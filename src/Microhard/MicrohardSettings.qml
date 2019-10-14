@@ -255,12 +255,21 @@ Rectangle {
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
-                                text:           qsTr("Channel:")
+                                text:           qsTr("Channel frequency:")
                             }
                             QGCComboBox {
                                 id:             connectingChannel
                                 model:          QGroundControl.microhardManager.channelLabels
                                 currentIndex:   QGroundControl.microhardManager.connectingChannel - QGroundControl.microhardManager.channelMin
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Channel bandwidth:")
+                            }
+                            QGCComboBox {
+                                id:             connectingBandwidth
+                                model:          QGroundControl.microhardManager.bandwidthLabels
+                                currentIndex:   QGroundControl.microhardManager.connectingBandwidth
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
@@ -275,13 +284,14 @@ Rectangle {
                                 return false
                             }
                             function testEnabled() {
-                                if(localIP.text            === QGroundControl.microhardManager.localIPAddr &&
-                                    remoteIP.text          === QGroundControl.microhardManager.remoteIPAddr &&
-                                    netMask.text           === QGroundControl.microhardManager.netMask &&
-                                    configUserName.text    === QGroundControl.microhardManager.configUserName &&
-                                    configPassword.text    === QGroundControl.microhardManager.configPassword &&
-                                    encryptionKey.text     === QGroundControl.microhardManager.encryptionKey &&
-                                    connectingChannel.text === QGroundControl.microhardManager.connectingChannel)
+                                if(localIP.text              === QGroundControl.microhardManager.localIPAddr &&
+                                    remoteIP.text            === QGroundControl.microhardManager.remoteIPAddr &&
+                                    netMask.text             === QGroundControl.microhardManager.netMask &&
+                                    configUserName.text      === QGroundControl.microhardManager.configUserName &&
+                                    configPassword.text      === QGroundControl.microhardManager.configPassword &&
+                                    encryptionKey.text       === QGroundControl.microhardManager.encryptionKey &&
+                                    connectingChannel.text   === QGroundControl.microhardManager.connectingChannel &&
+                                    connectingBandwidth.text === QGroundControl.microhardManager.connectingBandwidth)
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
@@ -298,9 +308,9 @@ Rectangle {
                                                                               configUserName.text,
                                                                               configPassword.text,
                                                                               encryptionKey.text,
-                                                                              connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin)
+                                                                              connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin,
+                                                                              connectingBandwidth.currentIndex)
                             }
-
                         }
                     }
                 }

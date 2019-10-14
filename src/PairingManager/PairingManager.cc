@@ -741,6 +741,9 @@ PairingManager::_parsePairingJsonAndConnect(const QString& jsonEnc)
         if (remotePairingMap.contains("CC")) {
             _toolbox->microhardManager()->setConnectChannel(remotePairingMap["CC"].toInt());
         }
+        if (remotePairingMap.contains("BW")) {
+            _toolbox->microhardManager()->setConnectBandwidth(remotePairingMap["BW"].toInt());
+        }
         _toolbox->microhardManager()->updateSettings();
     }
     emit startUpload(name, pairURL, responseJsonDoc, true, uploadRetries);
@@ -855,6 +858,7 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
     jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     return QJsonDocument(jsonObj);
 }
 
@@ -1024,6 +1028,7 @@ PairingManager::startMicrohardPairing()
     jsonObj.insert("CU", _toolbox->microhardManager()->configUserName());
     jsonObj.insert("CP", _toolbox->microhardManager()->configPassword());
     jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
 
