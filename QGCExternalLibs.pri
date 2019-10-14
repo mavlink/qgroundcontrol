@@ -175,6 +175,8 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
             } else {
                 INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
             }
+        } else {
+	    LIBS += -lcrypto
         }
     }
 }
