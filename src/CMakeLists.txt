@@ -126,6 +126,7 @@ add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
 add_subdirectory(GPS)
+add_subdirectory(PhotoGallery)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
 add_subdirectory(PlanView)
@@ -161,6 +162,7 @@ target_link_libraries(qgc
 		FlightMap
 		FollowMe
 		gps
+		PhotoGallery
 		Joystick
 		MissionManager
 		PositionManager
