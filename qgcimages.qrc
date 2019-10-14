@@ -122,6 +122,7 @@
         <file alias="no-logging.svg">src/AutoPilotPlugins/PX4/Images/no-logging.svg</file>
         <file alias="ObjectAvoidance.svg">src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg</file>
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="PhotoGallery.svg">src/ui/toolbar/Images/PhotoGallery.svg</file>
         <file alias="PiP.svg">src/FlightMap/Images/PiP.svg</file>
         <file alias="pipHide.svg">src/FlightMap/Images/pipHide.svg</file>
         <file alias="pipResize.svg">src/FlightMap/Images/pipResize.svg</file>
