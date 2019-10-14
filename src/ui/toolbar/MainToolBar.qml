@@ -162,6 +162,17 @@ Item {
                     }
                 }
 
+                QGCToolBarButton {
+                    id:                 photoGalleryButton
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    icon.source:        "/qmlimages/PhotoGallery.svg"
+                    onClicked: {
+                        checked = true
+                        mainWindow.showPhotoGalleryView()
+                    }
+                }
+
                 Item {
                     Layout.fillHeight:  true
                     width:              ScreenTools.defaultFontPixelWidth / 2
