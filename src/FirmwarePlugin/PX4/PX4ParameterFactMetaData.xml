@@ -7876,6 +7876,14 @@ to takeoff is reached</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter default="2.0" name="RWTO_RAMP_TIME" type="FLOAT">
+      <short_desc>Throttle ramp up time for runway takeoff</short_desc>
+      <min>1.0</min>
+      <max>15.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+      <increment>0.1</increment>
+    </parameter>
     <parameter default="0" name="RWTO_TKOFF" type="INT32">
       <short_desc>Runway takeoff with landing gear</short_desc>
       <boolean />
