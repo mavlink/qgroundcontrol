@@ -37,6 +37,7 @@
         <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
         <file alias="HealthPageWidget.qml">src/FlightMap/Widgets/HealthPageWidget.qml</file>
         <file alias="HelpSettings.qml">src/ui/preferences/HelpSettings.qml</file>
+        <file alias="PhotoGalleryView.qml">src/PhotoGallery/PhotoGalleryView.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="JoystickConfigButtons.qml">src/VehicleSetup/JoystickConfigButtons.qml</file>
         <file alias="JoystickConfigAdvanced.qml">src/VehicleSetup/JoystickConfigAdvanced.qml</file>
