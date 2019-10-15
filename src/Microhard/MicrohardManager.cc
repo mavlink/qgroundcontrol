@@ -13,6 +13,10 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
+#ifdef QGC_ENABLE_PAIRING
+#include "PairingManager.h"
+#endif
+
 #include <QSettings>
 
 #define SHORT_TIMEOUT 2500
