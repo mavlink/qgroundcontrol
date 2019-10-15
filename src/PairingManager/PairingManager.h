@@ -71,11 +71,13 @@ public:
     int             nfcIndex                    () { return _nfcIndex; }
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
-    bool            videoCanRestart             () { return !_connectedDevices.empty(); }
+    bool            usePairing                  () { return _usePairing; }
+    bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            jsonReceived                (const QString& json) { emit parsePairingJson(json); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
+    void            setUsePairing               (bool set);
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -102,6 +104,7 @@ public:
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
+    Q_PROPERTY(bool             usePairing              READ usePairing              WRITE setUsePairing NOTIFY usePairingChanged)
 
 signals:
     void startUpload                            (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
@@ -117,6 +120,7 @@ signals:
     void pairedListChanged                      ();
     void connectedVehicleChanged                ();
     void firstBootChanged                       ();
+    void usePairingChanged                      ();
     void connectToPairedDevice                  (const QString& name);
 
 private slots:
@@ -127,6 +131,7 @@ private slots:
     void _parsePairingJson                      (const QString& jsonEnc, bool updateSettings);
     void _setPairingStatus                      (PairingStatus status, const QString& pairingStatus);
     void _connectToPairedDevice                 (const QString& name);
+    void _setEnabled                            ();
 
 private:
     QString                 _statusString;
@@ -143,6 +148,7 @@ private:
     QJsonDocument           _jsonDoc{}; // TODO get rid of this
     QNetworkAccessManager   _uploadManager;
     bool                    _firstBoot = true;
+    bool                    _usePairing = false;
     QMap<QString, qint64>   _devicesToConnect{};
     QStringList             _deviceList;
     QTimer                  _reconnectTimer;

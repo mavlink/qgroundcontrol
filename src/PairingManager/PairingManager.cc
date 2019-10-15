@@ -43,6 +43,7 @@ void
 PairingManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
+    _setEnabled();
 
     connect(this, &PairingManager::parsePairingJson, this, &PairingManager::_parsePairingJsonNFC, Qt::QueuedConnection);
     connect(this, &PairingManager::setPairingStatus, this, &PairingManager::_setPairingStatus, Qt::QueuedConnection);
@@ -50,13 +51,40 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
     connect(this, &PairingManager::startCommand, this, &PairingManager::_startCommand, Qt::QueuedConnection);
     connect(this, &PairingManager::connectToPairedDevice, this, &PairingManager::_connectToPairedDevice, Qt::QueuedConnection);
     connect(&_reconnectTimer, &QTimer::timeout, this, &PairingManager::_autoConnect, Qt::QueuedConnection);
-    _reconnectTimer.setSingleShot(false);
-    _reconnectTimer.start(1000);
+    connect(_toolbox->settingsManager()->appSettings()->usePairing(), &Fact::rawValueChanged, this, &PairingManager::_setEnabled, Qt::QueuedConnection);
+}
 
-    _readPairingConfig();
+//-----------------------------------------------------------------------------
+void
+PairingManager::_setEnabled()
+{
+    setUsePairing(_toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool());
+}
 
-    _updatePairedDeviceNameList();
-    emit pairedListChanged();
+//-----------------------------------------------------------------------------
+void
+PairingManager::setUsePairing(bool set)
+{
+    if (_usePairing == set) {
+        return;
+    }
+    _usePairing = set;
+
+    if (_usePairing) {
+        _reconnectTimer.setSingleShot(false);
+        _reconnectTimer.start(1000);
+        _readPairingConfig();
+        _updatePairedDeviceNameList();
+        emit pairedListChanged();
+    } else {
+        _reconnectTimer.stop();
+    }
+
+    _toolbox->microhardManager()->updateSettings();
+    if (videoCanRestart()) {
+        _toolbox->videoManager()->startVideo();
+    }
+    emit usePairingChanged();
 }
 
 //-----------------------------------------------------------------------------
