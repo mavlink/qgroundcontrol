@@ -181,13 +181,29 @@ Item {
             mainWindow.planMasterControllerPlan = _planMasterController
         }
 
-        function waitingOnDataMessage() {
-            mainWindow.showMessageDialog(qsTr("Unable to Save/Upload"), qsTr("Plan is waiting on terrain data from server for correct altitude values."))
+        function waitingOnIncompleteDataMessage(save) {
+            var saveOrUpload = save ? qsTr("Save") : qsTr("Upload")
+            mainWindow.showMessageDialog(qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan has incomplete items. Complete all items and %1 again.").arg(saveOrUpload))
+        }
+
+        function waitingOnTerrainDataMessage(save) {
+            var saveOrUpload = save ? qsTr("Save") : qsTr("Upload")
+            mainWindow.showMessageDialog(qsTr("Unable to %1").arg(saveOrUpload), qsTr("Plan is waiting on terrain data from server for correct altitude values."))
+        }
+
+        function checkReadyForSaveUpload(save) {
+            if (readyForSaveState() == VisualMissionItem.NotReadyForSaveData) {
+                waitingOnIncompleteDataMessage(save)
+                return false
+            } else if (readyForSaveState() == VisualMissionItem.NotReadyForSaveTerrain) {
+                waitingOnTerrainDataMessage(save)
+                return false
+            }
+            return true
         }
 
         function upload() {
-            if (!readyForSaveSend()) {
-                waitingOnDataMessage()
+            if (!checkReadyForSaveUpload(false /* save */)) {
                 return
             }
             if (activeVehicle && activeVehicle.armed && activeVehicle.flightMode === activeVehicle.missionFlightMode) {
@@ -208,8 +224,7 @@ Item {
         }
 
         function saveToSelectedFile() {
-            if (!readyForSaveSend()) {
-                waitingOnDataMessage()
+            if (!checkReadyForSaveUpload(true /* save */)) {
                 return
             }
             fileDialog.title =          qsTr("Save Plan")
@@ -236,8 +251,7 @@ Item {
         }
 
         function saveKmlToSelectedFile() {
-            if (!readyForSaveSend()) {
-                waitingOnDataMessage()
+            if (!checkReadyForSaveUpload(true /* save */)) {
                 return
             }
             fileDialog.title =          qsTr("Save KML")
@@ -1040,10 +1054,13 @@ Item {
                 QGCButton {
                     text:               qsTr("New...")
                     Layout.fillWidth:   true
-                    enabled:            _planMasterController.containsItems
                     onClicked:  {
                         dropPanel.hide()
-                        mainWindow.showComponentDialog(removeAllPromptDialog, qsTr("New Plan"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        if (_planMasterController.containsItems) {
+                            mainWindow.showComponentDialog(removeAllPromptDialog, qsTr("New Plan"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        } else {
+                            startOverlay.visible = true
+                        }
                     }
                 }
 
