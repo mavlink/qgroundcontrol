@@ -140,8 +140,9 @@ MicrohardManager::switchToConnectionEncryptionKey(QString encryptionKey)
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::switchToPairingEncryptionKey()
+MicrohardManager::switchToPairingEncryptionKey(QString pairingKey)
 {
+    setEncryptionKey(pairingKey);
     _usePairingSettings = true;
 }
 

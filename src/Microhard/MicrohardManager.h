@@ -38,7 +38,7 @@ public:
     Q_PROPERTY(QString      netMask             READ netMask                                       NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configUserName      READ configUserName                                NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                                NOTIFY configPasswordChanged)
-    Q_PROPERTY(QString      encryptionKey       READ encryptionKey                                 NOTIFY encryptionKeyChanged)
+    Q_PROPERTY(QString      encryptionKey       READ encryptionKey       WRITE setEncryptionKey    NOTIFY encryptionKeyChanged)
     Q_PROPERTY(int          pairingChannel      READ pairingChannel      WRITE setPairingChannel   NOTIFY pairingChannelChanged)
     Q_PROPERTY(int          connectingChannel   READ connectingChannel   WRITE setConnectChannel   NOTIFY connectingChannelChanged)
     Q_PROPERTY(int          connectingBandwidth READ connectingBandwidth WRITE setConnectBandwidth NOTIFY connectingBandwidthChanged)
@@ -76,12 +76,13 @@ public:
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
     void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
+    void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
     void        setPairingChannel               (int val)     { _pairingChannel = val; emit pairingChannelChanged(); }
     void        setConnectChannel               (int val)     { _connectingChannel = val; emit connectingChannelChanged(); }
     void        setConnectBandwidth             (int val)     { _connectingBandwidth = val; emit connectingBandwidthChanged(); }
     void        updateSettings                  ();
     void        configure                       ();
-    void        switchToPairingEncryptionKey    ();
+    void        switchToPairingEncryptionKey    (QString pairingKey);
     void        switchToConnectionEncryptionKey (QString encryptionKey);
     void        setProductName                  (QString product);
 

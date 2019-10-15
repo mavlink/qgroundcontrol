@@ -999,7 +999,7 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
             _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
         }
         _toolbox->videoManager()->stopVideo();
-        _toolbox->microhardManager()->switchToPairingEncryptionKey();
+        _toolbox->microhardManager()->switchToPairingEncryptionKey(_toolbox->microhardManager()->encryptionKey());
         _toolbox->microhardManager()->updateSettings();
     }
     emit startUpload(tempName, pairURL, responseJsonDoc, false, uploadRetries);
@@ -1008,13 +1008,13 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
 #if QGC_GST_MICROHARD_ENABLED
 //-----------------------------------------------------------------------------
 void
-PairingManager::startMicrohardPairing()
+PairingManager::startMicrohardPairing(const QString& pairingKey)
 {
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
 
     _toolbox->videoManager()->stopVideo();
-    _toolbox->microhardManager()->switchToPairingEncryptionKey();
+    _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
     _toolbox->microhardManager()->updateSettings();
 
     QJsonDocument receivedJsonDoc;

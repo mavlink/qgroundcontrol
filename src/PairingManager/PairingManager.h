@@ -91,7 +91,7 @@ public:
     Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
-    Q_INVOKABLE void    startMicrohardPairing   ();
+    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey);
 #endif
     Q_INVOKABLE void    stopPairing             ();
     Q_INVOKABLE void    disconnectDevice        (const QString& name);
