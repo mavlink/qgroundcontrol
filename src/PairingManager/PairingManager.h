@@ -88,12 +88,12 @@ public:
     Q_INVOKABLE QString extractChannel          (const QString& name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
-    Q_INVOKABLE void    startNFCScan();
+    Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
-    Q_INVOKABLE void    startMicrohardPairing();
+    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey);
 #endif
-    Q_INVOKABLE void    stopPairing();
+    Q_INVOKABLE void    stopPairing             ();
     Q_INVOKABLE void    disconnectDevice        (const QString& name);
 
     Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr        NOTIFY pairingStatusChanged)
@@ -181,6 +181,7 @@ private:
     QString                 _removeRSAkey               (const QString& s);
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);
+    QString                 _getDeviceIP                (const QString& name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;

@@ -133,6 +133,17 @@ PairingManager::_getDeviceConnectTime(const QString& name)
 }
 
 //-----------------------------------------------------------------------------
+QString
+PairingManager::_getDeviceIP(const QString& name)
+{
+    if (!_devices.contains(name)) {
+        return "";
+    }
+    QJsonObject jsonObj = _devices[name].object();
+    return jsonObj["IP"].toString();
+}
+
+//-----------------------------------------------------------------------------
 QStringList
 PairingManager::connectedDeviceNameList()
 {
@@ -142,7 +153,7 @@ PairingManager::connectedDeviceNameList()
     while (i.hasNext()) {
         i.next();
         if (i.value()) {
-            list.append(tr("CH:") + QString::number(_getDeviceChannel(i.key())).rightJustified(2, '0') + chSeparator + i.key());
+            list.append(tr("Channel: ") + QString::number(_getDeviceChannel(i.key())).rightJustified(2, '0') + chSeparator + i.key());
         }
     }
     std::sort(list.begin(), list.end(),
@@ -164,7 +175,7 @@ PairingManager::pairedDeviceNameList()
     for (QString name : _devices.keys())
     {
         if (!_connectedDevices.contains(name)) {
-            list.append(tr("CH:") + QString::number(_getDeviceChannel(name)).rightJustified(2, '0') + chSeparator + name);
+            list.append(tr("Channel: ") + QString::number(_getDeviceChannel(name)).rightJustified(2, '0') + chSeparator + name);
         }
     }
     std::sort(list.begin(), list.end(),
@@ -395,6 +406,22 @@ PairingManager::connectToDevice(const QString& name)
         return;
     }
 
+    QString ip = _getDeviceIP(name);
+    // If multiple vehicles share same IP then disconnect
+    for (QString n : _connectedDevices.keys()) {
+        if (ip == _getDeviceIP(n)) {
+            disconnectDevice(n);
+            break;
+        }
+    }
+    // If multiple vehicles share same IP then do not try to autoconnect anymore
+    for (QString n : _devicesToConnect.keys()) {
+        if (ip == _getDeviceIP(n)) {
+            _devicesToConnect.remove(n);
+            break;
+        }
+    }
+
     setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
 }
@@ -521,9 +548,10 @@ PairingManager::removePairedDevice(const QString& name)
     QFile file(_pairingCacheFile(name));
     file.remove();
     _removeUDPLink(name);
-
-    QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
-    emit startCommand(name, unpairURL, "");
+    if (_getDeviceChannel(name) == _toolbox->microhardManager()->connectingChannel()) {
+        QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
+        emit startCommand(name, unpairURL, "");
+    }
     _updatePairedDeviceNameList();
     setPairingStatus(PairingIdle, "");
 }
@@ -714,6 +742,9 @@ PairingManager::_parsePairingJsonAndConnect(const QString& jsonEnc)
         if (remotePairingMap.contains("CC")) {
             _toolbox->microhardManager()->setConnectChannel(remotePairingMap["CC"].toInt());
         }
+        if (remotePairingMap.contains("BW")) {
+            _toolbox->microhardManager()->setConnectBandwidth(remotePairingMap["BW"].toInt());
+        }
         _toolbox->microhardManager()->updateSettings();
     }
     emit startUpload(name, pairURL, responseJsonDoc, true, uploadRetries);
@@ -828,6 +859,7 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
     jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     return QJsonDocument(jsonObj);
 }
 
@@ -968,7 +1000,7 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
             _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
         }
         _toolbox->videoManager()->stopVideo();
-        _toolbox->microhardManager()->switchToPairingEncryptionKey();
+        _toolbox->microhardManager()->switchToPairingEncryptionKey(_toolbox->microhardManager()->encryptionKey());
         _toolbox->microhardManager()->updateSettings();
     }
     emit startUpload(tempName, pairURL, responseJsonDoc, false, uploadRetries);
@@ -977,13 +1009,13 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
 #if QGC_GST_MICROHARD_ENABLED
 //-----------------------------------------------------------------------------
 void
-PairingManager::startMicrohardPairing()
+PairingManager::startMicrohardPairing(const QString& pairingKey)
 {
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
 
     _toolbox->videoManager()->stopVideo();
-    _toolbox->microhardManager()->switchToPairingEncryptionKey();
+    _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
     _toolbox->microhardManager()->updateSettings();
 
     QJsonDocument receivedJsonDoc;
@@ -997,6 +1029,7 @@ PairingManager::startMicrohardPairing()
     jsonObj.insert("CU", _toolbox->microhardManager()->configUserName());
     jsonObj.insert("CP", _toolbox->microhardManager()->configPassword());
     jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
 
