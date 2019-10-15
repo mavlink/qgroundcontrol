@@ -64,7 +64,7 @@ void NdefPull_Cb(unsigned char *pNdefMessage, unsigned short NdefMessageSize)
             NdefRecord.recordPayload[NdefRecord.recordPayloadSize] = '\0';
             QString text = reinterpret_cast<char *>(&NdefRecord.recordPayload[NdefRecord.recordPayload[0]+1]);
             qCDebug(PairingNFCLog) << "   Text: " << text;
-            qgcApp()->toolbox()->pairingManager()->jsonReceived(text);
+            qgcApp()->toolbox()->pairingManager()->jsonReceivedStartPairing(text);
             NdefRecord.recordPayload[NdefRecord.recordPayloadSize] = save;
             break;
         }

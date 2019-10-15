@@ -32,7 +32,6 @@ MicrohardHandler::close()
 {
     bool res = false;
     if(_tcpSocket) {
-        qCDebug(MicrohardLog) << "Close Microhard TCP socket on port" << _tcpSocket->localPort();
         _tcpSocket->close();
         _tcpSocket->deleteLater();
         _tcpSocket = nullptr;
@@ -48,7 +47,6 @@ MicrohardHandler::_start(uint16_t port, QHostAddress addr)
     close();
     _tcpSocket = new QTcpSocket();
     QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &MicrohardHandler::_readBytes);
-    qCDebug(MicrohardLog) << "Connecting to" << addr;
     _tcpSocket->connectToHost(addr, port);
     QTimer::singleShot(1000, this, &MicrohardHandler::_testConnection);
 }

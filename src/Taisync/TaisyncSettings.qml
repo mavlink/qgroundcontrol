@@ -294,6 +294,14 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         columns: 2
                         QGCLabel {
+                            text:           qsTr("Aspect Ratio")
+                            Layout.minimumWidth: _labelWidth
+                        }
+                        FactTextField {
+                            fact:           QGroundControl.settingsManager.videoSettings.aspectRatio
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
                             text:           qsTr("Video Output:")
                             Layout.minimumWidth: _labelWidth
                         }
