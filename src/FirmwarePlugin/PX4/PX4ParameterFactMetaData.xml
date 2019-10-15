@@ -1741,7 +1741,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
         <value code="0">Automatic</value>
         <value code="1">Magnetic heading</value>
         <value code="2">3-axis</value>
-        <value code="3">VTOL customn</value>
+        <value code="3">VTOL custom</value>
         <value code="4">MC custom</value>
         <value code="5">None</value>
       </values>
