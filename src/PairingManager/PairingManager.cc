@@ -548,9 +548,10 @@ PairingManager::removePairedDevice(const QString& name)
     QFile file(_pairingCacheFile(name));
     file.remove();
     _removeUDPLink(name);
-
-    QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
-    emit startCommand(name, unpairURL, "");
+    if (_getDeviceChannel(name) == _toolbox->microhardManager()->connectingChannel()) {
+        QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
+        emit startCommand(name, unpairURL, "");
+    }
     _updatePairedDeviceNameList();
     setPairingStatus(PairingIdle, "");
 }
