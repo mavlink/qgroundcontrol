@@ -28,7 +28,7 @@ Item {
             _clickCount++
             eggTimer.restart()
             if (_clickCount == 5) {
-                if(QGroundControl.corePlugin.showAdvancedUI) {
+                if(!QGroundControl.corePlugin.showAdvancedUI) {
                     advancedModeConfirmation.open()
                 } else {
                     QGroundControl.corePlugin.showAdvancedUI = false
