@@ -66,10 +66,13 @@ WindowsBuild {
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
-    COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\deploy\\libeay32.dll \
-        $$BASEDIR_WIN\\deploy\\ssleay32.dll
+    contains(QT_ARCH, i386) {
+        COPY_FILE_LIST = \
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll
+    } else {
+        COPY_FILE_LIST = \
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll
+    }
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
