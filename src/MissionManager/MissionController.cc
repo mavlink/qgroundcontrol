@@ -1004,16 +1004,16 @@ bool MissionController::loadTextFile(QFile& file, QString& errorString)
     return true;
 }
 
-bool MissionController::readyForSaveSend(void) const
+int MissionController::readyForSaveState(void) const
 {
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         if (visualItem->readyForSaveState() != VisualMissionItem::ReadyForSave) {
-            return false;
+            return visualItem->readyForSaveState();
         }
     }
 
-    return true;
+    return VisualMissionItem::ReadyForSave;
 }
 
 void MissionController::save(QJsonObject& json)
