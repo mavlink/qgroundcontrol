@@ -58,7 +58,8 @@ git:
     # Set up git user name and tag this commit
     - git config --local user.name "$GIT_USER"
     - git config --local user.email "$GIT_EMAIL"
-    - export TRAVIS_TAG=$($SH 'export version=$(< $SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt) && echo $version') && echo $TRAVIS_TAG
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
+    - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
     - git tag $TRAVIS_TAG
 
 matrix:
@@ -91,8 +92,8 @@ matrix:
         # Set up git user name and tag this commit
         - git config --local user.name "$GIT_USER"
         - git config --local user.email "$GIT_EMAIL"
-        # TODO, the echo commands can be removed after the tagging is running stable
-        - export TRAVIS_TAG=$($SH 'export version=$(< $SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt) && echo $version') && echo $TRAVIS_TAG
+        - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
+        - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
         - git tag $TRAVIS_TAG
       # TODO: This is a build time action. Update it to work with custom
       #  - cd ${TRAVIS_BUILD_DIR}
@@ -164,10 +165,9 @@ deploy:
   - <<: *template_deploy
     on:
       branch: master
-      condition: "$TRAVIS_TAG =~ ^v*$ && $CONFIG == installer"
+      condition: $CONFIG == installer
   #  # pre-release a version for each commit with prefix 'pr-*' on any branch except master
   - <<: *template_deploy
-    name: $TRAVIS_BRANCH
     prerelease: true
     overwrite: true
     on:
