@@ -10,6 +10,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.5.5 - Not yet released
 * Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
+* Disable Pause when fixed wing is on landing approach.
 
 ### 3.5.4 - Stable
 * Update windows drivers
