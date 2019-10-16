@@ -90,7 +90,9 @@ install:
   - if [ "${SPEC}" = "linux-g++-64" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.3-gcc_64-min.tar.bz2 &&
         tar jxf Qt5.11.3-gcc_64-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.11-gcc_64/5.11.3/gcc_64/bin:$PATH
+        export PATH=/tmp/Qt5.11-gcc_64/5.11.3/gcc_64/bin:$PATH &&
+        sudo cp -r ${TRAVIS_BUILD_DIR}/libs/gdal/linux/lib/* /usr/local/lib/ &&
+        sudo ldconfig
         ;
     fi
 
@@ -176,8 +178,7 @@ script:
   - if [ "${SPEC}" = "macx-clang" ]; then
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC};
     elif [ "${SPEC}" = "linux-g++-64" ]; then
-    # Use already compiled GDAL for QGC
-        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC} INCLUDEPATH+=${TRAVIS_BUILD_DIR}/libs/gdal/linux/include LIBS+= -L${TRAVIS_BUILD_DIR}/libs/gdal/linux/lib/ -lproj;
+        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC} INCLUDEPATH+=${TRAVIS_BUILD_DIR}/libs/gdal/linux/include LIBS+=" -L${TRAVIS_BUILD_DIR}/libs/gdal/linux/lib/ -lproj";
     else
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC};
     fi
