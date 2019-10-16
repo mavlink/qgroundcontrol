@@ -115,23 +115,18 @@ MacBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
     INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
-    INCLUDEPATH += $$BASEDIR/libs/zlib/Windows/include
-
+    BASEQTDIR = $$(QTDIR)
+    INCLUDEPATH += $$BASEQTDIR/include/QtZlib
     contains(QT_ARCH, i386) {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x86/include
+        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x86/include
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x86/lib
     } else {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
+        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x64/include
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x64/lib
     }
-    LIBS += -L$$BASEDIR/libs/zlib/Windows/libs
     LIBS += \
         -lSDL2main \
-        -lSDL2 \
-		-lz \
-		-llibeay32
+        -lSDL2
 }
 
 # Include Android OpenSSL 1.1.x libs in order to make Qt OpenSSL support work with Qt 5.12.x and above
