@@ -301,12 +301,17 @@ VideoReceiver::start()
             break;
         }
 
-        if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
-            qWarning() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
-            if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
-                break;
+        bool useSoftwareDecoding = true;
+        if (qgcApp()->toolbox()->settingsManager()->videoSettings()->enableHardwareAcceleration()->rawValue().toBool()) {
+            if (_hwDecoderName && (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
+                useSoftwareDecoding = false;
+            } else {
+                qWarning() << "VideoReceiver::start() hardware decoding not available. Decoder: " << ((_hwDecoderName) ? _hwDecoderName : "");
             }
+        }
+        if (useSoftwareDecoding && (decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
+            qCritical() << "VideoReceiver::start() failed. Decoder: " << _swDecoderName;
+            break;
         }
 
         if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
@@ -494,8 +499,6 @@ VideoReceiver::_shutdownPipeline() {
 void
 VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
-    // If there was an error we switch to software decoding only
-    _tryWithHardwareDecoding = false;
 
     if (_videoSurface && _videoSurface->lastFrame() == 0) {
         // We didn't receive any frame yet, so we restart after some time
@@ -638,10 +641,6 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _hwDecoderName = "vaapih264dec";
 #endif
         _swDecoderName = "avdec_h264";
-    }
-
-    if (!_tryWithHardwareDecoding) {
-        _hwDecoderName = nullptr;
     }
 }
 
