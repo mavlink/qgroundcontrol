@@ -29,7 +29,7 @@ class PlanMasterController : public QObject
 public:
     PlanMasterController(QObject* parent = nullptr);
     ~PlanMasterController();
-    
+
     Q_PROPERTY(MissionController*       missionController       READ missionController                      CONSTANT)
     Q_PROPERTY(GeoFenceController*      geoFenceController      READ geoFenceController                     CONSTANT)
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController                   CONSTANT)
@@ -52,9 +52,10 @@ public:
     ///     @param deleteWhenSendCmplete The PlanMasterController object should be deleted after the first send is completed.
     Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle, bool deleteWhenSendCompleted = false);
 
-    /// Determines if the plan has all data needed to be saved or sent to the vehicle. Currently the only case where this
-    /// would return false is when it is still waiting on terrain data to determine correct altitudes.
-    Q_INVOKABLE bool readyForSaveSend(void) const { return _missionController.readyForSaveSend(); }
+    /// Determines if the plan has all information needed to be saved or sent to the vehicle.
+    /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
+    /// a nightmare of circular header dependency problems.
+    Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
 
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to

@@ -145,9 +145,10 @@ public:
     /// Returns the index of this item in the visual item list
     Q_INVOKABLE int visualItemIndexFromSequenceNumber(int sequenceNumber) const;
 
-    /// Determines if the mission has all data needed to be saved or sent to the vehicle. Currently the only case where this
-    /// would return false is when it is still waiting on terrain data to determine correct altitudes.
-    bool readyForSaveSend(void) const;
+    /// Determines if the mission has all data needed to be saved or sent to the vehicle.
+    /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
+    /// a nightmare of circular header dependency problems.
+    int readyForSaveState(void) const;
 
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
