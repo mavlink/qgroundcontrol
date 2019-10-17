@@ -155,6 +155,9 @@ install:
         export PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
         ;
     fi
+  - if [ "${SPEC}" = "macx-clang" ]; then
+        brew upgrade gdal;
+    fi
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
