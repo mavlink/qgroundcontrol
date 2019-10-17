@@ -24,13 +24,17 @@
 #include <gst/gst.h>
 #endif
 
+#include <QQuickItem>
+
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
 class VideoSettings;
 
-class VideoReceiver : public QObject
+class VideoReceiver : public QQuickItem
 {
     Q_OBJECT
+    Q_PROPERTY(QObject *videoItem WRITE setVideoItem READ videoItem NOTIFY videoItemChanged)
+
 public:
     enum VideoEncoding {
         H264_SW = 1,
@@ -47,7 +51,7 @@ public:
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
-    explicit VideoReceiver(QObject* parent = nullptr);
+    explicit VideoReceiver(QQuickItem* parent = nullptr);
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
@@ -68,6 +72,17 @@ public:
 
     void                  setVideoDecoder   (VideoEncoding encoding);
 
+    /* This is the Qml GstGLVideoItem  */
+    QObject *videoItem() const;
+    Q_SLOT void setVideoItem(QObject *videoItem);
+    Q_SIGNAL void videoItemChanged(QObject *videoItem);
+
+    /* This method sets the pipeline state to playing as soon as Qt allows it */
+    Q_INVOKABLE void startVideo();
+
+    /* This *actually* enables the video set by startVideo() */
+    QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *);
+
 signals:
     void videoRunningChanged                ();
     void imageFileChanged                   ();
@@ -80,6 +95,7 @@ signals:
     void msgStateChangedReceived            ();
     void gotFirstRecordingKeyFrame          ();
 #endif
+
 
 public slots:
     virtual void start                      ();
@@ -153,5 +169,8 @@ protected:
     bool            _tryWithHardwareDecoding = true;
     const char*     _hwDecoderName;
     const char*     _swDecoderName;
+
+    QObject *_videoItem;
+    bool _shouldStartVideo;
 };
 

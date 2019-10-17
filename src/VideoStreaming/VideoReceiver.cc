@@ -26,6 +26,8 @@
 #include <QDir>
 #include <QDateTime>
 #include <QSysInfo>
+#include <QQuickWindow>
+
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -50,8 +52,53 @@ static const char* kVideoMuxes[] =
 #endif
 
 
-VideoReceiver::VideoReceiver(QObject* parent)
-    : QObject(parent)
+VideoReceiver::~VideoReceiver() {
+    gst_element_set_state (_pipeline, GST_STATE_NULL);
+    if (_videoSink) {
+        gst_object_unref(_videoSink);
+    }
+}
+
+void VideoReceiver::setVideoItem(QObject *videoItem) {
+    if (_videoItem != videoItem) {
+        qDebug() << "Setting the video item";
+        _videoItem = videoItem;
+        Q_EMIT videoItemChanged(_videoItem);
+    }
+    startVideo();
+}
+
+void VideoReceiver::startVideo() {
+    if (_pipeline && _videoSink && _videoItem) {
+
+        GObject *videoSinkHasWidget = nullptr;
+        g_object_get(_videoSink, "widget", videoSinkHasWidget, nullptr);
+        if (!videoSinkHasWidget) {
+            g_object_set(_videoSink, "widget", _videoItem, nullptr);
+        }
+
+        _shouldStartVideo = true;
+        update();
+    }
+}
+
+QSGNode *VideoReceiver::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
+{
+    Q_UNUSED(data)
+    if (_shouldStartVideo) {
+        gst_element_set_state(_pipeline, GST_STATE_PLAYING);
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-playing");
+        _shouldStartVideo = false;
+    }
+    return node;
+}
+
+QObject *VideoReceiver::videoItem() const {
+    return _videoItem;
+}
+
+VideoReceiver::VideoReceiver(QQuickItem* parent)
+    : QQuickItem(parent)
 #if defined(QGC_GST_STREAMING)
     , _running(false)
     , _recording(false)
@@ -72,7 +119,11 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoSettings(nullptr)
     , _hwDecoderName(nullptr)
     , _swDecoderName("avdec_h264")
+    , _videoItem(nullptr)
+    , _shouldStartVideo(false)
 {
+    setFlag(ItemHasContents);
+
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
@@ -87,16 +138,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
-#endif
-}
-
-VideoReceiver::~VideoReceiver()
-{
-#if defined(QGC_GST_STREAMING)
-    stop();
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-    }
+    start();
 #endif
 }
 
@@ -157,6 +199,7 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
+    qDebug() << "Starting the video receiver";
     /*
     if (_uri.isEmpty()) {
         return;
@@ -426,6 +469,7 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
+    // Make sure this is running in the render thread.
     qDebug() << "Calling Stop";
     if(qgcApp() && qgcApp()->runningUnitTests()) {
         return;

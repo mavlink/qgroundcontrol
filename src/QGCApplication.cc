@@ -68,7 +68,6 @@
 #include "CoordinateVector.h"
 #include "PlanMasterController.h"
 #include "VideoManager.h"
-#include "VideoReceiver.h"
 #include "LogDownloadController.h"
 #include "MAVLinkInspectorController.h"
 #include "ValuesWidgetController.h"

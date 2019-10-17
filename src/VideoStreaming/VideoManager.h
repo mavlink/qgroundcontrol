@@ -42,7 +42,7 @@ public:
     Q_PROPERTY(QString          videoSourceID           READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
-    Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
+//    Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
     Q_PROPERTY(VideoReceiver*   thermalVideoReceiver    READ    thermalVideoReceiver                        CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalAspectRatio      READ    thermalAspectRatio                          NOTIFY aspectRatioChanged)
@@ -64,7 +64,7 @@ public:
     virtual bool        hasThermal          ();
     virtual void        restartVideo        ();
 
-    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
+//    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
@@ -108,7 +108,7 @@ protected:
 protected:
     SubtitleWriter  _subtitleWriter;
     bool            _isTaisync              = false;
-    VideoReceiver*  _videoReceiver          = nullptr;
+//    VideoReceiver*  _videoReceiver          = nullptr;
     VideoReceiver*  _thermalVideoReceiver   = nullptr;
     VideoSettings*  _videoSettings          = nullptr;
     QString         _videoSourceID;

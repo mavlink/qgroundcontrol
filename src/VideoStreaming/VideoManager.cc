@@ -30,6 +30,12 @@
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
+//***************** TODO ************************
+// VERIFY IF THIS FILE IS NEEDED
+// AND LOOK FOR A BETTER APPROACH.
+// THIS MAKES IT POSSIBLE TO USE JUST ONE CAMERA
+//***********************************************
+
 //-----------------------------------------------------------------------------
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
@@ -39,9 +45,9 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-    if(_videoReceiver) {
-        delete _videoReceiver;
-    }
+  //  if(_videoReceiver) {
+  //      delete _videoReceiver;
+  //  }
     if(_thermalVideoReceiver) {
         delete _thermalVideoReceiver;
     }
@@ -54,7 +60,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-   qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -73,12 +78,12 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
-    _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+   // _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
    // _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
     _updateSettings();
     if(isGStreamer()) {
         startVideo();
-        _subtitleWriter.setVideoReceiver(_videoReceiver);
+   //     _subtitleWriter.setVideoReceiver(_videoReceiver);
     } else {
         stopVideo();
     }
@@ -90,7 +95,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 void
 VideoManager::startVideo()
 {
-    if(_videoReceiver) _videoReceiver->start();
+   // if(_videoReceiver) _videoReceiver->start();
     if(_thermalVideoReceiver) _thermalVideoReceiver->start();
 }
 
@@ -98,7 +103,7 @@ VideoManager::startVideo()
 void
 VideoManager::stopVideo()
 {
-    if(_videoReceiver) _videoReceiver->stop();
+   // if(_videoReceiver) _videoReceiver->stop();
     if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
 }
 
@@ -282,11 +287,12 @@ VideoManager::setfullScreen(bool f)
     emit fullScreenChanged();
 }
 
+// TODO: Those settings should be set on Qml.
 //-----------------------------------------------------------------------------
 void
 VideoManager::_updateSettings()
 {
-    if(!_videoSettings || !_videoReceiver)
+    if(!_videoSettings /* || !_videoReceiver */)
         return;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
@@ -295,23 +301,23 @@ VideoManager::_updateSettings()
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
                 case VIDEO_STREAM_TYPE_RTSP:
-                    _videoReceiver->setUri(pInfo->uri());
+                //    _videoReceiver->setUri(pInfo->uri());
                     _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
                     break;
                 case VIDEO_STREAM_TYPE_TCP_MPEG:
-                    _videoReceiver->setUri(pInfo->uri());
+                //    _videoReceiver->setUri(pInfo->uri());
                     _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
                     break;
                 case VIDEO_STREAM_TYPE_RTPUDP:
-                    _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
+                //    _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
                     _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
                     break;
                 case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                    _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
+                //    _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
                     _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
                     break;
                 default:
-                    _videoReceiver->setUri(pInfo->uri());
+                //    _videoReceiver->setUri(pInfo->uri());
                     break;
             }
             //-- Thermal stream (if any)
@@ -337,6 +343,7 @@ VideoManager::_updateSettings()
             return;
         }
     }
+   /* // TODO: This should be set in Qml.
     QString source = _videoSettings->videoSource()->rawValue().toString();
     if (source == VideoSettings::videoSourceUDPH264)
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
@@ -348,6 +355,7 @@ VideoManager::_updateSettings()
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
         _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+    */
 }
 
 //-----------------------------------------------------------------------------

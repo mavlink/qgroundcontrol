@@ -422,11 +422,6 @@ VideoManager* QGCCorePlugin::createVideoManager(QGCApplication *app, QGCToolbox 
     return new VideoManager(app, toolbox);
 }
 
-VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
-{
-    return new VideoReceiver(parent);
-}
-
 bool QGCCorePlugin::guidedActionsControllerLogging() const
 {
     return GuidedActionsControllerLog().isDebugEnabled();
