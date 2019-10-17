@@ -593,12 +593,6 @@ Item {
                     visible:    _guidedController.showContinueMission
                 },
                 {
-                    title:      _guidedController.resumeMissionTitle,
-                    text:       _guidedController.resumeMissionMessage,
-                    action:     _guidedController.actionResumeMission,
-                    visible:    _guidedController.showResumeMission
-                },
-                {
                     title:      _guidedController.changeAltTitle,
                     text:       _guidedController.changeAltMessage,
                     action:     _guidedController.actionChangeAlt,
