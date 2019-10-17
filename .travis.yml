@@ -199,11 +199,11 @@ after_success:
   - cd ${TRAVIS_BUILD_DIR}
 
   # master development builds to beta track
-  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
+  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol-daily
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
-        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol-daily;
     else
         GOOGLE_PLAY_PKG=none;
     fi
