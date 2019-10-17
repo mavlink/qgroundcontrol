@@ -1,3 +1,8 @@
+# avoiding builds on tags, since duplicated builds will be triggered by tag and push events
+branches:
+  except:
+    - /^v[0-9]/
+
 language: cpp
 
 env:
@@ -60,7 +65,7 @@ git:
     - git config --local user.email "$GIT_EMAIL"
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
     - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
-    - git tag $TRAVIS_TAG
+    - git tag -f $TRAVIS_TAG
 
 matrix:
   include:
@@ -94,57 +99,7 @@ matrix:
         - git config --local user.email "$GIT_EMAIL"
         - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
         - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
-        - git tag $TRAVIS_TAG
-      # TODO: This is a build time action. Update it to work with custom
-      #  - cd ${TRAVIS_BUILD_DIR}
-      #  # insert QGC version in AndroidManifest.xml
-      #  -  git remote set-branches origin 'master'
-      #  -  git fetch --tags origin master
-      #  -  ./tools/update_android_version.sh ${BITNESS}
-  #TODO: implement further build cases
-#  exclude:
-#    - name: Linux Debug
-#      <<: *template_linux
-#      services: xvfb
-#      env:
-#        - CONFIG=debug
-#        - DOCKERFILE=Dockerfile_linux
-#        - DOCKER_IMAGE=auterion/ags_builder_linux
-#        - QT_FATAL_WARNINGS=1
-#      script:
-#      # TODO:
-#      #  # unit tests linux
-#      #  - $SH 'mkdir -p $PWD/.config/QtProject/'
-#      #  - $SH 'cp $PWD/test/qtlogging.ini $PWD/.config/QtProject/'
-#      #  - $SH './debug/qgroundcontrol-start.sh --unittest'
-#      #before_deploy: skip
-#    - name: OSX Installer
-#      os: osx
-#      osx_image: xcode9.2
-#      env:
-#        - QT_DIR=Qt5.11-clang_64/5.11.0/clang_64
-#        - QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins
-#        - QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
-#        - PATH=/tmp/$QT_DIR/bin:$PATH
-#        - IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang`
-#        - IOS_CCACHE_CXX=`/usr/bin/xcrun sdk iphoneos -find clang++`
-#        - PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
-#      install:
-#        # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
-#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-clang_64-min.tar.bz2
-#        - tar jxf Qt5.11.0-clang_64-min.tar.bz2 -C /tmp
-#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2
-#        - sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
-#        # ios dependencies: qt
-#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-ios-min.tar.bz2
-#      script:
-#        - mkdir $SHADOW_BUILD_DIR
-#        - cd $SHADOW_BUILD_DIR
-#        - make -r $TRAVIS_BUILD_DIR/qgroundcontrol.pro CONFIG+=$CONFIG
-#        - xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
-#    - name: Windows Installer
-#      os: windows
-
+        - git tag -f $TRAVIS_TAG
 
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
@@ -172,9 +127,7 @@ deploy:
     overwrite: true
     on:
       all_branches: true
-      branch:
-        - /^pr-$/
-      condition: $CONFIG == installer
+      condition: $TRAVIS_BRANCH =~ ^pr-.*$ && $CONFIG == installer
 
 notifications:
   slack:
