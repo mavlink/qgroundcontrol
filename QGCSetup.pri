@@ -62,16 +62,23 @@ WindowsBuild {
     BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
     DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
     QT_BIN_DIR  = $$dirname(QMAKE_QMAKE)
+    BASEQTDIR = $$(QTDIR)
+    contains(QT_ARCH, i386) {
+        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x86/include
 
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     contains(QT_ARCH, i386) {
         COPY_FILE_LIST = \
-            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
+            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x86\\bin\\libcrypto-1_1.dll \
+            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x86\\bin\\libssl-1_1.dll
     } else {
         COPY_FILE_LIST = \
-            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x64\\bin\\libcrypto-1_1-x64.dll \
+            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x64\\bin\\libssl-1_1-x64.dll
     }
 
     for(COPY_FILE, COPY_FILE_LIST) {

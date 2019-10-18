@@ -70,17 +70,6 @@ RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.
 # create user with id 1001 (jenkins docker workflow default)
 RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
 
-# Compile OpenSSL 1.1.1.c
-RUN cd /usr/local/src/ \
-    && wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
-    && tar -xf openssl-1.1.1c.tar.gz \
-    && cd openssl-1.1.1c \
-    && ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib \
-    && make \
-    && make install \
-    && mkdir -p ${QT_PATH}/Tools/OpenSSL/binary/lib/ && cp -f /usr/local/ssl/lib/libcrypto.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/ \
-    && cp -f /usr/local/ssl/lib/libssl.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/
-
 # create and start as LOCAL_USER_ID
 COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
