@@ -113,7 +113,7 @@ MacBuild {
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
-    LIBS+= -lgdal#/external/gdal/lib/libgdal.a -ldl -lpthread -lgeos_c -ljson-c
+    LIBS+= -lgdal
 	INCLUDEPATH+= /external/gdal/include/
 } else:WindowsBuild {
     INCLUDEPATH += C:/OSGeo4W/include
@@ -154,16 +154,15 @@ AndroidBuild {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/proj/lib/libproj.so
         LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.so
         LIBS += $$BASEDIR/libs/gdal/android/proj/lib/libproj.so
-        #LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.a
 
     } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libssl.so
-        INCLUDEPATH += $$BASEDIR/libs/gdal/android/amd64/include
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libgdal.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/proj/lib/libproj.so
-        LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libgdal.so
-        LIBS += $$BASEDIR/libs/gdal/android/amd64/proj/lib/libproj.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libssl.so
+        INCLUDEPATH += $$BASEDIR/libs/gdal/android/arm64/include
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libgdal.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libproj.so
+        LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libgdal.so
+        LIBS += $$BASEDIR/libs/gdal/android/arm64/lib/libproj.so
     } else:equals(ANDROID_TARGET_ARCH, x86)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so

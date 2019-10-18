@@ -156,7 +156,9 @@ install:
         ;
     fi
   - if [ "${SPEC}" = "macx-clang" ]; then
-        brew upgrade gdal;
+        brew uninstall postgis &&
+        brew uninstall gdal --ignore-dependencies &&
+        brew install gdal;
     fi
 
 before_script:
