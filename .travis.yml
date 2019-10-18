@@ -135,6 +135,14 @@ install:
         ;
     fi
 
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
+       brew uninstall --force postgis &&
+       curl -O http://www.kyngchaos.com/files/software/frameworks/GDAL_Complete-2.4.dmg &&
+       hdiutil attach GDAL_Complete-2.4.dmg &&
+       cd '/Volumes/GDAL Complete 2.4/' &&
+       sudo installer -pkg 'Install GDAL Complete 2.4.pkg' -target "/";
+    fi
+
   - if [ "${SPEC}" = "macx-clang" ]; then
         export QT_DIR=Qt5.11-clang_64/5.11.0/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
@@ -154,11 +162,6 @@ install:
         export IOS_CCACHE_CXX=`/usr/bin/xcrun -sdk iphoneos -find clang++` &&
         export PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
         ;
-    fi
-  - if [ "${SPEC}" = "macx-clang" ]; then
-        brew uninstall postgis &&
-        brew uninstall gdal --ignore-dependencies &&
-        brew install gdal;
     fi
 
 before_script:
