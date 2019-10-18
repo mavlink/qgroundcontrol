@@ -23,10 +23,9 @@ import QGroundControl.Vehicle               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          visible ? priorityLinkSelector.width : 0
-    visible:        _visible
+    width:          priorityLinkSelector.width
 
-    property bool _visible: false
+    property bool showIndicator: false
 
     QGCLabel {
         id:                     priorityLinkSelector
@@ -66,7 +65,7 @@ Item {
                     }
                 }
 
-                _visible = links.length > 1 && has_hl
+                showIndicator = links.length > 1 && has_hl
             }
         }
 
