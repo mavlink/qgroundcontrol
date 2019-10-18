@@ -1,0 +1,74 @@
+#!/bin/sh
+CONFIG_LIBS="-L/external/gdal/lib -lgdal"
+CONFIG_DEP_LIBS=" -L/external/proj//lib -lproj  -lm -ldl  -lsupc++ -lstdc++ -L/scripts/arm64/lib/ -lcrypto -lssl                     "
+CONFIG_PREFIX="/external/gdal"
+CONFIG_CFLAGS="-I/external/gdal/include"
+CONFIG_DATA="/external/gdal/share/gdal"
+CONFIG_VERSION="2.4.2"
+CONFIG_OGR_ENABLED=yes
+CONFIG_GNM_ENABLED=no
+CONFIG_FORMATS=" gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b nitf bmp airsar rs2 ilwis rmf leveller sgi srtmhgt idrisi gsg ingr ers jaxapalsar dimap gff cosar pds adrg coasp tsx terragen blx msgn til r northwood saga xyz hf2 kmlsuperoverlay ctg e00grid zmap ngsgeoid iris map cals safe sentinel2 derived prf sigdem ignfheightasciigrid zlib  rik ozi pdf arg"
+usage()
+{
+	cat <<EOF
+Usage: gdal-config [OPTIONS]
+Options:
+	[--prefix[=DIR]]
+	[--libs]
+	[--dep-libs]
+	[--cflags]
+	[--datadir]
+	[--version]
+	[--ogr-enabled]
+	[--gnm-enabled]
+	[--formats]
+EOF
+	exit $1
+}
+
+if test $# -eq 0; then
+	usage 1 1>&2
+fi
+
+case $1 in
+  --libs)
+    echo $CONFIG_LIBS
+    ;;
+
+  --dep-libs)
+    echo $CONFIG_DEP_LIBS
+    ;;
+
+  --cflags)
+    echo $CONFIG_CFLAGS
+    ;;
+
+  --datadir)
+    echo $CONFIG_DATA
+    ;;
+
+  --prefix)
+    echo $CONFIG_PREFIX
+    ;;
+
+  --version)
+    echo $CONFIG_VERSION
+    ;;
+
+  --ogr-enabled)
+    echo yes
+    ;;
+
+  --gnm-enabled)
+    echo $CONFIG_GNM_ENABLED
+    ;;
+
+  --formats)
+    echo $CONFIG_FORMATS
+    ;;
+
+  *)
+    usage 1 1>&2
+    ;;
+
+esac

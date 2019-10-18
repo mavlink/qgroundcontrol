@@ -157,7 +157,13 @@ AndroidBuild {
         #LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.a
 
     } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libssl.so
+        INCLUDEPATH += $$BASEDIR/libs/gdal/android/amd64/include
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libgdal.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/amd64/proj/lib/libproj.so
+        LIBS += $$BASEDIR/libs/gdal/android/amd64/lib/libgdal.so
+        LIBS += $$BASEDIR/libs/gdal/android/amd64/proj/lib/libproj.so
     } else:equals(ANDROID_TARGET_ARCH, x86)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
