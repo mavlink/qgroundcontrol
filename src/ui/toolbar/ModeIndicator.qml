@@ -20,13 +20,12 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Mode Indicator
 QGCComboBox {
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    alternateText:  _activeVehicle ? _activeVehicle.flightMode : ""
-    model:          _flightModes
-    font.pointSize: ScreenTools.mediumFontPointSize
-    currentIndex:   -1
-    sizeToContents: true
+    anchors.verticalCenter: parent.verticalCenter
+    alternateText:          _activeVehicle ? _activeVehicle.flightMode : ""
+    model:                  _flightModes
+    font.pointSize:         ScreenTools.mediumFontPointSize
+    currentIndex:           -1
+    sizeToContents:         true
 
     property bool showIndicator: true
 
