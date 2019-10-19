@@ -109,34 +109,6 @@ Item {
                 }
             }
             */
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.33
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.66
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.33
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.66
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
         }
 
         //-- Thermal Image

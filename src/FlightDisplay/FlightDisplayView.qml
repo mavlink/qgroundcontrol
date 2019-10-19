@@ -354,10 +354,9 @@ Item {
         }
 
         //-- Video View
-        Item {
+        Row {
             id:             _flightVideo
             z:              mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
-            width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
             height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
@@ -446,16 +445,41 @@ Item {
             //-- Video Streaming
             FlightDisplayViewVideo {
                 id:             videoStreaming
-                anchors.fill:   parent
                 visible:        QGroundControl.videoManager.isGStreamer
+                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             }
+
+            FlightDisplayViewVideo {
+                id:             videoStreaming2
+                visible:        QGroundControl.videoManager.isGStreamer
+                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            }
+
+            FlightDisplayViewVideo {
+                id:             videoStreaming3
+                visible:        QGroundControl.videoManager.isGStreamer
+                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            }
+
+            FlightDisplayViewVideo {
+                id:             videoStreaming4
+                visible:        QGroundControl.videoManager.isGStreamer
+                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            }
+
             //-- UVC Video (USB Camera or Video Device)
+            /*
             Loader {
                 id:             cameraLoader
                 anchors.fill:   parent
                 visible:        !QGroundControl.videoManager.isGStreamer
                 source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
             }
+            */
         }
 
         QGCPipable {
@@ -485,6 +509,7 @@ Item {
                 _pipSize = newWidth
             }
         }
+
 
         Row {
             id:                     singleMultiSelector
