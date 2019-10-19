@@ -482,6 +482,8 @@ Item {
             */
         }
 
+        //TODO: The pipable control is disabled for the moment, I don't think it should do anything
+        // and we need to devise a Control that will be inside the FligthDisplayViewVideo.
         QGCPipable {
             id:                 _flightVideoPipControl
             z:                  _flightVideo.z + 3
@@ -490,7 +492,7 @@ Item {
             anchors.left:       _mapAndVideo.left
             anchors.bottom:     _mapAndVideo.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
+            visible:            false // QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             enablePopup:        mainIsMap

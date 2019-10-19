@@ -20,6 +20,7 @@ import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
 import QGroundControl.QgcQtGStreamer    1.0
+import QGroundControl.SettingsManager       1.0
 
 Item {
     id:     root
@@ -78,6 +79,10 @@ Item {
             }
             //-- Fit Width
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
+        }
+
+        VideoSettingsController {
+            visible: false
         }
 
         //-- Main Video

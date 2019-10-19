@@ -230,7 +230,7 @@
         <file alias="VibrationPageWidget.qml">src/FlightMap/Widgets/VibrationPageWidget.qml</file>
         <file alias="VideoPageWidget.qml">src/FlightMap/Widgets/VideoPageWidget.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
-        <file>src/ui/preferences/VideoSettings.qml</file>
+        <file alias="QGroundControl/FlightDisplay/VideoSettingsController.qml">src/FlightDisplay/VideoSettingsController.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="APMMavlinkStreamRate.SettingsGroup.json">src/Settings/APMMavlinkStreamRate.SettingsGroup.json</file>
