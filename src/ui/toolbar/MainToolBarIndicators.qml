@@ -84,10 +84,12 @@ Item {
         Repeater {
             model:      activeVehicle ? activeVehicle.toolBarIndicators : []
             Loader {
+                id:                 indicatorLoader
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-                source:             modelData;
+                source:             modelData
+                visible:            item.showIndicator
             }
         }
     }
