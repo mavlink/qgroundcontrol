@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Toolbar: Scrollable left/right on small screens like phones
 * Plan View: New create plan UI for initial plan creation
 * New Corridor editing tools ui. Includes ability to trace polyline by clicking.
 * New Polygon editing tools ui. Includes ability to trace polygon by clicking.
