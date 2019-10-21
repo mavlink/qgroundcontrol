@@ -762,6 +762,7 @@ bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfigu
         saveLinkConfigurationList();
         // Tell link about changes (if any)
         config->updateSettings();
+        emit config->nameChanged(config->name());
         // Discard temporary duplicate
         delete editedConfig;
     } else {
