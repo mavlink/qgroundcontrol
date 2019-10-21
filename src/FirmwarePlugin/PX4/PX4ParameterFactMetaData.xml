@@ -7482,8 +7482,8 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
   </group>
   <group name="Return Mode">
     <parameter default="0" name="RTL_CONE_ANG" type="INT32">
-      <short_desc>Half-angle of the RTL cone</short_desc>
-      <long_desc>Defines the half-angle of the cone which defines the vehicle RTL behavior.</long_desc>
+      <short_desc>Half-angle of the return mode altitude cone</short_desc>
+      <long_desc>Defines the half-angle of a cone centered around the home position that affects the altitude at which the vehicle returns during return to home.</long_desc>
       <min>0</min>
       <max>90</max>
       <unit>degrees</unit>
@@ -7497,8 +7497,8 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       </values>
     </parameter>
     <parameter default="30" name="RTL_DESCEND_ALT" type="FLOAT">
-      <short_desc>Return mode loiter altitude</short_desc>
-      <long_desc>Stay at this altitude above home position after RTL descending. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
+      <short_desc>Return mode loiter altitude (relative to home)</short_desc>
+      <long_desc>Descend to this altitude (above home position) after return, and wait for time defined in RTL_LAND_DELAY. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
       <min>2</min>
       <max>100</max>
       <unit>m</unit>
@@ -7507,7 +7507,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="-1.0" name="RTL_LAND_DELAY" type="FLOAT">
       <short_desc>Return mode delay</short_desc>
-      <long_desc>Delay after descend before landing in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
+      <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
       <min>-1</min>
       <max>300</max>
       <unit>s</unit>
@@ -7515,8 +7515,8 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>0.5</increment>
     </parameter>
     <parameter default="5.0" name="RTL_MIN_DIST" type="FLOAT">
-      <short_desc>Minimum distance to trigger rising to a safe altitude</short_desc>
-      <long_desc>If the system is horizontally closer than this distance to home it will land straight on home instead of raising to the return altitude first.</long_desc>
+      <short_desc>Maximum horizontal distance from home, below which RTL_DESCEND_ALT is used as return altitude</short_desc>
+      <long_desc>If the vehicle is less than this horizontal distance from home when return mode is activated it will ascend to RTL_DESCEND_ALT for the return journey (rather than the altitude set by RTL_RETURN_ALT and RTL_CONE_ANG).</long_desc>
       <min>0.5</min>
       <max>20</max>
       <unit>m</unit>
@@ -7524,8 +7524,8 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>0.5</increment>
     </parameter>
     <parameter default="60" name="RTL_RETURN_ALT" type="FLOAT">
-      <short_desc>RTL altitude</short_desc>
-      <long_desc>Altitude to fly back in RTL in meters</long_desc>
+      <short_desc>Return mode return altitude</short_desc>
+      <long_desc>Default minimum altitude above home for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
       <min>0</min>
       <max>150</max>
       <unit>m</unit>
