@@ -20,12 +20,11 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Multiple Vehicle Selector
 QGCComboBox {
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    font.pointSize: ScreenTools.mediumFontPointSize
-    currentIndex:   -1
-    sizeToContents: true
-    model:          _vehicleModel
+    anchors.verticalCenter: parent.verticalCenter
+    font.pointSize:         ScreenTools.mediumFontPointSize
+    currentIndex:           -1
+    sizeToContents:         true
+    model:                  _vehicleModel
 
     property bool showIndicator: _multipleVehicles
 

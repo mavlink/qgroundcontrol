@@ -20,13 +20,12 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- VTOL Mode Indicator
 QGCLabel {
-    anchors.top:        parent.top
-    anchors.bottom:     parent.bottom
-    verticalAlignment:  Text.AlignVCenter
-    text:               _fwdFlight ? qsTr("VTOL: Fixed Wing") : qsTr("VTOL: Multi-Rotor")
-    font.pointSize:     ScreenTools.mediumFontPointSize
-    color:              qgcPal.buttonText
-    width:              implicitWidth
+    anchors.verticalCenter: parent.verticalCenter
+    verticalAlignment:      Text.AlignVCenter
+    text:                   _fwdFlight ? qsTr("VTOL: Fixed Wing") : qsTr("VTOL: Multi-Rotor")
+    font.pointSize:         ScreenTools.mediumFontPointSize
+    color:                  qgcPal.buttonText
+    width:                  implicitWidth
 
     property bool showIndicator: _activeVehicle.vtol && _activeVehicle.px4Firmware
 
