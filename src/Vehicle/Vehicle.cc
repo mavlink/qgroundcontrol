@@ -3115,7 +3115,9 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
             static_cast<float>(qQNaN()),    // Empty
             static_cast<float>(qQNaN()),    // Empty
             static_cast<float>(qQNaN()),    // Empty
-            centerCoord.latitude(), centerCoord.longitude(), static_cast<float>(centerCoord.altitude()));
+            centerCoord.latitude(),
+            centerCoord.longitude(),
+            static_cast<float>(centerCoord.altitude()));
     } else {
         sendMavCommand(
             defaultComponentId(),
