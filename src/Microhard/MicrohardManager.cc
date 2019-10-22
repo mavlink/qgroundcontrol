@@ -154,14 +154,19 @@ MicrohardManager::configure()
 #ifdef QGC_ENABLE_PAIRING
         if (_toolbox->pairingManager()->usePairing()) {
             if (_usePairingSettings) {
-                _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _pairingChannel, 1);
+                QString networkId = "CH_" + QString::number(_pairingChannel);
+                _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
+                                          _pairingChannel, 1, networkId);
             } else {
-                _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower, _connectingChannel, _connectingBandwidth);
+                QString networkId = "CH_" + QString::number(_connectingChannel);
+                _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower,
+                                          _connectingChannel, _connectingBandwidth, networkId);
             }
             return;
         }
 #endif
-        _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _connectingChannel, _connectingBandwidth);
+        _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
+                                  _connectingChannel, _connectingBandwidth, "");
     }
 }
 
