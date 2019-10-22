@@ -1052,6 +1052,13 @@ PairingManager::startMicrohardPairing(const QString& pairingKey)
 #endif
 
 //-----------------------------------------------------------------------------
+QString
+PairingManager::pairingKey()
+{
+    return _toolbox->microhardManager()->encryptionKey();
+}
+
+//-----------------------------------------------------------------------------
 void
 PairingManager::stopPairing()
 {
