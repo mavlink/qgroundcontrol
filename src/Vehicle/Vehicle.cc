@@ -3133,6 +3133,40 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
     }
 }
 
+void Vehicle::stopGuidedModeROI()
+{
+    if (!roiModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        return;
+    }
+    if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        sendMavCommandInt(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_NONE,
+            MAV_FRAME_GLOBAL,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<double>(qQNaN()),   // Empty
+            static_cast<double>(qQNaN()),   // Empty
+            static_cast<float>(qQNaN()));   // Empty
+    } else {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_NONE,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()));   // Empty
+    }
+}
+
 void Vehicle::pauseVehicle(void)
 {
     if (!pauseVehicleSupported()) {
@@ -3398,6 +3432,20 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         } else {
             qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_PROTOCOL_VERSION with error(%1).").arg(ack.result);
             _handleUnsupportedRequestProtocolVersion();
+        }
+    }
+
+    if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            _isROIEnabled = true;
+            emit isROIEnabledChanged();
+        }
+    }
+
+    if (ack.command == MAV_CMD_DO_SET_ROI_NONE) {
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            _isROIEnabled = false;
+            emit isROIEnabledChanged();
         }
     }
 
