@@ -642,6 +642,7 @@ public:
     Q_PROPERTY(qreal                gimbalPitch             READ gimbalPitch                                            NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal                gimbalYaw               READ gimbalYaw                                              NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
+    Q_PROPERTY(bool                 isROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -741,6 +742,7 @@ public:
     /// Command vehicle to keep given point as ROI
     ///     @param centerCoord ROI coordinates
     Q_INVOKABLE void guidedModeROI(const QGeoCoordinate& centerCoord);
+    Q_INVOKABLE void stopGuidedModeROI();
 
     /// Command vehicle to pause at current location. If vehicle supports guide mode, vehicle will be left
     /// in guided mode after pause.
@@ -1114,6 +1116,7 @@ public:
     qreal       gimbalPitch             () { return static_cast<qreal>(_curGimbalPitch); }
     qreal       gimbalYaw               () { return static_cast<qreal>(_curGinmbalYaw); }
     bool        gimbalData              () { return _haveGimbalData; }
+    bool        isROIEnabled            () { return _isROIEnabled; }
 
 public slots:
     void setVtolInFwdFlight             (bool vtolInFwdFlight);
@@ -1229,6 +1232,7 @@ signals:
     void gimbalPitchChanged         ();
     void gimbalYawChanged           ();
     void gimbalDataChanged          ();
+    void isROIEnabledChanged        ();
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -1495,6 +1499,7 @@ private:
     float               _curGimbalPitch = 0.0f;
     float               _curGinmbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
+    bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
 
     int _firmwareMajorVersion;
