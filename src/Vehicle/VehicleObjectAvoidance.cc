@@ -12,7 +12,7 @@
 #include "ParameterManager.h"
 #include <cmath>
 
-static const char* kColPrevParam = "MPC_COL_PREV_D";
+static const char* kColPrevParam = "CP_DIST";
 
 //-----------------------------------------------------------------------------
 VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle *vehicle, QObject* parent)
