@@ -3,5 +3,8 @@
 <summary/>
 <description/>
 </information>
-<testsettings/>
+<testsettings>
+<logScreenshotOnError>true</logScreenshotOnError>
+<logScreenshotOnFail>true</logScreenshotOnFail>
+</testsettings>
 </testconfig>
