@@ -52,7 +52,7 @@ SetupPage {
             property Fact _rcLossAction:        controller.getParameterFact(-1, "NAV_RCL_ACT")
             property Fact _dlLossAction:        controller.getParameterFact(-1, "NAV_DLL_ACT")
             property Fact _disarmLandDelay:     controller.getParameterFact(-1, "COM_DISARM_LAND")
-            property Fact _collisionPrevention: controller.getParameterFact(-1, "MPC_COL_PREV_D")
+            property Fact _collisionPrevention: controller.getParameterFact(-1, "CP_DIST")
             property Fact _objectAvoidance:     controller.getParameterFact(-1, "COM_OBS_AVOID")
             property Fact _landSpeedMC:         controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
             property bool _hitlAvailable:       controller.parameterExists(-1, hitlParam)
