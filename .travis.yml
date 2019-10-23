@@ -110,6 +110,8 @@ before_install:
   provider: releases
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
+  name: $TRAVIS_TAG
+  overwrite: true
   file_glob: true
   file:
     - $RELEASE_DIR/*
@@ -124,10 +126,20 @@ deploy:
   #  # pre-release a version for each commit with prefix 'pr-*' on any branch except master
   - <<: *template_deploy
     prerelease: true
-    overwrite: true
     on:
       all_branches: true
       condition: $TRAVIS_BRANCH =~ ^pr-.*$ && $CONFIG == installer
+  #  # release a version for DIU
+  - <<: *template_deploy
+    on:
+      branch: diu-release
+      condition: $CONFIG == installer
+  #  # pre-release a version for DIU
+  - <<: *template_deploy
+    prerelease: true
+    on:
+      branch: wip-todo
+      condition: $CONFIG == installer
 
 notifications:
   slack:
