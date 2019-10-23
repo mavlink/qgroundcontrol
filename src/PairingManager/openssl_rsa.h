@@ -31,6 +31,8 @@ public:
 
     bool verify(std::string cipher_text, std::string signature);
 
+    static std::string random_string(uint length);
+
 private:
     RSA_ptr     _rsa_public;
     RSA_ptr     _rsa_private;

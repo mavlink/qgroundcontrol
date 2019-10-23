@@ -8,7 +8,9 @@
 #include <openssl/bn.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/engine.h>
 #include <openssl/pem.h>
+#include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <sstream>
 #include <zlib.h>
@@ -35,21 +37,46 @@ split(std::string str, char delimiter)
 }
 
 //-----------------------------------------------------------------------------
-static std::string
-random_string(uint length)
+std::string
+OpenSSL_RSA::random_string(uint length)
 {
-    srand(time(nullptr));
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const uint max_index = (sizeof(charset) - 1);
-        return charset[rand() % max_index];
-    };
+    const char charset[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+    const int max_index = (sizeof(charset) - 1);
+
+    unsigned int seed = static_cast<unsigned int>(time(nullptr));
     std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
+
+    // Hardware random generator setup
+    ENGINE_load_rdrand();
+    ENGINE *eng = ENGINE_by_id("rdrand");
+    if (eng != nullptr && ENGINE_init(eng)) {
+        ENGINE_set_default(eng, ENGINE_METHOD_RAND);
+    }
+    // If platform doesn't support hardware random generator
+    // cryptographically strong software random generator will be used
+    std::unique_ptr<unsigned char[]> buffer(new unsigned char[length]);
+    RAND_seed(&seed, sizeof(seed));
+    if (RAND_bytes(buffer.get(), static_cast<int>(length)) == 1) {
+        for (unsigned int i = 0; i < length; i++) {
+            str[i] = charset[buffer.get()[i] % max_index];
+        }
+    } else {
+        // RAND_bytes failed, use weak method
+        srand(seed);
+        auto randchar = [charset]() -> char
+        {
+            return charset[rand() % max_index];
+        };
+        std::generate_n(str.begin(), length, randchar);
+    }
+
+    ENGINE_finish(eng);
+    ENGINE_free(eng);
+    ENGINE_cleanup();
+
     return str;
 }
 
