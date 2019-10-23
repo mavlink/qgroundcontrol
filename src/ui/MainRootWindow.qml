@@ -577,6 +577,12 @@ ApplicationWindow {
         indicatorDropdown.open()
     }
 
+    function hidePopUp() {
+        indicatorDropdown.close()
+        indicatorDropdown.currentItem = null
+        indicatorDropdown.currentIndicator = null
+    }
+
     Popup {
         id:             indicatorDropdown
         y:              ScreenTools.defaultFontPixelHeight
