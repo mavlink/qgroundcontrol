@@ -2,17 +2,21 @@ from utils import confirm_with_slider
 import global_object_map as names
 import squish
 import test
-import object
 
 
 def is_drone_armed():
     label = squish.waitForObject(names.armedIndicatorLabel)
     led = squish.waitForObject(names.armedIndicatorLed)
-    green = "#27bf89"
-    # red: "#e1544c"
-    if squish.waitFor(lambda: label.text == "Armed", 10000):
-        if squish.waitFor(lambda: str(led.color.name) == green, 10000):
-            return True
+    if label.text == "Armed" and str(led.color.name) == "#27bf89":
+        return True
+    return False
+
+
+def is_drone_disarmed():
+    label = squish.waitForObject(names.armedIndicatorLabel)
+    led = squish.waitForObject(names.armedIndicatorLed)
+    if label.text == "Disarmed" and str(led.color.name) == "#e1544c":
+        return True
     return False
 
 
