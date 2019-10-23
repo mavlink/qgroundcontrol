@@ -30,16 +30,11 @@ def upload_file(local_path, remote_path, force=True):
     rs.upload(local_path, remote_path)
 
 
-def start_qgc(remove_settings=True):
+def start_qgc(clear_settings=True):
     test.startSection("[Test Setup] Starting the QGroundControl Ground Control Station")
-    if remove_settings:
-        remote_path = (
-            RemoteSystem().getEnvironmentVariable("HOME")
-            + "/.config/qgroundcontrol.org/CustomQGC.ini"
-        )
-        remove_file(remote_path)
-    test.log("[Test Setup] Launch run_qgc.sh")
-    squish.startApplication("run_qgc.sh")
+    aut = "run_qgc.sh --clear-settings" if clear_settings else "run_qgc.sh"
+    test.log(f"[Test Setup] Launch {aut}")
+    squish.startApplication(aut)
     squish.waitForObject(names.o_icon_Image)
     test.log("[Test Setup] Application started")
     test.endSection()
