@@ -44,7 +44,6 @@ FlightMap {
 
     property var    _geoFenceController:        missionController.geoFenceController
     property var    _rallyPointController:      missionController.rallyPointController
-    property var    activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
@@ -404,7 +403,7 @@ FlightMap {
     // ROI Location visuals
     MapQuickItem {
         id:             roiLocationItem
-        visible:        false
+        visible:        activeVehicle && activeVehicle.isROIEnabled
         z:              QGroundControl.zOrderMapItems
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
@@ -414,30 +413,18 @@ FlightMap {
             label:      qsTr("ROI here", "Make this a Region Of Interest")
         }
 
-        Connections {
-            target: mainWindow
-            onActiveVehicleChanged: {
-                if (!activeVehicle) {
-                    roiLocationItem.visible = false
-                }
-            }
-        }
-
+        //-- Visibilty controlled by actual state
         function show(coord) {
             roiLocationItem.coordinate = coord
-            roiLocationItem.visible = true
         }
 
         function hide() {
-            roiLocationItem.visible = false
         }
 
         function actionConfirmed() {
-            hide()
         }
 
         function actionCancelled() {
-            hide()
         }
     }
 
@@ -496,7 +483,6 @@ FlightMap {
 
                 onTriggered: {
                     roiLocationItem.show(clickMenu.coord)
-                    gotoLocationItem.hide()
                     guidedActionsController.confirmAction(guidedActionsController.actionROI, clickMenu.coord, orbitMapCircle)
                 }
             }
