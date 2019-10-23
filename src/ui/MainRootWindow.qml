@@ -626,7 +626,7 @@ Item {
             x:                  visible ? loader.item.x + loader.item.width - _margins - width : 0
             y:                  visible ? loader.item.y + _margins : 0
             z:                  visible ? loader.item.z + 1 : 0
-            visible:            loader.item !== null
+            visible:            ScreenTools.isLinux && loader.item !== null
             width:              ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
             height:             width
             sourceSize.height:  width
