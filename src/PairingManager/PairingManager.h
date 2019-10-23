@@ -78,6 +78,7 @@ public:
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
+    QString         pairingKey                  ();
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -96,13 +97,14 @@ public:
     Q_INVOKABLE void    stopPairing             ();
     Q_INVOKABLE void    disconnectDevice        (const QString& name);
 
-    Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr        NOTIFY pairingStatusChanged)
-    Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus           NOTIFY pairingStatusChanged)
-    Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList NOTIFY deviceListChanged)
-    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList    NOTIFY deviceListChanged)
+    Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr                            NOTIFY pairingStatusChanged)
+    Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus                               NOTIFY pairingStatusChanged)
+    Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList                     NOTIFY deviceListChanged)
+    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList                        NOTIFY deviceListChanged)
     Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings  CONSTANT)
-    Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle        NOTIFY connectedVehicleChanged)
-    Q_PROPERTY(bool             errorState              READ errorState              NOTIFY pairingStatusChanged)
+    Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle                            NOTIFY connectedVehicleChanged)
+    Q_PROPERTY(QString          pairingKey              READ pairingKey                                  NOTIFY pairingKeyChanged)
+    Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
@@ -122,6 +124,7 @@ signals:
     void firstBootChanged                       ();
     void usePairingChanged                      ();
     void connectToPairedDevice                  (const QString& name);
+    void pairingKeyChanged                      ();
 
 private slots:
     void _startCommand                          (const QString& name, const QString& pairURL, const QString& content);
