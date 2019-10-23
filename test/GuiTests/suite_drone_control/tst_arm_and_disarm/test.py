@@ -4,10 +4,16 @@ import drone_bar
 
 def main():
     start_qgc()
-    test.compare(drone_bar.is_drone_armed(), False, "Drone should be Disarmed")
+    test.verify(
+        waitFor(lambda: drone_bar.is_drone_disarmed(), 10000),
+        "Drone should be Disarmed",
+    )
     drone_bar.arm_drone()
-    test.compare(drone_bar.is_drone_armed(), True, "Drone should be Armed")
-    snooze(30)
-    test.compare(drone_bar.is_drone_armed(), True, "Drone should be Armed after 30s")
+    test.verify(
+        waitFor(lambda: drone_bar.is_drone_armed(), 10000), "Drone should be Armed"
+    )
     drone_bar.disarm_drone()
-    test.compare(drone_bar.is_drone_armed(), False, "Drone should be Disarmed")
+    test.verify(
+        waitFor(lambda: drone_bar.is_drone_disarmed(), 10000),
+        "Drone should be Disarmed",
+    )
