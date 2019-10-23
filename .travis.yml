@@ -15,16 +15,17 @@ env:
     - CONTAINER_NAME="builder_container"
     - SH="docker exec -it $CONTAINER_NAME bash -c"
     - SHADOW_BUILD_DIR="/tmp/shadow_build_dir"
-    - QGC_CUSTOM_APP_NAME="AGS"
-    - QGC_CUSTOM_GENERIC_NAME="Auterion Ground Station"
-    - QGC_CUSTOM_BINARY_NAME="AuterionGS"
+    - QGC_CUSTOM_APP_NAME="Custom QGS"
+    - QGC_CUSTOM_GENERIC_NAME="Custom Ground Station"
+    - QGC_CUSTOM_BINARY_NAME="CustomQGC"
     - QGC_CUSTOM_LINUX_START_SH="$PWD/custom/deploy/qgroundcontrol-start.sh"
-    - QGC_CUSTOM_APP_ICON="$PWD/custom/res/src/Auterion_Icon.png"
-    - QGC_CUSTOM_APP_ICON_NAME="Auterion_Icon"
+    - QGC_CUSTOM_APP_ICON="$PWD/resources/icons/qgroundcontrol.png"
+    - QGC_CUSTOM_APP_ICON_NAME="qgroundcontrol"
     - GIT_USER="Auterion_CI"
     - GIT_EMAIL="auterion_ci@auterion.com"
     - CCACHE_DIR="$HOME/.ccache"
     - PROJECT_ROOT="$PWD"
+    - QGC_CUSTOM_BUILD_FOLDER="custom"
 
 cache: ccache
 
@@ -45,6 +46,7 @@ git:
       -e QGC_CUSTOM_APP_NAME="$QGC_CUSTOM_APP_NAME" -e QGC_CUSTOM_GENERIC_NAME="$QGC_CUSTOM_GENERIC_NAME"
       -e QGC_CUSTOM_BINARY_NAME="$QGC_CUSTOM_BINARY_NAME" -e QGC_CUSTOM_LINUX_START_SH="$QGC_CUSTOM_LINUX_START_SH"
       -e QGC_CUSTOM_APP_ICON="$QGC_CUSTOM_APP_ICON" -e QGC_CUSTOM_APP_ICON_NAME="$QGC_CUSTOM_APP_ICON_NAME"
+      -e QGC_CUSTOM_BUILD_FOLDER="custom"
       -v `pwd`:`pwd` -v "$CCACHE_DIR:$CCACHE_DIR" -w `pwd` $DOCKER_IMAGE
   script:
     - $SH 'ccache -z'
@@ -74,15 +76,15 @@ matrix:
       env:
         - DOCKERFILE=Dockerfile_linux
         - DOCKER_IMAGE=auterion/ags_builder_linux
-        #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
-        - APPIMAGE_BINARY_NAME="AuterionGS_linux.AppImage"
+        #to rename the duplicated CustomQGC.AppImage name during Github Release deploy, avoid overwrite
+        - APPIMAGE_BINARY_NAME="CustomQGC_linux.AppImage"
     - name: CentOS Installer
       <<: *template_linux
       env:
         - DOCKERFILE=Dockerfile_centos
         - DOCKER_IMAGE=auterion/ags_builder_centos
-        #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
-        - APPIMAGE_BINARY_NAME="AuterionGS_centos.AppImage"
+        #to rename the duplicated CustomQGC.AppImage name during Github Release deploy, avoid overwrite
+        - APPIMAGE_BINARY_NAME="CustomQGC_centos.AppImage"
     - name: Android Installer
       <<: *template_linux
       env:
