@@ -1,0 +1,8 @@
+<testconfig version="1.0">
+<information>
+<summary>03 Export Tiles</summary>
+<description>Export current default tile set, including indicating file path and name.&#13;
+Verify if the file was created</description>
+</information>
+<testsettings/>
+</testconfig>
