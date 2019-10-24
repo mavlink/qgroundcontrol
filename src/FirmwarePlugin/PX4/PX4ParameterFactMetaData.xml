@@ -939,6 +939,11 @@ Set -1 to disable the check</short_desc>
         <value code="3">Return mode at critically low level, Land mode at current position if reaching dangerously low levels</value>
       </values>
     </parameter>
+    <parameter default="1" name="COM_MOT_TEST_EN" type="INT32">
+      <short_desc>Enable Motor Testing</short_desc>
+      <long_desc>If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that allows spinning the motors for testing purposes.</long_desc>
+      <boolean />
+    </parameter>
     <parameter default="100" name="COM_OA_BOOT_T" type="INT32">
       <short_desc>Set avoidance system bootup timeout</short_desc>
       <long_desc>The avoidance system running on the companion computer is expected to boot within this time and start providing trajectory points. If no avoidance system is detected a MAVLink warning message is sent.</long_desc>
