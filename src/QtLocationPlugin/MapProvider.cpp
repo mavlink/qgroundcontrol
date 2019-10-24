@@ -34,9 +34,9 @@ QNetworkRequest MapProvider::getTileURL(const int x, const int y, const int zoom
         return request;
     }
     request.setUrl(QUrl(url));
-    request.setRawHeader("Accept", "*/*");
-    request.setRawHeader("Referrer", _referrer.toUtf8());
-    request.setRawHeader("User-Agent", _userAgent);
+    request.setRawHeader(QByteArrayLiteral("Accept"), QByteArrayLiteral("*/*"));
+    request.setRawHeader(QByteArrayLiteral("Referrer"), _referrer.toUtf8());
+    request.setRawHeader(QByteArrayLiteral("User-Agent"), _userAgent);
     return request;
 }
 
@@ -56,7 +56,7 @@ QString MapProvider::getImageFormat(const QByteArray& image) const {
     return format;
 }
 
-QString MapProvider::_tileXYToQuadKey(const int tileX, const int tileY, const int levelOfDetail) {
+QString MapProvider::_tileXYToQuadKey(const int tileX, const int tileY, const int levelOfDetail) const {
     QString quadKey;
     for (int i = levelOfDetail; i > 0; i--) {
         char digit = '0';
@@ -73,7 +73,7 @@ QString MapProvider::_tileXYToQuadKey(const int tileX, const int tileY, const in
     return quadKey;
 }
 
-int MapProvider::_getServerNum(const int x, const int y, const int max) {
+int MapProvider::_getServerNum(const int x, const int y, const int max) const {
     return (x + 2 * y) % max;
 }
 
@@ -89,7 +89,9 @@ int MapProvider::lat2tileY(const double lat, const int z) const {
         2.0 * pow(2.0, z)));
 }
 
-bool MapProvider::_isElevationProvider() { return false; }
+bool MapProvider::_isElevationProvider() const {
+    return false;
+}
 
 QGCTileSet MapProvider::getTileCount(const int zoom, const double topleftLon,
                                      const double topleftLat, const double bottomRightLon,
