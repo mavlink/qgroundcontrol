@@ -85,3 +85,7 @@ Qt*-linux*.tar.*
 .vs/
 
 libs/airmapd/include/boost
+
+# Jetbrains IDEs
+.idea/
+cmake-build-debug/
