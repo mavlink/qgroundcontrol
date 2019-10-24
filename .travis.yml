@@ -40,8 +40,8 @@ git:
   sudo: required
   install:
     - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-    - docker pull $DOCKER_IMAGE || true
-    - docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
+    - travis_wait 30 docker pull "$DOCKER_IMAGE" || true
+    - travis_wait 60 docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
     - docker run --privileged --name $CONTAINER_NAME --rm -td  -e PROJECT_ROOT="$PROJECT_ROOT" -e CCACHE_DIR="$CCACHE_DIR"
       -e QGC_CUSTOM_APP_NAME="$QGC_CUSTOM_APP_NAME" -e QGC_CUSTOM_GENERIC_NAME="$QGC_CUSTOM_GENERIC_NAME"
       -e QGC_CUSTOM_BINARY_NAME="$QGC_CUSTOM_BINARY_NAME" -e QGC_CUSTOM_LINUX_START_SH="$QGC_CUSTOM_LINUX_START_SH"
@@ -53,21 +53,25 @@ git:
     - $SH 'mkdir $SHADOW_BUILD_DIR && cd $SHADOW_BUILD_DIR && qmake -r $PROJECT_ROOT/qgroundcontrol.pro CONFIG+=$CONFIG && make -j`nproc --all`'
     - $SH 'ccache -s'
   after_success:
-    - docker push $DOCKER_IMAGE
+    - travis_wait 30 docker push $DOCKER_IMAGE
   before_deploy:
     - mkdir $RELEASE_DIR
     # create linux appimage
     - $SH './deploy/create_linux_appimage.sh $PROJECT_ROOT $SHADOW_BUILD_DIR/release $SHADOW_BUILD_DIR/release'
     # copy the AppImage from container to the build host
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR
-    - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR/$APPIMAGE_BINARY_NAME
-    - chmod +x $RELEASE_DIR/$APPIMAGE_BINARY_NAME
+    - chmod +x $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage
     # Set up git user name and tag this commit
     - git config --local user.name "$GIT_USER"
     - git config --local user.email "$GIT_EMAIL"
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
     - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
     - git tag -f $TRAVIS_TAG
+    # rename to add version number to file name
+    - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR/$APPIMAGE_BINARY_NAME-$TRAVIS_TAG.AppImage
+    # generate release note
+    - go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
+    - $GOPATH/bin/git-chglog --output $RELEASE_DIR/CHANGELOG_$TRAVIS_TAG.md $(git describe --tags $(git rev-list --tags --max-count=1))
 
 matrix:
   include:
@@ -102,6 +106,8 @@ matrix:
         - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
         - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
         - git tag -f $TRAVIS_TAG
+        # rename to add version number to file name
+        - mv $RELEASE_DIR/android-build-debug.apk  $RELEASE_DIR/AuterionGS_android-debug-$TRAVIS_TAG.apk
 
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
@@ -110,10 +116,15 @@ before_install:
 
 .template_deploy: &template_deploy
   provider: releases
+
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
   name: $TRAVIS_TAG
   overwrite: true
+#  Can not use release_notes_file due to an open overwrite bug in dplv2
+#  https://github.com/travis-ci/dpl/issues/846
+#  edge: true
+#  release_notes_file: $RELEASE_DIR/CHANGELOG_$TRAVIS_TAG.md
   file_glob: true
   file:
     - $RELEASE_DIR/*
