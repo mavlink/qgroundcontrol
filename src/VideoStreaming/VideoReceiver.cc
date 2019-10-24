@@ -81,8 +81,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _setVideoSink(_videoSurface->videoSink());
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
-    connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
-    connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
+    connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError, Qt::QueuedConnection);
+    connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS, Qt::QueuedConnection);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
@@ -133,7 +133,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
     //g_print("A new pad %s was created\n", name);
     GstCaps* p_caps = gst_pad_get_pad_template_caps (pad);
     gchar* description = gst_caps_to_string(p_caps);
-    qCDebug(VideoReceiverLog) << p_caps << ", " << description;
+    qCDebug(VideoReceiverLog) << "New pad: " << name << ", " << description;
     g_free(description);
     GstElement* sink = GST_ELEMENT(data);
     if(gst_element_link_pads(element, name, sink, "sink") == false)
@@ -446,15 +446,19 @@ VideoReceiver::stop()
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
         GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
-        GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
+        GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_MSECOND * 200, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
         gst_object_unref(bus);
-        if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
+        if (message != nullptr) {
+            if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
+                _shutdownPipeline();
+                qCritical() << "Error stopping pipeline!";
+            } else if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
+                _handleEOS();
+            }
+            gst_message_unref(message);
+        } else {
             _shutdownPipeline();
-            qCritical() << "Error stopping pipeline!";
-        } else if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_EOS) {
-            _handleEOS();
         }
-        gst_message_unref(message);
     }
 #endif
 }
@@ -521,7 +525,7 @@ VideoReceiver::_handleEOS() {
         _shutdownRecordingBranch();
     } else {
         qWarning() << "VideoReceiver: Unexpected EOS!";
-        _handleError();
+        emit msgErrorReceived();
     }
 }
 #endif
@@ -554,11 +558,11 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
         g_free(debug);
         qCritical() << error->message;
         g_error_free(error);
-        pThis->msgErrorReceived();
+        emit pThis->msgErrorReceived();
     }
         break;
     case(GST_MESSAGE_EOS):
-        pThis->msgEOSReceived();
+        emit pThis->msgEOSReceived();
         break;
     case(GST_MESSAGE_STATE_CHANGED):
         pThis->msgStateChangedReceived();
