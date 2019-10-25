@@ -775,6 +775,15 @@ public:
     Q_INVOKABLE int versionCompare(QString& compare);
     Q_INVOKABLE int versionCompare(int major, int minor, int patch);
 
+    /// Asynchronously requests the version of the given microservice.
+    /// After calling this function, a microserviceVersion signal will be emitted.
+    /// If the version of this particular microservice was never requested, then this function sends out the
+    /// request message over MAVLink. When it gets the result, it caches it locally and emits the signal.
+    /// If the version is already cached, then this function will immediately emit the signal without
+    /// any communication over MAVLink.
+    /// @param serviceID the ID of the service to request, or 0 to request all services supported by the system.
+    Q_INVOKABLE void requestMicroserviceVersion(uint16_t serviceID);
+
     /// Test motor
     ///     @param motor Motor number, 1-based
     ///     @param percent 0-no power, 100-full power
@@ -1170,6 +1179,7 @@ signals:
     void linksPropertiesChanged         ();
     void textMessageReceived            (int uasid, int componentid, int severity, QString text);
     void checkListStateChanged          ();
+    void serviceVersionReceived         (uint16_t serviceID, uint16_t serviceVersion);
 
     void messagesReceivedChanged        ();
     void messagesSentChanged            ();
@@ -1325,6 +1335,7 @@ private:
     void _handleMessageInterval         (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
+    void _handleServiceVersion          (const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback          (const mavlink_message_t& message);
@@ -1424,6 +1435,9 @@ private:
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
     CheckList       _checkListState = CheckListNotSetup;
+
+    // TODO microservice version: Make sure there's not some specific data type for service IDs
+    QHash<uint16_t, uint16_t> _microserviceVersions;
 
     QGCCameraManager* _cameras;
 

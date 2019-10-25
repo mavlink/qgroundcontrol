@@ -4037,6 +4037,25 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
 
+void Vehicle::requestMicroserviceVersion(uint16_t serviceID) {
+    auto iter = _microserviceVersions.find(serviceID);
+    if(iter == _microserviceVersions.end()){
+        // TODO microservice version: Where to get supported range of versions for QGC?
+        sendMavCommand(
+                defaultComponentId(),
+                MAV_CMD_REQUEST_MESSAGE,
+                false,
+                MAVLINK_MSG_ID_MAVLINK_SERVICE_VERSION,
+                serviceID,
+                0,
+                9999
+                );
+    }else{
+        uint16_t version = iter.value();
+        emit serviceVersionReceived(serviceID, version);
+    }
+}
+
 void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
 {
     if (_pidTuningWaitingForRates) {
@@ -4247,6 +4266,17 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
 void Vehicle::updateFlightDistance(double distance)
 {
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
+}
+
+void Vehicle::_handleServiceVersion(const mavlink_message_t &message) {
+    mavlink_mavlink_service_version_t serviceVersion;
+    mavlink_msg_mavlink_service_version_decode(&message, &serviceVersion);
+
+    // TODO microservice version: Should I do anything special here to handle unsupported service?
+    // I don't think so, because every service will have to handle on its own the case when it just is not
+    // supported, so it is probably best to just return 0 for the supported version.
+    _microserviceVersions.insert(serviceVersion.service_id, serviceVersion.selected_version);
+    emit serviceVersionReceived(serviceVersion.service_id, serviceVersion.selected_version);
 }
 
 //-----------------------------------------------------------------------------
