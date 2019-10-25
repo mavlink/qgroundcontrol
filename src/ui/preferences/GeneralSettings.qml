@@ -894,6 +894,7 @@ Rectangle {
                                 fact:                   QGroundControl.settingsManager.videoSettings.tcpUrl
                                 visible:                _isTCP && QGroundControl.settingsManager.videoSettings.tcpUrl.visible
                             }
+
                             QGCLabel {
                                 text:                   qsTr("Aspect Ratio")
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
@@ -902,6 +903,16 @@ Rectangle {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.aspectRatio
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("Enable Hardware Acceleration")
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration.visible
+                            }
+                            FactCheckBox {
+                                text:                   ""
+                                fact:                   QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration.visible
                             }
 
                             QGCLabel {
