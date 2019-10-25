@@ -12,6 +12,7 @@
 #include "MapProvider.h"
 
 #include <QNetworkReply>
+#include <QMutex>
 
 class GoogleMapProvider : public MapProvider {
     Q_OBJECT
