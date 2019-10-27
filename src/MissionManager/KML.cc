@@ -36,7 +36,6 @@ void Kml::points(const QStringList& points)
     _docEle.appendChild(placemark);
     createTextElement(placemark, "styleUrl", "yellowLineGreenPoly");
     createTextElement(placemark, "name", "Absolute");
-    createTextElement(placemark, "visibility", "0");
     createTextElement(placemark, "description", "Transparent purple line");
 
     QStringList latLonAlt = points[0].split(",");
