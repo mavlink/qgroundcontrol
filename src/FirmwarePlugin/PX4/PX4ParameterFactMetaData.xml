@@ -7470,7 +7470,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <short_desc>Maximum horizontal distance from home, below which RTL_DESCEND_ALT is used as return altitude</short_desc>
       <long_desc>If the vehicle is less than this horizontal distance from home when return mode is activated it will ascend to RTL_DESCEND_ALT for the return journey (rather than the altitude set by RTL_RETURN_ALT and RTL_CONE_ANG).</long_desc>
       <min>0.5</min>
-      <max>20</max>
+      <max>100</max>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
@@ -7491,6 +7491,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
         <value code="0">Return home via direct path</value>
         <value code="1">Return to a planned mission landing, if available, via direct path, else return to home via direct path</value>
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path</value>
+        <value code="3">Return via direct way to whatever is closest: home, mission lading or safe point</value>
       </values>
     </parameter>
   </group>
