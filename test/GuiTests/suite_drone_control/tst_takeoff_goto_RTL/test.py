@@ -1,14 +1,14 @@
 from utils import start_qgc
 import drone_control
 import drone_params
-import drone_bar
+import toolbar
 import utils
 
 
 def main():
     epsilon = 0.3
     altitude = 10.0
-    climb_timeout = 25
+    climb_timeout = 30
     rtl_altitude = 30.0
     rtl_timeout = 60
     rtl_epsilon = 1
@@ -47,7 +47,7 @@ def main():
         f'Within {rtl_timeout}s Drone should reach "{rtl_altitude}"m. Epsilon "{epsilon}"',
     )
     test.verify(
-        waitFor(lambda: drone_bar.is_drone_armed() == False, return_timeout * 1000),
+        waitFor(lambda: toolbar.is_drone_armed() == False, return_timeout * 1000),
         f'After RTL Drone should land within {return_timeout}s. Epsilon "{epsilon}"',
     )
     test.verify(
