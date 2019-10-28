@@ -13,6 +13,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "VideoManager.h"
+#include "openssl_rand.h"
 
 #include <QSettings>
 #include <QJsonObject>
@@ -585,7 +586,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel)
 QString
 PairingManager::_random_string(uint length)
 {
-    return QString::fromStdString(OpenSSL_RSA::random_string(length));
+    return QString::fromStdString(OpenSSL_Rand::random_string(length));
 }
 
 //-----------------------------------------------------------------------------
