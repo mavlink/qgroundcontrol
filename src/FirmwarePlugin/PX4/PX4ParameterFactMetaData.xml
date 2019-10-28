@@ -920,16 +920,15 @@ Set -1 to disable the check</short_desc>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter default="0" name="COM_LOW_BAT_ACT" type="INT32">
+    <parameter default="3" name="COM_LOW_BAT_ACT" type="INT32">
       <short_desc>Battery failsafe mode</short_desc>
-      <long_desc>Action the system takes on low battery. Defaults to off</long_desc>
+      <long_desc>Action the system takes at critical battery.</long_desc>
       <decimal>0</decimal>
       <increment>1</increment>
       <values>
         <value code="0">Warning</value>
-        <value code="1">Return mode</value>
         <value code="2">Land mode</value>
-        <value code="3">Return mode at critically low level, Land mode at current position if reaching dangerously low levels</value>
+        <value code="3">Return at critical level, land at emergency level</value>
       </values>
     </parameter>
     <parameter default="1" name="COM_MOT_TEST_EN" type="INT32">
