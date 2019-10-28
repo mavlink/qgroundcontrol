@@ -1,19 +1,17 @@
 from utils import start_qgc
-import drone_bar
+import toolbar
 
 
 def main():
     start_qgc()
     test.verify(
-        waitFor(lambda: drone_bar.is_drone_disarmed(), 10000),
-        "Drone should be Disarmed",
+        waitFor(lambda: toolbar.is_drone_disarmed(), 10000), "Drone should be Disarmed"
     )
-    drone_bar.arm_drone()
+    toolbar.arm_drone()
     test.verify(
-        waitFor(lambda: drone_bar.is_drone_armed(), 10000), "Drone should be Armed"
+        waitFor(lambda: toolbar.is_drone_armed(), 10000), "Drone should be Armed"
     )
-    drone_bar.disarm_drone()
+    toolbar.disarm_drone()
     test.verify(
-        waitFor(lambda: drone_bar.is_drone_disarmed(), 10000),
-        "Drone should be Disarmed",
+        waitFor(lambda: toolbar.is_drone_disarmed(), 10000), "Drone should be Disarmed"
     )

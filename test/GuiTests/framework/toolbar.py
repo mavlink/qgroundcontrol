@@ -4,6 +4,12 @@ import squish
 import test
 
 
+def open_main_menu():
+    test.log("[Toolbar] Open Main Menu")
+    squish.mouseClick(squish.waitForObject(names.o_icon_Image))
+    squish.waitForObject(names.fly_Button)
+
+
 def is_drone_armed():
     label = squish.waitForObject(names.armedIndicatorLabel)
     led = squish.waitForObject(names.armedIndicatorLed)
@@ -21,7 +27,7 @@ def is_drone_disarmed():
 
 
 def arm_drone():
-    test.startSection("[Drone Bar] Arm Drone")
+    test.startSection("[Toolbarr] Arm Drone")
     label = names.armedIndicatorLabel.copy()
     label["text"] = "Disarmed"
     squish.mouseClick(squish.waitForObject(label))
@@ -30,7 +36,7 @@ def arm_drone():
 
 
 def disarm_drone():
-    test.startSection("[Drone Bar] Disrm Drone")
+    test.startSection("[Toolbar] Disrm Drone")
     label = names.armedIndicatorLabel.copy()
     label["text"] = "Armed"
     squish.mouseClick(squish.waitForObject(label))
