@@ -354,13 +354,14 @@ Item {
         }
 
         //-- Video View
-        Row {
+        Grid {
+            columns: 4
             id:             _flightVideo
             z:              mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
-            height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) * 2
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
-            visible:        QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
+            visible:        true //QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
 
             onParentChanged: {
                 /* If video comes back from popup
@@ -443,32 +444,13 @@ Item {
                 }
             ]
             //-- Video Streaming
-            FlightDisplayViewVideo {
-                id:             videoStreaming
-                visible:        QGroundControl.videoManager.isGStreamer
-                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
-                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
-            }
-
-            FlightDisplayViewVideo {
-                id:             videoStreaming2
-                visible:        QGroundControl.videoManager.isGStreamer
-                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
-                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
-            }
-
-            FlightDisplayViewVideo {
-                id:             videoStreaming3
-                visible:        QGroundControl.videoManager.isGStreamer
-                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
-                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
-            }
-
-            FlightDisplayViewVideo {
-                id:             videoStreaming4
-                visible:        QGroundControl.videoManager.isGStreamer
-                width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
-                height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            Repeater {
+                model: 8
+                FlightDisplayViewVideo {
+                    visible:        true //QGroundControl.videoManager.isGStreamer
+                    width:          (!mainIsMap ? _mapAndVideo.width  : _pipSize)
+                    height:         (!mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) )
+                }
             }
 
             //-- UVC Video (USB Camera or Video Device)

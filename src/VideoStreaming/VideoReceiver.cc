@@ -454,9 +454,34 @@ VideoReceiver::start()
 //    _starting = false;
     _pipeline = gst_pipeline_new (nullptr);
 
-    GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
-    _glUpload = gst_element_factory_make ("glupload", nullptr);
 
+    const std::vector<std::string> patternlist = {
+       "smpte",
+       "snow",
+       "red",
+       "green",
+       "blue",
+       "checkers-8",
+       "circular",
+       "blink",
+       "smpte75",
+       "zone-plate",
+       "gamut",
+       "chroma-zone-plate",
+       "solid-color",
+       "ball",
+       "smpte100",
+       "bar",
+       "pinwheel",
+       "spokes",
+       "gradient",
+       "colors"
+    };
+
+    GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
+    static int ppp = 0;
+    g_object_set(src, "pattern", ppp++%25, nullptr);
+    _glUpload = gst_element_factory_make ("glupload", nullptr);
     gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);
     gst_element_link_many (src, _glUpload, _videoSink, nullptr);
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");

@@ -1350,12 +1350,14 @@ HEADERS += \
     src/VideoStreaming/VideoReceiver.h \
     src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/SubtitleWriter.h \
-    src/VideoStreaming/VideoManager.h
+    src/VideoStreaming/VideoManager.h \
+    src/VideoStreaming/VideoReceiverModel.h
 
 SOURCES += \
     src/VideoStreaming/VideoReceiver.cc \
     src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/SubtitleWriter.cc \
+    src/VideoStreaming/VideoReceiverModel.cc \
     src/VideoStreaming/VideoManager.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
