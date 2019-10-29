@@ -982,7 +982,7 @@ Set -1 to disable the check</short_desc>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter default="3" name="COM_LOW_BAT_ACT" type="INT32">
+    <parameter default="0" name="COM_LOW_BAT_ACT" type="INT32">
       <short_desc>Battery failsafe mode</short_desc>
       <long_desc>Action the system takes at critical battery. See also BAT_CRIT_THR and BAT_EMERGEN_THR for definition of battery states.</long_desc>
       <decimal>0</decimal>
