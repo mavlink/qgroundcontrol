@@ -75,7 +75,7 @@ OpenSSL_RSA::generate()
 bool
 OpenSSL_RSA::generate_public(std::string key)
 {
-    BIO* bio = BIO_new_mem_buf(key.c_str(), key.length() + 1);
+    BIO* bio = BIO_new_mem_buf(key.c_str(), static_cast<int>(key.length() + 1));
     if (bio == nullptr) {
         return false;
     }
@@ -163,7 +163,10 @@ OpenSSL_RSA::encrypt(std::string plain_text)
     std::unique_ptr<unsigned char[]> res(new unsigned char[RSA_size(_rsa_public.get())]);
     std::unique_ptr<unsigned char[]> from(new unsigned char[aes_key.length() + 1]);
     memcpy(from.get(), aes_key.c_str(), aes_key.length() + 1);
-    int len = RSA_public_encrypt(aes_key.length() + 1, from.get(), res.get(), _rsa_public.get(), RSA_PKCS1_OAEP_PADDING);
+    int len = RSA_public_encrypt(
+        static_cast<int>(aes_key.length() + 1),
+        from.get(), res.get(), _rsa_public.get(),
+        RSA_PKCS1_OAEP_PADDING);
     if (len <= 0) {
         return {};
     }
@@ -194,7 +197,8 @@ OpenSSL_RSA::decrypt(std::string cipher_text)
     }
 
     std::string aes_key = std::string(res.get());
-    OpenSSL_AES aes(aes_key, rsa_aes_salt, false);
+    OpenSSL_AES aes;
+    aes.init(aes_key, rsa_aes_salt, false);
     return aes.decrypt(a[1]);
 }
 
