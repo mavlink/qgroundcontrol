@@ -5,5 +5,5 @@
 class OpenSSL_Rand
 {
 public:
-    static std::string random_string(uint length);
+    static std::string random_string(unsigned int length);
 };
