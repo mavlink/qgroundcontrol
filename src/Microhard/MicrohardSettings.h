@@ -18,7 +18,7 @@ public:
     explicit MicrohardSettings          (QString address, QObject* parent = nullptr, bool configure = false);
     bool    start                       () override;
     void    getStatus                   ();
-    void    configure                   (QString key, QString power, int channel, int bandwidth);
+    void    configure                   (QString key, QString power, int channel, int bandwidth, QString networkId);
     bool    loggedIn                    () { return _loggedIn; }
 
 protected slots:
