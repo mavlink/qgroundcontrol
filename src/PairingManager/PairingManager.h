@@ -80,6 +80,7 @@ public:
     void            setUsePairing               (bool set);
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
     QString         pairingKey                  ();
+    QString         networkId                   ();
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -93,7 +94,7 @@ public:
     Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
-    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey);
+    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey, const QString& networkId);
 #endif
     Q_INVOKABLE void    stopPairing             ();
     Q_INVOKABLE void    disconnectDevice        (const QString& name);
@@ -105,6 +106,7 @@ public:
     Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings  CONSTANT)
     Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle                            NOTIFY connectedVehicleChanged)
     Q_PROPERTY(QString          pairingKey              READ pairingKey                                  NOTIFY pairingKeyChanged)
+    Q_PROPERTY(QString          networkId               READ networkId                                   NOTIFY networkIdChanged)
     Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
     Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
@@ -127,6 +129,7 @@ signals:
     void connectToPairedDevice                  (const QString& deviceName);
     void pairingKeyChanged                      ();
     void confirmHighPowerModeChanged            ();
+    void networkIdChanged                       ();
 
 private slots:
     void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);

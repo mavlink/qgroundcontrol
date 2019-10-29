@@ -255,6 +255,15 @@ Rectangle {
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
+                                text:           qsTr("Network ID:")
+                            }
+                            QGCTextField {
+                                id:             networkId
+                                text:           QGroundControl.microhardManager.networkId
+                                enabled:        true
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
                                 text:           qsTr("Channel frequency:")
                             }
                             QGCComboBox {
@@ -290,6 +299,7 @@ Rectangle {
                                     configUserName.text      === QGroundControl.microhardManager.configUserName &&
                                     configPassword.text      === QGroundControl.microhardManager.configPassword &&
                                     encryptionKey.text       === QGroundControl.microhardManager.encryptionKey &&
+                                    networkId.text           === QGroundControl.microhardManager.networkId &&
                                     connectingChannel.text   === QGroundControl.microhardManager.connectingChannel &&
                                     connectingBandwidth.text === QGroundControl.microhardManager.connectingBandwidth)
                                     return false
@@ -308,6 +318,7 @@ Rectangle {
                                                                               configUserName.text,
                                                                               configPassword.text,
                                                                               encryptionKey.text,
+                                                                              networkId.text,
                                                                               connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin,
                                                                               connectingBandwidth.currentIndex)
                             }

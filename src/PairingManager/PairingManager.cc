@@ -992,13 +992,14 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
 #if QGC_GST_MICROHARD_ENABLED
 //-----------------------------------------------------------------------------
 void
-PairingManager::startMicrohardPairing(const QString& pairingKey)
+PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& networkId)
 {
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
 
     _toolbox->videoManager()->stopVideo();
     _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
+    _toolbox->microhardManager()->setNetworkId(networkId);
     _toolbox->microhardManager()->updateSettings();
 
     QJsonDocument receivedJsonDoc;
@@ -1042,6 +1043,13 @@ PairingManager::pairingKey()
     QString key = _toolbox->microhardManager()->encryptionKey();
     _aes.init(key.toStdString());
     return key;
+}
+
+//-----------------------------------------------------------------------------
+QString
+PairingManager::networkId()
+{
+    return _toolbox->microhardManager()->networkId();
 }
 
 //-----------------------------------------------------------------------------

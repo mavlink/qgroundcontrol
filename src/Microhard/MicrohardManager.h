@@ -21,6 +21,7 @@ class AppSettings;
 class QGCApplication;
 
 #define DEFAULT_PAIRING_CHANNEL 36
+#define DEFAULT_PAIRING_BANDWIDTH 1
 #define DEFAULT_CONNECTING_BANDWIDTH 1
 
 //-----------------------------------------------------------------------------
@@ -40,6 +41,7 @@ public:
     Q_PROPERTY(QString      configUserName      READ configUserName                                NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                                NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey       WRITE setEncryptionKey    NOTIFY encryptionKeyChanged)
+    Q_PROPERTY(QString      networkId           READ networkId           WRITE setNetworkId        NOTIFY networkIdChanged)
     Q_PROPERTY(int          pairingChannel      READ pairingChannel      WRITE setPairingChannel   NOTIFY pairingChannelChanged)
     Q_PROPERTY(int          connectingChannel   READ connectingChannel   WRITE setConnectChannel   NOTIFY connectingChannelChanged)
     Q_PROPERTY(int          connectingBandwidth READ connectingBandwidth WRITE setConnectBandwidth NOTIFY connectingBandwidthChanged)
@@ -48,7 +50,8 @@ public:
     Q_PROPERTY(int          channelMin          READ channelMin                                    NOTIFY channelMinChanged)
     Q_PROPERTY(int          channelMax          READ channelMax                                    NOTIFY channelMaxChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encyrptionKey, int channel, int bandwidth);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName,
+                                                 QString cfgPassword, QString encyrptionKey, QString networkId, int channel, int bandwidth);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
@@ -66,6 +69,7 @@ public:
     QString     configUserName                  () { return _configUserName; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
+    QString     networkId                       () { return _networkId; }
     int         pairingChannel                  () { return _pairingChannel; }
     int         connectingChannel               () { return _connectingChannel; }
     int         connectingBandwidth             () { return _connectingBandwidth; }
@@ -81,6 +85,7 @@ public:
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
     void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
     void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
+    void        setNetworkId                    (QString val) { _networkId = val; emit networkIdChanged(); }
     void        setPairingChannel               (int val)     { _pairingChannel = val; emit pairingChannelChanged(); }
     void        setConnectChannel               (int val)     { _connectingChannel = val; emit connectingChannelChanged(); }
     void        setConnectBandwidth             (int val)     { _connectingBandwidth = val; emit connectingBandwidthChanged(); }
@@ -100,6 +105,7 @@ signals:
     void    configUserNameChanged           ();
     void    configPasswordChanged           ();
     void    encryptionKeyChanged            ();
+    void    networkIdChanged                ();
     void    pairingChannelChanged           ();
     void    connectingChannelChanged        ();
     void    connectingBandwidthChanged      ();
@@ -140,6 +146,7 @@ private:
     QString            _netMask;
     QString            _configUserName;
     QString            _configPassword;
+    QString            _networkId;
     QString            _encryptionKey;
     QString            _communicationEncryptionKey;
     bool               _usePairingSettings = true;
@@ -148,6 +155,7 @@ private:
     int                _pairingChannel = DEFAULT_PAIRING_CHANNEL;
     int                _connectingChannel = DEFAULT_PAIRING_CHANNEL;
     int                _connectingBandwidth = DEFAULT_CONNECTING_BANDWIDTH;
+    int                _pairingBandwidth = DEFAULT_PAIRING_BANDWIDTH;
     QStringList        _channelLabels;
     QStringList        _bandwidthLabels;
     QTime              _timeoutTimer;
