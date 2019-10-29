@@ -126,7 +126,6 @@ MacBuild {
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
     }
     LIBS += \
-        -lSDL2main \
         -lSDL2
 }
 
