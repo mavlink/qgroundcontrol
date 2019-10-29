@@ -103,7 +103,7 @@ PairingManager::_pairingCompleted(const QString& tempName, const QString& newNam
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
     _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
     // Automatically connect to newly paired device
-    connectToDevice(newName);
+    connectToDevice(newName, true);
 }
 
 //-----------------------------------------------------------------------------
@@ -380,11 +380,20 @@ PairingManager::_channelCompleted(const QString& name, int channel)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::connectToDevice(const QString& name)
+PairingManager::connectToDevice(const QString& deviceName, bool confirmHighPowerMode)
 {
+    QString name = (!confirmHighPowerMode && deviceName.isEmpty()) ? _lastDeviceNameToConnect : deviceName;
     if (name.isEmpty()) {
         return;
     }
+
+    if (confirmHighPowerMode && !_devicesToConnect.contains(name)) {
+        _lastDeviceNameToConnect = name;
+        _confirmHighPowerMode = true;
+        emit confirmHighPowerModeChanged();
+        return;
+    }
+    _lastDeviceNameToConnect = "";
 
     QString ip = _getDeviceIP(name);
     // If multiple vehicles share same IP then disconnect
@@ -1050,6 +1059,26 @@ PairingManager::stopPairing()
 void
 PairingManager::disconnectDevice(const QString& name)
 {
+    LinkInterface *link = _connectedDevices[name];
+    QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+    for (int i=0; i<vehicles->count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        if (vehicle->containsLink(link)) {
+            if (vehicle->armed()) {
+                QVariantMap map = _getPairingMap(name);
+                QString disconnectURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/disconnect";
+                QJsonDocument jsonDoc;
+                QJsonObject jsonObj;
+                jsonObj["NM"] = name;
+                jsonObj["CC"] = map["CC"].toInt();
+                jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
+                jsonDoc.setObject(jsonObj);
+                emit startUpload(name, disconnectURL, jsonDoc, true);
+            }
+            break;
+        }
+    }
+
     _removeUDPLink(name);
     _toolbox->videoManager()->stopVideo();
     setPairingStatus(PairingIdle, "");

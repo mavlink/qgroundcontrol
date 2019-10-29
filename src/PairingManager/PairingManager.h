@@ -74,6 +74,7 @@ public:
     bool            usePairing                  () { return _usePairing; }
     bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
+    bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
@@ -82,7 +83,7 @@ public:
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
-    Q_INVOKABLE void    connectToDevice         (const QString& name);
+    Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirmHighPowerMode = false);
     Q_INVOKABLE void    removePairedDevice      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
     Q_INVOKABLE QString extractName             (const QString& name);
@@ -105,6 +106,7 @@ public:
     Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle                            NOTIFY connectedVehicleChanged)
     Q_PROPERTY(QString          pairingKey              READ pairingKey                                  NOTIFY pairingKeyChanged)
     Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
+    Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
@@ -124,6 +126,7 @@ signals:
     void usePairingChanged                      ();
     void connectToPairedDevice                  (const QString& deviceName);
     void pairingKeyChanged                      ();
+    void confirmHighPowerModeChanged            ();
 
 private slots:
     void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
@@ -149,9 +152,11 @@ private:
     QNetworkAccessManager         _uploadManager;
     bool                          _firstBoot = true;
     bool                          _usePairing = false;
+    bool                          _confirmHighPowerMode = false;
     QMap<QString, qint64>         _devicesToConnect{};
     QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
+    QString                       _lastDeviceNameToConnect = "";
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
