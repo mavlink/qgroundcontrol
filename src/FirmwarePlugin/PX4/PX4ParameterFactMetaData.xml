@@ -7496,22 +7496,22 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
   <group name="Return Mode">
     <parameter default="0" name="RTL_CONE_ANG" type="INT32">
       <short_desc>Half-angle of the return mode altitude cone</short_desc>
-      <long_desc>Defines the half-angle of a cone centered around the home position that affects the altitude at which the vehicle returns during return to home.</long_desc>
+      <long_desc>Defines the half-angle of a cone centered around the destination position that affects the altitude at which the vehicle returns.</long_desc>
       <min>0</min>
       <max>90</max>
       <unit>degrees</unit>
       <values>
-        <value code="0">No cone, always climb to RTL_RETURN_ALT above home.</value>
+        <value code="0">No cone, always climb to RTL_RETURN_ALT above destination.</value>
         <value code="25">25 degrees half cone angle.</value>
         <value code="45">45 degrees half cone angle.</value>
         <value code="65">65 degrees half cone angle.</value>
         <value code="80">80 degrees half cone angle.</value>
-        <value code="90">Only climb to at least RTL_DESCEND_ALT above home.</value>
+        <value code="90">Only climb to at least RTL_DESCEND_ALT above destination.</value>
       </values>
     </parameter>
     <parameter default="30" name="RTL_DESCEND_ALT" type="FLOAT">
-      <short_desc>Return mode loiter altitude (relative to home)</short_desc>
-      <long_desc>Descend to this altitude (above home position) after return, and wait for time defined in RTL_LAND_DELAY. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
+      <short_desc>Return mode loiter altitude</short_desc>
+      <long_desc>Descend to this altitude (above destination position) after return, and wait for time defined in RTL_LAND_DELAY. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
       <min>2</min>
       <max>100</max>
       <unit>m</unit>
@@ -7528,8 +7528,8 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>0.5</increment>
     </parameter>
     <parameter default="5.0" name="RTL_MIN_DIST" type="FLOAT">
-      <short_desc>Maximum horizontal distance from home, below which RTL_DESCEND_ALT is used as return altitude</short_desc>
-      <long_desc>If the vehicle is less than this horizontal distance from home when return mode is activated it will ascend to RTL_DESCEND_ALT for the return journey (rather than the altitude set by RTL_RETURN_ALT and RTL_CONE_ANG).</long_desc>
+      <short_desc>Maximum horizontal distance from return destination, below which RTL_DESCEND_ALT is used as return altitude</short_desc>
+      <long_desc>If the vehicle is less than this horizontal distance from the return destination when return mode is activated it will ascend to RTL_DESCEND_ALT for the return journey (rather than the altitude set by RTL_RETURN_ALT and RTL_CONE_ANG).</long_desc>
       <min>0.5</min>
       <max>100</max>
       <unit>m</unit>
@@ -7538,7 +7538,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="60" name="RTL_RETURN_ALT" type="FLOAT">
       <short_desc>Return mode return altitude</short_desc>
-      <long_desc>Default minimum altitude above home for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
+      <long_desc>Default minimum altitude above destination (e.g. home, safe point, landing pattern) for return flight. This is affected by RTL_MIN_DIST and RTL_CONE_ANG.</long_desc>
       <min>0</min>
       <max>150</max>
       <unit>m</unit>
@@ -7547,12 +7547,12 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="RTL_TYPE" type="INT32">
       <short_desc>Return type</short_desc>
-      <long_desc>Fly straight to the home location or planned mission landing and land there or use the planned mission to get to those points.</long_desc>
+      <long_desc>Fly straight to the return location or planned mission landing and land there or use the planned mission to get to those points.</long_desc>
       <values>
         <value code="0">Return home via direct path</value>
         <value code="1">Return to a planned mission landing, if available, via direct path, else return to home via direct path</value>
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path</value>
-        <value code="3">Return via direct way to whatever is closest: home, mission lading or safe point</value>
+        <value code="3">Return via direct path to closest destination: home, mission landing pattern or safe point</value>
       </values>
     </parameter>
   </group>
