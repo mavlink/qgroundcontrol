@@ -3,7 +3,7 @@
 #include <memory>
 //-----------------------------------------------------------------------------
 std::string
-OpenSSL_Rand::random_string(uint length)
+OpenSSL_Rand::random_string(unsigned int length)
 {
     const char charset[] =
         "0123456789"
