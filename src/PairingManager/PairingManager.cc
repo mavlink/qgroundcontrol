@@ -13,6 +13,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "VideoManager.h"
+#include "openssl_rand.h"
 
 #include <QSettings>
 #include <QJsonObject>
@@ -585,19 +586,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel)
 QString
 PairingManager::_random_string(uint length)
 {
-    srand(static_cast<unsigned int>(time(nullptr)));
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const uint max_index = (sizeof(charset) - 1);
-        return charset[static_cast<uint>(std::rand()) % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-    return QString::fromStdString(str);
+    return QString::fromStdString(OpenSSL_Rand::random_string(length));
 }
 
 //-----------------------------------------------------------------------------
