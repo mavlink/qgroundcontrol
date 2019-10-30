@@ -152,7 +152,6 @@ protected:
     VideoSettings*  _videoSettings;
     const char*     _depayName;
     const char*     _parserName;
-    bool            _tryWithHardwareDecoding = true;
     const char*     _hwDecoderName;
     const char*     _swDecoderName;
 };

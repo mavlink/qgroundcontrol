@@ -49,6 +49,7 @@ public:
     Q_PROPERTY(QString                  firmwareUpgradeSingleURL        READ firmwareUpgradeSingleURL       CONSTANT)
     Q_PROPERTY(bool                     guidedBarShowEmergencyStop      READ guidedBarShowEmergencyStop     NOTIFY guidedBarShowEmergencyStopChanged)
     Q_PROPERTY(bool                     guidedBarShowOrbit              READ guidedBarShowOrbit             NOTIFY guidedBarShowOrbitChanged)
+    Q_PROPERTY(bool                     guidedBarShowROI                READ guidedBarShowROI               NOTIFY guidedBarShowROIChanged)
     Q_PROPERTY(bool                     missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
     Q_PROPERTY(bool                     multiVehicleEnabled             READ multiVehicleEnabled            NOTIFY multiVehicleEnabledChanged)
     Q_PROPERTY(bool                     showOfflineMapExport            READ showOfflineMapExport           NOTIFY showOfflineMapExportChanged)
@@ -110,6 +111,7 @@ public:
     virtual bool    showFirmwareUpgrade             () const { return true; }
     virtual bool    guidedBarShowEmergencyStop      () const { return true; }
     virtual bool    guidedBarShowOrbit              () const { return true; }
+    virtual bool    guidedBarShowROI                () const { return true; }
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
     virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
     virtual bool    guidedActionsRequireRCRSSI      () const { return false; }  ///< true: Guided actions will be disabled is there is no RC RSSI
@@ -147,6 +149,7 @@ signals:
     void showFirmwareUpgradeChanged             (bool show);
     void guidedBarShowEmergencyStopChanged      (bool show);
     void guidedBarShowOrbitChanged              (bool show);
+    void guidedBarShowROIChanged                (bool show);
     void missionWaypointsOnlyChanged            (bool missionWaypointsOnly);
     void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
     void showOfflineMapExportChanged            ();

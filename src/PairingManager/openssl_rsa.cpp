@@ -1,4 +1,5 @@
 #include "openssl_aes.h"
+#include "openssl_rand.h"
 #include "openssl_rsa.h"
 #include "openssl_base64.h"
 
@@ -32,25 +33,6 @@ split(std::string str, char delimiter)
     }
 
     return internal;
-}
-
-//-----------------------------------------------------------------------------
-static std::string
-random_string(uint length)
-{
-    srand(time(nullptr));
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const uint max_index = (sizeof(charset) - 1);
-        return charset[rand() % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-    return str;
 }
 
 //-----------------------------------------------------------------------------
@@ -175,7 +157,7 @@ OpenSSL_RSA::encrypt(std::string plain_text)
         return {};
     }
 
-    std::string aes_key = random_string(32);
+    std::string aes_key = OpenSSL_Rand::random_string(32);
     OpenSSL_AES aes(aes_key, rsa_aes_salt, false);
 
     std::unique_ptr<unsigned char[]> res(new unsigned char[RSA_size(_rsa_public.get())]);

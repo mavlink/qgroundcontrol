@@ -113,8 +113,15 @@
 },
 {
     "name":             "disableWhenDisarmed",
-    "shortDescription": "Video Stream Disnabled When Armed",
+    "shortDescription": "Video Stream Disabled When Armed",
     "longDescription":  "Disable Video Stream when disarmed.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "enableHardwareAcceleration",
+    "shortDescription": "Enable hardware acceleration",
+    "longDescription":  "Enable hardware acceleration for video decoding.",
     "type":             "bool",
     "defaultValue":     false
 }
