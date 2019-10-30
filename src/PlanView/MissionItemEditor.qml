@@ -43,6 +43,7 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
+    readonly property real  _trashSize:     commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
@@ -192,6 +193,28 @@ Rectangle {
                 text:       qsTr("Item #%1").arg(missionItem.sequenceNumber)
                 enabled:    false
             }
+        }
+    }
+
+    QGCColoredImage {
+        id:                     trash
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.right:          hamburger.left
+        anchors.verticalCenter: commandPicker.verticalCenter
+        width:                  _trashSize
+        height:                 _trashSize
+        sourceSize.height:      _trashSize
+        source:                 "/res/TrashDelete.svg"
+        visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
+        color:                  qgcPal.text
+    }
+    QGCMouseArea {
+        fillItem:   trash
+        visible:    trash.visible
+        onClicked: {
+            currentItemScope.focus = true
+            remove()
+            //trashMenu.popup()
         }
     }
 
