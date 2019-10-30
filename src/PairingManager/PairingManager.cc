@@ -385,20 +385,24 @@ PairingManager::_channelCompleted(const QString& name, int channel)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::connectToDevice(const QString& deviceName, bool confirmHighPowerMode)
+PairingManager::connectToDevice(const QString& deviceName, bool confirm)
 {
-    QString name = (!confirmHighPowerMode && deviceName.isEmpty()) ? _lastDeviceNameToConnect : deviceName;
+    QString name = (!confirm && deviceName.isEmpty()) ? _lastDeviceNameToConnect : deviceName;
     if (name.isEmpty()) {
         return;
     }
 
-    if (confirmHighPowerMode && !_devicesToConnect.contains(name)) {
+    if (confirm && !_devicesToConnect.contains(name)) {
         _lastDeviceNameToConnect = name;
         _confirmHighPowerMode = true;
         emit confirmHighPowerModeChanged();
         return;
     }
     _lastDeviceNameToConnect = "";
+    if (_confirmHighPowerMode) {
+        _confirmHighPowerMode = false;
+        emit confirmHighPowerModeChanged();
+    }
 
     QString ip = _getDeviceIP(name);
     // If multiple vehicles share same IP then disconnect

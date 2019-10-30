@@ -84,7 +84,7 @@ public:
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
-    Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirmHighPowerMode = false);
+    Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirm = false);
     Q_INVOKABLE void    removePairedDevice      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
     Q_INVOKABLE QString extractName             (const QString& name);
