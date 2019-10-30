@@ -234,7 +234,7 @@ Rectangle {
 
         anchors.top:            parent.top
         visible:                !commandLabel.visible
-        text:                   missionItem.commandName
+        text:                   missionItem.sequenceNumber + " - " + missionItem.commandName
 
         Component {
             id: commandDialog
@@ -254,7 +254,7 @@ Rectangle {
         visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
         verticalAlignment:      Text.AlignVCenter
         horizontalAlignment:    Text.AlignHCenter
-        text:                   missionItem.commandName
+        text:                   missionItem.sequenceNumber + " - " + missionItem.commandName
         color:                  _outerTextColor
     }
 
