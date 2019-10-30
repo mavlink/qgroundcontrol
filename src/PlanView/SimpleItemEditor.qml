@@ -87,6 +87,7 @@ Rectangle {
             }
         }
 
+
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
@@ -292,6 +293,20 @@ Rectangle {
             CameraSection {
                 checked:    missionItem.cameraSection.settingsSpecified
                 visible:    missionItem.cameraSection.available
+            }
+
+            Row{
+                Switch{
+                    scale: 0.7
+                    checked :       false
+                    onClicked:      missionItem.rawEdit = checked
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                QGCLabel{
+                    id:             textShowAllValues
+                    text:           qsTr("Show all values")
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
         }
     }
