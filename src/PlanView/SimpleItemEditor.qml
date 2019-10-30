@@ -296,11 +296,11 @@ Rectangle {
             }
 
             Row{
-                Switch{
-                    scale: 0.7
+                spacing: _margin
+                QGCCheckBox{
+                    id:             switchShowAllValues
                     checked :       false
                     onClicked:      missionItem.rawEdit = checked
-                    anchors.verticalCenter: parent.verticalCenter
                 }
                 QGCLabel{
                     id:             textShowAllValues
