@@ -310,6 +310,11 @@ PairingManager::_uploadFinished()
             QStringList a = QString::fromStdString(_rsa.decrypt(QString::fromUtf8(bytes.data(), bytes.size()).toStdString())).split(";");
             if (a.length() != 2 || !_device_rsa.verify(a[0].toStdString(), a[1].toStdString())) {
                 qCDebug(PairingManagerLog) << "Failed to verify remote vehicle ID";
+                if (url.contains("/connect")) {
+                    setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
+                } else if (url.contains("/channel")) {
+                    setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
+                }
             } else {
                 json = a[0];
             }

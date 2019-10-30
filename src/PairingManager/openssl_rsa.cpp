@@ -197,8 +197,7 @@ OpenSSL_RSA::decrypt(std::string cipher_text)
     }
 
     std::string aes_key = std::string(res.get());
-    OpenSSL_AES aes;
-    aes.init(aes_key, rsa_aes_salt, false);
+    OpenSSL_AES aes(aes_key, rsa_aes_salt, false);
     return aes.decrypt(a[1]);
 }
 
