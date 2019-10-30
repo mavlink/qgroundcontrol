@@ -53,7 +53,7 @@ MicrohardSettings::configure(QString key, int power, int channel, int bandwidth,
     cmd += "AT+MWBAND=" + QString::number(bandwidth) + "\n";
     cmd += key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
     if (!networkId.isEmpty()) {
-        cmd +="AT+MWNETWORKID=" + networkId + "\n";
+        cmd +="AT+MWNETWORKID=" + networkId.toUpper() + "\n";
     }
     cmd += "AT&W\n";
     _tcpSocket->write(cmd.toStdString().c_str());
