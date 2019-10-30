@@ -45,6 +45,7 @@ Column {
     property bool   _hasModes:              _camera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _storageReady:          _camera && _camera.storageStatus === QGCCameraControl.STORAGE_READY
+    property bool   _batteryReady:          _camera && _camera.batteryRemaining >= 0
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool   _canShoot:              !_videoRecording && _cameraPhotoIdle && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -75,6 +76,12 @@ Column {
         font.pointSize: ScreenTools.smallFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
         visible: _camera && _storageReady
+    }
+    QGCLabel {
+        text: _camera ? qsTr("Battery: ") + _camera.batteryRemainingStr : ""
+        font.pointSize: ScreenTools.smallFontPointSize
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: _camera && _batteryReady
     }
     //-- Camera Mode (visible only if camera has modes)
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camMode.visible; }
