@@ -33,7 +33,7 @@ static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _aes()
-    , _aes_config("J6+KuWh9K2!hG(F'", 0x368de30e8ec063ce)
+    , _aes_config("bq2iLbdmJGNyuiyA4D8drVNITohrbPNq", 0xf9a830cd32f30313)
     , _uploadManager(this)
 {
 }
@@ -474,7 +474,7 @@ PairingManager::_getPairingJsonDoc(const QString& name, bool remove)
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = QString::fromStdString(_aes_config.decrypt(file.readAll().toStdString()));
     file.close();
-    if (remove) {
+    if (remove || json.isEmpty()) {
         file.remove();
     }
 
@@ -629,7 +629,10 @@ PairingManager::_updatePairedDeviceNameList()
         QFileInfo fileInfo(it.next());
         if (fileInfo.fileName() != gcsFileName) {
             QString name = fileInfo.fileName();
-            _devices[name] = _getPairingJsonDoc(name);
+            QJsonDocument jsonDoc = _getPairingJsonDoc(name);
+            if (!_gcsJsonDoc.isNull() && _gcsJsonDoc.isObject()) {
+                _devices[name] = jsonDoc;
+            }
         }
     }
     if (_devices.empty()) {
