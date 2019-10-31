@@ -360,7 +360,9 @@ PairingManager::_uploadFinished()
             emit _startUploadRequest(name, url, content);
         });
     } else if (url.contains("/unpair")) {
-        _updatePairedDeviceNameList();
+        if (!reply->errorString().contains("canceled")) {
+            _updatePairedDeviceNameList();
+        }
     } else {
         qCDebug(PairingManagerLog) << "Request " << url << " error: " + reply->errorString();
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
