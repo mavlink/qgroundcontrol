@@ -77,8 +77,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _videoSink = gst_element_factory_make ("qmlglsink", nullptr);
-
     qDebug() << "video sink created" << _videoSink;
 
     _restart_timer.setSingleShot(true);
@@ -155,21 +153,17 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
-    qDebug() << "Starting the video receiver";
+   _pipeline = gst_parse_launch(
+               //  "udpsrc port=5600 close-socket=false multicast-iface=false auto-multicast=true "
+               //  "! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! videoconvert "
+               "videotestsrc pattern=18 "
+                "! glupload name=glupload ! qmlglsink name=sink", nullptr);
 
-    _pipeline = gst_pipeline_new (nullptr);
-    _glUpload = gst_element_factory_make ("glupload", nullptr);
-    static int ppp = 0;
-
-    GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
-    g_object_set(src, "pattern", ppp++%25, nullptr);
-    gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);
-    gst_element_link_many (src, _glUpload, _videoSink, nullptr);
+    _videoSink = gst_bin_get_by_name(GST_BIN (_pipeline), "sink");
+    _glUpload = gst_bin_get_by_name(GST_BIN(_pipeline), "glupload");
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
-
-    qDebug() << "Pipeline criado";
-// #endif
+    gst_element_set_state(_pipeline, GST_STATE_PAUSED);
 }
 
 //-----------------------------------------------------------------------------
