@@ -384,6 +384,7 @@ Item {
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: ScrollBar {}
             model: videoReceiverModel
+            verticalLayoutDirection: ListView.BottomToTop
 
             delegate: FlightDisplayViewVideo {
                 width:          (!mainIsMap ? _mapAndVideo.width  : _pipSize)

@@ -35,6 +35,7 @@ void VideoReceiverModel::createVideoStream()
     QUuid uuid = QUuid::createUuid();
     settings.beginGroup(QStringLiteral("VideoManagement"));
     settings.beginGroup(QStringLiteral("VideoStream_%1").arg(uuid.toString()));
+    settings.setValue("hasVideo", true);
     // TODO: Store the defaults for the Video Stream.
     videoReceiver->setProperty("uuid", uuid.toString());
     endInsertRows();
