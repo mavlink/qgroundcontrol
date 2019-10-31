@@ -7,6 +7,8 @@
 /* Adds a UUID to the Video, so it's easy to store and retreieve setttings for it.
 * This is not using the Fact system as I did not understand how to use it for
 * Array types
+*
+* Hm, maybe this should just manage the settings. let's see.
 */
 VideoReceiverModel::VideoReceiverModel()
 {

@@ -19,7 +19,6 @@ import QGroundControl.Palette       1.0
 Item {
     id: pip
 
-    property bool isHidden:  false
     property bool isDark:    false
 
     // As a percentage of the window width
@@ -34,10 +33,11 @@ Item {
     signal  newWidth(real newWidth)
     signal  popup()
 
+    visible: pipMouseArea.containsMouse
+
     MouseArea {
         id: pipMouseArea
         anchors.fill: parent
-        enabled:      !isHidden
         hoverEnabled: true
         onClicked: {
             pip.activated()
@@ -91,7 +91,7 @@ Item {
         mipmap: true
         anchors.right:  parent.right
         anchors.top:    parent.top
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup
+        visible:        (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -128,7 +128,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.top:    parent.top
-        visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup && pipMouseArea.containsMouse
+        visible:        !inPopup && !ScreenTools.isMobile && enablePopup && pipMouseArea.containsMouse
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -149,7 +149,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
+        visible:        (ScreenTools.isMobile || pipMouseArea.containsMouse)
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -169,7 +169,7 @@ Item {
         height:                 ScreenTools.defaultFontPixelHeight * 2
         width:                  ScreenTools.defaultFontPixelHeight * 2
         radius:                 ScreenTools.defaultFontPixelHeight / 3
-        visible:                isHidden
+        visible:                false
         color:                  isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
         Image {
             width:              parent.width  * 0.75

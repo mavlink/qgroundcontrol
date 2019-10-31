@@ -36,6 +36,8 @@ Item {
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
+    property alias videoReceiver: videoSurface.videoReceiver
+
     property double _thermalHeightFactor: 0.85 //-- TODO
 
     /*
@@ -86,12 +88,9 @@ Item {
         }
 
         //-- Main Video
-        VideoReceiver {
-            id: videoController
+        VideoSurface {
+            id: videoSurface
             videoItem: videoContent
-            Component.onCompleted : {
-                videoController.startVideo();
-            }
         }
 
         QGCVideoBackground {
@@ -188,4 +187,110 @@ Item {
             property int zoom: 0
         }
     }
+
+    QGCPipable {
+        id:                 _flightVideoPipControl
+        z:                  _flightVideo.z + 3
+        anchors.fill:       parent
+        visible:            true // QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
+        isDark:        isBackgroundDark
+        enablePopup:   mainIsMap
+        onActivated: {
+            mainIsMap = !mainIsMap
+            setStates()
+        }
+        onHideIt: {
+            setPipVisibility(!state)
+        }
+        onPopup: {
+            videoWindow.visible = true
+            _flightVideo.state = "popup"
+        }
+        onNewWidth: {
+            _pipSize = newWidth
+        }
+    }
+
+    /*
+    onParentChanged: {
+        // If video comes back from popup
+        // correct anchors.
+        // Such thing is not possible with ParentChange.
+        if(parent == _mapAndVideo) {
+            // Do anchors again after popup
+            anchors.left =       _mapAndVideo.left
+            anchors.bottom =     _mapAndVideo.bottom
+            anchors.margins =    ScreenTools.defaultFontPixelHeight
+        }
+    }
+    */
+
+    states: [
+        State {
+            name:   "pipMode"
+            PropertyChanges {
+                target: _flightVideo
+                anchors.margins: ScreenTools.defaultFontPixelHeight
+            }
+            PropertyChanges {
+                target: _flightVideoPipControl
+                inPopup: false
+            }
+        },
+        State {
+            name:   "fullMode"
+            PropertyChanges {
+                target: _flightVideo
+                anchors.margins:    0
+            }
+            PropertyChanges {
+                target: _flightVideoPipControl
+                inPopup: false
+            }
+        },
+        State {
+            name: "popup"
+            StateChangeScript {
+                script: {
+                    // Stop video, restart it again with Timer
+                    // Avoiding crashs if ParentChange is not yet done
+                    QGroundControl.videoManager.stopVideo()
+                    videoPopUpTimer.running = true
+                }
+            }
+            PropertyChanges {
+                target: _flightVideoPipControl
+                inPopup: true
+            }
+        },
+        State {
+            name: "popup-finished"
+            ParentChange {
+                target: _flightVideo
+                parent: videoItem
+                x: 0
+                y: 0
+                width: videoItem.width
+                height: videoItem.height
+            }
+        },
+        State {
+            name: "unpopup"
+            StateChangeScript {
+                script: {
+                    QGroundControl.videoManager.stopVideo()
+                    videoPopUpTimer.running = true
+                }
+            }
+            ParentChange {
+                target: _flightVideo
+                parent: _mapAndVideo
+            }
+            PropertyChanges {
+                target: _flightVideoPipControl
+                inPopup: false
+            }
+        }
+    ]
+
 }

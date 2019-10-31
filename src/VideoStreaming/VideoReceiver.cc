@@ -51,54 +51,8 @@ static const char* kVideoMuxes[] =
 
 #endif
 
-
-VideoReceiver::~VideoReceiver() {
-    gst_element_set_state (_pipeline, GST_STATE_NULL);
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-    }
-}
-
-void VideoReceiver::setVideoItem(QObject *videoItem) {
-    if (_videoItem != videoItem) {
-        qDebug() << "Setting the video item";
-        _videoItem = videoItem;
-        Q_EMIT videoItemChanged(_videoItem);
-    }
-    startVideo();
-}
-
-void VideoReceiver::startVideo() {
-    if (_pipeline && _videoSink && _videoItem) {
-
-        GObject *videoSinkHasWidget = nullptr;
-        g_object_get(_videoSink, "widget", videoSinkHasWidget, nullptr);
-        if (!videoSinkHasWidget) {
-            g_object_set(_videoSink, "widget", _videoItem, nullptr);
-        }
-
-        _shouldStartVideo = true;
-        update();
-    }
-}
-
-QSGNode *VideoReceiver::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
-{
-    Q_UNUSED(data)
-    if (_shouldStartVideo) {
-        gst_element_set_state(_pipeline, GST_STATE_PLAYING);
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-playing");
-        _shouldStartVideo = false;
-    }
-    return node;
-}
-
-QObject *VideoReceiver::videoItem() const {
-    return _videoItem;
-}
-
-VideoReceiver::VideoReceiver(QQuickItem* parent)
-    : QQuickItem(parent)
+VideoReceiver::VideoReceiver(QObject* parent)
+    : QObject(parent)
 #if defined(QGC_GST_STREAMING)
     , _running(false)
     , _recording(false)
@@ -119,11 +73,7 @@ VideoReceiver::VideoReceiver(QQuickItem* parent)
     , _videoSettings(nullptr)
     , _hwDecoderName(nullptr)
     , _swDecoderName("avdec_h264")
-    , _videoItem(nullptr)
-    , _shouldStartVideo(false)
 {
-    setFlag(ItemHasContents);
-
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
@@ -140,6 +90,12 @@ VideoReceiver::VideoReceiver(QQuickItem* parent)
     _frameTimer.start(1000);
     start();
 #endif
+}
+
+VideoReceiver::~VideoReceiver()
+{
+    qDebug() << "Killing the video receiver.";
+    gst_element_set_state (_pipeline, GST_STATE_NULL);
 }
 
 GstElement *VideoReceiver::pipeline() const
@@ -454,36 +410,19 @@ VideoReceiver::start()
 //    _starting = false;
     _pipeline = gst_pipeline_new (nullptr);
 
-
-    const std::vector<std::string> patternlist = {
-       "smpte",
-       "snow",
-       "red",
-       "green",
-       "blue",
-       "checkers-8",
-       "circular",
-       "blink",
-       "smpte75",
-       "zone-plate",
-       "gamut",
-       "chroma-zone-plate",
-       "solid-color",
-       "ball",
-       "smpte100",
-       "bar",
-       "pinwheel",
-       "spokes",
-       "gradient",
-       "colors"
-    };
-
+    GstElement *src = gst_element_factory_make ("rtspsrc", nullptr);
+    g_object_set(src, "location", "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov", nullptr);
+    GstElement *src2 = gst_element_factory_make ("decodebin", nullptr);
+    GstElement *src3 = gst_element_factory_make ("videoconvert", nullptr);
+    _glUpload = gst_element_factory_make ("glupload", nullptr);
+    gst_bin_add_many (GST_BIN (_pipeline), src, src2, src3, _glUpload, _videoSink, nullptr);
+    /*
     GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
     static int ppp = 0;
     g_object_set(src, "pattern", ppp++%25, nullptr);
     _glUpload = gst_element_factory_make ("glupload", nullptr);
-    gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);
-    gst_element_link_many (src, _glUpload, _videoSink, nullptr);
+    gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);*/
+    gst_element_link_many (src, src2, src3, _glUpload, _videoSink, nullptr);
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
 
     qDebug() << "Pipeline criado";

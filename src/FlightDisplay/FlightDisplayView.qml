@@ -17,16 +17,17 @@ import QtPositioning            5.3
 import QtQuick.Window           2.2
 import QtQml.Models             2.1
 
-import QGroundControl               1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FlightDisplay 1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
+import QGroundControl                1.0
+import QGroundControl.Airspace       1.0
+import QGroundControl.Controllers    1.0
+import QGroundControl.Controls       1.0
+import QGroundControl.FactSystem     1.0
+import QGroundControl.FlightDisplay  1.0
+import QGroundControl.FlightMap      1.0
+import QGroundControl.Palette        1.0
+import QGroundControl.ScreenTools    1.0
+import QGroundControl.Vehicle        1.0
+import QGroundControl.QgcQtGStreamer 1.0
 
 /// Flight Display View
 Item {
@@ -354,103 +355,41 @@ Item {
         }
 
         //-- Video View
-        Grid {
-            columns: 4
-            id:             _flightVideo
-            z:              mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
-            height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) * 2
-            anchors.left:   _mapAndVideo.left
-            anchors.bottom: _mapAndVideo.bottom
+        VideoReceiverModel {
+            id: videoReceiverModel
+        }
+
+        Button {
+            id: _addVideo
+            text: "+"
+            onClicked: videoReceiverModel.createVideoStream();
+            height: 50
+            width: 50
+            z: 100
+            x: 0
+            anchors.bottom: parent.bottom
+            visible: true
+        }
+
+        ListView {
+            id: _flightVideo
+            z: mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
+            y: _addVideo.y - height
+            height: !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) * 4
+            width: (!mainIsMap ? _mapAndVideo.width  : _pipSize)
+            anchors.left: _mapAndVideo.left
+            clip: true
             visible:        true //QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
+            flickableDirection: Flickable.VerticalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: ScrollBar {}
+            model: videoReceiverModel
 
-            onParentChanged: {
-                /* If video comes back from popup
-                 * correct anchors.
-                 * Such thing is not possible with ParentChange.
-                 */
-                if(parent == _mapAndVideo) {
-                    // Do anchors again after popup
-                    anchors.left =       _mapAndVideo.left
-                    anchors.bottom =     _mapAndVideo.bottom
-                    anchors.margins =    ScreenTools.defaultFontPixelHeight
-                }
-            }
-
-            states: [
-                State {
-                    name:   "pipMode"
-                    PropertyChanges {
-                        target: _flightVideo
-                        anchors.margins: ScreenTools.defaultFontPixelHeight
-                    }
-                    PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
-                    }
-                },
-                State {
-                    name:   "fullMode"
-                    PropertyChanges {
-                        target: _flightVideo
-                        anchors.margins:    0
-                    }
-                    PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
-                    }
-                },
-                State {
-                    name: "popup"
-                    StateChangeScript {
-                        script: {
-                            // Stop video, restart it again with Timer
-                            // Avoiding crashs if ParentChange is not yet done
-                            QGroundControl.videoManager.stopVideo()
-                            videoPopUpTimer.running = true
-                        }
-                    }
-                    PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: true
-                    }
-                },
-                State {
-                    name: "popup-finished"
-                    ParentChange {
-                        target: _flightVideo
-                        parent: videoItem
-                        x: 0
-                        y: 0
-                        width: videoItem.width
-                        height: videoItem.height
-                    }
-                },
-                State {
-                    name: "unpopup"
-                    StateChangeScript {
-                        script: {
-                            QGroundControl.videoManager.stopVideo()
-                            videoPopUpTimer.running = true
-                        }
-                    }
-                    ParentChange {
-                        target: _flightVideo
-                        parent: _mapAndVideo
-                    }
-                    PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
-                    }
-                }
-            ]
-            //-- Video Streaming
-            Repeater {
-                model: 8
-                FlightDisplayViewVideo {
-                    visible:        true //QGroundControl.videoManager.isGStreamer
-                    width:          (!mainIsMap ? _mapAndVideo.width  : _pipSize)
-                    height:         (!mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) )
-                }
+            delegate: FlightDisplayViewVideo {
+                width:          (!mainIsMap ? _mapAndVideo.width  : _pipSize)
+                height:         (!mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) )
+                videoReceiver: model.videoReceiver
+                Component.onCompleted: print(JSON.stringify({height: _flightVideo.height, width: _flightVideo.width}))
             }
 
             //-- UVC Video (USB Camera or Video Device)
@@ -463,37 +402,6 @@ Item {
             }
             */
         }
-
-        //TODO: The pipable control is disabled for the moment, I don't think it should do anything
-        // and we need to devise a Control that will be inside the FligthDisplayViewVideo.
-        QGCPipable {
-            id:                 _flightVideoPipControl
-            z:                  _flightVideo.z + 3
-            width:              _pipSize
-            height:             _pipSize * (9/16)
-            anchors.left:       _mapAndVideo.left
-            anchors.bottom:     _mapAndVideo.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            false // QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
-            isHidden:           !_isPipVisible
-            isDark:             isBackgroundDark
-            enablePopup:        mainIsMap
-            onActivated: {
-                mainIsMap = !mainIsMap
-                setStates()
-            }
-            onHideIt: {
-                setPipVisibility(!state)
-            }
-            onPopup: {
-                videoWindow.visible = true
-                _flightVideo.state = "popup"
-            }
-            onNewWidth: {
-                _pipSize = newWidth
-            }
-        }
-
 
         Row {
             id:                     singleMultiSelector
@@ -557,10 +465,10 @@ Item {
         Loader {
             id:                         virtualJoystickMultiTouch
             z:                          _mapAndVideo.z + 5
-            width:                      parent.width  - (_flightVideoPipControl.width / 2)
+            width:                      parent.width  - (_pipSize / 2)
             height:                     Math.min(mainWindow.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
             visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen && !(activeVehicle ? activeVehicle.highLatencyLink : false)
-            anchors.bottom:             _flightVideoPipControl.top
+            anchors.bottom:             _flightVideo.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
@@ -696,7 +604,7 @@ Item {
             confirmDialog:      guidedActionConfirm
             actionList:         guidedActionList
             altitudeSlider:     _altitudeSlider
-            z:                  _flightVideoPipControl.z + 1
+            z:                  _flightVideo.z + 1
 
             onShowStartMissionChanged: {
                 if (showStartMission) {

@@ -29,6 +29,8 @@
 
 #include "VideoStreaming.h"
 #include "VideoReceiver.h"
+#include "VideoReceiverModel.h"
+#include "VideoSurface.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
@@ -169,6 +171,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     Q_UNUSED(debuglevel);
 #endif
     // Fake Player to start the video in the Rendering Thread.
-    qmlRegisterType<VideoReceiver>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiver");
+    qmlRegisterType<VideoReceiver> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiver");
+    qmlRegisterType<VideoReceiverModel> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiverModel");
+    qmlRegisterType<VideoSurface> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface");
 }
 

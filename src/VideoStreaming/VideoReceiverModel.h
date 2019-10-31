@@ -8,8 +8,9 @@ class VideoReceiver;
 /* This class controls the creation, deletion and displaying of the
  * VideoReceivers in the Qml.
  */
-class VideoReceiverModel : public QAbstractItemModel
+class VideoReceiverModel : public QAbstractListModel
 {
+    Q_OBJECT
 public:
     VideoReceiverModel();
     Q_INVOKABLE void createVideoStream();
