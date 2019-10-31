@@ -238,8 +238,7 @@ OpenSSL_RSA::verify(std::string message, std::string signature)
     unsigned int signLen = static_cast<unsigned int>(sig.size());
     SHA256(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
     int rc = RSA_verify(NID_sha256, hash, SHA256_DIGEST_LENGTH, sig.data(), signLen, _rsa_public.get());
-    return true;
-    //return (rc == 1);
+    return (rc == 1);
 }
 
 //-----------------------------------------------------------------------------

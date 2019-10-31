@@ -175,7 +175,7 @@ private:
     QDir                    _pairingCacheDir            ();
     QDir                    _pairingCacheTempDir        ();
     QString                 _pairingCacheFile           (const QString& uavName);
-    void                    _updatePairedDeviceNameList ();
+    void                    _updatePairedDeviceNameList (bool checkEmpty = true);
     QString                 _random_string              (uint length);
     void                    _readPairingConfig          ();
     void                    _resetPairingConfig         ();

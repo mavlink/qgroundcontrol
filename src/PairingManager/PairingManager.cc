@@ -314,6 +314,8 @@ PairingManager::_uploadFinished()
                     setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
                 } else if (url.contains("/channel")) {
                     setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
+                } else if (url.contains("/unpair")) {
+                    _updatePairedDeviceNameList();
                 }
             } else {
                 json = a[0];
@@ -345,6 +347,8 @@ PairingManager::_uploadFinished()
                 setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
                 qCDebug(PairingManagerLog) << "Set channel rejected.";
             }
+        } else if (map["CMD"] == "unpair") {
+            _updatePairedDeviceNameList();
         } else {
             qCDebug(PairingManagerLog) << map["CMD"] << " " << map["RES"];
         }
@@ -355,6 +359,8 @@ PairingManager::_uploadFinished()
         {
             emit _startUploadRequest(name, url, content);
         });
+    } else if (url.contains("/unpair")) {
+        _updatePairedDeviceNameList();
     } else {
         qCDebug(PairingManagerLog) << "Request " << url << " error: " + reply->errorString();
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
@@ -541,7 +547,7 @@ PairingManager::removePairedDevice(const QString& name)
         jsonDoc.setObject(jsonObj);
         emit startUpload(name, unpairURL, jsonDoc, true);
     }
-    _updatePairedDeviceNameList();
+    _updatePairedDeviceNameList(false);
     setPairingStatus(PairingIdle, "");
 }
 
@@ -630,7 +636,7 @@ PairingManager::_resetPairingConfig()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_updatePairedDeviceNameList()
+PairingManager::_updatePairedDeviceNameList(bool checkEmpty)
 {
     _devices.clear();
     QDirIterator it(_pairingCacheDir().absolutePath(), QDir::Files);
@@ -644,7 +650,7 @@ PairingManager::_updatePairedDeviceNameList()
             }
         }
     }
-    if (_devices.empty()) {
+    if (checkEmpty && _devices.empty()) {
         _resetPairingConfig();
     }
     emit deviceListChanged();
