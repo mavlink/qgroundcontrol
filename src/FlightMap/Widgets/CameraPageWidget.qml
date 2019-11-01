@@ -42,6 +42,7 @@ Column {
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
+    property bool   _streamingEnabled:      false //TODO: determine what it should be, VideoPageWidget.qml does QGroundControl.settingsManager.videoSettings.streamConfigured
     property bool   _hasModes:              _camera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _storageReady:          _camera && _camera.storageStatus === QGCCameraControl.STORAGE_READY
