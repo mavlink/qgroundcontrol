@@ -91,6 +91,7 @@ signals:
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _ackTimeout(void);
+    void _serviceVersionReceived(uint16_t serviceID, uint16_t serviceVersion);
 
 protected:
     typedef enum {
@@ -100,6 +101,7 @@ protected:
         AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         AckMissionClearAll, ///< MISSION_CLEAR_ALL sent, MISSION_ACK is expected
         AckGuidedItem,      ///< MISSION_ACK expected in response to ArduPilot guided mode single item send
+        AckServiceVersion,  ///< Expecting to receive microservice version
     } AckType_t;
 
     typedef enum {
@@ -154,8 +156,20 @@ protected:
     int                 _currentMissionIndex;
     int                 _lastCurrentIndex;
 
+    bool                _connectedToMavlink;
+    uint16_t            _serviceVersion;
+
 private:
     void _setTransactionInProgress(TransactionType_t type);
+    /**
+     * Performs the following actions:
+     *  - Set _retry_count to 0
+     *  - Connect to Mavlink (if not already done)
+     *  - Request the microservice version
+     * Once the microservice version is received, the actual transaction begins.
+     * @param type
+     */
+    void _startTransaction(TransactionType_t type);
 };
 
 #endif

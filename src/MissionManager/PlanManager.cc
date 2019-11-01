@@ -19,6 +19,11 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 
+// TODO microservice versioning: Figure out how to actually configure these
+#define SERVICE_ID 1
+constexpr uint16_t SERVICE_MIN_VERSION = 1;
+constexpr uint16_t SERVICE_MAX_VERSION = 3;
+
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
@@ -33,6 +38,8 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     , _missionItemCountToRead   (-1)
     , _currentMissionIndex      (-1)
     , _lastCurrentIndex         (-1)
+    , _connectedToMavlink       (false)
+    , _serviceVersion           (0)
 {
     _ackTimeoutTimer = new QTimer(this);
     _ackTimeoutTimer->setSingleShot(true);
@@ -59,10 +66,7 @@ void PlanManager::_writeMissionItemsWorker(void)
         _itemIndicesToWrite << i;
     }
 
-    _retryCount = 0;
-    _setTransactionInProgress(TransactionWrite);
-    _connectToMavlink();
-    _writeMissionCount();
+    _startTransaction(TransactionWrite);
 }
 
 
@@ -135,10 +139,7 @@ void PlanManager::loadFromVehicle(void)
         return;
     }
 
-    _retryCount = 0;
-    _setTransactionInProgress(TransactionRead);
-    _connectToMavlink();
-    _requestList();
+    _startTransaction(TransactionRead);
 }
 
 /// Internal call to request list of mission items. May be called during a retry sequence.
@@ -164,6 +165,26 @@ void PlanManager::_requestList(void)
     _startAckTimeout(AckMissionCount);
 }
 
+void PlanManager::_serviceVersionReceived(uint16_t serviceID, uint16_t serviceVersion){
+    qCDebug(PlanManagerLog) << QStringLiteral("ServiceVersion: ID %1, ver %2").arg(serviceID).arg(serviceVersion);
+    if(serviceID == SERVICE_ID){
+        _serviceVersion = serviceVersion;
+        switch(_transactionInProgress){
+        case TransactionRemoveAll:
+            _removeAllWorker();
+            break;
+        case TransactionRead:
+            _requestList();
+            break;
+        case TransactionWrite:
+            _writeMissionCount();
+            break;
+        case TransactionNone:
+            break;
+        }
+    }
+}
+
 void PlanManager::_ackTimeout(void)
 {
     if (_expectedAck == AckNone) {
@@ -174,6 +195,16 @@ void PlanManager::_ackTimeout(void)
     case AckNone:
         qCWarning(PlanManagerLog) << QStringLiteral("_ackTimeout %1 timeout with AckNone").arg(_planTypeString());
         _sendError(InternalError, tr("Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone"));
+        break;
+    case AckServiceVersion:
+        if(_retryCount > _maxRetryCount){
+            _sendError(VehicleError, tr("Request mission service version failed, maximum retries exceeded."));
+            _finishTransaction(false);
+        }else{
+            _retryCount++;
+            qCDebug(PlanManagerLog) << tr("Retrying %1 Request microservice version (MAV_CMD_REQUEST_MESSAGE) retry Count").arg(_planTypeString()) << _retryCount;
+            _vehicle->requestMicroserviceVersion(SERVICE_ID, SERVICE_MIN_VERSION, SERVICE_MAX_VERSION);
+        }
         break;
     case AckMissionCount:
         // MISSION_COUNT message expected
@@ -248,6 +279,8 @@ void PlanManager::_startAckTimeout(AckType_t ack)
         _ackTimeoutTimer->setInterval(_retryTimeoutMilliseconds);
         break;
     case AckNone:
+        // FALLTHROUGH
+    case AckServiceVersion:
         // FALLTHROUGH
     case AckMissionCount:
         // FALLTHROUGH
@@ -622,6 +655,7 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
 
     switch (savedExpectedAck) {
     case AckNone:
+    case AckServiceVersion: // If we are waiting to get the service version, we would not expect a MISSION_ACK message
         // State machine is idle. Vehicle is confused.
 	qCDebug(PlanManagerLog) << QStringLiteral("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         break;
@@ -720,6 +754,8 @@ QString PlanManager::_ackTypeToString(AckType_t ackType)
         return QString("MISSION_REQUEST");
     case AckGuidedItem:
         return QString("Guided Mode Item");
+    case AckServiceVersion:
+        return QString("MAVLINK_SERVICE_VERSION");
     default:
         qWarning(PlanManagerLog) << QStringLiteral("Fell off end of switch statement %1").arg(_planTypeString());
         return QString("QGC Internal Error");
@@ -901,7 +937,6 @@ void PlanManager::_removeAllWorker(void)
 
     emit progressPct(0);
 
-    _connectToMavlink();
     _dedicatedLink = _vehicle->priorityLink();
     mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
@@ -931,10 +966,7 @@ void PlanManager::removeAll(void)
         emit lastCurrentIndexChanged(-1);
     }
 
-    _retryCount = 0;
-    _setTransactionInProgress(TransactionRemoveAll);
-
-    _removeAllWorker();
+    _startTransaction(TransactionRemoveAll);
 }
 
 void PlanManager::_clearAndDeleteMissionItems(void)
@@ -959,11 +991,14 @@ void PlanManager::_clearAndDeleteWriteMissionItems(void)
 void PlanManager::_connectToMavlink(void)
 {
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
+    qCDebug(PlanManagerLog) << QStringLiteral("Connecting to MAVLink");
+    _connectedToMavlink = true;
 }
 
 void PlanManager::_disconnectFromMavlink(void)
 {
     disconnect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &PlanManager::_mavlinkMessageReceived);
+    _connectedToMavlink = false;
 }
 
 QString PlanManager::_planTypeString(void)
@@ -988,4 +1023,20 @@ void PlanManager::_setTransactionInProgress(TransactionType_t type)
         _transactionInProgress = type;
         emit inProgressChanged(inProgress());
     }
+}
+
+void PlanManager::_startTransaction(TransactionType_t type){
+    if(!_connectedToMavlink){
+        _connectToMavlink();
+    }
+
+    _retryCount = 0;
+    _setTransactionInProgress(type);
+    connect(_vehicle, &Vehicle::serviceVersionReceived, this, &PlanManager::_serviceVersionReceived);
+    // If the service version is already cached by Vehicle, then requestMicroserviceVersion() will result in
+    // a signal immediately. So I need to start the timeout before actually making the request, so we don't
+    // receive the signal before the timeout is actually set up.
+    _startAckTimeout(AckServiceVersion);
+    _vehicle->requestMicroserviceVersion(SERVICE_ID, SERVICE_MIN_VERSION, SERVICE_MAX_VERSION);
+
 }

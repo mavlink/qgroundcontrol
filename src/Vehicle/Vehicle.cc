@@ -4037,18 +4037,17 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
 
-void Vehicle::requestMicroserviceVersion(uint16_t serviceID) {
+void Vehicle::requestMicroserviceVersion(uint16_t serviceID, uint16_t minVersion, uint16_t maxVersion) {
     auto iter = _microserviceVersions.find(serviceID);
     if(iter == _microserviceVersions.end()){
-        // TODO microservice version: Where to get supported range of versions for QGC?
         sendMavCommand(
                 defaultComponentId(),
                 MAV_CMD_REQUEST_MESSAGE,
                 false,
                 MAVLINK_MSG_ID_MAVLINK_SERVICE_VERSION,
                 serviceID,
-                0,
-                9999
+                minVersion,
+                maxVersion
                 );
     }else{
         uint16_t version = iter.value();
