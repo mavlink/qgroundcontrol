@@ -391,6 +391,7 @@ Item {
                 height:         (!mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) )
                 videoReceiver: model.videoReceiver
                 Component.onCompleted: print(JSON.stringify({height: _flightVideo.height, width: _flightVideo.width}))
+                onConfigRequested: settingsController.visible = true
             }
 
             //-- UVC Video (USB Camera or Video Device)
@@ -402,6 +403,14 @@ Item {
                 source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
             }
             */
+        }
+
+        VideoSettingsController {
+            id: settingsController;
+            visible: false
+            x: 300
+            y: _flightVideo.y
+            z: 100
         }
 
         Row {

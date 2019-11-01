@@ -37,8 +37,9 @@ Item {
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
     property alias videoReceiver: videoSurface.videoReceiver
-
     property double _thermalHeightFactor: 0.85 //-- TODO
+
+    signal configRequested()
 
     /*
     Rectangle {
@@ -62,6 +63,7 @@ Item {
     }
     */
 
+
     Rectangle {
         anchors.fill:   parent
         color:          "black"
@@ -81,10 +83,6 @@ Item {
             }
             //-- Fit Width
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
-        }
-
-        VideoSettingsController {
-            visible: false
         }
 
         //-- Main Video
@@ -209,6 +207,11 @@ Item {
         onNewWidth: {
             _pipSize = newWidth
         }
+
+        onConfigRequested: {
+            parent.configRequested()
+        }
+
     }
 
     /*
@@ -292,5 +295,4 @@ Item {
             }
         }
     ]
-
 }

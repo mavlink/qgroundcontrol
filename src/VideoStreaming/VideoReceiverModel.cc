@@ -27,6 +27,10 @@ VideoReceiverModel::VideoReceiverModel()
 
 void VideoReceiverModel::createVideoStream()
 {
+    if (rowCount() > 20) {
+        return;
+    }
+
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     auto videoReceiver = new VideoReceiver();
     m_videoReceivers.append(videoReceiver);

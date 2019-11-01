@@ -32,6 +32,7 @@ Item {
     signal  hideIt(bool state)
     signal  newWidth(real newWidth)
     signal  popup()
+    signal  configRequested()
 
     visible: pipMouseArea.containsMouse
 
@@ -137,6 +138,26 @@ Item {
             onClicked: {
                 inPopup = true
                 pip.popup()
+            }
+        }
+    }
+
+    //-- PIP Setup VideoStream
+    Image {
+        id: setupPIP
+        source: "/qmlimages/Gears.svg"
+        mipmap:         true
+        anchors.right:  parent.right
+        anchors.bottom: parent.bottom
+        visible:        pipMouseArea.containsMouse
+        fillMode:       Image.PreserveAspectFit
+        height:         ScreenTools.defaultFontPixelHeight * 2.5
+        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                configRequested()
             }
         }
     }
