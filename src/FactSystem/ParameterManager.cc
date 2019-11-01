@@ -274,6 +274,17 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         _setLoadProgress((double)(_totalParamCount - readWaitingParamCount) / (double)_totalParamCount);
     }
 
+    // Update progress bar for waiting writes
+    if (waitingWriteParamNameCount == 0) {
+        // We are no longer waiting for any writes to complete
+        if (_prevWaitingWriteParamNameCount != 0) {
+            // Set progress to 0 if not already there
+            _setLoadProgress(0.0);
+        }
+    } else {
+        _setLoadProgress((double)(_totalParamCount - waitingWriteParamNameCount) / (double)_totalParamCount);
+    }
+
     // Get parameter set version
     if (!_versionParam.isEmpty() && _versionParam == parameterName) {
         _parameterSetMajorVersion = value.toInt();
