@@ -33,10 +33,10 @@ Rectangle {
             anchors.leftMargin:     _margins
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
-            source:                 "/res/gear-black.svg"
+            source:                 "/res/gear-white.svg"
             mipmap:                 true
             width:                  parent.height -(_margins * 2)
-            sourceSize.width:       width
+            sourceSize.width:       width * 0.75
             fillMode:               Image.PreserveAspectFit
             visible:                pageWidgetLoader.item ? (pageWidgetLoader.item.showSettingsIcon ? pageWidgetLoader.item.showSettingsIcon : false) : false
 
