@@ -110,8 +110,10 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-    //-- Only pay attention to "camera" component IDs
-    if(_vehicleReadyState && _vehicle->id() == message.sysid && message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6) {
+    //-- Only pay attention to camera components, as identified by their MAV_TYPE, and as fallback by their compId
+    if(_vehicleReadyState && _vehicle->id() == message.sysid &&
+            ((heartbeat.autopilot == MAV_AUTOPILOT_INVALID && heartbeat.type == MAV_TYPE_CAMERA) ||
+             (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         //-- First time hearing from this one?
         QString sCompID = QString::number(message.compid);
         if(!_cameraInfoRequest.contains(sCompID)) {
