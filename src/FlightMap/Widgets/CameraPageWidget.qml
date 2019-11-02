@@ -75,13 +75,13 @@ Column {
         text: _camera ? qsTr("Free Space: ") + _camera.storageFreeStr : ""
         font.pointSize: ScreenTools.defaultFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: _camera && _storageReady
+        visible: _storageReady
     }
     QGCLabel {
         text: _camera ? qsTr("Battery: ") + _camera.batteryRemainingStr : ""
         font.pointSize: ScreenTools.defaultFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: _camera && _batteryReady
+        visible: _batteryReady
     }
     //-- Camera Mode (visible only if camera has modes)
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camMode.visible; }
