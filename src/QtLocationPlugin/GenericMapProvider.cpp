@@ -1,103 +1,75 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 #include "GenericMapProvider.h"
-#include "QGCMapEngine.h"
 
-QString StatkartMapProvider::_getURL(int x, int y, int zoom,
-                                     QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    return QString("http://opencache.statkart.no/gatekeeper/gk/"
-                   "gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3")
-        .arg(zoom)
-        .arg(x)
-        .arg(y);
+static const QString StatkartMapUrl = QStringLiteral("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3");
+
+QString StatkartMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return StatkartMapUrl.arg(zoom).arg(x).arg(y);
 }
 
-QString EniroMapProvider::_getURL(int x, int y, int zoom,
-                                  QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    return QString("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/"
-                   "%2/%3.png")
-        .arg(zoom)
-        .arg(x)
-        .arg((1 << zoom) - 1 - y);
+static const QString EniroMapUrl = QStringLiteral("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.png");
+
+QString EniroMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return EniroMapUrl.arg(zoom).arg(x).arg((1 << zoom) - 1 - y);
 }
 
-QString MapQuestMapMapProvider::_getURL(int x, int y, int zoom,
-                                        QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    char letter = "1234"[_getServerNum(x, y, 4)];
-    return QString("http://otile%1.mqcdn.com/tiles/1.0.0/map/%2/%3/%4.jpg")
-        .arg(letter)
-        .arg(zoom)
-        .arg(x)
-        .arg(y);
+static const QString MapQuestMapUrl = QStringLiteral("http://otile%1.mqcdn.com/tiles/1.0.0/map/%2/%3/%4.jpg");
+
+QString MapQuestMapMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return MapQuestMapUrl.arg(_getServerNum(x, y, 4)).arg(zoom).arg(x).arg(y);
 }
 
-QString MapQuestSatMapProvider::_getURL(int x, int y, int zoom,
-                                        QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    char letter = "1234"[_getServerNum(x, y, 4)];
-    return QString("http://otile%1.mqcdn.com/tiles/1.0.0/sat/%2/%3/%4.jpg")
-        .arg(letter)
-        .arg(zoom)
-        .arg(x)
-        .arg(y);
+static const QString MapQuestSatUrl = QStringLiteral("http://otile%1.mqcdn.com/tiles/1.0.0/sat/%2/%3/%4.jpg");
+
+QString MapQuestSatMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return MapQuestSatUrl.arg(_getServerNum(x, y, 4)).arg(zoom).arg(x).arg(y);
 }
 
-QString
-VWorldStreetMapProvider::_getURL(int x, int y, int zoom,
-                                 QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    int gap   = zoom - 6;
-    int x_min = 53 * pow(2, gap);
-    int x_max = 55 * pow(2, gap) + (2 * gap - 1);
-    int y_min = 22 * pow(2, gap);
-    int y_max = 26 * pow(2, gap) + (2 * gap - 1);
+QString VWorldStreetMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    const int gap   = zoom - 6;
+    const int x_min = int(53 * pow(2, gap));
+    const int x_max = int(55 * pow(2, gap) + (2 * gap - 1));
+    const int y_min = int(22 * pow(2, gap));
+    const int y_max = int(26 * pow(2, gap) + (2 * gap - 1));
 
     if (zoom > 19) {
-        return {};
-    } else if (zoom > 5 && x >= x_min && x <= x_max && y >= y_min &&
-               y <= y_max) {
-        return QString(
-                   "http://xdworld.vworld.kr:8080/2d/Base/service/%1/%2/%3.png")
-            .arg(zoom)
-            .arg(x)
-            .arg(y);
+        return QString();
+    } else if (zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
+        return QString(QStringLiteral("http://xdworld.vworld.kr:8080/2d/Base/service/%1/%2/%3.png")).arg(zoom, x, y);
     } else {
-        QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/"
-                       "r%2.png?g=%3&mkt=%4")
-            .arg(_getServerNum(x, y, 4))
-            .arg(key)
-            .arg(_versionBingMaps)
-            .arg(_language);
+        const QString key = _tileXYToQuadKey(x, y, zoom);
+        return QString(QStringLiteral("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4"))
+            .arg(_getServerNum(x, y, 4)).arg(key, _versionBingMaps, _language);
     }
 }
 
-QString VWorldSatMapProvider::_getURL(int x, int y, int zoom,
-                                      QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    int gap   = zoom - 6;
-    int x_min = 53 * pow(2, gap);
-    int x_max = 55 * pow(2, gap) + (2 * gap - 1);
-    int y_min = 22 * pow(2, gap);
-    int y_max = 26 * pow(2, gap) + (2 * gap - 1);
+QString VWorldSatMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    const int gap   = zoom - 6;
+    const int x_min = int(53 * pow(2, gap));
+    const int x_max = int(55 * pow(2, gap) + (2 * gap - 1));
+    const int y_min = int(22 * pow(2, gap));
+    const int y_max = int(26 * pow(2, gap) + (2 * gap - 1));
 
     if (zoom > 19) {
-        return {};
-    } else if (zoom > 5 && x >= x_min && x <= x_max && y >= y_min &&
-               y <= y_max) {
-        return QString("http://xdworld.vworld.kr:8080/2d/Satellite/service/%1/"
-                       "%2/%3.jpeg")
-            .arg(zoom)
-            .arg(x)
-            .arg(y);
+        return QString();
+    } else if (zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
+        return QString("http://xdworld.vworld.kr:8080/2d/Satellite/service/%1/%2/%3.jpeg").arg(zoom, x, y);
     } else {
-        QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/"
-                       "a%2.jpeg?g=%3&mkt=%4")
-            .arg(_getServerNum(x, y, 4))
-            .arg(key)
-            .arg(_versionBingMaps)
-            .arg(_language);
+        const QString key = _tileXYToQuadKey(x, y, zoom);
+        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4")
+            .arg(_getServerNum(x, y, 4)).arg(key, _versionBingMaps, _language);
     }
 }
