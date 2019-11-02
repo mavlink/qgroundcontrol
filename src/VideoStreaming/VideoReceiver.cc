@@ -153,16 +153,20 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
+    static int pattern = 1;
+    QString pipelineSter = QString("videotestsrc pattern=%1 ! glupload name=glupload ! qmlglsink name=sink").arg(pattern++);
+    std::string stdPipeline =  pipelineSter.toStdString();
+    qDebug() << pipelineSter;
+
    _pipeline = gst_parse_launch(
                //  "udpsrc port=5600 close-socket=false multicast-iface=false auto-multicast=true "
                //  "! application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! videoconvert "
-               "videotestsrc pattern=18 "
-                "! glupload name=glupload ! qmlglsink name=sink", nullptr);
+               stdPipeline.c_str(), nullptr);
 
     _videoSink = gst_bin_get_by_name(GST_BIN (_pipeline), "sink");
     _glUpload = gst_bin_get_by_name(GST_BIN(_pipeline), "glupload");
 
-    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
+//    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
     gst_element_set_state(_pipeline, GST_STATE_PAUSED);
 }
 

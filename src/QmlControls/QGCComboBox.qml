@@ -115,6 +115,7 @@ T.ComboBox {
         height:         Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
         topMargin:      6
         bottomMargin:   6
+        z:              control.z + 1
 
         contentItem: ListView {
             clip:                   true
@@ -124,7 +125,6 @@ T.ComboBox {
             highlightMoveDuration:  0
 
             Rectangle {
-                z:              10
                 width:          parent.width
                 height:         parent.height
                 color:          "transparent"

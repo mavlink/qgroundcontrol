@@ -1352,7 +1352,8 @@ HEADERS += \
     src/VideoStreaming/SubtitleWriter.h \
     src/VideoStreaming/VideoManager.h \
     src/VideoStreaming/VideoReceiverModel.h \
-    src/VideoStreaming/VideoSurface.h
+    src/VideoStreaming/VideoSurface.h \
+    src/VideoStreaming/VideoSettings2.h
 
 
 SOURCES += \
@@ -1361,7 +1362,8 @@ SOURCES += \
     src/VideoStreaming/SubtitleWriter.cc \
     src/VideoStreaming/VideoReceiverModel.cc \
     src/VideoStreaming/VideoManager.cc \
-    src/VideoStreaming/VideoSurface.cc
+    src/VideoStreaming/VideoSurface.cc \
+    src/VideoStreaming/VideoSettings2.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")

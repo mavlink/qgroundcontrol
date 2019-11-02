@@ -391,7 +391,10 @@ Item {
                 height:         (!mainIsMap ? _mapAndVideo.height : _pipSize * (9/16) )
                 videoReceiver: model.videoReceiver
                 Component.onCompleted: print(JSON.stringify({height: _flightVideo.height, width: _flightVideo.width}))
-                onConfigRequested: settingsController.visible = true
+                onConfigRequested: {
+                    settingsController.videoReceiver = model.videoReceiver
+                    settingsController.visible = true
+                }
             }
 
             //-- UVC Video (USB Camera or Video Device)
