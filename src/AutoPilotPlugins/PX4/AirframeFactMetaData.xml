@@ -430,9 +430,9 @@
       <maintainer>Henry Zhang &lt;zhanghui629@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe id="4250" maintainer="Jacob Dahl &lt;jacob.dahl@tealdrones.com&gt;" name="Teal One">
+    <airframe id="4250" maintainer="Matt McFadden &lt;matt.mcfadden@tealdrones.com&gt;" name="Teal One">
       <class>Copter</class>
-      <maintainer>Jacob Dahl &lt;jacob.dahl@tealdrones.com&gt;</maintainer>
+      <maintainer>Matt McFadden &lt;matt.mcfadden@tealdrones.com&gt;</maintainer>
       <type>Quadrotor x</type>
       <output name="MAIN1">motor 1</output>
       <output name="MAIN2">motor 2</output>
