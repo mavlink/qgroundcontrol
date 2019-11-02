@@ -126,6 +126,9 @@ public:
     static Theme    globalTheme             () { return _theme; }
     static void     setGlobalTheme          (Theme newTheme);
 
+public slots:
+    QColor changeAlpha(const QColor& color, qreal alpha) const;
+
 signals:
     void paletteChanged ();
 
