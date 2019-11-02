@@ -97,6 +97,9 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
                 _handleVideoStreamStatus(message);
                 break;
+            case MAVLINK_MSG_ID_BATTERY_STATUS:
+                _handleBatteryStatus(message);
+                break;
         }
     }
 }
@@ -357,6 +360,18 @@ QGCCameraManager::_handleVideoStreamStatus(const mavlink_message_t& message)
         mavlink_video_stream_status_t streamStatus;
         mavlink_msg_video_stream_status_decode(&message, &streamStatus);
         pCamera->handleVideoStatus(&streamStatus);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleBatteryStatus(const mavlink_message_t& message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_battery_status_t batteryStatus;
+        mavlink_msg_battery_status_decode(&message, &batteryStatus);
+        pCamera->handleBatteryStatus(batteryStatus);
     }
 }
 

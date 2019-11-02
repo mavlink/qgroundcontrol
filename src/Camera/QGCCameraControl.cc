@@ -264,6 +264,16 @@ QGCCameraControl::storageFreeStr()
 }
 
 //-----------------------------------------------------------------------------
+QString
+QGCCameraControl::batteryRemainingStr()
+{
+    if(_batteryRemaining >= 0) {
+        return QGCMapEngine::numberToString(static_cast<quint64>(_batteryRemaining)) + " %";
+    }
+    return "";
+}
+
+//-----------------------------------------------------------------------------
 void
 QGCCameraControl::setCameraMode(CameraMode mode)
 {
@@ -1487,6 +1497,17 @@ QGCCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
     if(_storageStatus != static_cast<StorageStatus>(st.status)) {
         _storageStatus = static_cast<StorageStatus>(st.status);
         emit storageStatusChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::handleBatteryStatus(const mavlink_battery_status_t& bs)
+{
+    qCDebug(CameraControlLog) << "handleBatteryStatus:" << bs.battery_remaining;
+    if(bs.battery_remaining >= 0 && _batteryRemaining != static_cast<int>(bs.battery_remaining)) {
+        _batteryRemaining = static_cast<int>(bs.battery_remaining);
+        emit batteryRemainingChanged();
     }
 }
 

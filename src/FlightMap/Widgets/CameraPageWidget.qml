@@ -46,6 +46,7 @@ Column {
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _photoIdle:             _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
     property bool   _storageReady:          _camera && _camera.storageStatus === QGCCameraControl.STORAGE_READY
+    property bool   _batteryReady:          _camera && _camera.batteryRemaining >= 0
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool   _canShoot:              !_cameraModeUndefined && !_videoRecording && _photoIdle && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
 
@@ -67,14 +68,20 @@ Column {
         id:             cameraLabel
         text:           _camera ? _camera.modelName : qsTr("Camera")
         visible:        _camera
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
     }
     QGCLabel {
         text: _camera ? qsTr("Free Space: ") + _camera.storageFreeStr : ""
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: _camera && _storageReady
+        visible: _storageReady
+    }
+    QGCLabel {
+        text: _camera ? qsTr("Battery: ") + _camera.batteryRemainingStr : ""
+        font.pointSize: ScreenTools.defaultFontPointSize
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: _batteryReady
     }
     //-- Camera Mode (visible only if camera has modes)
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camMode.visible; }
@@ -179,13 +186,13 @@ Column {
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _camera; }
     QGCLabel {
         text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         visible: _cameraVideoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
     QGCLabel {
         text: activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.defaultFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
