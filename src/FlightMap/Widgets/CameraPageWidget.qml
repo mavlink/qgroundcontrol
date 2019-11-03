@@ -402,16 +402,11 @@ Column {
                            anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCSwitch {
-                            enabled:            _streamingEnabled && activeVehicle
-                            checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+                            checked:            (QGroundControl.settingsManager.videoSettings.gridLines.rawValue) ? 1 : 0
                             width:              _editFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: {
-                                if(checked) {
-                                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
-                                } else {
-                                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 0
-                                }
+                                QGroundControl.settingsManager.videoSettings.gridLines.rawValue = (checked) ? 1 : 0
                             }
                         }
                     }
