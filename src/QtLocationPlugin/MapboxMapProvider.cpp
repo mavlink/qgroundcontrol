@@ -3,33 +3,19 @@
 #include "QGCMapEngine.h"
 #include "SettingsManager.h"
 
-MapboxMapProvider::MapboxMapProvider(QString mapName, quint32 averageSize,
-                                     QGeoMapType::MapStyle mapType,
-                                     QObject*              parent)
-    : MapProvider(QString("https://www.mapbox.com/"), QString("jpg"),
-                  averageSize, mapType, parent), mapboxName(mapName) {
+static const QString MapBoxUrl = QStringLiteral("https://api.mapbox.com/v4/%1/%2/%3/%4.jpg80?access_token=%5");
+
+MapboxMapProvider::MapboxMapProvider(const QString &mapName, const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent)
+    : MapProvider(QStringLiteral("https://www.mapbox.com/"), QStringLiteral("jpg"), averageSize, mapType, parent)
+    , _mapboxName(mapName)
+{
 }
 
-QString
-MapboxMapProvider::_getURL(int x, int y, int zoom,
-                                  QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    QString mapBoxToken = qgcApp()
-                              ->toolbox()
-                              ->settingsManager()
-                              ->appSettings()
-                              ->mapboxToken()
-                              ->rawValue()
-                              .toString();
+QString MapboxMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    const QString mapBoxToken = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString();
     if (!mapBoxToken.isEmpty()) {
-        QString server = "https://api.mapbox.com/v4/";
-        server += mapboxName;
-        server += QString("/%1/%2/%3.jpg80?access_token=%4")
-                      .arg(zoom)
-                      .arg(x)
-                      .arg(y)
-                      .arg(mapBoxToken);
-        return server;
+        return MapBoxUrl.arg(_mapboxName).arg(zoom).arg(x).arg(y).arg(mapBoxToken);
     }
-    return QString("");
+    return QString();
 }

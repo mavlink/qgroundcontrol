@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Toolbar: Scrollable left/right on small screens like phones
 * Plan View: New create plan UI for initial plan creation
 * New Corridor editing tools ui. Includes ability to trace polyline by clicking.
 * New Polygon editing tools ui. Includes ability to trace polygon by clicking.
@@ -46,20 +47,24 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.4 - Not yet released
+### 3.5.5 - Not yet released
+* Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
+* Disable Pause when fixed wing is on landing approach.
+
+### 3.5.4 - Stable
 * Update windows drivers
 * Add support for FMUK66 flashing/connection
 * Guard against null geometry coming from gstreamer which can cause crashes
 * Add .apj file selection support to custom firmware flash
 
-### 3.5.3 - Stable
+### 3.5.3
 * Change minimum RTK Survey-In limit to 0.01 meters
 * Change Windows driver detection logic
 * Fix crash when clicking on GeoFence polygon vertex
 * PX4: Fix missing ```MC_YAW_FF``` parameter in PID Tuning
 * ArduPilot: Fix parameter file save generating bad characters from git hash
 
-### 3.5.2 - Stable
+### 3.5.2
 * Fix Ubuntu AppImage startup failure
 
 ### 3.5.1

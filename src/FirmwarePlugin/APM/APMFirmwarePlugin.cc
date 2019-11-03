@@ -660,9 +660,12 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
         }
     }
 
-    // Streaming of home position is required for various features in QGC to work correctly. Otherwise relative altitudes
-    // cannot be calculated correctly.
-    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, true /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
+    // ArduPilot only sends home position on first boot and then when it arms. It does not stream the position.
+    // This means that depending on when QGC connects to the vehicle it may not have home position.
+    // This can cause various features to not be available. So we request home position streaming ourselves.
+    // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
+    // Which also means than on older firmwares you may be left with some missing features.
+    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
 }
 
 

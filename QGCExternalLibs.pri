@@ -106,9 +106,7 @@ SOURCES += \
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers \
-        /Library/Frameworks/GDAL.framework/unix/include \
-
+        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
         -framework SDL2 \
@@ -127,8 +125,6 @@ MacBuild {
 
 
     INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
-    INCLUDEPATH += $$BASEDIR/libs/zlib/Windows/include
-
     contains(QT_ARCH, i386) {
         INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x86/include
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
@@ -138,12 +134,9 @@ MacBuild {
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
         LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x64/lib
     }
-    LIBS += -L$$BASEDIR/libs/zlib/Windows/libs
     LIBS += \
         -lSDL2main \
-        -lSDL2 \
-		-lz \
-		-llibeay32
+        -lSDL2
 }
 
 # Include Android OpenSSL libs in order to make Qt OpenSSL support work
@@ -187,6 +180,10 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
             DEFINES -= QGC_ENABLE_NFC
             DEFINES -= QGC_ENABLE_PAIRING
         }
+    } else:WindowsBuild {
+        #- Pairing is not supported on Windows
+        DEFINES -= QGC_ENABLE_NFC
+        DEFINES -= QGC_ENABLE_PAIRING
     } else {
         LIBS += -lcrypto -lz
         AndroidBuild {
@@ -217,7 +214,6 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 } else {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
-
 
 #
 # [OPTIONAL] AirMap Support

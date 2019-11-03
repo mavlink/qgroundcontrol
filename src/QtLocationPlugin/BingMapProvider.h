@@ -1,46 +1,43 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #pragma once
 
 #include "MapProvider.h"
 
-#include <QByteArray>
-#include <QMutex>
-#include <QNetworkProxy>
-#include <QNetworkReply>
-#include <QPoint>
-#include <QString>
-
 class BingMapProvider : public MapProvider {
     Q_OBJECT
-  public:
-    BingMapProvider(QString imageFormat, quint32 averageSize,
-                    QGeoMapType::MapStyle mapType, QObject* parent);
 
-    ~BingMapProvider();
+public:
+    BingMapProvider(const QString &imageFormat, const quint32 averageSize,
+                    const QGeoMapType::MapStyle mapType, QObject* parent = nullptr);
 
-  protected:
-    // Define the url to Request
-    virtual QString _getURL(int x, int y, int zoom,
-                            QNetworkAccessManager* networkManager) = 0;
+    ~BingMapProvider() = default;
 
-    const QString _versionBingMaps = "563";
+protected:
+    const QString _versionBingMaps = QStringLiteral("563");
 };
 
-const quint32 AVERAGE_BING_STREET_MAP = 1297;
-const quint32 AVERAGE_BING_SAT_MAP    = 19597;
+static const quint32 AVERAGE_BING_STREET_MAP = 1297;
+static const quint32 AVERAGE_BING_SAT_MAP    = 19597;
 
 // -----------------------------------------------------------
 // Bing Road Map
 
 class BingRoadMapProvider : public BingMapProvider {
     Q_OBJECT
-  public:
-    BingRoadMapProvider(QObject* parent)
-        : BingMapProvider(QString("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap,
-                          parent) {}
 
-  protected:
-    QString _getURL(int x, int y, int zoom,
-                    QNetworkAccessManager* networkManager);
+public:
+    BingRoadMapProvider(QObject* parent = nullptr)
+        : BingMapProvider(QStringLiteral("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 // -----------------------------------------------------------
@@ -48,14 +45,12 @@ class BingRoadMapProvider : public BingMapProvider {
 
 class BingSatelliteMapProvider : public BingMapProvider {
     Q_OBJECT
-  public:
-    BingSatelliteMapProvider(QObject* parent)
-        : BingMapProvider(QString("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay,
-                          parent) {}
 
-  protected:
-    QString _getURL(int x, int y, int zoom,
-                    QNetworkAccessManager* networkManager);
+public:
+    BingSatelliteMapProvider(QObject* parent = nullptr)
+        : BingMapProvider(QStringLiteral("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
 // -----------------------------------------------------------
@@ -63,12 +58,9 @@ class BingSatelliteMapProvider : public BingMapProvider {
 
 class BingHybridMapProvider : public BingMapProvider {
     Q_OBJECT
-  public:
-    BingHybridMapProvider(QObject* parent)
-        : BingMapProvider(QString("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap,
-                          parent) {}
+public:
+    BingHybridMapProvider(QObject* parent = nullptr)
+        : BingMapProvider(QStringLiteral("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap, parent) {}
 
-  protected:
-    QString _getURL(int x, int y, int zoom,
-                    QNetworkAccessManager* networkManager);
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };

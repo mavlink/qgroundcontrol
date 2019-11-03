@@ -24,6 +24,8 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
+    property bool showIndicator: true
+
     Component {
         id: gpsInfo
 

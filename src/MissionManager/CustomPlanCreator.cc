@@ -23,8 +23,8 @@ void CustomPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
     _planMasterController->removeAll();
     VisualMissionItem* takeoffItem = _missionController->insertSimpleMissionItem(mapCenterCoord, -1);
     takeoffItem->setWizardMode(true);
-    _missionController->insertSimpleMissionItem(mapCenterCoord.atDistanceAndAzimuth(50, 135), -1)->setWizardMode(true);
-    _missionController->insertSimpleMissionItem(mapCenterCoord.atDistanceAndAzimuth(50, -135),-1)->setWizardMode(true);
+    _missionController->insertSimpleMissionItem(mapCenterCoord.atDistanceAndAzimuth(50, 135), -1);
+    _missionController->insertSimpleMissionItem(mapCenterCoord.atDistanceAndAzimuth(50, -135),-1);
     if (_planMasterController->managerVehicle()->fixedWing()) {
         FixedWingLandingComplexItem* landingItem = qobject_cast<FixedWingLandingComplexItem*>(_missionController->insertComplexMissionItem(MissionController::patternFWLandingName, mapCenterCoord, -1));
         landingItem->setWizardMode(true);

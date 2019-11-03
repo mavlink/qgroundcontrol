@@ -5,13 +5,10 @@
 #endif
 #include "QGCMapEngine.h"
 
-ElevationProvider::ElevationProvider(QString imageFormat, quint32 averageSize,
-                                     QGeoMapType::MapStyle mapType,
-                                     QObject*              parent)
-    : MapProvider(QString("https://api.airmap.com/"), imageFormat, averageSize,
-                  mapType, parent) {}
-ElevationProvider::~ElevationProvider() {}
+ElevationProvider::ElevationProvider(const QString& imageFormat, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent)
+    : MapProvider(QStringLiteral("https://api.airmap.com/"), imageFormat, averageSize, mapType, parent) {}
 
+ElevationProvider::~ElevationProvider() {}
 //-----------------------------------------------------------------------------
 QByteArray AirmapElevationProvider::serialize(QByteArray buf) {
     return AirmapTerrainTile::serialize(buf);
@@ -23,34 +20,30 @@ TerrainTile* AirmapElevationProvider::newTerrainTile(QByteArray buf) {
 }
 
 //-----------------------------------------------------------------------------
-int AirmapElevationProvider::long2tileX(double lon, int z) {
+int AirmapElevationProvider::long2tileX(const double lon, const int z) const {
     Q_UNUSED(z);
     return static_cast<int>(floor((lon + 180.0) / srtm1TileSize));
 }
 
 //-----------------------------------------------------------------------------
-int AirmapElevationProvider::lat2tileY(double lat, int z) {
-    Q_UNUSED(z);
+int AirmapElevationProvider::lat2tileY(const double lat, const int z) const {
+    Q_UNUSED(z)
     return static_cast<int>(floor((lat + 90.0) / srtm1TileSize));
 }
 
-QString
-AirmapElevationProvider::_getURL(int x, int y, int zoom,
-                                 QNetworkAccessManager* networkManager) {
-    Q_UNUSED(networkManager);
-    Q_UNUSED(zoom);
-    return QString("https://api.airmap.com/elevation/v1/ele/"
-                   "carpet?points=%1,%2,%3,%4")
+QString AirmapElevationProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    Q_UNUSED(zoom)
+    return QString("https://api.airmap.com/elevation/v1/ele/carpet?points=%1,%2,%3,%4")
         .arg(static_cast<double>(y) * srtm1TileSize - 90.0)
         .arg(static_cast<double>(x) * srtm1TileSize - 180.0)
         .arg(static_cast<double>(y + 1) * srtm1TileSize - 90.0)
         .arg(static_cast<double>(x + 1) * srtm1TileSize - 180.0);
 }
 
-QGCTileSet AirmapElevationProvider::getTileCount(int zoom, double topleftLon,
-                                                 double topleftLat,
-                                                 double bottomRightLon,
-                                                 double bottomRightLat) {
+QGCTileSet AirmapElevationProvider::getTileCount(const int zoom, const double topleftLon,
+                                                 const double topleftLat, const double bottomRightLon,
+                                                 const double bottomRightLat) const {
     QGCTileSet set;
     set.tileX0 = long2tileX(topleftLon, zoom);
     set.tileY0 = lat2tileY(bottomRightLat, zoom);
@@ -76,11 +69,11 @@ TerrainTile* GeotiffElevationProvider::newTerrainTile(QByteArray buf) {
     return t;
 }
 
-double GeotiffElevationProvider::tilex2long(int x, int z) {
+double GeotiffElevationProvider::tilex2long(const int x, const int z) const{
     return x / (double)(1 << z) * 360.0 - 180;
 }
 
-double GeotiffElevationProvider::tiley2lat(int y, int z) {
+double GeotiffElevationProvider::tiley2lat(const int y,const int z) const{
     double n = M_PI - 2.0 * M_PI * y / (double)(1 << z);
     return 180.0 / M_PI * atan(0.5 * (exp(n) - exp(-n)));
 }
@@ -125,11 +118,11 @@ TerrainTile* AW3DElevationProvider::newTerrainTile(QByteArray buf) {
     return t;
 }
 
-double AW3DElevationProvider::tilex2long(int x, int z) {
+double AW3DElevationProvider::tilex2long(const int x, const int z) const {
     return x / (double)(1 << z) * 360.0 - 180;
 }
 
-double AW3DElevationProvider::tiley2lat(int y, int z) {
+double AW3DElevationProvider::tiley2lat(const int y,const int z)const {
     double n = M_PI - 2.0 * M_PI * y / (double)(1 << z);
     return 180.0 / M_PI * atan(0.5 * (exp(n) - exp(-n)));
 }

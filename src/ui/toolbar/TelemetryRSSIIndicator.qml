@@ -22,10 +22,12 @@ Item {
     id:             _root
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          _hasTelemetry ? telemIcon.width * 1.1 : 0
-    visible:        _hasTelemetry
+    width:          telemIcon.width * 1.1
 
-    property bool _hasTelemetry:    activeVehicle ? activeVehicle.telemetryLRSSI !== 0 : false
+    property bool showIndicator: _hasTelemetry
+
+    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
+    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
 
     Component {
         id: telemRSSIInfo
