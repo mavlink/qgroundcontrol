@@ -48,7 +48,10 @@ MicrohardSettings::configure(QString key, int power, int channel, int bandwidth,
         return;
     }
     QString nid = networkId.toUpper();
-    QString cmd = "AT+MWTXPOWER=" + QString::number(power) + "\n";
+    QString cmd = "";
+    if (power > 0) {
+        cmd += "AT+MWTXPOWER=" + QString::number(power) + "\n";
+    }
     cmd += "AT+MWFREQ=" + QString::number(channel) + "\n";
     cmd += "AT+MWBAND=" + QString::number(bandwidth) + "\n";
     cmd += key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";

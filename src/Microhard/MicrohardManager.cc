@@ -165,8 +165,7 @@ MicrohardManager::configure()
             return;
         }
 #endif
-        _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
-                                  _connectingChannel, _connectingBandwidth, _networkId);
+        _mhSettingsLoc->configure(_encryptionKey, 0, _connectingChannel, _connectingBandwidth, _networkId);
     }
 }
 
