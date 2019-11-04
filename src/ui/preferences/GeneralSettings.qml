@@ -1061,17 +1061,30 @@ Rectangle {
                     Item { width: 1; height: _margins }
 
                     QGCLabel {
-                        text:               qsTr("%1 Version: %2").arg(QGroundControl.appName).arg(QGroundControl.qgcVersion)
+                        text:               qsTr("%1 Version").arg(QGroundControl.appName)
                         Layout.alignment:   Qt.AlignHCenter
                     }
                     QGCLabel {
-                        text:               qsTr("Custom Version: %1").arg(QGroundControl.corePlugin.customVersion)
-                        visible:            QGroundControl.corePlugin.customVersion !== undefined
+                        // If built with custom folder show only the custom version
+                        text:               QGroundControl.corePlugin.customVersion !== undefined ? QGroundControl.corePlugin.customVersion : QGroundControl.qgcVersion
+                        Layout.alignment:   Qt.AlignHCenter
+                    }
+
+                    // In case of advanced mode show the custom submodule and QGC core version
+                    Item {
+                        height:  ScreenTools.defaultFontPixelHeight * 2
+                        width:   1
+                        visible: _devVersion.visible
+                    }
+                    QGCLabel {
+                        id: _devVersion
+                        text:               qsTr("Custom Dev Version: %1").arg(QGroundControl.corePlugin.customGitVersion)
+                        visible:            QGroundControl.corePlugin.customVersion !== undefined && QGroundControl.corePlugin.showAdvancedUI
                         Layout.alignment:   Qt.AlignHCenter
                     }
                     QGCLabel {
-                        text:               qsTr("Custom Development Version: %1").arg(QGroundControl.corePlugin.customGitVersion)
-                        visible:            QGroundControl.corePlugin.customGitVersion !== undefined && QGroundControl.corePlugin.showAdvancedUI
+                        text:               qsTr("Core Dev Version: %1").arg(QGroundControl.qgcVersion)
+                        visible:            _devVersion.visible
                         Layout.alignment:   Qt.AlignHCenter
                     }
                 } // settingsColumn
