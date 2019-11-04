@@ -312,6 +312,52 @@ Column {
                         }
                     }
                     //-------------------------------------------
+                    //-- Time Lapse
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            _cameraPhotoMode
+                        property var photoModes: [qsTr("Single"), qsTr("Time Lapse")]
+                        QGCLabel {
+                            text:           qsTr("Photo Mode")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            id:             photoModeCombo
+                            width:          _editFieldWidth
+                            model:          parent.photoModes
+                            currentIndex:   _camera ? _camera.photoMode : 0
+                            onActivated:    _camera.photoMode = index
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Time Lapse Interval
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            _cameraElapsedMode
+                        QGCLabel {
+                            text:           qsTr("Photo Interval (seconds)")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Item {
+                            height:         photoModeCombo.height
+                            width:          _editFieldWidth
+                            QGCSlider {
+                                maximumValue:   60
+                                minimumValue:   1
+                                stepSize:       1
+                                value:          _curPhotoLapse
+                                displayValue:   true
+                                updateValueWhileDragging: true
+                                anchors.fill:   parent
+                                onValueChanged: _camera.photoLapse = value
+                            }
+                        }
+                    }
+                    //-------------------------------------------
                     //-- Camera Settings
                     Repeater {
                         model:  _camera ? _camera.activeSettings : []
@@ -362,54 +408,6 @@ Column {
                                     anchors.left:   parent.left
                                     checked:        parent._fact ? parent._fact.value : false
                                     onClicked:      parent._fact.value = checked ? 1 : 0
-                                }
-                            }
-                        }
-                    }
-                    //-------------------------------------------
-                    //-- Time Lapse
-                    Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        visible:        _cameraPhotoMode
-                        property var photoModes: [qsTr("Single"), qsTr("Time Lapse")]
-                        QGCLabel {
-                            text:       qsTr("Photo Mode")
-                            width:      _labelFieldWidth
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        QGCComboBox {
-                            id:             photoModeCombo
-                            width:          _editFieldWidth
-                            model:          parent.photoModes
-                            currentIndex:   _camera ? _camera.photoMode : 0
-                            onActivated:    _camera.photoMode = index
-                        }
-                    }
-                    //-------------------------------------------
-                    //-- Time Lapse Interval
-                    Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        visible:        _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
-                        QGCLabel {
-                            text:       qsTr("Photo Interval (seconds)")
-                            width:      _labelFieldWidth
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        Item {
-                            height:     photoModeCombo.height
-                            width:      _editFieldWidth
-                            QGCSlider {
-                                maximumValue:   60
-                                minimumValue:   1
-                                stepSize:       1
-                                value:          _camera ? _camera.photoLapse : 5
-                                displayValue:   true
-                                updateValueWhileDragging: true
-                                anchors.fill:   parent
-                                onValueChanged: {
-                                    _camera.photoLapse = value
                                 }
                             }
                         }
