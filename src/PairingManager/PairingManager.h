@@ -176,6 +176,7 @@ private:
     void                    _uploadError                (QNetworkReply::NetworkError code);
     void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel);
     void                    _connectionCompleted        (const QString& name, const int channel);
+    void                    _disconnectCompleted        (const QString& name);
     void                    _channelCompleted           (const QString& name, int channel);
     QDir                    _pairingCacheDir            ();
     QDir                    _pairingCacheTempDir        ();

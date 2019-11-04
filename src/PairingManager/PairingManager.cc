@@ -116,13 +116,7 @@ PairingManager::_getDeviceChannel(const QString& name)
     }
 
     QJsonObject jsonObj = _devices[name].object();
-    int cc = jsonObj["CC"].toInt();
-
-    if (cc == 0) {
-        return 0;
-    }
-
-    return cc;
+    return jsonObj["CC"].toInt();
 }
 
 //-----------------------------------------------------------------------------
@@ -252,6 +246,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("LastConnection", QDateTime::currentDateTime().toString(timeFormat));
     jsonObj.insert("CC", channel);
+    jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
     jsonDoc.setObject(jsonObj);
     _devices[name] = jsonDoc;
     _writeJson(jsonDoc, name);
@@ -261,6 +256,18 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     _toolbox->videoManager()->startVideo();
     emit connectedVehicleChanged();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_disconnectCompleted(const QString& name)
+{
+    QJsonDocument jsonDoc = _getPairingJsonDoc(name);
+    QJsonObject jsonObj = jsonDoc.object();
+    jsonObj.insert("PW", _toolbox->microhardManager()->pairingPower());
+    jsonDoc.setObject(jsonObj);
+    _devices[name] = jsonDoc;
+    _writeJson(jsonDoc, name);
 }
 
 //-----------------------------------------------------------------------------
@@ -348,6 +355,12 @@ PairingManager::_uploadFinished()
                 setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
                 qCDebug(PairingManagerLog) << "Connection rejected.";
             }
+        } else if (map["CMD"] == "disconnect") {
+            if (map["RES"] == "accepted") {
+                _disconnectCompleted(map["NM"].toString());
+            } else if (map["RES"] == "rejected") {
+                qCDebug(PairingManagerLog) << "Disconnect rejected.";
+            }
         } else if (map["CMD"] == "channel") {
             if (map["RES"] == "accepted") {
                 _channelCompleted(map["NM"].toString(), map["CC"].toInt());
@@ -411,10 +424,13 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
     }
 
     if (confirm && !_devicesToConnect.contains(name)) {
-        _lastDeviceNameToConnect = name;
-        _confirmHighPowerMode = true;
-        emit confirmHighPowerModeChanged();
-        return;
+        QJsonObject jsonObj = _devices[name].object();
+        if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
+            _lastDeviceNameToConnect = name;
+            _confirmHighPowerMode = true;
+            emit confirmHighPowerModeChanged();
+            return;
+        }
     }
     _lastDeviceNameToConnect = "";
     if (_confirmHighPowerMode) {
@@ -1124,7 +1140,7 @@ PairingManager::disconnectDevice(const QString& name)
     for (int i=0; i<vehicles->count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
         if (vehicle->containsLink(link)) {
-            if (vehicle->armed()) {
+            if (!vehicle->armed()) {
                 QVariantMap map = _getPairingMap(name);
                 QString disconnectURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/disconnect";
                 QJsonDocument jsonDoc;
