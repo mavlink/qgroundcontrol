@@ -26,6 +26,7 @@ static const qint64  min_time_between_connects = 5000;
 static const int     pairRetryWait = 3000;
 static const QString gcsFileName = "gcs";
 static const QString tempPrefix = "temp";
+static const QString nidPrefix = "SRR_";
 static const QString chSeparator = "\t";
 static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
 
@@ -388,6 +389,7 @@ PairingManager::_channelCompleted(const QString& name, int channel)
     _devices[name] = jsonDoc;
     emit deviceListChanged();
     _toolbox->microhardManager()->setConnectChannel(channel);
+    _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)));
     _toolbox->microhardManager()->updateSettings();
 }
 
@@ -559,6 +561,7 @@ PairingManager::setConnectingChannel(int channel, int power)
 {
     if (_connectedDevices.empty()) {
         _toolbox->microhardManager()->setConnectChannel(channel);
+        _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)));
         _toolbox->microhardManager()->updateSettings();
         return;
     }
@@ -579,6 +582,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     QJsonObject jsonObj;
     jsonObj["NM"] = name;
     jsonObj["CC"] = channel;
+    jsonObj["NID"] = nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel));
     jsonObj["PW"] = power;
     jsonDoc.setObject(jsonObj);
     emit startUpload(name, channelURL, jsonDoc, true);
@@ -729,7 +733,9 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     if (linkType == "MH") {
         _toolbox->microhardManager()->switchToConnectionEncryptionKey(remotePairingMap["EK"].toString());
         if (remotePairingMap.contains("CC")) {
-            _toolbox->microhardManager()->setConnectChannel(remotePairingMap["CC"].toInt());
+            int cc = remotePairingMap["CC"].toInt();
+            _toolbox->microhardManager()->setConnectChannel(cc);
+            _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
         }
         if (remotePairingMap.contains("BW")) {
             _toolbox->microhardManager()->setConnectBandwidth(remotePairingMap["BW"].toInt());
@@ -851,7 +857,9 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("IP", localIP);
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
-    jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    int cc = _toolbox->microhardManager()->connectingChannel();
+    jsonObj.insert("CC", cc);
+    jsonObj.insert("NID", nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
     jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     return QJsonDocument(jsonObj);
 }
@@ -879,11 +887,15 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 24550);
+    int cc;
     if (remotePairingMap.contains("CC")) {
-        jsonObj.insert("CC", remotePairingMap["CC"].toInt());
+        cc = remotePairingMap["CC"].toInt();
     } else {
-        jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+        cc = _toolbox->microhardManager()->connectingChannel();
     }
+    jsonObj.insert("CC", cc);
+    jsonObj.insert("NID", nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
+
     jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
 
     return QJsonDocument(jsonObj);
@@ -1103,7 +1115,9 @@ PairingManager::disconnectDevice(const QString& name)
                 QJsonDocument jsonDoc;
                 QJsonObject jsonObj;
                 jsonObj["NM"] = name;
-                jsonObj["CC"] = map["CC"].toInt();
+                int cc = map["CC"].toInt();
+                jsonObj["CC"] = cc;
+                jsonObj["NID"] = nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc));
                 jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
                 jsonDoc.setObject(jsonObj);
                 emit startUpload(name, disconnectURL, jsonDoc, true);
