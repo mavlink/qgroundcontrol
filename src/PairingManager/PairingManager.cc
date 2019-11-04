@@ -26,7 +26,6 @@ static const qint64  min_time_between_connects = 5000;
 static const int     pairRetryWait = 3000;
 static const QString gcsFileName = "gcs";
 static const QString tempPrefix = "temp";
-static const QString nidPrefix = "SRR_";
 static const QString chSeparator = "\t";
 static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
 
@@ -389,11 +388,12 @@ PairingManager::_channelCompleted(const QString& name, int channel)
     _devices[name] = jsonDoc;
     emit deviceListChanged();
     _toolbox->microhardManager()->setConnectChannel(channel);
-    _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)));
+    _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
     _toolbox->microhardManager()->updateSettings();
 }
 
 //-----------------------------------------------------------------------------
+
 void
 PairingManager::connectToDevice(const QString& deviceName, bool confirm)
 {
@@ -561,7 +561,7 @@ PairingManager::setConnectingChannel(int channel, int power)
 {
     if (_connectedDevices.empty()) {
         _toolbox->microhardManager()->setConnectChannel(channel);
-        _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)));
+        _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
         _toolbox->microhardManager()->updateSettings();
         return;
     }
@@ -582,7 +582,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     QJsonObject jsonObj;
     jsonObj["NM"] = name;
     jsonObj["CC"] = channel;
-    jsonObj["NID"] = nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel));
+    jsonObj["NID"] = _getDeviceConnectNid(channel);
     jsonObj["PW"] = power;
     jsonDoc.setObject(jsonObj);
     emit startUpload(name, channelURL, jsonDoc, true);
@@ -733,9 +733,10 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     if (linkType == "MH") {
         _toolbox->microhardManager()->switchToConnectionEncryptionKey(remotePairingMap["EK"].toString());
         if (remotePairingMap.contains("CC")) {
-            int cc = remotePairingMap["CC"].toInt();
-            _toolbox->microhardManager()->setConnectChannel(cc);
-            _toolbox->microhardManager()->setConnectNetworkId(nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
+            _toolbox->microhardManager()->setConnectChannel(remotePairingMap["CC"].toInt());
+        }
+        if (remotePairingMap.contains("NID")) {
+            _toolbox->microhardManager()->setConnectNetworkId(remotePairingMap["NID"].toString());
         }
         if (remotePairingMap.contains("BW")) {
             _toolbox->microhardManager()->setConnectBandwidth(remotePairingMap["BW"].toInt());
@@ -859,7 +860,7 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("PublicKey", _publicKey);
     int cc = _toolbox->microhardManager()->connectingChannel();
     jsonObj.insert("CC", cc);
-    jsonObj.insert("NID", nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
+    jsonObj.insert("NID", _getDeviceConnectNid(cc));
     jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     return QJsonDocument(jsonObj);
 }
@@ -894,7 +895,11 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
         cc = _toolbox->microhardManager()->connectingChannel();
     }
     jsonObj.insert("CC", cc);
-    jsonObj.insert("NID", nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc)));
+    if (remotePairingMap.contains("NID")) {
+        jsonObj.insert("NID", remotePairingMap["NID"].toString());
+    } else {
+        jsonObj.insert("NID", _getDeviceConnectNid(cc));
+    }
 
     jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
 
@@ -1049,7 +1054,9 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     jsonObj.insert("AIP", remoteIPAddr);
     jsonObj.insert("CU", _toolbox->microhardManager()->configUserName());
     jsonObj.insert("CP", _toolbox->microhardManager()->configPassword());
-    jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
+    int cc = _toolbox->microhardManager()->connectingChannel();
+    jsonObj.insert("CC", cc);
+    jsonObj.insert("NID", _getDeviceConnectNid(cc));
     jsonObj.insert("PW", _toolbox->microhardManager()->pairingPower());
     jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
     jsonObj.insert("EK", _encryptionKey);
@@ -1117,7 +1124,7 @@ PairingManager::disconnectDevice(const QString& name)
                 jsonObj["NM"] = name;
                 int cc = map["CC"].toInt();
                 jsonObj["CC"] = cc;
-                jsonObj["NID"] = nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(cc));
+                jsonObj["NID"] = _getDeviceConnectNid(cc);
                 jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
                 jsonDoc.setObject(jsonObj);
                 emit startUpload(name, disconnectURL, jsonDoc, true);
@@ -1131,8 +1138,15 @@ PairingManager::disconnectDevice(const QString& name)
     setPairingStatus(PairingIdle, "");
 }
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
 //-----------------------------------------------------------------------------
+QString
+PairingManager::_getDeviceConnectNid(int channel)
+{
+    return _nidPrefix + QString::number(_toolbox->microhardManager()->getChannelFrequency(channel));
+}
+
+//-----------------------------------------------------------------------------
+#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
 void
 PairingManager::startNFCScan()
 {

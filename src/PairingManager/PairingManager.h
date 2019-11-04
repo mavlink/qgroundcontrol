@@ -75,12 +75,14 @@ public:
     bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
+    QString         nidPrefix                   () { return _nidPrefix; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
+    void            setNidPrefix                (QString nidPrefix) { _nidPrefix = nidPrefix; emit nidPrefixChanged(); }
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
     QString         pairingKey                  ();
-    QString         networkId                   ();
+    QString         networkId                   ();    
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -107,6 +109,7 @@ public:
     Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle                            NOTIFY connectedVehicleChanged)
     Q_PROPERTY(QString          pairingKey              READ pairingKey                                  NOTIFY pairingKeyChanged)
     Q_PROPERTY(QString          networkId               READ networkId                                   NOTIFY networkIdChanged)
+    Q_PROPERTY(QString          nidPrefix               READ nidPrefix               WRITE setNidPrefix  NOTIFY nidPrefixChanged)
     Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
     Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
@@ -130,6 +133,7 @@ signals:
     void pairingKeyChanged                      ();
     void confirmHighPowerModeChanged            ();
     void networkIdChanged                       ();
+    void nidPrefixChanged                       ();
 
 private slots:
     void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
@@ -160,6 +164,7 @@ private:
     QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
     QString                       _lastDeviceNameToConnect = "";
+    QString                       _nidPrefix = "QGC_";
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
@@ -191,6 +196,7 @@ private:
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);
     QString                 _getDeviceIP                (const QString& name);
+    QString                 _getDeviceConnectNid        (int channel);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
