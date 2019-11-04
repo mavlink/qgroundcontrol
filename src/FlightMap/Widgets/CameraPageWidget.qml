@@ -179,7 +179,11 @@ Column {
                     if(_cameraVideoMode) {
                         _camera.toggleVideo()
                     } else {
-                        _camera.takePhoto()
+                        if(_cameraPhotoMode && !_photoIdle && _cameraElapsedMode) {
+                            _camera.stopTakePhoto()
+                        } else {
+                            _camera.takePhoto()
+                        }
                     }
                 }
             }
@@ -224,7 +228,6 @@ Column {
     Component {
         id: cameraSettings
         QGCViewDialog {
-            id: _cameraSettingsDialog
             QGCFlickable {
                 anchors.fill:       parent
                 contentHeight:      camSettingsCol.height
