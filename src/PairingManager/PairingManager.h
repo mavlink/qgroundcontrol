@@ -174,8 +174,8 @@ private:
     QString                 _getLocalIPInNetwork        (const QString& remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey);
-    void                    _connectionCompleted        (const QString& name);
+    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel);
+    void                    _connectionCompleted        (const QString& name, const int channel);
     void                    _channelCompleted           (const QString& name, int channel);
     QDir                    _pairingCacheDir            ();
     QDir                    _pairingCacheTempDir        ();

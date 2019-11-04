@@ -91,12 +91,13 @@ PairingManager::setUsePairing(bool set)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(const QString& tempName, const QString& newName, const QString& devicePublicKey)
+PairingManager::_pairingCompleted(const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel)
 {
     QJsonDocument jsonDoc = _getPairingJsonDoc(tempName, true);
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("Name", newName);
     jsonObj.insert("PublicKey", devicePublicKey);
+    jsonObj.insert("CC", channel);
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, newName);
     _updatePairedDeviceNameList();
@@ -115,7 +116,13 @@ PairingManager::_getDeviceChannel(const QString& name)
     }
 
     QJsonObject jsonObj = _devices[name].object();
-    return jsonObj["CC"].toInt();
+    int cc = jsonObj["CC"].toInt();
+
+    if (cc == 0) {
+        return 0;
+    }
+
+    return cc;
 }
 
 //-----------------------------------------------------------------------------
@@ -222,13 +229,6 @@ PairingManager::_createUDPLink(const QString& name, quint16 port)
     connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged, Qt::QueuedConnection);
     _connectedDevices[name] = link;
 
-    QJsonDocument jsonDoc = _devices[name];
-    QJsonObject jsonObj = jsonDoc.object();
-    jsonObj.insert("LastConnection", QDateTime::currentDateTime().toString(timeFormat));
-    jsonDoc.setObject(jsonObj);
-    _devices[name] = jsonDoc;
-    _writeJson(jsonDoc, name);
-
     _updateConnectedDevices();
 }
 
@@ -246,8 +246,16 @@ PairingManager::_removeUDPLink(const QString& name)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_connectionCompleted(const QString& name)
+PairingManager::_connectionCompleted(const QString& name, const int channel)
 {
+    QJsonDocument jsonDoc = _devices[name];
+    QJsonObject jsonObj = jsonDoc.object();
+    jsonObj.insert("LastConnection", QDateTime::currentDateTime().toString(timeFormat));
+    jsonObj.insert("CC", channel);
+    jsonDoc.setObject(jsonObj);
+    _devices[name] = jsonDoc;
+    _writeJson(jsonDoc, name);
+
     _lastConnected = name;
     _createUDPLink(_lastConnected, 24550);
     _toolbox->videoManager()->startVideo();
@@ -328,14 +336,14 @@ PairingManager::_uploadFinished()
         if (map["CMD"] == "pair") {
             removeTempFile = true;
             if (map["RES"] == "accepted") {
-                _pairingCompleted(name, map["NM"].toString(), map["PublicKey"].toString());
+                _pairingCompleted(name, map["NM"].toString(), map["PublicKey"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
                 setPairingStatus(PairingRejected, tr("Pairing rejected"));
                 qCDebug(PairingManagerLog) << "Pairing rejected";
             }
         } else if (map["CMD"] == "connect") {
             if (map["RES"] == "accepted") {
-                _connectionCompleted(map["NM"].toString());
+                _connectionCompleted(map["NM"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
                 setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
                 qCDebug(PairingManagerLog) << "Connection rejected.";
