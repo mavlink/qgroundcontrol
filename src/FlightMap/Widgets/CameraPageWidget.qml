@@ -359,7 +359,15 @@ Column {
                     }
                     //-------------------------------------------
                     //-- Camera Settings
+                    Rectangle {
+                        width:      parent.width
+                        height:     1
+                        color:      qgcPal.button
+                        visible:    _cameraPhotoMode //TODO: that's not totally correct, need to determine if there had been anything before, is there a simple way?
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                     Repeater {
+                        id:     factRepeater
                         model:  _camera ? _camera.activeSettings : []
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
@@ -411,6 +419,13 @@ Column {
                                 }
                             }
                         }
+                    }
+                    Rectangle {
+                        width:      parent.width
+                        height:     1
+                        color:      qgcPal.button
+                        visible:    factRepeater.count > 0
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                     //-------------------------------------------
                     // Grid Lines
