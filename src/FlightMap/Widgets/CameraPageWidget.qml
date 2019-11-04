@@ -51,6 +51,7 @@ Column {
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool   _canShoot:              !_cameraModeUndefined && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
     property bool   _isShooting:            (_cameraVideoMode && _videoRecording) || (_cameraPhotoMode && !_photoIdle)
+    property int    _curPhotoLapse:         _camera ? _camera.photoLapse : 5
 
     function showSettings() {
         mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -147,37 +148,60 @@ Column {
         }
     }
     //-- Shutter
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camShutter.visible; }
-    Rectangle {
-        id:         camShutter
-        color:      Qt.rgba(0,0,0,0)
-        width:      ScreenTools.defaultFontPixelWidth * 6
-        height:     width
-        radius:     width * 0.5
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _camera; }
+    Row {
         visible:    _camera
-        border.color: qgcPal.buttonText
-        border.width: 3
+        height:     ScreenTools.defaultFontPixelHeight * 2.75 // ScreenTools.defaultFontPixelWidth * 6
+        spacing:    ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
-        Rectangle {
-            width:      parent.width * (_isShooting ? 0.5 : 0.75)
-            height:     width
-            radius:     _isShooting ? 0 : width * 0.5
-            color:      _canShoot ? qgcPal.colorRed : qgcPal.colorGrey
-            anchors.centerIn:   parent
+        Item {
+            height:     parent.height
+            width:      height
         }
-        MouseArea {
-            anchors.fill:   parent
-            enabled:        _canShoot
-            onClicked: {
-                if(_cameraVideoMode) {
-                    _camera.toggleVideo()
-                } else {
-                    if(_cameraPhotoMode && !_photoIdle && _cameraElapsedMode) {
-                        _camera.stopTakePhoto()
+        Rectangle {
+            color:          Qt.rgba(0,0,0,0)
+            height:         parent.height
+            width:          height
+            radius:         height * 0.5
+            border.color:   qgcPal.buttonText
+            border.width:   3
+            Rectangle {
+                width:      parent.width * (_isShooting ? 0.5 : 0.75)
+                height:     width
+                radius:     _isShooting ? 0 : width * 0.5
+                color:      _canShoot ? qgcPal.colorRed : qgcPal.colorGrey
+                anchors.centerIn:   parent
+            }
+            MouseArea {
+                anchors.fill:   parent
+                enabled:        _canShoot
+                onClicked: {
+                    if(_cameraVideoMode) {
+                        _camera.toggleVideo()
                     } else {
                         _camera.takePhoto()
                     }
                 }
+            }
+        }
+        Item {
+            height:     parent.height
+            width:      height
+            QGCColoredImage {
+                visible:            _cameraElapsedMode
+                height:             ScreenTools.defaultFontPixelHeight * 3
+                width:              height
+                anchors.centerIn:   parent
+                source:             "/qmlimages/camera_photo.svg" //TODO: how to get a new pic in ??? "/qmlimages/camera_photo_timelapse.svg"
+                fillMode:           Image.PreserveAspectFit
+                sourceSize.height:  height
+                color:              qgcPal.text
+            }
+            QGCLabel {
+                text:               _curPhotoLapse + "s"
+                font.pointSize:     ScreenTools.defaultFontPointSize
+                visible:            _cameraElapsedMode
+                anchors.centerIn:   parent
             }
         }
     }
