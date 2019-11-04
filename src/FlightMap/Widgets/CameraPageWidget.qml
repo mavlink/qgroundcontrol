@@ -42,13 +42,15 @@ Column {
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
+    property bool   _streamingEnabled:      false //TODO: determine what it should be, VideoPageWidget.qml does QGroundControl.settingsManager.videoSettings.streamConfigured
     property bool   _hasModes:              _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
-    property bool   _photoIdle:             _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
+    property bool   _photoIdle:             _camera && (_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE || _camera.photoStatus >= QGCCameraControl.PHOTO_CAPTURE_LAST)
     property bool   _storageReady:          _camera && _camera.storageStatus === QGCCameraControl.STORAGE_READY
     property bool   _batteryReady:          _camera && _camera.batteryRemaining >= 0
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
-    property bool   _canShoot:              !_cameraModeUndefined && !_videoRecording && _photoIdle && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
+    property bool   _canShoot:              !_cameraModeUndefined && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
+    property bool   _isShooting:            (_cameraVideoMode && _videoRecording) || (_cameraPhotoMode && !_photoIdle)
 
     function showSettings() {
         mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -113,7 +115,7 @@ Column {
                 color:              _cameraVideoMode ? qgcPal.colorGreen : qgcPal.text
                 MouseArea {
                     anchors.fill:   parent
-                    enabled:        _cameraPhotoMode
+                    enabled:        _cameraPhotoMode && !_isShooting
                     onClicked: {
                         _camera.setVideoMode()
                     }
@@ -140,7 +142,7 @@ Column {
                 color:              _cameraPhotoMode ? qgcPal.colorGreen : qgcPal.text
                 MouseArea {
                     anchors.fill:   parent
-                    enabled:        _cameraVideoMode
+                    enabled:        _cameraVideoMode && !_isShooting
                     onClicked: {
                         _camera.setPhotoMode()
                     }
@@ -161,9 +163,9 @@ Column {
         border.width: 3
         anchors.horizontalCenter: parent.horizontalCenter
         Rectangle {
-            width:      parent.width * (_videoRecording || (_cameraPhotoMode && !_photoIdle && _cameraElapsedMode) ? 0.5 : 0.75)
+            width:      parent.width * (_isShooting ? 0.5 : 0.75)
             height:     width
-            radius:     _videoRecording || (_cameraPhotoMode && !_photoIdle && _cameraElapsedMode) ? 0 : width * 0.5
+            radius:     _isShooting ? 0 : width * 0.5
             color:      _canShoot ? qgcPal.colorRed : qgcPal.colorGrey
             anchors.centerIn:   parent
         }
@@ -183,6 +185,7 @@ Column {
             }
         }
     }
+    //-- Timer/Counter
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _camera; }
     QGCLabel {
         text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
@@ -196,6 +199,7 @@ Column {
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
+    //-- Settings
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _camera; }
     Component {
         id: cameraSettings
@@ -234,7 +238,7 @@ Column {
                     //-- Stream Selector
                     Row {
                         spacing:            ScreenTools.defaultFontPixelWidth
-                        visible:            _isCamera && _camera.streamLabels.length > 1
+                        visible:            _camera && _camera.streamLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Stream Selector:")
