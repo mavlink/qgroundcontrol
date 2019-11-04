@@ -35,7 +35,7 @@ public:
     //-- Return a list of cameras provided by this vehicle
     virtual QmlObjectListModel* cameras             () { return &_cameras; }
     //-- Camera names to show the user (for selection)
-    virtual QStringList          cameraLabels       () { return _cameraLabels; }
+    virtual QStringList         cameraLabels        () { return _cameraLabels; }
     //-- Current selected camera
     virtual int                 currentCamera       () { return _currentCamera; }
     virtual QGCCameraControl*   currentCameraInstance();
@@ -79,6 +79,7 @@ protected:
     virtual void    _handleCaptureStatus    (const mavlink_message_t& message);
     virtual void    _handleVideoStreamInfo  (const mavlink_message_t& message);
     virtual void    _handleVideoStreamStatus(const mavlink_message_t& message);
+    virtual void    _handleBatteryStatus    (const mavlink_message_t& message);
 
 protected:
 
