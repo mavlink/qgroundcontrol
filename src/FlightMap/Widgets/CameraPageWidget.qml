@@ -54,7 +54,7 @@ Column {
     property int    _curPhotoLapse:         _camera ? _camera.photoLapse : 5
 
     function showSettings() {
-        mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
+        mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Photo Settings"), 70, StandardButton.Ok)
     }
 
     //-- Dumb camera trigger if no actual camera interface exists
