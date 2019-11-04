@@ -549,7 +549,7 @@ PairingManager::removePairedDevice(const QString& name)
         jsonDoc.setObject(jsonObj);
         emit startUpload(name, unpairURL, jsonDoc, true);
     }
-    _updatePairedDeviceNameList(false);
+    _updatePairedDeviceNameList();
     setPairingStatus(PairingIdle, "");
 }
 
@@ -638,7 +638,7 @@ PairingManager::_resetPairingConfig()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_updatePairedDeviceNameList(bool checkEmpty)
+PairingManager::_updatePairedDeviceNameList()
 {
     _devices.clear();
     QDirIterator it(_pairingCacheDir().absolutePath(), QDir::Files);
@@ -651,9 +651,6 @@ PairingManager::_updatePairedDeviceNameList(bool checkEmpty)
                 _devices[name] = jsonDoc;
             }
         }
-    }
-    if (checkEmpty && _devices.empty()) {
-        _resetPairingConfig();
     }
     emit deviceListChanged();
 }
@@ -959,6 +956,10 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
         return;
     }
 
+    if (_devices.empty()) {
+        _resetPairingConfig();
+    }
+
     QVariantMap remotePairingMap = jsonObj.toVariantMap();
     QString linkType  = remotePairingMap["LT"].toString();
     QString pport     = remotePairingMap["PP"].toString();
@@ -1021,6 +1022,10 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
     _toolbox->microhardManager()->setNetworkId(networkId);
     _toolbox->microhardManager()->updateSettings();
+
+    if (_devices.empty()) {
+        _resetPairingConfig();
+    }
 
     QJsonDocument receivedJsonDoc;
     QJsonObject   jsonObj;
