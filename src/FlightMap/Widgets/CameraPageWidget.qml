@@ -407,14 +407,14 @@ Column {
                             }
                             Item {
                                 width:      parent._isBool ? _editFieldWidth : 0
-                                height:     factSwitch.height
+                                height:     ScreenTools.defaultFontPixelHeight * 2.5
                                 visible:    parent._isBool
                                 anchors.verticalCenter: parent.verticalCenter
                                 property var _fact: parent._fact
                                 Switch {
-                                    id: factSwitch
-                                    anchors.left:   parent.left
                                     checked:        parent._fact ? parent._fact.value : false
+                                    anchors.left:   parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
                                     onClicked:      parent._fact.value = checked ? 1 : 0
                                 }
                             }
