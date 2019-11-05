@@ -33,6 +33,7 @@ public:
     Q_PROPERTY(int          linkConnected       READ linkConnected                                 NOTIFY linkConnectedChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                    NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                                  NOTIFY linkChanged)
+    Q_PROPERTY(int          downlinkRSSIPct     READ downlinkRSSIPct                               NOTIFY linkChanged)
     Q_PROPERTY(QString      localIPAddr         READ localIPAddr          WRITE setLocalIPAddr     NOTIFY localIPAddrChanged)
     Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr         WRITE setRemoteIPAddr    NOTIFY remoteIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                       NOTIFY netMaskChanged)
@@ -58,6 +59,7 @@ public:
     int         linkConnected                   () { return _linkConnectedStatus; }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
+    int         downlinkRSSIPct                 ();
     QString     localIPAddr                     () { return _localIPAddr; }
     QString     remoteIPAddr                    () { return _remoteIPAddr; }
     QString     netMask                         () { return _netMask; }
