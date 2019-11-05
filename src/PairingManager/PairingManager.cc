@@ -678,7 +678,7 @@ PairingManager::_updatePairedDeviceNameList()
         if (fileInfo.fileName() != gcsFileName) {
             QString name = fileInfo.fileName();
             QJsonDocument jsonDoc = _getPairingJsonDoc(name);
-            if (!_gcsJsonDoc.isNull() && _gcsJsonDoc.isObject()) {
+            if (!jsonDoc.isNull() && jsonDoc.isObject()) {
                 _devices[name] = jsonDoc;
             }
         }
