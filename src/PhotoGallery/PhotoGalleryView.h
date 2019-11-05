@@ -54,13 +54,13 @@ public:
         ///
         /// Moving pointer by less than this amount (relative to widget size)
         /// is interpreted as being a "click".
-        double click_slip = 0.02;
+        double click_slip = 0.10;
 
         /// Timeout to finish zoom operations.
         std::chrono::system_clock::duration zoom_timeout = std::chrono::milliseconds(250);
 
         /// Timeout to recognize long clicks.
-        std::chrono::system_clock::duration long_click_timeout = std::chrono::milliseconds(500);
+        std::chrono::system_clock::duration long_click_timeout = std::chrono::milliseconds(300);
     };
 
     /// Current view mode (gallery or single image full screen).
