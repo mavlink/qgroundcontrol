@@ -19,6 +19,45 @@
 
 #include <QStandardPaths>
 
+
+const QHash<int, QString> _mavlinkCompIdHash {
+    { MAV_COMP_ID_CAMERA,   "Camera1" },
+    { MAV_COMP_ID_CAMERA2,  "Camera2" },
+    { MAV_COMP_ID_CAMERA3,  "Camera3" },
+    { MAV_COMP_ID_CAMERA4,  "Camera4" },
+    { MAV_COMP_ID_CAMERA5,  "Camera5" },
+    { MAV_COMP_ID_CAMERA6,  "Camera6" },
+    { MAV_COMP_ID_SERVO1,   "Servo1" },
+    { MAV_COMP_ID_SERVO2,   "Servo2" },
+    { MAV_COMP_ID_SERVO3,   "Servo3" },
+    { MAV_COMP_ID_SERVO4,   "Servo4" },
+    { MAV_COMP_ID_SERVO5,   "Servo5" },
+    { MAV_COMP_ID_SERVO6,   "Servo6" },
+    { MAV_COMP_ID_SERVO7,   "Servo7" },
+    { MAV_COMP_ID_SERVO8,   "Servo8" },
+    { MAV_COMP_ID_SERVO9,   "Servo9" },
+    { MAV_COMP_ID_SERVO10,  "Servo10" },
+    { MAV_COMP_ID_SERVO11,  "Servo11" },
+    { MAV_COMP_ID_SERVO12,  "Servo12" },
+    { MAV_COMP_ID_SERVO13,  "Servo13" },
+    { MAV_COMP_ID_SERVO14,  "Servo14" },
+    { MAV_COMP_ID_GIMBAL,   "Gimbal1" },
+    { MAV_COMP_ID_ADSB,     "ADSB" },
+    { MAV_COMP_ID_OSD,      "OSD" },
+    { MAV_COMP_ID_FLARM,    "FLARM" },
+    { 171,  "Gimbal2" }, //{ MAV_COMP_ID_GIMBAL2,  "Gimbal2" }, //not yet in the used common.h !!
+    { 172,  "Gimbal3" }, //{ MAV_COMP_ID_GIMBAL3,  "Gimbal3" },
+    { 173,  "Gimbal4" }, //{ MAV_COMP_ID_GIMBAL4,  "Gimbal4" },
+    { 174,  "Gimbal5" }, //{ MAV_COMP_ID_GIMBAL5,  "Gimbal5" },
+    { 175,  "Gimbal6" }, //{ MAV_COMP_ID_GIMBAL6,  "Gimbal6" },
+    { MAV_COMP_ID_IMU,      "IMU1" },
+    { MAV_COMP_ID_IMU_2,    "IMU2" },
+    { MAV_COMP_ID_IMU_3,    "IMU3" },
+    { MAV_COMP_ID_GPS,      "GPS1" },
+    { MAV_COMP_ID_GPS2,     "GPS2" }
+};
+
+
 ParameterEditorController::ParameterEditorController(void)
     : _currentCategory          ("Standard")  // FIXME: firmware specific
     , _parameters               (new QmlObjectListModel(this))
@@ -36,7 +75,14 @@ ParameterEditorController::ParameterEditorController(void)
     // There is a category for each non default component
     for (int compId: _parameterMgr->componentIds()) {
         if (compId != _vehicle->defaultComponentId()) {
-            _categories.append(QString("%1%2").arg(_componentCategoryPrefix).arg(compId));
+            QString componentCategory;
+            if (_mavlinkCompIdHash.contains(compId)) {
+                componentCategory = _mavlinkCompIdHash.value(compId) + QString("   (compId %1)").arg(compId);
+            } else {
+                componentCategory = QString("%1%2").arg(_componentCategoryPrefix).arg(compId);
+            }
+            _componentCategoryHash.insert(componentCategory, compId);
+            _categories.append(componentCategory);
         }
     }
 
@@ -59,7 +105,7 @@ ParameterEditorController::~ParameterEditorController()
 
 QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
 {
-    if (category.startsWith(_componentCategoryPrefix)) {
+    if (_componentCategoryHash.contains(category)) {
         return QStringList(tr("All"));
     } else {
         const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
@@ -182,12 +228,11 @@ void ParameterEditorController::_updateParameters(void)
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
     if (searchItems.isEmpty() && !_showModifiedOnly) {
-        if (_currentCategory.startsWith(_componentCategoryPrefix)) {
-            int compId = _currentCategory.right(_currentCategory.length() - _componentCategoryPrefix.length()).toInt();
+        if (_componentCategoryHash.contains(_currentCategory)) {
+            int compId = _componentCategoryHash.value(_currentCategory);
             for (const QString& paramName: _parameterMgr->parameterNames(compId)) {
                 newParameterList.append(_parameterMgr->getParameter(compId, paramName));
             }
-
         } else {
             const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
             for (const QString& parameter: categoryMap[_currentCategory][_currentGroup]) {

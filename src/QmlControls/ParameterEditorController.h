@@ -73,6 +73,7 @@ private:
     ParameterManager*   _parameterMgr;
     QString             _componentCategoryPrefix;
     bool                _showModifiedOnly;
+    QHash<QString, int> _componentCategoryHash;
 };
 
 #endif
