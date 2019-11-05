@@ -255,7 +255,9 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     _createUDPLink(_lastConnected, 24550);
     _toolbox->videoManager()->startVideo();
     emit connectedVehicleChanged();
-    setPairingStatus(PairingConnected, tr("Connection Successfull"));
+    QString chStr = QString::number(channel) + " - " +
+                    QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
+    setPairingStatus(PairingConnected, tr("Connection Successfull\nChannel: %1").arg(chStr));
 }
 
 //-----------------------------------------------------------------------------
