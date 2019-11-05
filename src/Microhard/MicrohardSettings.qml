@@ -232,6 +232,7 @@ Rectangle {
                                 id:             configUserName
                                 text:           QGroundControl.microhardManager.configUserName
                                 enabled:        true
+                                validator:      RegExpValidator { regExp: /^[0-9a-zA-Z_-]{5,32}$/ }
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -242,6 +243,7 @@ Rectangle {
                                 text:           QGroundControl.microhardManager.configPassword
                                 enabled:        true
                                 echoMode:       TextInput.Password
+                                validator:      RegExpValidator { regExp: /^[0-9a-zA-Z_-!]{5,64}$/ }
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -252,6 +254,17 @@ Rectangle {
                                 text:           QGroundControl.microhardManager.encryptionKey
                                 enabled:        true
                                 echoMode:       TextInput.Password
+                                validator:      RegExpValidator { regExp: /^[0-9a-zA-Z_-!]{8,64}$/ }
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Network ID:")
+                            }
+                            QGCTextField {
+                                id:             networkId
+                                text:           QGroundControl.microhardManager.networkId
+                                enabled:        true
+                                validator:      RegExpValidator { regExp: /^[0-9a-zA-Z_-]{1,64}$/ }
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -284,12 +297,17 @@ Rectangle {
                                 return false
                             }
                             function testEnabled() {
+                                if (!configUserName.acceptableInput) return false
+                                if (!configPassword.acceptableInput) return false
+                                if (!encryptionKey.acceptableInput) return false
+                                if (!networkId.acceptableInput) return false
                                 if(localIP.text              === QGroundControl.microhardManager.localIPAddr &&
                                     remoteIP.text            === QGroundControl.microhardManager.remoteIPAddr &&
                                     netMask.text             === QGroundControl.microhardManager.netMask &&
                                     configUserName.text      === QGroundControl.microhardManager.configUserName &&
                                     configPassword.text      === QGroundControl.microhardManager.configPassword &&
                                     encryptionKey.text       === QGroundControl.microhardManager.encryptionKey &&
+                                    networkId.text           === QGroundControl.microhardManager.networkId &&
                                     connectingChannel.text   === QGroundControl.microhardManager.connectingChannel &&
                                     connectingBandwidth.text === QGroundControl.microhardManager.connectingBandwidth)
                                     return false
@@ -308,6 +326,7 @@ Rectangle {
                                                                               configUserName.text,
                                                                               configPassword.text,
                                                                               encryptionKey.text,
+                                                                              networkId.text,
                                                                               connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin,
                                                                               connectingBandwidth.currentIndex)
                             }
