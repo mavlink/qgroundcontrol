@@ -51,8 +51,19 @@ class QGCFileDownload;
  * This class is started by the main method and provides
  * the central management unit of the groundstation application.
  *
- **/
-class QGCApplication : public QGuiApplication
+ * Needs QApplication base to support QtCharts module. This way
+ * we avoid application crashing on 5.12 when using the module.
+ * We don't have QtWidgets on mobile, avoid using it.
+ *
+ * Note: `lastWindowClosed` will be sent by MessageBox popups and other
+ * dialogs, that are spawned in QML, when they are closed
+**/
+class QGCApplication :
+      #if defined(__mobile__)
+        public QGuiApplication
+      #else
+        public QApplication
+      #endif
 {
     Q_OBJECT
 
