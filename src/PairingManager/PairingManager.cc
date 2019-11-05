@@ -1137,6 +1137,9 @@ PairingManager::stopPairing()
 void
 PairingManager::disconnectDevice(const QString& name)
 {
+    if (!_connectedDevices.contains(name)) {
+        return;
+    }
     LinkInterface *link = _connectedDevices[name];
     QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
     for (int i=0; i<vehicles->count(); i++) {
