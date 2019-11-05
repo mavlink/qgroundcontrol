@@ -412,3 +412,14 @@ MicrohardManager::setProductName(QString product)
 }
 
 //-----------------------------------------------------------------------------
+// https://www.adriangranados.com/blog/dbm-to-percent-conversion
+int
+MicrohardManager::downlinkRSSIPct()
+{
+    double dbm = static_cast<double>(_downlinkRSSI);
+    if(dbm < -92) return 0;
+    if(dbm > -21) return 100;
+    return static_cast<int>(round((-0.0154 * dbm * dbm) - (0.3794 * dbm) + 98.182));
+}
+
+//-----------------------------------------------------------------------------
