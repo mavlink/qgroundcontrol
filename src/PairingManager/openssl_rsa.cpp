@@ -75,18 +75,19 @@ OpenSSL_RSA::generate()
 bool
 OpenSSL_RSA::generate_public(std::string key)
 {
-    BIO* bio = BIO_new_mem_buf(key.c_str(), key.length() + 1);
+    BIO* bio = BIO_new_mem_buf(key.c_str(), static_cast<int>(key.length() + 1));
     if (bio == nullptr) {
         return false;
     }
 
     RSA* rsa = nullptr;
     PEM_read_bio_RSAPublicKey(bio, &rsa, nullptr, nullptr);
+    BIO_free(bio);
     if (rsa == nullptr) {
         return false;
     }
 
-       _rsa_public.reset(rsa);
+    _rsa_public.reset(rsa);
 
     return true;
 }
@@ -102,6 +103,7 @@ OpenSSL_RSA::generate_private(std::string key)
 
     RSA* rsa = nullptr;
     PEM_read_bio_RSAPrivateKey(bio, &rsa, nullptr, nullptr);
+    BIO_free(bio);
     if (rsa == nullptr) {
         return false;
     }
@@ -163,7 +165,10 @@ OpenSSL_RSA::encrypt(std::string plain_text)
     std::unique_ptr<unsigned char[]> res(new unsigned char[RSA_size(_rsa_public.get())]);
     std::unique_ptr<unsigned char[]> from(new unsigned char[aes_key.length() + 1]);
     memcpy(from.get(), aes_key.c_str(), aes_key.length() + 1);
-    int len = RSA_public_encrypt(aes_key.length() + 1, from.get(), res.get(), _rsa_public.get(), RSA_PKCS1_OAEP_PADDING);
+    int len = RSA_public_encrypt(
+        static_cast<int>(aes_key.length() + 1),
+        from.get(), res.get(), _rsa_public.get(),
+        RSA_PKCS1_OAEP_PADDING);
     if (len <= 0) {
         return {};
     }
@@ -206,14 +211,14 @@ OpenSSL_RSA::sign(std::string message)
         return {};
     }
 
-    unsigned char hash[SHA256_DIGEST_LENGTH];
+    unsigned char hash[SHA512_DIGEST_LENGTH];
     std::unique_ptr<unsigned char[]> sign(new unsigned char[static_cast<unsigned int>(RSA_size(_rsa_private.get()))]);
     unsigned int signLen;
 
-    SHA256(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
+    SHA512(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
 
     // Sign with private key
-    int rc = RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign.get(), &signLen, _rsa_private.get());
+    int rc = RSA_sign(NID_sha512, hash, SHA512_DIGEST_LENGTH, sign.get(), &signLen, _rsa_private.get());
     if (rc != 1) {
         return {};
     }
@@ -230,11 +235,11 @@ OpenSSL_RSA::verify(std::string message, std::string signature)
         return false;
     }
 
-    unsigned char hash[SHA256_DIGEST_LENGTH];
+    unsigned char hash[SHA512_DIGEST_LENGTH];
     std::vector<unsigned char> sig = OpenSSL_Base64::decode(signature);
     unsigned int signLen = static_cast<unsigned int>(sig.size());
-    SHA256(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
-    int rc = RSA_verify(NID_sha256, hash, SHA256_DIGEST_LENGTH, sig.data(), signLen, _rsa_public.get());
+    SHA512(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
+    int rc = RSA_verify(NID_sha512, hash, SHA512_DIGEST_LENGTH, sig.data(), signLen, _rsa_public.get());
     return (rc == 1);
 }
 

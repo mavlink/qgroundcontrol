@@ -41,26 +41,29 @@ MicrohardSettings::getStatus()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardSettings::configure(QString key, QString power, int channel, int bandwidth, QString networkId)
+MicrohardSettings::configure(QString key, int power, int channel, int bandwidth, QString networkId)
 {
     if (!_tcpSocket) {
         _configureAfterConnect = true;
         return;
     }
-
-    QString cmd = "AT+MWTXPOWER=" + power + "\n";
+    QString nid = networkId.toUpper();
+    QString cmd;
+    if (power > 0) {
+        cmd += "AT+MWTXPOWER=" + QString::number(power) + "\n";
+    }
     cmd += "AT+MWFREQ=" + QString::number(channel) + "\n";
     cmd += "AT+MWBAND=" + QString::number(bandwidth) + "\n";
     cmd += key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
     if (!networkId.isEmpty()) {
-        cmd +="AT+MWNETWORKID=" + networkId + "\n";
+        cmd +="AT+MWNETWORKID=" + nid + "\n";
     }
     cmd += "AT&W\n";
     _tcpSocket->write(cmd.toStdString().c_str());
 
     qCDebug(MicrohardLog) << "Configure key: " << key << " power: " << power << " channel: "
                           << channel << " bandwidth: " << bandwidth
-                          << (!networkId.isEmpty() ? " network ID: " + networkId : "");
+                          << (!networkId.isEmpty() ? " network ID: " + nid : "");
 }
 
 //-----------------------------------------------------------------------------
