@@ -100,6 +100,11 @@ void QGCPalette::setGlobalTheme(Theme newTheme)
     }
 }
 
+QColor QGCPalette::changeAlpha(const QColor& color, qreal alpha) const
+{
+    return QColor(color.red(), color.green(), color.blue(), qBound(0, static_cast<int>(alpha * 255.0), 255));
+}
+
 void QGCPalette::_signalPaletteChangeToAll()
 {
     // Notify all objects of the new theme
