@@ -14,7 +14,7 @@ ObjectModel {
     id: _root
 
     function reset() {
-        for (var i=0; i<_root.count; i++) {
+        for (var i = 0; i < _root.count; i++) {
             var group = _root.get(i)
             group.reset()
             group.enabled = i === 0

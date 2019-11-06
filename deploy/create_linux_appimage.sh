@@ -40,6 +40,7 @@ TMPDIR=`mktemp -d`
 APPDIR=${TMPDIR}/$APP".AppDir"
 mkdir -p ${APPDIR}
 
+# TODO: check if they are still used and cache them in the docker image (update Dockerfile)
 cd ${TMPDIR}
    wget -c --quiet https://mirrors.mediatemple.net/debian-archive/debian/pool/main/u/udev/udev_175-7.2_amd64.deb \
 && wget -c --quiet http://archive.ubuntu.com/ubuntu/pool/main/s/speech-dispatcher/speech-dispatcher_0.8.8-1ubuntu1_amd64.deb \
@@ -61,8 +62,6 @@ fi
 cd ${APPDIR}
 find ../ -name *.deb -exec dpkg -x {} . \;
 find ../ -name *.rpm -exec sh -c 'rpm2cpio {} | cpio -idmv' \;
-
-cp -L /usr/lib64/libSDL2* ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
 # copy QGroundControl release into appimage
 rsync -av --exclude=*.cpp --exclude=*.h --exclude=*.o --exclude="CMake*" --exclude="*.cmake" ${QGC_RELEASE_DIR}/* ${APPDIR}/
@@ -87,16 +86,10 @@ VERSION=$(strings ${APPDIR}/${QGC_CUSTOM_BINARY_NAME} | grep '^v[0-9*]\.[0-9*].[
 echo ${QGC_CUSTOM_APP_NAME} Version: ${VERSION}
 
 # Go out of AppImage
-APPIMAGE_ASSISTANT="./AppImageAssistant"
 cd ${TMPDIR}
-if [ -f $HOME/cached/AppImageAssistant ]; then
-  APPIMAGE_ASSISTANT="$HOME/cached/AppImageAssistant"
-else
-  wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
-  chmod a+x ./AppImageAssistant
-fi
+wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
+chmod a+x ./AppImageAssistant
 
-$APPIMAGE_ASSISTANT ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
+./AppImageAssistant ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
 
 cp ${TMPDIR}/$APP".AppImage" ${OUTPUT_DIR}/$APP".AppImage"
-

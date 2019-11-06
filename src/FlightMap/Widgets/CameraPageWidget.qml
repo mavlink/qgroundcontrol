@@ -189,7 +189,7 @@ Column {
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _camera; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {
         id: cameraSettings
         QGCViewDialog {

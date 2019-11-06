@@ -10,9 +10,12 @@
 #include "MicrohardManager.h"
 #include "MicrohardSettings.h"
 #include "SettingsManager.h"
-#include "PairingManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+
+#ifdef QGC_ENABLE_PAIRING
+#include "PairingManager.h"
+#endif
 
 #include <QSettings>
 
@@ -26,8 +29,10 @@ static const char *kNET_MASK            = "NetMask";
 static const char *kCFG_USERNAME        = "ConfigUserName";
 static const char *kCFG_PASSWORD        = "ConfigPassword";
 static const char *kENC_KEY             = "EncryptionKey";
+static const char *kNETWORK_ID          = "NetworkId";
 static const char *kPAIR_CH             = "PairingChannel";
 static const char *kCONN_CH             = "ConnectingChannel";
+static const char *kCONN_BW             = "ConnectingBandwidth";
 
 //-----------------------------------------------------------------------------
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -55,14 +60,16 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
-    _localIPAddr       = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
-    _remoteIPAddr      = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
-    _netMask           = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
-    _configUserName    = settings.value(kCFG_USERNAME,   QString("admin")).toString();
-    _configPassword    = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
-    _encryptionKey     = settings.value(kENC_KEY,        QString("1234567890")).toString();
-    _pairingChannel    = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
-    _connectingChannel = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
+    _localIPAddr         = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
+    _remoteIPAddr        = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
+    _netMask             = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
+    _configUserName      = settings.value(kCFG_USERNAME,   QString("admin")).toString();
+    _configPassword      = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
+    _encryptionKey       = settings.value(kENC_KEY,        QString("1234567890")).toString();
+    _networkId           = settings.value(kNETWORK_ID,     QString("MH")).toString();
+    _pairingChannel      = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
+    _connectingChannel   = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
+    _connectingBandwidth = settings.value(kCONN_BW,        DEFAULT_CONNECTING_BANDWIDTH).toInt();
     settings.endGroup();
 
     setProductName("");
@@ -135,8 +142,9 @@ MicrohardManager::switchToConnectionEncryptionKey(QString encryptionKey)
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::switchToPairingEncryptionKey()
+MicrohardManager::switchToPairingEncryptionKey(QString pairingKey)
 {
+    setEncryptionKey(pairingKey);
     _usePairingSettings = true;
 }
 
@@ -145,15 +153,19 @@ void
 MicrohardManager::configure()
 {
     if (_mhSettingsLoc) {
+#ifdef QGC_ENABLE_PAIRING
         if (_toolbox->pairingManager()->usePairing()) {
             if (_usePairingSettings) {
-                _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _pairingChannel);
+                _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
+                                          _pairingChannel, _pairingBandwidth, _networkId);
             } else {
-                _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower, _connectingChannel);
+                _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower,
+                                          _connectingChannel, _connectingBandwidth, _connectingNetworkId);
             }
-        } else {
-            _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _connectingChannel);
+            return;
         }
+#endif
+        _mhSettingsLoc->configure(_encryptionKey, 0, _connectingChannel, _connectingBandwidth, _networkId);
     }
 }
 
@@ -168,9 +180,16 @@ MicrohardManager::_updateSettings()
     settings.setValue(kNET_MASK, _netMask);
     settings.setValue(kCFG_PASSWORD, _configPassword);
     settings.setValue(kENC_KEY, _encryptionKey);
+    settings.setValue(kNETWORK_ID, _networkId);
     settings.setValue(kPAIR_CH, QString::number(_pairingChannel));
     settings.setValue(kCONN_CH, QString::number(_connectingChannel));
+    settings.setValue(kCONN_BW, QString::number(_connectingBandwidth));
     settings.endGroup();
+
+#ifdef QGC_ENABLE_PAIRING
+    emit _toolbox->pairingManager()->pairingKeyChanged();
+    emit _toolbox->pairingManager()->networkIdChanged();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -184,18 +203,22 @@ MicrohardManager::updateSettings()
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encryptionKey, int channel)
+MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword,
+                                QString encryptionKey, QString networkId, int channel, int bandwidth)
 {
     if (_localIPAddr != localIP || _remoteIPAddr != remoteIP || _netMask != netMask ||
-        _configUserName != cfgUserName || _configPassword != cfgPassword || _encryptionKey != encryptionKey || _connectingChannel != channel)
+        _configUserName != cfgUserName || _configPassword != cfgPassword || _encryptionKey != encryptionKey ||
+        _networkId != networkId || _connectingChannel != channel || _connectingBandwidth != bandwidth)
     {
-        _localIPAddr       = localIP;
-        _remoteIPAddr      = remoteIP;
-        _netMask           = netMask;
-        _configUserName    = cfgUserName;
-        _configPassword    = cfgPassword;
-        _encryptionKey     = encryptionKey;
-        _connectingChannel = channel;
+        _localIPAddr         = localIP;
+        _remoteIPAddr        = remoteIP;
+        _netMask             = netMask;
+        _configUserName      = cfgUserName;
+        _configPassword      = cfgPassword;
+        _encryptionKey       = encryptionKey;
+        _networkId           = networkId;
+        _connectingChannel   = channel;
+        _connectingBandwidth = bandwidth;
 
         updateSettings();
 
@@ -343,27 +366,37 @@ MicrohardManager::setProductName(QString product)
 
     _channelMin = 6;
     _channelMax = 76;
-    int frequencyStart = 2407;
+    _frequencyStart = 2407;
+
+    _bandwidthLabels.clear();
+    _bandwidthLabels.append("8 MHz");
+    _bandwidthLabels.append("4 MHz");
 
     if (product == "pMDDL2350" || product == "pDDL2350") {
         _channelMin = 1;
         _channelMax = 81;
-        frequencyStart = 2310;
+        _frequencyStart = 2310;
     } else if (product == "pMDDL2450" || product == "pDDL2450") {
         _channelMin = 6;
         _channelMax = 76;
-        frequencyStart = 2407;
+        _frequencyStart = 2407;
     } else if (product == "pMDDL1800" || product == "pDDL1800" ) {
         _channelMin = 3;
         _channelMax = 57;
-        frequencyStart = 1813;
+        _frequencyStart = 1813;
+        _bandwidthLabels.clear();
+        _bandwidthLabels.append("8 MHz");
+        _bandwidthLabels.append("4 MHz");
+        _bandwidthLabels.append("2 MHz");
+        _bandwidthLabels.append("1 MHz");
+        _pairingBandwidth = 3;
     }
 
     _channelLabels.clear();
     for (int i = _channelMin; i <= _channelMax; i++) {
-        _channelLabels.append(QString::number(i) +
+        _channelLabels.append(QString::number(i).rightJustified(2, '0') +
                               " - " +
-                              QString::number(i + frequencyStart - _channelMin) +
+                              QString::number(getChannelFrequency(i)) +
                               " MHz");
     }
 
@@ -379,8 +412,20 @@ MicrohardManager::setProductName(QString product)
     }
 
     emit channelLabelsChanged();
+    emit bandwidthLabelsChanged();
     emit pairingChannelChanged();
     emit connectingChannelChanged();
+}
+
+//-----------------------------------------------------------------------------
+// https://www.adriangranados.com/blog/dbm-to-percent-conversion
+int
+MicrohardManager::downlinkRSSIPct()
+{
+    double dbm = static_cast<double>(_downlinkRSSI);
+    if(dbm < -92) return 0;
+    if(dbm > -21) return 100;
+    return static_cast<int>(round((-0.0154 * dbm * dbm) - (0.3794 * dbm) + 98.182));
 }
 
 //-----------------------------------------------------------------------------

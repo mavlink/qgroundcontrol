@@ -37,7 +37,7 @@ Column  {
     }
 
     function reset() {
-        for (var i=0; i<innerColumn.children.length; i++) {
+        for (var i = 0; i < innerColumn.children.length; i++) {
             innerColumn.children[i].reset()
         }
     }
@@ -53,7 +53,7 @@ Column  {
         visible:    header.checked
 
         function buttonPassedChanged() {
-            for (var i=0; i<children.length; i++) {
+            for (var i = 0; i < children.length; i++) {
                 if (!children[i].passed) {
                     passed = false
                     return

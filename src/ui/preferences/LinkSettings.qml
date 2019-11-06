@@ -67,7 +67,6 @@ Rectangle {
                     text:                       object.name
                     exclusiveGroup:             linkGroup
                     visible:                    !object.dynamic
-
                     onClicked: {
                         checked = true
                         _currentSelection = object
@@ -275,7 +274,7 @@ Rectangle {
                                             linkSettingLoader.source = ""
                                             linkSettingLoader.visible = false
                                             // Save current name
-                                            var name = editConfig.name
+                                            var name = nameField.text
                                             // Discard link configuration (old type)
                                             QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
                                             // Create new link configuration
