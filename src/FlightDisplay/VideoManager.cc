@@ -378,10 +378,11 @@ void
 VideoManager::restartVideoReceiver(VideoReceiver *receiver)
 {
 #if defined(QGC_GST_STREAMING)
+#if defined(QGC_ENABLE_PAIRING)
     if (!qgcApp()->toolbox()->pairingManager()->videoCanRestart()) {
         return;
     }
-
+#endif
     qCDebug(VideoManagerLog) << "Restart video streaming";
     stopVideo(receiver);
     _updateSettings();
