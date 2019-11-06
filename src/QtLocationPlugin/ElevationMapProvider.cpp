@@ -79,7 +79,7 @@ double GeotiffElevationProvider::tiley2lat(const int y,const int z) const{
 }
 
 QString
-GeotiffElevationProvider::_getURL(int x, int y, int zoom,
+GeotiffElevationProvider::_getURL(const int x, const int y, const int zoom,
                                   QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager);
     Q_UNUSED(zoom);
@@ -128,7 +128,7 @@ double AW3DElevationProvider::tiley2lat(const int y,const int z)const {
 }
 
 QString
-AW3DElevationProvider::_getURL(int x, int y, int zoom,
+AW3DElevationProvider::_getURL(const int x, const int y, const int zoom,
                                   QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager);
     Q_UNUSED(zoom);
@@ -163,22 +163,22 @@ AW3DElevationProvider::_getURL(int x, int y, int zoom,
 }
 
 //-----------------------------------------------------------------------------
-int AW3DElevationProvider::long2tileX(double lon, int z) {
+int AW3DElevationProvider::long2tileX(const double lon, const int z) const{
     Q_UNUSED(z);
     return (int)(lon);
 }
 
 //-----------------------------------------------------------------------------
-int AW3DElevationProvider::lat2tileY(double lat, int z) {
+int AW3DElevationProvider::lat2tileY(const double lat, const int z) const{
     Q_UNUSED(z);
     return (int)(lat);
 }
 
 
-QGCTileSet AW3DElevationProvider::getTileCount(int zoom, double topleftLon,
-                                                 double topleftLat,
-                                                 double bottomRightLon,
-                                                 double bottomRightLat) {
+QGCTileSet AW3DElevationProvider::getTileCount(const int zoom, const double topleftLon,
+                                                 const double topleftLat,
+                                                 const double bottomRightLon,
+                                                 const double bottomRightLat) const {
     QGCTileSet set;
     set.tileX0 = long2tileX(topleftLon, zoom);
     set.tileY0 = lat2tileY(bottomRightLat, zoom);
