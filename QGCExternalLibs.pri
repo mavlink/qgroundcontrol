@@ -118,10 +118,10 @@ MacBuild {
     LIBS+= -lgdal
 	INCLUDEPATH+= /external/gdal/include/
 } else:WindowsBuild {
-    INCLUDEPATH += C:/OSGeo4W/include
-    LIBS += -LC:/OSGeo4W/lib
-    LIBS += -LC:/OSGeo4W/bin
-    LIBS += C:/OSGeo4W/lib/gdal_i.lib
+    INCLUDEPATH += $$BASEDIR/libs/gdal/windows/include
+    LIBS += -L$$BASEDIR/libs/gdal/windows/lib
+    LIBS += -L$$BASEDIR/libs/gdal/windows/bin
+    LIBS += $$BASEDIR/libs/gdal/windows/lib/gdal_i.lib
 
     message($$sprintf("GDAL ? '%1'.", $$INCLUDEPATH))
 
