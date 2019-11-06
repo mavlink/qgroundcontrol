@@ -106,7 +106,9 @@ SOURCES += \
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
+        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers \
+        /Library/Frameworks/GDAL.framework/unix/include
+
     LIBS += \
         -F$$BASEDIR/libs/lib/Frameworks \
         -framework SDL2 \
