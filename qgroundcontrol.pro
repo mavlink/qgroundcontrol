@@ -334,10 +334,6 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_NFC
-} else:AndroidBuild:contains(QT_ARCH, arm64) {
-    # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
-    message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
-    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
@@ -463,6 +459,7 @@ HEADERS += \
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     HEADERS += \
         src/PairingManager/openssl_aes.h \
+        src/PairingManager/openssl_rand.h \
         src/PairingManager/openssl_rsa.h \
         src/PairingManager/openssl_base64.h
 }
@@ -477,6 +474,7 @@ SOURCES += \
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     SOURCES += \
         src/PairingManager/openssl_aes.cpp \
+        src/PairingManager/openssl_rand.cpp \
         src/PairingManager/openssl_rsa.cpp \
         src/PairingManager/openssl_base64.cpp
 }
@@ -1056,17 +1054,15 @@ SOURCES += \
         src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
 }}
 
-# ArduPilot Specific
+# ArduPilot FirmwarePlugin
 
-ArdupilotEnabled {
+!ArdupilotDisabled {
     HEADERS += \
         src/Settings/APMMavlinkStreamRateSettings.h \
 
     SOURCES += \
         src/Settings/APMMavlinkStreamRateSettings.cc \
 }
-
-# ArduPilot FirmwarePlugin
 
 APMFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
