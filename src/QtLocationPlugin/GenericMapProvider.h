@@ -84,6 +84,6 @@ class TestMapProvider : public MapProvider {
                       AVERAGE_TILE_SIZE, QGeoMapType::SatelliteMapDay, parent) {
     }
 
-    QString _getURL(int x, int y, int zoom,
-                    QNetworkAccessManager* networkManager);
+    QString _getURL(const int x, const int y, const int zoom,
+                    QNetworkAccessManager* networkManager) override;
 };

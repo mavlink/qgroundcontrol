@@ -26,14 +26,6 @@ class ElevationProvider : public MapProvider {
     ~ElevationProvider();
 
     virtual bool _isElevationProvider() const override{ return true; }
-
-    // Used to create a new TerrainTile associated to the provider
-    virtual TerrainTile* newTerrainTile(QByteArray buf) = 0;
-
-  protected:
-    // Define the url to Request
-    virtual QString _getURL(const int x, const int y, const int zoom,
-                            QNetworkAccessManager* networkManager) = 0;
 };
 
 // -----------------------------------------------------------

@@ -74,7 +74,7 @@ QString VWorldSatMapProvider::_getURL(const int x, const int y, const int zoom, 
     }
 }
 
-QString TestMapProvider::_getURL(int x, int y, int zoom,
+QString TestMapProvider::_getURL(const int x, const int y, const int zoom,
                                         QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager);
     qDebug() << "zoom" << zoom << " x " << x << " y " << y;
