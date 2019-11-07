@@ -1,4 +1,4 @@
-from utils import start_qgc
+import application
 import drone_control
 import drone_params
 import toolbar
@@ -14,7 +14,7 @@ def main():
     rtl_epsilon = 1
     return_timeout = 90
 
-    start_qgc()
+    application.start()
     initial_position = drone_params.get_position()
     drone_control.takeoff(altitude)
 
