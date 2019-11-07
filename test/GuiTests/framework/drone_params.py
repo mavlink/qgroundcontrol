@@ -1,25 +1,56 @@
-import global_object_map as names
+from qgroundcontrol import QGroundControlPO
+from map import MapPO
 import squish
 import builtins
 
 
+class DroneParamsPO(QGroundControlPO):
+    vehicleStatusGrid_GridLayout = {
+        "container": QGroundControlPO.application_window,
+        "id": "vehicleStatusGrid",
+        "type": "GridLayout",
+        "unnamed": 1,
+        "visible": True,
+    }
+    currentDroneAltitude = {
+        "container": vehicleStatusGrid_GridLayout,
+        "occurrence": 7,
+        "type": "Text",
+        "unnamed": 1,
+        "visible": True,
+    }
+    currentDroneDistance = {
+        "container": vehicleStatusGrid_GridLayout,
+        "occurrence": 6,
+        "type": "Text",
+        "unnamed": 1,
+        "visible": True,
+    }
+    currentDroneSpeed = {
+        "container": vehicleStatusGrid_GridLayout,
+        "occurrence": 2,
+        "type": "Text",
+        "unnamed": 1,
+        "visible": True,
+    }
+
+
 def get_altitude():
-    return float(str(squish.waitForObject(names.currentDroneAltitude).text)[:-1])
+    return float(
+        str(squish.waitForObject(DroneParamsPO.currentDroneAltitude).text)[:-1]
+    )
 
 
 def get_distance():
-    return builtins.int(str(squish.waitForObject(names.currentDroneDistance).text)[:-1])
+    return builtins.int(
+        str(squish.waitForObject(DroneParamsPO.currentDroneDistance).text)[:-1]
+    )
 
 
 def get_speed():
-    return float(str(squish.waitForObject(names.currentDroneSpeed).text)[:-3])
+    return float(str(squish.waitForObject(DroneParamsPO.currentDroneSpeed).text)[:-3])
 
 
 def get_position():
-    drone = squish.waitForObject(names.o_VehicleMapItem)
+    drone = squish.waitForObject(MapPO.o_VehicleMapItem)
     return (builtins.int(drone.x), builtins.int(drone.y))
-
-
-#     x = drone.x + builtins.int(drone.width / 2)
-#     y = drone.y + builtins.int(drone.height / 2)
-#     return (x, y)
