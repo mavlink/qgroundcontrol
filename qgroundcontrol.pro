@@ -94,8 +94,6 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # this will also trigger enabling of custom build
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
-    # Use the default name for the custom folder: custom
-    QGC_CUSTOM_BUILD_FOLDER=custom
     # Default build is disabled because of the constant presence of the custom build
     CONFIG += QGC_DISABLE_CUSTOM_BUILD
 } else {
