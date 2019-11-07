@@ -22,9 +22,11 @@ Item {
     anchors.fill:           parent
     anchors.margins:        ScreenTools.defaultFontPixelWidth
 
-    property var curVehicle:        controller ? controller.activeVehicle : null
-    property int curMessageIndex:   0
-    property var curMessage:        curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
+    property var    curVehicle:     controller ? controller.activeVehicle : null
+    property int    curMessageIndex:0
+    property var    curMessage:     curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
+    property int    curCompID:      0
+    property bool   selectionValid: false
 
     MAVLinkInspectorController {
         id: controller
@@ -35,11 +37,36 @@ Item {
     }
 
     //-- Header
-    QGCLabel {
+    RowLayout {
         id:                 header
-        text:               qsTr("Inspect real time MAVLink messages.")
         anchors.top:        parent.top
         anchors.left:       parent.left
+        anchors.right:      parent.right
+        QGCLabel {
+            text:           qsTr("Inspect real time MAVLink messages.")
+        }
+        RowLayout {
+            Layout.alignment:   Qt.AlignRight
+            visible:            curVehicle ? curVehicle.compIDsStr.length > 2 : false
+            QGCLabel {
+                text:           qsTr("Component ID:")
+            }
+            QGCComboBox {
+                id:             cidCombo
+                model:          curVehicle ? curVehicle.compIDsStr : []
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                currentIndex:   0
+                onActivated: {
+                    if(curVehicle && curVehicle.compIDsStr.length > 1) {
+                        selectionValid = false
+                        if(index < 1)
+                            curCompID = 0
+                        else
+                            curCompID = curVehicle.compIDs[index - 1]
+                    }
+                }
+            }
+        }
     }
 
     //-- Messages (Buttons)
@@ -59,10 +86,15 @@ Item {
                 model:      curVehicle ? curVehicle.messages : []
                 delegate:   MAVLinkMessageButton {
                     text:       object.name
+                    compID:     object.cid
                     checked:    curMessageIndex === index
                     messageHz:  object.messageHz
-                    onClicked:  curMessageIndex = index
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 36
+                    visible:    curCompID === 0 || curCompID === compID
+                    onClicked: {
+                        selectionValid  = true
+                        curMessageIndex = index
+                    }
+                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 40
                 }
             }
         }
@@ -70,7 +102,7 @@ Item {
     //-- Message Data
     QGCFlickable {
         id:                 messageGrid
-        visible:            curMessage !== null
+        visible:            curMessage !== null && selectionValid
         anchors.top:        buttonGrid.top
         anchors.bottom:     parent.bottom
         anchors.left:       buttonGrid.right
