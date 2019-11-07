@@ -1,0 +1,8 @@
+<testconfig version="1.0">
+<information>
+<summary>06 Log Download</summary>
+<description>Select and download a single log file from vehicle, including choosing a directory to store it.&#13;
+Check if the log file was created.</description>
+</information>
+<testsettings/>
+</testconfig>
