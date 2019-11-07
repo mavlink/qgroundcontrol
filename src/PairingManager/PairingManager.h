@@ -72,7 +72,6 @@ public:
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
     bool            usePairing                  () { return _usePairing; }
-    bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
     QString         nidPrefix                   () { return _nidPrefix; }

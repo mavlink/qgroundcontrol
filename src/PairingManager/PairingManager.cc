@@ -84,7 +84,7 @@ PairingManager::setUsePairing(bool set)
     }
 
     _toolbox->microhardManager()->updateSettings();
-    if (videoCanRestart()) {
+    if (!_usePairing || !_connectedDevices.empty()) {
         _toolbox->videoManager()->startVideo();
     }
     emit usePairingChanged();
