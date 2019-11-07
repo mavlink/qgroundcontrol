@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <chrono>
+
 #include <QObject>
 
 /// A "photo" operation in progress
