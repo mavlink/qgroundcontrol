@@ -78,6 +78,7 @@ ApplicationWindow {
         analyzeWindow.visible   = false
         flightView.visible      = false
         planViewLoader.visible  = false
+        photoGalleryView.visible = false
         if(isPlanView) {
             toolbar.source  = _planToolbar
         } else {
@@ -108,6 +109,11 @@ ApplicationWindow {
     function showSettingsView() {
         viewSwitch(false)
         settingsWindow.visible = true
+    }
+
+    function showPhotoGalleryView() {
+        viewSwitch(false)
+        photoGalleryView.visible = true
     }
 
     //-------------------------------------------------------------------------
@@ -320,6 +326,15 @@ ApplicationWindow {
         anchors.fill:   parent
         visible:        false
         source:         "AnalyzeView.qml"
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Photo Gallery
+    Loader {
+        id:             photoGalleryView
+        anchors.fill:   parent
+        visible:        false
+        source:         "PhotoGalleryView.qml"
     }
 
     //-------------------------------------------------------------------------
@@ -577,6 +592,12 @@ ApplicationWindow {
         indicatorDropdown.open()
     }
 
+    function hidePopUp() {
+        indicatorDropdown.close()
+        indicatorDropdown.currentItem = null
+        indicatorDropdown.currentIndicator = null
+    }
+
     Popup {
         id:             indicatorDropdown
         y:              ScreenTools.defaultFontPixelHeight
@@ -596,7 +617,7 @@ ApplicationWindow {
             x:                  visible ? loader.item.x + loader.item.width - _margins - width : 0
             y:                  visible ? loader.item.y + _margins : 0
             z:                  visible ? loader.item.z + 1 : 0
-            visible:            loader.item !== null
+            visible:            ScreenTools.isLinux && loader.item !== null
             width:              ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
             height:             width
             sourceSize.height:  width

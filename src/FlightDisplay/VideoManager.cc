@@ -22,7 +22,6 @@
 
 #include "ScreenToolsController.h"
 #include "VideoManager.h"
-#include "PairingManager.h"
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
@@ -30,6 +29,10 @@
 #include "Settings/SettingsManager.h"
 #include "Vehicle.h"
 #include "QGCCameraManager.h"
+
+#ifdef QGC_ENABLE_PAIRING
+#include "PairingManager.h"
+#endif
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -375,15 +378,18 @@ void
 VideoManager::restartVideoReceiver(VideoReceiver *receiver)
 {
 #if defined(QGC_GST_STREAMING)
+#if defined(QGC_ENABLE_PAIRING)
     if (!qgcApp()->toolbox()->pairingManager()->videoCanRestart()) {
         return;
     }
-
+#endif
     qCDebug(VideoManagerLog) << "Restart video streaming";
     stopVideo(receiver);
     _updateSettings();
     startVideo(receiver);
     emit aspectRatioChanged();
+#else
+    Q_UNUSED(receiver)
 #endif
 }
 

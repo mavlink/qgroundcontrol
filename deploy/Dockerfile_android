@@ -1,0 +1,105 @@
+#
+# QGroundControl android build environment
+#
+
+FROM ubuntu:xenial
+MAINTAINER Daniel Agar <daniel@agar.ca>
+
+ARG QT_VERSION=5.12.4
+ARG NDK_VERSION=r20
+ARG SDK_BUILD_TOOLS=25.0.3
+ARG SDK_PACKAGES="tools platform-tools"
+ARG SDK_PLATFORM=android-21
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+ENV QMAKESPEC=android-clang
+ENV QT_PATH /opt/Qt
+ENV QT_PLATFORM=android_armv7
+ENV QGC_ANDROID_GSTREAMER_URL=https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2
+ENV QGC_ANDROID_GSTREAMER_PATH=/opt/gstreamer-1.0-android-universal-1.14.4
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_NDK_ARCH=arch-arm
+ENV ANDROID_NDK_EABI=llvm
+ENV ANDROID_NDK_HOST=linux-x86_64
+ENV ANDROID_NDK_TOOLCHAIN_PREFIX=arm-linux-androideabi
+ENV ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
+ENV ANDROID_NDK_PLATFORM=${SDK_PLATFORM}
+ENV ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk-${NDK_VERSION}
+ENV ANDROID_NDK_TOOLS_PREFIX=${ANDROID_NDK_TOOLCHAIN_PREFIX}
+ENV ANDROID_DEV=${ANDROID_NDK_ROOT}/platforms/${ANDROID_NDK_PLATFORM}/${ANDROID_NDK_ARCH}/usr
+ENV ANDROID_NDK_TOOLCHAIN=${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_TOOLCHAIN_PREFIX}-${ANDROID_NDK_TOOLCHAIN_VERSION}/prebuilt/${ANDROID_NDK_HOST}
+
+ENV PATH=${QT_PATH}/${QT_VERSION}/${QT_PLATFORM}/bin:${ANDROID_NDK_TOOLCHAIN}/${ANDROID_NDK_TOOLCHAIN_PREFIX}/bin:${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_EABI}/prebuilt/${ANDROID_NDK_HOST}/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+ENV PATH=/usr/lib/ccache:${PATH}
+ENV SHADOW_BUILD_DIR=/tmp/shadow_build_dir
+
+RUN	dpkg --add-architecture i386 \
+	&& apt-get update && apt-get -y --quiet --no-install-recommends install \
+		ant \
+		ca-certificates \
+		ccache \
+		cmake \
+		curl \
+		default-jdk \
+		git \
+		gosu \
+		libc6:i386 \
+		libdbus-1-3 \
+		libfontconfig1 \
+		libgcc1:i386 \
+		libice6 \
+		libncurses5:i386 \
+		libsdl1.2debian:i386 \
+		libsm6 \
+		libstdc++6:i386 \
+		libxext6 \
+		libxrender1 \
+		libz1:i386 \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		unzip \
+		wget \
+		xvfb \
+		zlib1g:i386 \
+		bzip2 \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
+
+# Download & unpack Qt toolchains & clean
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
+	&& QT_PACKAGE_VER=$(echo "${QT_VERSION}" | tr -d .) QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.android_arm64_v8a,qt.qt5.${QT_PACKAGE_VER}.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtcharts.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtcharts.android_arm64_v8a,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth.android_arm64_v8a /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+	&& find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
+	&& rm -rf /tmp/*
+
+# Download & unpack android SDK
+RUN curl --silent -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip' \
+	&& mkdir -p ${ANDROID_HOME} && unzip -q /tmp/sdk-tools.zip -d ${ANDROID_HOME} && rm -f /tmp/sdk-tools.zip \
+	&& yes | sdkmanager --licenses && sdkmanager --verbose "platforms;${SDK_PLATFORM}" "build-tools;${SDK_BUILD_TOOLS}" ${SDK_PACKAGES}
+
+# Download & unpack android NDK
+RUN mkdir /tmp/android && curl --silent -Lo /tmp/android/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux-x86_64.zip" \
+	&& unzip -q /tmp/android/ndk.zip -d /tmp/android/ && mv /tmp/android/android-ndk-* $ANDROID_NDK_ROOT && chmod -R +rX $ANDROID_NDK_ROOT \
+	&& rm -rf /tmp/android
+
+ENV QGC_ANDROID_GSTREAMER_URL=https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2
+ENV QGC_ANDROID_GSTREAMER_PATH=/opt/gstreamer-1.0-android-universal-1.14.4
+RUN curl --silent -Lo /tmp/gstreamer-android.tar.bz2 ${QGC_ANDROID_GSTREAMER_URL} && mkdir ${QGC_ANDROID_GSTREAMER_PATH} && tar jxf /tmp/gstreamer-android.tar.bz2 -C ${QGC_ANDROID_GSTREAMER_PATH} && rm -f /tmp/gstreamer-android.tar.bz2
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1001 (jenkins docker workflow default)
+RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+
+# create and start as LOCAL_USER_ID
+COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["/bin/bash"]

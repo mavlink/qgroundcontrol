@@ -66,10 +66,13 @@ WindowsBuild {
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
-    COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\deploy\\libeay32.dll \
-        $$BASEDIR_WIN\\deploy\\ssleay32.dll
+    contains(QT_ARCH, i386) {
+        COPY_FILE_LIST = \
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll
+    } else {
+        COPY_FILE_LIST = \
+            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll
+    }
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
@@ -121,7 +124,7 @@ LinuxBuild {
         libQt5Xml.so.5 \
         libicui18n.so* \
         libQt5TextToSpeech.so.5 \
-        libQt5VirtualKeyboard.so.5
+        libQt5NetworkAuth.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
         # Some Qt distributions link with *.so.56
@@ -135,6 +138,9 @@ LinuxBuild {
         QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
     }
 
+    QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_BINS]/../../../Tools/OpenSSL/binary/lib/libcrypto.so.1.1 $$DESTDIR/Qt/libs/ \
+                       && $$QMAKE_COPY --dereference $$[QT_INSTALL_BINS]/../../../Tools/OpenSSL/binary/lib/libssl.so.1.1 $$DESTDIR/Qt/libs/
+
     # QT_INSTALL_PLUGINS
     QT_PLUGIN_LIST = \
         bearer \
@@ -145,8 +151,7 @@ LinuxBuild {
         platforms \
         position \
         sqldrivers \
-        texttospeech \
-        virtualkeyboard
+        texttospeech
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations

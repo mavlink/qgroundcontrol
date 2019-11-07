@@ -16,6 +16,7 @@
 
 #include <QObject>
 #include <QVariantList>
+#include <QSettings>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl
@@ -177,6 +178,10 @@ protected:
     Vehicle*            _activeVehicle  = nullptr;
     QGCCameraManager*   _dynamicCameras = nullptr;
     QGCCameraControl*   _currentCamera  = nullptr;
+
+    QSettings           _settings;
+    static const char*  _kSettingsGroupName;
+    static const char*  _kShowAdvancedUI;
 
 private:
     QGCCorePlugin_p*    _p;

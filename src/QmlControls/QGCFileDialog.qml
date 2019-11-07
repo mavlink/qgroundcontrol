@@ -158,16 +158,22 @@ Item {
 
         QGCViewDialog {
             function accept() {
-                if (filenameTextField.text == "") {
-                    return
+                if(_root.selectFolder) {
+                    _root.acceptedForSave(_root.folder + (_root.folder.endsWith("/") ? "" : "/") + filenameTextField.text)
                 }
-                if (!replaceMessage.visible) {
-                    if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))) {
-                        replaceMessage.visible = true
+                else {
+                    if (filenameTextField.text == "") {
                         return
                     }
+                    if (!replaceMessage.visible) {
+                        if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))) {
+                            replaceMessage.visible = true
+                            return
+                        }
+                    }
+                    _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))
                 }
-                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))
+
                 hideDialog()
             }
 
@@ -186,7 +192,7 @@ Item {
                         anchors.right:  parent.right
                         spacing:        ScreenTools.defaultFontPixelWidth
 
-                        QGCLabel { text: qsTr("New file name:") }
+                        QGCLabel { text: _root.selectFolder ? qsTr("Folder name:") : qsTr("File name:") }
 
                         QGCTextField {
                             id:                 filenameTextField
@@ -199,6 +205,7 @@ Item {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
+                        visible:        !_root.selectFolder
                         text:           qsTr("File names must end with .%1 file extension. If missing it will be added.").arg(fileExtension)
                     }
 
@@ -215,6 +222,7 @@ Item {
                     SectionHeader {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
+                        visible:        !_root.selectFolder
                         text:           qsTr("Save to existing file:")
                     }
 

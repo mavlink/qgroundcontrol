@@ -324,8 +324,24 @@ QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
                 emit m->indexChanged();
             }
         }
+        _checkCompID(message);
     }
     emit messagesChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMAVLinkVehicle::_checkCompID(QGCMAVLinkMessage* message)
+{
+    if(_compIDsStr.isEmpty()) {
+        _compIDsStr << tr("All");
+    }
+    if(!_compIDs.contains(static_cast<int>(message->cid()))) {
+        int cid = static_cast<int>(message->cid());
+        _compIDs.append(cid);
+        _compIDsStr << QString::number(cid);
+        emit compIDsChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -430,9 +446,8 @@ MAVLinkInspectorController::_vehicleRemoved(Vehicle* vehicle)
 
 //-----------------------------------------------------------------------------
 void
-MAVLinkInspectorController::_receiveMessage(LinkInterface* link, mavlink_message_t message)
+MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t message)
 {
-    Q_UNUSED(link);
     QGCMAVLinkMessage* m = nullptr;
     QGCMAVLinkVehicle* v = _findVehicle(message.sysid);
     if(!v) {
@@ -453,7 +468,6 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface* link, mavlink_message
     } else {
         m->update(&message);
     }
-
 }
 
 //-----------------------------------------------------------------------------

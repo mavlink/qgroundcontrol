@@ -94,8 +94,6 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # this will also trigger enabling of custom build
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
-    # Use the default name for the custom folder: custom
-    QGC_CUSTOM_BUILD_FOLDER=custom
     # Default build is disabled because of the constant presence of the custom build
     CONFIG += QGC_DISABLE_CUSTOM_BUILD
 } else {
@@ -334,10 +332,6 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_NFC
-} else:AndroidBuild:contains(QT_ARCH, arm64) {
-    # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
-    message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
-    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
@@ -421,6 +415,7 @@ INCLUDEPATH += \
     src/Joystick \
     src/PlanView \
     src/MissionManager \
+    src/PhotoGallery \
     src/PositionManager \
     src/QmlControls \
     src/QtLocationPlugin \
@@ -463,6 +458,7 @@ HEADERS += \
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     HEADERS += \
         src/PairingManager/openssl_aes.h \
+        src/PairingManager/openssl_rand.h \
         src/PairingManager/openssl_rsa.h \
         src/PairingManager/openssl_base64.h
 }
@@ -477,6 +473,7 @@ SOURCES += \
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     SOURCES += \
         src/PairingManager/openssl_aes.cpp \
+        src/PairingManager/openssl_rand.cpp \
         src/PairingManager/openssl_rsa.cpp \
         src/PairingManager/openssl_base64.cpp
 }
@@ -1056,17 +1053,15 @@ SOURCES += \
         src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
 }}
 
-# ArduPilot Specific
+# ArduPilot FirmwarePlugin
 
-ArdupilotEnabled {
+!ArdupilotDisabled {
     HEADERS += \
         src/Settings/APMMavlinkStreamRateSettings.h \
 
     SOURCES += \
         src/Settings/APMMavlinkStreamRateSettings.cc \
 }
-
-# ArduPilot FirmwarePlugin
 
 APMFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
@@ -1372,6 +1367,11 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
 }
+
+#-------------------------------------------------------------------------------------
+# Video Streaming
+
+include(src/PhotoGallery/photogallery.pri)
 
 #-------------------------------------------------------------------------------------
 # Android
