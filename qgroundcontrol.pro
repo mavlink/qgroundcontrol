@@ -415,6 +415,7 @@ INCLUDEPATH += \
     src/Joystick \
     src/PlanView \
     src/MissionManager \
+    src/PhotoGallery \
     src/PositionManager \
     src/QmlControls \
     src/QtLocationPlugin \
@@ -1366,6 +1367,11 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
 }
+
+#-------------------------------------------------------------------------------------
+# Video Streaming
+
+include(src/PhotoGallery/photogallery.pri)
 
 #-------------------------------------------------------------------------------------
 # Android

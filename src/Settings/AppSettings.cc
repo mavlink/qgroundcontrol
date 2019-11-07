@@ -33,6 +33,7 @@ const char* AppSettings::missionDirectory =         "Missions";
 const char* AppSettings::logDirectory =             "Logs";
 const char* AppSettings::videoDirectory =           "Video";
 const char* AppSettings::crashDirectory =           "CrashLogs";
+const char* AppSettings::photoDirectory =           "Photos";
 
 DECLARE_SETTINGGROUP(App, "")
 {
@@ -126,6 +127,7 @@ void AppSettings::_checkSavePathDirectories(void)
         savePathDir.mkdir(logDirectory);
         savePathDir.mkdir(videoDirectory);
         savePathDir.mkdir(crashDirectory);
+        savePathDir.mkdir(photoDirectory);
     }
 }
 
@@ -190,6 +192,16 @@ QString AppSettings::crashSavePath(void)
     if (!path.isEmpty() && QDir(path).exists()) {
         QDir dir(path);
         return dir.filePath(crashDirectory);
+    }
+    return QString();
+}
+
+QString AppSettings::photoSavePath(void)
+{
+    QString path = savePath()->rawValue().toString();
+    if (!path.isEmpty() && QDir(path).exists()) {
+        QDir dir(path);
+        return dir.filePath(photoDirectory);
     }
     return QString();
 }
