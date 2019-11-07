@@ -25,12 +25,18 @@ Button {
     }
 
     property double messageHz:  0
+    property int    compID:     0
 
     contentItem: RowLayout {
         QGCLabel {
+            text:   control.compID
+            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 3
+        }
+        QGCLabel {
             text:   control.text
             color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 26
+            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 28
         }
         QGCLabel {
             color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
