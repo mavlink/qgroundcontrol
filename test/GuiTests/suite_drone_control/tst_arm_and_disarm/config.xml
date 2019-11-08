@@ -1,0 +1,7 @@
+<testconfig version="1.0">
+<information>
+<summary>04 Arm and Disarm</summary>
+<description>Shows arming and disarming vehicle. Current state within the toolbar reflects the actual vehicle state (Armed/Disarmed)</description>
+</information>
+<testsettings/>
+</testconfig>
