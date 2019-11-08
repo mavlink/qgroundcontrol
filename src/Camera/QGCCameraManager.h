@@ -103,5 +103,5 @@ protected:
     QTime               _lastZoomChange;
     QTime               _lastCameraChange;
     QTimer              _cameraTimer;
-    QMap<QString, CameraStruct*> _cameraInfoRequest;
+    QMap<int, CameraStruct*> _cameraInfoRequest;
 };

@@ -115,17 +115,17 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
             ((heartbeat.autopilot == MAV_AUTOPILOT_INVALID && heartbeat.type == MAV_TYPE_CAMERA) ||
              (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         //-- First time hearing from this one?
-        QString sCompID = QString::number(message.compid);
-        if(!_cameraInfoRequest.contains(sCompID)) {
+        int compID = message.compid;
+        if(!_cameraInfoRequest.contains(compID)) {
             qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
             CameraStruct* pInfo = new CameraStruct(this, message.compid);
             pInfo->lastHeartbeat.start();
-            _cameraInfoRequest[sCompID] = pInfo;
+            _cameraInfoRequest[compID] = pInfo;
             //-- Request camera info
             _requestCameraInfo(message.compid);
         } else {
-            if(_cameraInfoRequest[sCompID]) {
-                CameraStruct* pInfo = _cameraInfoRequest[sCompID];
+            if(_cameraInfoRequest[compID]) {
+                CameraStruct* pInfo = _cameraInfoRequest[compID];
                 //-- Check if we have indeed received the camera info
                 if(pInfo->infoReceived) {
                     //-- We have it. Just update the heartbeat timeout
@@ -146,7 +146,7 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
                     }
                 }
             } else {
-                qWarning() << "_cameraInfoRequest[" << sCompID << "] is null";
+                qWarning() << "_cameraInfoRequest[" << compID << "] is null";
             }
         }
     }
@@ -212,10 +212,10 @@ void
 QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 {
     //-- Have we requested it?
-    QString sCompID = QString::number(message.compid);
-    if(_cameraInfoRequest.contains(sCompID) && !_cameraInfoRequest[sCompID]->infoReceived) {
+    int compID = message.compid;
+    if(_cameraInfoRequest.contains(compID) && !_cameraInfoRequest[compID]->infoReceived) {
         //-- Flag it as done
-        _cameraInfoRequest[sCompID]->infoReceived = true;
+        _cameraInfoRequest[compID]->infoReceived = true;
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&message, &info);
         qCDebug(CameraManagerLog) << "_handleCameraInfo:" << reinterpret_cast<const char*>(info.model_name) << reinterpret_cast<const char*>(info.vendor_name) << "Comp ID:" << message.compid;
@@ -235,9 +235,9 @@ void
 QGCCameraManager::_cameraTimeout()
 {
     //-- Iterate cameras
-    foreach(QString sCompID, _cameraInfoRequest.keys()) {
-        if(_cameraInfoRequest[sCompID]) {
-            CameraStruct* pInfo = _cameraInfoRequest[sCompID];
+    foreach(int compID, _cameraInfoRequest.keys()) {
+        if(_cameraInfoRequest[compID]) {
+            CameraStruct* pInfo = _cameraInfoRequest[compID];
             //-- Have we received a camera info message?
             if(pInfo->infoReceived) {
                 //-- Has the camera stopped talking to us?
@@ -259,7 +259,7 @@ QGCCameraManager::_cameraTimeout()
                         pCamera->deleteLater();
                         delete pInfo;
                     }
-                    _cameraInfoRequest.remove(sCompID);
+                    _cameraInfoRequest.remove(compID);
                     emit cameraLabelsChanged();
                     //-- If we have another camera, switch current camera.
                     if(_cameras.count()) {
