@@ -203,8 +203,8 @@ Item {
                             readonly property string groupName: modelData
 
                             onClicked: {
+                                if (!checked) _rowWidth = 10
                                 checked = true
-                                _rowWidth                   = 10
                                 controller.currentCategory  = category
                                 controller.currentGroup     = groupName
                             }
