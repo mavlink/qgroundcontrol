@@ -71,6 +71,8 @@ RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${
 # Reconfigure locale
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 
+# The QT offline package doesn't conain the OpenSSL binaries.
+# There is no official OpenSSL packge outside the online installer.
 # Compile OpenSSL 1.1.1.c
 RUN cd /usr/local/src/ \
     && wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
