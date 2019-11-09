@@ -9,10 +9,11 @@ endif()
 add_library(Vehicle
 	ADSBVehicle.cc
 	GPSRTKFactGroup.cc
-	VehicleObjectAvoidance.cc
 	MAVLinkLogManager.cc
 	MultiVehicleManager.cc
+	TrajectoryPoints.cc
 	Vehicle.cc
+	VehicleObjectAvoidance.cc
 	${EXTRA_SRC}
 )
 
