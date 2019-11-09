@@ -55,11 +55,7 @@ class QGCFileDownload;
  * avoid application crashing on 5.12. Enforce no widget on mobile
 **/
 class QGCApplication :
-      #if defined(__mobile__)
-        public QGuiApplication
-      #else
-        public QApplication
-      #endif
+    public QGuiApplication
 {
     Q_OBJECT
 
