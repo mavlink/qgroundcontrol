@@ -87,22 +87,32 @@ class QGCMAVLinkVehicle : public QObject {
     Q_OBJECT
     Q_PROPERTY(quint8               id              READ id             CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  messages        READ messages       NOTIFY messagesChanged)
+    Q_PROPERTY(QList<int>           compIDs         READ compIDs        NOTIFY compIDsChanged)
+    Q_PROPERTY(QStringList          compIDsStr      READ compIDsStr     NOTIFY compIDsChanged)
 
 public:
     QGCMAVLinkVehicle(QObject* parent, quint8 id);
 
     quint8              id              () { return _id; }
     QmlObjectListModel* messages        () { return &_messages; }
+    QList<int>          compIDs         () { return _compIDs; }
+    QStringList         compIDsStr      () { return _compIDsStr; }
 
     QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t cid);
     void                append          (QGCMAVLinkMessage* message);
 
 signals:
     void messagesChanged                ();
+    void compIDsChanged                 ();
+
+private:
+    void _checkCompID                   (QGCMAVLinkMessage *message);
 
 private:
     quint8              _id;
-    QmlObjectListModel  _messages;  //-- List of QGCMAVLinkMessage
+    QList<int>          _compIDs;
+    QStringList         _compIDsStr;
+    QmlObjectListModel  _messages;      //-- List of QGCMAVLinkMessage
 };
 
 //-----------------------------------------------------------------------------

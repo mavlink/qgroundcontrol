@@ -51,8 +51,15 @@ class QGCFileDownload;
  * This class is started by the main method and provides
  * the central management unit of the groundstation application.
  *
- **/
-class QGCApplication : public QGuiApplication
+ * Needs QApplication base to support QtCharts drawing module and
+ * avoid application crashing on 5.12. Enforce no widget on mobile
+**/
+class QGCApplication :
+      #if defined(__mobile__)
+        public QGuiApplication
+      #else
+        public QApplication
+      #endif
 {
     Q_OBJECT
 
