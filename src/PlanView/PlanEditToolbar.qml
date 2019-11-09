@@ -14,14 +14,18 @@ import QtQuick.Layouts      1.2
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
 
 /// Toolbar used for things like Polygon editing tools
 Item {
+    width:  Math.min(toolsRowLayout.width + (_margins * 2), availableWidth)
     height: toolsFlickable.y + toolsFlickable.height + _margins
     z:      QGroundControl.zOrderMapItems + 2
 
-    property real   _radius:            ScreenTools.defaultFontPixelWidth / 2
-    property real   _margins:   ScreenTools.defaultFontPixelWidth / 2
+    property real availableWidth
+
+    property real _radius:  ScreenTools.defaultFontPixelWidth / 2
+    property real _margins: ScreenTools.defaultFontPixelWidth / 2
 
     Component.onCompleted: {
         // Move the child controls from consumer into the layout control
@@ -39,8 +43,7 @@ Item {
     Rectangle {
         anchors.fill:    parent
         radius:         _radius
-        color:          "white"
-        opacity:        0.75
+        color:          qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
     }
 
     QGCFlickable {
@@ -64,10 +67,8 @@ Item {
         id: instructionComponent
 
         QGCLabel {
-            id:                     instructionLabel
-            color:                  "black"
-            text:                   _instructionText
-            Layout.fillWidth:       true
+            id:             instructionLabel
+            text:           _instructionText
         }
     }
 }
