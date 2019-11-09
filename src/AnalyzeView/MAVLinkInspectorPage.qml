@@ -94,7 +94,7 @@ Item {
                         selectionValid  = true
                         curMessageIndex = index
                     }
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 40
+                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 43
                 }
             }
         }
