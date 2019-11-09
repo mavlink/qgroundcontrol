@@ -613,6 +613,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     jsonObj["CC"] = channel;
     jsonObj["NID"] = _getDeviceConnectNid(channel);
     jsonObj["PW"] = power;
+    jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
     jsonDoc.setObject(jsonObj);
     emit startUpload(name, channelURL, jsonDoc, true);
 }
@@ -680,7 +681,7 @@ PairingManager::_updatePairedDeviceNameList()
         if (fileInfo.fileName() != gcsFileName) {
             QString name = fileInfo.fileName();
             QJsonDocument jsonDoc = _getPairingJsonDoc(name);
-            if (!_gcsJsonDoc.isNull() && _gcsJsonDoc.isObject()) {
+            if (!jsonDoc.isNull() && jsonDoc.isObject()) {
                 _devices[name] = jsonDoc;
             }
         }
@@ -931,6 +932,7 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
     }
 
     jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
+    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
 
     return QJsonDocument(jsonObj);
 }
@@ -1158,6 +1160,7 @@ PairingManager::disconnectDevice(const QString& name)
                 jsonObj["CC"] = cc;
                 jsonObj["NID"] = _getDeviceConnectNid(cc);
                 jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
+                jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
                 jsonDoc.setObject(jsonObj);
                 emit startUpload(name, disconnectURL, jsonDoc, true);
             }
