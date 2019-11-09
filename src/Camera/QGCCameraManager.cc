@@ -73,11 +73,9 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             _handleHeartbeat(message);
             return;
         }
-
         if (!_cameraInfoRequest.contains(QString::number(message.compid))) {
             return;
         }
-
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
