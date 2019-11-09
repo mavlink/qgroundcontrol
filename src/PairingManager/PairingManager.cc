@@ -101,7 +101,7 @@ PairingManager::_pairingCompleted(const QString& tempName, const QString& newNam
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, newName);
     _updatePairedDeviceNameList();
-    setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
+    setPairingStatus(PairingSuccess, tr("Pairing Successful"));
     _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
     // Automatically connect to newly paired device
     connectToDevice(newName, true);
@@ -257,7 +257,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     emit connectedVehicleChanged();
     QString chStr = QString::number(channel) + " - " +
                     QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
-    setPairingStatus(PairingConnected, tr("Connection Successfull\nChannel: %1").arg(chStr));
+    setPairingStatus(PairingConnected, tr("Connection Successful\nChannel: %1").arg(chStr));
 }
 
 //-----------------------------------------------------------------------------
@@ -377,12 +377,15 @@ PairingManager::_uploadFinished()
         }
     } else if (url.contains("/pair")) {
         qCDebug(PairingManagerLog) << "Pairing error: " + reply->errorString();
-        QString content = reply->property("content").toString();
-        QTimer::singleShot(pairRetryWait, [this, name, url, content]()
-        {
-            emit _startUploadRequest(name, url, content);
-        });
+        if (!reply->errorString().contains("canceled")) {
+            QString content = reply->property("content").toString();
+            QTimer::singleShot(pairRetryWait, [this, name, url, content]()
+            {
+                _startUploadRequest(name, url, content);
+            });
+        }
     } else if (url.contains("/unpair")) {
+        qCDebug(PairingManagerLog) << "Unpair error: " + reply->errorString();
         if (!reply->errorString().contains("canceled")) {
             _updatePairedDeviceNameList();
         }
