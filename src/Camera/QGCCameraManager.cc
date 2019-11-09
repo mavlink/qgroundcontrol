@@ -69,15 +69,21 @@ void
 QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
     if(message.sysid == _vehicle->id()) {
+        if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+            _handleHeartbeat(message);
+            return;
+        }
+
+        if (!_cameraInfoRequest.contains(QString::number(message.compid))) {
+            return;
+        }
+
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
                 break;
             case MAVLINK_MSG_ID_STORAGE_INFORMATION:
                 _handleStorageInfo(message);
-                break;
-            case MAVLINK_MSG_ID_HEARTBEAT:
-                _handleHeartbeat(message);
                 break;
             case MAVLINK_MSG_ID_CAMERA_INFORMATION:
                 _handleCameraInfo(message);
