@@ -153,6 +153,9 @@ ApplicationWindow {
         mainWindowDialog.dialogButtons = buttons
         mainWindowDialog.open()
         if(buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
+            mainWindowDialog.closePolicy = Popup.NoAutoClose;
+            mainWindowDialog.interactive = false;
+        } else {
             mainWindowDialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
             mainWindowDialog.interactive = true;
         }
