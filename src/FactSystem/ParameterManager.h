@@ -22,6 +22,7 @@
 #include "AutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
+#include "QGCApplication.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
@@ -56,7 +57,7 @@ public:
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
 
     /// Request a refresh on the specific parameter
-    void refreshParameter(int componentId, const QString& name);
+    void refreshParameter(int componentId, const QString& paramName);
 
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString& namePrefix);
@@ -67,7 +68,7 @@ public:
     /// Returns true if the specifed parameter exists
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
-    bool parameterExists(int componentId, const QString& name);
+    bool parameterExists(int componentId, const QString& paramName);
 
     /// Returns all parameter names
     QStringList parameterNames(int componentId);
@@ -76,14 +77,16 @@ public:
     /// a missing parameter error to user if parameter does not exist.
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
-    Fact* getParameter(int componentId, const QString& name);
+    Fact* getParameter(int componentId, const QString& paramName);
 
-    const QMap<QString, QMap<QString, QStringList> >& getDefaultComponentCategoryMap(void);
+    int  getComponentId(const QString& category);
+    QString getComponentCategory(int componentId);
+    const QMap<QString, QMap<QString, QStringList> >& getComponentCategoryMap(int componentId);
 
     /// Returns error messages from loading
     QString readParametersFromStream(QTextStream& stream);
 
-    void writeParametersToStream(QTextStream &stream);
+    void writeParametersToStream(QTextStream& stream);
 
     /// Returns the version number for the parameter set, -1 if not known
     int parameterSetVersion(void) { return _parameterSetMajorVersion; }
@@ -128,11 +131,22 @@ protected:
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
 
+    // ComponentInfo handling
+    void _startRequestComponentInfoAll(void);
+    void _componentInfoRequestTimeout(void);
+    void _requestComponentInfo(int componentId);
+    void _componentInfoReceived(mavlink_message_t msg);
+    void _httpRequest(const QString& url);
+    void _httpDownloadFinished();
+    bool _loadComponentDefinitionFile(QByteArray& bytes);
+    void _updateAllComponentCategoryMaps(void);
+
 private:
     static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);
 
     int     _actualComponentId(int componentId);
+    void    _setupComponentCategoryMap(int componentId);
     void    _setupDefaultComponentCategoryMap(void);
     void    _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void    _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
@@ -155,8 +169,10 @@ private:
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap>            _mapParameterName2Variant;
 
-    // Category map of default component parameters
-    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _defaultComponentCategoryMap;
+    // List of category map of component parameters
+    typedef QMap<QString, QMap<QString, QStringList>>   ComponentCategoryMapType; //<Key: category, Value: Map< Key: group, Value: parameter names list >>
+    QMap<int, ComponentCategoryMapType>                 _componentCategoryMaps;
+    QHash<QString, int>                                 _componentCategoryHash;
 
     double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete
@@ -211,4 +227,32 @@ private:
     static const char* _jsonCompIdKey;
     static const char* _jsonParamNameKey;
     static const char* _jsonParamValueKey;
+
+    // ComponentInfo handling
+    QTimer                  _componentInfoRequestTimer;
+    static const int        _componentInfoRequestRetryMax = 4;
+    int                     _componentInfoRequestRetryCount;
+    bool                    _componentInfoAllReceived;
+    QNetworkAccessManager*  _netManager = nullptr;
+
+    QList<int>              _componentInfoRecievedList;       // key = componentID
+    QMap<int, QString>      _componentInfoDefinitionFileList; // key = componentID
+
+    typedef struct {
+        QString                     group;
+        FactMetaData::ValueType_t   factType;
+        QString                     displayName;
+        QString                     shortDescription;
+        QString                     longDescription;
+        QString                     unit;
+        int                         defaultValue;
+        int                         minValue;
+        int                         maxValue;
+        int                         increment;
+        int                         decimal;
+        QMap<int,QString>           valuesMap;
+    } ComponentParameterElement_t;
+
+    QMap<int, QMap<QString, QStringList> >                  _componentInfoGroupMap;     // key = componentID
+    QMap<int, QMap<QString, ComponentParameterElement_t> >  _componentInfoParameterMap; // key = componentID
 };
