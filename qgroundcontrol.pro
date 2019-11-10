@@ -406,6 +406,7 @@ INCLUDEPATH += \
     src/FlightMap \
     src/FlightMap/Widgets \
     src/FollowMe \
+    src/Geo \
     src/GPS \
     src/Joystick \
     src/PlanView \
@@ -627,12 +628,20 @@ HEADERS += \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
+    src/Geo/QGCGeo.h \
+    src/Geo/UTM.h \
+    src/Geo/Constants.hpp \
+    src/Geo/Math.hpp \
+    src/Geo/Utility.hpp \
+    src/Geo/UTMUPS.hpp \
+    src/Geo/MGRS.hpp \
+    src/Geo/TransverseMercator.hpp \
+    src/Geo/PolarStereographic.hpp \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCFileDownload.h \
-    src/QGCGeo.h \
     src/QGCLoggingCategory.h \
     src/QGCMapPalette.h \
     src/QGCPalette.h \
@@ -689,7 +698,6 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/UTM.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
     src/uas/FileManager.h \
@@ -857,11 +865,18 @@ SOURCES += \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
+    src/Geo/QGCGeo.cc \
+    src/Geo/UTM.cpp \
+    src/Geo/Math.cpp \
+    src/Geo/Utility.cpp \
+    src/Geo/UTMUPS.cpp \
+    src/Geo/MGRS.cpp \
+    src/Geo/TransverseMercator.cpp \
+    src/Geo/PolarStereographic.cpp \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
     src/QGCFileDownload.cc \
-    src/QGCGeo.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
     src/QGCPalette.cc \
@@ -917,7 +932,6 @@ SOURCES += \
     src/main.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/UTM.cpp \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
     src/uas/FileManager.cc \
