@@ -44,6 +44,7 @@
 #include "PositionManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
+#include "QGCGeo.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -1175,6 +1176,7 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 
     _gpsFactGroup.lat()->setRawValue(gpsRawInt.lat * 1e-7);
     _gpsFactGroup.lon()->setRawValue(gpsRawInt.lon * 1e-7);
+    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
     _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
     _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
     _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
@@ -1248,6 +1250,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
 
     _gpsFactGroup.lat()->setRawValue(highLatency2.latitude * 1e-7);
     _gpsFactGroup.lon()->setRawValue(highLatency2.longitude * 1e-7);
+    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7)));
     _gpsFactGroup.count()->setRawValue(0);
     _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
     _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
@@ -3577,6 +3580,7 @@ void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 
 const char* VehicleGPSFactGroup::_latFactName =                 "lat";
 const char* VehicleGPSFactGroup::_lonFactName =                 "lon";
+const char* VehicleGPSFactGroup::_mgrsFactName =                "mgrs";
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
@@ -3587,6 +3591,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
     , _latFact              (0, _latFactName,               FactMetaData::valueTypeDouble)
     , _lonFact              (0, _lonFactName,               FactMetaData::valueTypeDouble)
+    , _mgrsFact             (0, _mgrsFactName,              FactMetaData::valueTypeString)
     , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
     , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
     , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
@@ -3595,6 +3600,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 {
     _addFact(&_latFact,                 _latFactName);
     _addFact(&_lonFact,                 _lonFactName);
+    _addFact(&_mgrsFact,                _mgrsFactName);
     _addFact(&_hdopFact,                _hdopFactName);
     _addFact(&_vdopFact,                _vdopFactName);
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
@@ -3603,6 +3609,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _mgrsFact.setRawValue("");
     _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
