@@ -29,6 +29,7 @@ QString VideoSettings2::uuid() const
 {
     return _uuid;
 }
+
 void VideoSettings2::setUuid(const QString& value)
 {
     if (_uuid != value) {

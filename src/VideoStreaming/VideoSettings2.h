@@ -30,7 +30,7 @@ class VideoSettings2 : public QObject {
 public:
     VideoSettings2();
 
-    QString *uuid() const;
+    QString uuid() const;
     Q_SLOT void setUuid(const QString& uuid);
     Q_SIGNAL void uuidChanged();
 
