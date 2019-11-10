@@ -58,6 +58,7 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
 //
 // Returns:
 //   The UTM zone used for calculating the values of x and y.
+//   If conversion failed the function returns 0
 int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northing);
 
 // UTMXYToLatLon
@@ -78,7 +79,30 @@ int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northi
 // lon - The longitude of the point, in radians.
 //
 // Returns:
-// The function does not return a value.
-void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord);
+// The function returns true if conversion succeeded.
+bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord);
+
+// Converts a latitude/longitude pair to MGRS string
+//
+// Inputs:
+//   coord - Latitude, Longiture coordinate
+//
+// Returns:
+//   The MGRS coordinate string
+//   If conversion fails the function returns empty string
+QString convertGeoToMGRS(const QGeoCoordinate& coord);
+
+// Converts MGRS string to a latitude/longitude pair.
+//
+// Inputs:
+// mgrs - MGRS coordinate string
+//
+// Outputs:
+// lat - The latitude of the point, in radians.
+// lon - The longitude of the point, in radians.
+//
+// Returns:
+// The function returns true if conversion succeeded.
+bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord);
 
 #endif // QGCGEO_H

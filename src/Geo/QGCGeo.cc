@@ -8,23 +8,19 @@
  ****************************************************************************/
 
 #include <QDebug>
+#include <QString>
 
 #include <cmath>
 #include <limits>
 
 #include "QGCGeo.h"
 #include "UTMUPS.hpp"
+#include "MGRS.hpp"
 
 // These defines are private
 #define M_DEG_TO_RAD (M_PI / 180.0)
-
 #define M_RAD_TO_DEG (180.0 / M_PI)
-
-#define CONSTANTS_ONE_G					9.80665f		/* m/s^2		*/
-#define CONSTANTS_AIR_DENSITY_SEA_LEVEL_15C		1.225f			/* kg/m^3		*/
-#define CONSTANTS_AIR_GAS_CONST				287.1f 			/* J/(kg * K)		*/
-#define CONSTANTS_ABSOLUTE_NULL_CELSIUS			-273.15f		/* °C			*/
-#define CONSTANTS_RADIUS_OF_EARTH			6371000			/* meters (m)		*/
+#define CONSTANTS_RADIUS_OF_EARTH 6371000 // meters (m)
 
 static const double epsilon = std::numeric_limits<double>::epsilon();
 
@@ -91,16 +87,62 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
 
 int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northing)
 {
-    int zone;
-    bool northp;
-    GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
-    return zone;
+    try {
+        int zone;
+        bool northp;
+        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
+        return zone;
+    } catch(...) {
+        return 0;
+    }
 }
 
-void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord)
+bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord)
 {
     double lat, lon;
-    GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
+    try {
+        GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
+    } catch(...) {
+        return false;
+    }
     coord.setLatitude(lat);
     coord.setLongitude(lon);
+
+    return true;
+}
+
+QString convertGeoToMGRS(const QGeoCoordinate& coord)
+{
+    int zone;
+    bool northp;
+    double x, y;
+    std::string mgrs;
+
+    try {
+        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
+        GeographicLib::MGRS::Forward(zone, northp, x, y, coord.latitude(), 5, mgrs);
+    } catch(...) {
+        mgrs = "";
+    }
+
+    return QString::fromStdString(mgrs);
+}
+
+bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord)
+{
+    int zone, prec;
+    bool northp;
+    double x, y;
+    double lat, lon;
+
+    try {
+        GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
+        GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
+    } catch(...) {
+        return false;
+    }
+    coord.setLatitude(lat);
+    coord.setLongitude(lon);
+
+    return true;
 }
