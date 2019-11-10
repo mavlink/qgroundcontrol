@@ -74,4 +74,6 @@ private:
     QString _uuid;
 };
 
+Q_DECLARE_METATYPE(VideoSettings2*);
+
 #endif

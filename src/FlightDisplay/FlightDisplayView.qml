@@ -392,7 +392,7 @@ Item {
                 videoReceiver: model.videoReceiver
                 Component.onCompleted: print(JSON.stringify({height: _flightVideo.height, width: _flightVideo.width}))
                 onConfigRequested: {
-                    settingsController.videoReceiver = model.videoReceiver
+                    settingsController.videoStettings = model.videoReceiver.settings
                     settingsController.visible = true
                 }
             }

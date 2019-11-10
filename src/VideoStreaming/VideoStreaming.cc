@@ -175,6 +175,7 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     qmlRegisterType<VideoReceiver> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiver");
     qmlRegisterType<VideoReceiverModel> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiverModel");
     qmlRegisterType<VideoSurface> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface");
-    qmlRegisterType<VideoSettings2> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSettings2");
+    qmlRegisterUncreatableType<VideoSettings2> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSettings2", "Cant create it.");
+    qRegisterMetaType<VideoSettings2*>("VideoSettings2*");
 }
 

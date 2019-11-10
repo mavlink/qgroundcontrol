@@ -50,6 +50,7 @@ public:
     Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
+    Q_PROPERTY(VideoSettings2*  settings READ settings CONSTANT)
 
     explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver();
