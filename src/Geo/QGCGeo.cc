@@ -13,7 +13,7 @@
 #include <limits>
 
 #include "QGCGeo.h"
-#include "UTM.h"
+#include "UTMUPS.hpp"
 
 // These defines are private
 #define M_DEG_TO_RAD (M_PI / 180.0)
@@ -26,7 +26,7 @@
 #define CONSTANTS_ABSOLUTE_NULL_CELSIUS			-273.15f		/* °C			*/
 #define CONSTANTS_RADIUS_OF_EARTH			6371000			/* meters (m)		*/
 
-static const float epsilon = std::numeric_limits<double>::epsilon();
+static const double epsilon = std::numeric_limits<double>::epsilon();
 
 void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, double* y, double* z)
 {
@@ -50,7 +50,7 @@ void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
     double ref_cos_lat = cos(ref_lat_rad);
 
     double c = acos(ref_sin_lat * sin_lat + ref_cos_lat * cos_lat * cos_d_lon);
-    double k = (fabs(c) < epsilon) ? 1.0 : (c / sin(c));
+    double k = (abs(c) < epsilon) ? 1.0 : (c / sin(c));
 
     *x = k * (ref_cos_lat * sin_lat - ref_sin_lat * cos_lat * cos_d_lon) * CONSTANTS_RADIUS_OF_EARTH;
     *y = k * cos_lat * sin(lon_rad - ref_lon_rad) * CONSTANTS_RADIUS_OF_EARTH;
@@ -61,7 +61,7 @@ void convertGeoToNed(QGeoCoordinate coord, QGeoCoordinate origin, double* x, dou
 void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCoordinate *coord) {
     double x_rad = x / CONSTANTS_RADIUS_OF_EARTH;
     double y_rad = y / CONSTANTS_RADIUS_OF_EARTH;
-    double c = sqrtf(x_rad * x_rad + y_rad * y_rad);
+    double c = sqrt(x_rad * x_rad + y_rad * y_rad);
     double sin_c = sin(c);
     double cos_c = cos(c);
 
@@ -74,7 +74,7 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
     double lat_rad;
     double lon_rad;
 
-    if (fabs(c) > epsilon) {
+    if (abs(c) > epsilon) {
         lat_rad = asin(cos_c * ref_sin_lat + (x_rad * sin_c * ref_cos_lat) / c);
         lon_rad = (ref_lon_rad + atan2(y_rad * sin_c, c * ref_cos_lat * cos_c - x_rad * ref_sin_lat * sin_c));
 
@@ -91,14 +91,16 @@ void convertNedToGeo(double x, double y, double z, QGeoCoordinate origin, QGeoCo
 
 int convertGeoToUTM(const QGeoCoordinate& coord, double& easting, double& northing)
 {
-    return LatLonToUTMXY(coord.latitude(), coord.longitude(), -1 /* zone */, easting, northing);
+    int zone;
+    bool northp;
+    GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
+    return zone;
 }
 
 void convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate& coord)
 {
-    double latRadians, lonRadians;
-
-    UTMXYToLatLon (easting, northing, zone, southhemi, latRadians, lonRadians);
-    coord.setLatitude(RadToDeg(latRadians));
-    coord.setLongitude(RadToDeg(lonRadians));
+    double lat, lon;
+    GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
+    coord.setLatitude(lat);
+    coord.setLongitude(lon);
 }

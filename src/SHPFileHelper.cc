@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "SHPFileHelper.h"
-#include "UTM.h"
+#include "QGCGeo.h"
 
 #include <QFile>
 #include <QVariant>
@@ -141,14 +141,14 @@ bool SHPFileHelper::loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordi
     }
 
     for (int i=0; i<shpObject->nVertices; i++) {
-        double lat, lon;
+        QGeoCoordinate coord;
         if (utmZone) {
-            UTMXYToLatLon(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, lat, lon);
+            convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord);
         } else {
-            lat = shpObject->padfY[i];
-            lon = shpObject->padfX[i];
+            coord.setLatitude(shpObject->padfY[i]);
+            coord.setLongitude(shpObject->padfX[i]);
         }
-        vertices.append(QGeoCoordinate(lat, lon));
+        vertices.append(coord);
     }
 
     // Filter last vertex such that it differs from first
