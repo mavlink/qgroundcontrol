@@ -14,11 +14,13 @@ import QGroundControl.Palette       1.0
 
 /// Mission item edit control
 Rectangle {
-    id:     _root
-    height: editorLoader.visible ? (editorLoader.y + editorLoader.height + (_margin * 2)) : (commandPicker.y + commandPicker.height + _margin / 2)
-    color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
-    radius: _radius
-    opacity: _currentItem ? 1.0 : 0.7
+    id:             _root
+    height:         editorLoader.visible ? (editorLoader.y + editorLoader.height + (_margin * 2)) : (commandPicker.y + commandPicker.height + _margin / 2)
+    color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
+    radius:         _radius
+    opacity:        _currentItem ? 1.0 : 0.7
+    border.width:   _readyForSave ? 0 : 1
+    border.color:   qgcPal.warningText
 
     property var    map                 ///< Map control
     property var    masterController
@@ -38,6 +40,7 @@ Rectangle {
     property bool   _noMissionItemsAdded:       ListView.view.model.count === 1
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
+    property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -73,25 +76,41 @@ Rectangle {
     }
 
     Rectangle {
-        anchors.verticalCenter: commandPicker.verticalCenter
+        id:                     notReadyForSaveIndicator
+        anchors.verticalCenter: notReadyForSaveLabel.visible ? notReadyForSaveLabel.verticalCenter : commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
         width:                  readyForSaveLabel.contentHeight
         height:                 width
         border.width:           1
-        border.color:           "red"
+        border.color:           qgcPal.warningText
         color:                  "white"
         radius:                 width / 2
-        visible:                missionItem.readyForSaveState !== VisualMissionItem.ReadyForSave
+        visible:                !_readyForSave
 
         QGCLabel {
             id:                 readyForSaveLabel
             anchors.centerIn:   parent
             //: Indicator in Plan view to show mission item is not ready for save/send
             text:               qsTr("?")
-            color:              "red"
+            color:              qgcPal.warningText
             font.pointSize:     ScreenTools.smallFontPointSize
         }
+    }
+
+    QGCLabel {
+        id:                     notReadyForSaveLabel
+        anchors.margins:        _margin
+        anchors.left:           notReadyForSaveIndicator.right
+        anchors.right:          parent.right
+        anchors.top:            commandPicker.bottom
+        visible:                _currentItem && !_readyForSave
+        text:                   missionItem.readyForSaveState === VisualMissionItem.NotReadyForSaveTerrain ?
+                                    qsTr("Incomplete: Waiting on terrain data.") :
+                                    qsTr("Incomplete: Item not fully specified.")
+        wrapMode:               Text.WordWrap
+        horizontalAlignment:    Text.AlignHCenter
+        color:                  qgcPal.warningText
     }
 
     QGCColoredImage {
@@ -197,18 +216,10 @@ Rectangle {
 
     QGCButton {
         id:                     commandPicker
-        anchors.topMargin:      _margin / 2
+        anchors.topMargin:      _margin
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-
-        /*
-            Trying no sequence numbers in ui
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
-        anchors.left:           label.right
-        */
-
         anchors.top:            parent.top
         visible:                !commandLabel.visible
         text:                   missionItem.commandName
@@ -237,10 +248,9 @@ Rectangle {
 
     Loader {
         id:                 editorLoader
-        anchors.leftMargin: _margin
-        anchors.topMargin:  _margin
+        anchors.margins:    _margin
         anchors.left:       parent.left
-        anchors.top:        commandPicker.bottom
+        anchors.top:        _readyForSave ? commandPicker.bottom : notReadyForSaveLabel.bottom
         source:             missionItem.editorQml
         visible:            _currentItem
 
