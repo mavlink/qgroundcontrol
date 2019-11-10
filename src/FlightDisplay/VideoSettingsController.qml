@@ -31,11 +31,7 @@ Rectangle {
     focus: true
     width: childrenRect.width + 10
     height: childrenRect.height + 10
-    property alias videoReceiver : internalSettings.videoReceiver
-
-    VideoSettings2 {
-        id: internalSettings
-    }
+    property QtObject videoStettings
 
    ColumnLayout {
         spacing: 6
@@ -56,20 +52,20 @@ Rectangle {
             visible:                videoSectionLabel.visible
 
             Label {
-                text:                   qsTr("Video Source")
+                text: qsTr("Video Source")
             }
             ComboBox {
-                id:                     videoSource
+                id: videoSource
             }
 
             Label {
-                text:                   qsTr("UDP Port")
+                text: qsTr("UDP Port")
             }
             TextField {
             }
 
             Label {
-                text:                   qsTr("URL")
+                text: qsTr("URL")
             }
             TextField {
             }
@@ -78,26 +74,25 @@ Rectangle {
         Item { width: 1; height: _margins }
 
         Label {
-            id:                             videoRecSectionLabel
-            text:                           qsTr("Video Recording")
+            id: videoRecSectionLabel
+            text: qsTr("Video Recording")
             Layout.alignment: Qt.AlignHCenter
         }
 
         GridLayout {
-            id:                         videoRecCol
-            Layout.fillWidth:           false
-            columns:                    2
-            visible:                    videoRecSectionLabel.visible
+            id: videoRecCol
+            Layout.fillWidth: false
+            columns: 2
+            visible: videoRecSectionLabel.visible
 
             Label {
-                text:                   qsTr("Auto-Delete Files")
+                text: qsTr("Auto-Delete Files")
             }
             CheckBox {
-                text:                   ""
             }
 
             Label {
-                text:                   qsTr("Max Storage Usage")
+                text: qsTr("Max Storage Usage")
             }
             TextField {
             }

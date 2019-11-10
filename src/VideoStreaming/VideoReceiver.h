@@ -29,6 +29,7 @@
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
 class VideoSettings;
+class VideoSettings2;
 
 class VideoReceiver : public QObject
 {
@@ -70,6 +71,7 @@ public:
     virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
 
     void                  setVideoDecoder   (VideoEncoding encoding);
+    VideoSettings2 *settings() const;
 
 signals:
     void videoRunningChanged                ();
@@ -157,5 +159,6 @@ protected:
     bool            _tryWithHardwareDecoding = true;
     const char*     _hwDecoderName;
     const char*     _swDecoderName;
+    VideoSettings2 *_videoSettings2;
 };
 

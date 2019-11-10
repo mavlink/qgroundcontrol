@@ -18,6 +18,8 @@
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
+#include "VideoSettings2.h"
+
 #ifdef QGC_GST_TAISYNC_ENABLED
 #include "TaisyncHandler.h"
 #endif
@@ -75,9 +77,9 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _swDecoderName("avdec_h264")
 {
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
+    _videoSettings2 = new VideoSettings2();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    qDebug() << "video sink created" << _videoSink;
 
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
@@ -628,6 +630,11 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
     return GST_PAD_PROBE_REMOVE;
 }
 #endif
+
+VideoSettings2 *VideoReceiver::settings() const
+{
+    return _videoSettings2;
+}
 
 //-----------------------------------------------------------------------------
 void

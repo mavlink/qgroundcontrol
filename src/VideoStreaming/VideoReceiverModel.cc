@@ -1,5 +1,6 @@
 #include "VideoReceiverModel.h"
 #include "VideoReceiver.h"
+#include "VideoSettings2.h"
 
 #include <QSettings>
 #include <QUuid>
@@ -33,15 +34,8 @@ void VideoReceiverModel::createVideoStream()
 
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     auto videoReceiver = new VideoReceiver();
+    videoReceiver->settings()->createNewEntry();
     m_videoReceivers.append(videoReceiver);
-
-    QSettings settings;
-    QUuid uuid = QUuid::createUuid();
-    settings.beginGroup(QStringLiteral("VideoManagement"));
-    settings.beginGroup(QStringLiteral("VideoStream_%1").arg(uuid.toString()));
-    settings.setValue("hasVideo", true);
-    // TODO: Store the defaults for the Video Stream.
-    videoReceiver->setProperty("uuid", uuid.toString());
     endInsertRows();
 }
 
@@ -50,13 +44,7 @@ void VideoReceiverModel::deleteVideoStream(int pos)
     beginRemoveRows(QModelIndex(), pos, pos);
     auto *toBeDeleted = m_videoReceivers.takeAt(pos);
     QString uuid = toBeDeleted->property("uuid").toString();
-
-    QSettings settings;
-    settings.beginGroup(QStringLiteral("VideoManagement"));
-        settings.beginGroup(QStringLiteral("VideoStream_%1").arg(uuid));
-            settings.remove(""); // erase group.
-        settings.endGroup();
-    settings.endGroup();
+    toBeDeleted->settings()->removeEntry();
     toBeDeleted->deleteLater();
     endRemoveRows();
 }
