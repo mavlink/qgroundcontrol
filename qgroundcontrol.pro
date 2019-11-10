@@ -636,7 +636,6 @@ HEADERS += \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
     src/Geo/QGCGeo.h \
-    src/Geo/UTM.h \
     src/Geo/Constants.hpp \
     src/Geo/Math.hpp \
     src/Geo/Utility.hpp \
@@ -868,7 +867,6 @@ SOURCES += \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
     src/Geo/QGCGeo.cc \
-    src/Geo/UTM.cpp \
     src/Geo/Math.cpp \
     src/Geo/Utility.cpp \
     src/Geo/UTMUPS.cpp \
