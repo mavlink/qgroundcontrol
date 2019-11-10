@@ -7,17 +7,7 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of main class
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
-#ifndef QGCAPPLICATION_H
-#define QGCAPPLICATION_H
+#pragma once
 
 #include <QApplication>
 #include <QTimer>
@@ -45,21 +35,7 @@ class QGCSingleton;
 class QGCToolbox;
 class QGCFileDownload;
 
-/**
- * @brief The main application and management class.
- *
- * This class is started by the main method and provides
- * the central management unit of the groundstation application.
- *
- * Needs QApplication base to support QtCharts drawing module and
- * avoid application crashing on 5.12. Enforce no widget on mobile
-**/
-class QGCApplication :
-      #if defined(__mobile__)
-        public QGuiApplication
-      #else
-        public QApplication
-      #endif
+class QGCApplication : public QGuiApplication
 {
     Q_OBJECT
 
@@ -214,5 +190,3 @@ private:
 
 /// @brief Returns the QGCApplication object singleton.
 QGCApplication* qgcApp(void);
-
-#endif
