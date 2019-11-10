@@ -609,7 +609,7 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
 QString ParameterManager::getComponentCategory(int componentId)
 {
     if (_mavlinkCompIdHash.contains(componentId)) {
-        return _mavlinkCompIdHash.value(componentId) + QString("   (compId %1)").arg(componentId);
+        return QString("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
     }
     QString componentCategoryPrefix = tr("Component ");
     return QString("%1%2").arg(componentCategoryPrefix).arg(componentId);
