@@ -125,7 +125,15 @@ QString convertGeoToMGRS(const QGeoCoordinate& coord)
         mgrs = "";
     }
 
-    return QString::fromStdString(mgrs);
+    QString qstr = QString::fromStdString(mgrs);
+    for (int i = qstr.length() - 1; i >= 0; i--) {
+        if (!qstr.at(i).isDigit()) {
+            int l = (qstr.length() - i) / 2;
+            return qstr.left(i + 1) + " " + qstr.mid(i + 1, l) + " " + qstr.mid(i + 1 + l);
+        }
+    }
+
+    return qstr;
 }
 
 bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord)

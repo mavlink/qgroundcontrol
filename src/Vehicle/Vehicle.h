@@ -217,6 +217,7 @@ public:
 
     Q_PROPERTY(Fact* lat                READ lat                CONSTANT)
     Q_PROPERTY(Fact* lon                READ lon                CONSTANT)
+    Q_PROPERTY(Fact* mgrs               READ mgrs               CONSTANT)
     Q_PROPERTY(Fact* hdop               READ hdop               CONSTANT)
     Q_PROPERTY(Fact* vdop               READ vdop               CONSTANT)
     Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
@@ -225,6 +226,7 @@ public:
 
     Fact* lat               (void) { return &_latFact; }
     Fact* lon               (void) { return &_lonFact; }
+    Fact* mgrs              (void) { return &_mgrsFact; }
     Fact* hdop              (void) { return &_hdopFact; }
     Fact* vdop              (void) { return &_vdopFact; }
     Fact* courseOverGround  (void) { return &_courseOverGroundFact; }
@@ -233,6 +235,7 @@ public:
 
     static const char* _latFactName;
     static const char* _lonFactName;
+    static const char* _mgrsFactName;
     static const char* _hdopFactName;
     static const char* _vdopFactName;
     static const char* _courseOverGroundFactName;
@@ -242,6 +245,7 @@ public:
 private:
     Fact        _latFact;
     Fact        _lonFact;
+    Fact        _mgrsFact;
     Fact        _hdopFact;
     Fact        _vdopFact;
     Fact        _courseOverGroundFact;
