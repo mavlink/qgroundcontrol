@@ -108,11 +108,11 @@ Q_SLOT void VideoSettings2::setName(const QString& value)
 QString VideoSettings2::createNewEntry()
 {
     QSettings settings;
-    QUuid uuid = QUuid::createUuid();
+    _uuid = QUuid::createUuid().toString();
     settings.beginGroup(QStringLiteral("VideoManagement"));
-    settings.beginGroup(QStringLiteral("VideoStream_%1").arg(uuid.toString()));
+    settings.beginGroup(QStringLiteral("VideoStream_%1").arg(_uuid));
     settings.setValue("name", tr("Untitled"));
-    _uuid = uuid.toString();
+    return _uuid;
 }
 
 void VideoSettings2::removeEntry()
