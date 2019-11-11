@@ -174,6 +174,8 @@ Item {
 
                     SectionHeader {
                         id:             categoryHeader
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
                         text:           category
                         checked:        controller.currentCategory === text
                         exclusiveGroup: sectionGroup

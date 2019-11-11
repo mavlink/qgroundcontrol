@@ -124,8 +124,10 @@ Rectangle {
                 }
 
                 SectionHeader {
-                    id:     corridorHeader
-                    text:   qsTr("Corridor")
+                    id:             corridorHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Corridor")
                 }
 
                 GridLayout {
@@ -182,9 +184,11 @@ Rectangle {
                 }
 
                 SectionHeader {
-                    id:         terrainHeader
-                    text:       qsTr("Terrain")
-                    checked:    missionItem.followTerrain
+                    id:             terrainHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Terrain")
+                    checked:        missionItem.followTerrain
                 }
 
                 ColumnLayout {
@@ -228,8 +232,10 @@ Rectangle {
                 }
 
                 SectionHeader {
-                    id:     statsHeader
-                    text:   qsTr("Statistics")
+                    id:             statsHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Statistics")
                 }
 
                 TransectStyleComplexItemStats { }
