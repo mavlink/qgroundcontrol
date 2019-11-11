@@ -8,12 +8,10 @@ VideoSurface::VideoSurface(QQuickItem *parent)
   , _videoItem(nullptr)
   , _shouldStartVideo(false)
 {
-    qDebug() << "Starting a video surface";
     setFlag(ItemHasContents);
 }
 
 VideoSurface::~VideoSurface() {
-    qDebug() << "Killing the video Surface";
     auto *sink =_videoReceiver->videoSink();
     auto *pipeline = _videoReceiver->pipeline();
 
@@ -23,7 +21,6 @@ VideoSurface::~VideoSurface() {
 
 void VideoSurface::setVideoItem(QObject *videoItem) {
     if (_videoItem != videoItem) {
-        qDebug() << "Setting the video item";
         _videoItem = videoItem;
         Q_EMIT videoItemChanged(_videoItem);
     }
@@ -35,7 +32,6 @@ void VideoSurface::startVideo() {
     auto *pipeline = _videoReceiver->pipeline();
 
     if (pipeline && sink && _videoItem) {
-        qDebug() << "Setting the video to play state";
         GObject *videoSinkHasWidget = nullptr;
         g_object_get(sink, "widget", videoSinkHasWidget, nullptr);
         if (!videoSinkHasWidget) {
@@ -54,7 +50,6 @@ QObject *VideoSurface::videoItem() const {
 void VideoSurface::setVideoReceiver(VideoReceiver *videoReceiver)
 {
     if (_videoReceiver != videoReceiver) {
-        qDebug() << "Setting the video receiver";
         _videoReceiver = videoReceiver;
         Q_EMIT videoReceiverChanged(_videoReceiver);
     }
@@ -71,11 +66,9 @@ QSGNode *VideoSurface::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
 {
     Q_UNUSED(data)
     if (_shouldStartVideo) {
-        qDebug() << "Set the surface to playing." << _videoReceiver->property("pipeline");
         auto *pipeline = _videoReceiver->pipeline();
-        qDebug() << "Set the surface to playing." << pipeline;
         GstState state;
-        auto currentState = gst_element_get_state(pipeline, &state, nullptr, 5);
+        gst_element_get_state(pipeline, &state, nullptr, 5);
         if ( state == GST_STATE_PLAYING ) {
              gst_element_set_state(pipeline, GST_STATE_PAUSED);
         }
