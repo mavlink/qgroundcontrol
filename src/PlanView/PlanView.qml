@@ -1025,6 +1025,7 @@ Item {
             property string _overwriteText: (_editingLayer == _layerMission) ? qsTr("Mission overwrite") : ((_editingLayer == _layerGeoFence) ? qsTr("GeoFence overwrite") : qsTr("Rally Points overwrite"))
 
             QGCLabel {
+                id:                 unsavedChangedLabel
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 text:               activeVehicle ?
@@ -1037,6 +1038,7 @@ Item {
                 id:                 createSection
                 Layout.fillWidth:   true
                 text:               qsTr("Create Plan")
+                showSpacer:         false
             }
 
             GridLayout {
