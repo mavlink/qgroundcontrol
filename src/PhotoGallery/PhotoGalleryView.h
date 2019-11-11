@@ -270,5 +270,7 @@ private:
     /// operations.
     QTimer _long_click_timeout;
 
+    QIcon _open_extern_folder_svg;
+
     std::set<QString> _selected_images;
 };
