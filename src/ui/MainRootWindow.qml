@@ -196,28 +196,11 @@ ApplicationWindow {
         mainWindow.close()
     }
 
-    MessageDialog {
-        id:                 activeConnectionsCloseDialog
-        title:              qsTr("%1 close").arg(QGroundControl.appName)
-        text:               qsTr("There are still active connections to vehicles. Are you sure you want to exit?")
-        standardButtons:    StandardButton.Yes | StandardButton.Cancel
-        modality:           Qt.ApplicationModal
-        visible:            false
-        onYes:              finishCloseProcess()
-        function check() {
-            if (QGroundControl.multiVehicleManager.activeVehicle) {
-                activeConnectionsCloseDialog.open()
-            } else {
-                finishCloseProcess()
-            }
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Check for unsaved missions
-
+    // On attempting an application close we check for:
+    //  Unsaved missions - then
+    //  Pending parameter writes - then
+    //  Active connections
     onClosing: {
-        // Check first for unsaved missions and active connections
         if (!_forceClose) {
             unsavedMissionCloseDialog.check()
             close.accepted = false
@@ -231,12 +214,48 @@ ApplicationWindow {
         standardButtons:    StandardButton.Yes | StandardButton.No
         modality:           Qt.ApplicationModal
         visible:            false
-        onYes:              activeConnectionsCloseDialog.check()
+        onYes:              pendingParameterWritesCloseDialog.check()
         function check() {
             if (planMasterControllerPlan && planMasterControllerPlan.dirty) {
                 unsavedMissionCloseDialog.open()
             } else {
-                activeConnectionsCloseDialog.check()
+                pendingParameterWritesCloseDialog.check()
+            }
+        }
+    }
+
+    MessageDialog {
+        id:                 pendingParameterWritesCloseDialog
+        title:              qsTr("%1 close").arg(QGroundControl.appName)
+        text:               qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?")
+        standardButtons:    StandardButton.Yes | StandardButton.No
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              activeConnectionsCloseDialog.check()
+        function check() {
+            for (var index=0; index<QGroundControl.multiVehicleManager.vehicles.count; index++) {
+                if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
+                    pendingParameterWritesCloseDialog.open()
+                    return
+                }
+            }
+            activeConnectionsCloseDialog.check()
+        }
+    }
+
+    MessageDialog {
+        id:                 activeConnectionsCloseDialog
+        title:              qsTr("%1 close").arg(QGroundControl.appName)
+        text:               qsTr("There are still active connections to vehicles. Are you sure you want to exit?")
+        standardButtons:    StandardButton.Yes | StandardButton.Cancel
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              finishCloseProcess()
+        function check() {
+            if (QGroundControl.multiVehicleManager.activeVehicle) {
+                activeConnectionsCloseDialog.open()
+            } else {
+                finishCloseProcess()
             }
         }
     }
