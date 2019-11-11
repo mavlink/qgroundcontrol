@@ -18,7 +18,7 @@ BlankPlanCreator::BlankPlanCreator(PlanMasterController* planMasterController, Q
 
 }
 
-void BlankPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
+void BlankPlanCreator::createPlan(const QGeoCoordinate& /*mapCenterCoord*/)
 {
     _planMasterController->removeAll();
 }
