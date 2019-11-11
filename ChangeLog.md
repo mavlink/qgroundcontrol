@@ -9,6 +9,7 @@ Note: This file only contains high level features or important fixes.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
 ### 3.5.6 - Not yet released
+* Fix ArduPilot version check which was causing Plane 4.0 to be reported as not supported.
 
 ### 3.5.5 - Stable
 * Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
