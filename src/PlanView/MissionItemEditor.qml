@@ -140,46 +140,6 @@ Rectangle {
             id: hamburgerMenu
 
             QGCMenuItem {
-                text:           qsTr("Insert waypoint")
-                onTriggered:    insertWaypoint()
-            }
-
-            QGCMenu {
-                id:         patternMenu
-                title:      qsTr("Insert pattern")
-                visible:    !_singleComplexItem
-
-                Instantiator {
-                    model: _missionController.complexMissionItemNames
-
-                    onObjectAdded:      patternMenu.insertItem(index, object)
-                    onObjectRemoved:    patternMenu.removeItem(object)
-
-                    QGCMenuItem {
-                        text:           modelData
-                        onTriggered:    insertComplexItem(modelData)
-                    }
-                }
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
-                visible:        _singleComplexItem
-                onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Delete")
-                onTriggered:    remove()
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Change command...")
-                onTriggered:    commandPicker.clicked()
-                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
-            }
-
-            QGCMenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
                 onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
