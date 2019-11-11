@@ -53,6 +53,7 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
     connect(this, &PairingManager::setPairingStatus, this, &PairingManager::_setPairingStatus, Qt::QueuedConnection);
     connect(this, &PairingManager::startUpload, this, &PairingManager::_startUpload, Qt::QueuedConnection);
     connect(this, &PairingManager::connectToPairedDevice, this, &PairingManager::_connectToPairedDevice, Qt::QueuedConnection);
+    connect(_toolbox->linkManager(), &LinkManager::linkDeleted, this, &PairingManager::_linkInactiveOrDeleted);
     connect(&_reconnectTimer, &QTimer::timeout, this, &PairingManager::_autoConnect, Qt::QueuedConnection);
     connect(_toolbox->settingsManager()->appSettings()->usePairing(), &Fact::rawValueChanged, this, &PairingManager::_setEnabled, Qt::QueuedConnection);
 }
@@ -198,17 +199,24 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
 {
     Q_UNUSED(vehicleID)
 
+    if (!active) {
+        _linkInactiveOrDeleted(link);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_linkInactiveOrDeleted(LinkInterface* link)
+{
     QMapIterator<QString, LinkInterface*> i(_connectedDevices);
     while (i.hasNext()) {
         i.next();
         if (i.value() == link) {
-            if (!active) {
-                qCDebug(PairingManagerLog) << "Link became inactive. Reconnecting " << i.key();
-                _removeUDPLink(i.key());
-                connectToDevice(i.key());
-            }
-            break;
+            qCDebug(PairingManagerLog) << "Link became inactive. Reconnecting " << i.key();
+            _removeUDPLink(i.key());
+            connectToDevice(i.key());
         }
+        break;
     }
 }
 

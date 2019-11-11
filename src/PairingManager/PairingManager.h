@@ -72,7 +72,6 @@ public:
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
     bool            usePairing                  () { return _usePairing; }
-    bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
     QString         nidPrefix                   () { return _nidPrefix; }
@@ -190,6 +189,7 @@ private:
     void                    _createUDPLink              (const QString& name, quint16 port);
     void                    _removeUDPLink              (const QString& name);
     void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
+    void                    _linkInactiveOrDeleted      (LinkInterface* link);
     void                    _autoConnect                ();
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
