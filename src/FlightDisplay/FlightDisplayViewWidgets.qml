@@ -134,7 +134,7 @@ Item {
         spacing:                    ScreenTools.defaultFontPixelHeight
 
         property bool noGPSLockVisible:     activeVehicle && !activeVehicle.coordinate.isValid && mainIsMap
-        property bool prearmErrorVisible:   activeVehicle && activeVehicle.prearmError
+        property bool prearmErrorVisible:   activeVehicle && !activeVehicle.armed && activeVehicle.prearmError
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter

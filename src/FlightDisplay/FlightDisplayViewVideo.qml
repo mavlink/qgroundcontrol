@@ -113,6 +113,7 @@ Item {
             */
         }
 
+
         //-- Thermal Image
         /*
         Item {

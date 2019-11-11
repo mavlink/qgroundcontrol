@@ -24,6 +24,8 @@ Item {
     anchors.bottom: parent.bottom
     width:          batteryIndicatorRow.width
 
+    property bool showIndicator: true
+
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.battery.percentRemaining.value > 75) {

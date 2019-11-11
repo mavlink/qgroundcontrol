@@ -156,8 +156,8 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-    : QGuiApplication           (argc, argv)
-    , _runningUnitTests         (unitTesting)
+    : QGuiApplication       (argc, argv)
+    , _runningUnitTests     (unitTesting)
 {
     _app = this;
     _msecsElapsedTime.start();
@@ -555,6 +555,12 @@ bool QGCApplication::_initForNormalAppBoot()
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
+
+    // Safe to show popup error messages now that main window is created
+    UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
+    if (msgHandler) {
+        msgHandler->showErrorsInToolbar();
+    }
 
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);

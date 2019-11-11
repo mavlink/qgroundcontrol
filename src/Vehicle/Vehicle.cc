@@ -12,6 +12,8 @@
 #include <QLocale>
 #include <QQuaternion>
 
+#include <Eigen/Eigen>
+
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
 #include "FirmwarePluginManager.h"
@@ -1132,15 +1134,25 @@ void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
     mavlink_attitude_quaternion_t attitudeQuaternion;
     mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
 
+    Eigen::Quaternionf quat(attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4);
+    Eigen::Vector3f rates(attitudeQuaternion.rollspeed, attitudeQuaternion.pitchspeed, attitudeQuaternion.yawspeed);
+    Eigen::Quaternionf repr_offset(attitudeQuaternion.repr_offset_q[0], attitudeQuaternion.repr_offset_q[1], attitudeQuaternion.repr_offset_q[2], attitudeQuaternion.repr_offset_q[3]);
+
+    // if repr_offset is valid, rotate attitude and rates
+    if (repr_offset.norm() >= 0.5f) {
+        quat = quat * repr_offset;
+        rates = repr_offset * rates; 
+    }
+
     float roll, pitch, yaw;
-    float q[] = { attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4 };
+    float q[] = { quat.w(), quat.x(), quat.y(), quat.z() };
     mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
 
     _handleAttitudeWorker(roll, pitch, yaw);
 
-    rollRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.rollspeed));
-    pitchRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.pitchspeed));
-    yawRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.yawspeed));
+    rollRate()->setRawValue(qRadiansToDegrees(rates[0]));
+    pitchRate()->setRawValue(qRadiansToDegrees(rates[1]));
+    yawRate()->setRawValue(qRadiansToDegrees(rates[2]));
 }
 
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)

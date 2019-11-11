@@ -20,7 +20,7 @@
 },
 {
     "name":             "LoiterAltitude",
-    "shortDescription": "Aircraft will proceed to the loiter point and loiter until it reaches this altitude. Once altitude is reached the aircraft will proceed to land.",
+    "shortDescription": "Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will proceed to land.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
