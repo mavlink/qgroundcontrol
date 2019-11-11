@@ -208,6 +208,16 @@ Rectangle {
                 property Fact _stopTakingVideo: missionItem.stopTakingVideo
             }
         }
+
+        QGCLabel {
+            anchors.left:           parent.left
+            anchors.right:          parent.right
+            wrapMode:               Text.WordWrap
+            color:                  qgcPal.warningText
+            font.pointSize:         ScreenTools.smallFontPointSize
+            horizontalAlignment:    Text.AlignHCenter
+            text:                   qsTr("* Glide slope altitudes are approximate. Actual flight path will vary due to environmental conditions and vehicle settings.")
+        }
     }
 
     Column {
