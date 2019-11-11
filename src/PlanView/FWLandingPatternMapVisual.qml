@@ -455,8 +455,8 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
-                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters).toFixed(1) + " " +
-                            QGroundControl.appSettingsDistanceUnitsString
+                heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters)) +
+                            QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
 
             function recalc() {
@@ -486,8 +486,8 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
-                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters).toFixed(1) + " " +
-                            QGroundControl.appSettingsDistanceUnitsString
+                heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters)) +
+                            QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
 
             function recalc() {
@@ -520,7 +520,7 @@ Item {
             coordinate:     _missionItem.loiterTangentCoordinate
 
             sourceItem: HeightIndicator {
-                heightText: _missionItem.loiterAltitude.value.toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
+                heightText: _missionItem.loiterAltitude.value.toFixed(1) + QGroundControl.appSettingsDistanceUnitsString
             }
         }
     }
