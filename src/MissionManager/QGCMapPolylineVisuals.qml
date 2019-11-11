@@ -38,7 +38,7 @@ Item {
     property real   _zorderSplitHandle:     QGroundControl.zOrderMapItems + 2
     property var    _savedVertices:         [ ]
 
-    readonly property string _corridorToolsText:    qsTr("Corridor Tools")
+    readonly property string _corridorToolsText:    qsTr("PolyLine Tools")
     readonly property string _traceText:            qsTr("Click in the map to add vertices. Click 'Done Tracing' when finished.")
 
     function _addCommonVisuals() {

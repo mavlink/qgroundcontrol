@@ -65,7 +65,7 @@ Rectangle {
             QGCLabel {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Use the Corridor Tools to create the polyline which defines the corridor.")
+                text:               qsTr("Use the PolyLine Tools to create the polyline which defines the corridor.")
             }
 
             QGCButton {
