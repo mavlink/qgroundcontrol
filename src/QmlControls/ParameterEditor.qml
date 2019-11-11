@@ -32,10 +32,8 @@ Item {
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
 
     ParameterEditorController {
-        id:         controller;
-        onShowErrorMessage: {
-            mainWindow.showMessageDialog(qsTr("Parameter Editor"), qsTr("Parameter Load Errors"))
-        }
+        id:                 controller
+        onShowErrorMessage: mainWindow.showMessageDialog(qsTr("Parameter Load Errors"), errorMsg)
     }
 
     ExclusiveGroup { id: sectionGroup }
@@ -176,6 +174,8 @@ Item {
 
                     SectionHeader {
                         id:             categoryHeader
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
                         text:           category
                         checked:        controller.currentCategory === text
                         exclusiveGroup: sectionGroup

@@ -108,9 +108,11 @@ Rectangle {
             }
 
             SectionHeader {
-                id:         missionEndHeader
-                text:       qsTr("Mission End")
-                checked:    true
+                id:             missionEndHeader
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           qsTr("Mission End")
+                checked:        true
             }
 
             Column {
@@ -128,10 +130,12 @@ Rectangle {
 
 
             SectionHeader {
-                id:         vehicleInfoSectionHeader
-                text:       qsTr("Vehicle Info")
-                visible:    _offlineEditing && !_waypointsOnlyMode
-                checked:    false
+                id:             vehicleInfoSectionHeader
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           qsTr("Vehicle Info")
+                visible:        _offlineEditing && !_waypointsOnlyMode
+                checked:        false
             }
 
             GridLayout {
@@ -192,10 +196,12 @@ Rectangle {
             } // GridLayout
 
             SectionHeader {
-                id:         plannedHomePositionSection
-                text:       qsTr("Planned Home Position")
-                visible:    !_vehicleHasHomePosition
-                checked:    false
+                id:             plannedHomePositionSection
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           qsTr("Planned Home Position")
+                visible:        !_vehicleHasHomePosition
+                checked:        false
             }
 
             Column {

@@ -40,7 +40,6 @@ ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PIDTuning               1.0 PIDTuning.qml
 PlanEditToolbar         1.0 PlanEditToolbar.qml
-PlanStartOverlay        1.0 PlanStartOverlay.qml
 PreFlightCheckButton    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup     1.0 PreFlightCheckGroup.qml
 PreFlightCheckModel     1.0 PreFlightCheckModel.qml
