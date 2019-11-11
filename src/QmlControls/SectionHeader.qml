@@ -7,10 +7,8 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 
 FocusScope {
-    id:             _root
-    anchors.left:   parent.left
-    anchors.right:  parent.right
-    height:         column.height
+    id:     _root
+    height: column.height
 
     property alias          text:           label.text
     property bool           checked:        true

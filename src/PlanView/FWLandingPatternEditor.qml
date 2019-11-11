@@ -52,8 +52,10 @@ Rectangle {
         visible:            !editorColumnNeedLandingPoint.visible
 
         SectionHeader {
-            id:     loiterPointSection
-            text:   qsTr("Loiter point")
+            id:             loiterPointSection
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("Loiter point")
         }
 
         Column {
@@ -101,8 +103,10 @@ Rectangle {
         }
 
         SectionHeader {
-            id:     landingPointSection
-            text:   qsTr("Landing point")
+            id:             landingPointSection
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("Landing point")
         }
 
         Column {
@@ -181,9 +185,11 @@ Rectangle {
         }
 
         SectionHeader {
-            id:         cameraSection
-            text:       qsTr("Camera")
-            visible:    _showCameraSection
+            id:             cameraSection
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            text:           qsTr("Camera")
+            visible:        _showCameraSection
         }
 
         Column {

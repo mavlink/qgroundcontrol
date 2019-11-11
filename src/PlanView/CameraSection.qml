@@ -24,6 +24,8 @@ Column {
 
     SectionHeader {
         id:             cameraSectionHeader
+        anchors.left:   parent.left
+        anchors.right:  parent.right
         text:           qsTr("Camera")
         checked:        false
     }
