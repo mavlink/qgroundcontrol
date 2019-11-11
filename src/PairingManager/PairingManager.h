@@ -185,6 +185,7 @@ private:
     QString                 _random_string              (uint length);
     void                    _readPairingConfig          ();
     void                    _resetPairingConfig         ();
+    void                    _resetMicrohardModem        ();
     void                    _updateConnectedDevices     ();
     void                    _createUDPLink              (const QString& name, quint16 port);
     void                    _removeUDPLink              (const QString& name);
