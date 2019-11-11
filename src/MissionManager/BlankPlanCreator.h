@@ -11,12 +11,12 @@
 
 #include "PlanCreator.h"
 
-class CustomPlanCreator : public PlanCreator
+class BlankPlanCreator : public PlanCreator
 {
     Q_OBJECT
     
 public:
-    CustomPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
+    BlankPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
 
     Q_INVOKABLE void createPlan(const QGeoCoordinate& mapCenterCoord) final;
 };
