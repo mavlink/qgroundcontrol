@@ -241,8 +241,9 @@ void
 PairingManager::_removeUDPLink(const QString& name)
 {
     if (_connectedDevices.contains(name)) {
-        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
+        LinkInterface *link = _connectedDevices[name];
         _connectedDevices.remove(name);
+        _toolbox->linkManager()->disconnectLink(link);
         _updateConnectedDevices();
         _toolbox->videoManager()->stopVideo();
     }
