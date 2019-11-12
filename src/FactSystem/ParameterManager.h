@@ -144,6 +144,7 @@ protected:
     void _httpDownloadFinished();
     bool _loadComponentDefinitionFile(QByteArray& bytes);
     void _updateAllComponentCategoryMaps(void);
+    bool _componentInfoAvailable(int componentId);
 
 private:
     static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -246,9 +247,17 @@ private:
     bool                    _componentInfoAllReceived;
     QNetworkAccessManager*  _netManager = nullptr;
 
-    QList<int>              _componentInfoRecievedList;       // key = componentID
-    QMap<int, QString>      _componentInfoDefinitionFileList; // key = componentID
-    QMap<int, bool>         _componentInfoOkList;             // key = componentID
+    typedef struct {
+        bool                        ok;
+        uint32_t                    firmware_version; //raw value as in MAVLink message
+        uint32_t                    hardware_version; //raw value as in MAVLink message
+        uint32_t                    capability_flags; //raw value as in MAVLink message
+        QString                     firmwareVersion;
+        QString                     hardwareVersion;
+        QString                     vendorName;
+        QString                     modelName; /*<  Name of the component model*/
+        QString                     definitionFileUri;
+    } ComponentInfo_t;
 
     typedef struct {
         QString                     group;
@@ -265,6 +274,9 @@ private:
         QMap<int,QString>           valuesMap;
     } ComponentParameterElement_t;
 
+    QMap<int, ComponentInfo_t>                              _componentInfoMap;          // key = componentID
     QMap<int, QMap<QString, QStringList> >                  _componentInfoGroupMap;     // key = componentID
     QMap<int, QMap<QString, ComponentParameterElement_t> >  _componentInfoParameterMap; // key = componentID
+
+    //TODO: SectionHeader in ParameterEiditor.qml should adapt arrow for text row number
 };
