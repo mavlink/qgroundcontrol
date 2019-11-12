@@ -538,7 +538,7 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace Polygon")
+                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
                     if (_traceMode) {
                         if (mapPolygon.count < 3) {
