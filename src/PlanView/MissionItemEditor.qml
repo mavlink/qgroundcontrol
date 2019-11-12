@@ -3,6 +3,7 @@ import QtQuick.Controls             2.4
 import QtQuick.Controls.Styles      1.4
 import QtQuick.Dialogs              1.2
 import QtQml                        2.2
+import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -46,6 +47,7 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
+    readonly property real  _trashSize:     commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
@@ -138,46 +140,6 @@ Rectangle {
             id: hamburgerMenu
 
             QGCMenuItem {
-                text:           qsTr("Insert waypoint")
-                onTriggered:    insertWaypoint()
-            }
-
-            QGCMenu {
-                id:         patternMenu
-                title:      qsTr("Insert pattern")
-                visible:    !_singleComplexItem
-
-                Instantiator {
-                    model: _missionController.complexMissionItemNames
-
-                    onObjectAdded:      patternMenu.insertItem(index, object)
-                    onObjectRemoved:    patternMenu.removeItem(object)
-
-                    QGCMenuItem {
-                        text:           modelData
-                        onTriggered:    insertComplexItem(modelData)
-                    }
-                }
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
-                visible:        _singleComplexItem
-                onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Delete")
-                onTriggered:    remove()
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Change command...")
-                onTriggered:    commandPicker.clicked()
-                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
-            }
-
-            QGCMenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
                 onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
@@ -214,15 +176,66 @@ Rectangle {
         }
     }
 
-    QGCButton {
-        id:                     commandPicker
-        anchors.topMargin:      _margin
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.leftMargin:     _margin
+    QGCColoredImage {
+        id:                     deleteButton
+        anchors.margins:        _margin
         anchors.left:           parent.left
-        anchors.top:            parent.top
-        visible:                !commandLabel.visible
-        text:                   missionItem.commandName
+        anchors.verticalCenter: commandPicker.verticalCenter
+        height:                 _hamburgerSize
+        width:                  height
+        sourceSize.height:      height
+        fillMode:               Image.PreserveAspectFit
+        mipmap:                 true
+        smooth:                 true
+        color:                  qgcPal.text
+        visible:                _currentItem && missionItem.sequenceNumber !== 0
+        source:                 "/res/TrashDelete.svg"
+
+        QGCMouseArea {
+            fillItem:   parent
+            onClicked:  remove()
+        }
+    }
+
+    Rectangle {
+        id:                 commandPicker
+        anchors.margins:    _margin
+        anchors.left:       deleteButton.right
+        anchors.top:        parent.top
+        height:             ScreenTools.implicitComboBoxHeight
+        width:              innerLayout.x + innerLayout.width + ScreenTools.comboBoxPadding
+        visible:            !commandLabel.visible
+        color:              qgcPal.window
+        border.width:       1
+        border.color:       qgcPal.text
+
+        RowLayout {
+            id:                 innerLayout
+            anchors.margins:    _padding
+            anchors.left:       parent.left
+            anchors.top:        parent.top
+            spacing:            _padding
+
+            property real _padding: ScreenTools.comboBoxPadding
+
+            QGCLabel { text: missionItem.commandName }
+
+            QGCColoredImage {
+                height:             ScreenTools.implicitComboBoxHeight - (ScreenTools.comboBoxPadding * 2)
+                width:              height
+                sourceSize.height:  height
+                fillMode:           Image.PreserveAspectFit
+                smooth:             true
+                antialiasing:       true
+                color:              qgcPal.text
+                source:             "qrc:/qt-project.org/imports/QtQuick/Controls.2/images/double-arrow.png"
+            }
+        }
+
+        QGCMouseArea {
+            fillItem:   parent
+            onClicked:  mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+        }
 
         Component {
             id: commandDialog
@@ -233,15 +246,14 @@ Rectangle {
             }
         }
 
-        onClicked: mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {
         id:                     commandLabel
+        anchors.leftMargin:     ScreenTools.comboBoxPadding
         anchors.fill:           commandPicker
         visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
         verticalAlignment:      Text.AlignVCenter
-        horizontalAlignment:    Text.AlignHCenter
         text:                   missionItem.commandName
         color:                  _outerTextColor
     }

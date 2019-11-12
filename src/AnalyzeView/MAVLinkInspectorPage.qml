@@ -22,11 +22,12 @@ Item {
     anchors.fill:           parent
     anchors.margins:        ScreenTools.defaultFontPixelWidth
 
-    property var    curVehicle:     controller ? controller.activeVehicle : null
-    property int    curMessageIndex:0
-    property var    curMessage:     curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
-    property int    curCompID:      0
-    property bool   selectionValid: false
+    property var    curVehicle:         controller ? controller.activeVehicle : null
+    property int    curMessageIndex:    0
+    property var    curMessage:         curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
+    property int    curCompID:          0
+    property bool   selectionValid:     false
+    property real   maxButtonWidth:     0
 
     MAVLinkInspectorController {
         id: controller
@@ -76,11 +77,13 @@ Item {
         anchors.topMargin:  ScreenTools.defaultFontPixelHeight
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
-        width:              buttonCol.width
-        contentWidth:       buttonCol.width
+        width:              maxButtonWidth
+        contentWidth:       width
         contentHeight:      buttonCol.height
         ColumnLayout {
             id:             buttonCol
+            anchors.left:   parent.left
+            anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelHeight * 0.25
             Repeater {
                 model:      curVehicle ? curVehicle.messages : []
@@ -94,7 +97,7 @@ Item {
                         selectionValid  = true
                         curMessageIndex = index
                     }
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 40
+                    Layout.fillWidth: true
                 }
             }
         }

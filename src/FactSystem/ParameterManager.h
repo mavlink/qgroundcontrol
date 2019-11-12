@@ -39,6 +39,7 @@ public:
     Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
     Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
     Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
+    Q_PROPERTY(bool     pendingWrites       READ pendingWrites      NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
 
     bool parametersReady    (void) const { return _parametersReady; }
     bool missingParameters  (void) const { return _missingParameters; }
@@ -113,12 +114,15 @@ public:
     /// @return true: success, false: failure (errorString set)
     bool loadFromJson(const QJsonObject& json, bool required, QString& errorString);
 
+    bool pendingWrites(void);
+
     Vehicle* vehicle(void) { return _vehicle; }
 
 signals:
-    void parametersReadyChanged(bool parametersReady);
-    void missingParametersChanged(bool missingParameters);
-    void loadProgressChanged(float value);
+    void parametersReadyChanged     (bool parametersReady);
+    void missingParametersChanged   (bool missingParameters);
+    void loadProgressChanged        (float value);
+    void pendingWritesChanged       (bool pendingWrites);
 
 protected:
     Vehicle*            _vehicle;
@@ -149,6 +153,7 @@ private:
     QString _logVehiclePrefix(int componentId);
     void    _setLoadProgress(double loadProgress);
     bool    _fillIndexBatchQueue(bool waitingParamTimeout);
+    void    _updateProgressBar(void);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
@@ -183,9 +188,13 @@ private:
     QMap<int /* component id */, QMap<QString /* param name */, bool /* seen */>>   _debugCacheParamSeen;
 
     // Wait counts from previous parameter update cycle
-    int         _prevWaitingReadParamIndexCount;
-    int         _prevWaitingReadParamNameCount;
-    int         _prevWaitingWriteParamNameCount;
+    int _prevWaitingReadParamIndexCount;
+    int _prevWaitingReadParamNameCount;
+    int _prevWaitingWriteParamNameCount;
+
+    bool _readParamIndexProgressActive =    false;
+    bool _readParamNameProgressActive =     false;
+    bool _writeParamProgressActive =        false;
 
     static const int    _maxInitialRequestListRetry = 4;        ///< Maximum retries for request list
     int                 _initialRequestRetryCount;              ///< Current retry count for request list
@@ -202,7 +211,9 @@ private:
     QMap<int, QMap<QString, int> >  _waitingWriteParamNameMap;  ///< Key: Component id, Value: Map { Key: parameter name still waiting for, Value: retry count }
     QMap<int, QList<int> >          _failedReadParamIndexMap;   ///< Key: Component id, Value: failed parameter index
 
-    int _totalParamCount;   ///< Number of parameters across all components
+    int _totalParamCount;                       ///< Number of parameters across all components
+    int _waitingWriteParamBatchCount = 0;       ///< Number of parameters which are batched up waiting on write responses
+    int _waitingReadParamNameBatchCount = 0;    ///< Number of parameters which are batched up waiting on read responses
 
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;

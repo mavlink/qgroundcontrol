@@ -19,7 +19,7 @@
 #include "SurveyPlanCreator.h"
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
-#include "CustomPlanCreator.h"
+#include "BlankPlanCreator.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceFlightPlanProvider.h"
 #endif
@@ -601,19 +601,19 @@ void PlanMasterController::_updatePlanCreatorsList(void)
     if (!_flyView) {
         if (!_planCreators) {
             _planCreators = new QmlObjectListModel(this);
+            _planCreators->append(new BlankPlanCreator(this, this));
             _planCreators->append(new SurveyPlanCreator(this, this));
             _planCreators->append(new CorridorScanPlanCreator(this, this));
-            _planCreators->append(new CustomPlanCreator(this, this));
             emit planCreatorsChanged(_planCreators);
         }
 
         if (_managerVehicle->fixedWing()) {
             if (_planCreators->count() == 4) {
-                _planCreators->removeAt(_planCreators->count() - 2);
+                _planCreators->removeAt(_planCreators->count() - 1);
             }
         } else {
             if (_planCreators->count() != 4) {
-                _planCreators->insert(_planCreators->count() - 1, new StructureScanPlanCreator(this, this));
+                _planCreators->append(new StructureScanPlanCreator(this, this));
             }
         }
     }
