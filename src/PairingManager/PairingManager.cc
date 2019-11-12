@@ -244,7 +244,6 @@ PairingManager::_removeUDPLink(const QString& name)
         LinkInterface *link = _connectedDevices[name];
         _connectedDevices.remove(name);
         _toolbox->linkManager()->disconnectLink(link);
-        _updateConnectedDevices();
         _toolbox->videoManager()->stopVideo();
     }
 }
@@ -521,6 +520,9 @@ PairingManager::_updateConnectedDevices()
     }
     if (!cd.isEmpty()) {
         jsonObj.insert("CONNECTED_DEVICE", cd);
+        qCDebug(PairingManagerLog) << "Adding devices to autoconnect: " << jsonObj["CONNECTED_DEVICE"];
+    } else {
+        qCDebug(PairingManagerLog) << "There are no devices to autoconnect: ";
     }
     _gcsJsonDoc.setObject(jsonObj);
     _writeJson(_gcsJsonDoc, gcsFileName);
@@ -585,6 +587,7 @@ PairingManager::removePairedDevice(const QString& name)
     QFile file(_pairingCacheFile(name));
     file.remove();
     _removeUDPLink(name);
+    _updateConnectedDevices();
     if (_getDeviceChannel(name) == _toolbox->microhardManager()->connectingChannel()) {
         QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
         QJsonDocument jsonDoc;
@@ -669,9 +672,12 @@ PairingManager::_readPairingConfig()
     }
 
     if (jsonObj.contains("CONNECTED_DEVICE")) {
+        qCDebug(PairingManagerLog) << "Devices to autoconnect: " << jsonObj["CONNECTED_DEVICE"];
         foreach (auto cd, jsonObj.value("CONNECTED_DEVICE").toString().split(";")) {
             connectToDevice(cd);
         }
+    } else {
+        qCDebug(PairingManagerLog) << "No devices to autoconnect";
     }
     _encryptionKey = jsonObj.value("EK").toString();
     _publicKey = jsonObj.value("PublicKey").toString();
@@ -1196,12 +1202,12 @@ PairingManager::disconnectDevice(const QString& name)
     }
 
     _removeUDPLink(name);
+    _updateConnectedDevices();
 
     if (_connectedDevices.empty() && _devicesToConnect.empty()) {
         _resetMicrohardModem();
     }
 
-    _toolbox->videoManager()->stopVideo();
     setPairingStatus(PairingIdle, "");
 }
 
