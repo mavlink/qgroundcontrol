@@ -27,7 +27,7 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
                 _lastPoint = coordinate;
                 _points.append(QVariant::fromValue(coordinate));
                 emit pointAdded(coordinate);
-            } else {
+            } else if(_points.count()>0){
                 _lastPoint = coordinate;
                 _points[_points.count() - 1] = QVariant::fromValue(coordinate);
                 emit updateLastPoint(coordinate);
