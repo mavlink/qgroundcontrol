@@ -641,7 +641,7 @@ void ParameterManager::_setupComponentCategoryMap(int componentId)
         if (i > 0) {
             componentCategoryMap[category][paramName.left(i)] += paramName;
         } else {
-            componentCategoryMap[category]["Misc"] += paramName;
+            componentCategoryMap[category][tr("Misc")] += paramName;
         }
     }
 
@@ -667,7 +667,7 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
 QString ParameterManager::getComponentCategory(int componentId)
 {
     if (_mavlinkCompIdHash.contains(componentId)) {
-        return QString("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
+        return tr("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
     }
     QString componentCategoryPrefix = tr("Component ");
     return QString("%1%2").arg(componentCategoryPrefix).arg(componentId);
@@ -1590,7 +1590,7 @@ void ParameterManager::_loadOfflineEditingParams(void)
     }
 
     _addMetaDataToDefaultComponent();
-    _setupDefaultComponentCategoryMap(); //TODO: check if this is really only for the default, or needs to be done for all components !!
+    _setupDefaultComponentCategoryMap();
     _parametersReady = true;
     _initialLoadComplete = true;
     _debugCacheCRC.clear();
