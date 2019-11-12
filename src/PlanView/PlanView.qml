@@ -65,7 +65,14 @@ Item {
         coordinate.latitude  = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
-        insertComplexMissionItem(complexItemName, coordinate, _missionController.visualItems.count)
+        var next_index = _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex)+1
+        if(next_index ==1 && _missionController.visualItems.count >1){
+            console.log(next_index, _missionController.visualItems.count)
+            insertComplexMissionItem(complexItemName, coordinate, next_index+1)
+        }
+        else if(next_index <= _missionController.visualItems.count){
+            insertComplexMissionItem(complexItemName, coordinate, next_index)
+        }
     }
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
@@ -468,7 +475,14 @@ Item {
                     switch (_editingLayer) {
                     case _layerMission:
                         if (_addWaypointOnClick) {
-                            insertSimpleMissionItem(coordinate, _missionController.visualItems.count)
+                            var next_index = _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex)+1
+                            if(next_index ==1 && _missionController.visualItems.count >1){
+                                console.log(next_index, _missionController.visualItems.count)
+                                insertSimpleMissionItem(coordinate, next_index+1)
+                            }
+                            else if(next_index <= _missionController.visualItems.count){
+                                    insertSimpleMissionItem(coordinate, next_index)
+                            }
                         } else if (_addROIOnClick) {
                             _addROIOnClick = false
                             insertROIMissionItem(coordinate, _missionController.visualItems.count)

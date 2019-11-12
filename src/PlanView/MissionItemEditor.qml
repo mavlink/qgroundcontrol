@@ -47,6 +47,7 @@ Rectangle {
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
+    readonly property real  _trashSize:     commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
 
     QGCPalette {
@@ -137,46 +138,6 @@ Rectangle {
 
         QGCMenu {
             id: hamburgerMenu
-
-            QGCMenuItem {
-                text:           qsTr("Insert waypoint")
-                onTriggered:    insertWaypoint()
-            }
-
-            QGCMenu {
-                id:         patternMenu
-                title:      qsTr("Insert pattern")
-                visible:    !_singleComplexItem
-
-                Instantiator {
-                    model: _missionController.complexMissionItemNames
-
-                    onObjectAdded:      patternMenu.insertItem(index, object)
-                    onObjectRemoved:    patternMenu.removeItem(object)
-
-                    QGCMenuItem {
-                        text:           modelData
-                        onTriggered:    insertComplexItem(modelData)
-                    }
-                }
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Insert ") + _missionController.complexMissionItemNames[0]
-                visible:        _singleComplexItem
-                onTriggered:    insertComplexItem(_missionController.complexMissionItemNames[0])
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Delete")
-                onTriggered:    remove()
-            }
-
-            QGCMenuItem {
-                text:           qsTr("Change command...")
-                onTriggered:    commandPicker.clicked()
-                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
-            }
 
             QGCMenuItem {
                 text:           qsTr("Edit position...")

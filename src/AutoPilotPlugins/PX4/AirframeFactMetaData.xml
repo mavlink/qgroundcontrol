@@ -439,6 +439,11 @@
       <output name="MAIN3">motor 3</output>
       <output name="MAIN4">motor 4</output>
     </airframe>
+    <airframe id="4500" maintainer="Oleg Kalachev &lt;okalachev@gmail.com&gt;" name="COEX Clover 4">
+      <class>Copter</class>
+      <maintainer>Oleg Kalachev &lt;okalachev@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe id="4900" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;" name="Crazyflie 2">
       <class>Copter</class>
       <maintainer>Dennis Shtatov &lt;densht@gmail.com&gt;</maintainer>
