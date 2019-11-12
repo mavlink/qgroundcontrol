@@ -98,10 +98,11 @@ PairingManager::_pairingCompleted(const QString& tempName, const QString& newNam
     jsonObj.insert("Name", newName);
     jsonObj.insert("PublicKey", devicePublicKey);
     jsonObj.insert("CC", channel);
+    jsonObj.insert("NID", _getDeviceConnectNid(channel));
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, newName);
     _updatePairedDeviceNameList();
-    setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
+    setPairingStatus(PairingSuccess, tr("Pairing Successful"));
     _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
     // Automatically connect to newly paired device
     connectToDevice(newName, true);
@@ -202,6 +203,7 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
         i.next();
         if (i.value() == link) {
             if (!active) {
+                qCDebug(PairingManagerLog) << "Link became inactive. Reconnecting " << i.key();
                 _removeUDPLink(i.key());
                 connectToDevice(i.key());
             }
@@ -246,6 +248,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("LastConnection", QDateTime::currentDateTime().toString(timeFormat));
     jsonObj.insert("CC", channel);
+    jsonObj.insert("NID", _getDeviceConnectNid(channel));
     jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
     jsonDoc.setObject(jsonObj);
     _devices[name] = jsonDoc;
@@ -257,7 +260,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     emit connectedVehicleChanged();
     QString chStr = QString::number(channel) + " - " +
                     QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
-    setPairingStatus(PairingConnected, tr("Connection Successfull\nChannel: %1").arg(chStr));
+    setPairingStatus(PairingConnected, tr("Connection Successful\nChannel: %1").arg(chStr));
 }
 
 //-----------------------------------------------------------------------------
@@ -377,12 +380,15 @@ PairingManager::_uploadFinished()
         }
     } else if (url.contains("/pair")) {
         qCDebug(PairingManagerLog) << "Pairing error: " + reply->errorString();
-        QString content = reply->property("content").toString();
-        QTimer::singleShot(pairRetryWait, [this, name, url, content]()
-        {
-            emit _startUploadRequest(name, url, content);
-        });
+        if (!reply->errorString().contains("canceled")) {
+            QString content = reply->property("content").toString();
+            QTimer::singleShot(pairRetryWait, [this, name, url, content]()
+            {
+                _startUploadRequest(name, url, content);
+            });
+        }
     } else if (url.contains("/unpair")) {
+        qCDebug(PairingManagerLog) << "Unpair error: " + reply->errorString();
         if (!reply->errorString().contains("canceled")) {
             _updatePairedDeviceNameList();
         }
@@ -406,6 +412,7 @@ PairingManager::_channelCompleted(const QString& name, int channel)
     QJsonDocument jsonDoc = _devices[name];
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("CC", channel);
+    jsonObj.insert("NID", _getDeviceConnectNid(channel));
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, name);
     _devices[name] = jsonDoc;
@@ -578,7 +585,21 @@ PairingManager::removePairedDevice(const QString& name)
         emit startUpload(name, unpairURL, jsonDoc, true);
     }
     _updatePairedDeviceNameList();
+
+    if (_connectedDevices.empty() && _devicesToConnect.empty()) {
+        _resetMicrohardModem();
+    }
+
     setPairingStatus(PairingIdle, "");
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_resetMicrohardModem()
+{
+    _toolbox->microhardManager()->switchToPairingEncryptionKey(_toolbox->microhardManager()->encryptionKey());
+    _toolbox->microhardManager()->setNetworkId(_toolbox->microhardManager()->networkId());
+    _toolbox->microhardManager()->updateSettings();
 }
 
 //-----------------------------------------------------------------------------
@@ -1166,6 +1187,11 @@ PairingManager::disconnectDevice(const QString& name)
     }
 
     _removeUDPLink(name);
+
+    if (_connectedDevices.empty() && _devicesToConnect.empty()) {
+        _resetMicrohardModem();
+    }
+
     _toolbox->videoManager()->stopVideo();
     setPairingStatus(PairingIdle, "");
 }
