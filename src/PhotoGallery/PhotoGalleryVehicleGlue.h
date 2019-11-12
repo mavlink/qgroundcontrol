@@ -32,9 +32,9 @@ class Vehicle;
 class PhotoGalleryVehicleGlue : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(AbstractPhotoTrigger* trigger READ trigger);
-    Q_PROPERTY(MultiVehicleManager* manager READ multiVehicleManager WRITE setMultiVehicleManager);
-    Q_PROPERTY(PhotoFileStore* store READ store WRITE setStore);
+    Q_PROPERTY(AbstractPhotoTrigger* trigger READ trigger CONSTANT)
+    Q_PROPERTY(MultiVehicleManager* manager READ multiVehicleManager WRITE setMultiVehicleManager)
+    Q_PROPERTY(PhotoFileStore* store READ store WRITE setStore)
 
 public:
     ~PhotoGalleryVehicleGlue() override;
