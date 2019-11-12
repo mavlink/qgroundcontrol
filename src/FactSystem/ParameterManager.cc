@@ -131,6 +131,63 @@ ParameterManager::~ParameterManager()
     delete _parameterMetaData;
 }
 
+void ParameterManager::_updateProgressBar(void)
+{
+    int waitingReadParamIndexCount = 0;
+    int waitingReadParamNameCount = 0;
+    int waitingWriteParamCount = 0;
+
+    for (int compId: _waitingReadParamIndexMap.keys()) {
+        waitingReadParamIndexCount += _waitingReadParamIndexMap[compId].count();
+    }
+    for(int compId: _waitingReadParamNameMap.keys()) {
+        waitingReadParamNameCount += _waitingReadParamNameMap[compId].count();
+    }
+    for(int compId: _waitingWriteParamNameMap.keys()) {
+        waitingWriteParamCount += _waitingWriteParamNameMap[compId].count();
+    }
+
+    if (waitingReadParamIndexCount == 0) {
+        if (_readParamIndexProgressActive) {
+            _readParamIndexProgressActive = false;
+            _setLoadProgress(0.0);
+            return;
+        }
+    } else {
+        _readParamIndexProgressActive = true;
+        _setLoadProgress((double)(_totalParamCount - waitingReadParamIndexCount) / (double)_totalParamCount);
+        return;
+    }
+
+    if (waitingWriteParamCount == 0) {
+        if (_writeParamProgressActive) {
+            _writeParamProgressActive = false;
+            _waitingWriteParamBatchCount = 0;
+            _setLoadProgress(0.0);
+            emit pendingWritesChanged(false);
+            return;
+        }
+    } else {
+        _writeParamProgressActive = true;
+        _setLoadProgress((double)(qMax(_waitingWriteParamBatchCount - waitingWriteParamCount, 1)) / (double)(_waitingWriteParamBatchCount + 1));
+        emit pendingWritesChanged(true);
+        return;
+    }
+
+    if (waitingReadParamNameCount == 0) {
+        if (_readParamNameProgressActive) {
+            _readParamNameProgressActive = false;
+            _waitingReadParamNameBatchCount = 0;
+            _setLoadProgress(0.0);
+            return;
+        }
+    } else {
+        _readParamNameProgressActive = true;
+        _setLoadProgress((double)(qMax(_waitingReadParamNameBatchCount - waitingReadParamNameCount, 1)) / (double)(_waitingReadParamNameBatchCount + 1));
+        return;
+    }
+}
+
 /// Called whenever a parameter is updated or first seen.
 void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value)
 {
@@ -299,17 +356,8 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
             qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
         }
     }
-
-    // Update progress bar for waiting reads
-    if (readWaitingParamCount == 0) {
-        // We are no longer waiting for any reads to complete
-        if (_prevWaitingReadParamIndexCount + _prevWaitingReadParamNameCount != 0) {
-            // Set progress to 0 if not already there
-            _setLoadProgress(0.0);
-        }
-    } else {
-        _setLoadProgress((double)(_totalParamCount - readWaitingParamCount) / (double)_totalParamCount);
-    }
+\
+    _updateProgressBar();
 
     // Get parameter set version
     if (!_versionParam.isEmpty() && _versionParam == parameterName) {
@@ -425,8 +473,13 @@ void ParameterManager::_valueUpdated(const QVariant& value)
     _dataMutex.lock();
 
     if (_waitingWriteParamNameMap.contains(componentId)) {
-        _waitingWriteParamNameMap[componentId].remove(name);    // Remove any old entry
-        _waitingWriteParamNameMap[componentId][name] = 0;       // Add new entry and set retry count
+        if (_waitingWriteParamNameMap[componentId].contains(name)) {
+            _waitingWriteParamNameMap[componentId].remove(name);
+        } else {
+            _waitingWriteParamBatchCount++;
+        }
+        _waitingWriteParamNameMap[componentId][name] = 0; // Add new entry and set retry count
+        _updateProgressBar();
         _waitingParamTimeoutTimer.start();
         _saveRequired = true;
     } else {
@@ -502,8 +555,13 @@ void ParameterManager::refreshParameter(int componentId, const QString& paramNam
     if (_waitingReadParamNameMap.contains(componentId)) {
         QString mappedParamName = _remapParamNameToVersion(paramName);
 
-        _waitingReadParamNameMap[componentId].remove(mappedParamName);  // Remove old wait entry if there
+        if (_waitingReadParamNameMap[componentId].contains(mappedParamName)) {
+            _waitingReadParamNameMap[componentId].remove(mappedParamName);
+        } else {
+            _waitingReadParamNameBatchCount++;
+        }
         _waitingReadParamNameMap[componentId][mappedParamName] = 0;     // Add new wait entry and update retry count
+        _updateProgressBar();
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "restarting _waitingParamTimeout";
         _waitingParamTimeoutTimer.start();
     } else {
@@ -978,7 +1036,8 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
 
 QString ParameterManager::readParametersFromStream(QTextStream& stream)
 {
-    QString errors;
+    QString missingErrors;
+    QString typeErrors;
 
     while (!stream.atEnd()) {
         QString line = stream.readLine();
@@ -997,18 +1056,18 @@ QString ParameterManager::readParametersFromStream(QTextStream& stream)
 
                 if (!parameterExists(componentId, paramName)) {
                     QString error;
-                    error = QString("Skipped parameter %1:%2 - does not exist on this vehicle\n").arg(componentId).arg(paramName);
-                    errors += error;
-                    qCDebug(ParameterManagerLog) << error;
+                    error += QStringLiteral("%1:%2 ").arg(componentId).arg(paramName);
+                    missingErrors += error;
+                    qCDebug(ParameterManagerLog) << QStringLiteral("Skipped due to missing: %1").arg(error);
                     continue;
                 }
 
                 Fact* fact = getParameter(componentId, paramName);
                 if (fact->type() != _mavTypeToFactType((MAV_PARAM_TYPE)mavType)) {
                     QString error;
-                    error  = QString("Skipped parameter %1:%2 - type mismatch %3:%4\n").arg(componentId).arg(paramName).arg(fact->type()).arg(_mavTypeToFactType((MAV_PARAM_TYPE)mavType));
-                    errors += error;
-                    qCDebug(ParameterManagerLog) << error;
+                    error  = QStringLiteral("%1:%2 ").arg(componentId).arg(paramName);
+                    typeErrors += error;
+                    qCDebug(ParameterManagerLog) << QStringLiteral("Skipped due to type mismatch: %1").arg(error);
                     continue;
                 }
 
@@ -1016,6 +1075,16 @@ QString ParameterManager::readParametersFromStream(QTextStream& stream)
                 fact->setRawValue(valStr);
             }
         }
+    }
+
+    QString errors;
+
+    if (!missingErrors.isEmpty()) {
+        errors = tr("Parameters not loaded since they are not currently on the vehicle: %1\n").arg(missingErrors);
+    }
+
+    if (!typeErrors.isEmpty()) {
+        errors += tr("Parameters not loaded due to type mismatch: %1").arg(typeErrors);
     }
 
     return errors;
@@ -1661,11 +1730,24 @@ QString ParameterManager::_logVehiclePrefix(int componentId)
 
 void ParameterManager::_setLoadProgress(double loadProgress)
 {
-    _loadProgress = loadProgress;
-    emit loadProgressChanged(static_cast<float>(loadProgress));
+    if (_loadProgress != loadProgress) {
+        _loadProgress = loadProgress;
+        emit loadProgressChanged(static_cast<float>(loadProgress));
+    }
 }
 
 QList<int> ParameterManager::componentIds(void)
 {
     return _paramCountMap.keys();
+}
+
+bool ParameterManager::pendingWrites(void)
+{
+    for (int compId: _waitingWriteParamNameMap.keys()) {
+        if (_waitingWriteParamNameMap[compId].count()) {
+            return true;
+        }
+    }
+
+    return false;
 }
