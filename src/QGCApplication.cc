@@ -469,6 +469,9 @@ void QGCApplication::_initCommon()
     static const char* kRefOnly         = "Reference only";
     static const char* kQGCControllers  = "QGroundControl.Controllers";
     static const char* kQGCVehicle      = "QGroundControl.Vehicle";
+    static const char* kQGCJoystick     = "QGroundControl.JoystickManager";
+    static const char* kQGCFlightMap    = "QGroundControl.FlightMap";
+    static const char* kQGC             = "QGroundControl";
 
     QSettings settings;
 
@@ -491,54 +494,55 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<RallyPointController>    (kQGCControllers,                   1, 0, "RallyPointController",       kRefOnly);
     qmlRegisterUncreatableType<VisualMissionItem>       (kQGCControllers,                   1, 0, "VisualMissionItem",          kRefOnly);
 
-    qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                      1, 0, "CoordinateVector",           kRefOnly);
-    qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                      1, 0, "QmlObjectListModel",         kRefOnly);
-    qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                      1, 0, "MissionCommandTree",         kRefOnly);
-    qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",                      1, 0, "CameraCalc",                 kRefOnly);
-    qmlRegisterUncreatableType<LogReplayLink>       ("QGroundControl",                      1, 0, "LogReplayLink",              kRefOnly);
+    qmlRegisterUncreatableType<CoordinateVector>        (kQGC,                              1, 0, "CoordinateVector",           kRefOnly);
+    qmlRegisterUncreatableType<QmlObjectListModel>      (kQGC,                              1, 0, "QmlObjectListModel",         kRefOnly);
+    qmlRegisterUncreatableType<MissionCommandTree>      (kQGC,                              1, 0, "MissionCommandTree",         kRefOnly);
+    qmlRegisterUncreatableType<CameraCalc>              (kQGC,                              1, 0, "CameraCalc",                 kRefOnly);
+    qmlRegisterUncreatableType<LogReplayLink>           (kQGC,                              1, 0, "LogReplayLink",              kRefOnly);
 #if defined(QGC_ENABLE_PAIRING)
-    qmlRegisterUncreatableType<PairingManager>      ("QGroundControl",                      1, 0, "PairingManager",             kRefOnly);
+    qmlRegisterUncreatableType<PairingManager>          (kQGC,                              1, 0, "PairingManager",             kRefOnly);
 #endif
+    qmlRegisterType<LogReplayLinkController>            (kQGC,                              1, 0, "LogReplayLinkController");
 
-    qmlRegisterType<LogReplayLinkController>        ("QGroundControl",                      1, 0, "LogReplayLinkController");
+    qmlRegisterUncreatableType<AutoPilotPlugin>         ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",            kRefOnly);
+    qmlRegisterUncreatableType<VehicleComponent>        ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",           kRefOnly);
 
-    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",            kRefOnly);
-    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",      1, 0, "VehicleComponent",           kRefOnly);
-    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",            kRefOnly);
-    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",                   kRefOnly);
-    qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",         kRefOnly);
+    qmlRegisterUncreatableType<AssignableButtonAction>  (kQGCJoystick,                      1, 0, "AssignableButtonAction",     kRefOnly);
+    qmlRegisterUncreatableType<JoystickManager>         (kQGCJoystick,                      1, 0, "JoystickManager",            kRefOnly);
+    qmlRegisterUncreatableType<Joystick>                (kQGCJoystick,                      1, 0, "Joystick",                   kRefOnly);
+
+    qmlRegisterUncreatableType<QGCPositionManager>      ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     kRefOnly);
     qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls",     1, 0, "FactValueSliderListModel",   kRefOnly);
 
-    qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",              kRefOnly);
-    qmlRegisterUncreatableType<QGCGeoBoundingCube>  ("QGroundControl.FlightMap",            1, 0, "QGCGeoBoundingCube",         kRefOnly);
-    qmlRegisterUncreatableType<TrajectoryPoints>    ("QGroundControl.FlightMap",            1, 0, "TrajectoryPoints",           kRefOnly);
+    qmlRegisterUncreatableType<QGCMapPolygon>           (kQGCFlightMap,                     1, 0, "QGCMapPolygon",              kRefOnly);
+    qmlRegisterUncreatableType<QGCGeoBoundingCube>      (kQGCFlightMap,                     1, 0, "QGCGeoBoundingCube",         kRefOnly);
+    qmlRegisterUncreatableType<TrajectoryPoints>        (kQGCFlightMap,                     1, 0, "TrajectoryPoints",           kRefOnly);
+    qmlRegisterType<QGCMapCircle>                       (kQGCFlightMap,                     1, 0, "QGCMapCircle");
 
-    qmlRegisterType<QGCMapCircle>                   ("QGroundControl.FlightMap",            1, 0, "QGCMapCircle");
-
-    qmlRegisterType<ParameterEditorController>      (kQGCControllers,                       1, 0, "ParameterEditorController");
-    qmlRegisterType<ESP8266ComponentController>     (kQGCControllers,                       1, 0, "ESP8266ComponentController");
-    qmlRegisterType<ScreenToolsController>          (kQGCControllers,                       1, 0, "ScreenToolsController");
-    qmlRegisterType<PlanMasterController>           (kQGCControllers,                       1, 0, "PlanMasterController");
-    qmlRegisterType<ValuesWidgetController>         (kQGCControllers,                       1, 0, "ValuesWidgetController");
-    qmlRegisterType<QGCFileDialogController>        (kQGCControllers,                       1, 0, "QGCFileDialogController");
-    qmlRegisterType<RCChannelMonitorController>     (kQGCControllers,                       1, 0, "RCChannelMonitorController");
-    qmlRegisterType<JoystickConfigController>       (kQGCControllers,                       1, 0, "JoystickConfigController");
-    qmlRegisterType<LogDownloadController>          (kQGCControllers,                       1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
-    qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
-    qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
+    qmlRegisterType<ParameterEditorController>          (kQGCControllers,                   1, 0, "ParameterEditorController");
+    qmlRegisterType<ESP8266ComponentController>         (kQGCControllers,                   1, 0, "ESP8266ComponentController");
+    qmlRegisterType<ScreenToolsController>              (kQGCControllers,                   1, 0, "ScreenToolsController");
+    qmlRegisterType<PlanMasterController>               (kQGCControllers,                   1, 0, "PlanMasterController");
+    qmlRegisterType<ValuesWidgetController>             (kQGCControllers,                   1, 0, "ValuesWidgetController");
+    qmlRegisterType<QGCFileDialogController>            (kQGCControllers,                   1, 0, "QGCFileDialogController");
+    qmlRegisterType<RCChannelMonitorController>         (kQGCControllers,                   1, 0, "RCChannelMonitorController");
+    qmlRegisterType<JoystickConfigController>           (kQGCControllers,                   1, 0, "JoystickConfigController");
+    qmlRegisterType<LogDownloadController>              (kQGCControllers,                   1, 0, "LogDownloadController");
+    qmlRegisterType<MAVLinkInspectorController>         (kQGCControllers,                   1, 0, "MAVLinkInspectorController");
+    qmlRegisterType<SyslinkComponentController>         (kQGCControllers,                   1, 0, "SyslinkComponentController");
+    qmlRegisterType<EditPositionDialogController>       (kQGCControllers,                   1, 0, "EditPositionDialogController");
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
-    qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<FirmwareUpgradeController>          (kQGCControllers,                   1, 0, "FirmwareUpgradeController");
 #endif
 #endif
-    qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
-    qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
-    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
+    qmlRegisterType<GeoTagController>                   (kQGCControllers,                   1, 0, "GeoTagController");
+    qmlRegisterType<MavlinkConsoleController>           (kQGCControllers,                   1, 0, "MavlinkConsoleController");
+    qmlRegisterType<MAVLinkInspectorController>         (kQGCControllers,                   1, 0, "MAVLinkInspectorController");
 
     // Register Qml Singletons
-    qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
+    qmlRegisterSingletonType<QGroundControlQmlGlobal>   (kQGC,                                      1, 0, kQGC,                     qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
     qmlRegisterSingletonType<ShapeFileHelper>           ("QGroundControl.ShapeFileHelper",          1, 0, "ShapeFileHelper",        shapeFileHelperSingletonFactory);
 }

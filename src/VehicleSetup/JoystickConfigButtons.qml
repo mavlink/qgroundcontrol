@@ -46,7 +46,7 @@ Item {
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 property bool pressed
-                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
+                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.getAssignableAction(buttonActionCombo.currentText) : null
                 Rectangle {
                     anchors.verticalCenter:     parent.verticalCenter
                     width:                      ScreenTools.defaultFontPixelHeight * 1.5
@@ -164,5 +164,3 @@ Item {
         }
     }
 }
-
-
