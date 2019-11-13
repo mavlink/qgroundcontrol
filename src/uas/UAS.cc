@@ -142,39 +142,6 @@ int UAS::getUASID() const
 
 void UAS::receiveMessage(mavlink_message_t message)
 {
-    if (!components.contains(message.compid))
-    {
-        QString componentName;
-
-        switch (message.compid)
-        {
-        case MAV_COMP_ID_ALL:
-        {
-            componentName = "ANONYMOUS";
-            break;
-        }
-        case MAV_COMP_ID_IMU:
-        {
-            componentName = "IMU #1";
-            break;
-        }
-        case MAV_COMP_ID_CAMERA:
-        {
-            componentName = "CAMERA";
-            break;
-        }
-        case MAV_COMP_ID_MISSIONPLANNER:
-        {
-            componentName = "MISSIONPLANNER";
-            break;
-        }
-        }
-
-        components.insert(message.compid, componentName);
-    }
-
-    //    qDebug() << "UAS RECEIVED from" << message.sysid << "component" << message.compid << "msg id" << message.msgid << "seq no" << message.seq;
-
     // Only accept messages from this system (condition 1)
     // and only then if a) attitudeStamped is disabled OR b) attitudeStamped is enabled
     // and we already got one attitude packet
@@ -1465,14 +1432,6 @@ void UAS::stopHil()
     sensorHil = false;
 }
 #endif
-
-/**
-* @rerturn the map of the components
-*/
-QMap<int, QString> UAS::getComponents()
-{
-    return components;
-}
 
 void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
 {
