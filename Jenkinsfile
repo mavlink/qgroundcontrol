@@ -59,7 +59,7 @@ pipeline {
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-            sh 'cd build; make -j`nproc --all`'
+            //sh 'cd build; make -j`nproc --all`' // FIXME
             sh 'ccache -s'
           }
           post {
