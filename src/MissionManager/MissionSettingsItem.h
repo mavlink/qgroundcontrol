@@ -48,8 +48,14 @@ public:
     /// @return true: Mission end action was added
     bool addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent);
 
-    /// Called to updaet home position coordinate when it comes from a connected vehicle
-    void setHomePositionFromVehicle(const QGeoCoordinate& coordinate);
+    /// Called to update home position coordinate when it comes from a connected vehicle
+    void setHomePositionFromVehicle(Vehicle* vehicle);
+
+    // Called to set the initial home position. Vehicle can still update home position after this.
+    void setInitialHomePosition(const QGeoCoordinate& coordinate);
+
+    // Called to set the initial home position specified by user. Vehicle will no longer affect home position.
+    void setInitialHomePositionFromUser(const QGeoCoordinate& coordinate);
 
     // Overrides from ComplexMissionItem
 
@@ -75,7 +81,7 @@ public:
     double          specifiedGimbalYaw      (void) final;
     double          specifiedGimbalPitch    (void) final;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
+    void            applyNewAltitude        (double /*newAltitude*/) final { /* no action */ }
     double          specifiedFlightSpeed    (void) final;
     double          additionalTimeDelay     (void) const final { return 0; }
 
@@ -84,11 +90,9 @@ public:
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate) final;   // Should only be called if the end user is moving
     void setSequenceNumber  (int sequenceNumber) final;
     void save               (QJsonArray&  missionItems) final;
-
-    static const char* jsonComplexItemTypeValue;
 
 signals:
     void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);
@@ -100,16 +104,17 @@ private slots:
     void _sectionDirtyChanged                   (bool dirty);
     void _updateAltitudeInCoordinate            (QVariant value);
     void _setHomeAltFromTerrain                 (double terrainAltitude);
+    void _setCoordinateWorker                   (const QGeoCoordinate& coordinate);
 
 private:
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
-    bool            _plannedHomePositionFromVehicle;
-    bool            _missionEndRTL;
+    int             _sequenceNumber =                   0;
+    bool            _plannedHomePositionFromVehicle =   false;
+    bool            _plannedHomePositionMovedByUser =   false;
+    bool            _missionEndRTL =                    false;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
-    int             _sequenceNumber;
-    bool            _dirty;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
