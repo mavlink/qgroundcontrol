@@ -111,51 +111,6 @@ void MissionControllerTest::_testEmptyVehicleAPM(void)
     _testEmptyVehicleWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
 }
 
-void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
-{
-    _initForFirmwareType(firmwareType);
-
-    QGeoCoordinate coordinate(37.803784, -122.462276);
-
-    _missionController->insertSimpleMissionItem(coordinate, _missionController->visualItems()->count());
-
-    QmlObjectListModel* visualItems = _missionController->visualItems();
-    QVERIFY(visualItems);
-
-    QCOMPARE(visualItems->count(), 2);
-
-    MissionSettingsItem* settingsItem = visualItems->value<MissionSettingsItem*>(0);
-    SimpleMissionItem* simpleItem = visualItems->value<SimpleMissionItem*>(1);
-    QVERIFY(settingsItem);
-    QVERIFY(simpleItem);
-
-    QCOMPARE((MAV_CMD)simpleItem->command(), MAV_CMD_NAV_TAKEOFF);
-    QCOMPARE(simpleItem->childItems()->count(), 0);
-
-    // Planned home position should always be set after first item
-    QVERIFY(settingsItem->coordinate().isValid());
-
-    // ArduPilot takeoff command has no coordinate, so should be child item
-    QCOMPARE(settingsItem->childItems()->count(), firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 1 : 0);
-
-    // Check waypoint line from home to takeoff
-    int expectedLineCount = firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : 1;
-    QmlObjectListModel* waypointLines = _missionController->waypointLines();
-    QVERIFY(waypointLines);
-    QCOMPARE(waypointLines->count(), expectedLineCount);
-}
-
-void MissionControllerTest::_testAddWayppointAPM(void)
-{
-    _testAddWaypointWorker(MAV_AUTOPILOT_ARDUPILOTMEGA);
-}
-
-
-void MissionControllerTest::_testAddWayppointPX4(void)
-{
-    _testAddWaypointWorker(MAV_AUTOPILOT_PX4);
-}
-
 #if 0
 void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareType)
 {
