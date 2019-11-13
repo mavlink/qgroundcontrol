@@ -140,7 +140,7 @@ void MissionController::_init(void)
 {
     // We start with an empty mission
     _visualItems = new QmlObjectListModel(this);
-    _addMissionSettings(_visualItems, false /* addToCenter */);
+    _addMissionSettings(_visualItems);
     _initAllVisualItems();
 }
 
@@ -169,18 +169,16 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _missionItemCount = newMissionItems.count();
         emit missionItemCountChanged(_missionItemCount);
 
-        int i = 0;
-        if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
+        _addMissionSettings(newControllerMissionItems);
+
+        int i=0;
+        if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0 && !_flyView) {
             // First item is fake home position
-            _addMissionSettings(newControllerMissionItems, false /* addToCenter */);
             MissionItem* fakeHomeItem = newMissionItems[0];
             if (fakeHomeItem->coordinate().latitude() != 0 || fakeHomeItem->coordinate().longitude() != 0) {
                 _settingsItem->setInitialHomePosition(fakeHomeItem->coordinate());
             }
             i = 1;
-        }
-        if (!_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() || _visualItems->count() == 0) {
-            _addMissionSettings(_visualItems, !_flyView && _visualItems->count() > 0 /* addToCenter */);
         }
 
         for (; i < newMissionItems.count(); i++) {
@@ -610,7 +608,7 @@ void MissionController::removeAll(void)
         _visualItems->deleteLater();
         _settingsItem = nullptr;
         _visualItems = new QmlObjectListModel(this);
-        _addMissionSettings(_visualItems, false /* addToCenter */);
+        _addMissionSettings(_visualItems);
         _initAllVisualItems();
         setDirty(true);
         _resetMissionFlightStatus();
@@ -658,7 +656,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     int nextSequenceNumber = 1; // Start with 1 since home is in 0
     QJsonArray itemArray(json[_jsonItemsKey].toArray());
 
-    _addMissionSettings(visualItems, true /* addToCenter */);
+    _addMissionSettings(visualItems);
     if (json.contains(_jsonPlannedHomePositionKey)) {
         SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
@@ -925,8 +923,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
     }
 
     if (versionOk) {
-        // Start with planned home in center
-        _addMissionSettings(visualItems, true /* addToCenter */);
+        _addMissionSettings(visualItems);
 
         while (!stream.atEnd()) {
             SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
@@ -978,7 +975,7 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
     _visualItems = loadedVisualItems;
 
     if (_visualItems->count() == 0) {
-        _addMissionSettings(_visualItems, true /* addToCenter */);
+        _addMissionSettings(_visualItems);
     }
 
     MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
@@ -1902,48 +1899,50 @@ double MissionController::_normalizeLon(double lon)
 }
 
 /// Add the Mission Settings complex item to the front of the items
-void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter)
+void MissionController::_addMissionSettings(QmlObjectListModel* visualItems)
 {
+    qCDebug(MissionControllerLog) << "_addMissionSettings";
+
     _settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
-
-    qCDebug(MissionControllerLog) << "_addMissionSettings addToCenter" << addToCenter;
-
     visualItems->insert(0, _settingsItem);
 
-    if (addToCenter) {
-        if (visualItems->count() > 1) {
-            double north = 0.0;
-            double south = 0.0;
-            double east  = 0.0;
-            double west  = 0.0;
-            bool firstCoordSet = false;
+    _settingsItem->setHomePositionFromVehicle(_managerVehicle);
+}
 
-            for (int i=1; i<visualItems->count(); i++) {
-                VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
-                if (item->specifiesCoordinate()) {
-                    if (firstCoordSet) {
-                        double lat = _normalizeLat(item->coordinate().latitude());
-                        double lon = _normalizeLon(item->coordinate().longitude());
-                        north = fmax(north, lat);
-                        south = fmin(south, lat);
-                        east  = fmax(east, lon);
-                        west  = fmin(west, lon);
-                    } else {
-                        firstCoordSet = true;
-                        north = _normalizeLat(item->coordinate().latitude());
-                        south = north;
-                        east  = _normalizeLon(item->coordinate().longitude());
-                        west  = east;
-                    }
+void MissionController::_centerHomePositionOnMissionItems(QmlObjectListModel *visualItems)
+{
+    qCDebug(MissionControllerLog) << "_centerHomePositionOnMissionItems";
+
+    if (visualItems->count() > 1) {
+        double north = 0.0;
+        double south = 0.0;
+        double east  = 0.0;
+        double west  = 0.0;
+        bool firstCoordSet = false;
+
+        for (int i=1; i<visualItems->count(); i++) {
+            VisualMissionItem* item = qobject_cast<VisualMissionItem*>(visualItems->get(i));
+            if (item->specifiesCoordinate()) {
+                if (firstCoordSet) {
+                    double lat = _normalizeLat(item->coordinate().latitude());
+                    double lon = _normalizeLon(item->coordinate().longitude());
+                    north = fmax(north, lat);
+                    south = fmin(south, lat);
+                    east  = fmax(east, lon);
+                    west  = fmin(west, lon);
+                } else {
+                    firstCoordSet = true;
+                    north = _normalizeLat(item->coordinate().latitude());
+                    south = north;
+                    east  = _normalizeLon(item->coordinate().longitude());
+                    west  = east;
                 }
             }
-
-            if (firstCoordSet) {
-                _settingsItem->setInitialHomePositionFromUser(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
-            }
         }
-    } else {
-        _settingsItem->setHomePositionFromVehicle(_managerVehicle);
+
+        if (firstCoordSet) {
+            _settingsItem->setInitialHomePositionFromUser(QGeoCoordinate((south + ((north - south) / 2)) - 90.0, (west + ((east - west) / 2)) - 180.0, 0.0));
+        }
     }
 }
 
