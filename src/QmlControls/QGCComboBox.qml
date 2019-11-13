@@ -15,16 +15,16 @@ import QtQuick.Templates        2.4 as T
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.Controls      1.0
 
 T.ComboBox {
     id:             control
     padding:        ScreenTools.comboBoxPadding
     spacing:        ScreenTools.defaultFontPixelWidth
     implicitWidth:  Math.max(background ? background.implicitWidth : 0,
-                            contentItem.implicitWidth + leftPadding + rightPadding)
+                             contentItem.implicitWidth + leftPadding + rightPadding + padding)
     implicitHeight: Math.max(background ? background.implicitHeight : 0,
-                             Math.max(contentItem.implicitHeight,
-                                      indicator ? indicator.implicitHeight : 0) + topPadding + bottomPadding)
+                             Math.max(contentItem.implicitHeight, indicator ? indicator.implicitHeight : 0) + topPadding + bottomPadding)
     leftPadding:    padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     rightPadding:   padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
 
@@ -76,14 +76,14 @@ T.ComboBox {
         highlighted:                control.highlightedIndex === index
     }
 
-    // Dropdown indicator
-    indicator: ColorImage {
-        x:              control.mirrored ? control.padding : control.width - width
-        y:              control.topPadding + (control.availableHeight - height) / 2
-        color:          _qgcPal.text
-        defaultColor:   "#353637"
-        source:         "qrc:/qt-project.org/imports/QtQuick/Controls.2/images/double-arrow.png"
-        opacity:        enabled ? 1 : 0.3
+    indicator: QGCColoredImage {
+        anchors.rightMargin:    control.padding
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        height:                 ScreenTools.defaultFontPixelWidth
+        width:                  height
+        source:                 "/qmlimages/arrow-down.png"
+        color:                  _qgcPal.text
     }
 
     // The label of the button
