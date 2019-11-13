@@ -252,7 +252,7 @@ Rectangle {
         id:                     commandLabel
         anchors.leftMargin:     ScreenTools.comboBoxPadding
         anchors.fill:           commandPicker
-        visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
+        visible:                (!missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode) && !missionItem.isTakeoffItem
         verticalAlignment:      Text.AlignVCenter
         text:                   missionItem.commandName
         color:                  _outerTextColor
