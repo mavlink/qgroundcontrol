@@ -218,6 +218,8 @@ MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMa
         updateSettings();
 
 #ifdef QGC_ENABLE_PAIRING
+        emit _toolbox->pairingManager()->pairingChannelChanged();
+        emit _toolbox->pairingManager()->connectingChannelChanged();
         emit _toolbox->pairingManager()->pairingKeyChanged();
         emit _toolbox->pairingManager()->networkIdChanged();
 #endif

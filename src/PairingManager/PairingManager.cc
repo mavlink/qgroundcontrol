@@ -428,6 +428,7 @@ PairingManager::_channelCompleted(const QString& name, int channel)
     _toolbox->microhardManager()->setConnectChannel(channel);
     _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
     _toolbox->microhardManager()->updateSettings();
+    emit _toolbox->pairingManager()->connectingChannelChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -1094,7 +1095,7 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
 #if QGC_GST_MICROHARD_ENABLED
 //-----------------------------------------------------------------------------
 void
-PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& networkId)
+PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& networkId, int pairingChannel, int connectingChannel)
 {
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
@@ -1102,6 +1103,8 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     _toolbox->videoManager()->stopVideo();
     _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
     _toolbox->microhardManager()->setNetworkId(networkId);
+    _toolbox->microhardManager()->setPairingChannel(pairingChannel);
+    _toolbox->microhardManager()->setConnectChannel(connectingChannel);
     _toolbox->microhardManager()->updateSettings();
 
     if (_devices.empty()) {
@@ -1158,6 +1161,20 @@ QString
 PairingManager::networkId()
 {
     return _toolbox->microhardManager()->networkId();
+}
+
+//-----------------------------------------------------------------------------
+int
+PairingManager::pairingChannel()
+{
+    return _toolbox->microhardManager()->pairingChannel();
+}
+
+//-----------------------------------------------------------------------------
+int
+PairingManager::connectingChannel()
+{
+    return _toolbox->microhardManager()->connectingChannel();
 }
 
 //-----------------------------------------------------------------------------
