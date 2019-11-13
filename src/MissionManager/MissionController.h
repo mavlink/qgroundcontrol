@@ -278,7 +278,7 @@ private:
     bool _findPreviousAltitude(int newIndex, double* prevAltitude, int* prevAltitudeMode);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
-    void _addMissionSettings(QmlObjectListModel* visualItems);
+    MissionSettingsItem* _addMissionSettings(QmlObjectListModel* visualItems);
     void _centerHomePositionOnMissionItems(QmlObjectListModel* visualItems);
     bool _loadJsonMissionFile(const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
     bool _loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
