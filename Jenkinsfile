@@ -10,13 +10,13 @@ pipeline {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CCACHE_CPP2 = '1'
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.3/android_armv7/bin/qmake"
+            QMAKE_VER = "5.12.5/android_armv7/bin/qmake"
             QT_MKSPEC = "android-clang"
             BITNESS=32
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-android:2019-11-08'
+              image 'mavlink/qgc-build-android:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -42,13 +42,13 @@ pipeline {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CCACHE_CPP2 = '1'
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.3/android_arm64_v8a/bin/qmake"
+            QMAKE_VER = "5.12.5/android_arm64_v8a/bin/qmake"
             QT_MKSPEC = "android-clang"
             BITNESS=64
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-android:2019-11-08'
+              image 'mavlink/qgc-build-android_arm64_v8a:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -73,11 +73,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.11.3/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-08'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -102,12 +102,12 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Debug'
-            QT_VERSION = "5.11.3"
+            QT_VERSION = "5.12.5"
             QT_MKSPEC = "gcc_64"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-08'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -132,11 +132,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.3/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-08'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -164,12 +164,12 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Release'
-            QT_VERSION = "5.11.3"
+            QT_VERSION = "5.12.5"
             QT_MKSPEC = "gcc_64"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-08'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
