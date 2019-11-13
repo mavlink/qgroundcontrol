@@ -170,7 +170,7 @@ private:
     QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
     QString                       _lastDeviceNameToConnect = "";
-    QString                       _nidPrefix = "QGC_";
+    QString                       _nidPrefix = "SRR_";
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
