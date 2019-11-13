@@ -3,67 +3,126 @@ set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
 		CameraCalcTest.cc
+		CameraCalcTest.h
 		CameraSectionTest.cc
+		CameraSectionTest.h
 		CorridorScanComplexItemTest.cc
+		CorridorScanComplexItemTest.h
 		FWLandingPatternTest.cc
+		FWLandingPatternTest.h
 		MissionCommandTreeTest.cc
+		MissionCommandTreeTest.h
 		MissionControllerManagerTest.cc
+		MissionControllerManagerTest.h
 		MissionControllerTest.cc
+		MissionControllerTest.h
 		MissionItemTest.cc
+		MissionItemTest.h
 		MissionManagerTest.cc
+		MissionManagerTest.h
 		MissionSettingsTest.cc
+		MissionSettingsTest.h
 		PlanMasterControllerTest.cc
+		PlanMasterControllerTest.h
 		QGCMapPolygonTest.cc
+		QGCMapPolygonTest.h
 		QGCMapPolylineTest.cc
+		QGCMapPolylineTest.h
 		SectionTest.cc
+		SectionTest.h
 		SimpleMissionItemTest.cc
+		SimpleMissionItemTest.h
 		SpeedSectionTest.cc
+		SpeedSectionTest.h
 		StructureScanComplexItemTest.cc
+		StructureScanComplexItemTest.h
 		SurveyComplexItemTest.cc
+		SurveyComplexItemTest.h
 		TransectStyleComplexItemTest.cc
+		TransectStyleComplexItemTest.h
 		VisualMissionItemTest.cc
+		VisualMissionItemTest.h
 	)
 endif()
 
 add_library(MissionManager
+	BlankPlanCreator.cc
+	BlankPlanCreator.h
 	CameraCalc.cc
+	CameraCalc.h
 	CameraSection.cc
+	CameraSection.h
 	CameraSpec.cc
+	CameraSpec.h
 	ComplexMissionItem.cc
+	ComplexMissionItem.h
 	CorridorScanComplexItem.cc
+	CorridorScanComplexItem.h
 	CorridorScanPlanCreator.cc
-	CustomPlanCreator.cc
+	CorridorScanPlanCreator.h
 	FixedWingLandingComplexItem.cc
+	FixedWingLandingComplexItem.h
 	GeoFenceController.cc
+	GeoFenceController.h
 	GeoFenceManager.cc
+	GeoFenceManager.h
 	KML.cc
+	KML.h
 	MissionCommandList.cc
+	MissionCommandList.h
 	MissionCommandTree.cc
+	MissionCommandTree.h
 	MissionCommandUIInfo.cc
+	MissionCommandUIInfo.h
 	MissionController.cc
+	MissionController.h
 	MissionItem.cc
+	MissionItem.h
 	MissionManager.cc
+	MissionManager.h
 	MissionSettingsItem.cc
+	MissionSettingsItem.h
 	PlanCreator.cc
+	PlanCreator.h
 	PlanElementController.cc
+	PlanElementController.h
 	PlanManager.cc
+	PlanManager.h
 	PlanMasterController.cc
+	PlanMasterController.h
 	QGCFenceCircle.cc
+	QGCFenceCircle.h
 	QGCFencePolygon.cc
+	QGCFencePolygon.h
 	QGCMapCircle.cc
+	QGCMapCircle.h
 	QGCMapPolygon.cc
+	QGCMapPolygon.h
 	QGCMapPolyline.cc
+	QGCMapPolyline.h
 	RallyPoint.cc
 	RallyPointController.cc
+	RallyPointController.h
+	RallyPoint.h
 	RallyPointManager.cc
+	RallyPointManager.h
+	Section.h
 	SimpleMissionItem.cc
+	SimpleMissionItem.h
 	SpeedSection.cc
+	SpeedSection.h
 	StructureScanComplexItem.cc
+	StructureScanComplexItem.h
 	StructureScanPlanCreator.cc
+	StructureScanPlanCreator.h
 	SurveyComplexItem.cc
+	SurveyComplexItem.h
 	SurveyPlanCreator.cc
+	SurveyPlanCreator.h
 	TransectStyleComplexItem.cc
+	TransectStyleComplexItem.h
 	VisualMissionItem.cc
+	VisualMissionItem.h
 
 	Section.h # shouldn't be listed here, but isn't named properly for AUTOMOC
 
