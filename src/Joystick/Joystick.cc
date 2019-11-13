@@ -1142,3 +1142,13 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _availableActionTitles.insert(0,_buttonActionNone);
     emit assignableActionsChanged();
 }
+
+AssignableButtonAction* Joystick::getAssignableAction(const QString& action)
+{
+    for(int i = 0; i < _assignableButtonActions.count(); i++) {
+        AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
+        if(p->action() == action)
+            return p;
+    }
+    return nullptr;
+}
