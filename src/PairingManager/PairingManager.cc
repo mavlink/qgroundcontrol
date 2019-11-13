@@ -304,6 +304,7 @@ void
 PairingManager::_startUploadRequest(const QString& name, const QString& url, const QString& data)
 {
     if (url.contains("/pair")) {
+        emit stopUpload();
         _devicesToConnect.clear();
     }
     QNetworkRequest req;
@@ -315,6 +316,10 @@ PairingManager::_startUploadRequest(const QString& name, const QString& url, con
     reply->setProperty("content", QVariant(data));
     connect(reply, &QNetworkReply::finished, this, &PairingManager::_uploadFinished, Qt::QueuedConnection);
     connect(this, SIGNAL(stopUpload()), reply, SLOT(abort()), Qt::QueuedConnection);
+    if (url.contains("/connect")) {
+        _connectRequests[name] = reply;
+        emit deviceListChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -368,10 +373,10 @@ PairingManager::_uploadFinished()
                 setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
                 qCDebug(PairingManagerLog) << "Connection rejected.";
             }
+            _connectRequests.remove(name);
+            emit deviceListChanged();
         } else if (map["CMD"] == "disconnect") {
-            if (map["RES"] == "accepted") {
-                _disconnectCompleted(map["NM"].toString());
-            } else if (map["RES"] == "rejected") {
+            if (map["RES"] == "rejected") {
                 qCDebug(PairingManagerLog) << "Disconnect rejected.";
             }
         } else if (map["CMD"] == "channel") {
@@ -403,6 +408,7 @@ PairingManager::_uploadFinished()
     } else {
         qCDebug(PairingManagerLog) << "Request " << url << " error: " + reply->errorString();
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
+            _connectRequests.remove(name);
             connectToDevice(name);
         }
     }
@@ -467,13 +473,35 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
     // If multiple vehicles share same IP then do not try to autoconnect anymore
     for (QString n : _devicesToConnect.keys()) {
         if (ip == _getDeviceIP(n)) {
-            _devicesToConnect.remove(n);
+            stopConnectingDevice(n);
             break;
         }
     }
 
     setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
+    emit deviceListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::stopConnectingDevice(const QString& name)
+{
+    if (_connectRequests.contains(name)) {
+        _connectRequests[name]->abort();
+        _connectRequests.remove(name);
+    }
+    _devicesToConnect.remove(name);
+    emit deviceListChanged();
+}
+
+//-----------------------------------------------------------------------------
+bool
+PairingManager::isDeviceConnecting(const QString& name)
+{
+    bool isConnecting = _devicesToConnect.contains(name) || _connectRequests.contains(name);
+    qCDebug(PairingManagerLog) << "isDeviceConnecting: " << name << " = " << isConnecting;
+    return isConnecting;
 }
 
 //-----------------------------------------------------------------------------
@@ -1213,6 +1241,7 @@ PairingManager::disconnectDevice(const QString& name)
                 jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
                 jsonDoc.setObject(jsonObj);
                 emit startUpload(name, disconnectURL, jsonDoc, true);
+                _disconnectCompleted(name);
             }
             break;
         }

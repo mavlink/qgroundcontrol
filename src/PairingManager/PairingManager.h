@@ -90,6 +90,8 @@ public:
 #endif
     Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirm = false);
     Q_INVOKABLE void    removePairedDevice      (const QString& name);
+    Q_INVOKABLE void    stopConnectingDevice    (const QString& name);
+    Q_INVOKABLE bool    isDeviceConnecting      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
     Q_INVOKABLE QString extractName             (const QString& name);
     Q_INVOKABLE QString extractChannel          (const QString& name);
@@ -169,6 +171,7 @@ private:
     QMap<QString, qint64>         _devicesToConnect{};
     QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
+    QMap<QString, QNetworkReply*> _connectRequests;
     QString                       _lastDeviceNameToConnect = "";
     QString                       _nidPrefix = "SRR_";
 
