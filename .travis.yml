@@ -150,7 +150,7 @@ deploy:
     name: 'SRR RC: $QGC_CUSTOM_VERSION (QGC core: $QGC_VERSION)'
     prerelease: true
     on:
-      branch: diu-release
+      branch: wip-todo
       condition: $CONFIG == installer
   # pre-release a version for each commit with prefix 'dev_srr*' on any branch except master
   - <<: *template_deploy
