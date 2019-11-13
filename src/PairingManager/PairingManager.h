@@ -82,12 +82,16 @@ public:
     void            setNidPrefix                (QString nidPrefix) { _nidPrefix = nidPrefix; emit nidPrefixChanged(); }
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
     QString         pairingKey                  ();
-    QString         networkId                   ();    
+    QString         networkId                   ();
+    int             pairingChannel              ();
+    int             connectingChannel           ();
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
     Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirm = false);
     Q_INVOKABLE void    removePairedDevice      (const QString& name);
+    Q_INVOKABLE void    stopConnectingDevice    (const QString& name);
+    Q_INVOKABLE bool    isDeviceConnecting      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
     Q_INVOKABLE QString extractName             (const QString& name);
     Q_INVOKABLE QString extractChannel          (const QString& name);
@@ -96,7 +100,7 @@ public:
     Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
-    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey, const QString& networkId);
+    Q_INVOKABLE void    startMicrohardPairing   (const QString& pairingKey, const QString& networkId, int pairingChannel, int connectingChannel);
 #endif
     Q_INVOKABLE void    stopPairing             ();
     Q_INVOKABLE void    disconnectDevice        (const QString& name);
@@ -110,6 +114,8 @@ public:
     Q_PROPERTY(QString          pairingKey              READ pairingKey                                  NOTIFY pairingKeyChanged)
     Q_PROPERTY(QString          networkId               READ networkId                                   NOTIFY networkIdChanged)
     Q_PROPERTY(QString          nidPrefix               READ nidPrefix               WRITE setNidPrefix  NOTIFY nidPrefixChanged)
+    Q_PROPERTY(int              pairingChannel          READ pairingChannel                              NOTIFY pairingChannelChanged)
+    Q_PROPERTY(int              connectingChannel       READ connectingChannel                           NOTIFY connectingChannelChanged)
     Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
     Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
@@ -133,6 +139,8 @@ signals:
     void pairingKeyChanged                      ();
     void confirmHighPowerModeChanged            ();
     void networkIdChanged                       ();
+    void pairingChannelChanged                  ();
+    void connectingChannelChanged               ();
     void nidPrefixChanged                       ();
 
 private slots:
@@ -163,8 +171,9 @@ private:
     QMap<QString, qint64>         _devicesToConnect{};
     QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
+    QMap<QString, QNetworkReply*> _connectRequests;
     QString                       _lastDeviceNameToConnect = "";
-    QString                       _nidPrefix = "QGC_";
+    QString                       _nidPrefix = "SRR_";
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
@@ -190,6 +199,7 @@ private:
     void                    _createUDPLink              (const QString& name, quint16 port);
     void                    _removeUDPLink              (const QString& name);
     void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
+    void                    _linkInactiveOrDeleted      (LinkInterface* link);
     void                    _autoConnect                ();
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
