@@ -71,8 +71,8 @@ git:
     - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
     - export QGC_VERSION=$(< /tmp/build_version.txt)
     - export CURRENT_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-    - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "diu-release" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
-    - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "diu-release" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
+    - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
+    - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
     - echo "TRAVIS_TAG=$TRAVIS_TAG, TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH, CURRENT_BRANCH=$CURRENT_BRANCH, VERSION_NAME=$VERSION_NAME, QGC_VERSION=$QGC_VERSION, QGC_CUSTOM_VERSION=$QGC_CUSTOM_VERSION"
     - git tag -f $TRAVIS_TAG
     # rename to add version number to file name
@@ -117,8 +117,8 @@ matrix:
         - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
         - export QGC_VERSION=$(< /tmp/build_version.txt)
         - export CURRENT_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-        - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "diu-release" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
-        - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "diu-release" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
+        - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
+        - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
         - echo "TRAVIS_TAG=$TRAVIS_TAG, TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH, CURRENT_BRANCH=$CURRENT_BRANCH, VERSION_NAME=$VERSION_NAME, QGC_VERSION=$QGC_VERSION, QGC_CUSTOM_VERSION=$QGC_CUSTOM_VERSION"
         - git tag -f $TRAVIS_TAG
         # rename to add version number to file name
