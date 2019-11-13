@@ -161,7 +161,12 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         //      - A load from vehicle was manually requested
         //      - The initial automatic load from a vehicle completed and the current editor is empty
 
+        _deinitAllVisualItems();
+        _visualItems->deleteLater();
+        _visualItems  = nullptr;
         _settingsItem = nullptr;
+        _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
+
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _missionManager->missionItems();
         qCDebug(MissionControllerLog) << "loading from vehicle: count"<< newMissionItems.count();
@@ -169,7 +174,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _missionItemCount = newMissionItems.count();
         emit missionItemCountChanged(_missionItemCount);
 
-        _addMissionSettings(newControllerMissionItems);
+        MissionSettingsItem* settingsItem = _addMissionSettings(newControllerMissionItems);
 
         int i=0;
         if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0 && !_flyView) {
@@ -186,18 +191,15 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_controllerVehicle, _flyView, *missionItem, this);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                 // This needs to be a TakeoffMissionItem
-                TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(*missionItem, _controllerVehicle, _flyView, _settingsItem, this);
+                TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(*missionItem, _controllerVehicle, _flyView, settingsItem, this);
                 simpleItem->deleteLater();
                 simpleItem = takeoffItem;
             }
             newControllerMissionItems->append(simpleItem);
         }
 
-        _deinitAllVisualItems();
-        _visualItems->deleteLater();
-        _visualItems  = nullptr;
-        _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
         _visualItems = newControllerMissionItems;
+        _settingsItem = settingsItem;
 
         MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
 
@@ -656,11 +658,11 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     int nextSequenceNumber = 1; // Start with 1 since home is in 0
     QJsonArray itemArray(json[_jsonItemsKey].toArray());
 
-    _addMissionSettings(visualItems);
+    MissionSettingsItem* settingsItem = _addMissionSettings(visualItems);
     if (json.contains(_jsonPlannedHomePositionKey)) {
         SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
-            _settingsItem->setInitialHomePositionFromUser(item->coordinate());
+            settingsItem->setInitialHomePositionFromUser(item->coordinate());
             item->deleteLater();
         } else {
             return false;
@@ -923,7 +925,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
     }
 
     if (versionOk) {
-        _addMissionSettings(visualItems);
+        MissionSettingsItem* settingsItem = _addMissionSettings(visualItems);
 
         while (!stream.atEnd()) {
             SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
@@ -933,7 +935,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
                 } else {
                     if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(item->command()))) {
                         // This needs to be a TakeoffMissionItem
-                        TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, _settingsItem, visualItems);
+                        TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, visualItems);
                         takeoffItem->load(stream);
                         item->deleteLater();
                         item = takeoffItem;
@@ -976,6 +978,8 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
 
     if (_visualItems->count() == 0) {
         _addMissionSettings(_visualItems);
+    } else {
+        _settingsItem = _visualItems->value<MissionSettingsItem*>(0);
     }
 
     MissionController::_scanForAdditionalSettings(_visualItems, _controllerVehicle);
@@ -1899,14 +1903,19 @@ double MissionController::_normalizeLon(double lon)
 }
 
 /// Add the Mission Settings complex item to the front of the items
-void MissionController::_addMissionSettings(QmlObjectListModel* visualItems)
+MissionSettingsItem* MissionController::_addMissionSettings(QmlObjectListModel* visualItems)
 {
     qCDebug(MissionControllerLog) << "_addMissionSettings";
 
-    _settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
-    visualItems->insert(0, _settingsItem);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
+    visualItems->insert(0, settingsItem);
+    settingsItem->setHomePositionFromVehicle(_managerVehicle);
 
-    _settingsItem->setHomePositionFromVehicle(_managerVehicle);
+    if (visualItems == _visualItems) {
+        _settingsItem = settingsItem;
+    }
+
+    return settingsItem;
 }
 
 void MissionController::_centerHomePositionOnMissionItems(QmlObjectListModel *visualItems)
