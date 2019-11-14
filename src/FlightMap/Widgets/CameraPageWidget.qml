@@ -196,7 +196,7 @@ Column {
                 height:             ScreenTools.defaultFontPixelHeight * 3
                 width:              height
                 anchors.centerIn:   parent
-                source:             "/qmlimages/camera_photo.svg" //TODO: how to get a new pic in ??? "/qmlimages/camera_photo_timelapse.svg"
+                source:             "/qmlimages/camera_timelapse.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
                 color:              qgcPal.text
@@ -241,6 +241,7 @@ Column {
                     //-------------------------------------------
                     //-- Camera Selector
                     Row {
+                        id: _cameraSelector
                         spacing:            ScreenTools.defaultFontPixelWidth
                         visible:            _isCamera && _dynamicCameras.cameraLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -260,6 +261,7 @@ Column {
                     //-------------------------------------------
                     //-- Stream Selector
                     Row {
+                        id: _streamSelector
                         spacing:            ScreenTools.defaultFontPixelWidth
                         visible:            _camera && _camera.streamLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -278,6 +280,7 @@ Column {
                     //-------------------------------------------
                     //-- Thermal Modes
                     Row {
+                        id: _thermalModes
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible:            QGroundControl.videoManager.hasThermal
@@ -297,6 +300,7 @@ Column {
                     //-------------------------------------------
                     //-- Thermal Video Opacity
                     Row {
+                        id: _thermalVideoOpacity
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
@@ -317,6 +321,7 @@ Column {
                     //-------------------------------------------
                     //-- Time Lapse
                     Row {
+                        id: _timeLapse
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible:            _cameraPhotoMode
@@ -337,6 +342,7 @@ Column {
                     //-------------------------------------------
                     //-- Time Lapse Interval
                     Row {
+                        id: _timeLapseInterval
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible:            _cameraElapsedMode
@@ -361,14 +367,17 @@ Column {
                         }
                     }
                     //-------------------------------------------
-                    //-- Camera Settings
+                    // Separator line
                     Rectangle {
                         width:      parent.width
                         height:     1
                         color:      qgcPal.button
-                        visible:    _cameraPhotoMode //TODO: that's not totally correct, need to determine if there had been anything before, is there a simple way?
+                        visible:    _cameraSelector.visible || _streamSelector.visible ||
+                                    _thermalModes.visible || _thermalVideoOpacity.visible || _timeLapse.visible || _timeLapseInterval.visible
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
+                    //-------------------------------------------
+                    //-- Camera Settings
                     Repeater {
                         id:     factRepeater
                         model:  _camera ? _camera.activeSettings : []
@@ -423,6 +432,8 @@ Column {
                             }
                         }
                     }
+                    //-------------------------------------------
+                    // Separator line
                     Rectangle {
                         width:      parent.width
                         height:     1
