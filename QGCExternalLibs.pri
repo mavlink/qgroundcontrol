@@ -113,15 +113,20 @@ MacBuild {
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
+    BASEQTDIR = $$(QTDIR)
+    INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/binary/include
+    LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/binary/lib
 } else:WindowsBuild {
     INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
     BASEQTDIR = $$(QTDIR)
     INCLUDEPATH += $$BASEQTDIR/include/QtZlib
     contains(QT_ARCH, i386) {
         INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x86/include
+        LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/Win_x86/lib
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
     } else {
         INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x64/include
+        LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/Win_x64/lib
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
     }
     LIBS += \
