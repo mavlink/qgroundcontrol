@@ -447,6 +447,8 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
         return;
     }
 
+    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
+
     if (confirm && !_devicesToConnect.contains(name)) {
         QJsonObject jsonObj = _devices[name].object();
         if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
@@ -478,7 +480,6 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
         }
     }
 
-    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
     emit deviceListChanged();
 }
@@ -487,11 +488,19 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
 void
 PairingManager::stopConnectingDevice(const QString& name)
 {
-    if (_connectRequests.contains(name)) {
-        _connectRequests[name]->abort();
-        _connectRequests.remove(name);
+    if (!name.isEmpty()) {
+        if (_connectRequests.contains(name)) {
+            _connectRequests[name]->abort();
+            _connectRequests.remove(name);
+        }
+        _devicesToConnect.remove(name);
+    } else {
+        foreach (auto cd, _connectRequests) {
+            cd->abort();
+        }
+        _connectRequests.clear();
+        _devicesToConnect.clear();
     }
-    _devicesToConnect.remove(name);
     emit deviceListChanged();
 }
 
