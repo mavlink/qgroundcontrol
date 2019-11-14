@@ -66,13 +66,14 @@ Rectangle {
             visible:            missionItem.wizardMode
 
             QGCLabel {
-                text:               qsTr("Adjust the initial launch location by selecting 'P' and dragging it to the correct location.")
+                text:               qsTr("Adjust the initial launch location by dragging 'L' indicator to the desired location.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
+                visible:            !missionItem.launchTakeoffAtSameLocation
             }
 
             QGCLabel {
-                text:               qsTr("Adjust the takeoff completion location by dragging it to the correct location.")
+                text:               qsTr("Adjust the takeoff %1 location by dragging 'T' indicator to the desired location.").arg(missionItem.launchTakeoffAtSameLocation ? "" : qsTr("completion "))
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
             }
