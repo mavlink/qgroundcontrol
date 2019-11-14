@@ -21,7 +21,7 @@ StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMas
 void StructureScanPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
 {
     _planMasterController->removeAll();
-    VisualMissionItem* takeoffItem = _missionController->insertSimpleMissionItem(mapCenterCoord, -1);
+    VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     takeoffItem->setWizardMode(true);
     _missionController->insertComplexMissionItem(MissionController::patternStructureScanName, mapCenterCoord, -1)->setWizardMode(true);
     if (_planMasterController->managerVehicle()->fixedWing()) {

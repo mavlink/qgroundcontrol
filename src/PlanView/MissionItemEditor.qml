@@ -221,14 +221,13 @@ Rectangle {
             QGCLabel { text: missionItem.commandName }
 
             QGCColoredImage {
-                height:             ScreenTools.implicitComboBoxHeight - (ScreenTools.comboBoxPadding * 2)
+                height:             ScreenTools.defaultFontPixelWidth
                 width:              height
-                sourceSize.height:  height
                 fillMode:           Image.PreserveAspectFit
                 smooth:             true
                 antialiasing:       true
                 color:              qgcPal.text
-                source:             "qrc:/qt-project.org/imports/QtQuick/Controls.2/images/double-arrow.png"
+                source:             "/qmlimages/arrow-down.png"
             }
         }
 
@@ -252,7 +251,7 @@ Rectangle {
         id:                     commandLabel
         anchors.leftMargin:     ScreenTools.comboBoxPadding
         anchors.fill:           commandPicker
-        visible:                (!missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode) && !missionItem.isTakeoffItem
+        visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode || missionItem.isTakeoffItem
         verticalAlignment:      Text.AlignVCenter
         text:                   missionItem.commandName
         color:                  _outerTextColor

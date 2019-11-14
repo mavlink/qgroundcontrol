@@ -533,6 +533,7 @@ Item {
                 anchorPoint.x:  sourceItem.width / 2
                 anchorPoint.y:  sourceItem.height / 2
                 z:              QGroundControl.zOrderWaypointLines + 1
+                visible:        _editingLayer == _layerMission
 
                 sourceItem: SplitIndicator {
                     onClicked:  insertSimpleMissionItem(splitSegmentItem.coordinate, _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex))
