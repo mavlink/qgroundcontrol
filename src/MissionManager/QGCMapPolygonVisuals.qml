@@ -274,7 +274,8 @@ Item {
             property int vertexIndex
 
             sourceItem: SplitIndicator {
-                z: _zorderSplitHandle
+                z:          _zorderSplitHandle
+                onClicked:  mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
             }
         }
     }
