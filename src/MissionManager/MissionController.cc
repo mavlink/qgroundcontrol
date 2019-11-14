@@ -2181,14 +2181,16 @@ VisualMissionItem* MissionController::currentPlanViewItem(void) const
 void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewIndex)) {
-        bool foundLand = false;
-        int takeoffIndex = -1;
+        bool    foundLand =     false;
+        int     takeoffIndex =  -1;
+        int     landIndex =     -1;
 
-        _splitSegment = nullptr;
-        _currentPlanViewItem  = nullptr;
-        _currentPlanViewIndex = -1;
-        _isInsertTakeoffValid = true;
-        _isInsertLandValid = true;
+        _splitSegment =                 nullptr;
+        _currentPlanViewItem  =         nullptr;
+        _currentPlanViewIndex =         -1;
+        _isInsertTakeoffValid =         true;
+        _isInsertLandValid =            true;
+        _flyThroughCommandsAllowed =    true;
 
         for (int i = 0; i < _visualItems->count(); i++) {
             VisualMissionItem* pVI = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -2214,6 +2216,7 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
                     case MAV_CMD_DO_LAND_START:
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
                         foundLand = true;
+                        landIndex = i;
                         break;
                     default:
                         break;
@@ -2222,6 +2225,7 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
                     FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(pVI);
                     if (fwLanding) {
                         foundLand = true;
+                        landIndex = i;
                     }
                 }
             }
@@ -2248,13 +2252,23 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
             }
         }
 
-        if (takeoffIndex != -1 && sequenceNumber <= takeoffIndex) {
-            // Takeoff item was found which means mission starts from ground.
-            // Land is only valid after the takeoff item.
+        if (takeoffIndex != -1) {
+            // Takeoff item was found which means mission starts from ground
+            if (sequenceNumber < takeoffIndex) {
+                // Land is only valid after the takeoff item.
+                _isInsertLandValid = false;
+                // Fly through commands are not allowed prior to the takeoff command
+                _flyThroughCommandsAllowed = false;
+            }
+        }
+
+        if (foundLand) {
+            // Can't have more than one land sequence
             _isInsertLandValid = false;
-        } else if (foundLand) {
-            // Can't have to land sequences
-            _isInsertLandValid = false;
+            if (sequenceNumber >= landIndex) {
+                // Can't have fly through commands after a land item
+                _flyThroughCommandsAllowed = false;
+            }
         }
 
         emit currentPlanViewIndexChanged();
@@ -2262,6 +2276,7 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
         emit splitSegmentChanged();
         emit isInsertTakeoffValidChanged();
         emit isInsertLandValidChanged();
+        emit flyThroughCommandsAllowedChanged();
     }
 }
 
