@@ -57,7 +57,7 @@ public:
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
 
     /// Request a refresh on the specific parameter
-    void refreshParameter(int componentId, const QString& name);
+    void refreshParameter(int componentId, const QString& paramName);
 
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString& namePrefix);
@@ -68,7 +68,7 @@ public:
     /// Returns true if the specifed parameter exists
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
-    bool parameterExists(int componentId, const QString& name);
+    bool parameterExists(int componentId, const QString& paramName);
 
     /// Returns all parameter names
     QStringList parameterNames(int componentId);
@@ -77,14 +77,16 @@ public:
     /// a missing parameter error to user if parameter does not exist.
     ///     @param componentId Component id or FactSystem::defaultComponentId
     ///     @param name Parameter name
-    Fact* getParameter(int componentId, const QString& name);
+    Fact* getParameter(int componentId, const QString& paramName);
 
-    const QMap<QString, QMap<QString, QStringList> >& getDefaultComponentCategoryMap(void);
+    int  getComponentId(const QString& category);
+    QString getComponentCategory(int componentId);
+    const QMap<QString, QMap<QString, QStringList> >& getComponentCategoryMap(int componentId);
 
     /// Returns error messages from loading
     QString readParametersFromStream(QTextStream& stream);
 
-    void writeParametersToStream(QTextStream &stream);
+    void writeParametersToStream(QTextStream& stream);
 
     /// Returns the version number for the parameter set, -1 if not known
     int parameterSetVersion(void) { return _parameterSetMajorVersion; }
@@ -137,6 +139,7 @@ private:
     static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);
 
     int     _actualComponentId(int componentId);
+    void    _setupComponentCategoryMap(int componentId);
     void    _setupDefaultComponentCategoryMap(void);
     void    _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void    _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
@@ -160,8 +163,10 @@ private:
     /// Second mapping is parameter name, to Fact* in QVariant
     QMap<int, QVariantMap>            _mapParameterName2Variant;
 
-    // Category map of default component parameters
-    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _defaultComponentCategoryMap;
+    // List of category map of component parameters
+    typedef QMap<QString, QMap<QString, QStringList>>   ComponentCategoryMapType; //<Key: category, Value: Map< Key: group, Value: parameter names list >>
+    QMap<int, ComponentCategoryMapType>                 _componentCategoryMaps;
+    QHash<QString, int>                                 _componentCategoryHash;
 
     double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete

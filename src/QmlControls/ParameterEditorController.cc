@@ -23,10 +23,9 @@ ParameterEditorController::ParameterEditorController(void)
     : _currentCategory          ("Standard")  // FIXME: firmware specific
     , _parameters               (new QmlObjectListModel(this))
     , _parameterMgr             (_vehicle->parameterManager())
-    , _componentCategoryPrefix  (tr("Component "))
     , _showModifiedOnly          (false)
 {
-    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getComponentCategoryMap(_vehicle->defaultComponentId());
     _categories = categoryMap.keys();
 
     // Move default category to front
@@ -36,7 +35,7 @@ ParameterEditorController::ParameterEditorController(void)
     // There is a category for each non default component
     for (int compId: _parameterMgr->componentIds()) {
         if (compId != _vehicle->defaultComponentId()) {
-            _categories.append(QString("%1%2").arg(_componentCategoryPrefix).arg(compId));
+            _categories.append(_parameterMgr->getComponentCategory(compId));
         }
     }
 
@@ -44,6 +43,7 @@ ParameterEditorController::ParameterEditorController(void)
     if (categoryMap.contains(_currentCategory) && categoryMap[_currentCategory].size() != 0) {
         _currentGroup = categoryMap[_currentCategory].keys()[0];
     }
+
     _updateParameters();
 
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_updateParameters);
@@ -59,13 +59,9 @@ ParameterEditorController::~ParameterEditorController()
 
 QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
 {
-    if (category.startsWith(_componentCategoryPrefix)) {
-        return QStringList(tr("All"));
-    } else {
-        const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
-
-        return categoryMap[category].keys();
-    }
+    int compId = _parameterMgr->getComponentId(category);
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getComponentCategoryMap(compId);
+    return categoryMap[category].keys();
 }
 
 QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
@@ -182,21 +178,14 @@ void ParameterEditorController::_updateParameters(void)
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
     if (searchItems.isEmpty() && !_showModifiedOnly) {
-        if (_currentCategory.startsWith(_componentCategoryPrefix)) {
-            int compId = _currentCategory.right(_currentCategory.length() - _componentCategoryPrefix.length()).toInt();
-            for (const QString& paramName: _parameterMgr->parameterNames(compId)) {
-                newParameterList.append(_parameterMgr->getParameter(compId, paramName));
-            }
-
-        } else {
-            const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getDefaultComponentCategoryMap();
-            for (const QString& parameter: categoryMap[_currentCategory][_currentGroup]) {
-                newParameterList.append(_parameterMgr->getParameter(_vehicle->defaultComponentId(), parameter));
-            }
+        int compId = _parameterMgr->getComponentId(_currentCategory);
+        const QMap<QString, QMap<QString, QStringList> >& categoryMap = _parameterMgr->getComponentCategoryMap(compId);
+        for (const QString& paramName: categoryMap[_currentCategory][_currentGroup]) {
+            newParameterList.append(_parameterMgr->getParameter(compId, paramName));
         }
     } else {
-        for(const QString &parameter: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
-            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), parameter);
+        for(const QString &paraName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
+            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paraName);
             bool matched = _shouldShow(fact);
             // All of the search items must match in order for the parameter to be added to the list
             if(matched) {
