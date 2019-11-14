@@ -410,7 +410,7 @@ Column {
                             }
                             Item {
                                 width:      parent._isBool ? _editFieldWidth : 0
-                                height:     ScreenTools.defaultFontPixelHeight * 2.5
+                                height:     ScreenTools.defaultFontPixelHeight * 1.75
                                 visible:    parent._isBool
                                 anchors.verticalCenter: parent.verticalCenter
                                 property var _fact: parent._fact
