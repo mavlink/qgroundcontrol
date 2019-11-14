@@ -306,7 +306,7 @@ Rectangle {
                                 }
 
                                 QGCCheckBox {
-                                    text:       qsTr("Use Embedded Virtual Keyboard")
+                                    text:       qsTr("Use Embedded Virtual Keyboard (requires restart)")
                                     checked:    CustomQuickInterface.showVirtualKeyboard
                                     onClicked:  CustomQuickInterface.showVirtualKeyboard = checked
                                 }
