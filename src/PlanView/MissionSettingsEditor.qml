@@ -108,28 +108,6 @@ Rectangle {
             }
 
             SectionHeader {
-                id:             missionEndHeader
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                text:           qsTr("Mission End")
-                checked:        true
-            }
-
-            Column {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-                visible:        missionEndHeader.checked
-
-                QGCCheckBox {
-                    text:       qsTr("Return To Launch")
-                    checked:    missionItem.missionEndRTL
-                    onClicked:  missionItem.missionEndRTL = checked
-                }
-            }
-
-
-            SectionHeader {
                 id:             vehicleInfoSectionHeader
                 anchors.left:   parent.left
                 anchors.right:  parent.right
