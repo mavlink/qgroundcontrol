@@ -81,6 +81,7 @@
 #include "QGCMapPolygon.h"
 #include "QGCMapCircle.h"
 #include "ParameterManager.h"
+#include "ComponentManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCCameraManager.h"
@@ -481,6 +482,7 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<Vehicle>                 (kQGCVehicle,                       1, 0, "Vehicle",                    kRefOnly);
     qmlRegisterUncreatableType<MissionManager>          (kQGCVehicle,                       1, 0, "MissionManager",             kRefOnly);
     qmlRegisterUncreatableType<ParameterManager>        (kQGCVehicle,                       1, 0, "ParameterManager",           kRefOnly);
+    qmlRegisterUncreatableType<ComponentManager>        (kQGCVehicle,                       1, 0, "ComponetManager",            kRefOnly);
     qmlRegisterUncreatableType<VehicleObjectAvoidance>  (kQGCVehicle,                       1, 0, "VehicleObjectAvoidance",     kRefOnly);
     qmlRegisterUncreatableType<QGCCameraManager>        (kQGCVehicle,                       1, 0, "QGCCameraManager",           kRefOnly);
     qmlRegisterUncreatableType<QGCCameraControl>        (kQGCVehicle,                       1, 0, "QGCCameraControl",           kRefOnly);

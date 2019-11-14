@@ -20,9 +20,7 @@
 #include "FactSystem.h"
 #include "MAVLinkProtocol.h"
 #include "AutoPilotPlugin.h"
-#include "QGCMAVLink.h"
 #include "Vehicle.h"
-#include "QGCApplication.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
@@ -136,15 +134,7 @@ protected:
     void _initialRequestTimeout(void);
 
     // ComponentInfo handling
-    void _startRequestComponentInfoAll(void);
-    void _componentInfoRequestTimeout(void);
-    void _requestComponentInfo(int componentId);
-    void _componentInfoReceived(mavlink_message_t msg);
-    void _httpRequest(const QString& url);
-    void _httpDownloadFinished();
-    bool _loadComponentDefinitionFile(QByteArray& bytes);
     void _updateAllComponentCategoryMaps(void);
-    bool _componentInfoAvailable(int componentId);
 
 private:
     static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
@@ -239,44 +229,4 @@ private:
     static const char* _jsonCompIdKey;
     static const char* _jsonParamNameKey;
     static const char* _jsonParamValueKey;
-
-    // ComponentInfo handling
-    QTimer                  _componentInfoRequestTimer;
-    static const int        _componentInfoRequestRetryMax = 4;
-    int                     _componentInfoRequestRetryCount;
-    bool                    _componentInfoAllReceived;
-    QNetworkAccessManager*  _netManager = nullptr;
-
-    typedef struct {
-        bool                        ok;
-        uint32_t                    firmware_version; //raw value as in MAVLink message
-        uint32_t                    hardware_version; //raw value as in MAVLink message
-        uint32_t                    capability_flags; //raw value as in MAVLink message
-        QString                     firmwareVersion;
-        QString                     hardwareVersion;
-        QString                     vendorName;
-        QString                     modelName; /*<  Name of the component model*/
-        QString                     definitionFileUri;
-    } ComponentInfo_t;
-
-    typedef struct {
-        QString                     group;
-        FactMetaData::ValueType_t   factType;
-        QString                     displayName;
-        QString                     shortDescription;
-        QString                     longDescription;
-        QString                     unit;
-        int                         defaultValue;
-        int                         minValue;
-        int                         maxValue;
-        int                         increment;
-        int                         decimal;
-        QMap<int,QString>           valuesMap;
-    } ComponentParameterElement_t;
-
-    QMap<int, ComponentInfo_t>                              _componentInfoMap;          // key = componentID
-    QMap<int, QMap<QString, QStringList> >                  _componentInfoGroupMap;     // key = componentID
-    QMap<int, QMap<QString, ComponentParameterElement_t> >  _componentInfoParameterMap; // key = componentID
-
-    //TODO: SectionHeader in ParameterEiditor.qml should adapt arrow for text row number
 };

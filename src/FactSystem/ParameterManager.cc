@@ -15,14 +15,14 @@
 #include "FirmwarePlugin.h"
 #include "UAS.h"
 #include "JsonHelper.h"
+#include "Vehicle.h"
+#include "ComponentManager.h"
 
 #include <QEasingCurve>
 #include <QFile>
 #include <QDebug>
 #include <QVariantAnimation>
 #include <QJsonArray>
-#include <QDomDocument>
-#include <QDomNodeList>
 
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
@@ -126,15 +126,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     } else if (!_logReplay){
         refreshAllParameters();
     }
-
-    // ComponentInfo handling
-    _componentInfoRequestTimer.setSingleShot(true);
-    _componentInfoRequestTimer.setInterval(3000);
-    connect(&_componentInfoRequestTimer, &QTimer::timeout, this, &ParameterManager::_componentInfoRequestTimeout);
-
-    connect(_vehicle->uas(), &UASInterface::componentInformationReceived, this, &ParameterManager::_componentInfoReceived);
-
-    _startRequestComponentInfoAll();
 }
 
 ParameterManager::~ParameterManager()
@@ -678,9 +669,9 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
 QString ParameterManager::getComponentCategory(int componentId)
 {
     if (_mavlinkCompIdHash.contains(componentId)) {
-        if (_componentInfoAvailable(componentId)) {
+        if (_vehicle->componentManager()->componentInfoAvailable(componentId)) {
             return tr("Component %1  (%2)\n%3").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId)
-                                               .arg(_componentInfoMap[componentId].modelName);
+                                               .arg(_vehicle->componentManager()->getComponentInfoMap()[componentId].modelName);
         }
         return tr("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
     }
@@ -1773,359 +1764,11 @@ bool ParameterManager::pendingWrites(void)
 
 // ComponentInfo handling
 
-void ParameterManager::_startRequestComponentInfoAll(void)
-{
-    _componentInfoMap.clear();
-    _componentInfoAllReceived = false;
-    _componentInfoRequestRetryCount = 0;
-    _requestComponentInfo(MAV_COMP_ID_ALL);
-}
-
-void ParameterManager::_componentInfoRequestTimeout(void)
-{
-    if (_componentInfoAllReceived) {
-        return;
-    }
-
-    if (++_componentInfoRequestRetryCount <= _componentInfoRequestRetryMax) {
-        qCDebug(ParameterManagerLog) << "XXXX " << _logVehiclePrefix(-1) << "COMPONENT_INFORMATION retry request";
-        _requestComponentInfo(MAV_COMP_ID_ALL);
-    } else {
-        qCDebug(ParameterManagerLog) << "XXXX " << _logVehiclePrefix(-1) << "COMPONENT_INFORMATION requesting stopped, receivedcount: " << _componentInfoMap.size();
-    }
-}
-
-void ParameterManager::_requestComponentInfo(int componentId)
-{
-    if (_logReplay) {
-        return;
-    }
-
-    _componentInfoRequestTimer.start();
-
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                       static_cast<uint8_t>(_mavlink->getComponentId()),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       static_cast<uint8_t>(_vehicle->id()),                        // target system
-                                       static_cast<uint8_t>(componentId),                           // target component
-                                       static_cast<uint16_t>(MAV_CMD_REQUEST_MESSAGE),              // command id
-                                       0,                                                           // 0=first transmission of command
-                                       static_cast<double>(MAVLINK_MSG_ID_COMPONENT_INFORMATION),   // The MAVLink message ID of the requested message.
-                                       0,0,0,0,0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-
-    QString what = (componentId == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentId);
-    qCDebug(ParameterManagerLog) << "XXXX " << _logVehiclePrefix(-1) << "COMPONENT_INFORMATION request for component ID:" << what;
-}
-
-void ParameterManager::_componentInfoReceived(mavlink_message_t msg)
-{
-    bool doneBefore = false;
-    if (!_componentInfoMap.contains(msg.compid)) {
-        ComponentInfo_t ci;
-        ci.ok = false;
-        _componentInfoMap[msg.compid] = ci;
-    } else {
-        doneBefore = true;
-    }
-
-    // check if all done
-    _componentInfoAllReceived = true;
-    // that's about the best list of components currently available, how disappointing :)
-    // it doesn't track them according to heartbeat, it also is static and doesn't detect disappearance/appearance
-    QMap<int, QString> components = _vehicle->uas()->getComponents();
-    for(int compId: components.keys()) {
-        if (compId == MAV_COMP_ID_ALL) continue;
-        if (!_componentInfoMap.contains(compId)) _componentInfoAllReceived = false;  //there is one we found one
-    }
-
-    if (doneBefore) return;
-
-    //TODO: for the moment we allow only one to be received and handled, we probably want a ComponentManager,ComponentController thing
-    // so we just stop anything further
-    _componentInfoAllReceived = true;
-
-    mavlink_component_information_t compInfo;
-    mavlink_msg_component_information_decode(&msg, &compInfo);
-
-    // Construct a string stopping at the first NUL (0) character, else copy the whole byte array
-    QByteArray urlBytes(compInfo.component_definition_uri, MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_COMPONENT_DEFINITION_URI_LEN);
-    QString url(urlBytes);
-
-    _componentInfoMap[msg.compid].firmware_version = compInfo.firmware_version;
-    _componentInfoMap[msg.compid].hardware_version = compInfo.hardware_version;
-    _componentInfoMap[msg.compid].capability_flags = compInfo.capability_flags;
-    _componentInfoMap[msg.compid].firmwareVersion = QString("%1.%2.%3.%4").arg(compInfo.firmware_version & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 8) & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 16) & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 24) & 0xFF);
-    _componentInfoMap[msg.compid].hardwareVersion = QString("%1.%2.%3.%4").arg(compInfo.hardware_version & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 8) & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 16) & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 24) & 0xFF);
-    QByteArray vBytes((char*)compInfo.vendor_name, MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_VENDOR_NAME_LEN);
-    _componentInfoMap[msg.compid].vendorName = QString(vBytes);
-    QByteArray mBytes((char*)compInfo.model_name, MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_MODEL_NAME_LEN);
-    _componentInfoMap[msg.compid].modelName = QString(mBytes);
-    _componentInfoMap[msg.compid].definitionFileUri += url;
-
-    _httpRequest(url);
-
-    QString what = (msg.compid == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(msg.compid);
-    qCDebug(ParameterManagerLog) << "XXXX " << _logVehiclePrefix(-1) << "COMPONENT_INFORMATION received for component ID:" << what;
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION definition file:" << url;
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION firmwareVersion:" << _componentInfoMap[msg.compid].firmwareVersion;
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION hardwareVersion:" << _componentInfoMap[msg.compid].hardwareVersion;
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION vendorName:" << _componentInfoMap[msg.compid].vendorName;
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION modelName:" << _componentInfoMap[msg.compid].modelName;
-}
-
-void ParameterManager::_httpRequest(const QString& url)
-{
-    if (!_netManager) {
-        _netManager = new QNetworkAccessManager(this);
-    }
-    QNetworkProxy savedProxy = _netManager->proxy();
-    QNetworkProxy tempProxy;
-    tempProxy.setType(QNetworkProxy::DefaultProxy);
-    _netManager->setProxy(tempProxy);
-    QNetworkRequest request(url);
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
-    QNetworkReply* reply = _netManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, &ParameterManager::_httpDownloadFinished);
-    _netManager->setProxy(savedProxy);
-}
-
-void ParameterManager::_httpDownloadFinished()
-{
-    QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-
-    if (!reply) {
-        return;
-    }
-
-    qCDebug(ParameterManagerLog) << "XXXX " << "COMPONENT_INFORMATION download finished, definition file:";
-
-    int err = reply->error();
-    int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    QByteArray data = reply->readAll();
-    if (err == QNetworkReply::NoError && http_code == 200) {
-        data.append("\n");
-    } else {
-        data.clear();
-        qWarning() << "XXXX " << QString("Component Definition download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
-    }
-
-    if (data.size()) {
-        qCDebug(ParameterManagerLog) << "XXXX " << "Parsing component definition";
-        _loadComponentDefinitionFile(data);
-    } else {
-        qCDebug(ParameterManagerLog) << "XXXX " << "No component definition";
-    }
-}
-
-static bool read_attribute_str(QDomNode& node, const char* tagName, QString& result)
-{
-    QDomNamedNodeMap attrs = node.attributes();
-    if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue();
-    return true;
-}
-
-static bool read_attribute_int(QDomNode& node, const char* tagName, int& result)
-{
-    QDomNamedNodeMap attrs = node.attributes();
-    if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue().toInt();
-    return true;
-}
-
-static bool read_value_str(QDomNode& node, const char* tagName, QString& result)
-{
-    QDomElement e = node.firstChildElement(tagName);
-    if (e.isNull()) return false;
-    result = e.text();
-    return true;
-}
-
-static bool read_value_int(QDomNode& node, const char* tagName, int& result)
-{
-    QDomElement e = node.firstChildElement(tagName);
-    if (e.isNull()) return false;
-    result = e.text().toInt();
-    return true;
-}
-
-bool ParameterManager::_loadComponentDefinitionFile(QByteArray& bytes)
-{
-    //fake, get the component Id
-    int compId = _componentInfoMap.keys()[0];
-    qCDebug(ParameterManagerLog) << "XXXX " << "Parse component definition file for component ID:" << compId;
-
-    QByteArray originalData(bytes);
-    QString errorMsg;
-    int errorLine;
-    QDomDocument doc;
-    //-- Read it
-    if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCDebug(ParameterManagerLog) << "XXXX " << "Unable to parse component definition file on line:" << errorLine;
-        qCDebug(ParameterManagerLog) << "XXXX " << errorMsg;
-        return false;
-    }
-    //-- Does it have groups?
-    QDomNodeList groupElements = doc.elementsByTagName("group");
-    if (!groupElements.size()) {
-        qCDebug(ParameterManagerLog) << "XXXX " << "Unable to load component group elements from component definition";
-        return false;
-    }
-    //-- Does it have parameters?
-    QDomNodeList parameterElements = doc.elementsByTagName("parameter");
-    if (!parameterElements.size()) {
-        qCDebug(ParameterManagerLog) << "XXXX " << "Unable to load component parameter elements from component definition";
-        return false;
-    }
-
-    //-- Load groups
-    QMap<QString, QStringList> groupMap;
-
-    for (int i = 0; i < groupElements.size(); i++) {
-        QDomNode groupNode = groupElements.item(i);
-        QString groupName;
-        if (read_attribute_str(groupNode, "name", groupName)) {
-            if (!groupNode.isElement()) {
-                continue; //somthing is wrong here
-            }
-            QStringList groupMapParameterList;
-            QDomNodeList groupParameterElements = groupNode.toElement().elementsByTagName("parameter");
-            for (int i = 0; i < groupParameterElements.size(); i++) {
-                QDomNode parameterNode = groupParameterElements.item(i);
-                QString factName;
-                if (read_attribute_str(parameterNode, "name", factName)) {
-                    groupMapParameterList.append(factName);
-                }
-            }
-            if (groupMapParameterList.size()) groupMap[groupName].append(groupMapParameterList);
-        }
-    }
-
-    //-- Load parameters
-    QMap<QString, ComponentParameterElement_t> parameterMap; //for the moment we just store the short description
-
-    for (int i = 0; i < parameterElements.size(); i++) {
-        QDomNode parameterNode = parameterElements.item(i);
-        ComponentParameterElement_t p;
-        QString factName;
-        if (!read_attribute_str(parameterNode, "name", factName)) {
-            continue; // we must have a fact name
-        }
-        QString factTypeStr;
-        if (!read_attribute_str(parameterNode, "type", factTypeStr)) {
-            continue; // we must have a fact type
-        } else {
-            bool unknownType;
-            FactMetaData::ValueType_t factType = FactMetaData::stringToType(factTypeStr, unknownType);
-            if (unknownType || (factType == FactMetaData::valueTypeCustom)) {
-                continue; // we must have a fact type
-            }
-            p.factType = factType;
-        }
-        for (QString groupName: groupMap.keys()) {
-            if (groupMap[groupName].contains(factName)) p.group = groupName;
-        }
-        if (!p.group.length()) {
-            continue; // it must be a member of a group
-        }
-        if (!read_attribute_str(parameterNode, "dispname", p.displayName)) {
-            p.displayName = factName;
-        }
-        if (!read_attribute_int(parameterNode, "default", p.defaultValue)) {
-            p.defaultValue = 0;
-        }
-        read_value_str(parameterNode, "short_desc", p.shortDescription);
-        read_value_str(parameterNode, "long_desc", p.longDescription);
-        read_value_str(parameterNode, "unit", p.unit);
-        if (!read_value_int(parameterNode, "min", p.minValue)) {
-            p.minValue = p.defaultValue;
-        }
-        if (!read_value_int(parameterNode, "max", p.maxValue)) {
-            p.maxValue = p.defaultValue;
-        }
-        if (p.minValue > p.maxValue) {
-            continue; // this doesn't make sense, we allow min = max however!
-        }
-        if (p.defaultValue < p.minValue || p.defaultValue > p.maxValue) {
-            continue;
-        }
-        if (!read_value_int(parameterNode, "increment", p.increment)) {
-            p.increment = 1;
-        }
-        if (!read_value_int(parameterNode, "decimal", p.decimal)) {
-            p.decimal = 0;
-        }
-        QDomElement valuesElement = parameterNode.firstChildElement("values");
-        if (!valuesElement.isNull()) {
-            QDomNodeList valueElementList = valuesElement.elementsByTagName("value");
-            for (int i = 0; i < valueElementList.size(); i++) {
-                QDomNode valueNode = valueElementList.item(i);
-                int valueCode;
-                if (!read_attribute_int(valueNode, "code", valueCode)) continue;
-                QString valueName = valueNode.toElement().text();
-                if (!valueName.length()) continue;
-                p.valuesMap[valueCode] = valueName;
-            }
-            if (!p.valuesMap.size()) continue;
-            if (p.minValue != 0) continue;
-            //if (p.maxValue != p.valuesMap.size()-1) continue;
-            if  (p.maxValue > p.valuesMap.size()-1) p.maxValue = p.valuesMap.size()-1;
-            if (p.increment != 1) continue;
-        }
-
-        parameterMap[factName] = p;
-    }
-
-    //-- Be happy
-    //TODO: error handling if something not ok parsing
-    _componentInfoMap[compId].ok = true;
-    _componentInfoGroupMap[compId] = groupMap;
-    _componentInfoParameterMap[compId] = parameterMap;
-
-    //-- If this is new, cache it
-    // TODO: we currently don't do chaing, but just save it for inspection
-    QString _cacheFile = "C:/Users/Olli/Documents/GitHub/test.xml";
-    bool _cached = false;
-    if (!_cached) {
-        qCDebug(ParameterManagerLog) << "XXXX " << "Saving component definition file" << _cacheFile;
-        QFile file(_cacheFile);
-        if (!file.open(QIODevice::WriteOnly)) {
-            qCDebug(ParameterManagerLog) << "XXXX " << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
-        } else {
-            file.write(originalData);
-        }
-    }
-
-    return true;
-}
-
-bool ParameterManager::_componentInfoAvailable(int componentId)
-{
-    return _componentInfoMap.contains(componentId) && _componentInfoMap[componentId].ok;
-}
-
 void ParameterManager::_updateAllComponentCategoryMaps(void)
 {
     // go through all components for which we have a categroy map
     for (int compId: _componentCategoryMaps.keys()) {
-        if (_componentInfoAvailable(compId)) {
+        if (_vehicle->componentManager()->componentInfoAvailable(compId)) {
             qCDebug(ParameterManagerLog) << "ZZZZ we do have component info for copmponent ID:" << compId;
 
             // let's build a new ComponentCategoryMap
@@ -2144,10 +1787,10 @@ void ParameterManager::_updateAllComponentCategoryMaps(void)
             QMap<QString, QStringList> newGroupMap;
             for (int i = 0; i < factNames.size(); i++) {
                 QString factName = factNames[i];
-                if (!_componentInfoParameterMap[compId].contains(factName)) {
+                if (!_vehicle->componentManager()->getComponentInfoParameterMap()[compId].contains(factName)) {
                     newGroupMap[tr("Misc")] += factName;
                 } else {
-                    ComponentParameterElement_t& p = _componentInfoParameterMap[compId][factName];
+                    ComponentManager::ComponentParameterElement_t& p = _vehicle->componentManager()->getComponentInfoParameterMap()[compId][factName];
                     newGroupMap[p.group ] += factName;
 
                     // modify fact's meta data

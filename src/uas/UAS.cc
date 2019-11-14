@@ -341,10 +341,6 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
             break;
 
-        case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
-            emit componentInformationReceived(message);
-            break;
-
         default:
             break;
         }

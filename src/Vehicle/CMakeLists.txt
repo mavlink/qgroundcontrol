@@ -14,6 +14,7 @@ add_library(Vehicle
 	TrajectoryPoints.cc
 	Vehicle.cc
 	VehicleObjectAvoidance.cc
+	ComponentManager.cc
 	${EXTRA_SRC}
 )
 
