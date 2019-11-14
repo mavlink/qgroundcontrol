@@ -21,8 +21,6 @@
 
 QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemLog")
 
-const char* MissionSettingsItem::jsonComplexItemTypeValue = "MissionSettings";
-
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
@@ -30,12 +28,8 @@ QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject* parent)
     : ComplexMissionItem                (vehicle, flyView, parent)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
-    , _plannedHomePositionFromVehicle   (false)
-    , _missionEndRTL                    (false)
     , _cameraSection                    (vehicle)
     , _speedSection                     (vehicle)
-    , _sequenceNumber                   (0)
-    , _dirty                            (false)
 {
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
@@ -95,7 +89,7 @@ void MissionSettingsItem::save(QJsonArray&  missionItems)
 
     appendMissionItems(items, this);
 
-    // First item show be planned home position, we are not responsible for save/load
+    // First item should be planned home position, we are not responsible for save/load
     // Remaining items we just output as is
     for (int i=1; i<items.count(); i++) {
         MissionItem* item = items[i];
@@ -222,22 +216,51 @@ void MissionSettingsItem::_setDirty(void)
     setDirty(true);
 }
 
-void MissionSettingsItem::setHomePositionFromVehicle(const QGeoCoordinate& coordinate)
+void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
 {
-    _plannedHomePositionFromVehicle = true;
-    setCoordinate(coordinate);
+    if (_plannedHomePositionCoordinate != coordinate) {
+        _plannedHomePositionCoordinate = coordinate;
+        emit coordinateChanged(coordinate);
+        emit exitCoordinateChanged(coordinate);
+        _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+    }
 }
+
+void MissionSettingsItem::setHomePositionFromVehicle(Vehicle* vehicle)
+{
+    // If the user hasn't moved the planned home position manually we use the value from the vehicle
+    if (!_plannedHomePositionMovedByUser) {
+        QGeoCoordinate coordinate = vehicle->homePosition();
+        // ArduPilot tends to send crap home positions at initial vehicle boot, discard them
+        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0)) {
+            _plannedHomePositionFromVehicle = true;
+            _setCoordinateWorker(coordinate);
+        }
+    }
+}
+
+void MissionSettingsItem::setInitialHomePosition(const QGeoCoordinate& coordinate)
+{
+    _plannedHomePositionMovedByUser = false;
+    _plannedHomePositionFromVehicle = false;
+    _setCoordinateWorker(coordinate);
+}
+
+void MissionSettingsItem::setInitialHomePositionFromUser(const QGeoCoordinate& coordinate)
+{
+    _plannedHomePositionMovedByUser = true;
+    _plannedHomePositionFromVehicle = false;
+    _setCoordinateWorker(coordinate);
+}
+
 
 void MissionSettingsItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (_plannedHomePositionCoordinate != coordinate) {
-        // ArduPilot tends to send crap home positions at initial vehicle boot, discard them
-        if (coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0)) {
-            _plannedHomePositionCoordinate = coordinate;
-            emit coordinateChanged(coordinate);
-            emit exitCoordinateChanged(coordinate);
-            _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
-        }
+    if (coordinate != this->coordinate()) {
+        // The user is moving the planned home position manually. Stop tracking vehicle home position.
+        _plannedHomePositionMovedByUser = true;
+        _plannedHomePositionFromVehicle = false;
+        _setCoordinateWorker(coordinate);
     }
 }
 
@@ -301,5 +324,5 @@ void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 
 QString MissionSettingsItem::abbreviation(void) const
 {
-    return _flyView ? tr("H") : tr("Planned Home");
+    return _flyView ? tr("H") : tr("Launch");
 }

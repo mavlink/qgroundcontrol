@@ -65,6 +65,7 @@ public:
     Q_PROPERTY(bool             isStandaloneCoordinate              READ isStandaloneCoordinate                                         NOTIFY isStandaloneCoordinateChanged)               ///< true: Waypoint line does not go through item
     Q_PROPERTY(bool             specifiesAltitudeOnly               READ specifiesAltitudeOnly                                          NOTIFY specifiesAltitudeOnlyChanged)                ///< true: Item has altitude only, no full coordinate
     Q_PROPERTY(bool             isSimpleItem                        READ isSimpleItem                                                   NOTIFY isSimpleItemChanged)                         ///< Simple or Complex MissionItem
+    Q_PROPERTY(bool             isTakeoffItem                       READ isTakeoffItem                                                  NOTIFY isTakeoffItemChanged)                        ///< true: Takeoff item special case
     Q_PROPERTY(QString          editorQml                           MEMBER _editorQml                                                   CONSTANT)                                           ///< Qml code for editing this item
     Q_PROPERTY(QString          mapVisualQML                        READ mapVisualQML                                                   CONSTANT)                                           ///< QMl code for map visuals
     Q_PROPERTY(QmlObjectListModel* childItems                       READ childItems                                                     CONSTANT)
@@ -120,6 +121,7 @@ public:
 
     virtual bool            dirty                   (void) const = 0;
     virtual bool            isSimpleItem            (void) const = 0;
+    virtual bool            isTakeoffItem           (void) const { return false; }
     virtual bool            isStandaloneCoordinate  (void) const = 0;
     virtual bool            specifiesCoordinate     (void) const = 0;
     virtual bool            specifiesAltitudeOnly   (void) const = 0;
@@ -194,6 +196,7 @@ signals:
     void isCurrentItemChanged           (bool isCurrentItem);
     void sequenceNumberChanged          (int sequenceNumber);
     void isSimpleItemChanged            (bool isSimpleItem);
+    void isTakeoffItemChanged           (bool isTakeoffItem);
     void specifiesCoordinateChanged     (void);
     void isStandaloneCoordinateChanged  (void);
     void specifiesAltitudeOnlyChanged   (void);

@@ -203,7 +203,7 @@ QGCCameraManager::_findCamera(int id)
             }
         }
     }
-    qWarning() << "Camera component id not found:" << id;
+    //qWarning() << "Camera component id not found:" << id;
     return nullptr;
 }
 
