@@ -26,7 +26,7 @@ class SimpleMissionItem : public VisualMissionItem
 public:
     SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
     SimpleMissionItem(Vehicle* vehicle, bool flyView, const MissionItem& missionItem, QObject* parent);
-    SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent);
+    //SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent);
 
     ~SimpleMissionItem();
 
@@ -64,7 +64,8 @@ public:
     // Property accesors
     
     QString         category            (void) const;
-    int             command(void) const { return _missionItem._commandFact.cookedValue().toInt(); }
+    int             command             (void) const { return _missionItem._commandFact.cookedValue().toInt(); }
+    MAV_CMD         mavCommand          (void) const { return static_cast<MAV_CMD>(command()); }
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
     bool            specifiesAltitude   (void) const;
@@ -92,14 +93,14 @@ public:
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
 
-    bool load(QTextStream &loadStream);
-    bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
+    virtual bool load(QTextStream &loadStream);
+    virtual bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
 
     MissionItem& missionItem(void) { return _missionItem; }
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-    bool            dirty                   (void) const final { return _dirty; }
+    bool            dirty                   (void) const override { return _dirty; }
     bool            isSimpleItem            (void) const final { return true; }
     bool            isStandaloneCoordinate  (void) const final;
     bool            specifiesCoordinate     (void) const final;
@@ -110,10 +111,10 @@ public:
     QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
     QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
     int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
-    double          specifiedFlightSpeed    (void) final;
-    double          specifiedGimbalYaw      (void) final;
-    double          specifiedGimbalPitch    (void) final;
-    QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    double          specifiedFlightSpeed    (void) override;
+    double          specifiedGimbalYaw      (void) override;
+    double          specifiedGimbalPitch    (void) override;
+    QString         mapVisualQML            (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
@@ -125,7 +126,7 @@ public:
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate) override;
     void setSequenceNumber  (int sequenceNumber) final;
     int  lastSequenceNumber (void) const final;
     void save               (QJsonArray&  missionItems) final;

@@ -60,18 +60,22 @@ Item {
     readonly property int       _layerRallyPoints:          3
     readonly property string    _armedVehicleUploadPrompt:  qsTr("Vehicle is currently armed. Do you want to upload the mission to the vehicle?")
 
-    function addComplexItem(complexItemName) {
+    function mapCenter() {
         var coordinate = editorMap.center
         coordinate.latitude  = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
+        return coordinate
+    }
+
+    function addComplexItem(complexItemName) {
         var next_index = _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex)+1
         if(next_index ==1 && _missionController.visualItems.count >1){
             console.log(next_index, _missionController.visualItems.count)
-            insertComplexMissionItem(complexItemName, coordinate, next_index+1)
+            insertComplexMissionItem(complexItemName, mapCenter(), next_index+1)
         }
         else if(next_index <= _missionController.visualItems.count){
-            insertComplexMissionItem(complexItemName, coordinate, next_index)
+            insertComplexMissionItem(complexItemName, mapCenter(), next_index)
         }
     }
 
@@ -618,7 +622,13 @@ Item {
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          mapScale.y - toolStrip.y
 
-            property int fileButtonIndex: 1
+            readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      1
+            readonly property int takeoffButtonIndex:   2
+            readonly property int waypointButtonIndex:  3
+            readonly property int roiButtonIndex:       4
+            readonly property int patternButtonIndex:   5
+            readonly property int centerButtonIndex:    6
 
             property bool _isRally:     _editingLayer == _layerRallyPoints
 
@@ -637,6 +647,12 @@ Item {
                     showAlternateIcon:  _planMasterController.dirty,
                     alternateIconSource:"/qmlimages/MapSyncChanged.svg",
                     dropPanelComponent: syncDropPanel
+                },
+                {
+                    name:               qsTr("Takeoff"),
+                    iconSource:         "/res/takeoff.svg",
+                    buttonEnabled:      _missionController.isInsertTakeoffValid,
+                    buttonVisible:      _editingLayer == _layerMission
                 },
                 {
                     name:               _editingLayer == _layerRallyPoints ? qsTr("Rally Point") : qsTr("Waypoint"),
@@ -671,10 +687,13 @@ Item {
 
             onClicked: {
                 switch (index) {
-                case 0:
+                case flyButtonIndex:
                     mainWindow.showFlyView()
-                    break;
-                case 2:
+                    break
+                case takeoffButtonIndex:
+                    _missionController.insertTakeoffItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
+                    break
+                case waypointButtonIndex:
                     if(_addWaypointOnClick) {
                         //-- Toggle it off
                         _addWaypointOnClick = false
@@ -685,11 +704,11 @@ Item {
                         _addROIOnClick = false
                     }
                     break
-                case 3:
+                case roiButtonIndex:
                     _addROIOnClick = checked
                     _addWaypointOnClick = false
                     break
-                case 4:
+                case patternButtonIndex:
                     if (_singleComplexItem) {
                         addComplexItem(_missionController.complexMissionItemNames[0])
                     }
