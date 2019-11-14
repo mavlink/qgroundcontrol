@@ -592,7 +592,7 @@ HEADERS += \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/CorridorScanComplexItem.h \
     src/MissionManager/CorridorScanPlanCreator.h \
-    src/MissionManager/CustomPlanCreator.h \
+    src/MissionManager/BlankPlanCreator.h \
     src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
@@ -623,6 +623,7 @@ HEADERS += \
     src/MissionManager/StructureScanPlanCreator.h \
     src/MissionManager/SurveyComplexItem.h \
     src/MissionManager/SurveyPlanCreator.h \
+    src/MissionManager/TakeoffMissionItem.h \
     src/MissionManager/TransectStyleComplexItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
@@ -823,7 +824,7 @@ SOURCES += \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/CorridorScanComplexItem.cc \
     src/MissionManager/CorridorScanPlanCreator.cc \
-    src/MissionManager/CustomPlanCreator.cc \
+    src/MissionManager/BlankPlanCreator.cc \
     src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
@@ -853,6 +854,7 @@ SOURCES += \
     src/MissionManager/StructureScanPlanCreator.cc \
     src/MissionManager/SurveyComplexItem.cc \
     src/MissionManager/SurveyPlanCreator.cc \
+    src/MissionManager/TakeoffMissionItem.cc \
     src/MissionManager/TransectStyleComplexItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \

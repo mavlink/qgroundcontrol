@@ -158,8 +158,8 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-    : QGuiApplication           (argc, argv)
-    , _runningUnitTests         (unitTesting)
+    : QGuiApplication       (argc, argv)
+    , _runningUnitTests     (unitTesting)
 {
     _app = this;
     _msecsElapsedTime.start();
