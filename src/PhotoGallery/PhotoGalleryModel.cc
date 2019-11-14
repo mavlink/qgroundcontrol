@@ -71,6 +71,15 @@ PhotoGalleryModel::Item PhotoGalleryModel::data(PhotoGalleryModelIndex index) co
     }
 }
 
+QString PhotoGalleryModel::filePath(PhotoGalleryModelIndex index) const
+{
+    if (index < _ids.size()) {
+        const QString & id = _ids[index];
+        return QDir::cleanPath(store()->location() + QDir::separator() + id);
+    }
+    return QString();
+}
+
 std::size_t PhotoGalleryModel::numPhotos() const
 {
     return _ids.size();

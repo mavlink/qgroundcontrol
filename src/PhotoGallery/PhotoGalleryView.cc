@@ -11,6 +11,9 @@
 
 #include <QPainter>
 #include <QtQml>
+#ifndef __mobile__
+    #include <QDesktopServices>
+#endif
 
 #include <cmath>
 
@@ -62,6 +65,12 @@ QRectF exitZoomBounds(const QSizeF & view_bounds)
 {
     double scale = std::min(view_bounds.width(), view_bounds.height()) * 0.1;
     return QRectF(scale * 0.4, scale * 0.4, scale, scale);
+}
+
+QRectF openExternalBounds(const QSizeF & view_bounds)
+{
+    auto topIcon = exitZoomBounds(view_bounds);
+    return QRectF(topIcon.left(), 2 * topIcon.top() + topIcon.width(), topIcon.width(), topIcon.height());
 }
 
 void drawExitZoom(QPainter * painter, const QRectF & bounds)
@@ -166,6 +175,7 @@ public:
 
 PhotoGalleryView::PhotoGalleryView(QQuickItem * parent)
     : QQuickPaintedItem(parent)
+    , _open_extern_folder_svg(QString(":/qmlimages/folder-open.svg"))
 {
     setAcceptedMouseButtons(Qt::AllButtons);
     _zoom_timeout.setSingleShot(true);
@@ -226,6 +236,10 @@ void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, co
     painter->drawImage(dst, image, src);
 
     drawTrashCan(painter, trashCanBounds(bounds));
+
+  #ifndef __mobile__
+    _open_extern_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
+  #endif
 }
 
 void PhotoGalleryView::paint(QPainter * painter, const QSizeF & bounds, const ViewState & view) const
@@ -640,6 +654,16 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
             update();
             return;
         }
+      #ifndef __mobile__
+        else if (_view_state.mode == ViewMode::Single
+                 && openExternalBounds(size()).contains(where)) {
+              const auto path = _model->filePath(PhotoGalleryModelIndex(_view_state.single.index));
+              if (!path.isEmpty()) {
+                  QString url(QString("file:///") + QFileInfo(path).absoluteDir().path());
+                  QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+              }
+        }
+      #endif
     }
 }
 
