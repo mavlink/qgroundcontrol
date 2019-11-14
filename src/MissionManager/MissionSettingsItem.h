@@ -27,16 +27,12 @@ public:
     MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
-    Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
     Q_PROPERTY(QObject* cameraSection               READ cameraSection                                          CONSTANT)
     Q_PROPERTY(QObject* speedSection                READ speedSection                                           CONSTANT)
 
     Fact*           plannedHomePositionAltitude (void) { return &_plannedHomePositionAltitudeFact; }
-    bool            missionEndRTL               (void) const { return _missionEndRTL; }
     CameraSection*  cameraSection               (void) { return &_cameraSection; }
     SpeedSection*   speedSection                (void) { return &_speedSection; }
-
-    void setMissionEndRTL(bool missionEndRTL);
 
     /// Scans the loaded items for settings items
     bool scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex);
@@ -96,7 +92,6 @@ public:
 
 signals:
     void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);
-    void missionEndRTLChanged               (bool missionEndRTL);
 
 private slots:
     void _setDirtyAndUpdateLastSequenceNumber   (void);
@@ -112,7 +107,6 @@ private:
     int             _sequenceNumber =                   0;
     bool            _plannedHomePositionFromVehicle =   false;
     bool            _plannedHomePositionMovedByUser =   false;
-    bool            _missionEndRTL =                    false;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
 
