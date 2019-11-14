@@ -53,7 +53,8 @@ T.ComboBox {
 
     // The items in the popup
     delegate: ItemDelegate {
-        width: _popupWidth
+        width:  _popupWidth
+        height: Math.round(popupItemMetrics.height * 1.75)
 
         property string _text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
 
