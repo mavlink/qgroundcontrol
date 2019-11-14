@@ -111,6 +111,8 @@ public:
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
 
+    Q_INVOKABLE AssignableButtonAction* getAssignableAction(const QString& action);
+
     // Property accessors
 
     QString     name                () { return _name; }
