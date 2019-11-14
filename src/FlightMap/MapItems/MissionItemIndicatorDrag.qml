@@ -23,7 +23,6 @@ Rectangle {
     height:         _itemIndicatorHeight + (_touchMarginVertical * 2)
     color:          "transparent"
     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
-    visible:        itemCoordinate.isValid
 
     // Properties which must be specific by consumer
     property var mapControl     ///< Map control which contains this item
