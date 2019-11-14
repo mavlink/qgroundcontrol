@@ -10,10 +10,7 @@
 #pragma once
 
 #include <QObject>
-//#include <QVariantList>
 
-//#include "QGCMAVLink.h"
-#include "MAVLinkProtocol.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
 
@@ -21,18 +18,17 @@
 Q_DECLARE_LOGGING_CATEGORY(ComponentManagerLog)
 
 
-class ComponentManager : public QObject
+class ComponentControl : public QObject
 {
     Q_OBJECT
 
 public:
-    ComponentManager(Vehicle* vehicle);
-    ~ComponentManager();
+    ComponentControl(const mavlink_component_information_t* compInfo, Vehicle* vehicle, int compId);
+    ~ComponentControl();
 
     Vehicle* vehicle(void) { return _vehicle; }
 
     typedef struct {
-        bool                        ok;
         uint32_t                    firmware_version; //raw value as in MAVLink message
         uint32_t                    hardware_version; //raw value as in MAVLink message
         uint32_t                    capability_flags; //raw value as in MAVLink message
@@ -58,14 +54,52 @@ public:
         QMap<int,QString>           valuesMap;
     } ComponentParameterElement_t;
 
+    bool componentInfoAvailable(void) {return _ok; }
+    ComponentInfo_t& getComponentInfo(void) { return _componentInfo; }
+    QMap<QString,ComponentParameterElement_t>& getComponentInfoParameterMap(void) { return _componentInfoParameterMap; }
+
+protected:
+    Vehicle*                        _vehicle;
+
+    void _httpRequest(const QString& url);
+    void _httpDownloadFinished();
+    bool _loadComponentDefinitionFile(QByteArray& bytes);
+
+private:
+    int                             _compId;
+    QNetworkAccessManager*          _netManager;
+
+    bool                            _ok;
+
+    ComponentInfo_t                             _componentInfo;
+    QMap<QString, QStringList>                  _componentInfoGroupMap;
+    QMap<QString, ComponentParameterElement_t>  _componentInfoParameterMap;
+};
+
+
+class ComponentManager : public QObject
+{
+    Q_OBJECT
+
+public:
+    ComponentManager(Vehicle* vehicle);
+    ~ComponentManager();
+
+    Vehicle* vehicle(void) { return _vehicle; }
+
     QList<int>& getComponentIdList(void) { return _componentIdList; }
-    bool componentInfoAvailable(int compId);
-    QMap<int,ComponentInfo_t>& getComponentInfoMap(void) { return _componentInfoMap; }
-    QMap<int,QMap<QString,ComponentParameterElement_t>>& getComponentInfoParameterMap(void) { return _componentInfoParameterMap; }
+    bool componentInfoAvailable(int compId) { return _componentControlMap.keys().contains(compId); }
+    ComponentControl::ComponentInfo_t& getComponentInfoMap(int compId) {
+        //if (!componentInfoAvailable(compId)) return nullptr;
+        return _componentControlMap[compId]->getComponentInfo();
+    }
+    QMap<QString,ComponentControl::ComponentParameterElement_t>& getComponentInfoParameterMap(int compId) {
+        //if (!componentInfoAvailable(compId)) return nullptr;
+        return _componentControlMap[compId]->getComponentInfoParameterMap();
+    }
 
 protected:
     Vehicle*            _vehicle;
-    MAVLinkProtocol*    _mavlink;
 
     void _startRequestComponentInfo(void);
     void _componentInfoRequestTimerTimeout(void);
@@ -74,10 +108,6 @@ protected:
     void _mavlinkMessageReceived(mavlink_message_t msg);
     void _handleHeartbeatMessage(mavlink_message_t& msg);
     void _handleComponentInfoMessage(mavlink_message_t& msg);
-
-    void _httpRequest(const QString& url);
-    void _httpDownloadFinished();
-    bool _loadComponentDefinitionFile(QByteArray& bytes);
 
 private:
     bool                    _logReplay;
@@ -88,11 +118,10 @@ private:
     static const int        _componentInfoRequestRetryMax = 4;
     int                     _componentInfoRequestRetryCount;
     bool                    _componentInfoAllReceived;
-    QNetworkAccessManager*  _netManager = nullptr;
 
-    QMap<int, ComponentInfo_t>                              _componentInfoMap;          // key = componentID
-    QMap<int, QMap<QString, QStringList> >                  _componentInfoGroupMap;     // key = componentID
-    QMap<int, QMap<QString, ComponentParameterElement_t> >  _componentInfoParameterMap; // key = componentID
+    QMap<int, ComponentControl*> _componentControlMap;
 
     //TODO: SectionHeader in ParameterEditor.qml should adapt arrow for text row number
 };
+
+

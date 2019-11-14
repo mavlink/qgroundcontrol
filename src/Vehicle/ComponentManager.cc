@@ -8,15 +8,8 @@
  ****************************************************************************/
 
 #include <QTime>
-#include <QDateTime>
-#include <QLocale>
-#include <QQuaternion>
 
 #include "MAVLinkProtocol.h"
-#include "FirmwarePluginManager.h"
-#include "LinkManager.h"
-#include "FirmwarePlugin.h"
-#include "UAS.h"
 #include "ParameterManager.h"
 #include "ComponentManager.h"
 #include "QGCApplication.h"
@@ -29,182 +22,102 @@
 QGC_LOGGING_CATEGORY(ComponentManagerLog, "ComponentManagerLog")
 
 
-// Standard connected vehicle
-ComponentManager::ComponentManager(Vehicle* vehicle)
-    : QObject                           (vehicle)
-    , _vehicle                          (vehicle)
-    , _mavlink                          (nullptr)
-    , _logReplay                        (vehicle->priorityLink() && vehicle->priorityLink()->isLogReplay())
+//-- DOM Helpers
+
+static bool read_attribute_str(QDomNode& node, const char* tagName, QString& result)
 {
-    if (_vehicle->isOfflineEditingVehicle()) {
-        return;
-    }
-
-    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-
-    //we connect directly to the Vehicle and not the UASInterface, it is thus more often called
-    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &ComponentManager::_mavlinkMessageReceived);
-
-    _componentInfoRequestTimer.setSingleShot(true);
-    _componentInfoRequestTimer.setInterval(3000);
-    connect(&_componentInfoRequestTimer, &QTimer::timeout, this, &ComponentManager::_componentInfoRequestTimerTimeout);
-
-    _startRequestComponentInfo();
+    QDomNamedNodeMap attrs = node.attributes();
+    if (!attrs.count()) return false;
+    QDomNode subNode = attrs.namedItem(tagName);
+    if (subNode.isNull()) return false;
+    result = subNode.nodeValue();
+    return true;
 }
 
 
-ComponentManager::~ComponentManager()
+static bool read_attribute_int(QDomNode& node, const char* tagName, int& result)
 {
+    QDomNamedNodeMap attrs = node.attributes();
+    if (!attrs.count()) return false;
+    QDomNode subNode = attrs.namedItem(tagName);
+    if (subNode.isNull()) return false;
+    result = subNode.nodeValue().toInt();
+    return true;
 }
 
 
-void ComponentManager::_startRequestComponentInfo(void)
+static bool read_value_str(QDomNode& node, const char* tagName, QString& result)
 {
-    _componentInfoMap.clear();
-    _componentInfoAllReceived = false;
-    _componentInfoRequestRetryCount = 0;
-
-    _sendComponentInfoRequest(MAV_COMP_ID_ALL);
-    _componentInfoRequestTimer.start();
+    QDomElement e = node.firstChildElement(tagName);
+    if (e.isNull()) return false;
+    result = e.text();
+    return true;
 }
 
 
-void ComponentManager::_componentInfoRequestTimerTimeout(void)
+static bool read_value_int(QDomNode& node, const char* tagName, int& result)
 {
-    if (_componentInfoAllReceived) {
-        return;
-    }
-
-    if (++_componentInfoRequestRetryCount <= _componentInfoRequestRetryMax) {
-        _sendComponentInfoRequest(MAV_COMP_ID_ALL);
-        _componentInfoRequestTimer.start();
-        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION retry request";
-    } else {
-        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION requesting stopped, receivedcount: " << _componentInfoMap.size();
-    }
+    QDomElement e = node.firstChildElement(tagName);
+    if (e.isNull()) return false;
+    result = e.text().toInt();
+    return true;
 }
 
 
-void ComponentManager::_sendComponentInfoRequest(int compId)
+//-- Component Controller
+
+ComponentControl::ComponentControl(const mavlink_component_information_t* compInfo, Vehicle* vehicle, int compId)
+    : QObject       (vehicle)
+    , _vehicle      (vehicle)
+    , _compId       (compId)
 {
-    if (_logReplay) {
-        return;
-    }
+    _netManager = nullptr;
 
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                       static_cast<uint8_t>(_mavlink->getComponentId()),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &msg,
-                                       static_cast<uint8_t>(_vehicle->id()),                        // target system
-                                       static_cast<uint8_t>(compId),                                // target component
-                                       static_cast<uint16_t>(MAV_CMD_REQUEST_MESSAGE),              // command id
-                                       0,                                                           // 0=first transmission of command
-                                       static_cast<double>(MAVLINK_MSG_ID_COMPONENT_INFORMATION),   // The MAVLink message ID of the requested message.
-                                       0,0,0,0,0,
-                                       0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    // Fill component information
+    // construct a string by stopping at the first NUL (0) character, else copy the whole byte array
+    _componentInfo.firmware_version = compInfo->firmware_version;
+    _componentInfo.hardware_version = compInfo->hardware_version;
+    _componentInfo.capability_flags = compInfo->capability_flags;
+    _componentInfo.firmwareVersion = QString("%1.%2.%3.%4").arg(compInfo->firmware_version & 0xFF)
+                                                           .arg((compInfo->firmware_version >> 8) & 0xFF)
+                                                           .arg((compInfo->firmware_version >> 16) & 0xFF)
+                                                           .arg((compInfo->firmware_version >> 24) & 0xFF);
+    _componentInfo.hardwareVersion = QString("%1.%2.%3.%4").arg(compInfo->hardware_version & 0xFF)
+                                                           .arg((compInfo->hardware_version >> 8) & 0xFF)
+                                                           .arg((compInfo->hardware_version >> 16) & 0xFF)
+                                                           .arg((compInfo->hardware_version >> 24) & 0xFF);
+    QByteArray vBytes(reinterpret_cast<const char*>(compInfo->vendor_name), MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_VENDOR_NAME_LEN);
+    _componentInfo.vendorName = QString(vBytes);
+    QByteArray mBytes(reinterpret_cast<const char*>(compInfo->model_name), MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_MODEL_NAME_LEN);
+    _componentInfo.modelName = QString(mBytes);
+    QByteArray uBytes(compInfo->component_definition_uri, MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_COMPONENT_DEFINITION_URI_LEN);
+    _componentInfo.definitionFileUri += QString(uBytes);
 
-    qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION request for component ID:" << compId;
-}
+    qCDebug(ComponentManagerLog) << "$$$$" << "Component Controller created for component ID: " << compId;
+    qCDebug(ComponentManagerLog) << "$$$$" << "    definition file:" << _componentInfo.definitionFileUri;
+    qCDebug(ComponentManagerLog) << "$$$$" << "    firmwareVersion:" << _componentInfo.firmwareVersion;
+    qCDebug(ComponentManagerLog) << "$$$$" << "    hardwareVersion:" << _componentInfo.hardwareVersion;
+    qCDebug(ComponentManagerLog) << "$$$$" << "    vendorName:" << _componentInfo.vendorName;
+    qCDebug(ComponentManagerLog) << "$$$$" << "    modelName:" << _componentInfo.modelName;
 
+    _ok = false;
 
-// handler for received MAVLink messages
-void ComponentManager::_mavlinkMessageReceived(mavlink_message_t msg)
-{
-    if (msg.sysid != _vehicle->id()) return; // not for us, we also ignore broadcast sysid's
-
-    switch (msg.msgid) {
-    case MAVLINK_MSG_ID_HEARTBEAT:
-        _handleHeartbeatMessage(msg);
-        break;
-    case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
-        _handleComponentInfoMessage(msg);
-        break;
-    default:
-        break;
+    if (_componentInfo.definitionFileUri.length() > 0) {
+        qCDebug(ComponentManagerLog) << "$$$$" << "Start downloading definition file";
+        _httpRequest(_componentInfo.definitionFileUri);
     }
 }
 
 
-// handler for received HEARTBEAT message
-void ComponentManager::_handleHeartbeatMessage(mavlink_message_t& msg)
+ComponentControl::~ComponentControl()
 {
-    if (msg.compid == MAV_COMP_ID_ALL) return; // this should never happen, but play it safe
-
-    // register new components
-    if (!_componentIdList.contains(msg.compid)){
-        _componentIdList.append(msg.compid);
-        qCDebug(ComponentManagerLog) << "!!!!" << "New conmponent registerd, component ID:" << msg.compid;
+    if (_netManager) {
+        delete _netManager;
     }
 }
 
 
-// handler for received COMPONENT_INFORMATION messages
-void ComponentManager::_handleComponentInfoMessage(mavlink_message_t& msg)
-{
-    bool componentAlreadyDone = false;
-
-    if (!_componentInfoMap.contains(msg.compid)) {
-        ComponentInfo_t ci;
-        ci.ok = false;
-        _componentInfoMap[msg.compid] = ci;
-    } else {
-        componentAlreadyDone = true;
-    }
-
-    // check if all done
-    _componentInfoAllReceived = true;
-    for(int i = 0; i < _componentIdList.size(); i++) {
-        int compId = _componentIdList[i];
-        if (compId == MAV_COMP_ID_ALL) continue;
-        if (!_componentInfoMap.contains(compId)) _componentInfoAllReceived = false;  //there is one
-    }
-
-    if (componentAlreadyDone) return;
-
-    //TODO: for the moment we allow only one to be received and handled, we probably want a ComponentManager,ComponentController thing
-    // so we just stop anything further
-
-    _componentInfoAllReceived = true;
-
-    mavlink_component_information_t compInfo;
-    mavlink_msg_component_information_decode(&msg, &compInfo);
-
-    // Construct a string stopping at the first NUL (0) character, else copy the whole byte array
-    QByteArray urlBytes(compInfo.component_definition_uri, MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_COMPONENT_DEFINITION_URI_LEN);
-    QString url(urlBytes);
-
-    _componentInfoMap[msg.compid].firmware_version = compInfo.firmware_version;
-    _componentInfoMap[msg.compid].hardware_version = compInfo.hardware_version;
-    _componentInfoMap[msg.compid].capability_flags = compInfo.capability_flags;
-    _componentInfoMap[msg.compid].firmwareVersion = QString("%1.%2.%3.%4").arg(compInfo.firmware_version & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 8) & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 16) & 0xFF)
-                                                                          .arg((compInfo.firmware_version >> 24) & 0xFF);
-    _componentInfoMap[msg.compid].hardwareVersion = QString("%1.%2.%3.%4").arg(compInfo.hardware_version & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 8) & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 16) & 0xFF)
-                                                                          .arg((compInfo.hardware_version >> 24) & 0xFF);
-    QByteArray vBytes(reinterpret_cast<char*>(compInfo.vendor_name), MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_VENDOR_NAME_LEN);
-    _componentInfoMap[msg.compid].vendorName = QString(vBytes);
-    QByteArray mBytes(reinterpret_cast<char*>(compInfo.model_name), MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_MODEL_NAME_LEN);
-    _componentInfoMap[msg.compid].modelName = QString(mBytes);
-    _componentInfoMap[msg.compid].definitionFileUri += url;
-
-    _httpRequest(url);
-
-    QString what = (msg.compid == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(msg.compid);
-    qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION received for component ID:" << what;
-    qCDebug(ComponentManagerLog) << "!!!!" << "    definition file:" << url;
-    qCDebug(ComponentManagerLog) << "!!!!" << "    firmwareVersion:" << _componentInfoMap[msg.compid].firmwareVersion;
-    qCDebug(ComponentManagerLog) << "!!!!" << "    hardwareVersion:" << _componentInfoMap[msg.compid].hardwareVersion;
-    qCDebug(ComponentManagerLog) << "!!!!" << "    vendorName:" << _componentInfoMap[msg.compid].vendorName;
-    qCDebug(ComponentManagerLog) << "!!!!" << "    modelName:" << _componentInfoMap[msg.compid].modelName;
-}
-
-
-void ComponentManager::_httpRequest(const QString& url)
+void ComponentControl::_httpRequest(const QString& url)
 {
     if (!_netManager) {
         _netManager = new QNetworkAccessManager(this);
@@ -219,12 +132,12 @@ void ComponentManager::_httpRequest(const QString& url)
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(conf);
     QNetworkReply* reply = _netManager->get(request);
-    connect(reply, &QNetworkReply::finished, this, &ComponentManager::_httpDownloadFinished);
+    connect(reply, &QNetworkReply::finished, this, &ComponentControl::_httpDownloadFinished);
     _netManager->setProxy(savedProxy);
 }
 
 
-void ComponentManager::_httpDownloadFinished()
+void ComponentControl::_httpDownloadFinished()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
 
@@ -232,7 +145,7 @@ void ComponentManager::_httpDownloadFinished()
         return;
     }
 
-    qCDebug(ComponentManagerLog) << "!!!!" << "Downloading component definition file finished";
+    qCDebug(ComponentManagerLog) << "$$$$" << "Downloading definition file finished";
 
     int err = reply->error();
     int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -241,60 +154,21 @@ void ComponentManager::_httpDownloadFinished()
         data.append("\n");
     } else {
         data.clear();
-        qWarning() << "!!!!" << QString("Component definition file download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
+        qWarning() << "$$$$" << QString("Definition file download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
         return;
     }
 
     if (data.size()) {
         _loadComponentDefinitionFile(data);
     } else {
-        qCDebug(ComponentManagerLog) << "!!!!" << "Empty component definition file";
+        qCDebug(ComponentManagerLog) << "$$$$" << "Empty definition file";
     }
 }
 
 
-static bool read_attribute_str(QDomNode& node, const char* tagName, QString& result)
+bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
 {
-    QDomNamedNodeMap attrs = node.attributes();
-    if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue();
-    return true;
-}
-
-static bool read_attribute_int(QDomNode& node, const char* tagName, int& result)
-{
-    QDomNamedNodeMap attrs = node.attributes();
-    if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue().toInt();
-    return true;
-}
-
-static bool read_value_str(QDomNode& node, const char* tagName, QString& result)
-{
-    QDomElement e = node.firstChildElement(tagName);
-    if (e.isNull()) return false;
-    result = e.text();
-    return true;
-}
-
-static bool read_value_int(QDomNode& node, const char* tagName, int& result)
-{
-    QDomElement e = node.firstChildElement(tagName);
-    if (e.isNull()) return false;
-    result = e.text().toInt();
-    return true;
-}
-
-
-bool ComponentManager::_loadComponentDefinitionFile(QByteArray& bytes)
-{
-    //fake, get the component Id
-    int compId = _componentInfoMap.keys()[0];
-    qCDebug(ComponentManagerLog) << "!!!!" << "Parse component definition file for component ID:" << compId;
+    qCDebug(ComponentManagerLog) << "$$$$" << "Parse definition file for component ID:" << _compId;
 
     QByteArray originalData(bytes);
     QString errorMsg;
@@ -303,22 +177,22 @@ bool ComponentManager::_loadComponentDefinitionFile(QByteArray& bytes)
 
     //-- Read it
     if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCDebug(ComponentManagerLog) << "!!!!" << "Unable to parse component definition file on line:" << errorLine;
-        qCDebug(ComponentManagerLog) << "!!!!" << errorMsg;
+        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to parse definition file on line:" << errorLine;
+        qCDebug(ComponentManagerLog) << "$$$$" << errorMsg;
         return false;
     }
 
     //-- Does it have groups?
     QDomNodeList groupElements = doc.elementsByTagName("group");
     if (!groupElements.size()) {
-        qCDebug(ComponentManagerLog) << "!!!!" << "Unable to load component group elements from component definition file";
+        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to load component group elements from definition file";
         return false;
     }
 
     //-- Does it have parameters?
     QDomNodeList parameterElements = doc.elementsByTagName("parameter");
     if (!parameterElements.size()) {
-        qCDebug(ComponentManagerLog) << "!!!!" << "Unable to load component parameter elements from component definition file";
+        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to load component parameter elements from definition file";
         return false;
     }
 
@@ -420,20 +294,21 @@ bool ComponentManager::_loadComponentDefinitionFile(QByteArray& bytes)
         parameterMap[factName] = p;
     }
 
-    //-- Be happy
     //TODO: error handling if something not ok in parsing
-    _componentInfoMap[compId].ok = true;
-    _componentInfoGroupMap[compId] = groupMap;
-    _componentInfoParameterMap[compId] = parameterMap;
+
+    //-- Be happy
+    _ok = true;
+    _componentInfoGroupMap = groupMap;
+    _componentInfoParameterMap = parameterMap;
 
     //-- If this is new, cache it
     // TODO: we currently don't do chaing, but just save it for inspection
-    QString _cacheFile = "C:/Users/Olli/Documents/GitHub/test.xml";
+    QString _cacheFile = QString("C:/Users/Olli/Documents/GitHub/test-%1.xml").arg(_compId);
     bool _cached = false;
     if (!_cached) {
         QFile file(_cacheFile);
         if (!file.open(QIODevice::WriteOnly)) {
-            qCDebug(ComponentManagerLog) << "!!!!" << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
+            qCDebug(ComponentManagerLog) << "$$$$" << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
         } else {
             file.write(originalData);
         }
@@ -443,9 +318,152 @@ bool ComponentManager::_loadComponentDefinitionFile(QByteArray& bytes)
 }
 
 
-bool ComponentManager::componentInfoAvailable(int componentId)
+//-- Component Manager
+
+ComponentManager::ComponentManager(Vehicle* vehicle)
+    : QObject       (vehicle)
+    , _vehicle      (vehicle)
+    , _logReplay    (vehicle->priorityLink() && vehicle->priorityLink()->isLogReplay())
 {
-    return _componentInfoMap.contains(componentId) && _componentInfoMap[componentId].ok;
+    if (_vehicle->isOfflineEditingVehicle()) {
+        return;
+    }
+
+    //we connect directly to the Vehicle and not the UASInterface, it is thus more often called
+    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &ComponentManager::_mavlinkMessageReceived);
+
+    _componentInfoRequestTimer.setSingleShot(true);
+    _componentInfoRequestTimer.setInterval(3000);
+    connect(&_componentInfoRequestTimer, &QTimer::timeout, this, &ComponentManager::_componentInfoRequestTimerTimeout);
+
+    //TODO: shoiuld we start the request only afetr a component was seen?
+
+    _startRequestComponentInfo();
+}
+
+
+ComponentManager::~ComponentManager()
+{
+}
+
+
+void ComponentManager::_startRequestComponentInfo(void)
+{
+    _componentInfoRequestRetryCount = 0;
+    _componentControlMap.clear();
+
+    _sendComponentInfoRequest(MAV_COMP_ID_ALL);
+    _componentInfoRequestTimer.start();
+}
+
+
+void ComponentManager::_componentInfoRequestTimerTimeout(void)
+{
+    if (_componentInfoAllReceived) {
+        return;
+    }
+
+    if (++_componentInfoRequestRetryCount <= _componentInfoRequestRetryMax) {
+        _sendComponentInfoRequest(MAV_COMP_ID_ALL);
+        _componentInfoRequestTimer.start();
+        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION retry request";
+    } else {
+        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION requesting stopped, receivedcount: " << _componentControlMap.size();
+    }
+}
+
+
+void ComponentManager::_sendComponentInfoRequest(int compId)
+{
+    if (_logReplay) {
+        return;
+    }
+
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack_chan(static_cast<uint8_t>(mavlink->getSystemId()),
+                                       static_cast<uint8_t>(mavlink->getComponentId()),
+                                       _vehicle->priorityLink()->mavlinkChannel(),
+                                       &msg,
+                                       static_cast<uint8_t>(_vehicle->id()),                        // target system
+                                       static_cast<uint8_t>(compId),                                // target component
+                                       static_cast<uint16_t>(MAV_CMD_REQUEST_MESSAGE),              // command id
+                                       0,                                                           // 0=first transmission of command
+                                       static_cast<double>(MAVLINK_MSG_ID_COMPONENT_INFORMATION),   // The MAVLink message ID of the requested message.
+                                       0,0,0,0,0,
+                                       0);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+
+    qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION request for component ID:" << compId;
+}
+
+
+// handler for received MAVLink messages
+void ComponentManager::_mavlinkMessageReceived(mavlink_message_t msg)
+{
+    // not for us, we also ignore broadcast sysid's
+    if (msg.sysid != _vehicle->id()) return;
+
+    if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        _handleHeartbeatMessage(msg);
+        return;
+    }
+
+    // only allow previously registered components, or broadcast messages
+    if ((msg.compid != MAV_COMP_ID_ALL) && !_componentIdList.contains(msg.compid)) return;
+
+    switch (msg.msgid) {
+    case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
+        _handleComponentInfoMessage(msg);
+        break;
+    default:
+        break;
+    }
+}
+
+
+// handler for received HEARTBEAT message
+void ComponentManager::_handleHeartbeatMessage(mavlink_message_t& msg)
+{
+    if (msg.compid == MAV_COMP_ID_ALL) return; // this should never happen, but play it safe
+
+    // register new components
+    if (!_componentIdList.contains(msg.compid)){
+        _componentIdList.append(msg.compid);
+        qCDebug(ComponentManagerLog) << "!!!!" << "New conmponent registerd, component ID:" << msg.compid;
+    }
+}
+
+
+// handler for received COMPONENT_INFORMATION messages
+void ComponentManager::_handleComponentInfoMessage(mavlink_message_t& msg)
+{
+    if (msg.compid == MAV_COMP_ID_ALL) return; // this should never happen, but play it safe
+
+    //TODO: should we really do the if(_componentIdList.contains(msg.compid)), to allow only from knwon components? Makes sense to  me.
+
+    if (_componentIdList.contains(msg.compid) && !_componentControlMap.keys().contains(msg.compid)) {
+        mavlink_component_information_t compInfo;
+        mavlink_msg_component_information_decode(&msg, &compInfo);
+
+        //TODO: we probably want to pass this through firmwarePlugin()
+        ComponentControl* pComponent = new ComponentControl(&compInfo, _vehicle, msg.compid);
+        if (pComponent) {
+            _componentControlMap[msg.compid] = pComponent;
+        }
+    }
+
+    //TODO: this isn't fully satisfying
+    // should we do as for the camera manager and do the request individually in component controller?
+
+    // check if all had been received
+    _componentInfoAllReceived = true;
+    for(int i = 0; i < _componentIdList.size(); i++) {
+        if (!_componentControlMap.keys().contains(msg.compid)) { _componentInfoAllReceived = false; break; }
+    }
+
+    //we fake it and allow only one
+    _componentInfoAllReceived = true;
 }
 
 

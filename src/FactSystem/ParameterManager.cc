@@ -671,7 +671,7 @@ QString ParameterManager::getComponentCategory(int componentId)
     if (_mavlinkCompIdHash.contains(componentId)) {
         if (_vehicle->componentManager()->componentInfoAvailable(componentId)) {
             return tr("Component %1  (%2)\n%3").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId)
-                                               .arg(_vehicle->componentManager()->getComponentInfoMap()[componentId].modelName);
+                                               .arg(_vehicle->componentManager()->getComponentInfoMap(componentId).modelName);
         }
         return tr("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
     }
@@ -1787,10 +1787,10 @@ void ParameterManager::_updateAllComponentCategoryMaps(void)
             QMap<QString, QStringList> newGroupMap;
             for (int i = 0; i < factNames.size(); i++) {
                 QString factName = factNames[i];
-                if (!_vehicle->componentManager()->getComponentInfoParameterMap()[compId].contains(factName)) {
+                if (!_vehicle->componentManager()->getComponentInfoParameterMap(compId).contains(factName)) {
                     newGroupMap[tr("Misc")] += factName;
                 } else {
-                    ComponentManager::ComponentParameterElement_t& p = _vehicle->componentManager()->getComponentInfoParameterMap()[compId][factName];
+                    ComponentControl::ComponentParameterElement_t& p = _vehicle->componentManager()->getComponentInfoParameterMap(compId)[factName];
                     newGroupMap[p.group ] += factName;
 
                     // modify fact's meta data
