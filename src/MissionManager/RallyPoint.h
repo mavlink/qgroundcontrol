@@ -39,6 +39,8 @@ public:
     bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);
 
+    static double getDefaultFactAltitude();
+
 signals:
     void coordinateChanged      (const QGeoCoordinate& coordinate);
     void dirtyChanged           (bool dirty);
@@ -48,6 +50,7 @@ private slots:
 
 private:
     void _factSetup(void);
+    static void _cacheFactMetadata();
 
     bool _dirty;
     Fact _longitudeFact;
