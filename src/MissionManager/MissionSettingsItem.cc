@@ -45,7 +45,6 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject
     _speedSection.setAvailable(true);
 
     connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-    connect(this,               &MissionSettingsItem::missionEndRTLChanged,             this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
 
@@ -155,26 +154,9 @@ void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject
     _speedSection.appendSectionItems(items, missionItemParent, seqNum);
 }
 
-bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
+bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& /*items*/, int /*seqNum*/, QObject* /*missionItemParent*/)
 {
-    MissionItem* item = nullptr;
-
-    // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
-
-    if (_missionEndRTL) {
-        qCDebug(MissionSettingsComplexItemLog) << "Appending end action RTL seqNum" << seqNum;
-        item = new MissionItem(seqNum,
-                               MAV_CMD_NAV_RETURN_TO_LAUNCH,
-                               MAV_FRAME_MISSION,
-                               0, 0, 0, 0, 0, 0, 0,        // param 1-7 not used
-                               true,                       // autoContinue
-                               false,                      // isCurrentItem
-                               missionItemParent);
-        items.append(item);
-        return true;
-    } else {
-        return false;
-    }
+    return false;
 }
 
 bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems, int scanIndex)
@@ -187,21 +169,6 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     // Scan through the initial mission items for possible mission settings
     foundCameraSection = _cameraSection.scanForSection(visualItems, scanIndex);
     foundSpeedSection = _speedSection.scanForSection(visualItems, scanIndex);
-
-    // Look at the end of the mission for end actions
-
-    int lastIndex = visualItems->count() - 1;
-    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(lastIndex);
-    if (item) {
-        MissionItem& missionItem = item->missionItem();
-
-        if (missionItem.command() == MAV_CMD_NAV_RETURN_TO_LAUNCH &&
-                missionItem.param1() == 0 && missionItem.param2() == 0 && missionItem.param3() == 0 && missionItem.param4() == 0 && missionItem.param5() == 0 && missionItem.param6() == 0 && missionItem.param7() == 0) {
-            qCDebug(MissionSettingsComplexItemLog) << "Scan: Found end action RTL";
-            _missionEndRTL = true;
-            visualItems->removeAt(lastIndex)->deleteLater();
-        }
-    }
 
     return foundSpeedSection || foundCameraSection;
 }
@@ -304,14 +271,6 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
         return _speedSection.flightSpeed()->rawValue().toDouble();
     } else {
         return std::numeric_limits<double>::quiet_NaN();
-    }
-}
-
-void MissionSettingsItem::setMissionEndRTL(bool missionEndRTL)
-{
-    if (missionEndRTL != _missionEndRTL) {
-        _missionEndRTL = missionEndRTL;
-        emit missionEndRTLChanged(missionEndRTL);
     }
 }
 
