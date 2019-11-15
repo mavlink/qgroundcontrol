@@ -193,13 +193,13 @@ Column {
             width:      height
             QGCColoredImage {
                 visible:            _cameraElapsedMode
-                height:             ScreenTools.defaultFontPixelHeight * 3
+                height:             ScreenTools.defaultFontPixelHeight * 2.6
                 width:              height
                 anchors.centerIn:   parent
                 source:             "/qmlimages/camera_timelapse.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
-                color:              qgcPal.text
+                color:              qgcPal.colorGrey //qgcPal.button //qgcPal.text
             }
             QGCLabel {
                 text:               _curPhotoLapse + "s"
