@@ -67,6 +67,11 @@ public:
     /// or empty string if failed
     QString filePath(PhotoGalleryModelIndex index) const;
 
+    /// Get photo storage path.
+    QString photosPath() const;
+    /// Get videos storage path.
+    QString videosPath() const;
+
     /// Number of entries held.
     std::size_t numPhotos() const;
 

@@ -104,6 +104,18 @@ QRectF cameraTriggerBounds(const QSizeF & view_bounds)
     return QRectF(view_bounds.width() - scale * 1.4, view_bounds.height() - scale * 1.4, scale, scale);
 }
 
+QRectF openPhotosExternal(const QSizeF & view_bounds)
+{
+    double scale = std::min(view_bounds.width(), view_bounds.height()) * 0.1;
+    return QRectF(scale * 1.4, view_bounds.height() - scale * 1.4, scale, scale);
+}
+
+QRectF openVideosExternal(const QSizeF & view_bounds)
+{
+    double scale = std::min(view_bounds.width(), view_bounds.height()) * 0.1;
+    return QRectF(2*(scale * 1.4) + scale, view_bounds.height() - scale * 1.4, scale, scale);
+}
+
 void drawCameraTrigger(QPainter * painter, const QRectF & bounds, bool active)
 {
     double w = bounds.width();
@@ -175,7 +187,8 @@ public:
 
 PhotoGalleryView::PhotoGalleryView(QQuickItem * parent)
     : QQuickPaintedItem(parent)
-    , _open_extern_folder_svg(QString(":/qmlimages/folder-open.svg"))
+    , _open_photos_folder_svg(QString(":/qmlimages/photos-folder-open.svg"))
+    , _open_videos_folder_svg(QString(":/qmlimages/videos-folder-open.svg"))
 {
     setAcceptedMouseButtons(Qt::AllButtons);
     _zoom_timeout.setSingleShot(true);
@@ -238,7 +251,7 @@ void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, co
     drawTrashCan(painter, trashCanBounds(bounds));
 
   #ifndef __mobile__
-    _open_extern_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
+    _open_photos_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
   #endif
 }
 
@@ -264,6 +277,10 @@ void PhotoGalleryView::paintIcons(QPainter * painter, const QSizeF & bounds, con
                 drawTrashCan(painter, trashCanBounds(bounds));
             }
             drawCameraTrigger(painter, cameraTriggerBounds(bounds), !!_photo_operation);
+          #ifndef __mobile__
+            _open_photos_folder_svg.paint(painter, openPhotosExternal(bounds).toRect());
+            _open_videos_folder_svg.paint(painter, openVideosExternal(bounds).toRect());
+          #endif
             break;
         }
         case ViewMode::Single: {
@@ -643,6 +660,22 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
             triggerPhoto();
             return;
         }
+      #ifndef __mobile__
+        else if (openPhotosExternal(size()).contains(where)) {
+            const auto path = _model->photosPath();
+            if (!path.isEmpty()) {
+                QString url(QString("file:") + QFileInfo(path + QDir::separator()).absoluteDir().path());
+                QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+            }
+        }
+        else if (openVideosExternal(size()).contains(where)) {
+            const auto path = _model->videosPath();
+            if (!path.isEmpty()) {
+                QString url(QString("file:") + QFileInfo(path + QDir::separator()).absoluteDir().path());
+                QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+            }
+        }
+      #endif
         if (!_selected_images.empty()) {
             toggleSelectImageAt(_view_state.gallery, where);
         } else {
