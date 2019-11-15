@@ -16,6 +16,7 @@
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "TerrainQuery.h"
+#include "TakeoffMissionItem.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";

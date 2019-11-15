@@ -146,37 +146,6 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, const Missi
     setDirty(false);
 }
 
-SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent)
-    : VisualMissionItem         (other, flyView, parent)
-    , _missionItem              (other._vehicle)
-    , _rawEdit                  (false)
-    , _dirty                    (false)
-    , _ignoreDirtyChangeSignals (false)
-    , _speedSection             (nullptr)
-    , _cameraSection            (nullptr)
-    , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
-    , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)
-    , _altitudeMode             (other._altitudeMode)
-    , _altitudeFact             (0,         "Altitude",             FactMetaData::valueTypeDouble)
-    , _amslAltAboveTerrainFact  (qQNaN(),   "Alt above terrain",    FactMetaData::valueTypeDouble)
-    , _param1MetaData           (FactMetaData::valueTypeDouble)
-    , _param2MetaData           (FactMetaData::valueTypeDouble)
-    , _param3MetaData           (FactMetaData::valueTypeDouble)
-    , _param4MetaData           (FactMetaData::valueTypeDouble)
-    , _syncingHeadingDegreesAndParam4           (false)
-{
-    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
-
-    _altitudeFact.setRawValue(other._altitudeFact.rawValue());
-    _amslAltAboveTerrainFact.setRawValue(other._amslAltAboveTerrainFact.rawValue());
-
-    _setupMetaData();
-    _connectSignals();
-    _updateOptionalSections();
-    _rebuildFacts();
-    setDirty(false);
-}
-
 void SimpleMissionItem::_connectSignals(void)
 {
     // Connect to change signals to track dirty state
