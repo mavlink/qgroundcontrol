@@ -240,8 +240,9 @@ Rectangle {
             id: commandDialog
 
             MissionCommandDialog {
-                missionItem:    _root.missionItem
-                map:            _root.map
+                missionItem:                _root.missionItem
+                map:                        _root.map
+                flyThroughCommandsAllowed:  _missionController.flyThroughCommandsAllowed
             }
         }
 

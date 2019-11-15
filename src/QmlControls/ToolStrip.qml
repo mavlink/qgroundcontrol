@@ -36,6 +36,7 @@ Rectangle {
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
     signal clicked(int index, bool checked)
+    signal dropped(int index)
 
     function setChecked(idx, check) {
         repeater.itemAt(idx).checked = check
@@ -88,6 +89,7 @@ Rectangle {
                     } else if (checked) {
                         var panelEdgeTopPoint = mapToItem(_root, width, 0)
                         dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                        _root.dropped(index)
                     }
                     if(_root && buttonTemplate)
                         _root.lastClickedButton = buttonTemplate
