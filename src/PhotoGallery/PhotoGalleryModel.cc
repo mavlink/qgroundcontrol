@@ -80,6 +80,16 @@ QString PhotoGalleryModel::filePath(PhotoGalleryModelIndex index) const
     return QString();
 }
 
+QString PhotoGalleryModel::photosPath() const
+{
+    return store()->location();
+}
+
+QString PhotoGalleryModel::videosPath() const
+{
+    return store()->videoLocation();
+}
+
 std::size_t PhotoGalleryModel::numPhotos() const
 {
     return _ids.size();
