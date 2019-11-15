@@ -85,12 +85,12 @@ public:
     void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
-    void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
+    void        setConfigPassword               (QString val) { _configPassword = val; }
     void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
     void        setNetworkId                    (QString val) { _networkId = val; emit networkIdChanged(); }
     void        setPairingChannel               (int val)     { _pairingChannel = val; emit pairingChannelChanged(); }
-    void        setConnectChannel               (int val)     { _connectingChannel = val; emit connectingChannelChanged(); }
-    void        setConnectBandwidth             (int val)     { _connectingBandwidth = val; emit connectingBandwidthChanged(); }
+    void        setConnectChannel               (int val)     { _connectingChannel = val; }
+    void        setConnectBandwidth             (int val)     { _connectingBandwidth = val; }
     void        setConnectNetworkId             (QString val) { _connectingNetworkId = val; emit connectingNetworkIdChanged(); }
     void        updateSettings                  ();
     void        configure                       ();

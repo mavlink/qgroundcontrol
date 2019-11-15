@@ -205,6 +205,12 @@ MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMa
         _configUserName != cfgUserName || _configPassword != cfgPassword || _encryptionKey != encryptionKey ||
         _networkId != networkId || _connectingChannel != channel || _connectingBandwidth != bandwidth)
     {
+#ifdef QGC_ENABLE_PAIRING
+        bool pairingKeyChanged = (_encryptionKey != encryptionKey);
+        bool networkIdChanged = (_networkId != networkId);
+        bool connectingChannelChanged = (_connectingChannel != channel);
+#endif
+
         _localIPAddr         = localIP;
         _remoteIPAddr        = remoteIP;
         _netMask             = netMask;
@@ -218,10 +224,16 @@ MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMa
         updateSettings();
 
 #ifdef QGC_ENABLE_PAIRING
-        emit _toolbox->pairingManager()->pairingChannelChanged();
-        emit _toolbox->pairingManager()->connectingChannelChanged();
-        emit _toolbox->pairingManager()->pairingKeyChanged();
-        emit _toolbox->pairingManager()->networkIdChanged();
+        if (connectingChannelChanged) {
+            emit _toolbox->pairingManager()->connectingChannelChanged();
+            _toolbox->pairingManager()->setConnectingChannel(_connectingChannel, connectingPower());
+        }
+        if (pairingKeyChanged) {
+            emit _toolbox->pairingManager()->pairingKeyChanged();
+        }
+        if (networkIdChanged) {
+            emit _toolbox->pairingManager()->networkIdChanged();
+        }
 #endif
 
         return true;
