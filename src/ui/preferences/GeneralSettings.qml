@@ -305,6 +305,12 @@ Rectangle {
                                     }
                                 }
 
+                                QGCCheckBox {
+                                    text:       qsTr("Use Embedded Virtual Keyboard")
+                                    checked:    CustomQuickInterface.showVirtualKeyboard
+                                    onClicked:  CustomQuickInterface.showVirtualKeyboard = checked
+                                }
+
                                 RowLayout {
                                     visible: QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce.visible
 

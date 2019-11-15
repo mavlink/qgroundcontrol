@@ -187,14 +187,6 @@ ApplicationWindow {
         onClosed: {
             dlgLoader.source = ""
         }
-        InputPanel {
-            visible: Qt.inputMethod.visible
-            active: Qt.inputMethod.visible
-
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-        }
     }
 
     property bool _forceClose: false
@@ -288,24 +280,13 @@ ApplicationWindow {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
 
-    InputPanel {
-        id: inputPanel
-
-        visible: Qt.inputMethod.visible && !mainWindowDialog.visible
-        active: Qt.inputMethod.visible && !mainWindowDialog.visible
-
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-    }
-
 Item {
     id: qtkHelper
 
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    anchors.bottom: inputPanel.visible ? inputPanel.top : parent.bottom
+    anchors.bottom: parent.bottom
 
     //-------------------------------------------------------------------------
     //-- Fly View

@@ -227,6 +227,7 @@ bool checkAndroidWritePermission() {
 int main(int argc, char *argv[])
 {
     qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+    qputenv("QT_VIRTUALKEYBOARD_STYLE", QByteArray("custom"));
 
 #ifndef __mobile__
     RunGuard guard("QGroundControlRunGuardKey");
