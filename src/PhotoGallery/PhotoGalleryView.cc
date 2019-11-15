@@ -666,6 +666,7 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
             if (!path.isEmpty()) {
                 QString url(QString("file:") + QFileInfo(path + QDir::separator()).absoluteDir().path());
                 QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+                return;
             }
         }
         else if (openVideosExternal(size()).contains(where)) {
@@ -673,6 +674,7 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
             if (!path.isEmpty()) {
                 QString url(QString("file:") + QFileInfo(path + QDir::separator()).absoluteDir().path());
                 QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+                return;
             }
         }
       #endif
@@ -692,7 +694,7 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
                  && openExternalBounds(size()).contains(where)) {
               const auto path = _model->filePath(PhotoGalleryModelIndex(_view_state.single.index));
               if (!path.isEmpty()) {
-                  QString url(QString("file:///") + QFileInfo(path).absoluteDir().path());
+                  QString url(QString("file:") + path);
                   QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
               }
         }
