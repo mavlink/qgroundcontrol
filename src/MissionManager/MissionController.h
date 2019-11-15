@@ -92,8 +92,9 @@ public:
     Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
     Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
-    Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged) ///< true: Takeoff tool should be enabled
-    Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)    ///< true: Land tool should be enabled
+    Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
+    Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
+    Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
 
     Q_INVOKABLE void removeMissionItem(int index);
 
@@ -228,32 +229,33 @@ public:
     static const QString patternSurveyName;
 
 signals:
-    void visualItemsChanged             (void);
-    void waypointPathChanged            (void);
-    void splitSegmentChanged             (void);
-    void newItemsFromVehicle            (void);
-    void missionDistanceChanged         (double missionDistance);
-    void missionTimeChanged             (void);
-    void missionHoverDistanceChanged    (double missionHoverDistance);
-    void missionHoverTimeChanged        (void);
-    void missionCruiseDistanceChanged   (double missionCruiseDistance);
-    void missionCruiseTimeChanged       (void);
-    void missionMaxTelemetryChanged     (double missionMaxTelemetry);
-    void complexMissionItemNamesChanged (void);
-    void resumeMissionIndexChanged      (void);
-    void resumeMissionReady             (void);
-    void resumeMissionUploadFail        (void);
-    void batteryChangePointChanged      (int batteryChangePoint);
-    void batteriesRequiredChanged       (int batteriesRequired);
-    void plannedHomePositionChanged     (QGeoCoordinate plannedHomePosition);
-    void progressPctChanged             (double progressPct);
-    void currentMissionIndexChanged     (int currentMissionIndex);
-    void currentPlanViewIndexChanged    (void);
-    void currentPlanViewItemChanged     (void);
-    void missionBoundingCubeChanged     (void);
-    void missionItemCountChanged        (int missionItemCount);
-    void isInsertTakeoffValidChanged    (void);
-    void isInsertLandValidChanged       (void);
+    void visualItemsChanged                 (void);
+    void waypointPathChanged                (void);
+    void splitSegmentChanged                (void);
+    void newItemsFromVehicle                (void);
+    void missionDistanceChanged             (double missionDistance);
+    void missionTimeChanged                 (void);
+    void missionHoverDistanceChanged        (double missionHoverDistance);
+    void missionHoverTimeChanged            (void);
+    void missionCruiseDistanceChanged       (double missionCruiseDistance);
+    void missionCruiseTimeChanged           (void);
+    void missionMaxTelemetryChanged         (double missionMaxTelemetry);
+    void complexMissionItemNamesChanged     (void);
+    void resumeMissionIndexChanged          (void);
+    void resumeMissionReady                 (void);
+    void resumeMissionUploadFail            (void);
+    void batteryChangePointChanged          (int batteryChangePoint);
+    void batteriesRequiredChanged           (int batteriesRequired);
+    void plannedHomePositionChanged         (QGeoCoordinate plannedHomePosition);
+    void progressPctChanged                 (double progressPct);
+    void currentMissionIndexChanged         (int currentMissionIndex);
+    void currentPlanViewIndexChanged        (void);
+    void currentPlanViewItemChanged         (void);
+    void missionBoundingCubeChanged         (void);
+    void missionItemCountChanged            (int missionItemCount);
+    void isInsertTakeoffValidChanged        (void);
+    void isInsertLandValidChanged           (void);
+    void flyThroughCommandsAllowedChanged   (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -330,8 +332,9 @@ private:
     QGCGeoBoundingCube      _travelBoundingCube;
     QGeoCoordinate          _takeoffCoordinate;
     CoordinateVector*       _splitSegment;
-    bool                    _isInsertTakeoffValid = true;
-    bool                    _isInsertLandValid = true;
+    bool                    _isInsertTakeoffValid =         true;
+    bool                    _isInsertLandValid =            true;
+    bool                    _flyThroughCommandsAllowed =    true;
 
     static const char*  _settingsGroup;
 

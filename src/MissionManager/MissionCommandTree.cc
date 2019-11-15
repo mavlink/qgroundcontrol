@@ -219,7 +219,7 @@ const MissionCommandUIInfo* MissionCommandTree::getUIInfo(Vehicle* vehicle, MAV_
     }
 }
 
-QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const QString& category)
+QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const QString& category, bool showFlyThroughCommands)
 {
     MAV_AUTOPILOT   baseFirmwareType;
     MAV_TYPE        baseVehicleType;
@@ -237,7 +237,8 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     for (MAV_CMD command: commandMap.keys()) {
         if (supportedCommands.contains(command)) {
             MissionCommandUIInfo* uiInfo = commandMap[command];
-            if (uiInfo->category() == category || category == _allCommandsCategory) {
+            if ((uiInfo->category() == category || category == _allCommandsCategory) &&
+                    (showFlyThroughCommands || !uiInfo->specifiesCoordinate() || uiInfo->isStandaloneCoordinate())) {
                 list.append(QVariant::fromValue(uiInfo));
             }
         }

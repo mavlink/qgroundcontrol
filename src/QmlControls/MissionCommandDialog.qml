@@ -19,8 +19,9 @@ import QGroundControl.Palette       1.0
 QGCViewDialog {
     id: root
 
-    property var missionItem
-    property var map
+    property var    missionItem
+    property var    map
+    property bool   flyThroughCommandsAllowed
 
     property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -40,7 +41,7 @@ QGCViewDialog {
         model:              QGroundControl.missionCommandTree.categoriesForVehicle(_vehicle)
 
         function categorySelected(category) {
-            commandList.model = QGroundControl.missionCommandTree.getCommandsForCategory(_vehicle, category)
+            commandList.model = QGroundControl.missionCommandTree.getCommandsForCategory(_vehicle, category, flyThroughCommandsAllowed)
         }
 
         Component.onCompleted: {
@@ -97,7 +98,7 @@ QGCViewDialog {
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                        missionItem.setMapCenterHintForCommandChange(map.center)
+                    missionItem.setMapCenterHintForCommandChange(map.center)
                     missionItem.command = mavCmdInfo.command
                     root.reject()
                 }
