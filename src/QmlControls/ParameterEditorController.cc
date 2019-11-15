@@ -32,6 +32,12 @@ ParameterEditorController::ParameterEditorController(void)
     _categories.removeOne(_currentCategory);
     _categories.prepend(_currentCategory);
 
+    // Move All category to end
+    if (_categories.contains(tr("All"))) {
+        _categories.removeOne(tr("All"));
+        _categories.append(tr("All"));
+    }
+
     // There is a category for each non default component
     for (int compId: _parameterMgr->componentIds()) {
         if (compId != _vehicle->defaultComponentId()) {
