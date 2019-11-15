@@ -661,6 +661,8 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
     for (const QString &paramName: _mapParameterName2Variant[_vehicle->defaultComponentId()].keys()) {
         Fact* fact = _mapParameterName2Variant[_vehicle->defaultComponentId()][paramName].value<Fact*>();
         defaultComponentCategoryMap[fact->category()][fact->group()] += paramName;
+        int i = paramName.indexOf("_");
+        defaultComponentCategoryMap[tr("All")][(i > 0) ? paramName.left(i) : tr("Misc")] += paramName;
     }
 }
 
