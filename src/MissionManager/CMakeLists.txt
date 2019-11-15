@@ -119,6 +119,8 @@ add_library(MissionManager
 	SurveyComplexItem.h
 	SurveyPlanCreator.cc
 	SurveyPlanCreator.h
+	TakeoffMissionItem.cc
+	TakeoffMissionItem.h
 	TransectStyleComplexItem.cc
 	TransectStyleComplexItem.h
 	VisualMissionItem.cc

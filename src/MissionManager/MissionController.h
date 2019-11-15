@@ -93,6 +93,7 @@ public:
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
     Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged) ///< true: Takeoff tool should be enabled
+    Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)    ///< true: Land tool should be enabled
 
     Q_INVOKABLE void removeMissionItem(int index);
 
@@ -109,6 +110,13 @@ public:
     ///     @param makeCurrentItem: true: Make this item the current item
     /// @return Newly created item
     Q_INVOKABLE VisualMissionItem* insertTakeoffItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
+
+    /// Add a new land item to the list
+    ///     @param coordinate: Coordinate for item
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem* insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new ROI mission item to the list
     ///     @param coordinate: Coordinate for item
@@ -245,6 +253,7 @@ signals:
     void missionBoundingCubeChanged     (void);
     void missionItemCountChanged        (int missionItemCount);
     void isInsertTakeoffValidChanged    (void);
+    void isInsertLandValidChanged       (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -296,6 +305,7 @@ private:
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
     CoordinateVector* _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
+    VisualMissionItem* _insertSimpleMissionItemWorker(QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
     void _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     void _warnIfTerrainFrameUsed(void);
 
@@ -321,6 +331,7 @@ private:
     QGeoCoordinate          _takeoffCoordinate;
     CoordinateVector*       _splitSegment;
     bool                    _isInsertTakeoffValid = true;
+    bool                    _isInsertLandValid = true;
 
     static const char*  _settingsGroup;
 

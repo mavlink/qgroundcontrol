@@ -29,7 +29,8 @@ SetupPage {
             width: availableWidth
 
             Component.onCompleted: {
-                showAdvanced = !ScreenTools.isMobile
+                // Advanced tuning is hacked out due to Qt crash with Qml Charts and a QGuiApplication
+                //showAdvanced = !ScreenTools.isMobile
             }
 
             FactPanelController {

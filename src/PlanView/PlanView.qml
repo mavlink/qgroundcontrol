@@ -629,7 +629,8 @@ Item {
             readonly property int waypointButtonIndex:  3
             readonly property int roiButtonIndex:       4
             readonly property int patternButtonIndex:   5
-            readonly property int centerButtonIndex:    6
+            readonly property int landButtonIndex:      6
+            readonly property int centerButtonIndex:    7
 
             property bool _isRally:     _editingLayer == _layerRallyPoints
 
@@ -678,6 +679,12 @@ Item {
                     dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                 },
                 {
+                    name:               _planMasterController.controllerVehicle.fixedWing ? qsTr("Land") : qsTr("Return"),
+                    iconSource:         "/res/rtl.svg",
+                    buttonEnabled:      _missionController.isInsertLandValid,
+                    buttonVisible:      _editingLayer == _layerMission
+                },
+                {
                     name:               qsTr("Center"),
                     iconSource:         "/qmlimages/MapCenter.svg",
                     buttonEnabled:      true,
@@ -713,6 +720,9 @@ Item {
                     if (_singleComplexItem) {
                         addComplexItem(_missionController.complexMissionItemNames[0])
                     }
+                    break
+                case landButtonIndex:
+                    _missionController.insertLandItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
                     break
                 }
             }
@@ -1025,25 +1035,6 @@ Item {
                         addComplexItem(modelData)
                         dropPanel.hide()
                     }
-                }
-            }
-
-            Rectangle {
-                width:              parent.width * 0.8
-                height:             1
-                color:              qgcPal.text
-                opacity:            0.5
-                Layout.fillWidth:   true
-                Layout.columnSpan:  2
-            }
-
-            QGCButton {
-                text:               qsTr("Load KML/SHP...")
-                Layout.fillWidth:   true
-                enabled:            !_planMasterController.syncInProgress
-                onClicked: {
-                    _planMasterController.loadShapeFromSelectedFile()
-                    dropPanel.hide()
                 }
             }
         } // Column
