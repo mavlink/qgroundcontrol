@@ -9,6 +9,7 @@ PhotoGalleryView {
         id: photoFileStore
         objectName: "PhotoFileStore"
         location: QGroundControl.settingsManager.appSettings.photoSavePath
+        videoLocation: QGroundControl.settingsManager.appSettings.videoSavePath
     }
     property PhotoGalleryVehicleGlue glue : PhotoGalleryVehicleGlue {
         objectName: "PhotoGalleryVehicleGlue"

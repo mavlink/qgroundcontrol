@@ -131,7 +131,7 @@ LinuxBuild {
         libQt5Xml.so.5 \
         libicui18n.so* \
         libQt5TextToSpeech.so.5 \
-        libQt5NetworkAuth.so.5
+        libQt5VirtualKeyboard.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
         # Some Qt distributions link with *.so.56
@@ -158,7 +158,8 @@ LinuxBuild {
         platforms \
         position \
         sqldrivers \
-        texttospeech
+        texttospeech \
+        virtualkeyboard
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_PLUGIN_LIST += xcbglintegrations

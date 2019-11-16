@@ -14,7 +14,7 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
-#define ENABLE_GIMBAL 0
+#define ENABLE_GIMBAL 1
 
 const int JoystickConfigController::_calCenterPoint =       0;
 const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value

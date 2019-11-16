@@ -1508,6 +1508,7 @@ private:
     bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
+    QTimer              _gimbalTimer;
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;

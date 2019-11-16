@@ -33,6 +33,7 @@
 class PhotoFileStore : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString location READ location WRITE setLocation)
+    Q_PROPERTY(QString videoLocation READ videoLocation WRITE setVideoLocation)
 
 public:
     explicit PhotoFileStore(QObject * parent = nullptr);
@@ -73,6 +74,9 @@ public:
     void setLocation(QString local_storage);
     const QString & location() const;
 
+    void setVideoLocation(QString local_storage);
+    const QString & videoLocation() const;
+
 signals:
     /// Notify of photos being added.
     void added(const std::set<QString> & ids);
@@ -84,5 +88,6 @@ private:
     void rescan();
 
     QString _location;
+    QString _videoLocation;
     std::set<QString> _photo_ids;
 };

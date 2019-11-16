@@ -24,6 +24,9 @@ import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
 import QGroundControl.SettingsManager       1.0
 
+import CustomQuickInterface                 1.0
+import Custom.Widgets                       1.0
+
 Rectangle {
     id:                 _root
     color:              qgcPal.window
@@ -302,6 +305,12 @@ Rectangle {
                                     }
                                 }
 
+                                QGCCheckBox {
+                                    text:       qsTr("Use Embedded Virtual Keyboard")
+                                    checked:    CustomQuickInterface.showVirtualKeyboard
+                                    onClicked:  CustomQuickInterface.showVirtualKeyboard = checked
+                                }
+
                                 RowLayout {
                                     visible: QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce.visible
 
@@ -541,6 +550,17 @@ Rectangle {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     visible:                parent._maxGoToLocationDistance.visible
                                     fact:                   parent._maxGoToLocationDistance
+                                }
+                                QGCLabel { text: QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor.shortDescription }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor
+                                }
+                                QGCLabel { text: qsTr("Show Gimbal Control") }
+                                CustomOnOffSwitch {
+                                    checked:    CustomQuickInterface.showGimbalControl
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.showGimbalControl = checked
                                 }
                             }
                         }
