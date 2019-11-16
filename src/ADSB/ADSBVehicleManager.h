@@ -30,13 +30,13 @@ public:
 
 signals:
     void adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehicleInfo);
+    void error(const QString errorMsg);
 
 protected:
     void run(void) final;
 
 private slots:
     void _readBytes(void);
-    void _socketError(QAbstractSocket::SocketError socketError);
 
 private:
     void _hardwareConnect(void);
@@ -61,7 +61,8 @@ public:
     void setToolbox(QGCToolbox* toolbox) final;
 
 public slots:
-    void adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehicleInfo);
+    void adsbVehicleUpdate  (const ADSBVehicle::VehicleInfo_t vehicleInfo);
+    void _tcpError          (const QString errorMsg);
 
 private slots:
     void _cleanupStaleVehicles(void);
