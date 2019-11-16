@@ -8630,11 +8630,12 @@ is less than 50% of this value</short_desc>
         <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
-    <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
+    <parameter category="System" default="-1" name="SENS_EN_THERMAL" type="INT32">
       <short_desc>Thermal control of sensor temperature</short_desc>
       <values>
         <value code="-1">Thermal control unavailable</value>
         <value code="0">Thermal control off</value>
+        <value code="1">Thermal control enabled</value>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_TRANGER" type="INT32">
@@ -8666,21 +8667,21 @@ is less than 50% of this value</short_desc>
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
-    <parameter default="55.0" name="SENS_IMU_TEMP" type="FLOAT">
+    <parameter category="System" default="55.0" name="SENS_IMU_TEMP" type="FLOAT">
       <short_desc>Target IMU temperature</short_desc>
       <min>0</min>
       <max>85.0</max>
       <unit>C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
+    <parameter category="System" default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
       <short_desc>IMU heater controller integrator gain value</short_desc>
       <min>0</min>
       <max>1.0</max>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
+    <parameter category="System" default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
       <short_desc>IMU heater controller proportional gain value</short_desc>
       <min>0</min>
       <max>2.0</max>
@@ -9127,7 +9128,7 @@ is less than 50% of this value</short_desc>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
-    <parameter default="1442826" name="SENS_TEMP_ID" type="INT32">
+    <parameter category="System" default="0" name="SENS_TEMP_ID" type="INT32">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
     </parameter>
     <parameter default="0" name="SENS_TFMINI_CFG" type="INT32">
