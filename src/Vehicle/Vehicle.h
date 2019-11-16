@@ -34,7 +34,6 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
-class ADSBVehicle;
 class QGCCameraManager;
 class Joystick;
 class VehicleObjectAvoidance;
@@ -621,7 +620,6 @@ public:
     Q_PROPERTY(int                  telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      NOTIFY toolBarIndicatorsChanged)
-    Q_PROPERTY(QmlObjectListModel*  adsbVehicles            READ adsbVehicles                                           CONSTANT)
     Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
@@ -880,7 +878,6 @@ public:
     void setPrearmError(const QString& prearmError);
 
     QmlObjectListModel* cameraTriggerPoints (void) { return &_cameraTriggerPoints; }
-    QmlObjectListModel* adsbVehicles        (void) { return &_adsbVehicles; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -1257,7 +1254,6 @@ private slots:
     void _mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
-    void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
     void _protocolVersionTimeOut(void);
     void _updateFlightTime      (void);
@@ -1468,10 +1464,7 @@ private:
     QTimer                          _flightTimeUpdater;
     TrajectoryPoints*               _trajectoryPoints;
     QmlObjectListModel              _cameraTriggerPoints;
-    QmlObjectListModel              _adsbVehicles;
-    QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
-    QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
-    QTimer                          _adsbTimer;
+    //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
