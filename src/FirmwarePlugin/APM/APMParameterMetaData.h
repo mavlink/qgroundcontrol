@@ -80,6 +80,7 @@ private:
     bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);
     void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
     QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
+    QString _groupFromParameterName(const QString& name);
 
     bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
     QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>
