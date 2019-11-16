@@ -31,7 +31,8 @@ void ADSBVehicleManager::setToolbox(QGCToolbox* toolbox)
     ADSBVehicleManagerSettings* settings = qgcApp()->toolbox()->settingsManager()->adsbVehicleManagerSettings();
     if (settings->adsbServerConnectEnabled()->rawValue().toBool()) {
         _tcpLink = new ADSBTCPLink(settings->adsbServerHostAddress()->rawValue().toString(), settings->adsbServerPort()->rawValue().toInt(), this);
-        connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate, this, &ADSBVehicleManager::adsbVehicleUpdate, Qt::QueuedConnection);
+        connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate,  this, &ADSBVehicleManager::adsbVehicleUpdate,   Qt::QueuedConnection);
+        connect(_tcpLink, &ADSBTCPLink::error,              this, &ADSBVehicleManager::_tcpError,           Qt::QueuedConnection);
     }
 }
 
@@ -62,6 +63,12 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehi
         }
     }
 }
+
+void ADSBVehicleManager::_tcpError(const QString errorMsg)
+{
+    qgcApp()->showMessage(tr("ADSB Server Error: %1").arg(errorMsg));
+}
+
 
 ADSBTCPLink::ADSBTCPLink(const QString& hostAddress, int port, QObject* parent)
     : QThread       (parent)
@@ -95,11 +102,12 @@ void ADSBTCPLink::_hardwareConnect()
 
     QObject::connect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
 
-    _socket->connectToHost(_hostAddress, _port);
+    _socket->connectToHost(_hostAddress, static_cast<quint16>(_port));
 
     // Give the socket a second to connect to the other side otherwise error out
     if (!_socket->waitForConnected(1000)) {
         qCDebug(ADSBVehicleManagerLog) << "ADSB Socket failed to connect";
+        emit error(_socket->errorString());
         delete _socket;
         _socket = nullptr;
         return;
@@ -115,13 +123,6 @@ void ADSBTCPLink::_readBytes(void)
         _parseLine(QString::fromLocal8Bit(bytes));
     }
 }
-
-void ADSBTCPLink::_socketError(QAbstractSocket::SocketError socketError)
-{
-    QString error = _socket->errorString();
-    qDebug() << _socket->errorString();
-}
-
 
 void ADSBTCPLink::_parseLine(const QString& line)
 {
