@@ -98,6 +98,8 @@ public:
         return _componentControlMap[compId]->getComponentInfoParameterMap();
     }
 
+    void stoptRequestComponentInfo(void);
+
 protected:
     Vehicle*            _vehicle;
 
@@ -117,11 +119,12 @@ private:
     QTimer                  _componentInfoRequestTimer;
     static const int        _componentInfoRequestRetryMax = 4;
     int                     _componentInfoRequestRetryCount;
-    bool                    _componentInfoAllReceived;
 
     QMap<int, ComponentControl*> _componentControlMap;
 
-    //TODO: SectionHeader in ParameterEditor.qml should adapt arrow for text row number
+    //TODO: SectionHeader in ParameterEditor.qml should adapt arrow to number of text rows
+    //TODO: should we do as for the camera manager and do the request individually in component controller?
+    //TODO: could/should we use the vehicle function for calling the CMD?
 };
 
 

@@ -1310,6 +1310,7 @@ void ParameterManager::_checkInitialLoadComplete(void)
 
     // Now let's see if we have some ComponentInformation
     // TODO: we should provide the method so this can be done also after the initial load is completed, but for the moment we check it here
+    _vehicle->componentManager()->stoptRequestComponentInfo(); //we don't continue trying
     _updateAllComponentCategoryMaps();
 
     // Signal load complete

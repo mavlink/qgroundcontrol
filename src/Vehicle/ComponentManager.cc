@@ -336,9 +336,7 @@ ComponentManager::ComponentManager(Vehicle* vehicle)
     _componentInfoRequestTimer.setInterval(3000);
     connect(&_componentInfoRequestTimer, &QTimer::timeout, this, &ComponentManager::_componentInfoRequestTimerTimeout);
 
-    //TODO: shoiuld we start the request only afetr a component was seen?
-
-    _startRequestComponentInfo();
+    //_startRequestComponentInfo(); //we start the request after a component was seen
 }
 
 
@@ -349,6 +347,8 @@ ComponentManager::~ComponentManager()
 
 void ComponentManager::_startRequestComponentInfo(void)
 {
+    qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION request started";
+
     _componentInfoRequestRetryCount = 0;
     _componentControlMap.clear();
 
@@ -357,16 +357,21 @@ void ComponentManager::_startRequestComponentInfo(void)
 }
 
 
+void ComponentManager::stoptRequestComponentInfo(void) //this is public so it can be called from externally
+{
+    qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION request stoped";
+
+    _componentInfoRequestRetryCount = _componentInfoRequestRetryMax;
+    _componentInfoRequestTimer.stop();
+}
+
+
 void ComponentManager::_componentInfoRequestTimerTimeout(void)
 {
-    if (_componentInfoAllReceived) {
-        return;
-    }
-
     if (++_componentInfoRequestRetryCount <= _componentInfoRequestRetryMax) {
+        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION retry request";
         _sendComponentInfoRequest(MAV_COMP_ID_ALL);
         _componentInfoRequestTimer.start();
-        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION retry request";
     } else {
         qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION requesting stopped, receivedcount: " << _componentControlMap.size();
     }
@@ -427,10 +432,11 @@ void ComponentManager::_handleHeartbeatMessage(mavlink_message_t& msg)
 {
     if (msg.compid == MAV_COMP_ID_ALL) return; // this should never happen, but play it safe
 
-    // register new components
-    if (!_componentIdList.contains(msg.compid)){
+    // register new components, and start requests when the first component was seen
+    if (!_componentIdList.contains(msg.compid)) {
         _componentIdList.append(msg.compid);
         qCDebug(ComponentManagerLog) << "!!!!" << "New conmponent registerd, component ID:" << msg.compid;
+        if (_componentIdList.size() == 1) _startRequestComponentInfo();
     }
 }
 
@@ -440,9 +446,11 @@ void ComponentManager::_handleComponentInfoMessage(mavlink_message_t& msg)
 {
     if (msg.compid == MAV_COMP_ID_ALL) return; // this should never happen, but play it safe
 
-    //TODO: should we really do the if(_componentIdList.contains(msg.compid)), to allow only from knwon components? Makes sense to  me.
+    //TODO: do we really want to do the if(_componentIdList.contains(msg.compid)), to allow only from known components? Makes sense to  me.
 
     if (_componentIdList.contains(msg.compid) && !_componentControlMap.keys().contains(msg.compid)) {
+        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION received for component ID: " << msg.compid;
+
         mavlink_component_information_t compInfo;
         mavlink_msg_component_information_decode(&msg, &compInfo);
 
@@ -452,18 +460,6 @@ void ComponentManager::_handleComponentInfoMessage(mavlink_message_t& msg)
             _componentControlMap[msg.compid] = pComponent;
         }
     }
-
-    //TODO: this isn't fully satisfying
-    // should we do as for the camera manager and do the request individually in component controller?
-
-    // check if all had been received
-    _componentInfoAllReceived = true;
-    for(int i = 0; i < _componentIdList.size(); i++) {
-        if (!_componentControlMap.keys().contains(msg.compid)) { _componentInfoAllReceived = false; break; }
-    }
-
-    //we fake it and allow only one
-    _componentInfoAllReceived = true;
 }
 
 
