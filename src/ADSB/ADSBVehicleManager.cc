@@ -30,7 +30,7 @@ void ADSBVehicleManager::setToolbox(QGCToolbox* toolbox)
 
     ADSBVehicleManagerSettings* settings = qgcApp()->toolbox()->settingsManager()->adsbVehicleManagerSettings();
     if (settings->adsbServerConnectEnabled()->rawValue().toBool()) {
-        _tcpLink = new ADSBTCPLink(this);
+        _tcpLink = new ADSBTCPLink(settings->adsbServerHostAddress()->rawValue().toString(), settings->adsbServerPort()->rawValue().toInt(), this);
         connect(_tcpLink, &ADSBTCPLink::adsbVehicleUpdate, this, &ADSBVehicleManager::adsbVehicleUpdate, Qt::QueuedConnection);
     }
 }
@@ -41,6 +41,7 @@ void ADSBVehicleManager::_cleanupStaleVehicles()
     for (int i=_adsbVehicles.count()-1; i>=0; i--) {
         ADSBVehicle* adsbVehicle = _adsbVehicles.value<ADSBVehicle*>(i);
         if (adsbVehicle->expired()) {
+            qCDebug(ADSBVehicleManagerLog) << "Expired" << QStringLiteral("%1").arg(adsbVehicle->icaoAddress(), 0, 16);
             _adsbVehicles.removeAt(i);
             adsbVehicle->deleteLater();
         }
@@ -62,10 +63,11 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehi
     }
 }
 
-ADSBTCPLink::ADSBTCPLink(QObject* parent)
-    : QThread(parent)
+ADSBTCPLink::ADSBTCPLink(const QString& hostAddress, int port, QObject* parent)
+    : QThread       (parent)
+    , _hostAddress  (hostAddress)
+    , _port         (port)
 {
-    _settings = qgcApp()->toolbox()->settingsManager()->adsbVehicleManagerSettings();
     moveToThread(this);
     start();
 }
@@ -74,7 +76,6 @@ ADSBTCPLink::~ADSBTCPLink(void)
 {
     if (_socket) {
         _socket->disconnectFromHost();
-        _socket->waitForDisconnected();
         _socket->deleteLater();
         _socket = nullptr;
     }
@@ -94,7 +95,7 @@ void ADSBTCPLink::_hardwareConnect()
 
     QObject::connect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
 
-    _socket->connectToHost(_settings->adsbServerHostAddress()->rawValue().toString(), _settings->adsbServerPort()->rawValue().toInt());
+    _socket->connectToHost(_hostAddress, _port);
 
     // Give the socket a second to connect to the other side otherwise error out
     if (!_socket->waitForConnected(1000)) {
