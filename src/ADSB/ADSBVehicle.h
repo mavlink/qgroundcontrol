@@ -20,9 +20,25 @@ class ADSBVehicle : public QObject
     Q_OBJECT
 
 public:
-    ADSBVehicle(mavlink_adsb_vehicle_t& adsbVehicle, QObject* parent = nullptr);
+    enum {
+        CallsignAvailable =     1 << 1,
+        LocationAvailable =     1 << 2,
+        AltitudeAvailable =     1 << 3,
+        HeadingAvailable =      1 << 4,
+        AlertAvailable =        1 << 5,
+    };
 
-    ADSBVehicle(const QGeoCoordinate& location, float heading, bool alert = false, QObject* parent = nullptr);
+    typedef struct {
+        uint32_t        icaoAddress;    // Required
+        QString         callsign;
+        QGeoCoordinate  location;
+        double          altitude;
+        double          heading;
+        bool            alert;
+        uint32_t        availableFlags;
+    } VehicleInfo_t;
+
+    ADSBVehicle(const VehicleInfo_t& vehicleInfo, QObject* parent);
 
     Q_PROPERTY(int              icaoAddress READ icaoAddress    CONSTANT)
     Q_PROPERTY(QString          callsign    READ callsign       NOTIFY callsignChanged)
@@ -31,17 +47,14 @@ public:
     Q_PROPERTY(double           heading     READ heading        NOTIFY headingChanged)      // NaN for not available
     Q_PROPERTY(bool             alert       READ alert          NOTIFY alertChanged)        // Collision path
 
-    int             icaoAddress (void) const { return _icaoAddress; }
+    int             icaoAddress (void) const { return static_cast<int>(_icaoAddress); }
     QString         callsign    (void) const { return _callsign; }
     QGeoCoordinate  coordinate  (void) const { return _coordinate; }
     double          altitude    (void) const { return _altitude; }
     double          heading     (void) const { return _heading; }
     bool            alert       (void) const { return _alert; }
 
-    /// Update the vehicle with new information
-    void update(mavlink_adsb_vehicle_t& adsbVehicle);
-
-    void update(bool alert, const QGeoCoordinate& location, float heading);
+    void update(const VehicleInfo_t& vehicleInfo);
 
     /// check if the vehicle is expired and should be removed
     bool expired();
@@ -69,3 +82,6 @@ private:
 
     QElapsedTimer   _lastUpdateTimer;
 };
+
+Q_DECLARE_METATYPE(ADSBVehicle::VehicleInfo_t)
+
