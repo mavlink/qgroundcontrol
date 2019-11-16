@@ -25,7 +25,7 @@ class ADSBTCPLink : public QThread
     Q_OBJECT
 
 public:
-    ADSBTCPLink(QObject* parent);
+    ADSBTCPLink(const QString& hostAddress, int port, QObject* parent);
     ~ADSBTCPLink();
 
 signals:
@@ -42,8 +42,9 @@ private:
     void _hardwareConnect(void);
     void _parseLine(const QString& line);
 
-    QTcpSocket*                 _socket =   nullptr;
-    ADSBVehicleManagerSettings* _settings = nullptr;
+    QString         _hostAddress;
+    int             _port;
+    QTcpSocket*     _socket =   nullptr;
 };
 
 class ADSBVehicleManager : public QGCTool {
