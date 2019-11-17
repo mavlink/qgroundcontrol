@@ -650,6 +650,10 @@ Set to 2 to use heading from motion capture</short_desc>
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
     </parameter>
+    <parameter default="0" name="COM_ARM_AUTH_REQ" type="INT32">
+      <short_desc>Require arm authorization to arm</short_desc>
+      <long_desc>The default allows to arm the vehicle without a arm authorization.</long_desc>
+    </parameter>
     <parameter default="1" name="COM_ARM_CHK_ESCS" type="INT32">
       <short_desc>Require all the ESCs to be detected to arm</short_desc>
       <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
