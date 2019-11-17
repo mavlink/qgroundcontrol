@@ -395,9 +395,8 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _controllerVehicle, _flyView, _settingsItem, this);
+    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _managerVehicle, _flyView, _settingsItem, this);
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setWizardMode(true);
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
@@ -1705,8 +1704,6 @@ void MissionController::_initAllVisualItems(void)
         }
     }
 
-    _settingsItem->setHomePositionFromVehicle(_managerVehicle);
-
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::_recalcAll);
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::plannedHomePositionChanged);
 
@@ -1831,7 +1828,7 @@ bool MissionController::_findPreviousAltitude(int newIndex, double* prevAltitude
 {
     bool        found = false;
     double      foundAltitude = 0;
-    int         foundAltitudeMode;
+    int         foundAltitudeMode = QGroundControlQmlGlobal::AltitudeModeNone;
 
     if (newIndex > _visualItems->count()) {
         return false;
@@ -1879,9 +1876,8 @@ MissionSettingsItem* MissionController::_addMissionSettings(QmlObjectListModel* 
 {
     qCDebug(MissionControllerLog) << "_addMissionSettings";
 
-    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_managerVehicle, _flyView, visualItems);
     visualItems->insert(0, settingsItem);
-    settingsItem->setHomePositionFromVehicle(_managerVehicle);
 
     if (visualItems == _visualItems) {
         _settingsItem = settingsItem;
