@@ -181,7 +181,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             // First item is fake home position
             MissionItem* fakeHomeItem = newMissionItems[0];
             if (fakeHomeItem->coordinate().latitude() != 0 || fakeHomeItem->coordinate().longitude() != 0) {
-                _settingsItem->setInitialHomePosition(fakeHomeItem->coordinate());
+                settingsItem->setInitialHomePosition(fakeHomeItem->coordinate());
             }
             i = 1;
         }
@@ -687,7 +687,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
                 if (TakeoffMissionItem::isTakeoffCommand(item->mavCommand())) {
                     // This needs to be a TakeoffMissionItem
-                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, _settingsItem, visualItems);
+                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, visualItems);
                     takeoffItem->load(itemObject, itemObject["id"].toInt(), errorString);
                     item->deleteLater();
                     item = takeoffItem;
@@ -742,9 +742,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
-    _settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
-    _settingsItem->setCoordinate(homeCoordinate);
-    visualItems->insert(0, _settingsItem);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
+    settingsItem->setCoordinate(homeCoordinate);
+    visualItems->insert(0, settingsItem);
     qCDebug(MissionControllerLog) << "plannedHomePosition" << homeCoordinate;
 
     // Read mission items
@@ -775,7 +775,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
             if (simpleItem->load(itemObject, nextSequenceNumber, errorString)) {
                 if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                     // This needs to be a TakeoffMissionItem
-                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, _settingsItem, this);
+                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, this);
                     takeoffItem->load(itemObject, nextSequenceNumber, errorString);
                     simpleItem->deleteLater();
                     simpleItem = takeoffItem;
@@ -918,7 +918,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
             SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
             if (item->load(stream)) {
                 if (firstItem && plannedHomePositionInFile) {
-                    _settingsItem->setInitialHomePositionFromUser(item->coordinate());
+                    settingsItem->setInitialHomePositionFromUser(item->coordinate());
                 } else {
                     if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(item->command()))) {
                         // This needs to be a TakeoffMissionItem
@@ -1701,7 +1701,6 @@ void MissionController::_initAllVisualItems(void)
     // Setup home position at index 0
 
     if (!_settingsItem) {
-        qWarning() << "_initAllVisualItems _settingsItem should already be set";
         _settingsItem = qobject_cast<MissionSettingsItem*>(_visualItems->get(0));
         if (!_settingsItem) {
             qWarning() << "First item not MissionSettingsItem";
