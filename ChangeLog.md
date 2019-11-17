@@ -6,7 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
-* ADSB: Added support for connecting to SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump190 --net' for example.
+* ADSB: Added support for connecting to SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump1090 --net' for example.
 * Toolbar: Scrollable left/right on small screens like phones
 * Plan View: New create plan UI for initial plan creation
 * New Corridor editing tools ui. Includes ability to trace polyline by clicking.
