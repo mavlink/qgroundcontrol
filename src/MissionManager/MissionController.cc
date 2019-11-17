@@ -377,7 +377,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
     }
 
     // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
-    _recalcAllWithClickCoordinate(coordinate);
+    _recalcAllWithCoordinate(coordinate);
 
     if (makeCurrentItem) {
         setCurrentPlanViewIndex(newItem->sequenceNumber(), true);
@@ -392,15 +392,11 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
     return _insertSimpleMissionItemWorker(coordinate, MAV_CMD_NAV_WAYPOINT, visualItemIndex, makeCurrentItem);
 }
 
-VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
+VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _controllerVehicle, _flyView, _settingsItem, this);
+    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _managerVehicle, _flyView, _settingsItem, this);
     newItem->setSequenceNumber(sequenceNumber);
-    if (!newItem->coordinate().isValid()) {
-        newItem->setCoordinate(coordinate);
-    }
-    newItem->setWizardMode(true);
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
@@ -419,8 +415,7 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate coordinat
         _visualItems->insert(visualItemIndex, newItem);
     }
 
-    // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
-    _recalcAllWithClickCoordinate(coordinate);
+    _recalcAll();
 
     if (makeCurrentItem) {
         setCurrentPlanViewIndex(newItem->sequenceNumber(), true);
@@ -466,7 +461,7 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
         return nullptr;
     }
 
-    _insertComplexMissionItemWorker(newItem, visualItemIndex, makeCurrentItem);
+    _insertComplexMissionItemWorker(mapCenterCoordinate, newItem, visualItemIndex, makeCurrentItem);
 
     return newItem;
 }
@@ -486,12 +481,12 @@ VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QStri
         return nullptr;
     }
 
-    _insertComplexMissionItemWorker(newItem, visualItemIndex, makeCurrentItem);
+    _insertComplexMissionItemWorker(QGeoCoordinate(), newItem, visualItemIndex, makeCurrentItem);
 
     return newItem;
 }
 
-void MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem)
+void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
     bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
@@ -538,7 +533,7 @@ void MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* comp
     if(!complexItem->isSimpleItem()) {
         connect(complexItem, &ComplexMissionItem::boundingCubeChanged, this, &MissionController::_complexBoundingBoxChanged);
     }
-    _recalcAll();
+    _recalcAllWithCoordinate(mapCenterCoordinate);
 
     if (makeCurrentItem) {
         setCurrentPlanViewIndex(complexItem->sequenceNumber(), true);
@@ -1649,6 +1644,7 @@ void MissionController::_recalcChildItems(void)
 
 void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoordinate& clickCoordinate)
 {
+    bool foundFirstCoordinate = false;
     QGeoCoordinate firstCoordinate;
 
     if (_settingsItem->coordinate().isValid()) {
@@ -1659,14 +1655,15 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoo
     for (int i=1; i<_visualItems->count(); i++) {
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
-        if (item->specifiesCoordinate()) {
+        if (item->specifiesCoordinate() && item->coordinate().isValid()) {
+            foundFirstCoordinate = true;
             firstCoordinate = item->coordinate();
             break;
         }
     }
 
     // No item specifying a coordinate was found, in this case it we have a clickCoordinate use that
-    if (!firstCoordinate.isValid()) {
+    if (!foundFirstCoordinate) {
         firstCoordinate = clickCoordinate;
     }
 
@@ -1677,11 +1674,10 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoo
     }
 }
 
-/// @param clickCoordinate The location of the user click when inserting a new item
-void MissionController::_recalcAllWithClickCoordinate(QGeoCoordinate& clickCoordinate)
+void MissionController::_recalcAllWithCoordinate(const QGeoCoordinate& coordinate)
 {
     if (!_flyView) {
-        _setPlannedHomePositionFromFirstCoordinate(clickCoordinate);
+        _setPlannedHomePositionFromFirstCoordinate(coordinate);
     }
     _recalcSequence();
     _recalcChildItems();
@@ -1692,7 +1688,7 @@ void MissionController::_recalcAllWithClickCoordinate(QGeoCoordinate& clickCoord
 void MissionController::_recalcAll(void)
 {
     QGeoCoordinate emptyCoord;
-    _recalcAllWithClickCoordinate(emptyCoord);
+    _recalcAllWithCoordinate(emptyCoord);
 }
 
 /// Initializes a new set of mission items
@@ -1707,8 +1703,6 @@ void MissionController::_initAllVisualItems(void)
             return;
         }
     }
-
-    _settingsItem->setHomePositionFromVehicle(_managerVehicle);
 
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::_recalcAll);
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::plannedHomePositionChanged);
@@ -1817,37 +1811,12 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::lastCurrentIndexChanged,  this, &MissionController::resumeMissionIndexChanged);
     connect(_missionManager, &MissionManager::resumeMissionReady,       this, &MissionController::resumeMissionReady);
     connect(_missionManager, &MissionManager::resumeMissionUploadFail,  this, &MissionController::resumeMissionUploadFail);
-    connect(_managerVehicle, &Vehicle::homePositionChanged,             this, &MissionController::_managerVehicleHomePositionChanged);
     connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatus);
     connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
     connect(_managerVehicle, &Vehicle::vehicleTypeChanged,              this, &MissionController::complexMissionItemNamesChanged);
 
-    if (!_masterController->offline()) {
-        _managerVehicleHomePositionChanged();
-    }
-
     emit complexMissionItemNamesChanged();
     emit resumeMissionIndexChanged();
-}
-
-void MissionController::_managerVehicleHomePositionChanged(void)
-{
-    if (_visualItems) {
-        bool currentDirtyBit = dirty();
-
-        MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(_visualItems->get(0));
-        if (settingsItem) {
-            settingsItem->setHomePositionFromVehicle(_managerVehicle);
-        } else {
-            qWarning() << "First item is not MissionSettingsItem";
-        }
-
-        if (!currentDirtyBit) {
-            // Don't let this trip the dirty bit. Otherwise plan will keep getting marked dirty if vehicle home
-            // changes.
-            _visualItems->setDirty(false);
-        }
-    }
 }
 
 void MissionController::_inProgressChanged(bool inProgress)
@@ -1858,8 +1827,8 @@ void MissionController::_inProgressChanged(bool inProgress)
 bool MissionController::_findPreviousAltitude(int newIndex, double* prevAltitude, int* prevAltitudeMode)
 {
     bool        found = false;
-    double      foundAltitude;
-    int         foundAltitudeMode;
+    double      foundAltitude = 0;
+    int         foundAltitudeMode = QGroundControlQmlGlobal::AltitudeModeNone;
 
     if (newIndex > _visualItems->count()) {
         return false;
@@ -1907,9 +1876,8 @@ MissionSettingsItem* MissionController::_addMissionSettings(QmlObjectListModel* 
 {
     qCDebug(MissionControllerLog) << "_addMissionSettings";
 
-    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _flyView, visualItems);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_managerVehicle, _flyView, visualItems);
     visualItems->insert(0, settingsItem);
-    settingsItem->setHomePositionFromVehicle(_managerVehicle);
 
     if (visualItems == _visualItems) {
         _settingsItem = settingsItem;
