@@ -46,11 +46,15 @@ Item {
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrEditingVisuals }
+    QGCDynamicObjectManager { id: _objMgrMouseClick }
 
     Component.onCompleted: {
         addCommonVisuals()
         if (_missionItem.isCurrentItem && map.planView) {
             addEditingVisuals()
+        }
+        if (!_missionItem.launchCoordinate.isValid) {
+            _objMgrMouseClick.createObject(mouseAreaClickComponent, map, false /* addToMap */)
         }
     }
 
@@ -125,6 +129,30 @@ Item {
                     highlightSelected:  true
                     onClicked:          _root.clicked(_missionItem.sequenceNumber)
                 }
+        }
+    }
+
+    // Mouse area to capture launch location click
+    Component {
+        id:  mouseAreaClickComponent
+
+        MouseArea {
+            anchors.fill:   map
+            z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
+
+            readonly property int   _decimalPlaces: 8
+
+            onClicked: {
+                var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+                coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                _missionItem.launchCoordinate = coordinate
+                if (_missionItem.launchTakeoffAtSameLocation) {
+                    _missionItem.wizardMode = false
+                }
+                _objMgrMouseClick.destroyObjects()
+            }
         }
     }
 }

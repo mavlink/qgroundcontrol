@@ -260,7 +260,6 @@ signals:
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
     void _itemCommandChanged(void);
-    void _managerVehicleHomePositionChanged(void);
     void _inProgressChanged(bool inProgress);
     void _currentMissionIndexChanged(int sequenceNumber);
     void _recalcWaypointLines(void);
@@ -278,7 +277,7 @@ private:
     void _init(void);
     void _recalcSequence(void);
     void _recalcChildItems(void);
-    void _recalcAllWithClickCoordinate(QGeoCoordinate& clickCoordinate);
+    void _recalcAllWithCoordinate(const QGeoCoordinate& coordinate);
     void _initAllVisualItems(void);
     void _deinitAllVisualItems(void);
     void _initVisualItem(VisualMissionItem* item);
@@ -308,7 +307,7 @@ private:
     CoordinateVector* _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
     VisualMissionItem* _insertSimpleMissionItemWorker(QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
-    void _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
+    void _insertComplexMissionItemWorker(const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     void _warnIfTerrainFrameUsed(void);
 
 private:

@@ -50,10 +50,9 @@ void TakeoffMissionItem::_init(void)
 {
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
-    if (_settingsItem->coordinate().isValid()) {
-        // Either the user has set a Launch location or it came from a connected vehicle.
-        // Use it as starting point.
-        setCoordinate(_settingsItem->coordinate());
+    QGeoCoordinate homePosition = _vehicle->homePosition();
+    if (homePosition.isValid()) {
+        _settingsItem->setCoordinate(homePosition);
     }
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &TakeoffMissionItem::launchCoordinateChanged);
 
@@ -76,19 +75,11 @@ void TakeoffMissionItem::setLaunchTakeoffAtSameLocation(bool launchTakeoffAtSame
 
 void TakeoffMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (this->coordinate().isValid() || !_vehicle->fixedWing()) {
-        if (coordinate != this->coordinate()) {
-            if (_launchTakeoffAtSameLocation) {
-                setLaunchCoordinate(coordinate);
-            }
-            SimpleMissionItem::setCoordinate(coordinate);
+    if (coordinate != this->coordinate()) {
+        SimpleMissionItem::setCoordinate(coordinate);
+        if (_launchTakeoffAtSameLocation) {
+            _settingsItem->setCoordinate(coordinate);
         }
-    } else {
-        // First time setup for fixed wing
-        if (!launchCoordinate().isValid()) {
-            setLaunchCoordinate(coordinate);
-        }
-        SimpleMissionItem::setCoordinate(launchCoordinate().atDistanceAndAzimuth(60, 0));
     }
 }
 
@@ -99,10 +90,22 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
 
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
-    if (_vehicle->fixedWing()) {
-        setLaunchTakeoffAtSameLocation(!specifiesCoordinate());
+    if (specifiesCoordinate()) {
+        if (_vehicle->fixedWing()) {
+            setLaunchTakeoffAtSameLocation(false);
+        } else {
+            // PX4 specifies a coordinate for takeoff even for non fixed wing. But it makes more sense to not have a coordinate
+            // from and end user standpoint. So even for PX4 we try to keep launch and takeoff at the same position. Unless the
+            // user has moved/loaded launch at a different location than takeoff.
+            if (coordinate().isValid() && _settingsItem->coordinate().isValid()) {
+                setLaunchTakeoffAtSameLocation(coordinate().latitude() == _settingsItem->coordinate().latitude() && coordinate().longitude() == _settingsItem->coordinate().longitude());
+            } else {
+                setLaunchTakeoffAtSameLocation(true);
+            }
+
+        }
     } else {
-        setLaunchTakeoffAtSameLocation(coordinate().latitude() == _settingsItem->coordinate().latitude() && coordinate().longitude() == _settingsItem->coordinate().longitude());
+        setLaunchTakeoffAtSameLocation(true);
     }
 }
 
@@ -122,4 +125,34 @@ bool TakeoffMissionItem::load(const QJsonObject& json, int sequenceNumber, QStri
         _initLaunchTakeoffAtSameLocation();
     }
     return success;
+}
+
+void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordinate)
+{
+    if (!launchCoordinate.isValid()) {
+        return;
+    }
+
+    _settingsItem->setCoordinate(launchCoordinate);
+
+    if (!coordinate().isValid()) {
+        QGeoCoordinate takeoffCoordinate;
+        if (_launchTakeoffAtSameLocation) {
+            takeoffCoordinate = launchCoordinate;
+        } else {
+            double altitude = this->altitude()->rawValue().toDouble();
+            double distance = 0.0;
+
+            if (coordinateHasRelativeAltitude()) {
+                // Offset for fixed wing climb out of 30 degrees
+                if (altitude != 0.0) {
+                    distance = altitude / tan(qDegreesToRadians(30.0));
+                }
+            } else {
+                distance = altitude * 1.5;
+            }
+            takeoffCoordinate = launchCoordinate.atDistanceAndAzimuth(distance, 0);
+        }
+        SimpleMissionItem::setCoordinate(takeoffCoordinate);
+    }
 }
