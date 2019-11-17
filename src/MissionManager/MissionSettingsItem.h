@@ -100,6 +100,7 @@ private slots:
     void _updateAltitudeInCoordinate            (QVariant value);
     void _setHomeAltFromTerrain                 (double terrainAltitude);
     void _setCoordinateWorker                   (const QGeoCoordinate& coordinate);
+    void _updateHomePosition                    (const QGeoCoordinate& homePosition);
 
 private:
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude

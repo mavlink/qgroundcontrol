@@ -17,8 +17,6 @@ import QGroundControl.Palette   1.0
 
 /// The MissionLineView control is used to add lines between mission items
 MapItemView {
-    property bool homePositionValid: true   ///< true: show home position, false: don't show home position
-
     delegate: MapPolyline {
         line.width: 3
         line.color: "#be781c"                           // Hack, can't get palette to work in here
