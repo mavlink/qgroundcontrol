@@ -58,6 +58,13 @@ void TakeoffMissionItem::_init(void)
 
     _initLaunchTakeoffAtSameLocation();
 
+    if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
+        _wizardMode = false;
+        SimpleMissionItem::setCoordinate(homePosition);
+    } else {
+        _wizardMode = true;
+    }
+
     setDirty(false);
 }
 
