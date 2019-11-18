@@ -66,17 +66,14 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                id:                 initialClickLabel
-                text:               missionItem.launchTakeoffAtSameLocation ?
-                                        qsTr("Click in map to set Takeoff location.") :
-                                        qsTr("Click in map to set Launch location.")
+                text:               qsTr("Move 'T' Takeoff to the climbout location.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                visible:            missionItem.isTakeoffItem && !missionItem.launchCoordinate.isValid
+                visible:            !initialClickLabel.visible
             }
 
             QGCLabel {
-                text:               qsTr("Adjust the takeoff completion location by dragging 'T' indicator to the desired location.")
+                text:               qsTr("Ensure clear of obstacles and into the wind.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
@@ -90,6 +87,16 @@ Rectangle {
                     missionItem.wizardMode = false
                     editorRoot.selectNextNotReadyItem()
                 }
+            }
+
+            QGCLabel {
+                id:                 initialClickLabel
+                text:               missionItem.launchTakeoffAtSameLocation ?
+                                        qsTr("Click in map to set planned Takeoff location.") :
+                                        qsTr("Click in map to set planned Launch location.")
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                visible:            missionItem.isTakeoffItem && !missionItem.launchCoordinate.isValid
             }
         }
 
