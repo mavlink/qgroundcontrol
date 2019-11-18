@@ -113,6 +113,7 @@ set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT
 
 add_subdirectory(ui)
 
+add_subdirectory(ADSB)
 add_subdirectory(Airmap)
 add_subdirectory(AnalyzeView)
 add_subdirectory(api)
@@ -148,6 +149,7 @@ target_link_libraries(qgc
 		Qt5::QuickWidgets
 		Qt5::Widgets
 
+                ADSB
 		Airmap
 		AnalyzeView
 		api
