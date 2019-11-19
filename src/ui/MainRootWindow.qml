@@ -193,6 +193,7 @@ ApplicationWindow {
 
     function finishCloseProcess() {
         QGroundControl.linkManager.shutdown()
+        QGroundControl.videoManager.stopVideo();
         _forceClose = true
         mainWindow.close()
     }
