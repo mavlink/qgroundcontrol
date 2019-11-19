@@ -133,6 +133,12 @@ Joystick::~Joystick()
     }
 }
 
+void Joystick::handleManualControlGimbal(float gimbalPitch, float gimbalYaw) {
+    _localPitch += static_cast<double>(gimbalPitch);
+    _localYaw += static_cast<double>(gimbalYaw);
+    emit gimbalControlValue(_localPitch, _localYaw);
+}
+
 void Joystick::_setDefaultCalibration(void) {
     QSettings settings;
     settings.beginGroup(_settingsGroup);
@@ -653,7 +659,7 @@ void Joystick::_handleAxis()
             if(_activeVehicle && _axisCount > 4 && _gimbalEnabled) {
                 //-- TODO: There is nothing consuming this as there are no messages to handle gimbal
                 //   the way MANUAL_CONTROL handles the other channels.
-                emit manualControlGimbal((gimbalPitch + 1.0f) / 2.0f * 90.0f, gimbalYaw * 180.0f);
+                emit manualControlGimbal(gimbalPitch, gimbalYaw);
             }
         }
     }
@@ -673,6 +679,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -696,6 +703,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            connect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
             // FIXME: ****
             //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
@@ -721,6 +729,7 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
