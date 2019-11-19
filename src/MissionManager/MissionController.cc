@@ -1419,7 +1419,21 @@ void MissionController::_recalcMissionFlightStatus()
             _missionFlightStatus.vehicleSpeed = newSpeed;
         }
 
-        // Look for gimbal change
+        // ROI commands cancel out previous gimbal yaw/pitch
+        if (simpleItem) {
+            switch (simpleItem->command()) {
+            case MAV_CMD_NAV_ROI:
+            case MAV_CMD_DO_SET_ROI_LOCATION:
+            case MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET:
+                _missionFlightStatus.gimbalYaw = std::numeric_limits<double>::quiet_NaN();
+                _missionFlightStatus.gimbalPitch = std::numeric_limits<double>::quiet_NaN();
+                break;
+            default:
+                break;
+            }
+        }
+
+        // Look for specific gimbal changes
         double gimbalYaw = item->specifiedGimbalYaw();
         if (!qIsNaN(gimbalYaw)) {
             _missionFlightStatus.gimbalYaw = gimbalYaw;

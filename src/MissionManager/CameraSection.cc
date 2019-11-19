@@ -543,9 +543,7 @@ double CameraSection::specifiedGimbalPitch(void) const
 
 void CameraSection::_updateSpecifiedGimbalYaw(void)
 {
-    if (_specifyGimbal) {
-        emit specifiedGimbalYawChanged(specifiedGimbalYaw());
-    }
+    emit specifiedGimbalYawChanged(specifiedGimbalYaw());
 }
 
 void CameraSection::_updateSpecifiedGimbalPitch(void)
