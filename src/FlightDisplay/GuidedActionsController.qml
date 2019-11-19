@@ -36,7 +36,7 @@ Item {
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
     readonly property string disarmTitle:                   qsTr("Disarm")
-    readonly property string rtlTitle:                      qsTr("RTL")
+    readonly property string rtlTitle:                      qsTr("Return")
     readonly property string takeoffTitle:                  qsTr("Takeoff")
     readonly property string landTitle:                     qsTr("Land")
     readonly property string startMissionTitle:             qsTr("Start Mission")

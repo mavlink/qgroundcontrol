@@ -9,14 +9,16 @@
 
 #pragma once
 
-#include "PlanCreator.h"
+#include "SettingsGroup.h"
 
-class CustomPlanCreator : public PlanCreator
+class ADSBVehicleManagerSettings : public SettingsGroup
 {
     Q_OBJECT
-    
 public:
-    CustomPlanCreator(PlanMasterController* planMasterController, QObject* parent = nullptr);
+    ADSBVehicleManagerSettings(QObject* parent = nullptr);
+    DEFINE_SETTING_NAME_GROUP()
 
-    Q_INVOKABLE void createPlan(const QGeoCoordinate& mapCenterCoord) final;
+    DEFINE_SETTINGFACT(adsbServerConnectEnabled)
+    DEFINE_SETTINGFACT(adsbServerHostAddress)
+    DEFINE_SETTINGFACT(adsbServerPort)
 };

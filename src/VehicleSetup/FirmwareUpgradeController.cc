@@ -319,6 +319,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_kakutef7_default.px4"},
     };
     
+    //////////////////////////////////// Durandal firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgDurandalV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/holybro_durandal-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_durandal-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_durandal-v1_default.px4"},
+    };
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
@@ -406,6 +412,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgKakuteF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgDurandalV1FirmwareArray)/sizeof(rgDurandalV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgDurandalV1FirmwareArray[i];
+        _rgDurandalV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgFMUK66V3FirmwareArray)/sizeof(rgFMUK66V3FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgFMUK66V3FirmwareArray[i];
@@ -485,6 +497,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardIDKakuteF7:
         _rgFirmwareDynamic = _rgKakuteF7Firmware;
+        break;
+    case Bootloader::boardIDDurandalV1:
+        _rgFirmwareDynamic = _rgDurandalV1Firmware;
         break;
     case Bootloader::boardIDFMUK66V3:
         _rgFirmwareDynamic = _rgFMUK66V3Firmware;

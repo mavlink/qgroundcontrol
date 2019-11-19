@@ -80,7 +80,7 @@ MapQuickItem {
             anchors.horizontalCenter:   parent.horizontalCenter
             map:                        _map
             text:                       vehicleLabelText
-            font.pointSize:             ScreenTools.smallFontPointSize
+            font.pointSize:             _adsbVehicle ? ScreenTools.defaultFontPointSize : ScreenTools.smallFontPointSize
             visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
             property string vehicleLabelText: visible ?
                                                   (_adsbVehicle ?
@@ -88,16 +88,6 @@ MapQuickItem {
                                                        (_multiVehicle ? qsTr("Vehicle %1").arg(vehicle.id) : "")) :
                                                   ""
 
-        }
-
-        QGCMapLabel {
-            anchors.top:                vehicleLabel.bottom
-            anchors.horizontalCenter:   parent.horizontalCenter
-            map:                        _map
-            text:                       vehicleLabelText
-            font.pointSize:             ScreenTools.smallFontPointSize
-            visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
-            property string vehicleLabelText: visible && _adsbVehicle ? callsign : ""
         }
     }
 }

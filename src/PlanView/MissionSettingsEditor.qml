@@ -108,30 +108,12 @@ Rectangle {
             }
 
             SectionHeader {
-                id:         missionEndHeader
-                text:       qsTr("Mission End")
-                checked:    true
-            }
-
-            Column {
+                id:             vehicleInfoSectionHeader
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-                spacing:        _margin
-                visible:        missionEndHeader.checked
-
-                QGCCheckBox {
-                    text:       qsTr("Return To Launch")
-                    checked:    missionItem.missionEndRTL
-                    onClicked:  missionItem.missionEndRTL = checked
-                }
-            }
-
-
-            SectionHeader {
-                id:         vehicleInfoSectionHeader
-                text:       qsTr("Vehicle Info")
-                visible:    _offlineEditing && !_waypointsOnlyMode
-                checked:    false
+                text:           qsTr("Vehicle Info")
+                visible:        _offlineEditing && !_waypointsOnlyMode
+                checked:        false
             }
 
             GridLayout {
@@ -192,10 +174,12 @@ Rectangle {
             } // GridLayout
 
             SectionHeader {
-                id:         plannedHomePositionSection
-                text:       qsTr("Planned Home Position")
-                visible:    !_vehicleHasHomePosition
-                checked:    false
+                id:             plannedHomePositionSection
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           qsTr("Planned Home Position")
+                visible:        !_vehicleHasHomePosition
+                checked:        false
             }
 
             Column {

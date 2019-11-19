@@ -30,6 +30,7 @@
 #include "QGCOptions.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "ADSBVehicleManager.h"
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
@@ -73,6 +74,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _followMe               = new FollowMe                  (app, this);
     _videoManager           = new VideoManager              (app, this);
     _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
+    _adsbVehicleManager     = new ADSBVehicleManager        (app, this);
 #if defined(QGC_ENABLE_PAIRING)
     _pairingManager         = new PairingManager            (app, this);
 #endif
@@ -116,6 +118,7 @@ void QGCToolbox::setChildToolboxes(void)
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
     _airspaceManager->setToolbox(this);
+    _adsbVehicleManager->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager->setToolbox(this);
 #endif

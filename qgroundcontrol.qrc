@@ -102,7 +102,6 @@
         <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
         <file alias="QGroundControl/Controls/PIDTuning.qml">src/QmlControls/PIDTuning.qml</file>
         <file alias="QGroundControl/Controls/PlanEditToolbar.qml">src/PlanView/PlanEditToolbar.qml</file>
-        <file alias="QGroundControl/Controls/PlanStartOverlay.qml">src/PlanView/PlanStartOverlay.qml</file>
         <file alias="QGroundControl/Controls/PreFlightCheckButton.qml">src/QmlControls/PreFlightCheckButton.qml</file>
         <file alias="QGroundControl/Controls/PreFlightCheckGroup.qml">src/QmlControls/PreFlightCheckGroup.qml</file>
         <file alias="QGroundControl/Controls/PreFlightCheckModel.qml">src/QmlControls/PreFlightCheckModel.qml</file>
@@ -153,6 +152,7 @@
         <file alias="QGroundControl/Controls/StructureScanMapVisual.qml">src/PlanView/StructureScanMapVisual.qml</file>
         <file alias="QGroundControl/Controls/SubMenuButton.qml">src/QmlControls/SubMenuButton.qml</file>
         <file alias="QGroundControl/Controls/SurveyMapVisual.qml">src/PlanView/SurveyMapVisual.qml</file>
+        <file alias="QGroundControl/Controls/TakeoffItemMapVisual.qml">src/PlanView/TakeoffItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">src/QmlControls/ToolStrip.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemStats.qml">src/PlanView/TransectStyleComplexItemStats.qml</file>
 		<file alias="QGroundControl/Controls/TransectStyleMapVisuals.qml">src/PlanView/TransectStyleMapVisuals.qml</file>
@@ -234,6 +234,7 @@
     <qresource prefix="/json">
         <file alias="APMMavlinkStreamRate.SettingsGroup.json">src/Settings/APMMavlinkStreamRate.SettingsGroup.json</file>
         <file alias="BreachReturn.FactMetaData.json">src/MissionManager/BreachReturn.FactMetaData.json</file>
+        <file alias="ADSBVehicleManager.SettingsGroup.json">src/Settings/ADSBVehicleManager.SettingsGroup.json</file>
         <file alias="App.SettingsGroup.json">src/Settings/App.SettingsGroup.json</file>
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="BrandImage.SettingsGroup.json">src/Settings/BrandImage.SettingsGroup.json</file>

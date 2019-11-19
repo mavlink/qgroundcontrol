@@ -5,15 +5,18 @@ pipeline {
     stage('build') {
       parallel {
 
-        stage('Android Release') {
+        stage('Android 32 bit Release') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
+            CCACHE_CPP2 = '1'
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
+            QMAKE_VER = "5.12.5/android_armv7/bin/qmake"
+            QT_MKSPEC = "android-clang"
+            BITNESS=32
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-android:2019-02-03'
+              image 'mavlink/qgc-build-android:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -34,15 +37,47 @@ pipeline {
           }
         }
 
+        stage('Android 64 bit Release') {
+          environment {
+            CCACHE_BASEDIR = "${env.WORKSPACE}"
+            CCACHE_CPP2 = '1'
+            QGC_CONFIG = 'release'
+            QMAKE_VER = "5.12.5/android_arm64_v8a/bin/qmake"
+            QT_MKSPEC = "android-clang"
+            BITNESS=64
+          }
+          agent {
+            docker {
+              image 'mavlink/qgc-build-android_arm64_v8a:2019-11-12'
+              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+            }
+          }
+          steps {
+            sh 'export'
+            sh 'ccache -z'
+            sh 'git submodule deinit -f .'
+            sh 'git clean -ff -x -d .'
+            sh 'git submodule update --init --recursive --force'
+            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+            //sh 'cd build; make -j`nproc --all`' // FIXME
+            sh 'ccache -s'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
+          }
+        }
+
         stage('Linux Debug') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-02-03'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -67,12 +102,12 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Debug'
-            QT_VERSION = "5.11.0"
+            QT_VERSION = "5.12.5"
             QT_MKSPEC = "gcc_64"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-02-03'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -97,11 +132,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-02-03'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -129,12 +164,12 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Release'
-            QT_VERSION = "5.11.0"
+            QT_VERSION = "5.12.5"
             QT_MKSPEC = "gcc_64"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-02-03'
+              image 'mavlink/qgc-build-linux:2019-11-12'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -190,6 +225,7 @@ pipeline {
           }
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
+            CCACHE_CPP2 = '1'
             CMAKE_BUILD_TYPE = 'Debug'
             QT_VERSION = "5.11.0"
             QT_MKSPEC = "clang_64"
@@ -218,6 +254,7 @@ pipeline {
           }
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
+            CCACHE_CPP2 = '1'
             QGC_CONFIG = 'installer'
             QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
@@ -270,6 +307,7 @@ pipeline {
           }
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
+            CCACHE_CPP2 = '1'
             CMAKE_BUILD_TYPE = 'Release'
             QT_VERSION = "5.11.0"
             QT_MKSPEC = "clang_64"
@@ -295,7 +333,6 @@ pipeline {
   } // stages
 
   environment {
-    CCACHE_CPP2 = '1'
     CCACHE_DIR = '/tmp/ccache'
     QT_FATAL_WARNINGS = '1'
   }
