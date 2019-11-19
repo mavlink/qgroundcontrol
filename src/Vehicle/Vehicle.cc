@@ -656,6 +656,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     if (!_containsLink(link)) {
         _addLink(link);
+        emit auxiliaryLinkAdded(this, link);
     }
 
     //-- Check link status

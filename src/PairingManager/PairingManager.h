@@ -198,6 +198,7 @@ private:
     void                    _createUDPLink              (const QString& name, quint16 port);
     void                    _removeUDPLink              (const QString& name);
     void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
+    void                    _vehicleAuxiliaryLinkAdded  (Vehicle *vehicle, LinkInterface* link);
     void                    _linkInactiveOrDeleted      (LinkInterface* link);
     void                    _autoConnect                ();
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);

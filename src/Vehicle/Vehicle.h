@@ -540,7 +540,7 @@ public:
     Q_ENUM(MavlinkSysStatus)
 
     Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
-    Q_PROPERTY(QString              name                    READ name                                                   CONSTANT)
+    Q_PROPERTY(QString              name                    READ name                                                   NOTIFY priorityLinkNameChanged)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
@@ -1199,6 +1199,7 @@ signals:
     void firmwareCustomVersionChanged(void);
     void gitHashChanged(QString hash);
     void vehicleUIDChanged();
+    void auxiliaryLinkAdded(Vehicle *vehicle, LinkInterface *link);
 
     /// New RC channel values
     ///     @param channelCount Number of available channels, cMaxRcChannels max
