@@ -14,7 +14,6 @@ add_custom_target(PlanViewQml
 		MissionItemStatus.qml
 		MissionSettingsEditor.qml
 		PlanEditToolbar.qml
-		PlanStartOverlay.qml
 		PlanToolBarIndicators.qml
 		PlanToolBar.qml
 		PlanView.qml

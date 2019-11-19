@@ -299,7 +299,8 @@ Item {
             property int vertexIndex
 
             sourceItem: SplitIndicator {
-                z: _zorderSplitHandle
+                z:          _zorderSplitHandle
+                onClicked:  mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
             }
         }
     }
@@ -538,7 +539,7 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace Polygon")
+                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
                     if (_traceMode) {
                         if (mapPolygon.count < 3) {

@@ -127,7 +127,7 @@
         <file alias="pipHide.svg">src/FlightMap/Images/pipHide.svg</file>
         <file alias="pipResize.svg">src/FlightMap/Images/pipResize.svg</file>
         <file alias="Plan.svg">src/ui/toolbar/Images/Plan.svg</file>
-        <file alias="PlanCreator/CustomPlanCreator.png">src/MissionManager/CustomPlanCreator.png</file>
+        <file alias="PlanCreator/BlankPlanCreator.png">src/MissionManager/BlankPlanCreator.png</file>
         <file alias="PlanCreator/CorridorScanPlanCreator.png">src/MissionManager/CorridorScanPlanCreator.png</file>
         <file alias="PlanCreator/StructureScanPlanCreator.png">src/MissionManager/StructureScanPlanCreator.png</file>
         <file alias="PlanCreator/SurveyPlanCreator.png">src/MissionManager/SurveyPlanCreator.png</file>

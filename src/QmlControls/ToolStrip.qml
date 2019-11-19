@@ -27,10 +27,16 @@ Rectangle {
 
     property AbstractButton lastClickedButton: null
 
+    function simulateClick(buttonIndex) {
+        toolStripColumn.children[buttonIndex].checked = true
+        toolStripColumn.children[buttonIndex].clicked()
+    }
+
     // Ensure we don't get narrower than content
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
     signal clicked(int index, bool checked)
+    signal dropped(int index)
 
     function setChecked(idx, check) {
         repeater.itemAt(idx).checked = check
@@ -73,7 +79,7 @@ Rectangle {
                 checked:        modelData.checked !== undefined ? modelData.checked : checked
 
                 ButtonGroup.group: buttonGroup
-                // Only drop pannel and toggleable are checkable
+                // Only drop panel and toggleable are checkable
                 checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
 
                 onClicked: {
@@ -83,6 +89,7 @@ Rectangle {
                     } else if (checked) {
                         var panelEdgeTopPoint = mapToItem(_root, width, 0)
                         dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                        _root.dropped(index)
                     }
                     if(_root && buttonTemplate)
                         _root.lastClickedButton = buttonTemplate

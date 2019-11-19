@@ -36,8 +36,6 @@ private slots:
     void _testLoadJsonSectionAvailable(void);
     void _testEmptyVehicleAPM(void);
     void _testEmptyVehiclePX4(void);
-    void _testAddWayppointAPM(void);
-    void _testAddWayppointPX4(void);
 
 private:
 #if 0

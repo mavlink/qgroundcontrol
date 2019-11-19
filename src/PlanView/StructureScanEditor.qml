@@ -130,8 +130,10 @@ Rectangle {
                 }
 
                 SectionHeader {
-                    id:         scanHeader
-                    text:       qsTr("Scan")
+                    id:             scanHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Scan")
                 }
 
                 Column {
@@ -200,8 +202,10 @@ Rectangle {
                 } // Column - Scan
 
                 SectionHeader {
-                    id:     statsHeader
-                    text:   qsTr("Statistics")
+                    id:             statsHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("Statistics")
                 }
 
                 Grid {

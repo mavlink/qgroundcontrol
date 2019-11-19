@@ -36,7 +36,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include "ADSBVehicle.h"
+#include "ADSBVehicleManager.h"
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
@@ -114,7 +114,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _csvLogTimer(this)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
@@ -298,10 +297,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 
-    connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
-    _adsbTimer.setSingleShot(false);
-    _adsbTimer.start(1000);
-
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
@@ -326,7 +321,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _csvLogTimer(this)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
@@ -3777,20 +3771,32 @@ bool Vehicle::autoDisarm(void)
 
 void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
 {
-    mavlink_adsb_vehicle_t adsbVehicle;
+    mavlink_adsb_vehicle_t adsbVehicleMsg;
     static const int maxTimeSinceLastSeen = 15;
 
-    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicle);
-    if (adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS) {
-        if (_adsbICAOMap.contains(adsbVehicle.ICAO_address)) {
-            if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
-                _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
-            }
-        } else if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
-            ADSBVehicle* vehicle = new ADSBVehicle(adsbVehicle, this);
-            _adsbICAOMap[adsbVehicle.ICAO_address] = vehicle;
-            _adsbVehicles.append(vehicle);
+    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
+    if (adsbVehicleMsg.flags | ADSB_FLAGS_VALID_COORDS && adsbVehicleMsg.tslc <= maxTimeSinceLastSeen) {
+        ADSBVehicle::VehicleInfo_t vehicleInfo;
+
+        vehicleInfo.availableFlags = 0;
+
+        vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
+        vehicleInfo.location.setLatitude(adsbVehicleMsg.lon / 1e7);
+
+        vehicleInfo.callsign = adsbVehicleMsg.callsign;
+        vehicleInfo.availableFlags |= ADSBVehicle::CallsignAvailable;
+
+        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
+            vehicleInfo.altitude = (double)adsbVehicleMsg.altitude / 1e3;
+            vehicleInfo.availableFlags |= ADSBVehicle::AltitudeAvailable;
         }
+
+        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
+            vehicleInfo.heading = (double)adsbVehicleMsg.heading / 100.0;
+            vehicleInfo.availableFlags |= ADSBVehicle::HeadingAvailable;
+        }
+
+        _toolbox->adsbVehicleManager()->adsbVehicleUpdate(vehicleInfo);
     }
 }
 
@@ -3902,11 +3908,11 @@ void Vehicle::_updateHighLatencyLink(bool sendCommand)
     }
 }
 
-void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading)
+void Vehicle::_trafficUpdate(bool /*alert*/, QString /*traffic_id*/, QString /*vehicle_id*/, QGeoCoordinate /*location*/, float /*heading*/)
 {
-    Q_UNUSED(vehicle_id);
-    // qDebug() << "traffic update:" << traffic_id << vehicle_id << heading << location;
-    // TODO: filter based on minimum altitude?
+#if 0
+    // This is ifdef'ed out for now since this code doesn't mesh with the recent ADSB manager changes. Also airmap isn't in any
+    // released build. So not going to waste time trying to fix up unused code.
     if (_trafficVehicleMap.contains(traffic_id)) {
         _trafficVehicleMap[traffic_id]->update(alert, location, heading);
     } else {
@@ -3914,19 +3920,7 @@ void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id,
         _trafficVehicleMap[traffic_id] = vehicle;
         _adsbVehicles.append(vehicle);
     }
-
-}
-void Vehicle::_adsbTimerTimeout()
-{
-    // Remove all expired ADSB vehicle whether from AirMap or ADSB Mavlink
-    for (int i=_adsbVehicles.count()-1; i>=0; i--) {
-        ADSBVehicle* adsbVehicle = _adsbVehicles.value<ADSBVehicle*>(i);
-        if (adsbVehicle->expired()) {
-            qDebug() << "ADSB expired";
-            _adsbVehicles.removeAt(i);
-            adsbVehicle->deleteLater();
-        }
-    }
+#endif
 }
 
 void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)

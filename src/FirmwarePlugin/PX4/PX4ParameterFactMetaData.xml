@@ -650,6 +650,10 @@ Set to 2 to use heading from motion capture</short_desc>
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
     </parameter>
+    <parameter default="0" name="COM_ARM_AUTH_REQ" type="INT32">
+      <short_desc>Require arm authorization to arm</short_desc>
+      <long_desc>The default allows to arm the vehicle without a arm authorization.</long_desc>
+    </parameter>
     <parameter default="1" name="COM_ARM_CHK_ESCS" type="INT32">
       <short_desc>Require all the ESCs to be detected to arm</short_desc>
       <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
@@ -8630,11 +8634,12 @@ is less than 50% of this value</short_desc>
         <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
-    <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
+    <parameter category="System" default="-1" name="SENS_EN_THERMAL" type="INT32">
       <short_desc>Thermal control of sensor temperature</short_desc>
       <values>
         <value code="-1">Thermal control unavailable</value>
         <value code="0">Thermal control off</value>
+        <value code="1">Thermal control enabled</value>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_TRANGER" type="INT32">
@@ -8666,21 +8671,21 @@ is less than 50% of this value</short_desc>
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
-    <parameter default="55.0" name="SENS_IMU_TEMP" type="FLOAT">
+    <parameter category="System" default="55.0" name="SENS_IMU_TEMP" type="FLOAT">
       <short_desc>Target IMU temperature</short_desc>
       <min>0</min>
       <max>85.0</max>
       <unit>C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
+    <parameter category="System" default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
       <short_desc>IMU heater controller integrator gain value</short_desc>
       <min>0</min>
       <max>1.0</max>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
+    <parameter category="System" default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
       <short_desc>IMU heater controller proportional gain value</short_desc>
       <min>0</min>
       <max>2.0</max>
@@ -9127,7 +9132,7 @@ is less than 50% of this value</short_desc>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
-    <parameter default="1442826" name="SENS_TEMP_ID" type="INT32">
+    <parameter category="System" default="0" name="SENS_TEMP_ID" type="INT32">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
     </parameter>
     <parameter default="0" name="SENS_TFMINI_CFG" type="INT32">
@@ -9846,175 +9851,175 @@ is less than 50% of this value</short_desc>
     </parameter>
   </group>
   <group name="Thermal Compensation">
-    <parameter default="0" name="TC_A0_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_A0_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A0_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A0_SCL_0" type="FLOAT">
       <short_desc>Accelerometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A0_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A0_SCL_1" type="FLOAT">
       <short_desc>Accelerometer scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A0_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A0_SCL_2" type="FLOAT">
       <short_desc>Accelerometer scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_A0_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_A0_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_TMIN" type="FLOAT">
       <short_desc>Accelerometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_A0_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_A0_TREF" type="FLOAT">
       <short_desc>Accelerometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X0_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X0_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X0_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X1_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X1_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X1_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X2_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X2_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X2_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X3_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X3_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A0_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A0_X3_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0" name="TC_A1_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_A1_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A1_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A1_SCL_0" type="FLOAT">
       <short_desc>Accelerometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A1_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A1_SCL_1" type="FLOAT">
       <short_desc>Accelerometer scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A1_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A1_SCL_2" type="FLOAT">
       <short_desc>Accelerometer scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_A1_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_A1_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_TMIN" type="FLOAT">
       <short_desc>Accelerometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_A1_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_A1_TREF" type="FLOAT">
       <short_desc>Accelerometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X0_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X0_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X0_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X1_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X1_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X1_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X2_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X2_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X2_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X3_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X3_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A1_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A1_X3_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0" name="TC_A2_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_A2_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A2_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A2_SCL_0" type="FLOAT">
       <short_desc>Accelerometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A2_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A2_SCL_1" type="FLOAT">
       <short_desc>Accelerometer scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_A2_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_A2_SCL_2" type="FLOAT">
       <short_desc>Accelerometer scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_A2_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_A2_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_TMIN" type="FLOAT">
       <short_desc>Accelerometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_A2_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_A2_TREF" type="FLOAT">
       <short_desc>Accelerometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X0_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X0_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X0_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X1_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X1_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X1_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X2_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X2_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X2_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X3_0" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X3_1" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_A2_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_A2_X3_2" type="FLOAT">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
     <parameter default="0" name="TC_A_ENABLE" type="INT32">
@@ -10022,103 +10027,103 @@ is less than 50% of this value</short_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
-    <parameter default="0" name="TC_B0_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_B0_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_B0_SCL" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_B0_SCL" type="FLOAT">
       <short_desc>Barometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="75.0" name="TC_B0_TMAX" type="FLOAT">
+    <parameter category="System" default="75.0" name="TC_B0_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="5.0" name="TC_B0_TMIN" type="FLOAT">
+    <parameter category="System" default="5.0" name="TC_B0_TMIN" type="FLOAT">
       <short_desc>Barometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="40.0" name="TC_B0_TREF" type="FLOAT">
+    <parameter category="System" default="40.0" name="TC_B0_TREF" type="FLOAT">
       <short_desc>Barometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X0" type="FLOAT">
       <short_desc>Barometer offset temperature ^0 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X1" type="FLOAT">
       <short_desc>Barometer offset temperature ^1 polynomial coefficients</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X2" type="FLOAT">
       <short_desc>Barometer offset temperature ^2 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X3" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X3" type="FLOAT">
       <short_desc>Barometer offset temperature ^3 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X4" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X4" type="FLOAT">
       <short_desc>Barometer offset temperature ^4 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B0_X5" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B0_X5" type="FLOAT">
       <short_desc>Barometer offset temperature ^5 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0" name="TC_B1_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_B1_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_B1_SCL" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_B1_SCL" type="FLOAT">
       <short_desc>Barometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="75.0" name="TC_B1_TMAX" type="FLOAT">
+    <parameter category="System" default="75.0" name="TC_B1_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="5.0" name="TC_B1_TMIN" type="FLOAT">
+    <parameter category="System" default="5.0" name="TC_B1_TMIN" type="FLOAT">
       <short_desc>Barometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="40.0" name="TC_B1_TREF" type="FLOAT">
+    <parameter category="System" default="40.0" name="TC_B1_TREF" type="FLOAT">
       <short_desc>Barometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X0" type="FLOAT">
       <short_desc>Barometer offset temperature ^0 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X1" type="FLOAT">
       <short_desc>Barometer offset temperature ^1 polynomial coefficients</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X2" type="FLOAT">
       <short_desc>Barometer offset temperature ^2 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X3" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X3" type="FLOAT">
       <short_desc>Barometer offset temperature ^3 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X4" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X4" type="FLOAT">
       <short_desc>Barometer offset temperature ^4 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B1_X5" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B1_X5" type="FLOAT">
       <short_desc>Barometer offset temperature ^5 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0" name="TC_B2_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_B2_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_B2_SCL" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_B2_SCL" type="FLOAT">
       <short_desc>Barometer scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="75.0" name="TC_B2_TMAX" type="FLOAT">
+    <parameter category="System" default="75.0" name="TC_B2_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="5.0" name="TC_B2_TMIN" type="FLOAT">
+    <parameter category="System" default="5.0" name="TC_B2_TMIN" type="FLOAT">
       <short_desc>Barometer calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="40.0" name="TC_B2_TREF" type="FLOAT">
+    <parameter category="System" default="40.0" name="TC_B2_TREF" type="FLOAT">
       <short_desc>Barometer calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X0" type="FLOAT">
       <short_desc>Barometer offset temperature ^0 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X1" type="FLOAT">
       <short_desc>Barometer offset temperature ^1 polynomial coefficients</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X2" type="FLOAT">
       <short_desc>Barometer offset temperature ^2 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X3" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X3" type="FLOAT">
       <short_desc>Barometer offset temperature ^3 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X4" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X4" type="FLOAT">
       <short_desc>Barometer offset temperature ^4 polynomial coefficient</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_B2_X5" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_B2_X5" type="FLOAT">
       <short_desc>Barometer offset temperature ^5 polynomial coefficient</short_desc>
     </parameter>
     <parameter default="0" name="TC_B_ENABLE" type="INT32">
@@ -10126,175 +10131,175 @@ is less than 50% of this value</short_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
-    <parameter default="0" name="TC_G0_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_G0_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G0_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G0_SCL_0" type="FLOAT">
       <short_desc>Gyro scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G0_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G0_SCL_1" type="FLOAT">
       <short_desc>Gyro scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G0_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G0_SCL_2" type="FLOAT">
       <short_desc>Gyro scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_G0_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_G0_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_TMIN" type="FLOAT">
       <short_desc>Gyro calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_G0_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_G0_TREF" type="FLOAT">
       <short_desc>Gyro calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X0_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X0_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X0_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X1_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X1_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X1_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X2_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X2_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X2_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X3_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X3_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G0_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G0_X3_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0" name="TC_G1_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_G1_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G1_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G1_SCL_0" type="FLOAT">
       <short_desc>Gyro scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G1_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G1_SCL_1" type="FLOAT">
       <short_desc>Gyro scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G1_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G1_SCL_2" type="FLOAT">
       <short_desc>Gyro scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_G1_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_G1_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_TMIN" type="FLOAT">
       <short_desc>Gyro calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_G1_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_G1_TREF" type="FLOAT">
       <short_desc>Gyro calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X0_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X0_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X0_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X1_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X1_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X1_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X2_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X2_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X2_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X3_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X3_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G1_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G1_X3_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0" name="TC_G2_ID" type="INT32">
+    <parameter category="System" default="0" name="TC_G2_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G2_SCL_0" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G2_SCL_0" type="FLOAT">
       <short_desc>Gyro scale factor - X axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G2_SCL_1" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G2_SCL_1" type="FLOAT">
       <short_desc>Gyro scale factor - Y axis</short_desc>
     </parameter>
-    <parameter default="1.0" name="TC_G2_SCL_2" type="FLOAT">
+    <parameter category="System" default="1.0" name="TC_G2_SCL_2" type="FLOAT">
       <short_desc>Gyro scale factor - Z axis</short_desc>
     </parameter>
-    <parameter default="100.0" name="TC_G2_TMAX" type="FLOAT">
+    <parameter category="System" default="100.0" name="TC_G2_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_TMIN" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_TMIN" type="FLOAT">
       <short_desc>Gyro calibration minimum temperature</short_desc>
     </parameter>
-    <parameter default="25.0" name="TC_G2_TREF" type="FLOAT">
+    <parameter category="System" default="25.0" name="TC_G2_TREF" type="FLOAT">
       <short_desc>Gyro calibration reference temperature</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X0_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X0_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X0_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X0_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X0_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X0_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^0 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X1_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X1_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X1_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X1_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X1_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X1_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^1 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X2_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X2_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X2_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X2_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X2_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X2_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^2 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X3_0" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X3_0" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - X axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X3_1" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X3_1" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Y axis</short_desc>
     </parameter>
-    <parameter default="0.0" name="TC_G2_X3_2" type="FLOAT">
+    <parameter category="System" default="0.0" name="TC_G2_X3_2" type="FLOAT">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
     <parameter default="0" name="TC_G_ENABLE" type="INT32">

@@ -111,7 +111,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
             }
 
-            if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) {
+            if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER && (_vehicle->versionCompare(4, 0, 0) >= 0)) {
                 _heliComponent = new APMHeliComponent(_vehicle, this);
                 _heliComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_heliComponent));
