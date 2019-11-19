@@ -42,6 +42,9 @@ Item {
         if (_objMgrEditingVisuals.empty) {
             _objMgrEditingVisuals.createObjects([ takeoffDragComponent, launchDragComponent ], map, false /* addToMap */)
         }
+        if (!_missionItem.launchCoordinate.isValid) {
+            _objMgrMouseClick.createObject(mouseAreaClickComponent, map, false /* addToMap */)
+        }
     }
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
@@ -53,9 +56,6 @@ Item {
         if (_missionItem.isCurrentItem && map.planView) {
             addEditingVisuals()
         }
-        if (!_missionItem.launchCoordinate.isValid) {
-            _objMgrMouseClick.createObject(mouseAreaClickComponent, map, false /* addToMap */)
-        }
     }
 
     Connections {
@@ -66,6 +66,7 @@ Item {
                 addEditingVisuals()
             } else {
                 _objMgrEditingVisuals.destroyObjects()
+                _objMgrMouseClick.destroyObjects()
             }
         }
     }
@@ -139,10 +140,12 @@ Item {
         MouseArea {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
+            visible:        !_missionItem.launchCoordinate.isValid
 
             readonly property int   _decimalPlaces: 8
 
             onClicked: {
+                console.log("mousearea click")
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
