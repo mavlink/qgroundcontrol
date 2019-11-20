@@ -50,19 +50,36 @@ void TakeoffMissionItem::_init(void)
 {
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
-    QGeoCoordinate homePosition = _vehicle->homePosition();
-    if (homePosition.isValid()) {
-        _settingsItem->setCoordinate(homePosition);
-    }
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &TakeoffMissionItem::launchCoordinateChanged);
+
+    if (_flyView) {
+        _initLaunchTakeoffAtSameLocation();
+        return;
+    }
+
+    QGeoCoordinate homePosition = _settingsItem->coordinate();
+    if (!homePosition.isValid()) {
+        Vehicle* activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+        if (activeVehicle) {
+            homePosition = activeVehicle->homePosition();
+            if (homePosition.isValid()) {
+                _settingsItem->setCoordinate(homePosition);
+            }
+        }
+    }
 
     _initLaunchTakeoffAtSameLocation();
 
-    if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
+    if (homePosition.isValid() && coordinate().isValid()) {
+        // Item already full specified, most likely from mission load from storage
         _wizardMode = false;
-        SimpleMissionItem::setCoordinate(homePosition);
     } else {
-        _wizardMode = true;
+        if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
+            _wizardMode = false;
+            SimpleMissionItem::setCoordinate(homePosition);
+        } else {
+            _wizardMode = true;
+        }
     }
 
     setDirty(false);
