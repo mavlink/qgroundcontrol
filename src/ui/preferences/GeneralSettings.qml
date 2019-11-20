@@ -556,8 +556,17 @@ Rectangle {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor
                                 }
-                                QGCLabel { text: qsTr("Show Gimbal Control") }
+                                QGCLabel { text: qsTr("Use Camera Gimbal Control") }
                                 CustomOnOffSwitch {
+                                    checked:    CustomQuickInterface.useEmbeddedGimbal
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.useEmbeddedGimbal = checked
+                                }
+                                QGCLabel {
+                                    visible: !CustomQuickInterface.useEmbeddedGimbal
+                                    text: qsTr("Show Gimbal Control") }
+                                CustomOnOffSwitch {
+                                    visible:    !CustomQuickInterface.useEmbeddedGimbal
                                     checked:    CustomQuickInterface.showGimbalControl
                                     width:      _valueFieldWidth
                                     onClicked:  CustomQuickInterface.showGimbalControl = checked
