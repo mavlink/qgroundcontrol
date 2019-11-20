@@ -185,11 +185,6 @@ MicrohardManager::_updateSettings()
     settings.setValue(kCONN_CH, QString::number(_connectingChannel));
     settings.setValue(kCONN_BW, QString::number(_connectingBandwidth));
     settings.endGroup();
-
-#ifdef QGC_ENABLE_PAIRING
-    emit _toolbox->pairingManager()->pairingKeyChanged();
-    emit _toolbox->pairingManager()->networkIdChanged();
-#endif
 }
 
 //-----------------------------------------------------------------------------
