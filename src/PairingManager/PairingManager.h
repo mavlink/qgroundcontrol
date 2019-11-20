@@ -21,6 +21,7 @@
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
 #include "UDPLink.h"
+#include "Vehicle.h"
 #if defined QGC_ENABLE_NFC
 #include "PairingNFC.h"
 #endif
