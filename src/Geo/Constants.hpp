@@ -7,8 +7,7 @@
  * https://geographiclib.sourceforge.io/
  **********************************************************************/
 
-#if !defined(GEOGRAPHICLIB_CONSTANTS_HPP)
-#define GEOGRAPHICLIB_CONSTANTS_HPP 1
+#pragma once
 
 // This will be overwritten by ./configure
 
@@ -19,8 +18,6 @@
 
 // Undefine HAVE_LONG_DOUBLE if this type is unknown to the compiler
 #define GEOGRAPHICLIB_HAVE_LONG_DOUBLE 1
-
-typedef double real;
 
 // Define WORDS_BIGENDIAN to be 1 if your machine is big endian
 /* #undef WORDS_BIGENDIAN */
@@ -149,18 +146,18 @@ namespace GeographicLib {
 
   public:
     /**
-     * A synonym for Math::degree<real>().
+     * A synonym for Math::degree<double>().
      **********************************************************************/
-    static real degree() { return Math::degree(); }
+    static double degree() { return Math::degree(); }
     /**
      * @return the number of radians in an arcminute.
      **********************************************************************/
-    static real arcminute()
+    static double arcminute()
     { return Math::degree() / 60; }
     /**
      * @return the number of radians in an arcsecond.
      **********************************************************************/
-    static real arcsecond()
+    static double arcsecond()
     { return Math::degree() / 3600; }
 
     /** \name Ellipsoid parameters
@@ -173,9 +170,9 @@ namespace GeographicLib {
     template<typename T> static T WGS84_a()
     { return 6378137 * meter<T>(); }
     /**
-     * A synonym for WGS84_a<real>().
+     * A synonym for WGS84_a<double>().
      **********************************************************************/
-    static real WGS84_a() { return WGS84_a<real>(); }
+    static double WGS84_a() { return WGS84_a<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the flattening of WGS84 ellipsoid (1/298.257223563).
@@ -187,9 +184,9 @@ namespace GeographicLib {
       return 1 / ( T(298257223563LL) / 1000000000 );
     }
     /**
-     * A synonym for WGS84_f<real>().
+     * A synonym for WGS84_f<double>().
      **********************************************************************/
-    static real WGS84_f() { return WGS84_f<real>(); }
+    static double WGS84_f() { return WGS84_f<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the gravitational constant of the WGS84 ellipsoid, \e GM, in
@@ -198,9 +195,9 @@ namespace GeographicLib {
     template<typename T> static T WGS84_GM()
     { return T(3986004) * 100000000 + 41800000; }
     /**
-     * A synonym for WGS84_GM<real>().
+     * A synonym for WGS84_GM<double>().
      **********************************************************************/
-    static real WGS84_GM() { return WGS84_GM<real>(); }
+    static double WGS84_GM() { return WGS84_GM<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the angular velocity of the WGS84 ellipsoid, &omega;, in rad
@@ -209,9 +206,9 @@ namespace GeographicLib {
     template<typename T> static T WGS84_omega()
     { return 7292115 / (T(1000000) * 100000); }
     /**
-     * A synonym for WGS84_omega<real>().
+     * A synonym for WGS84_omega<double>().
      **********************************************************************/
-    static real WGS84_omega() { return WGS84_omega<real>(); }
+    static double WGS84_omega() { return WGS84_omega<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the equatorial radius of GRS80 ellipsoid, \e a, in m.
@@ -219,9 +216,9 @@ namespace GeographicLib {
     template<typename T> static T GRS80_a()
     { return 6378137 * meter<T>(); }
     /**
-     * A synonym for GRS80_a<real>().
+     * A synonym for GRS80_a<double>().
      **********************************************************************/
-    static real GRS80_a() { return GRS80_a<real>(); }
+    static double GRS80_a() { return GRS80_a<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the gravitational constant of the GRS80 ellipsoid, \e GM, in
@@ -230,9 +227,9 @@ namespace GeographicLib {
     template<typename T> static T GRS80_GM()
     { return T(3986005) * 100000000; }
     /**
-     * A synonym for GRS80_GM<real>().
+     * A synonym for GRS80_GM<double>().
      **********************************************************************/
-    static real GRS80_GM() { return GRS80_GM<real>(); }
+    static double GRS80_GM() { return GRS80_GM<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the angular velocity of the GRS80 ellipsoid, &omega;, in rad
@@ -240,7 +237,7 @@ namespace GeographicLib {
      *
      * This is about 2 &pi; 366.25 / (365.25 &times; 24 &times; 3600) rad
      * s<sup>&minus;1</sup>.  365.25 is the number of days in a Julian year and
-     * 365.35/366.25 converts from solar days to sidereal days.  Using the
+     * 365.35/366.25 converts from solar days to sidedouble days.  Using the
      * number of days in a Gregorian year (365.2425) results in a worse
      * approximation (because the Gregorian year includes the precession of the
      * earth's axis).
@@ -248,9 +245,9 @@ namespace GeographicLib {
     template<typename T> static T GRS80_omega()
     { return 7292115 / (T(1000000) * 100000); }
     /**
-     * A synonym for GRS80_omega<real>().
+     * A synonym for GRS80_omega<double>().
      **********************************************************************/
-    static real GRS80_omega() { return GRS80_omega<real>(); }
+    static double GRS80_omega() { return GRS80_omega<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the dynamical form factor of the GRS80 ellipsoid,
@@ -259,9 +256,9 @@ namespace GeographicLib {
     template<typename T> static T GRS80_J2()
     { return T(108263) / 100000000; }
     /**
-     * A synonym for GRS80_J2<real>().
+     * A synonym for GRS80_J2<double>().
      **********************************************************************/
-    static real GRS80_J2() { return GRS80_J2<real>(); }
+    static double GRS80_J2() { return GRS80_J2<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the central scale factor for UTM (0.9996).
@@ -269,9 +266,9 @@ namespace GeographicLib {
     template<typename T> static T UTM_k0()
     {return T(9996) / 10000; }
     /**
-     * A synonym for UTM_k0<real>().
+     * A synonym for UTM_k0<double>().
      **********************************************************************/
-    static real UTM_k0() { return UTM_k0<real>(); }
+    static double UTM_k0() { return UTM_k0<double>(); }
     /**
      * @tparam T the type of the returned value.
      * @return the central scale factor for UPS (0.994).
@@ -279,9 +276,9 @@ namespace GeographicLib {
     template<typename T> static T UPS_k0()
     { return T(994) / 1000; }
     /**
-     * A synonym for UPS_k0<real>().
+     * A synonym for UPS_k0<double>().
      **********************************************************************/
-    static real UPS_k0() { return UPS_k0<real>(); }
+    static double UPS_k0() { return UPS_k0<double>(); }
     ///@}
 
     /** \name SI units
@@ -296,20 +293,20 @@ namespace GeographicLib {
      **********************************************************************/
     template<typename T> static T meter() { return T(1); }
     /**
-     * A synonym for meter<real>().
+     * A synonym for meter<double>().
      **********************************************************************/
-    static real meter() { return meter<real>(); }
+    static double meter() { return meter<double>(); }
     /**
      * @return the number of meters in a kilometer.
      **********************************************************************/
-    static real kilometer()
-    { return 1000 * meter<real>(); }
+    static double kilometer()
+    { return 1000 * meter<double>(); }
     /**
      * @return the number of meters in a nautical mile (approximately 1 arc
      *   minute)
      **********************************************************************/
-    static real nauticalmile()
-    { return 1852 * meter<real>(); }
+    static double nauticalmile()
+    { return 1852 * meter<double>(); }
 
     /**
      * @tparam T the type of the returned value.
@@ -319,26 +316,26 @@ namespace GeographicLib {
      * necessary.
      **********************************************************************/
     template<typename T> static T square_meter()
-    { return meter<real>() * meter<real>(); }
+    { return meter<double>() * meter<double>(); }
     /**
-     * A synonym for square_meter<real>().
+     * A synonym for square_meter<double>().
      **********************************************************************/
-    static real square_meter()
-    { return square_meter<real>(); }
+    static double square_meter()
+    { return square_meter<double>(); }
     /**
      * @return the number of square meters in a hectare.
      **********************************************************************/
-    static real hectare()
-    { return 10000 * square_meter<real>(); }
+    static double hectare()
+    { return 10000 * square_meter<double>(); }
     /**
      * @return the number of square meters in a square kilometer.
      **********************************************************************/
-    static real square_kilometer()
+    static double square_kilometer()
     { return kilometer() * kilometer(); }
     /**
      * @return the number of square meters in a square nautical mile.
      **********************************************************************/
-    static real square_nauticalmile()
+    static double square_nauticalmile()
     { return nauticalmile() * nauticalmile(); }
     ///@}
 
@@ -348,36 +345,36 @@ namespace GeographicLib {
     /**
      * @return the number of meters in an international foot.
      **********************************************************************/
-    static real foot()
-    { return real(254 * 12) / 10000 * meter<real>(); }
+    static double foot()
+    { return double(254 * 12) / 10000 * meter<double>(); }
     /**
      * @return the number of meters in a yard.
      **********************************************************************/
-    static real yard() { return 3 * foot(); }
+    static double yard() { return 3 * foot(); }
     /**
      * @return the number of meters in a fathom.
      **********************************************************************/
-    static real fathom() { return 2 * yard(); }
+    static double fathom() { return 2 * yard(); }
     /**
      * @return the number of meters in a chain.
      **********************************************************************/
-    static real chain() { return 22 * yard(); }
+    static double chain() { return 22 * yard(); }
     /**
      * @return the number of meters in a furlong.
      **********************************************************************/
-    static real furlong() { return 10 * chain(); }
+    static double furlong() { return 10 * chain(); }
     /**
      * @return the number of meters in a statute mile.
      **********************************************************************/
-    static real mile() { return 8 * furlong(); }
+    static double mile() { return 8 * furlong(); }
     /**
      * @return the number of square meters in an acre.
      **********************************************************************/
-    static real acre() { return chain() * furlong(); }
+    static double acre() { return chain() * furlong(); }
     /**
      * @return the number of square meters in a square statute mile.
      **********************************************************************/
-    static real square_mile() { return mile() * mile(); }
+    static double square_mile() { return mile() * mile(); }
     ///@}
 
     /** \name Anachronistic US units
@@ -386,8 +383,8 @@ namespace GeographicLib {
     /**
      * @return the number of meters in a US survey foot.
      **********************************************************************/
-    static real surveyfoot()
-    { return real(1200) / 3937 * meter<real>(); }
+    static double surveyfoot()
+    { return double(1200) / 3937 * meter<double>(); }
     ///@}
   };
 
@@ -413,5 +410,3 @@ namespace GeographicLib {
   };
 
 } // namespace GeographicLib
-
-#endif  // GEOGRAPHICLIB_CONSTANTS_HPP
