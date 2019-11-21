@@ -2768,6 +2768,17 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
         return;
     }
 
+    // check if the link is ours
+    bool found = false;
+    for (int i = 0; i<_links.length(); i++) {
+        if (_links[i] == link) {
+            found = true;
+        }
+    }
+    if (!found) {
+        return;
+    }
+
     emit linksPropertiesChanged();
 
     bool communicationLost = false;
