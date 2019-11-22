@@ -7567,12 +7567,12 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter default="0" name="RTL_TYPE" type="INT32">
       <short_desc>Return type</short_desc>
-      <long_desc>Fly straight to the return location or planned mission landing and land there or use the planned mission to get to those points.</long_desc>
+      <long_desc>Return mode destination and flight path (home location, rally point, mission landing pattern, reverse mission)</long_desc>
       <values>
-        <value code="0">Return home via direct path</value>
-        <value code="1">Return to a planned mission landing, if available, via direct path, else return to home via direct path</value>
-        <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path</value>
-        <value code="3">Return via direct path to closest destination: home, mission landing pattern or safe point</value>
+        <value code="0">Return to closest safe point (home or rally point) via direct path.</value>
+        <value code="1">Return to closest safe point other than home (mission landing pattern or rally point), via direct path. If no mission landing or rally points are defined return home via direct path.</value>
+        <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path. Do not consider rally points.</value>
+        <value code="3">Return via direct path to closest destination: home, start of mission landing pattern or safe point. If the destination is a mission landing pattern, follow the pattern to land.</value>
       </values>
     </parameter>
   </group>
