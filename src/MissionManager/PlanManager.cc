@@ -22,7 +22,7 @@
 // TODO microservice versioning: Figure out how to actually configure these
 #define SERVICE_ID 1
 constexpr uint16_t SERVICE_MIN_VERSION = 1;
-constexpr uint16_t SERVICE_MAX_VERSION = 3;
+constexpr uint16_t SERVICE_MAX_VERSION = 1;
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
@@ -381,7 +381,8 @@ void PlanManager::_requestNextMissionItem(void)
     qCDebug(PlanManagerLog) << QStringLiteral("_requestNextMissionItem %1 sequenceNumber:retry").arg(_planTypeString()) << _itemIndicesToRead[0] << _retryCount;
 
     mavlink_message_t message;
-    if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+    //if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+    if (_serviceVersion > 1) {
         mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                   _dedicatedLink->mavlinkChannel(),
@@ -574,7 +575,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
     mavlink_message_t   messageOut;
-    if (missionItemInt || _vehicle->apmFirmware() /* ArduPilot always expects to get MISSION_ITEM_INT no matter what */) {
+    if (_serviceVersion > 1 || _vehicle->apmFirmware() /* ArduPilot always expects to get MISSION_ITEM_INT no matter what */) {
         mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                _dedicatedLink->mavlinkChannel(),

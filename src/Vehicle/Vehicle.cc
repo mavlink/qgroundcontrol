@@ -822,6 +822,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
         _handleObstacleDistance(message);
         break;
+    case MAVLINK_MSG_ID_MAVLINK_SERVICE_VERSION:
+        _handleServiceVersion(message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
@@ -2835,6 +2838,8 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
         } else if (multiVehicle) {
             qgcApp()->showMessage(tr("Communication lost to vehicle %1").arg(_id));
         }
+        // Communication loss might be because the vehicle rebooted, and hence lost all microservice version information
+        _microserviceVersions.clear();
     }
     if (multiVehicle && (communicationLost || communicationRegained)) {
         commSpeech.append(tr(" to vehicle %1").arg(_id));
@@ -4270,6 +4275,8 @@ void Vehicle::updateFlightDistance(double distance)
 void Vehicle::_handleServiceVersion(const mavlink_message_t &message) {
     mavlink_mavlink_service_version_t serviceVersion;
     mavlink_msg_mavlink_service_version_decode(&message, &serviceVersion);
+
+    qDebug() << "Service ID: " << serviceVersion.service_id << ", selected version: " << serviceVersion.selected_version;
 
     // TODO microservice version: Should I do anything special here to handle unsupported service?
     // I don't think so, because every service will have to handle on its own the case when it just is not
