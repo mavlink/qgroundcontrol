@@ -50,6 +50,9 @@ public:
     Q_PROPERTY(QStringList  bandwidthLabels     READ bandwidthLabels                               NOTIFY bandwidthLabelsChanged)
     Q_PROPERTY(int          channelMin          READ channelMin                                    NOTIFY channelMinChanged)
     Q_PROPERTY(int          channelMax          READ channelMax                                    NOTIFY channelMaxChanged)
+    Q_PROPERTY(int          pairingPower        READ pairingPower                                  CONSTANT)
+    Q_PROPERTY(int          connectingPower     READ connectingPower                               CONSTANT)
+
 
     Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName,
                                                  QString cfgPassword, QString encyrptionKey, QString networkId, int channel, int bandwidth);
@@ -79,8 +82,8 @@ public:
     QStringList bandwidthLabels                 () { return _bandwidthLabels; }
     int         channelMin                      () { return _channelMin; }
     int         channelMax                      () { return _channelMax; }
-    int         pairingPower                    () { return _pairingPower; }
-    int         connectingPower                 () { return _connectingPower; }
+    int         pairingPower                    () const { return _pairingPower; }
+    int         connectingPower                 () const { return _connectingPower; }
     int         getChannelFrequency             (int channel) { return channel - _channelMin + _frequencyStart; }
     void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
@@ -154,8 +157,8 @@ private:
     QString            _encryptionKey;
     QString            _communicationEncryptionKey;
     bool               _usePairingSettings = true;
-    int                _pairingPower = 7;
-    int                _connectingPower = 30;
+    const int          _pairingPower = 7;
+    const int          _connectingPower = 30;
     int                _pairingChannel = DEFAULT_PAIRING_CHANNEL;
     int                _connectingChannel = DEFAULT_PAIRING_CHANNEL;
     int                _connectingBandwidth = DEFAULT_CONNECTING_BANDWIDTH;
