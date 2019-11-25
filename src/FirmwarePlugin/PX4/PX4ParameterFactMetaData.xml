@@ -4545,6 +4545,14 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <unit>deg/s</unit>
       <decimal>1</decimal>
     </parameter>
+    <parameter default="0.08" name="MPC_MAN_Y_TAU" type="FLOAT">
+      <short_desc>Manual yaw rate input filter time constant
+Setting this parameter to 0 disables the filter</short_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter default="3" name="MPC_POS_MODE" type="INT32">
       <short_desc>Manual-Position control sub-mode</short_desc>
       <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX) 3 Smooth position control with maximum acceleration and jerk limits (different algorithm than 1).</long_desc>
