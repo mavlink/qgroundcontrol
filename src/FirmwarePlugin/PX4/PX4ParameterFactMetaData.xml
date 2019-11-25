@@ -1776,6 +1776,10 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <unit>Gauss/s</unit>
       <decimal>6</decimal>
     </parameter>
+    <parameter default="0" name="EKF2_MAG_CHECK" type="INT32">
+      <short_desc>Magnetic field strength test selection</short_desc>
+      <long_desc>When set, the EKF checks the strength of the magnetic field to decide whether the magnetometer data is valid. If GPS data is received, the magnetic field is compared to a World Magnetic Model (WMM), otherwise an average value is used. This check is useful to reject occasional hard iron disturbance.</long_desc>
+    </parameter>
     <parameter category="System" default="0" name="EKF2_MAG_DECL" type="FLOAT" volatile="true">
       <short_desc>Magnetic declination</short_desc>
       <unit>deg</unit>
