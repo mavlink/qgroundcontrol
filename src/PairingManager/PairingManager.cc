@@ -378,6 +378,7 @@ PairingManager::_uploadFinished()
             if (a.length() != 2 || !_device_rsa.verify(a[0].toStdString(), a[1].toStdString())) {
                 qCDebug(PairingManagerLog) << "Failed to verify remote vehicle ID";
                 if (url.contains("/connect")) {
+                    _connectRequests.remove(name);
                     setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
                 } else if (url.contains("/channel")) {
                     setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
