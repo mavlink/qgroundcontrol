@@ -567,9 +567,7 @@ PairingManager::stopConnectingDevice(const QString& name)
 bool
 PairingManager::isDeviceConnecting(const QString& name)
 {
-    bool isConnecting = _devicesToConnect.contains(name) || _connectRequests.contains(name);
-    qCDebug(PairingManagerLog) << "isDeviceConnecting: " << name << " = " << isConnecting;
-    return isConnecting;
+    return _devicesToConnect.contains(name) || _connectRequests.contains(name);
 }
 
 //-----------------------------------------------------------------------------
