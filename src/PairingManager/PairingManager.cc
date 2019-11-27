@@ -982,7 +982,7 @@ void
 PairingManager::_writeJson(const QJsonDocument& jsonDoc, const QString& name)
 {
     QString val = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
-    qCDebug(PairingManagerLog) << "Write json " << _removeRSAkey(val);
+    qCDebug(PairingManagerLog) << "Write json" << name << _removeRSAkey(val);
     QString enc = QString::fromStdString(_aes_config.encrypt(val.toStdString()));
 
     QFile file(_pairingCacheFile(name));
@@ -1320,14 +1320,16 @@ PairingManager::disconnectDevice(const QString& name)
     }
 
     _removeUDPLink(name);
-    _updateConnectedDevices();
 
     if (_connectedDevices.empty() && _devicesToConnect.empty()) {
         _resetMicrohardModem();
     }
+
     if (!uploading) {
         _disconnectCompleted(name);
     }
+
+    _updateConnectedDevices();
 }
 
 //-----------------------------------------------------------------------------
