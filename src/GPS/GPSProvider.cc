@@ -23,7 +23,7 @@
 #include "Drivers/src/base_station.h"
 #include "definitions.h"
 
-//#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
+#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
                                //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc
 
 

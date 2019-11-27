@@ -11,7 +11,7 @@
 #include "FactSystem.h"
 #include "FirmwarePluginManager.h"
 #include "AudioOutput.h"
-#ifndef __mobile__
+#ifndef __ios__
 #include "GPSManager.h"
 #endif
 #include "JoystickManager.h"
@@ -59,7 +59,7 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
     _audioOutput            = new AudioOutput               (app, this);
     _factSystem             = new FactSystem                (app, this);
     _firmwarePluginManager  = new FirmwarePluginManager     (app, this);
-#ifndef __mobile__
+#ifndef __ios__
     _gpsManager             = new GPSManager                (app, this);
 #endif
     _imageProvider          = new QGCImageProvider          (app, this);
@@ -102,7 +102,7 @@ void QGCToolbox::setChildToolboxes(void)
     _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);
     _firmwarePluginManager->setToolbox(this);
-#ifndef __mobile__
+#ifndef __ios__
     _gpsManager->setToolbox(this);
 #endif
     _imageProvider->setToolbox(this);

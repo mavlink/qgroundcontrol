@@ -13,7 +13,9 @@
 #include <QString>
 #include <QThread>
 #include <QByteArray>
-#include <QSerialPort>
+//#include <QSerialPort>
+#include "qserialport.h"
+
 
 #include <atomic>
 
