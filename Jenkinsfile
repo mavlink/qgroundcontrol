@@ -150,7 +150,8 @@ pipeline {
               sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
             }
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-            sh 'cd build; make -j`nproc --all`'
+            //sh 'cd build; make -j`nproc --all`' // TODO: increase slave memory
+            sh 'cd build; make'
             sh 'ccache -s'
           }
           post {
