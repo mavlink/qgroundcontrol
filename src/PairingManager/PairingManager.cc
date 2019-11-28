@@ -84,7 +84,7 @@ PairingManager::setUsePairing(bool set)
     }
 
     _toolbox->microhardManager()->updateSettings();
-    if (videoCanRestart()) {
+    if (!_usePairing || !_connectedDevices.empty()) {
         _toolbox->videoManager()->startVideo();
     }
     emit usePairingChanged();
@@ -199,6 +199,10 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
 {
     Q_UNUSED(vehicleID)
 
+    if (link == nullptr) {
+        return;
+    }
+
     if (!active) {
         _linkInactiveOrDeleted(link);
     }
@@ -208,6 +212,9 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
 void
 PairingManager::_linkInactiveOrDeleted(LinkInterface* link)
 {
+    if (link == nullptr) {
+        return;
+    }
     QMapIterator<QString, LinkInterface*> i(_connectedDevices);
     while (i.hasNext()) {
         i.next();
@@ -229,9 +236,21 @@ PairingManager::_createUDPLink(const QString& name, quint16 port)
     udpConfig->setLocalPort(port);
     udpConfig->setDynamic(true);
     SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);
+    if (linkConfig.isNull()) {
+        return;
+    }
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
+    if (link == nullptr) {
+        return;
+    }
     connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged, Qt::QueuedConnection);
     _connectedDevices[name] = link;
+
+    QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+    for (int i=0; i<vehicles->count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        connect(vehicle, &Vehicle::auxiliaryLinkAdded, this, &PairingManager::_vehicleAuxiliaryLinkAdded);
+    }
 
     _updateConnectedDevices();
 }
@@ -245,6 +264,21 @@ PairingManager::_removeUDPLink(const QString& name)
         _connectedDevices.remove(name);
         _toolbox->linkManager()->disconnectLink(link);
         _toolbox->videoManager()->stopVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_vehicleAuxiliaryLinkAdded(Vehicle *vehicle, LinkInterface* link)
+{
+    QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+    while (i.hasNext()) {
+        i.next();
+        if (i.value() == link) {
+            // We want our link to be priority link
+            _toolbox->linkManager()->disconnectLink(vehicle->priorityLink());
+            break;
+        }
     }
 }
 

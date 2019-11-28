@@ -115,6 +115,7 @@ protected:
     QString         _videoSourceID;
     bool            _fullScreen             = false;
     Vehicle*        _activeVehicle          = nullptr;
+    bool            _videoStarted           = false;
 };
 
 #endif
