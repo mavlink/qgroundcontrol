@@ -285,7 +285,7 @@ void QmlObjectListModel::clearAndDeleteContents()
     endResetModel();
 }
 
-void QmlObjectListModel::beginReset(void)
+void QmlObjectListModel::beginReset()
 {
     if (_externalBeginResetModel) {
         qWarning() << "QmlObjectListModel::beginReset already set";
@@ -294,7 +294,7 @@ void QmlObjectListModel::beginReset(void)
     beginResetModel();
 }
 
-void QmlObjectListModel::endReset(void)
+void QmlObjectListModel::endReset()
 {
     if (!_externalBeginResetModel) {
         qWarning() << "QmlObjectListModel::endReset begin not set";
