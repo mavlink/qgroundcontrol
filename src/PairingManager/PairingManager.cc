@@ -413,7 +413,6 @@ PairingManager::_uploadFinished()
                 qCDebug(PairingManagerLog) << "Connection rejected.";
             }
             _connectRequests.remove(name);
-            emit deviceListChanged();
         } else if (map["CMD"] == "disconnect") {
             if (map["RES"] == "accepted") {
                 setPairingStatus(Disconnected, tr("Disconnected %1").arg(name));
@@ -470,6 +469,7 @@ PairingManager::_uploadFinished()
             setPairingStatus(PairingIdle, "");
         }
     }
+    emit deviceListChanged();
     reply->deleteLater();
     if (removeTempFile) {
         QFile file(_pairingCacheFile(name));
