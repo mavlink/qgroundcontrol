@@ -20,13 +20,13 @@ Vagrant.configure(2) do |config|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["modifyvm", :id, "--memory", "4096"]
+    vb.customize ["modifyvm", :id, "--memory", "6144"]
     vb.customize ["modifyvm", :id, "--cpus", "1"]
     vb.gui = true
   end
   ["vmware_fusion", "vmware_workstation"].each do |p|
     config.vm.provider p do |v|
-      v.vmx["memsize"] = "4096"
+      v.vmx["memsize"] = "6144"
       v.vmx["numvcpus"] = "1"
       v.gui = true
     end
