@@ -8061,20 +8061,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO0_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO0_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO0_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="1" name="CAL_GYRO1_EN" type="INT32">
       <short_desc>Gyro 1 enabled</short_desc>
@@ -8085,20 +8076,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO1_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO1_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO1_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="1" name="CAL_GYRO2_EN" type="INT32">
       <short_desc>Gyro 2 enabled</short_desc>
@@ -8109,20 +8091,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO2_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO2_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO2_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="0" name="CAL_GYRO_PRIME" type="INT32">
       <short_desc>Primary gyro ID</short_desc>
