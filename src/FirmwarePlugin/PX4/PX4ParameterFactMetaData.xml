@@ -10314,17 +10314,6 @@ is less than 50% of this value</short_desc>
       <min>1</min>
       <max>125</max>
     </parameter>
-    <parameter default="1000000" name="ESC_BITRATE" type="INT32">
-      <short_desc>UAVCAN CAN bus bitrate</short_desc>
-      <min>20000</min>
-      <max>1000000</max>
-    </parameter>
-    <parameter default="120" name="ESC_NODE_ID" type="INT32">
-      <short_desc>UAVCAN Node ID</short_desc>
-      <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
-      <min>1</min>
-      <max>125</max>
-    </parameter>
     <parameter default="1000000" name="UAVCAN_BITRATE" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
