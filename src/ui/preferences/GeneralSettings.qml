@@ -257,7 +257,10 @@ Rectangle {
                                     visible:    _usePairing.visible && QGroundControl.supportsPairing
                                     property Fact _usePairing: QGroundControl.settingsManager.appSettings.usePairing
                                 }
-
+                                FactCheckBox {
+                                    text:       qsTr("Display MGRS coordinates")
+                                    fact:       QGroundControl.settingsManager.appSettings.displayMGRSCoordinates
+                                }
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
