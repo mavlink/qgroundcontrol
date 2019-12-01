@@ -28,9 +28,9 @@ static bool read_attribute_str(QDomNode& node, const char* tagName, QString& res
 {
     QDomNamedNodeMap attrs = node.attributes();
     if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue();
+    QDomNode n = attrs.namedItem(tagName);
+    if (n.isNull()) return false;
+    result = n.nodeValue();
     return true;
 }
 
@@ -39,9 +39,20 @@ static bool read_attribute_int(QDomNode& node, const char* tagName, int& result)
 {
     QDomNamedNodeMap attrs = node.attributes();
     if (!attrs.count()) return false;
-    QDomNode subNode = attrs.namedItem(tagName);
-    if (subNode.isNull()) return false;
-    result = subNode.nodeValue().toInt();
+    QDomNode n = attrs.namedItem(tagName);
+    if (n.isNull()) return false;
+    result = n.nodeValue().toInt();
+    return true;
+}
+
+
+static bool read_attribute_bool(QDomNode& node, const char* tagName, bool& result)
+{
+    QDomNamedNodeMap attrs = node.attributes();
+    if (!attrs.count()) return false;
+    QDomNode n = attrs.namedItem(tagName);
+    if (n.isNull()) return false;
+    result = (n.nodeValue().toLower() == "true");
     return true;
 }
 
@@ -60,6 +71,15 @@ static bool read_value_int(QDomNode& node, const char* tagName, int& result)
     QDomElement e = node.firstChildElement(tagName);
     if (e.isNull()) return false;
     result = e.text().toInt();
+    return true;
+}
+
+
+static bool read_value_bool(QDomNode& node, const char* tagName, bool& result)
+{
+    QDomElement e = node.firstChildElement(tagName);
+    if (e.isNull()) return false;
+    result = (e.text().toLower() == "true");
     return true;
 }
 
@@ -145,8 +165,6 @@ void ComponentControl::_httpDownloadFinished()
         return;
     }
 
-    qCDebug(ComponentManagerLog) << "$$$$" << "Downloading definition file finished";
-
     int err = reply->error();
     int http_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     QByteArray data = reply->readAll();
@@ -154,15 +172,18 @@ void ComponentControl::_httpDownloadFinished()
         data.append("\n");
     } else {
         data.clear();
-        qWarning() << "$$$$" << QString("Definition file download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
+        qWarning() << "$$$$" << QString("Error: Definition file download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
         return;
     }
 
-    if (data.size()) {
-        _loadComponentDefinitionFile(data);
-    } else {
-        qCDebug(ComponentManagerLog) << "$$$$" << "Empty definition file";
+    if (!data.size()) {
+        qCDebug(ComponentManagerLog) << "$$$$" << "Error: Definition file is empty";
+        return;
     }
+
+    qCDebug(ComponentManagerLog) << "$$$$" << "Downloading definition file DONE";
+
+    _loadComponentDefinitionFile(data);
 }
 
 
@@ -177,7 +198,7 @@ bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
 
     //-- Read it
     if(!doc.setContent(bytes, false, &errorMsg, &errorLine)) {
-        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to parse definition file on line:" << errorLine;
+        qCDebug(ComponentManagerLog) << "$$$$" << "Error: Unable to parse definition file, error on line:" << errorLine;
         qCDebug(ComponentManagerLog) << "$$$$" << errorMsg;
         return false;
     }
@@ -185,14 +206,14 @@ bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
     //-- Does it have groups?
     QDomNodeList groupElements = doc.elementsByTagName("group");
     if (!groupElements.size()) {
-        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to load component group elements from definition file";
+        qCDebug(ComponentManagerLog) << "$$$$" << "Error: Unable to load group elements from definition file";
         return false;
     }
 
     //-- Does it have parameters?
     QDomNodeList parameterElements = doc.elementsByTagName("parameter");
     if (!parameterElements.size()) {
-        qCDebug(ComponentManagerLog) << "$$$$" << "Unable to load component parameter elements from definition file";
+        qCDebug(ComponentManagerLog) << "$$$$" << "Error: Unable to load parameter elements from definition file";
         return false;
     }
 
@@ -244,17 +265,29 @@ bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
             if (groupMap[groupName].contains(factName)) p.group = groupName;
         }
         if (!p.group.length()) {
-            continue; // it must be a member of a group
+            continue; // it must be member of a group
         }
         if (!read_attribute_str(parameterNode, "dispname", p.displayName)) {
             p.displayName = factName;
         }
-        if (!read_attribute_int(parameterNode, "default", p.defaultValue)) {
-            p.defaultValue = 0;
+        if (!read_attribute_bool(parameterNode, "hide", p.hide)) {
+            p.hide = false;
         }
         read_value_str(parameterNode, "short_desc", p.shortDescription);
         read_value_str(parameterNode, "long_desc", p.longDescription);
+        if (!read_value_bool(parameterNode, "reboot_required", p.rebootRequired)) {
+            p.rebootRequired = false;
+        }
+        if (!read_value_bool(parameterNode, "read_only", p.readOnly)) {
+            p.readOnly = false;
+        }
         read_value_str(parameterNode, "unit", p.unit);
+        if (read_value_int(parameterNode, "default", p.defaultValue)) {
+            p.defaultValueAvailable = true;
+        } else {
+            p.defaultValue = 0;
+            p.defaultValueAvailable = false;
+        }
         if (!read_value_int(parameterNode, "min", p.minValue)) {
             p.minValue = p.defaultValue;
         }
@@ -262,10 +295,10 @@ bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
             p.maxValue = p.defaultValue;
         }
         if (p.minValue > p.maxValue) {
-            continue; // this doesn't make sense, we allow min = max however!
+            continue; // min > max doesn't make sense, we allow min = max however!
         }
         if (p.defaultValue < p.minValue || p.defaultValue > p.maxValue) {
-            continue;
+            continue; // default must be in range
         }
         if (!read_value_int(parameterNode, "increment", p.increment)) {
             p.increment = 1;
@@ -296,14 +329,16 @@ bool ComponentControl::_loadComponentDefinitionFile(QByteArray& bytes)
 
     //TODO: error handling if something not ok in parsing
 
+    qCDebug(ComponentManagerLog) << "$$$$" << "Parsing definition file DONE";
+
     //-- Be happy
     _ok = true;
     _componentInfoGroupMap = groupMap;
     _componentInfoParameterMap = parameterMap;
 
     //-- If this is new, cache it
-    // TODO: we currently don't do chaing, but just save it for inspection
-    QString _cacheFile = QString("C:/Users/Olli/Documents/GitHub/test-%1.xml").arg(_compId);
+    // TODO: we currently don't do caching
+    QString _cacheFile = QString("C:/Users/Olli/Documents/GitHub/test-%1.xml").arg(_compId); //OW !!!
     bool _cached = false;
     if (!_cached) {
         QFile file(_cacheFile);
@@ -373,7 +408,7 @@ void ComponentManager::_componentInfoRequestTimerTimeout(void)
         _sendComponentInfoRequest(MAV_COMP_ID_ALL);
         _componentInfoRequestTimer.start();
     } else {
-        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION requesting stopped, receivedcount: " << _componentControlMap.size();
+        qCDebug(ComponentManagerLog) << "!!!!" << "COMPONENT_INFORMATION request stopped, receivedcount: " << _componentControlMap.size();
     }
 }
 

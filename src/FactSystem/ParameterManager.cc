@@ -1792,18 +1792,23 @@ void ParameterManager::_updateAllComponentCategoryMaps(void)
                     newGroupMap[tr("Misc")] += factName;
                 } else {
                     ComponentControl::ComponentParameterElement_t& p = _vehicle->componentManager()->getComponentInfoParameterMap(compId)[factName];
+                    if (p.hide) continue;
+
                     newGroupMap[p.group ] += factName;
 
                     // modify fact's meta data
                     Fact* fact = _mapParameterName2Variant[compId][factName].value<Fact*>();
                     FactMetaData* factMetaData = fact->metaData();
 
+                    factMetaData->setDisplayName(p.displayName);
                     if (p.shortDescription.length()) factMetaData->setShortDescription(p.shortDescription);
                     if (p.longDescription.length()) factMetaData->setLongDescription(p.longDescription);
                     if (p.unit.length()) factMetaData->setRawUnits(p.unit);
-                    factMetaData->setRawDefaultValue(p.defaultValue);
+                    factMetaData->setVehicleRebootRequired(p.rebootRequired);
+                    factMetaData->setReadOnly(p.readOnly);
                     factMetaData->setRawMin(p.minValue);
                     factMetaData->setRawMax(p.maxValue);
+                    if (p.defaultValueAvailable) factMetaData->setRawDefaultValue(p.defaultValue); //must come after setRawMin/Max
                     factMetaData->setRawIncrement(p.increment);
                     factMetaData->setDecimalPlaces(p.decimal);
 

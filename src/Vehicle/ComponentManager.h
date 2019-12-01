@@ -43,10 +43,14 @@ public:
         QString                     group;
         FactMetaData::ValueType_t   factType;
         QString                     displayName;
+        bool                        hide;
         QString                     shortDescription;
         QString                     longDescription;
+        bool                        rebootRequired;
+        bool                        readOnly;
         QString                     unit;
-        int                         defaultValue;
+        bool                        defaultValueAvailable;
+        int                         defaultValue; //TODO: these may also be float
         int                         minValue;
         int                         maxValue;
         int                         increment;

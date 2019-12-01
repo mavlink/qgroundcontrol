@@ -20,6 +20,7 @@
 #include "FactSystem.h"
 #include "MAVLinkProtocol.h"
 #include "AutoPilotPlugin.h"
+#include "QGCMAVLink.h"
 #include "Vehicle.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)

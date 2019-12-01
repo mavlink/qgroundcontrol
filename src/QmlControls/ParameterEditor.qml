@@ -23,7 +23,7 @@ import QGroundControl.FactControls  1.0
 Item {
     id:         _root
 
-    property Fact   _editorDialogFact: Fact { }
+    property Fact   _editorDialogFact:  Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10 // Dynamic adjusted at runtime
     property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
@@ -242,8 +242,9 @@ Item {
 
                 QGCLabel {
                     id:     nameLabel
-                    width:  ScreenTools.defaultFontPixelWidth  * 20
-                    text:   factRow.modelFact.name
+                    //TODO: how to adjust width dynamically
+                    width:  (factRow.modelFact.displayName.length > 0) ? ScreenTools.defaultFontPixelWidth  * 25 : ScreenTools.defaultFontPixelWidth  * 20
+                    text:   (factRow.modelFact.displayName.length > 0) ? factRow.modelFact.displayName : factRow.modelFact.name
                     clip:   true
                 }
 
@@ -260,7 +261,7 @@ Item {
                 }
 
                 Component.onCompleted: {
-                    if(_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
+                    if (_rowWidth < factRow.width + ScreenTools.defaultFontPixelWidth) {
                         _rowWidth = factRow.width + ScreenTools.defaultFontPixelWidth
                     }
                 }

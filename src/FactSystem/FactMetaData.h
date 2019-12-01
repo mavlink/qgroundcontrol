@@ -109,6 +109,7 @@ public:
     bool            readOnly                (void) const { return _readOnly; }
     bool            writeOnly               (void) const { return _writeOnly; }
     bool            volatileValue           (void) const { return _volatile; }
+    QString         displayName             (void) const { return _displayName; }
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
     /// NaN for no increment available.
@@ -143,6 +144,7 @@ public:
     void setReadOnly                (bool bValue)                       { _readOnly = bValue; }
     void setWriteOnly               (bool bValue)                       { _writeOnly = bValue; }
     void setVolatileValue           (bool bValue);
+    void setDisplayName             (const QString& name)               { _displayName = name; }
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -259,6 +261,7 @@ private:
     bool            _readOnly;
     bool            _writeOnly;
     bool            _volatile;
+    QString         _displayName;
 
     // Exact conversion constants
     static const struct UnitConsts_s {

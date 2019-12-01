@@ -754,3 +754,15 @@ void Fact::_setIgnoreQGCRebootRequired(bool ignore)
 {
     _ignoreQGCRebootRequired = ignore;
 }
+
+QString Fact::displayName(void) const
+{
+/*
+    if (_metaData) {
+        if (_metaData->displayName().length() > 0) return _metaData->displayName();
+    }
+    return _name;
+*/
+    if (_metaData) return _metaData->displayName();
+    return QString();
+}

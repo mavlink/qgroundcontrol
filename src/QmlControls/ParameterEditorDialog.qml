@@ -36,6 +36,8 @@ QGCViewDialog {
     property bool   _editingParameter:          fact.componentId != 0
     property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI || !_editingParameter
     property bool   _allowDefaultReset:         fact.defaultValueAvailable && (QGroundControl.corePlugin.showAdvancedUI || !_editingParameter)
+    property bool   _displayNameAvailable:      fact.displayName != "" //this implicitely indicates it came from an xml
+    property bool   _activeVehicleIsArmed:      QGroundControl.multiVehicleManager.activeVehicle.armed
 
     ParameterEditorController { id: controller; }
 
@@ -111,6 +113,11 @@ QGCViewDialog {
                 color:      qgcPal.warningText
             }
 
+            QGCLabel {
+                visible:    _displayNameAvailable
+                text:       fact.displayName + ":"
+            }
+
             RowLayout {
                 spacing:        ScreenTools.defaultFontPixelWidth
                 anchors.left:   parent.left
@@ -130,7 +137,7 @@ QGCViewDialog {
                 }
 
                 QGCButton {
-                    visible:    _allowDefaultReset
+                    visible:    !_displayNameAvailable && _allowDefaultReset
                     text:       qsTr("Reset to default")
 
                     onClicked: {
@@ -196,7 +203,7 @@ QGCViewDialog {
                 id:         longDescriptionLabel
                 width:      parent.width
                 wrapMode:   Text.WordWrap
-                visible:    fact.longDescription != ""
+                visible:    _longDescriptionAvailable
                 text:       fact.longDescription
             }
 
@@ -240,7 +247,7 @@ QGCViewDialog {
                 wrapMode:   Text.WordWrap
                 text:       qsTr("Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
                             qsTr("Make sure you know what you are doing and double-check your values before Save!")
-                visible:    fact.componentId != -1
+                visible:    (fact.componentId != -1) && _activeVehicleIsArmed
             }
 
             QGCCheckBox {
@@ -249,10 +256,23 @@ QGCViewDialog {
                 text:       qsTr("Force save (dangerous!)")
             }
 
+            // _displayNameAvailable = true
+            QGCButton {
+                visible:    _displayNameAvailable && _allowDefaultReset
+                text:       qsTr("Reset to default")
+
+                onClicked: {
+                    fact.value = fact.defaultValue
+                    fact.valueChanged(fact.value)
+                    hideDialog()
+                }
+            }
+
+            // _displayNameAvailable = false
             Row {
                 width:      parent.width
                 spacing:    ScreenTools.defaultFontPixelWidth / 2
-                visible:    showRCToParam || factCombo.visible || bitmaskColumn.visible
+                visible:    !_displayNameAvailable && (showRCToParam || factCombo.visible || bitmaskColumn.visible)
 
                 Rectangle {
                     height: 1
@@ -277,7 +297,7 @@ QGCViewDialog {
             // Checkbox to allow manual entry of enumerated or bitmask parameters
             QGCCheckBox {
                 id:         manualEntry
-                visible:    _advanced.checked && (factCombo.visible || bitmaskColumn.visible)
+                visible:    !_displayNameAvailable && (_advanced.checked && (factCombo.visible || bitmaskColumn.visible))
                 text:       qsTr("Manual Entry")
 
                 onClicked: {
@@ -288,7 +308,7 @@ QGCViewDialog {
             QGCButton {
                 text:           qsTr("Set RC to Param...")
                 width:          _editFieldWidth
-                visible:        _advanced.checked && !validate && showRCToParam
+                visible:        !_displayNameAvailable && (_advanced.checked && !validate && showRCToParam)
                 onClicked:      controller.setRCToParam(fact.name)
             }
         } // Column
