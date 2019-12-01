@@ -29,7 +29,7 @@ public:
     QGeoCoordinate  launchCoordinate            (void) const { return _settingsItem->coordinate(); }
     bool            launchTakeoffAtSameLocation (void) const { return _launchTakeoffAtSameLocation; }
 
-    void setLaunchCoordinate            (const QGeoCoordinate& launchCoordinate) { _settingsItem->setCoordinate(launchCoordinate); }
+    void setLaunchCoordinate            (const QGeoCoordinate& launchCoordinate);
     void setLaunchTakeoffAtSameLocation (bool launchTakeoffAtSameLocation);
 
     static bool isTakeoffCommand(MAV_CMD command);

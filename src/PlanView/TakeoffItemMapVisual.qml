@@ -42,10 +42,14 @@ Item {
         if (_objMgrEditingVisuals.empty) {
             _objMgrEditingVisuals.createObjects([ takeoffDragComponent, launchDragComponent ], map, false /* addToMap */)
         }
+        if (!_missionItem.launchCoordinate.isValid) {
+            _objMgrMouseClick.createObject(mouseAreaClickComponent, map, false /* addToMap */)
+        }
     }
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrEditingVisuals }
+    QGCDynamicObjectManager { id: _objMgrMouseClick }
 
     Component.onCompleted: {
         addCommonVisuals()
@@ -62,6 +66,7 @@ Item {
                 addEditingVisuals()
             } else {
                 _objMgrEditingVisuals.destroyObjects()
+                _objMgrMouseClick.destroyObjects()
             }
         }
     }
@@ -125,6 +130,32 @@ Item {
                     highlightSelected:  true
                     onClicked:          _root.clicked(_missionItem.sequenceNumber)
                 }
+        }
+    }
+
+    // Mouse area to capture launch location click
+    Component {
+        id:  mouseAreaClickComponent
+
+        MouseArea {
+            anchors.fill:   map
+            z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
+            visible:        !_missionItem.launchCoordinate.isValid
+
+            readonly property int   _decimalPlaces: 8
+
+            onClicked: {
+                console.log("mousearea click")
+                var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+                coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+                coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+                coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+                _missionItem.launchCoordinate = coordinate
+                if (_missionItem.launchTakeoffAtSameLocation) {
+                    _missionItem.wizardMode = false
+                }
+                _objMgrMouseClick.destroyObjects()
+            }
         }
     }
 }

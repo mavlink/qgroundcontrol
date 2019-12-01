@@ -94,7 +94,6 @@ add_library(qgc
 	QGCComboBox.cc
 	QGCDockWidget.cc
 	QGCFileDownload.cc
-	QGCGeo.cc
 	QGCLoggingCategory.cc
 	QGCMapPalette.cc
 	QGCPalette.cc
@@ -105,14 +104,13 @@ add_library(qgc
 	ShapeFileHelper.cc
 	SHPFileHelper.cc
 	TerrainTile.cc
-
-	UTM.cpp
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
 
 add_subdirectory(ui)
 
+add_subdirectory(ADSB)
 add_subdirectory(Airmap)
 add_subdirectory(AnalyzeView)
 add_subdirectory(api)
@@ -125,6 +123,7 @@ add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
+add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
@@ -148,6 +147,7 @@ target_link_libraries(qgc
 		Qt5::QuickWidgets
 		Qt5::Widgets
 
+                ADSB
 		Airmap
 		AnalyzeView
 		api
@@ -160,6 +160,7 @@ target_link_libraries(qgc
 		FlightDisplay
 		FlightMap
 		FollowMe
+		Geo
 		gps
 		Joystick
 		MissionManager

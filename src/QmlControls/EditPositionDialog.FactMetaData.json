@@ -40,5 +40,10 @@
     "type":             "uint8",
     "enumStrings":      "North,South",
     "enumValues":       "0,1"
+},
+{
+    "name":             "MGRS",
+    "shortDescription": "MGRS coordinate",
+    "type":             "string"
 }
 ]
