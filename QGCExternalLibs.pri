@@ -136,18 +136,7 @@ MacBuild {
 
 # Include Android OpenSSL 1.1.x libs in order to make Qt OpenSSL support work with Qt 5.12.x and above
 AndroidBuild {
-    equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-    } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-arm64-v8a/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-arm64-v8a/lib/libssl.so
-    } else:equals(ANDROID_TARGET_ARCH, x86)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
-    } else {
-        error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
-    }
+    include($$BASEDIR/libs/OpenSSL/android_openssl/openssl.pri)
 }
 
 # Pairing
@@ -166,18 +155,10 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
             DEFINES -= QGC_ENABLE_PAIRING
         }
     } else {
-        LIBS += -lz
+        LIBS += -lcrypto -lz
         AndroidBuild {
             LIBS += $$ANDROID_EXTRA_LIBS
-            equals(ANDROID_TARGET_ARCH, armeabi-v7a) {
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
-            } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-arm64-v8a/include
-            } else {
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
-            }
-        } else {
-	        LIBS += -lcrypto
+            INCLUDEPATH += $$BASEDIR/libs/OpenSSL/android_openssl/openssl-1.1.1c-src/include
         }
     }
 }
