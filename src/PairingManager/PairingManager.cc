@@ -882,12 +882,6 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
         if (remotePairingMap.contains("AIP")) {
             _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
         }
-        if (remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(remotePairingMap["CU"].toString());
-        }
-        if (remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
-        }
     }
     if (linkType == "MH") {
         _toolbox->microhardManager()->switchToConnectionEncryptionKey(remotePairingMap["EK"].toString());
