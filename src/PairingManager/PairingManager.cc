@@ -341,6 +341,7 @@ PairingManager::_startUploadRequest(const QString& name, const QString& url, con
     if (url.contains("/pair")) {
         emit stopUpload();
         _devicesToConnect.clear();
+        stopConnectingDevice("");
     }
     QNetworkRequest req;
     req.setUrl(QUrl(url));
