@@ -466,7 +466,7 @@ PairingManager::_uploadFinished()
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
             _connectRequests.remove(name);
             connectToDevice(name);
-        } else {
+        } else if (_status != PairingActive) {
             setPairingStatus(PairingIdle, "");
         }
     }
