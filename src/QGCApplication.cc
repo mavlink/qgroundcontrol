@@ -748,7 +748,7 @@ void QGCApplication::showMessage(const QString& message)
 
 QQuickItem* QGCApplication::mainRootWindow()
 {
-    if(_mainRootWindow) {
+    if(!_mainRootWindow) {
         _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
     }
     return _mainRootWindow;
