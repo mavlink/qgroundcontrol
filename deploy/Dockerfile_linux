@@ -62,9 +62,11 @@ RUN apt-get update \
 
 COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
 
-# Download & unpack Qt toolchains & clean
-RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
-        && QT_PACKAGE_VER=$(echo "${QT_VERSION}" | tr -d .) QT_CI_PACKAGES=qt,qt.qt5.5124,qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.5124.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+# Download Qt toolchains
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
+
+# Unpack Qt toolchains & clean
+RUN QT_PACKAGE_VER=$(echo "${QT_VERSION}" | tr -d .) QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
         && find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
         && rm -rf /tmp/*
 
