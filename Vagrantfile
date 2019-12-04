@@ -108,7 +108,7 @@ MAKE
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
     :deps_url => yaml_config['deps_url'],
-    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse']).join(' '),
+    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse', 'libsdl2-dev']).join(' '),
     :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
 
     :project_root_dir => yaml_config['project_root_dir'],
