@@ -1103,17 +1103,12 @@ Rectangle {
                     Item {
                         height:  ScreenTools.defaultFontPixelHeight * 2
                         width:   1
-                        visible: _devVersion.visible
+                        visible: _coreVersion.visible
                     }
                     QGCLabel {
-                        id: _devVersion
-                        text:               qsTr("Custom Dev Version: %1").arg(QGroundControl.corePlugin.customGitVersion)
+                        id: _coreVersion
+                        text:               qsTr("Core Version: %1").arg(QGroundControl.qgcVersion)
                         visible:            QGroundControl.corePlugin.customVersion !== undefined && QGroundControl.corePlugin.showAdvancedUI
-                        Layout.alignment:   Qt.AlignHCenter
-                    }
-                    QGCLabel {
-                        text:               qsTr("Core Dev Version: %1").arg(QGroundControl.qgcVersion)
-                        visible:            _devVersion.visible
                         Layout.alignment:   Qt.AlignHCenter
                     }
                 } // settingsColumn
