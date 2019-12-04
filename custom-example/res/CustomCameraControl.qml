@@ -37,6 +37,10 @@ Item {
     width:          mainColumn.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
 
+    // Temporary until we implement gimbal abstractization upstream
+    // the we call gimbal.pitchJoystick(joystickPitchNormalized)
+    property real joystickPitchNormalized: gimbalPitchMouseArea.pitchNormalized
+
     readonly property string _commLostStr:  qsTr("NO CAMERA")
     readonly property real   buttonSize:    ScreenTools.defaultFontPixelWidth * 5
 
@@ -92,7 +96,7 @@ Item {
             id:             thermalBackgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact || _camera.vendor === "NextVision"
+            visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact
             anchors.horizontalCenter: parent.horizontalCenter
             Component.onCompleted: {
                 if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
@@ -131,7 +135,7 @@ Item {
                     id:                 thermalPip
                     width:              buttonSize
                     height:             buttonSize
-                    visible:            _camera.vendor !== "NextVision"
+                    visible:            _camera && _camera.thermalStreamInstance
                     iconSource:        "/custom/img/thermal-pip.svg"
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_PIP
@@ -483,6 +487,68 @@ Item {
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
+                //
+                // Vertical gimbal control
+                //
+
+                // Touch/Mouse marker
+                RadialGradient {
+                    id: pointerGradient
+                    visible: gimbalPitchMouseArea.pressed
+                    x: 0
+                    y: {
+                        var minY = gimbalPitchMouseArea._lastGimbalY - (gimbalBackground.height/2);
+                        if(gimbalPitchMouseArea.mouseY < minY)
+                            return minY;
+                        else {
+                            var maxY = gimbalPitchMouseArea._lastGimbalY + (gimbalBackground.height/2);
+                            if(gimbalPitchMouseArea.mouseY > maxY)
+                                return maxY;
+                            else
+                                return gimbalPitchMouseArea.mouseY;
+                        }
+                    }
+                    z: -1
+
+                    transform: Translate {
+                        y: -pointerGradient.height/2
+                    }
+
+                    width: parent.width
+                    height: width
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: qgcPal.window; }
+                        GradientStop { position: 0.5; color: qgcPal.changeAlpha(qgcPal.window, 0.0); }
+                        GradientStop { position: 1.0; color: qgcPal.changeAlpha(qgcPal.window, 0.0); }
+                    }
+                }
+                // First touch reference marker
+                Rectangle {
+                    visible: gimbalPitchMouseArea.pressed
+                    color: qgcPal.changeAlpha(qgcPal.windowShade, 0.75)
+                    x: 0
+                    y: gimbalPitchMouseArea._lastGimbalY - height/2
+                    z: -2
+                    height: ScreenTools.defaultFontPixelWidth
+                    width: parent.width
+                    radius: height * 0.5
+                }
+                // Handle touch/mouse
+                MouseArea {
+                    id: gimbalPitchMouseArea
+                    enabled: true
+                    anchors.fill: parent
+                    hoverEnabled: false
+                    preventStealing: true
+
+                    property real pitchNormalized: pressed ? (gimbalPitchMouseArea._lastGimbalY - pointerGradient.y)/(gimbalBackground.height/2) : 0
+                    property real _lastGimbalY: 0
+
+                    onPressed: {
+                        _lastGimbalY = mouseY
+                        mouse.accepted = true
+                    }
+                }
             } // Gimbal Indicator
         }
         //-- Zoom Buttons
@@ -658,7 +724,8 @@ Item {
                             value:          _camera ? _camera.thermalOpacity : 0
                             live:           true
                             onValueChanged: {
-                                _camera.thermalOpacity = value
+                                if(_camera)
+                                    _camera.thermalOpacity = value
                             }
                         }
                     }
@@ -802,10 +869,29 @@ Item {
                         visible:    _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE && !_noSdCard
                     }
                     //-------------------------------------------
-                    //-- Gimbal Control
+                    //-- Camera Embedded Pitch Gimbal Control
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
                         visible:        _camera && !_camera.isThermal
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:       qsTr("Use Camera Gimbal Control")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        CustomOnOffSwitch {
+                            checked:    CustomQuickInterface.useEmbeddedGimbal
+                            width:      _editFieldWidth
+                            height:     _editFieldHeight
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked:  CustomQuickInterface.useEmbeddedGimbal = checked
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Gimbal Control
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        !CustomQuickInterface.useEmbeddedGimbal && _camera && !_camera.isThermal
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:       qsTr("Show Gimbal Control")

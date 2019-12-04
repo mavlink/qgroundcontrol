@@ -10,8 +10,12 @@
         <file alias="CustomModeIndicator.qml">res/MainToolbar/CustomModeIndicator.qml</file>
         <file alias="CustomMultiVehicleSelector.qml">res/MainToolbar/CustomMultiVehicleSelector.qml</file>
         <file alias="CustomRCRSSIIndicator.qml">res/MainToolbar/CustomRCRSSIIndicator.qml</file>
+        <file alias="CustomROIIndicator.qml">res/MainToolbar/CustomROIIndicator.qml</file>
         <file alias="PairingIndicator.qml">res/PairingIndicator.qml</file>
         <file alias="PreFlightCheckList.qml">res/PreFlightCheckList.qml</file>
+    </qresource>
+    <qresource prefix="/QtQuick/VirtualKeyboard/content/styles/custom">
+        <file alias="style.qml">res/VKStyles/CustomStyle/style.qml</file>
     </qresource>
     <qresource prefix="custom/img">
         <file alias="altitude.svg">res/Images/altitude.svg</file>
@@ -32,10 +36,12 @@
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
+        <file alias="padlock.svg">res/Images/padlock.svg</file>
         <file alias="PairingButton.svg">res/Images/PairingButton.svg</file>
         <file alias="PairingConnected.svg">res/Images/PairingConnected.svg</file>
         <file alias="PairingError.svg">res/Images/PairingError.svg</file>
         <file alias="PairingIcon.svg">res/Images/PairingIcon.svg</file>
+        <file alias="roi.svg">res/Images/roi.svg</file>
         <file alias="thermal-brightness.svg">res/Images/thermal-brightness.svg</file>
         <file alias="thermal-palette.svg">res/Images/thermal-palette.svg</file>
         <file alias="thermal-pip.svg">res/Images/thermal-pip.svg</file>
@@ -43,6 +49,7 @@
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
         <file alias="void.png">res/Images/void.png</file>
         <file alias="PairingDelete.svg">res/Images/PairingDelete.svg</file>
+        <file alias="male-solid.svg">res/Images/male-solid.svg</file>
     </qresource>
     <qresource prefix="Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>

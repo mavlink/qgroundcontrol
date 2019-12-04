@@ -94,8 +94,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # this will also trigger enabling of custom build
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
-    # Default build is enabled for AGS and disabled upstream
-    QGC_CUSTOM_BUILD_FOLDER=custom
+    # Default build is enabled for SRR and disabled upstream
+    QGC_CUSTOM_BUILD_FOLDER=custom-example
 } else {
     message("Externally triggered custom build override")
 }

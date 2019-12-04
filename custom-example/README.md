@@ -2,14 +2,13 @@
 
 ## Custom Build Example
 
-To build this sample custom version, simply rename the directory from `custom-example` to `custom` before running `qmake` (or launching Qt Creator.) The build system will automatically find anything in `custom` and incorporate it into the build. If you had already run a build before renaming the directory, delete the build directory before running `qmake`. To restore the build to a stock QGroundControl one, rename the directory back to `custom-example` (making sure to clean the build directory again.)
+To build this sample custom version, clone it to your local QGroundControl repository and name the directory `custom` before running `qmake` (or launching Qt Creator.) QGC's build system will automatically find anything in `custom` and incorporate it into the build. If you had already run a build before adding the custom directory, delete the build directory before running `qmake`. To restore the build to a stock QGroundControl one, either rename the directory or remove it (making sure to clean the build directory again.)
 
 ### Custom Builds
 
 The root project file (`qgroundcontrol.pro`) will look and see if `custom/custom.pri` exists. If it does, it will load it before anything else is setup. This allows you to modify the build in any way necessary for a custom build. This example shows you how to:
 
 * Fully brand your build
-* Define a single flight stack to avoid carrying over unnecessary code
 * Implement your own, autopilot and firmware plugin overrides
 * Implement your own camera manager and plugin overrides
 * Implement your own QtQuick interface module

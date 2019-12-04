@@ -247,6 +247,7 @@ Item {
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
     }
+
     //-------------------------------------------------------------------------
     //-- Vehicle Indicator
     Rectangle {
@@ -280,7 +281,7 @@ Item {
                 visible:                vehicleIndicator._showGps
             }
             QGCLabel {
-                id:                     firstLabel
+                id:                     latLabelValue
                 text:                   activeVehicle ? activeVehicle.gps.lat.value.toFixed(activeVehicle.gps.lat.decimalPlaces) : "-"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
@@ -299,12 +300,13 @@ Item {
                 visible:                vehicleIndicator._showGps
             }
             QGCLabel {
+                id:                     lonLabelValue
                 text:                   activeVehicle ? activeVehicle.gps.lon.value.toFixed(activeVehicle.gps.lon.decimalPlaces) : "-"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
                 visible:                vehicleIndicator._showGps
             }
             //-- HDOP
@@ -317,12 +319,13 @@ Item {
                 visible:                vehicleIndicator._showGps
             }
             QGCLabel {
+                id:                     hdopLabelValue
                 text:                   activeVehicle ? activeVehicle.gps.hdop.value.toFixed(activeVehicle.gps.hdop.decimalPlaces) : "-"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
                 visible:                vehicleIndicator._showGps
             }
 
@@ -408,6 +411,7 @@ Item {
                 color:                  qgcPal.text
             }
             QGCLabel {
+                id:                     flightTimeLabelValue
                 text: {
                         if(activeVehicle)
                             return secondsToHHMMSS(activeVehicle.getFact("flightTime").value)
@@ -417,7 +421,7 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
             //-- Ground Speed
             QGCColoredImage {
@@ -430,12 +434,13 @@ Item {
                 color:                  qgcPal.text
             }
             QGCLabel {
+                id:                     groundSpeedLabelValue
                 text:                   activeVehicle ? activeVehicle.groundSpeed.value.toFixed(1) + ' ' + activeVehicle.groundSpeed.units : "0.0"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
             //-- Vertical Speed
             QGCColoredImage {
@@ -449,12 +454,13 @@ Item {
 
             }
             QGCLabel {
+                id:                     verticalSpeedLabelValue
                 text:                   activeVehicle ? activeVehicle.climbRate.value.toFixed(1) + ' ' + activeVehicle.climbRate.units : "0.0"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
             //-- Third Row
             //-- Odometer
@@ -469,12 +475,13 @@ Item {
 
             }
             QGCLabel {
+                id:                     odometerLabelValue
                 text:                   activeVehicle ? ('00000' + activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + activeVehicle.flightDistance.units : "00000"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
             //-- Altitude
             QGCColoredImage {
@@ -488,12 +495,13 @@ Item {
 
             }
             QGCLabel {
+                id:                     altitudeLabelValue
                 text:                   _altitude
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
             //-- Distance
             QGCColoredImage {
@@ -507,12 +515,13 @@ Item {
 
             }
             QGCLabel {
+                id:                     distanceLabelValue
                 text:                   _distance ? _distanceStr : noGPS
                 color:                  _distance ? _indicatorsColor : qgcPal.colorOrange
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                horizontalAlignment:    latLabelValue.horizontalAlignment
             }
         }
         MouseArea {
@@ -571,10 +580,87 @@ Item {
         }
     }
     //-------------------------------------------------------------------------
+    //-- Flight Coordinates View
+    Item {
+        id:             _flightCoordinates
+        z:              _mapAndVideo.z + 3
+        width:          layoutRow.width
+        height:         layoutRow.height
+        anchors.left:   parent.left
+        anchors.leftMargin: ScreenTools.defaultFontPixelHeight
+        anchors.bottom: parent.bottom
+        visible:        QGroundControl.settingsManager.appSettings.displayMGRSCoordinates.rawValue
+
+        property real _fontSize: ScreenTools.defaultFontPointSize * 0.75
+
+        Connections {
+            target: QGroundControl.qgcPositionManger
+            onGcsPositionChanged: {
+                if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
+                    var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
+                    gcsPositionLabel.text = QGroundControl.positionToMGRSFormat(gcs)
+                } else {
+                    gcsPositionLabel.text = ""
+                }
+            }
+        }
+
+        Rectangle {
+            id:               coordinatesRectangle
+            anchors.fill:     parent
+            color:            qgcPal.window
+            radius:           ScreenTools.defaultFontPixelWidth * 0.5
+            visible:          vehiclePositionLabel.text !== "" || gcsPositionLabel.text !== ""
+
+            Row {
+                id: layoutRow
+                spacing:          ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.centerIn: parent
+                padding:          ScreenTools.defaultFontPixelWidth * 0.25
+
+                QGCLabel {
+                    text:                    "MGRS"
+                    color:                   qgcPal.text
+                    font.pointSize:          _flightCoordinates._fontSize
+                }
+                QGCColoredImage {
+                     id:                     _icon1
+                     height:                 vehiclePositionLabel.contentHeight * 0.75
+                     width:                  height
+                     color:                  qgcPal.text
+                     source:                 "/qmlimages/PaperPlane.svg"
+                     anchors.verticalCenter: parent.verticalCenter
+                     visible:                vehiclePositionLabel.text !== ""
+                }
+                QGCLabel {
+                    id:                      vehiclePositionLabel
+                    text:                    (activeVehicle && activeVehicle.coordinate) ? QGroundControl.positionToMGRSFormat(activeVehicle.coordinate) : ""
+                    color:                   qgcPal.text
+                    font.pointSize:          _flightCoordinates._fontSize
+                }
+                QGCColoredImage {
+                     id:                     _icon2
+                     height:                 vehiclePositionLabel.contentHeight * 0.75
+                     width:                  height
+                     color:                  qgcPal.text
+                     source:                 "/custom/img/male-solid.svg"
+                     anchors.verticalCenter: parent.verticalCenter
+                     visible:                gcsPositionLabel.text !== ""
+                }
+                QGCLabel {
+                    id:                      gcsPositionLabel
+                    color:                   qgcPal.text
+                    font.pointSize:          _flightCoordinates._fontSize
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
     //-- Gimbal Control
     Rectangle {
         id:                     gimbalControl
-        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal
+        visible:                camControlLoader.visible && _hasGimbal && CustomQuickInterface.showGimbalControl && !CustomQuickInterface.useEmbeddedGimbal
         anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
@@ -598,7 +684,7 @@ Item {
 
         Timer {
             interval:   100  //-- 10Hz
-            running:    gimbalControl.visible && activeVehicle
+            running:    camControlLoader.visible && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl)
             repeat:     true
             onTriggered: {
                 if (activeVehicle) {
@@ -606,7 +692,7 @@ Item {
                     var oldYaw = yaw;
                     var pitch = gimbalControl._currentPitch
                     var oldPitch = pitch;
-                    var pitch_stick = (stick.yAxis * 2.0 - 1.0)
+                    var pitch_stick = gimbalControl.visible ? (stick.yAxis * 2.0 - 1.0) : (camControlLoader.status === Loader.Ready ?  camControlLoader.item.joystickPitchNormalized : 0)
                     if(_camera && _camera.vendor === "NextVision") {
                         var time_current_seconds = ((new Date()).getTime())/1000.0
                         if(gimbalControl.time_last_seconds === 0.0)

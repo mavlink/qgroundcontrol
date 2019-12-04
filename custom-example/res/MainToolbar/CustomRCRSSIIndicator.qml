@@ -10,7 +10,6 @@
  */
 
 import QtQuick          2.11
-import QtQuick.Controls 1.4
 import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
@@ -19,18 +18,17 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
-import Custom.Widgets                       1.0
-
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
-    id:                     _root
-    width:                  visible ? rssiRow.width : 0
-    anchors.top:            parent.top
-    anchors.bottom:         parent.bottom
-    visible:                activeVehicle ? activeVehicle.supportsRadio : true
+    id:             _root
+    width:          rssiRow.width * 1.1
+    anchors.top:    parent.top
+    anchors.bottom: parent.bottom
+    visible:        activeVehicle ? activeVehicle.supportsRadio : true
 
-    property bool   _rcRSSIAvailable:   activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
+    property bool   _rcRSSIAvailable:   activeVehicle ? (activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100) : false
+    property bool   _mhRSSIAvailable:   activeVehicle ? QGroundControl.microhardManager.linkConnected > 0 : false
 
     Component {
         id: rcRSSIInfo
@@ -40,31 +38,39 @@ Item {
             height: rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
             color:  qgcPal.window
+            border.color:   qgcPal.text
 
             Column {
                 id:                 rcrssiCol
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                width:              Math.max(rcrssiGrid.width, rssiLabel.width)
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
 
                 QGCLabel {
                     id:             rssiLabel
-                    text:           activeVehicle ? (activeVehicle.rcRSSI !== 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
+                    text:           qsTr("RSSI Status")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
+                QGCLabel {
+                    visible:        !rcrssiGrid.visible
+                    text:           activeVehicle ? qsTr("RSSI Data Unavailable") : qsTr("N/A", "No data available")
+                }
+
                 GridLayout {
                     id:                 rcrssiGrid
-                    visible:            _rcRSSIAvailable
+                    visible:            _rcRSSIAvailable || _mhRSSIAvailable
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
-
-                    QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: activeVehicle ? (activeVehicle.rcRSSI + "%") : 0 }
+                    QGCLabel { text: qsTr("RC RSSI:"); visible: _rcRSSIAvailable; }
+                    QGCLabel { text: activeVehicle ? (activeVehicle.rcRSSI + "%") : 0; visible: _rcRSSIAvailable; }
+                    QGCLabel { text: qsTr("Uplink RSSI:"); visible: _mhRSSIAvailable; }
+                    QGCLabel { text: activeVehicle ? (QGroundControl.microhardManager.uplinkRSSI + "dBm") : 0; visible: _mhRSSIAvailable; }
+                    QGCLabel { text: qsTr("Downlink RSSI:"); visible: _mhRSSIAvailable; }
+                    QGCLabel { text: activeVehicle ? (QGroundControl.microhardManager.downlinkRSSI + "dBm") : 0; visible: _mhRSSIAvailable; }
                 }
             }
         }
@@ -74,21 +80,23 @@ Item {
         id:             rssiRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        spacing:        ScreenTools.defaultFontPixelWidth * 0.25
+        spacing:        ScreenTools.defaultFontPixelWidth
+
         QGCColoredImage {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
-            source:             "/custom/img/menu_rc.svg"
-            color:              qgcPal.text
+            source:             "/qmlimages/RC.svg"
             fillMode:           Image.PreserveAspectFit
             opacity:            _rcRSSIAvailable ? 1 : 0.5
+            color:              qgcPal.buttonText
         }
-        CustomSignalStrength {
+
+        SignalStrength {
             anchors.verticalCenter: parent.verticalCenter
-            size:                   parent.height * 0.75
-            percent:                _rcRSSIAvailable ? activeVehicle.rcRSSI : 0
+            size:                   parent.height * 0.5
+            percent:                _rcRSSIAvailable ? activeVehicle.rcRSSI : (_mhRSSIAvailable ? QGroundControl.microhardManager.downlinkRSSIPct : 0)
         }
     }
 

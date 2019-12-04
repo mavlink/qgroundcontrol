@@ -69,9 +69,13 @@ public:
 class CustomPlugin : public QGCCorePlugin
 {
     Q_OBJECT
+
 public:
     CustomPlugin(QGCApplication* app, QGCToolbox *toolbox);
     ~CustomPlugin();
+
+    Q_PROPERTY(QString customVersion        READ customVersion  CONSTANT)
+    Q_PROPERTY(QString customGitVersion     READ customGitVersion  CONSTANT)
 
     // Overrides from QGCCorePlugin
     QVariantList&           settingsPages                   () final;
@@ -86,6 +90,9 @@ public:
     void                    paletteOverride                 (QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
+
+    QString customVersion() const { return QString(CUSTOM_QGC_VERSION); }
+    QString customGitVersion() const { return QString(CUSTOM_GIT_VERSION); }
 
     const static QColor     _windowShadeEnabledLightColor;
     const static QColor     _windowShadeEnabledDarkColor;

@@ -4,9 +4,6 @@
 [submodule "libs/mavlink/include/mavlink/v2.0"]
 	path = libs/mavlink/include/mavlink/v2.0
 	url = https://github.com/mavlink/c_library_v2.git
-[submodule "custom"]
-	path = custom
-	url = https://github.com/Auterion/QGCCustomExample.git
 [submodule "libs/OpenSSL/android_openssl"]
 	path = libs/OpenSSL/android_openssl
 	#url = https://github.com/KDAB/android_openssl.git

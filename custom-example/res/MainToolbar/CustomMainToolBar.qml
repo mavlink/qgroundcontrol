@@ -251,6 +251,24 @@ Item {
                 height:                     1
                 color:                      menuSeparatorColor
             }
+            CustomToolBarButton {
+                id:                         photoGalleryButton
+                text:                       qsTr("Photos")
+                icon.source:                "/qmlimages/PhotoGallery.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showPhotoGalleryView()
+                }
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      menuSeparatorColor
+            }
         }
         ColumnLayout {
             id:                             lowerButtons
