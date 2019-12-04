@@ -53,12 +53,15 @@ public:
     enum PairingStatus {
         PairingIdle,
         PairingActive,
-        PairingSuccess,
-        PairingConnecting,
-        PairingConnected,
-        PairingRejected,
-        PairingConnectionRejected,
-        PairingError
+        PairingError,
+        Success,
+        Error,
+        Connecting,
+        Connected,
+        Disconnecting,
+        Disconnected,
+        Unpairing,
+        ConfiguringModem
     };
 
     Q_ENUM(PairingStatus)
@@ -73,13 +76,13 @@ public:
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
     bool            usePairing                  () { return _usePairing; }
-    bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
     QString         nidPrefix                   () { return _nidPrefix; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
     void            setNidPrefix                (QString nidPrefix) { _nidPrefix = nidPrefix; emit nidPrefixChanged(); }
+    void            setConfirmHPM               (bool set) { _confirmHighPowerMode = set; emit confirmHighPowerModeChanged(); }
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
     QString         pairingKey                  ();
     QString         networkId                   ();
@@ -89,7 +92,7 @@ public:
     static void     setNativeMethods            (void);
 #endif
     Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirm = false);
-    Q_INVOKABLE void    removePairedDevice      (const QString& name);
+    Q_INVOKABLE void    unpairDevice            (const QString& name);
     Q_INVOKABLE void    stopConnectingDevice    (const QString& name);
     Q_INVOKABLE bool    isDeviceConnecting      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
@@ -116,8 +119,7 @@ public:
     Q_PROPERTY(QString          nidPrefix               READ nidPrefix               WRITE setNidPrefix  NOTIFY nidPrefixChanged)
     Q_PROPERTY(int              pairingChannel          READ pairingChannel                              NOTIFY pairingChannelChanged)
     Q_PROPERTY(int              connectingChannel       READ connectingChannel                           NOTIFY connectingChannelChanged)
-    Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
-    Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
+    Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode    WRITE setConfirmHPM NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
