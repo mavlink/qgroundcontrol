@@ -220,6 +220,7 @@ private:
     QHash<FirmwareIdentifier, QString> _rgKakuteF7Firmware;
     QHash<FirmwareIdentifier, QString> _rgDurandalV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgFMUK66V3Firmware;
+    QHash<FirmwareIdentifier, QString> _rgModalFCV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 
