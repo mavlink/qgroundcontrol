@@ -75,7 +75,6 @@ public:
     ~CustomPlugin();
 
     Q_PROPERTY(QString customVersion        READ customVersion  CONSTANT)
-    Q_PROPERTY(QString customGitVersion     READ customGitVersion  CONSTANT)
 
     // Overrides from QGCCorePlugin
     QVariantList&           settingsPages                   () final;
@@ -92,7 +91,6 @@ public:
     void                    setToolbox                      (QGCToolbox* toolbox);
 
     QString customVersion() const { return QString(CUSTOM_QGC_VERSION); }
-    QString customGitVersion() const { return QString(CUSTOM_GIT_VERSION); }
 
     const static QColor     _windowShadeEnabledLightColor;
     const static QColor     _windowShadeEnabledDarkColor;
