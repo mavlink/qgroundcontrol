@@ -9,8 +9,9 @@ env:
   global:
     - CONFIG="installer"
     - RELEASE_DIR="/tmp/release"
-    - DEPLOY_BRANCH_FILTER=^pr-.*$
+    - DEPLOY_BRANCH_FILTER=^dev_srr.*$
     - DOCKER_USER="auterionci"
+    - QGC_CUSTOM_BUILD_FOLDER="custom-example"
     # encrypted DOCKER_PASS
     - secure: "urD4DJ5N7e2AJOfyaWysLigaCc4DwZT7v3NRLTw5339XOXN9388dT65FhW0/HPOisUxOP50ejUKZNhTiGaMAH516xZAj+i0vWWsNYUeF8y5GS76ycuQtafhM6OAyx5zIe7Hsi6GYltDbNgrYzN6W5aMuFKvX0QZJpeEd9qO1D73HQVYeiL83+18U1LBltnJ1KkNDMS9yJIR4th5PnDPKQz4K5LgneswnCkTy0JJbIWTL5nCd9TMedDeQnciMlch9w2GpzgqpfcPCmpVM9/tAzcrFW82esxpbD/knbGBRK9ynV9xJRi7DuXzjLFiQULMWylTdQcR0WhpHmETGTQm1Tdb8Fgtcp7gEqe4DS8unfQoghEyrz0edEwRKs1YoEKXbpQ5ITddUiBk3JJHoBdgeZExDf4katM7IyAxN3Ecr9lvmgDhipiLHAebnV3NoCghj+dWvabd1AfWAhvPpdgtXTUK49AGYVjMYXABACTRmG9nqFdIfXlNNXF5YPrkqmgUBXtyUz0yV1wcvZ1GUXGwruFK1hs7WVGq6BvNitb+tBiQ7nJdpsIN95WhDLhqG3WToYdjhDFBBXmswnjdqpavxWt9zIJZO3HUQ4V122Qq9HmdMYcuWiFN7qwNEHZ6yCZLKS6ry3zh/lmTu6+7j3tu9xMtEG1uKDFumknrsFE+S0Yw="
     - CONTAINER_NAME="builder_container"
@@ -26,7 +27,6 @@ env:
     - GIT_EMAIL="auterion_ci@auterion.com"
     - CCACHE_DIR="$HOME/.ccache"
     - PROJECT_ROOT="$PWD"
-    - QGC_CUSTOM_BUILD_FOLDER="custom"
 
 cache: ccache
 
@@ -47,13 +47,22 @@ git:
       -e QGC_CUSTOM_APP_NAME="$QGC_CUSTOM_APP_NAME" -e QGC_CUSTOM_GENERIC_NAME="$QGC_CUSTOM_GENERIC_NAME"
       -e QGC_CUSTOM_BINARY_NAME="$QGC_CUSTOM_BINARY_NAME" -e QGC_CUSTOM_LINUX_START_SH="$QGC_CUSTOM_LINUX_START_SH"
       -e QGC_CUSTOM_APP_ICON="$QGC_CUSTOM_APP_ICON" -e QGC_CUSTOM_APP_ICON_NAME="$QGC_CUSTOM_APP_ICON_NAME"
-      -e QGC_CUSTOM_BUILD_FOLDER="custom"
       -v `pwd`:`pwd` -v "$CCACHE_DIR:$CCACHE_DIR" -w `pwd` $DOCKER_IMAGE
   script:
     - $SH 'ccache -z'
     - $SH 'mkdir $SHADOW_BUILD_DIR && cd $SHADOW_BUILD_DIR && qmake -r $PROJECT_ROOT/qgroundcontrol.pro CONFIG+=$CONFIG && make -j`nproc --all`'
     - $SH 'ccache -s'
   after_success:
+    # Compose build tag used to identify a release in GitHub releases page
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/$QGC_CUSTOM_BUILD_FOLDER/deploy/custom_build_version.txt /tmp
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/deploy/build_version.txt /tmp
+    - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
+    - export QGC_VERSION=$(< /tmp/build_version.txt)
+    - export CURRENT_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
+    - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
+    - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
+    - echo "TRAVIS_TAG=$TRAVIS_TAG, TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH, CURRENT_BRANCH=$CURRENT_BRANCH, VERSION_NAME=$VERSION_NAME, QGC_VERSION=$QGC_VERSION, QGC_CUSTOM_VERSION=$QGC_CUSTOM_VERSION"
+    # Push the docker image to the  if already 
     - travis_wait 30 docker push $DOCKER_IMAGE
   before_deploy:
     - mkdir $RELEASE_DIR
@@ -62,24 +71,16 @@ git:
     # copy the AppImage from container to the build host
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR
     - chmod +x $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage
-    # Set up git user name and tag this commit
-    - git config --local user.name "$GIT_USER"
-    - git config --local user.email "$GIT_EMAIL"
-    # Compose build tag used to identify a release in GitHub releases page
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/deploy/build_version.txt /tmp
-    - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
-    - export QGC_VERSION=$(< /tmp/build_version.txt)
-    - export CURRENT_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-    - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
-    - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
-    - echo "TRAVIS_TAG=$TRAVIS_TAG, TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH, CURRENT_BRANCH=$CURRENT_BRANCH, VERSION_NAME=$VERSION_NAME, QGC_VERSION=$QGC_VERSION, QGC_CUSTOM_VERSION=$QGC_CUSTOM_VERSION"
-    - git tag -f $TRAVIS_TAG
     # rename to add version number to file name
-    - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR/$APPIMAGE_BINARY_NAME-$VERSION_NAME.AppImage && cp /tmp/build_version.txt $RELEASE_DIR/core_git_version.txt
+    - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR/$APPIMAGE_BINARY_NAME-$VERSION_NAME.AppImage && zip -r $RELEASE_DIR/$APPIMAGE_BINARY_NAME-$VERSION_NAME.AppImage.zip $RELEASE_DIR/$APPIMAGE_BINARY_NAME-$VERSION_NAME.AppImage && cp /tmp/build_version.txt $RELEASE_DIR/core_git_version.txt
     # generate release note
     - go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
     - $GOPATH/bin/git-chglog --output $RELEASE_DIR/CHANGELOG_$VERSION_NAME.md $(git describe --tags $(git rev-list --tags --max-count=1))
+  after_deploy:
+    # Set up git user name and tag this commit
+    - git config --local user.name "$GIT_USER"
+    - git config --local user.email "$GIT_EMAIL"
+    - git tag -f $TRAVIS_TAG
 
 matrix:
   include:
@@ -95,34 +96,21 @@ matrix:
     #   env:
     #     - DOCKERFILE=Dockerfile_centos
     #     - DOCKER_IMAGE=auterion/ags_builder_centos
-    #     #to rename the duplicated CustomQGC.AppImage name during Github Release deploy, avoid overwrite
-    #     - APPIMAGE_BINARY_NAME="CustomQGC_centos"
-    # - name: Android Installer
-    #   <<: *template_linux
-    #   env:
-    #     - DOCKERFILE=Dockerfile_android
-    #     - DOCKER_IMAGE=auterion/ags_builder_android
-    #   before_script:
-    #     - $SH 'ln -snf $QGC_ANDROID_GSTREAMER_PATH ./'
-    #   before_deploy:
-    #     - mkdir $RELEASE_DIR
-    #     # copy the apk from container to the build host
-    #     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/android-build//build/outputs/apk/android-build-debug.apk $RELEASE_DIR
-    #     # Set up git user name and tag this commit
-    #     - git config --local user.name "$GIT_USER"
-    #     - git config --local user.email "$GIT_EMAIL"
-    #     # Compose build tag used to identify a release in GitHub releases page
-    #     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
-    #     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/deploy/build_version.txt /tmp
-    #     - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
-    #     - export QGC_VERSION=$(< /tmp/build_version.txt)
-    #     - export CURRENT_BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-    #     - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
-    #     - export TRAVIS_TAG=$(if [ "$CURRENT_BRANCH" == "wip-todo" ]; then echo "srr-v$QGC_CUSTOM_VERSION"; else echo "dev_srr_$CURRENT_BRANCH"; fi)
-    #     - echo "TRAVIS_TAG=$TRAVIS_TAG, TRAVIS_BRANCH=$TRAVIS_BRANCH, TRAVIS_PULL_REQUEST_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH, CURRENT_BRANCH=$CURRENT_BRANCH, VERSION_NAME=$VERSION_NAME, QGC_VERSION=$QGC_VERSION, QGC_CUSTOM_VERSION=$QGC_CUSTOM_VERSION"
-    #     - git tag -f $TRAVIS_TAG
-    #     # rename to add version number to file name
-    #     - mv $RELEASE_DIR/android-build-debug.apk  $RELEASE_DIR/CustomGS_android-$VERSION_NAME.apk
+    #     #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
+    #     - APPIMAGE_BINARY_NAME="AuterionGS_centos"
+    #- name: Android Installer
+    #  <<: *template_linux
+    #  env:
+    #    - DOCKERFILE=Dockerfile_android
+    #    - DOCKER_IMAGE=auterion/ags_builder_android
+    #  before_script:
+    #    - $SH 'ln -snf $QGC_ANDROID_GSTREAMER_PATH ./'
+    #  before_deploy:
+    #    - mkdir $RELEASE_DIR
+    #    # copy the apk from container to the build host
+    #    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/android-build//build/outputs/apk/android-build-debug.apk $RELEASE_DIR
+    #    # rename to add version number to file name
+    #    - mv $RELEASE_DIR/android-build-debug.apk  $RELEASE_DIR/AuterionGS_android-$VERSION_NAME.apk
 
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
@@ -145,7 +133,7 @@ before_install:
   skip_cleanup: true
 
 deploy:
-  # pre-release a stable version when a commit is tagged with prefix "v*'
+  # pre-release a SRR RC build from wip-todo'
   - <<: *template_deploy
     name: 'SRR RC: $QGC_CUSTOM_VERSION (QGC core: $QGC_VERSION)'
     prerelease: true
@@ -154,7 +142,7 @@ deploy:
       condition: $CONFIG == installer
   # pre-release a version for each commit with prefix 'dev_srr*' on any branch except master
   - <<: *template_deploy
-    name: 'DEV: [$CURRENT_BRANCH] - $QGC_CUSTOM_VERSION (QGC core: $QGC_VERSION)'
+    name: 'DEV: [$CURRENT_BRANCH] - v$QGC_CUSTOM_VERSION (QGC core: $QGC_VERSION)'
     prerelease: true
     on:
       all_branches: true

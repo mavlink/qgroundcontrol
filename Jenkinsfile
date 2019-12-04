@@ -118,8 +118,8 @@ pipeline {
             QGC_CUSTOM_APP_NAME = "AGS"
             QGC_CUSTOM_GENERIC_NAME = "Auterion Ground Station"
             QGC_CUSTOM_BINARY_NAME = "AuterionGS"
-            QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom/deploy/qgroundcontrol-start.sh"
-            QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/custom/res/src/Auterion_Icon.png"
+            QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom-example/deploy/qgroundcontrol-start.sh"
+            QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/custom-example/res/src/Auterion_Icon.png"
             QGC_CUSTOM_APP_ICON_NAME = "Auterion_Icon"
           }
           agent {
