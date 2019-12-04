@@ -51,16 +51,16 @@ CustomFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* in
 
 //-----------------------------------------------------------------------------
 const QVariantList&
-CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+CustomFirmwarePlugin::toolBarIndicators(const Vehicle*)
 {
-    Q_UNUSED(vehicle);
     if(_toolBarIndicatorList.size() == 0) {
 #if defined(QGC_ENABLE_PAIRING)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/custom/PairingIndicator.qml")));
 #endif
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/custom/CustomROIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/custom/CustomRCRSSIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
     }
     return _toolBarIndicatorList;

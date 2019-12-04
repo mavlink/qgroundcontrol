@@ -211,6 +211,7 @@ QQmlApplicationEngine*
 CustomPlugin::createRootWindow(QObject *parent)
 {
     QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/");
     pEngine->addImportPath("qrc:/qml");
     pEngine->addImportPath("qrc:/Custom/Widgets");
     pEngine->addImportPath("qrc:/Custom/Camera");

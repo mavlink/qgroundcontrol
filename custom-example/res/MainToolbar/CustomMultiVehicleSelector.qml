@@ -47,7 +47,7 @@ Item {
         }
         QGCLabel {
             id:                     multiVehicleSelector
-            text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
+            text:                   activeVehicle ? activeVehicle.name : "Vehicle None"
             color:                  qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }

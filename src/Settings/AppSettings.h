@@ -52,7 +52,6 @@ public:
     DEFINE_SETTINGFACT(language)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(usePairing)
-    DEFINE_SETTINGFACT(displayMGRSCoordinates)
     DEFINE_SETTINGFACT(saveCsvTelemetry)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side

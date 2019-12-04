@@ -257,10 +257,7 @@ Rectangle {
                                     visible:    _usePairing.visible && QGroundControl.supportsPairing
                                     property Fact _usePairing: QGroundControl.settingsManager.appSettings.usePairing
                                 }
-                                FactCheckBox {
-                                    text:       qsTr("Display MGRS coordinates")
-                                    fact:       QGroundControl.settingsManager.appSettings.displayMGRSCoordinates
-                                }
+
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
@@ -309,7 +306,7 @@ Rectangle {
                                 }
 
                                 QGCCheckBox {
-                                    text:       qsTr("Use Embedded Virtual Keyboard (requires restart)")
+                                    text:       qsTr("Use Embedded Virtual Keyboard")
                                     checked:    CustomQuickInterface.showVirtualKeyboard
                                     onClicked:  CustomQuickInterface.showVirtualKeyboard = checked
                                 }

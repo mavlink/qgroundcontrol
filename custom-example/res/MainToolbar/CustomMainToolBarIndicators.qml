@@ -38,7 +38,7 @@ Item {
         running:   false;
         repeat:    false;
         onTriggered: {
-            if(!activeVehicle) {
+            if(!activeVehicle && QGroundControl.pairingManager.usePairing) {
                 if(QGroundControl.pairingManager.firstBoot && pairingLoader.item) {
                     QGroundControl.pairingManager.firstBoot = false
                     pairingLoader.item.runPairing()
@@ -81,7 +81,7 @@ Item {
         anchors.right:              parent.right
         anchors.rightMargin:        ScreenTools.defaultFontPixelWidth * 2
         spacing:                    ScreenTools.defaultFontPixelWidth * 2
-        visible:                    !indicatorRow.visible
+        visible:                    !indicatorRow.visible && QGroundControl.pairingManager.usePairing
         Loader {
             id:                     pairingLoader
             anchors.top:            parent.top

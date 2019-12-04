@@ -33,7 +33,7 @@ Rectangle {
         spacing:                    ScreenTools.defaultFontPixelWidth
         anchors.centerIn:           parent
         QGCLabel {
-            id:                     labelText
+            id:                     armedStatusLabel
             text:                   _armed ? qsTr("Armed") : qsTr("Disarmed")
             color:                  qgcPal.text
             font.pointSize:         ScreenTools.defaultFontPointSize

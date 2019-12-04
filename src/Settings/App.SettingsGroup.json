@@ -265,12 +265,6 @@
     "defaultValue":     false
 },
 {
-    "name":             "displayMGRSCoordinates",
-    "shortDescription": "Display MGRS Coordinates",
-    "type":             "bool",
-    "defaultValue":     false
-},
-{
     "name":             "saveCsvTelemetry",
     "shortDescription": "Save CSV Telementry Logs",
     "longDescription":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
