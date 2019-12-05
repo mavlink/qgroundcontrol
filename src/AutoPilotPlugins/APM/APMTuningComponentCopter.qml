@@ -64,8 +64,8 @@ SetupPage {
             ExclusiveGroup { id: returnAltRadioGroup }
 
             Component.onCompleted: {
-                // Advanced tuning is hacked out due to Qt crash with Qml Charts and a QGuiApplication
-                //showAdvanced = !ScreenTools.isMobile
+                // We use QtCharts only on Desktop platforms
+                showAdvanced = !ScreenTools.isMobile
 
                 // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
                 // setting and then set Slider::value to the bound properties value. If you have an onValueChanged
