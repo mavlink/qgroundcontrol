@@ -368,18 +368,206 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Battery Calibration">
-    <parameter default="-1" name="BAT_ADC_CHANNEL" type="INT32">
-      <short_desc>Battery ADC Channel</short_desc>
+    <parameter default="-1" name="BAT1_ADC_CHANNEL" type="INT32">
+      <short_desc>Battery 1 ADC Channel</short_desc>
       <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_A_PER_V" type="FLOAT">
+      <short_desc>Battery 1 current per volt (A/V)</short_desc>
+      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_CAPACITY" type="FLOAT">
+      <short_desc>Battery 1 capacity</short_desc>
+      <long_desc>Defines the capacity of battery 1 in mAh.</long_desc>
+      <min>-1.0</min>
+      <max>100000</max>
+      <unit>mAh</unit>
+      <decimal>0</decimal>
+      <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT1_N_CELLS" type="INT32">
+      <short_desc>Number of cells for battery 1</short_desc>
+      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="2">2S Battery</value>
+        <value code="3">3S Battery</value>
+        <value code="4">4S Battery</value>
+        <value code="5">5S Battery</value>
+        <value code="6">6S Battery</value>
+        <value code="7">7S Battery</value>
+        <value code="8">8S Battery</value>
+        <value code="9">9S Battery</value>
+        <value code="10">10S Battery</value>
+        <value code="11">11S Battery</value>
+        <value code="12">12S Battery</value>
+        <value code="13">13S Battery</value>
+        <value code="14">14S Battery</value>
+        <value code="15">15S Battery</value>
+        <value code="16">16S Battery</value>
+      </values>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_R_INTERNAL" type="FLOAT">
+      <short_desc>Explicitly defines the per cell internal resistance for battery 1</short_desc>
+      <long_desc>If non-negative, then this will be used in place of BAT1_V_LOAD_DROP for all calculations.</long_desc>
+      <min>-1.0</min>
+      <max>0.2</max>
+      <unit>Ohm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT1_SOURCE" type="INT32">
+      <short_desc>Battery 1 monitoring source</short_desc>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <unit>mAh</unit>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Power Module</value>
+        <value code="1">External</value>
+      </values>
+    </parameter>
+    <parameter default="4.05" name="BAT1_V_CHARGED" type="FLOAT">
+      <short_desc>Full cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_V_DIV" type="FLOAT">
+      <short_desc>Battery 1 voltage divider (V divider)</short_desc>
+      <long_desc>This is the divider from battery 1 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="3.5" name="BAT1_V_EMPTY" type="FLOAT">
+      <short_desc>Empty cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0.3" name="BAT1_V_LOAD_DROP" type="FLOAT">
+      <short_desc>Voltage drop per cell on full throttle</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT1_R_INTERNAL is set.</long_desc>
+      <min>0.07</min>
+      <max>0.5</max>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT2_ADC_CHANNEL" type="INT32">
+      <short_desc>Battery 2 ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_A_PER_V" type="FLOAT">
+      <short_desc>Battery 2 current per volt (A/V)</short_desc>
+      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_CAPACITY" type="FLOAT">
+      <short_desc>Battery 2 capacity</short_desc>
+      <long_desc>Defines the capacity of battery 2 in mAh.</long_desc>
+      <min>-1.0</min>
+      <max>100000</max>
+      <unit>mAh</unit>
+      <decimal>0</decimal>
+      <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT2_N_CELLS" type="INT32">
+      <short_desc>Number of cells for battery 2</short_desc>
+      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="2">2S Battery</value>
+        <value code="3">3S Battery</value>
+        <value code="4">4S Battery</value>
+        <value code="5">5S Battery</value>
+        <value code="6">6S Battery</value>
+        <value code="7">7S Battery</value>
+        <value code="8">8S Battery</value>
+        <value code="9">9S Battery</value>
+        <value code="10">10S Battery</value>
+        <value code="11">11S Battery</value>
+        <value code="12">12S Battery</value>
+        <value code="13">13S Battery</value>
+        <value code="14">14S Battery</value>
+        <value code="15">15S Battery</value>
+        <value code="16">16S Battery</value>
+      </values>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_R_INTERNAL" type="FLOAT">
+      <short_desc>Explicitly defines the per cell internal resistance for battery 2</short_desc>
+      <long_desc>If non-negative, then this will be used in place of BAT2_V_LOAD_DROP for all calculations.</long_desc>
+      <min>-1.0</min>
+      <max>0.2</max>
+      <unit>Ohm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT2_SOURCE" type="INT32">
+      <short_desc>Battery 2 monitoring source</short_desc>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <unit>mAh</unit>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Power Module</value>
+        <value code="1">External</value>
+      </values>
+    </parameter>
+    <parameter default="4.05" name="BAT2_V_CHARGED" type="FLOAT">
+      <short_desc>Full cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_V_DIV" type="FLOAT">
+      <short_desc>Battery 2 voltage divider (V divider)</short_desc>
+      <long_desc>This is the divider from battery 2 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="3.5" name="BAT2_V_EMPTY" type="FLOAT">
+      <short_desc>Empty cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0.3" name="BAT2_V_LOAD_DROP" type="FLOAT">
+      <short_desc>Voltage drop per cell on full throttle</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT2_R_INTERNAL is set.</long_desc>
+      <min>0.07</min>
+      <max>0.5</max>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT_ADC_CHANNEL" type="INT32">
+      <short_desc>This parameter is deprecated. Please use BAT1_ADC_CHANNEL</short_desc>
     </parameter>
     <parameter default="-1.0" name="BAT_A_PER_V" type="FLOAT">
-      <short_desc>Battery current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_A_PER_V</short_desc>
       <decimal>8</decimal>
     </parameter>
     <parameter default="-1.0" name="BAT_CAPACITY" type="FLOAT">
-      <short_desc>Battery capacity</short_desc>
-      <long_desc>Defines the capacity of the attached battery.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_CAPACITY instead</short_desc>
+      <long_desc>Defines the capacity of battery 1.</long_desc>
       <min>-1.0</min>
       <max>100000</max>
       <unit>mAh</unit>
@@ -428,7 +616,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="BAT_N_CELLS" type="INT32">
-      <short_desc>Number of cells</short_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_N_CELLS instead</short_desc>
       <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
       <unit>S</unit>
       <reboot_required>true</reboot_required>
@@ -452,7 +640,7 @@ Set to 2 to use heading from motion capture</short_desc>
       </values>
     </parameter>
     <parameter default="-1.0" name="BAT_R_INTERNAL" type="FLOAT">
-      <short_desc>Explicitly defines the per cell internal resistance</short_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_R_INTERNAL instead</short_desc>
       <long_desc>If non-negative, then this will be used in place of BAT_V_LOAD_DROP for all calculations.</long_desc>
       <min>-1.0</min>
       <max>0.2</max>
@@ -460,8 +648,8 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="BAT_SOURCE" type="INT32">
-      <short_desc>Battery monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_SOURCE instead</short_desc>
+      <long_desc>Battery monitoring source. This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
@@ -470,29 +658,28 @@ Set to 2 to use heading from motion capture</short_desc>
       </values>
     </parameter>
     <parameter default="4.05" name="BAT_V_CHARGED" type="FLOAT">
-      <short_desc>Full cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="-1.0" name="BAT_V_DIV" type="FLOAT">
-      <short_desc>Battery voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_DIV</short_desc>
       <decimal>8</decimal>
     </parameter>
     <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
-      <short_desc>Empty cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0.3" name="BAT_V_LOAD_DROP" type="FLOAT">
-      <short_desc>Voltage drop per cell on full throttle</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.</long_desc>
       <min>0.07</min>
       <max>0.5</max>
       <unit>V</unit>
