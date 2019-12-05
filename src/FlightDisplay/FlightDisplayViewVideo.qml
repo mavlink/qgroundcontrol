@@ -79,8 +79,8 @@ Item {
             id: videoBackgroundComponent
             QGCVideoBackground {
                 id:             videoContent
+                objectName:     "videoContent"
                 receiver:       _videoReceiver
-                display:        _videoReceiver && _videoReceiver.videoSurface
 
                 Connections {
                     target:         _videoReceiver
@@ -125,7 +125,7 @@ Item {
         Loader {
             // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
             // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
-            // code from running. Setting QGCVideoBackground.receiver/display = null does not work to prevent any
+            // code from running. Setting QGCVideoBackground.receiver = null does not work to prevent any
             // video OpenGL from being generated. Hence the Loader to completely remove it.
             height:             parent.getHeight()
             width:              parent.getWidth()
@@ -169,9 +169,9 @@ Item {
             }
             QGCVideoBackground {
                 id:             thermalVideo
+                objectName:     "thermalVideo"
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
-                display:        QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
                 opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }
