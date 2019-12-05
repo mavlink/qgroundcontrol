@@ -95,7 +95,7 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
     # Default build is enabled for AGS and disabled upstream
-    QGC_CUSTOM_BUILD_FOLDER=custom
+    QGC_CUSTOM_BUILD_FOLDER=custom-example
 } else {
     message("Externally triggered custom build override")
 }
@@ -104,7 +104,7 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
     exists($${QGC_CUSTOM_BUILD_FOLDER}) {
-        message("Found custom build")
+        message("Found custom build in folder: $$QGC_CUSTOM_BUILD_FOLDER")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
