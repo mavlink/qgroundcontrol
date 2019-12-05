@@ -39,12 +39,11 @@ void MissionItemTest::init(void)
                                   MAV_TYPE_QUADROTOR,
                                   qgcApp()->toolbox()->firmwarePluginManager(),
                                   this);
-
 }
 
 void MissionItemTest::cleanup(void)
 {
-    delete _offlineVehicle;
+    _offlineVehicle->deleteLater();
     UnitTest::cleanup();
 }
 

@@ -395,7 +395,7 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _managerVehicle, _flyView, _settingsItem, this);
+    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _controllerVehicle, _flyView, _settingsItem, this);
     newItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(newItem);
 
@@ -1419,7 +1419,21 @@ void MissionController::_recalcMissionFlightStatus()
             _missionFlightStatus.vehicleSpeed = newSpeed;
         }
 
-        // Look for gimbal change
+        // ROI commands cancel out previous gimbal yaw/pitch
+        if (simpleItem) {
+            switch (simpleItem->command()) {
+            case MAV_CMD_NAV_ROI:
+            case MAV_CMD_DO_SET_ROI_LOCATION:
+            case MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET:
+                _missionFlightStatus.gimbalYaw = std::numeric_limits<double>::quiet_NaN();
+                _missionFlightStatus.gimbalPitch = std::numeric_limits<double>::quiet_NaN();
+                break;
+            default:
+                break;
+            }
+        }
+
+        // Look for specific gimbal changes
         double gimbalYaw = item->specifiedGimbalYaw();
         if (!qIsNaN(gimbalYaw)) {
             _missionFlightStatus.gimbalYaw = gimbalYaw;
