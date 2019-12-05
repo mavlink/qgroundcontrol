@@ -1,13 +1,13 @@
 configs:
     dev:
         'qt_deps_tarball': 'Qt5.11.0-gcc_64-min.tar.bz2'
-        'qt_deps_unpack_parent_dir': '/tmp'
+        'qt_deps_unpack_parent_dir': '/home/vagrant'
 
-        'qt_deps_unpack_dir': '/tmp/Qt5.11-gcc_64/5.11.0'
-        'qt_deps_bin_unpack_dir': '/tmp/Qt5.11-gcc_64/5.11.0/gcc_64/bin'
-        'qt_deps_lib_unpack_dir': '/tmp/Qt5.11-gcc_64/5.11.0/gcc_64/lib'
-        'qt_deps_plugins_unpack_dir': '/tmp/Qt5.11-gcc_64/5.11.0/gcc_64/plugins'
-        'qt_deps_qml_unpack_dir': '/tmp/Qt5.11-gcc_64/5.11.0/gcc_64/qml'
+        'qt_deps_unpack_dir': '/home/vagrant/Qt5.11-gcc_64/5.11.0'
+        'qt_deps_bin_unpack_dir': '/home/vagrant/Qt5.11-gcc_64/5.11.0/gcc_64/bin'
+        'qt_deps_lib_unpack_dir': '/home/vagrant/Qt5.11-gcc_64/5.11.0/gcc_64/lib'
+        'qt_deps_plugins_unpack_dir': '/home/vagrant/Qt5.11-gcc_64/5.11.0/gcc_64/plugins'
+        'qt_deps_qml_unpack_dir': '/home/vagrant/Qt5.11-gcc_64/5.11.0/gcc_64/qml'
 
         'project_root_dir': '/vagrant'
 
