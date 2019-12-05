@@ -14,13 +14,11 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick                          2.11
-import QtQuick.Controls                 2.4
-import QGroundControl.QgcQtGStreamer    1.0
+import QtQuick                                  2.11
+import QtQuick.Controls                         2.4
+import org.freedesktop.gstreamer.GLVideoItem    1.0
 
-VideoItem {
+GstGLVideoItem {
     id: videoBackground
-    property var display
     property var receiver
-    surface: display
 }

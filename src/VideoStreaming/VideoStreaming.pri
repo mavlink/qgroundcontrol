@@ -113,60 +113,7 @@ VideoEnabled {
     message("Including support for video streaming")
 
     DEFINES += \
-        QGC_GST_STREAMING \
-        GST_PLUGIN_BUILD_STATIC \
-        QTGLVIDEOSINK_NAME=qt5glvideosink \
-        QGC_VIDEOSINK_PLUGIN=qt5videosink
-
-    INCLUDEPATH += \
-        $$PWD/gstqtvideosink \
-        $$PWD/gstqtvideosink/delegates \
-        $$PWD/gstqtvideosink/painters \
-        $$PWD/gstqtvideosink/utils \
-
-    #-- QtGstreamer (gutted to our needs)
-
-    HEADERS += \
-        $$PWD/gstqtvideosink/delegates/basedelegate.h \
-        $$PWD/gstqtvideosink/delegates/qtquick2videosinkdelegate.h \
-        $$PWD/gstqtvideosink/delegates/qtvideosinkdelegate.h \
-        $$PWD/gstqtvideosink/delegates/qwidgetvideosinkdelegate.h \
-        $$PWD/gstqtvideosink/gstqtglvideosink.h \
-        $$PWD/gstqtvideosink/gstqtglvideosinkbase.h \
-        $$PWD/gstqtvideosink/gstqtquick2videosink.h \
-        $$PWD/gstqtvideosink/gstqtvideosink.h \
-        $$PWD/gstqtvideosink/gstqtvideosinkbase.h \
-        $$PWD/gstqtvideosink/gstqtvideosinkmarshal.h \
-        $$PWD/gstqtvideosink/gstqtvideosinkplugin.h \
-        $$PWD/gstqtvideosink/gstqwidgetvideosink.h \
-        $$PWD/gstqtvideosink/painters/abstractsurfacepainter.h \
-        $$PWD/gstqtvideosink/painters/genericsurfacepainter.h \
-        $$PWD/gstqtvideosink/painters/openglsurfacepainter.h \
-        $$PWD/gstqtvideosink/painters/videomaterial.h \
-        $$PWD/gstqtvideosink/painters/videonode.h \
-        $$PWD/gstqtvideosink/utils/bufferformat.h \
-        $$PWD/gstqtvideosink/utils/utils.h \
-        $$PWD/gstqtvideosink/utils/glutils.h \
-
-    SOURCES += \
-        $$PWD/gstqtvideosink/delegates/basedelegate.cpp \
-        $$PWD/gstqtvideosink/delegates/qtquick2videosinkdelegate.cpp \
-        $$PWD/gstqtvideosink/delegates/qtvideosinkdelegate.cpp \
-        $$PWD/gstqtvideosink/delegates/qwidgetvideosinkdelegate.cpp \
-        $$PWD/gstqtvideosink/gstqtglvideosink.cpp \
-        $$PWD/gstqtvideosink/gstqtglvideosinkbase.cpp \
-        $$PWD/gstqtvideosink/gstqtvideosinkmarshal.c \
-        $$PWD/gstqtvideosink/gstqtquick2videosink.cpp \
-        $$PWD/gstqtvideosink/gstqtvideosink.cpp \
-        $$PWD/gstqtvideosink/gstqtvideosinkbase.cpp \
-        $$PWD/gstqtvideosink/gstqtvideosinkplugin.cpp \
-        $$PWD/gstqtvideosink/gstqwidgetvideosink.cpp \
-        $$PWD/gstqtvideosink/painters/genericsurfacepainter.cpp \
-        $$PWD/gstqtvideosink/painters/openglsurfacepainter.cpp \
-        $$PWD/gstqtvideosink/painters/videomaterial.cpp \
-        $$PWD/gstqtvideosink/painters/videonode.cpp \
-        $$PWD/gstqtvideosink/utils/bufferformat.cpp \
-        $$PWD/gstqtvideosink/utils/utils.cpp \
+        QGC_GST_STREAMING
 
     iOSBuild {
         OBJECTIVE_SOURCES += \
