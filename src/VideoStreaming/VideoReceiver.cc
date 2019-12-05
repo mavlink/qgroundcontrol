@@ -854,13 +854,22 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
             return GST_PAD_PROBE_DROP;
         } else {
             VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
-            // reset the clock
-            GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(pThis->_pipeline));
-            GstClockTime time = gst_clock_get_time(clock);
-            gst_object_unref(clock);
-            gst_element_set_base_time(pThis->_pipeline, time); // offset pipeline timestamps to start at zero again
-            buf->dts = 0; // The offset will not apply to this current buffer, our first frame, timestamp is zero
-            buf->pts = 0;
+
+            // set media file '0' offset to current timeline position - we don't want to touch other elements in the graph, except these which are downstream!
+
+            gint64 position;
+
+            if (gst_element_query_position(pThis->_pipeline, GST_FORMAT_TIME, &position) != TRUE) {
+                qCDebug(VideoReceiverLog) << "Unable to get timeline position, let's hope that downstream elements will survive";
+
+                if (buf->pts != GST_CLOCK_TIME_NONE) {
+                    position = buf->pts;
+                } else {
+                    position = gst_pad_get_offset(pad);
+                }
+            }
+
+            gst_pad_set_offset(pad, position);
 
             // Add the filesink once we have a valid I-frame
             gst_bin_add_many(GST_BIN(pThis->_pipeline), pThis->_sink->filesink, nullptr);
