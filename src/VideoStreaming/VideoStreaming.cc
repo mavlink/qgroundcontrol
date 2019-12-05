@@ -158,23 +158,23 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         GST_PLUGIN_STATIC_REGISTER(matroska);
         GST_PLUGIN_STATIC_REGISTER(androidmedia);
     #endif
-#else
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    Q_UNUSED(logpath);
-    Q_UNUSED(debuglevel);
-#endif
     /* the plugin must be loaded before loading the qml file to register the
      * GstGLVideoItem qml item
      * FIXME Add a QQmlExtensionPlugin into qmlglsink to register GstGLVideoItem
      * with the QML engine, then remove this */
-    GstElement *sink = gst_element_factory_make ("qmlglsink", NULL);
+    GstElement *sink = gst_element_factory_make("qmlglsink", NULL);
     if (sink != NULL) {
         gst_object_unref(sink);
         sink = NULL;
     } else {
         qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
+#else
+    Q_UNUSED(argc)
+    Q_UNUSED(argv)
+    Q_UNUSED(logpath)
+    Q_UNUSED(debuglevel)
+#endif
 }
 
 void shutdownVideoStreaming()
