@@ -14,8 +14,7 @@
 #include "MicrohardSettings.h"
 #include "Fact.h"
 
-#include <QTimer>
-#include <QTime>
+#include <QThread>
 
 class AppSettings;
 class QGCApplication;
@@ -30,9 +29,9 @@ class MicrohardManager : public QGCTool
     Q_OBJECT
 public:
 
-    Q_PROPERTY(int          connected           READ connected                                     NOTIFY connectedChanged)
+    Q_PROPERTY(QString      connected           READ connected                                     NOTIFY connectedChanged)
+    Q_PROPERTY(QString      linkConnected       READ linkConnected                                 NOTIFY linkConnectedChanged)
     Q_PROPERTY(bool         showRemote          READ showRemote           WRITE setShowRemote      NOTIFY showRemoteChanged)
-    Q_PROPERTY(int          linkConnected       READ linkConnected                                 NOTIFY linkConnectedChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                    NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                                  NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSIPct     READ downlinkRSSIPct                               NOTIFY linkChanged)
@@ -63,9 +62,9 @@ public:
 
     void        setToolbox                      (QGCToolbox* toolbox) override;
 
-    int         connected                       () { return _connectedStatus; }
+    QString     connected                       () { return _connectedStatus; }
     bool        showRemote                      () { return _showRemote; }
-    int         linkConnected                   () { return _linkConnectedStatus; }
+    QString     linkConnected                   () { return _linkConnectedStatus; }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     int         downlinkRSSIPct                 ();
@@ -105,35 +104,34 @@ public:
     void        setProductName                  (QString product);
 
 signals:
-    void    linkChanged                     ();
-    void    linkConnectedChanged            ();
-    void    connectedChanged                ();
-    void    showRemoteChanged               ();
-    void    localIPAddrChanged              ();
-    void    remoteIPAddrChanged             ();
-    void    netMaskChanged                  ();
-    void    configUserNameChanged           ();
-    void    configPasswordChanged           ();
-    void    encryptionKeyChanged            ();
-    void    networkIdChanged                ();
-    void    pairingChannelChanged           ();
-    void    connectingChannelChanged        ();
-    void    connectingBandwidthChanged      ();
-    void    connectingNetworkIdChanged      ();
-    void    channelLabelsChanged            ();
-    void    bandwidthLabelsChanged          ();
-    void    channelMinChanged               ();
-    void    channelMaxChanged               ();
+    void linkChanged();
+    void linkConnectedChanged();
+    void showRemoteChanged();
+    void connectedChanged();
+    void localIPAddrChanged();
+    void remoteIPAddrChanged();
+    void netMaskChanged();
+    void configUserNameChanged();
+    void configPasswordChanged();
+    void encryptionKeyChanged();
+    void networkIdChanged();
+    void pairingChannelChanged();
+    void connectingChannelChanged();
+    void connectingBandwidthChanged();
+    void connectingNetworkIdChanged();
+    void channelLabelsChanged();
+    void bandwidthLabelsChanged();
+    void channelMinChanged();
+    void channelMaxChanged();
+    void run();
+    void configureMicrohard(QString key, int power, int channel, int bandwidth, QString networkId);
 
 private slots:
-    void    _connectedLoc                   (int status);
+    void    _connectedLoc                   (const QString& status);
     void    _rssiUpdatedLoc                 (int rssi);
-    void    _connectedRem                   (int status);
+    void    _connectedRem                   (const QString& status);
     void    _rssiUpdatedRem                 (int rssi);
-    void    _checkMicrohard                 ();
     void    _setEnabled                     ();
-    void    _locTimeout                     ();
-    void    _remTimeout                     ();
 
 private:
     void    _close                          ();
@@ -141,16 +139,15 @@ private:
     FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
-    int                _connectedStatus = 0;
+    QString            _connectedStatus;
     bool               _showRemote = true;
     AppSettings*       _appSettings = nullptr;
     MicrohardSettings* _mhSettingsLoc = nullptr;
+    QThread*           _mhSettingsLocThread = nullptr;
     MicrohardSettings* _mhSettingsRem = nullptr;
+    QThread*           _mhSettingsRemThread = nullptr;
     bool               _enabled  = true;
-    int                _linkConnectedStatus = 0;
-    QTimer             _workTimer;
-    QTimer             _locTimer;
-    QTimer             _remTimer;
+    QString            _linkConnectedStatus;
     int                _downlinkRSSI = 0;
     int                _uplinkRSSI = 0;
     QString            _localIPAddr;
@@ -171,7 +168,6 @@ private:
     QString            _connectingNetworkId;
     QStringList        _channelLabels;
     QStringList        _bandwidthLabels;
-    QTime              _timeoutTimer;
     int                _frequencyStart = 2407;
     int                _channelMin = 1;
     int                _channelMax = 81;

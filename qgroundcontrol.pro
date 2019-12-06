@@ -1258,12 +1258,10 @@ contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
 
     HEADERS += \
         src/Microhard/MicrohardManager.h \
-        src/Microhard/MicrohardHandler.h \
         src/Microhard/MicrohardSettings.h \
 
     SOURCES += \
         src/Microhard/MicrohardManager.cc \
-        src/Microhard/MicrohardHandler.cc \
         src/Microhard/MicrohardSettings.cc \
 }
 

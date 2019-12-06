@@ -121,16 +121,8 @@ Rectangle {
                                 Layout.minimumWidth: _labelWidth
                             }
                             QGCLabel {
-                                function getStatus(status) {
-                                    if (status === 1)
-                                        return qsTr("Connected");
-                                    else if (status === -1)
-                                        return qsTr("Login Error")
-                                    else
-                                        return qsTr("Not Connected")
-                                }
-                                text:           getStatus(QGroundControl.microhardManager.connected)
-                                color:          QGroundControl.microhardManager.connected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
+                                text:           QGroundControl.microhardManager.connected
+                                color:          QGroundControl.microhardManager.connected === qsTr("Connected") ? qgcPal.colorGreen : qgcPal.colorRed
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -138,17 +130,9 @@ Rectangle {
                                 visible:        QGroundControl.microhardManager.showRemote
                             }
                             QGCLabel {
-                                function getStatus(status) {
-                                    if (status === 1)
-                                        return qsTr("Connected");
-                                    else if (status === -1)
-                                        return qsTr("Login Error")
-                                    else
-                                        return qsTr("Not Connected")
-                                }
-                                text:           getStatus(QGroundControl.microhardManager.linkConnected)
+                                text:           QGroundControl.microhardManager.linkConnected
                                 visible:        QGroundControl.microhardManager.showRemote
-                                color:          QGroundControl.microhardManager.linkConnected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
+                                color:          QGroundControl.microhardManager.linkConnected === qsTr("Connected") ? qgcPal.colorGreen : qgcPal.colorRed
                             }
                             QGCLabel {
                                 text:           qsTr("Uplink RSSI:")

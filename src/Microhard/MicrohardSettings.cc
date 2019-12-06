@@ -13,26 +13,39 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
+QGC_LOGGING_CATEGORY(MicrohardLog, "MicrohardLog")
+
 //-----------------------------------------------------------------------------
-MicrohardSettings::MicrohardSettings(QString address_, QObject* parent, bool configure)
-    : MicrohardHandler(parent)
+MicrohardSettings::MicrohardSettings(QString address_, bool configure)
+    : QObject()
 {
     _address = address_;
     _configure = configure;
 }
 
 //-----------------------------------------------------------------------------
-bool
-MicrohardSettings::start()
+MicrohardSettings::~MicrohardSettings()
 {
-    _loggedIn = false;
-    _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
-    return true;
+    _statusTimer->stop();
+    _statusTimer->deleteLater();
+    _statusTimer = nullptr;
+    _close();
 }
 
 //-----------------------------------------------------------------------------
 void
-MicrohardSettings::getStatus()
+MicrohardSettings::run()
+{
+    _loggedIn = false;
+    _statusTimer = new QTimer();
+    connect(_statusTimer, SIGNAL(timeout()), this, SLOT(_getStatus()));
+    _statusTimer->start(2500);
+    _start();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_getStatus()
 {
     if (_loggedIn && _tcpSocket) {
         _tcpSocket->write("AT+MWSTATUS\n");
@@ -97,11 +110,11 @@ MicrohardSettings::_readBytes()
         std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
         _tcpSocket->write(pwd.c_str());
     } else if (bytesIn.contains("Login incorrect")) {
-        emit connected(-1);
+        emit connected(tr("Login Error"));
     } else if (bytesIn.contains("Entering")) {
         if (!_configure) {
             _loggedIn = true;
-            emit connected(1);
+            emit connected(tr("Connected"));
         } else {
             _tcpSocket->write("at+mssysi\n");
         }
@@ -111,14 +124,60 @@ MicrohardSettings::_readBytes()
             QString product = bytesIn.mid(i + 2, bytesIn.indexOf("\r", i + 3) - (i + 2));
             qgcApp()->toolbox()->microhardManager()->setProductName(product);
         }
-        if (!loggedIn() && (_configure || _configureAfterConnect)) {
+        if (!_loggedIn && (_configure || _configureAfterConnect)) {
             _configureAfterConnect = false;
             qgcApp()->toolbox()->microhardManager()->configure();
         }
         _loggedIn = true;
-        emit connected(1);
+        emit connected(tr("Connected"));
     }
 
     emit rssiUpdated(_rssiVal);
 }
 
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_start()
+{
+    _close();
+    _tcpSocket = new QTcpSocket();
+    connect(_tcpSocket, &QIODevice::readyRead, this, &MicrohardSettings::_readBytes, Qt::QueuedConnection);
+    connect(_tcpSocket, &QTcpSocket::stateChanged, this, &MicrohardSettings::_stateChanged, Qt::QueuedConnection);
+    connect(_tcpSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &MicrohardSettings::_socketError, Qt::QueuedConnection);
+    _tcpSocket->connectToHost(QHostAddress(_address), MICROHARD_SETTINGS_PORT);
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_close()
+{
+    if (_tcpSocket) {
+        disconnect(_tcpSocket, &QIODevice::readyRead, this, &MicrohardSettings::_readBytes);
+        disconnect(_tcpSocket, &QTcpSocket::stateChanged, this, &MicrohardSettings::_stateChanged);
+        disconnect(_tcpSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &MicrohardSettings::_socketError);
+        _tcpSocket->close();
+        _tcpSocket->deleteLater();
+        _tcpSocket = nullptr;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_stateChanged(QAbstractSocket::SocketState socketState)
+{
+    if (socketState != QAbstractSocket::ConnectedState) {
+        _loggedIn = false;
+        emit connected(tr("Not Connected"));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_socketError(QAbstractSocket::SocketError socketError)
+{
+    qCDebug(MicrohardLog) << "Socket error: " << socketError;
+    emit connected(tr("Not Connected"));
+    _start();
+}
+
+//-----------------------------------------------------------------------------
