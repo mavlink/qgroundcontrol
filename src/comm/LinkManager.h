@@ -25,6 +25,8 @@
 #include "MAVLinkProtocol.h"
 #if !defined(__mobile__)
 #include "LogReplayLink.h"
+#endif
+#if !defined(__ios__)
 #include "UdpIODevice.h"
 #endif
 #include "QmlObjectListModel.h"
@@ -240,7 +242,7 @@ private:
     static const int    _autoconnectConnectDelayMSecs;
 
     // NMEA GPS device for GCS position
-#ifndef __mobile__
+#ifndef __ios__
 #ifndef NO_SERIAL_LINK
     QString      _nmeaDeviceName;
     QSerialPort* _nmeaPort;
