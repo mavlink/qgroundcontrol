@@ -21,8 +21,8 @@ import QGroundControl.Palette               1.0
 //-- VTOL Mode Indicator
 QGCComboBox {
     anchors.verticalCenter: parent.verticalCenter
-    alternateText:          _fwdFlight ? qsTr("VTOL: FW") : qsTr("VTOL: MR")
-    model:                  [ qsTr("VTOL: Multi-Rotor"), qsTr("VTOL: Fixed Wing")  ]
+    verticalAlignment:      Text.AlignVCenter
+    text:                   _fwdFlight ? qsTr("Fixed Wing") : qsTr("Multi-Rotor")
     font.pointSize:         ScreenTools.mediumFontPointSize
     currentIndex:           -1
     sizeToContents:         true
