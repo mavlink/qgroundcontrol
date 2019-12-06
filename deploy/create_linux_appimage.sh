@@ -64,6 +64,7 @@ find ../ -name *.deb -exec dpkg -x {} . \;
 find ../ -name *.rpm -exec sh -c 'rpm2cpio {} | cpio -idmv' \;
 
 cp -L /usr/lib64/libSDL2* ${APPDIR}/usr/lib/x86_64-linux-gnu/
+cp -vP $(echo "$(ldconfig -p | grep libcrypto.so.1.0.0 | tr ' ' '\n' | grep /)") ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
 # copy QGroundControl release into appimage
 rsync -av --exclude=*.cpp --exclude=*.h --exclude=*.o --exclude="CMake*" --exclude="*.cmake" ${QGC_RELEASE_DIR}/* ${APPDIR}/
