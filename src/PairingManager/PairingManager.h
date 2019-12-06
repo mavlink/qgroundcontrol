@@ -185,7 +185,7 @@ private:
     QString                 _getLocalIPInNetwork        (const QString& remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel);
+    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& ip, const QString& devicePublicKey, const int channel);
     void                    _connectionCompleted        (const QString& name, const int channel);
     void                    _disconnectCompleted        (const QString& name);
     void                    _channelCompleted           (const QString& name, int channel);
@@ -211,6 +211,7 @@ private:
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);
     QString                 _getDeviceIP                (const QString& name);
+    bool                    _getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip);
     QString                 _getDeviceConnectNid        (int channel);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC

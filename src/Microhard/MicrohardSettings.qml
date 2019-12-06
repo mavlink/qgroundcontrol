@@ -135,6 +135,7 @@ Rectangle {
                             }
                             QGCLabel {
                                 text:           qsTr("Air Unit:")
+                                visible:        QGroundControl.microhardManager.showRemote
                             }
                             QGCLabel {
                                 function getStatus(status) {
@@ -146,6 +147,7 @@ Rectangle {
                                         return qsTr("Not Connected")
                                 }
                                 text:           getStatus(QGroundControl.microhardManager.linkConnected)
+                                visible:        QGroundControl.microhardManager.showRemote
                                 color:          QGroundControl.microhardManager.linkConnected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
                             }
                             QGCLabel {
@@ -156,9 +158,11 @@ Rectangle {
                             }
                             QGCLabel {
                                 text:           qsTr("Downlink RSSI:")
+                                visible:        QGroundControl.microhardManager.showRemote
                             }
                             QGCLabel {
                                 text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.downlinkRSSI < 0 ? QGroundControl.microhardManager.downlinkRSSI : ""
+                                visible:        QGroundControl.microhardManager.showRemote
                             }
                         }
                     }

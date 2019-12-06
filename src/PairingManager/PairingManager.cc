@@ -24,6 +24,7 @@ QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
 static const qint64  min_time_between_connects = 5000;
 static const int     pairRetryWait = 3000;
+static const QString defaultRemotePairingManagerIPPostfix = ".10";
 static const QString gcsFileName = "gcs";
 static const QString tempPrefix = "temp";
 static const QString chSeparator = "\t";
@@ -33,7 +34,7 @@ static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _aes()
-    , _aes_config("bq2iLbdmJGNyuiyA4D8drVNITohrbPNq", 0xf9a830cd32f30313)
+    , _aes_config("GdnQvHqDDiJoej2022Xti4BM4ko3nx88", 0xf9a830cd32f30313)
     , _uploadManager(this)
 {
 }
@@ -62,7 +63,9 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 void
 PairingManager::_setEnabled()
 {
-    setUsePairing(_toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool());
+    bool value = _toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool();
+    setUsePairing(value);
+    _toolbox->microhardManager()->setShowRemote(!value);
 }
 
 //-----------------------------------------------------------------------------
@@ -92,11 +95,12 @@ PairingManager::setUsePairing(bool set)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel)
+PairingManager::_pairingCompleted(const QString& tempName, const QString& newName, const QString& ip, const QString& devicePublicKey, const int channel)
 {
     QJsonDocument jsonDoc = _getPairingJsonDoc(tempName, true);
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("Name", newName);
+    jsonObj.insert("IP", ip);
     jsonObj.insert("PublicKey", devicePublicKey);
     jsonObj.insert("CC", channel);
     jsonObj.insert("NID", _getDeviceConnectNid(channel));
@@ -145,6 +149,40 @@ PairingManager::_getDeviceIP(const QString& name)
     }
     QJsonObject jsonObj = _devices[name].object();
     return jsonObj["IP"].toString();
+}
+
+//-----------------------------------------------------------------------------
+bool
+PairingManager::_getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip)
+{
+    const int maxNumberOfDevices = 8;
+    const int deviceIPStart = 30;
+    const int mhIPStart = 20;
+
+    QString remoteIPAddr = _toolbox->microhardManager()->remoteIPAddr();
+    QString prefix = remoteIPAddr.left(remoteIPAddr.lastIndexOf('.') + 1);
+
+    for (int i = 0; i < maxNumberOfDevices; i++)
+    {
+        QString ipTrial = prefix + QString::number(deviceIPStart + i);
+        bool found = false;
+        QMapIterator<QString, QJsonDocument> iter(_devices);
+        while (iter.hasNext()) {
+            iter.next();
+            QJsonObject jsonObj = iter.value().object();
+            if (ipTrial == jsonObj["IP"].toString()) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ip = ipTrial;
+            mhip = prefix + QString::number(mhIPStart + i);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -401,7 +439,7 @@ PairingManager::_uploadFinished()
         if (map["CMD"] == "pair") {
             removeTempFile = true;
             if (map["RES"] == "accepted") {
-                _pairingCompleted(name, map["NM"].toString(), map["PublicKey"].toString(), map["CC"].toInt());
+                _pairingCompleted(name, map["NM"].toString(), map["IP"].toString(), map["PublicKey"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
                 setPairingStatus(PairingError, tr("Pairing rejected"));
                 qCDebug(PairingManagerLog) << "Pairing rejected";
@@ -866,7 +904,7 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     QString connectURL = "http://" + remotePairingMap["IP"].toString() + ":" + pport;
     QJsonDocument responseJsonDoc;
 
-    connectURL +=  + "/connect";
+    connectURL += "/connect";
     if (linkType == "ZT") {
         responseJsonDoc = _createZeroTierConnectJson(remotePairingMap);
     } else if (linkType == "MH") {
@@ -879,9 +917,6 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     } else if (linkType == "MH") {
         _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(true);
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
-        if (remotePairingMap.contains("AIP")) {
-            _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
-        }
     }
     if (linkType == "MH") {
         _toolbox->microhardManager()->switchToConnectionEncryptionKey(remotePairingMap["EK"].toString());
@@ -1004,6 +1039,12 @@ PairingManager::_createZeroTierPairingJson(const QVariantMap& remotePairingMap)
 QJsonDocument
 PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
 {
+    QString assignedIP, assignedMHIP;
+    if (!_getFreeDeviceAndMicrohardIP(assignedIP, assignedMHIP)) {
+        qCDebug(PairingManagerLog) << "Maximum number of paired devices exceeded.";
+        return QJsonDocument();
+    }
+
     QString localIP = _getLocalIPInNetwork(remotePairingMap["IP"].toString(), 3);
 
     QJsonObject jsonObj;
@@ -1015,6 +1056,9 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("CC", cc);
     jsonObj.insert("NID", _getDeviceConnectNid(cc));
     jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
+    jsonObj.insert("CCIP", assignedIP);
+    jsonObj.insert("MHIP", assignedMHIP);
+
     return QJsonDocument(jsonObj);
 }
 
@@ -1161,6 +1205,10 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
         responseJsonDoc = _createZeroTierPairingJson(remotePairingMap);
     } else if (linkType == "MH") {
         responseJsonDoc = _createMicrohardPairingJson(remotePairingMap);
+        if (responseJsonDoc.isEmpty()) {
+            setPairingStatus(PairingError, tr("Maximum number of paired devices exceeded."));
+            return;
+        }
     }
 
     if (linkType == "ZT") {
@@ -1169,9 +1217,6 @@ PairingManager::jsonReceivedStartPairing(const QString& jsonEnc)
     } else if (linkType == "MH") {
         _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(true);
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
-        if (remotePairingMap.contains("AIP")) {
-            _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
-        }
         if (remotePairingMap.contains("CU")) {
             _toolbox->microhardManager()->setConfigUserName(remotePairingMap["CU"].toString());
         }
@@ -1210,8 +1255,7 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     jsonObj.insert("LT", "MH");
     QString remoteIPAddr = _toolbox->microhardManager()->remoteIPAddr();
     QString ipPrefix = remoteIPAddr.left(remoteIPAddr.lastIndexOf('.'));
-    jsonObj.insert("IP", ipPrefix + ".10");
-    jsonObj.insert("AIP", remoteIPAddr);
+    jsonObj.insert("IP", ipPrefix + defaultRemotePairingManagerIPPostfix);
     jsonObj.insert("CU", _toolbox->microhardManager()->configUserName());
     jsonObj.insert("CP", _toolbox->microhardManager()->configPassword());
     int cc = _toolbox->microhardManager()->connectingChannel();
@@ -1236,6 +1280,10 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
 
     QString pairURL = "http://" + remotePairingMap["IP"].toString() + ":" + pport + "/pair";
     QJsonDocument responseJsonDoc = _createMicrohardPairingJson(remotePairingMap);
+    if (responseJsonDoc.isEmpty()) {
+        setPairingStatus(PairingError, tr("Maximum number of paired devices exceeded."));
+        return;
+    }
     emit startUpload(tempName, pairURL, responseJsonDoc, false);
 }
 #endif
