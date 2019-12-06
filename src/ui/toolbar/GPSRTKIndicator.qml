@@ -22,8 +22,8 @@ Item {
     width:          (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-
-    property bool showIndicator: QGroundControl.gpsRtk.connected.value
+    property bool showIndicator: true
+    //property bool showIndicator: QGroundControl.gpsRtk.connected.value
 
     Component {
         id: gpsInfo
