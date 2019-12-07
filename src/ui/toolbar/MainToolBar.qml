@@ -193,6 +193,7 @@ Item {
                 Loader {
                     id:                 gpsRTKindicator
                     Layout.fillHeight:  true
+                    Layout.margins:     ScreenTools.defaultFontPixelHeight / 1.5
                     source:             "/toolbar/GPSRTKIndicator.qml"
                     visible:            QGroundControl.corePlugin.showAdvancedUI
                 }
