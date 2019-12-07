@@ -1364,10 +1364,6 @@ PairingManager::disconnectDevice(const QString& name)
 
     _removeUDPLink(name);
 
-    if (_connectedDevices.empty() && _devicesToConnect.empty()) {
-        _resetMicrohardModem();
-    }
-
     if (!uploading) {
         _disconnectCompleted(name);
     }
