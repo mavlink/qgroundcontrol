@@ -322,6 +322,7 @@ signals:
     void    thermalModeChanged              ();
     void    thermalOpacityChanged           ();
     void    storageStatusChanged            ();
+    void requestPicturesFromVideoStream(const QString& savePath);
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
