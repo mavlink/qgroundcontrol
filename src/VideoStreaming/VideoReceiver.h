@@ -64,6 +64,8 @@ public:
     virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
 
     void                  setVideoDecoder   (VideoEncoding encoding);
+    GstElement *videoSink() const { return _videoSink; }
+    GstElement *pipeline() const { return _pipeline; }
 
 signals:
     void videoRunningChanged                ();
