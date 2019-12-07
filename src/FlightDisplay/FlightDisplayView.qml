@@ -390,7 +390,6 @@ Item {
                         script: {
                             // Stop video, restart it again with Timer
                             // Avoiding crashs if ParentChange is not yet done
-                            QGroundControl.videoManager.stopVideo()
                             videoPopUpTimer.running = true
                         }
                     }
@@ -414,7 +413,6 @@ Item {
                     name: "unpopup"
                     StateChangeScript {
                         script: {
-                            QGroundControl.videoManager.stopVideo()
                             videoPopUpTimer.running = true
                         }
                     }

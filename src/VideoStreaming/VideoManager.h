@@ -42,8 +42,6 @@ public:
     Q_PROPERTY(QString          videoSourceID           READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
-    Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
-    Q_PROPERTY(VideoReceiver*   thermalVideoReceiver    READ    thermalVideoReceiver                        CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalAspectRatio      READ    thermalAspectRatio                          NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           hfov                    READ    hfov                                        NOTIFY aspectRatioChanged)
@@ -62,10 +60,6 @@ public:
     virtual double      thermalHfov         ();
     virtual bool        autoStreamConfigured();
     virtual bool        hasThermal          ();
-    virtual void        restartVideo        ();
-
-    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
-    virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
     virtual bool        uvcEnabled          () { return false; }
@@ -79,9 +73,6 @@ public:
     // Override from QGCTool
     virtual void        setToolbox          (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo     ();
-    Q_INVOKABLE void stopVideo      ();
-
 signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
@@ -94,9 +85,6 @@ signals:
 
 protected slots:
     void _videoSourceChanged        ();
-    void _udpPortChanged            ();
-    void _rtspUrlChanged            ();
-    void _tcpUrlChanged             ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
@@ -108,8 +96,6 @@ protected:
 protected:
     SubtitleWriter  _subtitleWriter;
     bool            _isTaisync              = false;
-    VideoReceiver*  _videoReceiver          = nullptr;
-    VideoReceiver*  _thermalVideoReceiver   = nullptr;
     VideoSettings*  _videoSettings          = nullptr;
     QString         _videoSourceID;
     bool            _fullScreen             = false;

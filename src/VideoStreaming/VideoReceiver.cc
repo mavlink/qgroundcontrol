@@ -140,7 +140,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 void
 VideoReceiver::_restart_timeout()
 {
-    qgcApp()->toolbox()->videoManager()->restartVideo();
+   //TODO: restart the pipeline here.
 }
 #endif
 
