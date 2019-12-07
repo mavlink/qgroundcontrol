@@ -52,7 +52,7 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _mavlinkChannelsUsedBitMask(1)    // We never use channel 0 to avoid sequence numbering problems
     , _autoConnectSettings(nullptr)
     , _mavlinkProtocol(nullptr)
-#ifndef __ios__
+#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     , _nmeaPort(nullptr)
 #endif
@@ -71,7 +71,7 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 
 LinkManager::~LinkManager()
 {
-#ifndef __ios__
+#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     delete _nmeaPort;
 #endif
@@ -477,7 +477,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         createConnectedLink(config);
         emit linkConfigurationsChanged();
     }
-#ifndef __ios__
+#ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect
     if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {
@@ -533,7 +533,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         QString boardName;
 
 #ifndef NO_SERIAL_LINK
-#ifndef __ios__
+#ifndef __mobile__
         // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
@@ -664,9 +664,9 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
         }
     }
-
+#endif
     // Check for RTK GPS connection gone
-#if !defined(__mobile__)
+#if !defined(__ios__)
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
         _toolbox->gpsManager()->disconnectGPS();
@@ -674,7 +674,6 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
 #endif
 
-#endif
 #endif // NO_SERIAL_LINK
 }
 
