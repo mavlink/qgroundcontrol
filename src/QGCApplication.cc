@@ -455,7 +455,6 @@ void QGCApplication::_shutdown()
     // Close out all Qml before we delete toolbox. This way we don't get all sorts of null reference complaints from Qml.
     delete _qmlAppEngine;
 
-    shutdownVideoStreaming();
     delete _toolbox;
 }
 
