@@ -173,19 +173,3 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
     qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QStringLiteral("VideoSurface from QML is not supported"));
 }
-
-void shutdownVideoStreaming()
-{
-    /* From: http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-Gst.html#gst-deinit
-     *
-     * "It is normally not needed to call this function in a normal application as the resources will automatically
-     * be freed when the program terminates. This function is therefore mostly used by testsuites and other memory
-     * profiling tools."
-     *
-     * It's causing a hang on exit. It hangs while deleting some thread.
-     *
-#if defined(QGC_GST_STREAMING)
-     gst_deinit();
-#endif
-    */
-}
