@@ -346,6 +346,7 @@ Item {
             height:         _pipSize * (9/16)
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
+            anchors.margins: _margins
             visible:        QGroundControl.videoManager.hasVideo
         }
 
