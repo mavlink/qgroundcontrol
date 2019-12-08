@@ -140,21 +140,21 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 void
 VideoReceiver::_restart_timeout()
 {
-   //TODO: restart the pipeline here.
+   // qgcApp()->toolbox()->videoManager()->restartVideo();
 }
 #endif
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
-//                                   +-->queue-->decoder-->_videosink
+//                                   +-->queue-->decoder-->glUpload-->_videosink
 //                                   |
 //    datasource-->demux-->parser-->tee
 //                                   ^
 //                                   |
 //                                   +-Here we will later link elements for recording
-void
-VideoReceiver::start()
+// This creates the pipeline but does not start it. The start must happen in the Qml Render Thread.
+void VideoReceiver::start()
 {
     if (_uri.isEmpty()) {
         return;
@@ -170,248 +170,33 @@ VideoReceiver::start()
     }
 
 #if defined(QGC_GST_STREAMING)
-    _stop = false;
+    auto prepareUdpPipeline = [this] () -> QString {
+        bool isH264 = _uri.startsWith("udp://");
+        auto port = _videoSettings->udpPort()->rawValue().toInt();
+        return QString("udpsrc port=%1 ! application/x-rtp, clock-rate=90000,payload=96 "
+                "! rtp%2depay ! video/x-%2 ! queue ! %2parse ! decodebin")
+                .arg(port)
+                .arg(isH264 ? "h264" : "h265");
+    };
+    auto prepareDefaultPipeline = [] () -> QString {
+        return QString("videotestsrc");
+    };
+    const auto videoSource = _videoSettings->videoSource()->rawValue().toString();
+    const auto pipeline = videoSource == "UDP" ? prepareUdpPipeline()
+                  : prepareDefaultPipeline();
+    const auto commonPipeline = pipeline + QString(" ! glupload ! glcolorconvert ! qmlglsink name=sink");
 
-#if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
-    //-- Taisync on iOS or Android sends a raw h.264 stream
-    bool isTaisyncUSB = qgcApp()->toolbox()->videoManager()->isTaisync();
-#else
-    bool isTaisyncUSB = false;
-#endif
-    bool isUdp264   = _uri.contains("udp://")  && !isTaisyncUSB;
-    bool isUdp265   = _uri.contains("udp265://")  && !isTaisyncUSB;
-    bool isTCP      = _uri.contains("tcp://")  && !isTaisyncUSB;
-    bool isMPEGTS   = _uri.contains("mpegts://")  && !isTaisyncUSB;
+    qDebug() << "Pipeline selected:" << pipeline;
 
-    if (!isTaisyncUSB && _uri.isEmpty()) {
-        qCritical() << "VideoReceiver::start() failed because URI is not specified";
-        return;
-    }
-    if (_videoSink == nullptr) {
-        qCritical() << "VideoReceiver::start() failed because video sink is not set";
-        return;
-    }
-    if(_running) {
-        qCDebug(VideoReceiverLog) << "Already running!";
-        return;
-    }
-    if (isUdp264) {
-        setVideoDecoder(H264_HW);
-    } else if (isUdp265) {
-        setVideoDecoder(H265_HW);
-    }
+    //TODO: Verify the usage of appsrc / appsink to simplify pipeline creation with multiple sinks.
+    std::string stdPipeline = commonPipeline.toStdString();
 
-    _starting = true;
+    _pipeline = gst_parse_launch(stdPipeline.c_str(), nullptr);
+    _videoSink = gst_bin_get_by_name(GST_BIN (_pipeline), "sink");
 
-    bool running    = false;
-    bool pipelineUp = false;
-
-    GstElement*     dataSource  = nullptr;
-    GstCaps*        caps        = nullptr;
-    GstElement*     demux       = nullptr;
-    GstElement*     parser      = nullptr;
-    GstElement*     queue       = nullptr;
-    GstElement*     decoder     = nullptr;
-    GstElement*     queue1      = nullptr;
-
-    do {
-        if ((_pipeline = gst_pipeline_new("receiver")) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_pipeline_new()";
-            break;
-        }
-
-        if(isUdp264 || isUdp265 || isMPEGTS || isTaisyncUSB) {
-            dataSource = gst_element_factory_make("udpsrc", "udp-source");
-        } else if(isTCP) {
-            dataSource = gst_element_factory_make("tcpclientsrc", "tcpclient-source");
-        } else {
-            dataSource = gst_element_factory_make("rtspsrc", "rtsp-source");
-        }
-
-        if (!dataSource) {
-            qCritical() << "VideoReceiver::start() failed. Error with data source for gst_element_factory_make()";
-            break;
-        }
-
-        if(isUdp264) {
-            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
-                break;
-            }
-            g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
-        } else if(isUdp265) {
-            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
-                break;
-            }
-            g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri.replace("udp265", "udp")), "caps", caps, nullptr);
-#if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
-        } else if(isTaisyncUSB) {
-            QString uri = QString("0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
-            qCDebug(VideoReceiverLog) << "Taisync URI:" << uri;
-            g_object_set(static_cast<gpointer>(dataSource), "port", TAISYNC_VIDEO_UDP_PORT, nullptr);
-#endif
-        } else if(isTCP) {
-            QUrl url(_uri);
-            g_object_set(static_cast<gpointer>(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );
-        } else if(isMPEGTS) {
-            QUrl url(_uri);
-            g_object_set(static_cast<gpointer>(dataSource), "port", url.port(), nullptr);
-        } else {
-            g_object_set(static_cast<gpointer>(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
-        }
-
-        if (isTCP || isMPEGTS) {
-            if ((demux = gst_element_factory_make("tsdemux", "mpeg-ts-demuxer")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tsdemux')";
-                break;
-            }
-        } else {
-            if(!isTaisyncUSB) {
-                if ((demux = gst_element_factory_make(_depayName, "rtp-depacketizer")) == nullptr) {
-                   qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _depayName << "')";
-                    break;
-                }
-            }
-        }
-
-        if ((parser = gst_element_factory_make(_parserName, "parser")) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _parserName << "')";
-            break;
-        }
-
-        if((_tee = gst_element_factory_make("tee", nullptr)) == nullptr)  {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
-            break;
-        }
-
-        if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
-            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
-            //       We should compare gstreamer scripts to QGroundControl to determine the need
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
-            break;
-        }
-
-        if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
-            qWarning() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
-            if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
-                break;
-            }
-        }
-
-        if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue') [1]";
-            break;
-        }
-
-        if(isTaisyncUSB) {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
-        } else {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
-        }
-        pipelineUp = true;
-
-        if(isUdp264 || isUdp265) {
-            // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
-                qCritical() << "Unable to link UDP elements.";
-                break;
-            }
-        } else if(isTaisyncUSB) {
-            // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
-                qCritical() << "Unable to link Taisync USB elements.";
-                break;
-            }
-        } else if (isTCP || isMPEGTS) {
-            if(!gst_element_link(dataSource, demux)) {
-                qCritical() << "Unable to link TCP/MPEG-TS dataSource to Demux.";
-                break;
-            }
-            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
-                qCritical() << "Unable to link TCP/MPEG-TS pipline to parser.";
-                break;
-            }
-            g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
-        } else {
-            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
-            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, nullptr)) {
-                qCritical() << "Unable to link RTSP elements.";
-                break;
-            }
-        }
-
-        dataSource = demux = parser = queue = decoder = queue1 = nullptr;
-
-        GstBus* bus = nullptr;
-
-        if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != nullptr) {
-            gst_bus_enable_sync_message_emission(bus);
-            g_signal_connect(bus, "sync-message", G_CALLBACK(_onBusMessage), this);
-            gst_object_unref(bus);
-            bus = nullptr;
-        }
-
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
-        running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
-
-    } while(0);
-
-    if (caps != nullptr) {
-        gst_caps_unref(caps);
-        caps = nullptr;
-    }
-
-    if (!running) {
-        qCritical() << "VideoReceiver::start() failed";
-
-        // In newer versions, the pipeline will clean up all references that are added to it
-        if (_pipeline != nullptr) {
-            gst_object_unref(_pipeline);
-            _pipeline = nullptr;
-        }
-
-        // If we failed before adding items to the pipeline, then clean up
-        if (!pipelineUp) {
-            if (decoder != nullptr) {
-                gst_object_unref(decoder);
-                decoder = nullptr;
-            }
-
-            if (parser != nullptr) {
-                gst_object_unref(parser);
-                parser = nullptr;
-            }
-
-            if (demux != nullptr) {
-                gst_object_unref(demux);
-                demux = nullptr;
-            }
-
-            if (dataSource != nullptr) {
-                gst_object_unref(dataSource);
-                dataSource = nullptr;
-            }
-
-            if (_tee != nullptr) {
-                gst_object_unref(_tee);
-                dataSource = nullptr;
-            }
-
-            if (queue != nullptr) {
-                gst_object_unref(queue);
-                dataSource = nullptr;
-            }
-        }
-
-        _running = false;
-    } else {
-        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-playing");
-        _running = true;
-        qCDebug(VideoReceiverLog) << "Running";
-    }
-    _starting = false;
+//    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
+    gst_element_set_state(_pipeline, GST_STATE_PAUSED);
+    _streaming = true;
 #endif
 }
 
@@ -422,6 +207,9 @@ VideoReceiver::stop()
     if(qgcApp() && qgcApp()->runningUnitTests()) {
         return;
     }
+    // TODO: Figure out how to stop without destroying the pipeline.
+    // this needs to be communicated via signal / slots probably.
+    return;
 #if defined(QGC_GST_STREAMING)
     _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
