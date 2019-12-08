@@ -88,12 +88,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
 
 VideoReceiver::~VideoReceiver()
 {
-#if defined(QGC_GST_STREAMING)
-    stop();
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-    }
-#endif
+    gst_element_set_state (_pipeline, GST_STATE_NULL);
 }
 
 #if defined(QGC_GST_STREAMING)
