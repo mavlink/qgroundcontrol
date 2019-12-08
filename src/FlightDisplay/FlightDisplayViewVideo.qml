@@ -28,7 +28,6 @@ Item {
     clip:   true
     property double _ar:                QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
-    property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
     property var    _dynamicCameras:    activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _connected:         activeVehicle ? !activeVehicle.connectionLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -37,75 +36,27 @@ Item {
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
+    property alias videoReceiver: videoSurface.videoReceiver
     property double _thermalHeightFactor: 0.85 //-- TODO
 
-    /* This controls the connection between the VideoManager and the GstGLVideoItem. */
-    VideoSurface {
-        id: videoSurface
-        videoItem: video
-        videoReceiver: QGroundControl.videoManager.videoReceiver
-    }
-
-    /* This is the actual surface displaying the item. */
-    GstGLVideoItem {
-        id: video
-        anchors.centerIn: parent
-        width: parent.width
-        height: parent.height
-        anchors.fill: parent
-        visible: !noVideo.visible
-    }
-
-    Rectangle {
-        id:             noVideo
-        anchors.fill:   parent
-        color:          Qt.rgba(0,0,0,0.75)
-        visible:        false // !(_videoReceiver && _videoReceiver.videoRunning)
-        QGCLabel {
-            text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-            font.family:        ScreenTools.demiboldFontFamily
-            color:              "white"
-            font.pointSize:     mainIsMap ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
-            anchors.centerIn:   parent
-        }
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
-            }
-        }
-    }
     Rectangle {
         anchors.fill:   parent
         color:          "black"
-        visible:        true
-        function getWidth() {
-            //-- Fit Width or Stretch
-            if(_fitMode === 0 || _fitMode === 2) {
-                return parent.width
-            }
-            //-- Fit Height
-            return _ar != 0.0 ? parent.height * _ar : parent.width
-        }
-        function getHeight() {
-            //-- Fit Height or Stretch
-            if(_fitMode === 1 || _fitMode === 2) {
-                return parent.height
-            }
-            //-- Fit Width
-            return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
+        visible:    true  //    _videoReceiver && _videoReceiver.videoRunning
+
+        //-- Main Video
+        VideoSurface {
+            id: videoSurface
+            videoItem: video
+            videoReceiver: QGroundControl.videoManager.videoReceiver
         }
 
-        Item {
-            id: videoBackgroundComponent
-        }
-
-        //-- Full screen toggle
-        MouseArea {
+        GstGLVideoItem {
+            id: video
+            anchors.centerIn: parent
+            width: parent.width
+            height: parent.height
             anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
-            }
         }
     }
 }
