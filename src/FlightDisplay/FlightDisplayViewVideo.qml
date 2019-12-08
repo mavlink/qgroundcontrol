@@ -19,6 +19,9 @@ import QGroundControl.Controls          1.0
 import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
+import QGroundControl.QgcQtGStreamer    1.0
+import QGroundControl.SettingsManager       1.0
+import org.freedesktop.gstreamer.GLVideoItem 1.0
 
 Item {
     id:     root
@@ -36,11 +39,28 @@ Item {
 
     property double _thermalHeightFactor: 0.85 //-- TODO
 
+    /* This controls the connection between the VideoManager and the GstGLVideoItem. */
+    VideoSurface {
+        id: videoSurface
+        videoItem: video
+        videoReceiver: QGroundControl.videoManager.videoReceiver
+    }
+
+    /* This is the actual surface displaying the item. */
+    GstGLVideoItem {
+        id: video
+        anchors.centerIn: parent
+        width: parent.width
+        height: parent.height
+        anchors.fill: parent
+        visible: !noVideo.visible
+    }
+
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !(_videoReceiver && _videoReceiver.videoRunning)
+        visible:        false // !(_videoReceiver && _videoReceiver.videoRunning)
         QGCLabel {
             text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
             font.family:        ScreenTools.demiboldFontFamily
