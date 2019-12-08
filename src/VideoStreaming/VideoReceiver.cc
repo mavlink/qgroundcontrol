@@ -157,6 +157,7 @@ VideoReceiver::_restart_timeout()
 void VideoReceiver::start()
 {
     if (_uri.isEmpty()) {
+        qCDebug(VideoReceiverLog) << "No uri, leaving";
         return;
     }
     qCDebug(VideoReceiverLog) << "start():" << _uri;
@@ -181,12 +182,9 @@ void VideoReceiver::start()
     auto prepareDefaultPipeline = [] () -> QString {
         return QString("videotestsrc");
     };
-    const auto videoSource = _videoSettings->videoSource()->rawValue().toString();
-    const auto pipeline = videoSource == "UDP" ? prepareUdpPipeline()
+    const auto pipeline = _uri.startsWith("udp://") ? prepareUdpPipeline()
                   : prepareDefaultPipeline();
     const auto commonPipeline = pipeline + QString(" ! glupload ! glcolorconvert ! qmlglsink name=sink");
-
-    qDebug() << "Pipeline selected:" << pipeline;
 
     //TODO: Verify the usage of appsrc / appsink to simplify pipeline creation with multiple sinks.
     std::string stdPipeline = commonPipeline.toStdString();

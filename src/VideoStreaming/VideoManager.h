@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
+    Q_PROPERTY(VideoReceiver* videoReceiver MEMBER _videoReceiver CONSTANT)
 
     virtual bool        hasVideo            ();
     virtual bool        isGStreamer         ();
@@ -97,6 +98,7 @@ protected:
     SubtitleWriter  _subtitleWriter;
     bool            _isTaisync              = false;
     VideoSettings*  _videoSettings          = nullptr;
+    VideoReceiver* _videoReceiver = nullptr;
     QString         _videoSourceID;
     bool            _fullScreen             = false;
     Vehicle*        _activeVehicle          = nullptr;

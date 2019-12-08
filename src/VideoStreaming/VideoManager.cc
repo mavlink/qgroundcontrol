@@ -42,7 +42,6 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-
 }
 
 //-----------------------------------------------------------------------------
@@ -65,6 +64,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
+    _videoReceiver = new VideoReceiver();
+    _updateSettings();
+    _videoReceiver->start();
 #endif
 }
 
@@ -298,6 +300,8 @@ VideoManager::_updateSettings()
         : source == VideoSettings::videoSourceTCP     ? QStringLiteral("tcp://%1").arg(tcpUrl)
         : source == VideoSettings::videoSourceRTSP    ? _videoSettings->rtspUrl()->rawValue().toString()
         : uri;
+
+    _videoReceiver->setUri(uri);
 }
 
 //----------------------------------------------------------------------------------------
