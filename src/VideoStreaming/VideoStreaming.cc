@@ -28,6 +28,8 @@
 #endif
 
 #include "VideoStreaming.h"
+#include "VideoSurface.h"
+#include "VideoManager.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
@@ -162,6 +164,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         GST_PLUGIN_STATIC_REGISTER(matroska);
         GST_PLUGIN_STATIC_REGISTER(androidmedia);
     #endif
+    qmlRegisterType<VideoReceiver> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiver");
+    qmlRegisterType<VideoSurface> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface");
 #else
     Q_UNUSED(argc);
     Q_UNUSED(argv);
