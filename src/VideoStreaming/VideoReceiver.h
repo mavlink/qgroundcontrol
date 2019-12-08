@@ -126,7 +126,6 @@ protected:
     virtual void                _shutdownRecordingBranch();
     virtual void                _shutdownPipeline       ();
     virtual void                _cleanupOldVideos       ();
-    virtual void                _setVideoSink           (GstElement* sink);
 
     GstElement*     _pipeline;
     GstElement*     _pipelineStopRec;

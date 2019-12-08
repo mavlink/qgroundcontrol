@@ -91,21 +91,6 @@ VideoReceiver::~VideoReceiver()
     gst_element_set_state (_pipeline, GST_STATE_NULL);
 }
 
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_setVideoSink(GstElement* sink)
-{
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-        _videoSink = nullptr;
-    }
-    if (sink) {
-        _videoSink = sink;
-        gst_object_ref_sink(_videoSink);
-    }
-}
-#endif
-
 //-----------------------------------------------------------------------------
 void
 VideoReceiver::grabImage(QString imageFile)
