@@ -143,6 +143,11 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             qCritical() << "gst_init_check() failed: " << error->message;
             g_error_free(error);
         }
+        // GStreamer needs the sink to be created before any Qml elements
+        // so that the Qml elements are registered in the system. so we create
+        // and free it.
+        GstElement *sink = gst_element_factory_make ("qmlglsink", nullptr);
+        gst_object_unref(sink);
     #endif
     #if defined(__android__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
