@@ -44,18 +44,24 @@ Item {
         color:          "black"
         visible:    true  //    _videoReceiver && _videoReceiver.videoRunning
 
-        //-- Main Video
+        //-- Main Video controller.
         VideoSurface {
             id: videoSurface
             videoItem: video
             videoReceiver: QGroundControl.videoManager.videoReceiver
         }
 
+        // Main Video.
         GstGLVideoItem {
             id: video
             anchors.centerIn: parent
             width: parent.width
             height: parent.height
+            anchors.fill: parent
+        }
+
+        QGCPipable {
+            id: videoControls
             anchors.fill: parent
         }
     }
