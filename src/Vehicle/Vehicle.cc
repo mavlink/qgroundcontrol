@@ -1774,6 +1774,9 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
     }
     if(_telemetryRRSSI != remrssi) {
         _telemetryRRSSI = remrssi;
+        if (_toolbox && _toolbox->settingsManager()->appSettings()->enableMicrohard()->rawValue().toBool()) {
+            _toolbox->microhardManager()->setUplinkRSSI(-_telemetryRRSSI);
+        }
         emit telemetryRRSSIChanged(_telemetryRRSSI);
     }
     if(_telemetryRXErrors != rstatus.rxerrors) {

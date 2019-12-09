@@ -72,7 +72,7 @@ PairingManager::_setEnabled()
 void
 PairingManager::setUsePairing(bool set)
 {
-    if (_usePairing == set) {
+    if (_usePairing == set && _usePairingSet) {
         return;
     }
     _usePairing = set;
@@ -86,7 +86,10 @@ PairingManager::setUsePairing(bool set)
         _reconnectTimer.stop();
     }
 
-    _toolbox->microhardManager()->updateSettings();
+    if (_usePairingSet) {
+        _toolbox->microhardManager()->updateSettings();
+    }
+    _usePairingSet = true;
     if (!_usePairing || !_connectedDevices.empty()) {
         _toolbox->videoManager()->startVideo();
     }

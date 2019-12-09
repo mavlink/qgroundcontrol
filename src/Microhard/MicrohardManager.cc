@@ -299,18 +299,16 @@ MicrohardManager::_connectedRem(const QString& status)
 void
 MicrohardManager::_rssiUpdatedLoc(int rssi)
 {
-    _downlinkRSSI = rssi;
+    setDownlinkRSSI(rssi);
     emit connectedChanged();
-    emit linkChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardManager::_rssiUpdatedRem(int rssi)
 {
-    _uplinkRSSI = rssi;
+    setUplinkRSSI(rssi);
     emit linkConnectedChanged();
-    emit linkChanged();
 }
 
 //-----------------------------------------------------------------------------

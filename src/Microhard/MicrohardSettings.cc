@@ -10,6 +10,7 @@
 #include "MicrohardSettings.h"
 #include "MicrohardManager.h"
 #include "SettingsManager.h"
+#include "PairingManager.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
@@ -88,7 +89,7 @@ MicrohardSettings::_readBytes()
     int j;
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
-    //qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
+    // qCDebug(MicrohardLog) << _address << " read bytes: " << bytesIn;
 
     if (_loggedIn) {
         int i1 = bytesIn.indexOf("RSSI (dBm)");
@@ -98,8 +99,9 @@ MicrohardSettings::_readBytes()
                 i2 += 2;
                 int i3 = bytesIn.indexOf(" ", i2);
                 int val = bytesIn.mid(i2, i3 - i2).toInt();
-                if (val < 0) {
+                if (val < 0 && _rssiVal != val) {
                     _rssiVal = val;
+                    emit rssiUpdated(_rssiVal);
                 }
             }
         }
@@ -124,15 +126,13 @@ MicrohardSettings::_readBytes()
             QString product = bytesIn.mid(i + 2, bytesIn.indexOf("\r", i + 3) - (i + 2));
             qgcApp()->toolbox()->microhardManager()->setProductName(product);
         }
-        if (!_loggedIn && (_configure || _configureAfterConnect)) {
+        if (!_loggedIn && !qgcApp()->toolbox()->pairingManager()->usePairing() && (_configure || _configureAfterConnect)) {
             _configureAfterConnect = false;
             qgcApp()->toolbox()->microhardManager()->configure();
         }
         _loggedIn = true;
         emit connected(tr("Connected"));
     }
-
-    emit rssiUpdated(_rssiVal);
 }
 
 //-----------------------------------------------------------------------------
