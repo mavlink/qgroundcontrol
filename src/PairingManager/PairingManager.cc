@@ -566,16 +566,17 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
     }
 
     QString ip = _getDeviceIP(name);
-    // If multiple vehicles share same IP then disconnect
+    int channel = _getDeviceChannel(name);
+    // If multiple vehicles share same IP or do not share same channel then disconnect
     for (QString n : _connectedDevices.keys()) {
-        if (ip == _getDeviceIP(n)) {
+        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
             disconnectDevice(n);
             break;
         }
     }
-    // If multiple vehicles share same IP then do not try to autoconnect anymore
+    // If multiple vehicles share same IP or do not share same channel then do not try to autoconnect anymore
     for (QString n : _devicesToConnect.keys()) {
-        if (ip == _getDeviceIP(n)) {
+        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
             stopConnectingDevice(n);
             break;
         }
