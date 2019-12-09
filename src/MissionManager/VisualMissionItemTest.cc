@@ -54,7 +54,7 @@ void VisualMissionItemTest::init(void)
 
 void VisualMissionItemTest::cleanup(void)
 {
-    delete _offlineVehicle;
+    _offlineVehicle->deleteLater();
     UnitTest::cleanup();
 }
 

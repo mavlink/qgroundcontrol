@@ -398,6 +398,7 @@ INCLUDEPATH += .
 INCLUDEPATH += \
     include/ui \
     src \
+    src/ADSB \
     src/api \
     src/AnalyzeView \
     src/Camera \
@@ -406,6 +407,7 @@ INCLUDEPATH += \
     src/FlightMap \
     src/FlightMap/Widgets \
     src/FollowMe \
+    src/Geo \
     src/GPS \
     src/Joystick \
     src/PlanView \
@@ -566,6 +568,8 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
 # Main QGC Headers and Source files
 
 HEADERS += \
+    src/ADSB/ADSBVehicle.h \
+    src/ADSB/ADSBVehicleManager.h \
     src/AnalyzeView/LogDownloadController.h \
     src/AnalyzeView/PX4LogParser.h \
     src/AnalyzeView/ULogParser.h \
@@ -592,7 +596,7 @@ HEADERS += \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/CorridorScanComplexItem.h \
     src/MissionManager/CorridorScanPlanCreator.h \
-    src/MissionManager/CustomPlanCreator.h \
+    src/MissionManager/BlankPlanCreator.h \
     src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
@@ -623,16 +627,24 @@ HEADERS += \
     src/MissionManager/StructureScanPlanCreator.h \
     src/MissionManager/SurveyComplexItem.h \
     src/MissionManager/SurveyPlanCreator.h \
+    src/MissionManager/TakeoffMissionItem.h \
     src/MissionManager/TransectStyleComplexItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
+    src/Geo/QGCGeo.h \
+    src/Geo/Constants.hpp \
+    src/Geo/Math.hpp \
+    src/Geo/Utility.hpp \
+    src/Geo/UTMUPS.hpp \
+    src/Geo/MGRS.hpp \
+    src/Geo/TransverseMercator.hpp \
+    src/Geo/PolarStereographic.hpp \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCFileDownload.h \
-    src/QGCGeo.h \
     src/QGCLoggingCategory.h \
     src/QGCMapPalette.h \
     src/QGCPalette.h \
@@ -651,6 +663,7 @@ HEADERS += \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
+    src/Settings/ADSBVehicleManagerSettings.h \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
@@ -668,7 +681,6 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
-    src/Vehicle/ADSBVehicle.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MultiVehicleManager.h \
@@ -689,7 +701,6 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/UTM.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
     src/uas/FileManager.h \
@@ -799,6 +810,8 @@ AndroidBuild {
 }
 
 SOURCES += \
+    src/ADSB/ADSBVehicle.cc \
+    src/ADSB/ADSBVehicleManager.cc \
     src/AnalyzeView/LogDownloadController.cc \
     src/AnalyzeView/PX4LogParser.cc \
     src/AnalyzeView/ULogParser.cc \
@@ -823,7 +836,7 @@ SOURCES += \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/CorridorScanComplexItem.cc \
     src/MissionManager/CorridorScanPlanCreator.cc \
-    src/MissionManager/CustomPlanCreator.cc \
+    src/MissionManager/BlankPlanCreator.cc \
     src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
@@ -853,15 +866,22 @@ SOURCES += \
     src/MissionManager/StructureScanPlanCreator.cc \
     src/MissionManager/SurveyComplexItem.cc \
     src/MissionManager/SurveyPlanCreator.cc \
+    src/MissionManager/TakeoffMissionItem.cc \
     src/MissionManager/TransectStyleComplexItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
+    src/Geo/QGCGeo.cc \
+    src/Geo/Math.cpp \
+    src/Geo/Utility.cpp \
+    src/Geo/UTMUPS.cpp \
+    src/Geo/MGRS.cpp \
+    src/Geo/TransverseMercator.cpp \
+    src/Geo/PolarStereographic.cpp \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
     src/QGCFileDownload.cc \
-    src/QGCGeo.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
     src/QGCPalette.cc \
@@ -880,6 +900,7 @@ SOURCES += \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
+    src/Settings/ADSBVehicleManagerSettings.cc \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
@@ -897,7 +918,6 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
-    src/Vehicle/ADSBVehicle.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MultiVehicleManager.cc \
@@ -917,7 +937,6 @@ SOURCES += \
     src/main.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/UTM.cpp \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
     src/uas/FileManager.cc \

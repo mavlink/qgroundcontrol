@@ -12,6 +12,8 @@
 #include <QLocale>
 #include <QQuaternion>
 
+#include <Eigen/Eigen>
+
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
 #include "FirmwarePluginManager.h"
@@ -34,7 +36,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
-#include "ADSBVehicle.h"
+#include "ADSBVehicleManager.h"
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
@@ -42,6 +44,7 @@
 #include "PositionManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
+#include "QGCGeo.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -111,7 +114,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _csvLogTimer(this)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
@@ -295,10 +297,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 
-    connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
-    _adsbTimer.setSingleShot(false);
-    _adsbTimer.start(1000);
-
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
@@ -323,7 +321,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _csvLogTimer(this)
     , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
@@ -1132,15 +1129,25 @@ void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
     mavlink_attitude_quaternion_t attitudeQuaternion;
     mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
 
+    Eigen::Quaternionf quat(attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4);
+    Eigen::Vector3f rates(attitudeQuaternion.rollspeed, attitudeQuaternion.pitchspeed, attitudeQuaternion.yawspeed);
+    Eigen::Quaternionf repr_offset(attitudeQuaternion.repr_offset_q[0], attitudeQuaternion.repr_offset_q[1], attitudeQuaternion.repr_offset_q[2], attitudeQuaternion.repr_offset_q[3]);
+
+    // if repr_offset is valid, rotate attitude and rates
+    if (repr_offset.norm() >= 0.5f) {
+        quat = quat * repr_offset;
+        rates = repr_offset * rates; 
+    }
+
     float roll, pitch, yaw;
-    float q[] = { attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4 };
+    float q[] = { quat.w(), quat.x(), quat.y(), quat.z() };
     mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
 
     _handleAttitudeWorker(roll, pitch, yaw);
 
-    rollRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.rollspeed));
-    pitchRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.pitchspeed));
-    yawRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.yawspeed));
+    rollRate()->setRawValue(qRadiansToDegrees(rates[0]));
+    pitchRate()->setRawValue(qRadiansToDegrees(rates[1]));
+    yawRate()->setRawValue(qRadiansToDegrees(rates[2]));
 }
 
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
@@ -1163,6 +1170,7 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 
     _gpsFactGroup.lat()->setRawValue(gpsRawInt.lat * 1e-7);
     _gpsFactGroup.lon()->setRawValue(gpsRawInt.lon * 1e-7);
+    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
     _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
     _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
     _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
@@ -1236,6 +1244,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
 
     _gpsFactGroup.lat()->setRawValue(highLatency2.latitude * 1e-7);
     _gpsFactGroup.lon()->setRawValue(highLatency2.longitude * 1e-7);
+    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7)));
     _gpsFactGroup.count()->setRawValue(0);
     _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
     _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
@@ -3565,6 +3574,7 @@ void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 
 const char* VehicleGPSFactGroup::_latFactName =                 "lat";
 const char* VehicleGPSFactGroup::_lonFactName =                 "lon";
+const char* VehicleGPSFactGroup::_mgrsFactName =                "mgrs";
 const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
 const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
 const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
@@ -3575,6 +3585,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
     , _latFact              (0, _latFactName,               FactMetaData::valueTypeDouble)
     , _lonFact              (0, _lonFactName,               FactMetaData::valueTypeDouble)
+    , _mgrsFact             (0, _mgrsFactName,              FactMetaData::valueTypeString)
     , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
     , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
     , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
@@ -3583,6 +3594,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 {
     _addFact(&_latFact,                 _latFactName);
     _addFact(&_lonFact,                 _lonFactName);
+    _addFact(&_mgrsFact,                _mgrsFactName);
     _addFact(&_hdopFact,                _hdopFactName);
     _addFact(&_vdopFact,                _vdopFactName);
     _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
@@ -3591,6 +3603,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _mgrsFact.setRawValue("");
     _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -3758,20 +3771,32 @@ bool Vehicle::autoDisarm(void)
 
 void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
 {
-    mavlink_adsb_vehicle_t adsbVehicle;
+    mavlink_adsb_vehicle_t adsbVehicleMsg;
     static const int maxTimeSinceLastSeen = 15;
 
-    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicle);
-    if (adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS) {
-        if (_adsbICAOMap.contains(adsbVehicle.ICAO_address)) {
-            if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
-                _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
-            }
-        } else if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
-            ADSBVehicle* vehicle = new ADSBVehicle(adsbVehicle, this);
-            _adsbICAOMap[adsbVehicle.ICAO_address] = vehicle;
-            _adsbVehicles.append(vehicle);
+    mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicleMsg);
+    if (adsbVehicleMsg.flags | ADSB_FLAGS_VALID_COORDS && adsbVehicleMsg.tslc <= maxTimeSinceLastSeen) {
+        ADSBVehicle::VehicleInfo_t vehicleInfo;
+
+        vehicleInfo.availableFlags = 0;
+
+        vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
+        vehicleInfo.location.setLatitude(adsbVehicleMsg.lon / 1e7);
+
+        vehicleInfo.callsign = adsbVehicleMsg.callsign;
+        vehicleInfo.availableFlags |= ADSBVehicle::CallsignAvailable;
+
+        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_ALTITUDE) {
+            vehicleInfo.altitude = (double)adsbVehicleMsg.altitude / 1e3;
+            vehicleInfo.availableFlags |= ADSBVehicle::AltitudeAvailable;
         }
+
+        if (adsbVehicleMsg.flags & ADSB_FLAGS_VALID_HEADING) {
+            vehicleInfo.heading = (double)adsbVehicleMsg.heading / 100.0;
+            vehicleInfo.availableFlags |= ADSBVehicle::HeadingAvailable;
+        }
+
+        _toolbox->adsbVehicleManager()->adsbVehicleUpdate(vehicleInfo);
     }
 }
 
@@ -3883,11 +3908,11 @@ void Vehicle::_updateHighLatencyLink(bool sendCommand)
     }
 }
 
-void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading)
+void Vehicle::_trafficUpdate(bool /*alert*/, QString /*traffic_id*/, QString /*vehicle_id*/, QGeoCoordinate /*location*/, float /*heading*/)
 {
-    Q_UNUSED(vehicle_id);
-    // qDebug() << "traffic update:" << traffic_id << vehicle_id << heading << location;
-    // TODO: filter based on minimum altitude?
+#if 0
+    // This is ifdef'ed out for now since this code doesn't mesh with the recent ADSB manager changes. Also airmap isn't in any
+    // released build. So not going to waste time trying to fix up unused code.
     if (_trafficVehicleMap.contains(traffic_id)) {
         _trafficVehicleMap[traffic_id]->update(alert, location, heading);
     } else {
@@ -3895,19 +3920,7 @@ void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id,
         _trafficVehicleMap[traffic_id] = vehicle;
         _adsbVehicles.append(vehicle);
     }
-
-}
-void Vehicle::_adsbTimerTimeout()
-{
-    // Remove all expired ADSB vehicle whether from AirMap or ADSB Mavlink
-    for (int i=_adsbVehicles.count()-1; i>=0; i--) {
-        ADSBVehicle* adsbVehicle = _adsbVehicles.value<ADSBVehicle*>(i);
-        if (adsbVehicle->expired()) {
-            qDebug() << "ADSB expired";
-            _adsbVehicles.removeAt(i);
-            adsbVehicle->deleteLater();
-        }
-    }
+#endif
 }
 
 void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)

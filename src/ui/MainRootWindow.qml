@@ -153,6 +153,9 @@ ApplicationWindow {
         mainWindowDialog.dialogButtons = buttons
         mainWindowDialog.open()
         if(buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
+            mainWindowDialog.closePolicy = Popup.NoAutoClose;
+            mainWindowDialog.interactive = false;
+        } else {
             mainWindowDialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
             mainWindowDialog.interactive = true;
         }
@@ -189,8 +192,56 @@ ApplicationWindow {
 
     function finishCloseProcess() {
         QGroundControl.linkManager.shutdown()
+        QGroundControl.videoManager.stopVideo();
         _forceClose = true
         mainWindow.close()
+    }
+
+    // On attempting an application close we check for:
+    //  Unsaved missions - then
+    //  Pending parameter writes - then
+    //  Active connections
+    onClosing: {
+        if (!_forceClose) {
+            unsavedMissionCloseDialog.check()
+            close.accepted = false
+        }
+    }
+
+    MessageDialog {
+        id:                 unsavedMissionCloseDialog
+        title:              qsTr("%1 close").arg(QGroundControl.appName)
+        text:               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?")
+        standardButtons:    StandardButton.Yes | StandardButton.No
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              pendingParameterWritesCloseDialog.check()
+        function check() {
+            if (planMasterControllerPlan && planMasterControllerPlan.dirty) {
+                unsavedMissionCloseDialog.open()
+            } else {
+                pendingParameterWritesCloseDialog.check()
+            }
+        }
+    }
+
+    MessageDialog {
+        id:                 pendingParameterWritesCloseDialog
+        title:              qsTr("%1 close").arg(QGroundControl.appName)
+        text:               qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?")
+        standardButtons:    StandardButton.Yes | StandardButton.No
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              activeConnectionsCloseDialog.check()
+        function check() {
+            for (var index=0; index<QGroundControl.multiVehicleManager.vehicles.count; index++) {
+                if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
+                    pendingParameterWritesCloseDialog.open()
+                    return
+                }
+            }
+            activeConnectionsCloseDialog.check()
+        }
     }
 
     MessageDialog {
@@ -206,34 +257,6 @@ ApplicationWindow {
                 activeConnectionsCloseDialog.open()
             } else {
                 finishCloseProcess()
-            }
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Check for unsaved missions
-
-    onClosing: {
-        // Check first for unsaved missions and active connections
-        if (!_forceClose) {
-            unsavedMissionCloseDialog.check()
-            close.accepted = false
-        }
-    }
-
-    MessageDialog {
-        id:                 unsavedMissionCloseDialog
-        title:              qsTr("%1 close").arg(QGroundControl.appName)
-        text:               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?")
-        standardButtons:    StandardButton.Yes | StandardButton.No
-        modality:           Qt.ApplicationModal
-        visible:            false
-        onYes:              activeConnectionsCloseDialog.check()
-        function check() {
-            if (planMasterControllerPlan && planMasterControllerPlan.dirty) {
-                unsavedMissionCloseDialog.open()
-            } else {
-                activeConnectionsCloseDialog.check()
             }
         }
     }

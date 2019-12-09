@@ -158,8 +158,12 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-    : QGuiApplication           (argc, argv)
-    , _runningUnitTests         (unitTesting)
+  #if defined(__mobile__)
+    : QGuiApplication       (argc, argv)
+  #else
+    : QApplication          (argc, argv)
+  #endif
+    , _runningUnitTests     (unitTesting)
 {
     _app = this;
     _msecsElapsedTime.start();
@@ -555,9 +559,6 @@ bool QGCApplication::_initForNormalAppBoot()
 
     QSettings settings;
 
-    // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
-
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 
     // Safe to show popup error messages now that main window is created
@@ -748,7 +749,7 @@ void QGCApplication::showMessage(const QString& message)
 
 QQuickItem* QGCApplication::mainRootWindow()
 {
-    if(_mainRootWindow) {
+    if(!_mainRootWindow) {
         _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
     }
     return _mainRootWindow;

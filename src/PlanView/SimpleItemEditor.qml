@@ -63,27 +63,40 @@ Rectangle {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            missionItem.wizardMode
+            visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Adjust the initial launch location by selecting 'P' and dragging it to the correct location.")
+                text:               qsTr("Move 'T' Takeoff to the climbout location.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
+                visible:            !initialClickLabel.visible
             }
 
             QGCLabel {
-                text:               qsTr("Adjust the takeoff completion location by dragging it to the correct location.")
+                text:               qsTr("Ensure clear of obstacles and into the wind.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
+                visible:            !initialClickLabel.visible
             }
 
             QGCButton {
                 text:               qsTr("Done Adjusting")
                 Layout.fillWidth:   true
+                visible:            !initialClickLabel.visible
                 onClicked: {
                     missionItem.wizardMode = false
                     editorRoot.selectNextNotReadyItem()
                 }
+            }
+
+            QGCLabel {
+                id:                 initialClickLabel
+                text:               missionItem.launchTakeoffAtSameLocation ?
+                                        qsTr("Click in map to set planned Takeoff location.") :
+                                        qsTr("Click in map to set planned Launch location.")
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                visible:            missionItem.isTakeoffItem && !missionItem.launchCoordinate.isValid
             }
         }
 

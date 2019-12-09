@@ -22,16 +22,8 @@ SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController,
 void SurveyPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
 {
     _planMasterController->removeAll();
-    VisualMissionItem* takeoffItem = _missionController->insertSimpleMissionItem(mapCenterCoord, -1);
-    takeoffItem->setWizardMode(true);
-    _missionController->insertComplexMissionItem(MissionController::patternSurveyName, mapCenterCoord, -1)->setWizardMode(true);
-    if (_planMasterController->managerVehicle()->fixedWing()) {
-        FixedWingLandingComplexItem* landingItem = qobject_cast<FixedWingLandingComplexItem*>(_missionController->insertComplexMissionItem(MissionController::patternFWLandingName, mapCenterCoord, -1));
-        landingItem->setWizardMode(true);
-        landingItem->setLoiterDragAngleOnly(true);
-    } else {
-        MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
-        settingsItem->setMissionEndRTL(true);
-    }
+    VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
+    _missionController->insertComplexMissionItem(MissionController::patternSurveyName, mapCenterCoord, -1);
+    _missionController->insertLandItem(mapCenterCoord, -1);
     _missionController->setCurrentPlanViewIndex(takeoffItem->sequenceNumber(), true);
 }
