@@ -73,26 +73,31 @@ Item {
             border.color:       qgcPal.text
             radius:             ScreenTools.defaultFontPixelWidth
         }
-        ColumnLayout {
-            id:                 comboListCol
-            spacing:            ScreenTools.defaultFontPixelHeight
-            anchors.centerIn:   parent
-            QGCLabel {
-                text:           qsTr("Flight Modes")
-                Layout.alignment:  Qt.AlignHCenter
-            }
-            Repeater {
-                model:          activeVehicle ? activeVehicle.flightModes : [ ]
-                QGCButton {
-                    text:       modelData
-                    Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
-                    Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
-                    Layout.fillHeight:      true
-                    Layout.fillWidth:       true
-                    Layout.alignment:       Qt.AlignHCenter
-                    onClicked: {
-                        activeVehicle.flightMode = modelData
-                        flightModesMenu.close()
+        QGCFlickable {
+            clip:               true
+            contentHeight:      comboListCol.height
+            anchors.fill:       parent
+            ColumnLayout {
+                id:                 comboListCol
+                spacing:            ScreenTools.defaultFontPixelHeight
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    text:           qsTr("Flight Modes")
+                    Layout.alignment:  Qt.AlignHCenter
+                }
+                Repeater {
+                    model:          activeVehicle ? activeVehicle.flightModes : [ ]
+                    QGCButton {
+                        text:       modelData
+                        Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
+                        Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
+                        Layout.fillHeight:      true
+                        Layout.fillWidth:       true
+                        Layout.alignment:       Qt.AlignHCenter
+                        onClicked: {
+                            activeVehicle.flightMode = modelData
+                            flightModesMenu.close()
+                        }
                     }
                 }
             }
