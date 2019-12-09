@@ -56,6 +56,11 @@ void VideoSurface::startVideo() {
     }
 }
 
+void VideoSurface::pauseVideo() {
+    _shouldPauseVideo = true;
+    update();
+}
+
 QObject *VideoSurface::videoItem() const {
     return _videoItem;
 }
@@ -79,18 +84,20 @@ VideoReceiver *VideoSurface::videoReceiver() const
 QSGNode *VideoSurface::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
 {
     Q_UNUSED(data)
-    if (!_shouldStartVideo) {
+    if (!_shouldStartVideo && !_shouldPauseVideo) {
         return node;
     }
     auto *pipeline = _videoReceiver->pipeline();
     // Do not try to play an already playing pipeline, pause it first.
-    GstState state;
-    gst_element_get_state(pipeline, &state, nullptr, 5);
-    if ( state == GST_STATE_PLAYING ) {
-         gst_element_set_state(pipeline, GST_STATE_PAUSED);
+    if (_shouldStartVideo) {
+        qDebug() << "Setting the state to PLAYING";
+        gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    } else if (_shouldPauseVideo) {
+        qDebug() << "Setting the state to PAUSED";
+        gst_element_set_state(pipeline, GST_STATE_PAUSED);
     }
-    gst_element_set_state(pipeline, GST_STATE_PLAYING);
     _shouldStartVideo = false;
+    _shouldPauseVideo = false;
     return node;
 }
 

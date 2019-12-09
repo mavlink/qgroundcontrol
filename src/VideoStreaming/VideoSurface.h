@@ -37,6 +37,7 @@ public:
 
     /* This method sets the pipeline state to playing as soon as Qt allows it */
     Q_INVOKABLE void startVideo();
+    Q_INVOKABLE void pauseVideo();
 
     /* update paint node usually is a method that should trigger a painting on the OpenGL surface
     in our case, it's where we set the gstreamer pipeline state to playing / stop / pause.
@@ -47,7 +48,7 @@ private:
     QObject *_videoItem;
     VideoReceiver *_videoReceiver;
     bool _shouldStartVideo;
-
+    bool _shouldPauseVideo;
 };
 
 #endif

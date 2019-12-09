@@ -63,6 +63,13 @@ Item {
         QGCPipable {
             id: videoControls
             anchors.fill: parent
+            onPlay: {
+                videoSurface.startVideo()
+            }
+
+            onPause: {
+                videoSurface.pauseVideo()
+            }
         }
     }
 }

@@ -33,6 +33,8 @@ Item {
     signal  hideIt(bool state)
     signal  newWidth(real newWidth)
     signal  popup()
+    signal play()
+    signal pause()
 
     MouseArea {
         id: pipMouseArea
@@ -185,6 +187,63 @@ Item {
             anchors.fill: parent
             onClicked: {
                 pip.hideIt(false)
+            }
+        }
+    }
+
+    //-- Show PIP
+    Rectangle {
+        id:                     buttonPlay
+        anchors.left :          openPIP.right
+        anchors.bottom:         parent.bottom
+        height:                 ScreenTools.defaultFontPixelHeight * 2
+        width:                  ScreenTools.defaultFontPixelHeight * 2
+        radius:                 ScreenTools.defaultFontPixelHeight / 3
+        visible:                true
+        color:                  isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
+
+        Image {
+            width:              parent.width  * 0.75
+            height:             parent.height * 0.75
+            sourceSize.height:  height
+            source:             "/res/Play"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.verticalCenter:     parent.verticalCenter
+            anchors.horizontalCenter:   parent.horizontalCenter
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                play();
+            }
+        }
+    }
+
+    Rectangle {
+        id:                     buttonStop
+        anchors.left:          buttonPlay.right
+        anchors.bottom:         parent.bottom
+        height:                 ScreenTools.defaultFontPixelHeight * 2
+        width:                  ScreenTools.defaultFontPixelHeight * 2
+        radius:                 ScreenTools.defaultFontPixelHeight / 3
+        visible:                true
+        color:                  isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
+
+        Image {
+            width:              parent.width  * 0.75
+            height:             parent.height * 0.75
+            sourceSize.height:  height
+            source:             "/res/Pause"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.verticalCenter:     parent.verticalCenter
+            anchors.horizontalCenter:   parent.horizontalCenter
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                pause();
             }
         }
     }
