@@ -308,6 +308,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
                     QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
     setPairingStatus(Connected, tr("Connection Successful\nChannel: %1").arg(chStr));
     emit connectedVehicleChanged();
+    emit _toolbox->pairingManager()->connectingChannelChanged();
 }
 
 //-----------------------------------------------------------------------------
