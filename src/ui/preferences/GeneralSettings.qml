@@ -956,6 +956,16 @@ Rectangle {
                                 fact:                   QGroundControl.settingsManager.videoSettings.disableWhenDisarmed
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }
+
+                            QGCLabel {
+                                text:                   qsTr("Show Video On Second Screen")
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.visible
+                            }
+                            FactCheckBox {
+                                text:                   "(Requires Restart)"
+                                fact:                   QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.visible
+                            }
                         }
                     }
 

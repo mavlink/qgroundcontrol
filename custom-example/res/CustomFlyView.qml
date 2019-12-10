@@ -229,7 +229,7 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !mainIsMap && _cameraPresent && _camera.paramComplete
+        visible:                (!mainIsMap || videoOnSecondScreen) && _cameraPresent && _camera.paramComplete
         source:                 visible ? "/custom/CustomCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
