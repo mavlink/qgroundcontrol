@@ -565,21 +565,23 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
         emit confirmHighPowerModeChanged();
     }
 
-    QString ip = _getDeviceIP(name);
-    int channel = _getDeviceChannel(name);
     // If multiple vehicles share same IP or do not share same channel then disconnect
-    for (QString n : _connectedDevices.keys()) {
-        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
-            disconnectDevice(n);
-            break;
-        }
-    }
     // If multiple vehicles share same IP or do not share same channel then do not try to autoconnect anymore
+
+    // Logic is disabled until all the problems with multiple vehicles are solved
+    // For now we just disconnect everything
+
+//    QString ip = _getDeviceIP(name);
+//    int channel = _getDeviceChannel(name);
+    for (QString n : _connectedDevices.keys()) {
+//        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
+            disconnectDevice(n);
+//        }
+    }
     for (QString n : _devicesToConnect.keys()) {
-        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
+//        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
             stopConnectingDevice(n);
-            break;
-        }
+//        }
     }
 
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
