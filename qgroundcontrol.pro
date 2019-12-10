@@ -94,8 +94,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # this will also trigger enabling of custom build
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
-    # Default build is disabled because of the constant presence of the custom build
-    CONFIG += QGC_DISABLE_CUSTOM_BUILD
+    # Default build is enabled for AGS and disabled upstream
+    QGC_CUSTOM_BUILD_FOLDER=custom-example
 } else {
     message("Externally triggered custom build override")
 }
@@ -104,7 +104,7 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
     exists($${QGC_CUSTOM_BUILD_FOLDER}) {
-        message("Found custom build")
+        message("Found custom build in folder: $$QGC_CUSTOM_BUILD_FOLDER")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
@@ -332,6 +332,10 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_NFC
+} else:AndroidBuild:contains(QT_ARCH, arm64) {
+    # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
+    message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
+    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
@@ -411,6 +415,7 @@ INCLUDEPATH += \
     src/FlightMap \
     src/FlightMap/Widgets \
     src/FollowMe \
+    src/Geo \
     src/GPS \
     src/Joystick \
     src/PlanView \
@@ -634,12 +639,19 @@ HEADERS += \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
     src/PositionManager/SimulatedPosition.h \
+    src/Geo/QGCGeo.h \
+    src/Geo/Constants.hpp \
+    src/Geo/Math.hpp \
+    src/Geo/Utility.hpp \
+    src/Geo/UTMUPS.hpp \
+    src/Geo/MGRS.hpp \
+    src/Geo/TransverseMercator.hpp \
+    src/Geo/PolarStereographic.hpp \
     src/QGC.h \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
     src/QGCFileDownload.h \
-    src/QGCGeo.h \
     src/QGCLoggingCategory.h \
     src/QGCMapPalette.h \
     src/QGCPalette.h \
@@ -696,7 +708,6 @@ HEADERS += \
     src/uas/UAS.h \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
-    src/UTM.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
     src/uas/FileManager.h \
@@ -859,11 +870,17 @@ SOURCES += \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \
     src/PositionManager/SimulatedPosition.cc \
+    src/Geo/QGCGeo.cc \
+    src/Geo/Math.cpp \
+    src/Geo/Utility.cpp \
+    src/Geo/UTMUPS.cpp \
+    src/Geo/MGRS.cpp \
+    src/Geo/TransverseMercator.cpp \
+    src/Geo/PolarStereographic.cpp \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
     src/QGCFileDownload.cc \
-    src/QGCGeo.cc \
     src/QGCLoggingCategory.cc \
     src/QGCMapPalette.cc \
     src/QGCPalette.cc \
@@ -919,7 +936,6 @@ SOURCES += \
     src/main.cc \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
-    src/UTM.cpp \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
     src/uas/FileManager.cc \

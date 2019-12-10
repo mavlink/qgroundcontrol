@@ -59,6 +59,19 @@ public:
     /// index exists.
     Item data(PhotoGalleryModelIndex index) const;
 
+    /// Get item file path.
+    ///
+    /// \param index Index of element to access.
+    ///
+    /// Returns the full path of the item represented by index
+    /// or empty string if failed
+    QString filePath(PhotoGalleryModelIndex index) const;
+
+    /// Get photo storage path.
+    QString photosPath() const;
+    /// Get videos storage path.
+    QString videosPath() const;
+
     /// Number of entries held.
     std::size_t numPhotos() const;
 

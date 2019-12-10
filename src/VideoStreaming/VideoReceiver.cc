@@ -303,7 +303,7 @@ VideoReceiver::start()
 
         bool useSoftwareDecoding = true;
         if (qgcApp()->toolbox()->settingsManager()->videoSettings()->enableHardwareAcceleration()->rawValue().toBool()) {
-            if (_hwDecoderName && (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
+            if (_hwDecoderName && (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) != nullptr) {
                 useSoftwareDecoding = false;
             } else {
                 qWarning() << "VideoReceiver::start() hardware decoding not available. Decoder: " << ((_hwDecoderName) ? _hwDecoderName : "");

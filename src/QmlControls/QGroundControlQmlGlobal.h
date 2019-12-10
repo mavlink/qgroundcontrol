@@ -23,6 +23,7 @@
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "AirspaceManager.h"
+#include "QGCGeo.h"
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
@@ -145,6 +146,9 @@ public:
 
     /// Converts from user specified area unit to square meters
     Q_INVOKABLE QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area) const { return FactMetaData::appSettingsAreaUnitsToSquareMeters(area); }
+
+    /// Converts from position to the user specified position format
+    Q_INVOKABLE QString positionToMGRSFormat(const QGeoCoordinate& pos) const { return convertGeoToMGRS(pos); }
 
     QString appSettingsAreaUnitsString(void) const { return FactMetaData::appSettingsAreaUnitsString(); }
 
