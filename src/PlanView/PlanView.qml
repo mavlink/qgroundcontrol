@@ -430,7 +430,8 @@ Item {
 
             // Add lines between waypoints
             MissionLineView {
-                model: _editingLayer == _layerMission ? _missionController.waypointLines : undefined
+                showSpecialVisual:  _missionController.isROIBeginCurrentItem
+                model:              _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
             MapItemView {

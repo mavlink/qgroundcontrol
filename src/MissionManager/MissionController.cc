@@ -444,6 +444,7 @@ VisualMissionItem* MissionController::insertROIMissionItem(QGeoCoordinate coordi
         simpleItem->setCommand(MAV_CMD_DO_SET_ROI)  ;
         simpleItem->missionItem().setParam1(MAV_ROI_LOCATION);
     }
+    _recalcROISpecialVisuals();
     return simpleItem;
 }
 
@@ -455,6 +456,7 @@ VisualMissionItem* MissionController::insertCancelROIMissionItem(int visualItemI
         simpleItem->setCommand(MAV_CMD_DO_SET_ROI)  ;
         simpleItem->missionItem().setParam1(MAV_ROI_NONE);
     }
+    _recalcROISpecialVisuals();
     return simpleItem;
 }
 
@@ -555,15 +557,15 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     }
 }
 
-void MissionController::removeMissionItem(int index)
+void MissionController::removeMissionItem(int viIndex)
 {
-    if (index <= 0 || index >= _visualItems->count()) {
-        qWarning() << "MissionController::removeMissionItem called with bad index - count:index" << _visualItems->count() << index;
+    if (viIndex <= 0 || viIndex >= _visualItems->count()) {
+        qWarning() << "MissionController::removeMissionItem called with bad index - count:index" << _visualItems->count() << viIndex;
         return;
     }
 
-    bool removeSurveyStyle = _visualItems->value<SurveyComplexItem*>(index) || _visualItems->value<CorridorScanComplexItem*>(index);
-    VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
+    bool removeSurveyStyle = _visualItems->value<SurveyComplexItem*>(viIndex) || _visualItems->value<CorridorScanComplexItem*>(viIndex);
+    VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(viIndex));
 
     _deinitVisualItem(item);
     item->deleteLater();
@@ -1163,6 +1165,39 @@ CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable&
     return coordVector;
 }
 
+void MissionController::_recalcROISpecialVisuals(void)
+{
+    return;
+    VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+    bool                roiActive =             false;
+
+    for (int i=1; i<_visualItems->count(); i++) {
+        VisualMissionItem*  visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        SimpleMissionItem*  simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+        VisualItemPair      viPair;
+
+        if (simpleItem) {
+            if (roiActive) {
+                if (_isROICancelItem(simpleItem)) {
+                    roiActive = false;
+                }
+            } else {
+                if (_isROIBeginItem(simpleItem)) {
+                    roiActive = true;
+                }
+            }
+        }
+
+        if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
+            viPair = VisualItemPair(lastCoordinateItem, visualItem);
+            if (_linesTable.contains(viPair)) {
+                _linesTable[viPair]->setSpecialVisual(roiActive);
+            }
+            lastCoordinateItem = visualItem;
+        }
+    }
+}
+
 void MissionController::_recalcWaypointLines(void)
 {
     VisualItemPair      lastSegmentVisualItemPair;
@@ -1172,7 +1207,8 @@ void MissionController::_recalcWaypointLines(void)
     bool                linkEndToHome =                 false;
     bool                linkStartToHome =               _managerVehicle->rover() ? true : false;
     bool                foundRTL =                      false;
-    bool                 homePositionValid =            _settingsItem->coordinate().isValid();
+    bool                homePositionValid =             _settingsItem->coordinate().isValid();
+    bool                roiActive =                     false;
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
 
@@ -1190,10 +1226,20 @@ void MissionController::_recalcWaypointLines(void)
     // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
 
     for (int i=1; i<_visualItems->count(); i++) {
-        VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-        SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+        VisualMissionItem*  visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        SimpleMissionItem*  simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
 
         if (simpleItem) {
+            if (roiActive) {
+                if (_isROICancelItem(simpleItem)) {
+                    roiActive = false;
+                }
+            } else {
+                if (_isROIBeginItem(simpleItem)) {
+                    roiActive = true;
+                }
+            }
+
             MAV_CMD command = simpleItem->mavCommand();
             switch (command) {
             case MAV_CMD_NAV_TAKEOFF:
@@ -1235,6 +1281,7 @@ void MissionController::_recalcWaypointLines(void)
                 lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, visualItem);
                 if (!_flyView || addDirectionArrow) {
                     CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
+                    coordVector->setSpecialVisual(roiActive);
                     if (addDirectionArrow) {
                         _directionArrows.append(coordVector);
                     }
@@ -1255,7 +1302,8 @@ void MissionController::_recalcWaypointLines(void)
         if (_flyView) {
             _waypointPath.append(QVariant::fromValue(_settingsItem->coordinate()));
         }
-        _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
+        CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
+        coordVector->setSpecialVisual(roiActive);
     }
 
     // Add direction arrow to last segment
@@ -2164,6 +2212,21 @@ void MissionController::_managerRemoveAllComplete(bool error)
     }
 }
 
+bool MissionController::_isROIBeginItem(SimpleMissionItem* simpleItem)
+{
+    return simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_LOCATION ||
+            simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET ||
+            (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI &&
+             static_cast<int>(simpleItem->missionItem().param1()) == MAV_ROI_LOCATION);
+}
+
+bool MissionController::_isROICancelItem(SimpleMissionItem* simpleItem)
+{
+    return simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_NONE ||
+            (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI &&
+             static_cast<int>(simpleItem->missionItem().param1()) == MAV_ROI_NONE);
+}
+
 void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
@@ -2178,6 +2241,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _isInsertTakeoffValid =         true;
         _isInsertLandValid =            true;
         _isROIActive =                  false;
+        _isROIBeginCurrentItem =        false;
         _flyThroughCommandsAllowed =    true;
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
@@ -2222,19 +2286,17 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             if (simpleItem) {
                 if (pVI->sequenceNumber() <= sequenceNumber) {
                     if (_isROIActive) {
-                        if (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_NONE ||
-                                (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI &&
-                                 simpleItem->missionItem().param1() == MAV_ROI_NONE)) {
+                        if (_isROICancelItem(simpleItem)) {
                             _isROIActive = false;
                         }
                     } else {
-                        if (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_LOCATION ||
-                                simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET ||
-                                (simpleItem->mavCommand() == MAV_CMD_DO_SET_ROI &&
-                                 simpleItem->missionItem().param1() == MAV_ROI_LOCATION)) {
+                        if (_isROIBeginItem(simpleItem)) {
                             _isROIActive = true;
                         }
                     }
+                }
+                if (pVI->sequenceNumber() == sequenceNumber && _isROIBeginItem(simpleItem)) {
+                    _isROIBeginCurrentItem = true;
                 }
             }
 
@@ -2287,6 +2349,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         emit isInsertTakeoffValidChanged();
         emit isInsertLandValidChanged();
         emit isROIActiveChanged();
+        emit isROIBeginCurrentItemChanged();
         emit flyThroughCommandsAllowedChanged();
     }
 }
