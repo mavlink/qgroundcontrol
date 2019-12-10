@@ -39,10 +39,11 @@ Item {
         }
     }
 
-    property alias  guidedController:              guidedActionsController
-    property bool   activeVehicleJoystickEnabled:  activeVehicle ? activeVehicle.joystickEnabled : false
-    property bool   mainIsMap:                     QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool   isBackgroundDark:              mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
+    property alias  guidedController:               guidedActionsController
+    property bool   activeVehicleJoystickEnabled:   activeVehicle ? activeVehicle.joystickEnabled : false
+    property bool   videoOnSecondScreen:            Qt.application.screens.length > 1 && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.value
+    property bool   mainIsMap:                      QGroundControl.videoManager.hasVideo && !videoOnSecondScreen ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool   isBackgroundDark:               mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
 
     property var    _missionController:             _planController.missionController
     property var    _geoFenceController:            _planController.geoFenceController
@@ -67,6 +68,7 @@ Item {
     readonly property string    _showMapBackgroundKey:  "/showMapBackground"
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
+    readonly property string    _videoWidget:           "qrc:/qml/FlightDisplayViewVideo.qml"
 
     function setStates() {
         QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
@@ -115,6 +117,22 @@ Item {
         return true;
     }
 
+    function enableVideoOnSecondScreen() {
+        videoStreamingInSitu.source = ""
+        videoOnSecondWindow.screen  = Qt.application.screens[1]
+        videoOnSecondWindow.x       = videoOnSecondWindow.screen.virtualX
+        videoOnSecondWindow.y       = videoOnSecondWindow.screen.virtualY
+        videoOnSecondWindowLoader.source = _videoWidget
+        videoOnSecondWindow.visible = true
+        videoOnSecondWindow.visibility = "FullScreen"
+    }
+
+    function disableVideoOnSecondScreen() {
+        videoOnSecondWindowLoader.source= ""
+        videoOnSecondWindow.close()
+        videoStreamingInSitu.source     = _videoWidget
+    }
+
     Connections {
         target:                     _missionController
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
@@ -142,6 +160,13 @@ Item {
         if(QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length) {
             checkList.source = QGroundControl.corePlugin.options.preFlightChecklistUrl
         }
+        QGroundControl.videoManager.stopVideo()
+        if(videoOnSecondScreen) {
+            enableVideoOnSecondScreen()
+        } else {
+            disableVideoOnSecondScreen()
+        }
+        videoPopUpTimer.running = true
     }
 
     // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
@@ -273,6 +298,16 @@ Item {
         }
     }
 
+    //-- Video Streaming On Second Screen
+    Window {
+        id:             videoOnSecondWindow
+        visible:        false
+        Loader {
+            id:         videoOnSecondWindowLoader
+            anchors.fill:   parent
+        }
+    }
+
     Window {
         id:             videoWindow
         width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
@@ -294,17 +329,17 @@ Item {
      * Such approach was the only one to avoid a crash for windows users
      */
     Timer {
-      id: videoPopUpTimer
+      id:       videoPopUpTimer
       interval: 2000;
-      running: false;
-      repeat: false
+      running:  false;
+      repeat:   false
       onTriggered: {
-          // If state is popup, the next one will be popup-finished
-          if (_flightVideo.state ==  "popup") {
-            _flightVideo.state = "popup-finished"
-          }
-          QGroundControl.videoManager.startVideo()
-      }
+            // If state is popup, the next one will be popup-finished
+            if (_flightVideo.state ==  "popup") {
+                _flightVideo.state = "popup-finished"
+            }
+            QGroundControl.videoManager.startVideo()
+        }
     }
 
     QGCMapPalette { id: mapPal; lightColors: mainIsMap ? mainWindow.flightDisplayMap.isSatelliteMap : true }
@@ -443,11 +478,11 @@ Item {
                     }
                 }
             ]
-            //-- Video Streaming
-            FlightDisplayViewVideo {
-                id:             videoStreaming
+            //-- Video Streaming In Situ
+            Loader {
+                id:             videoStreamingInSitu
                 anchors.fill:   parent
-                visible:        QGroundControl.videoManager.isGStreamer
+                visible:        QGroundControl.videoManager.isGStreamer && !videoOnSecondScreen
             }
             //-- UVC Video (USB Camera or Video Device)
             Loader {
@@ -466,7 +501,7 @@ Item {
             anchors.left:       _mapAndVideo.left
             anchors.bottom:     _mapAndVideo.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
+            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup" && !videoOnSecondScreen
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             enablePopup:        mainIsMap

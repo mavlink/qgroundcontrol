@@ -308,8 +308,9 @@ Rectangle {
                                     configPassword.text      === QGroundControl.microhardManager.configPassword &&
                                     encryptionKey.text       === QGroundControl.microhardManager.encryptionKey &&
                                     networkId.text           === QGroundControl.microhardManager.networkId &&
-                                    connectingChannel.text   === QGroundControl.microhardManager.connectingChannel &&
-                                    connectingBandwidth.text === QGroundControl.microhardManager.connectingBandwidth)
+                                    _connectingChannel       === QGroundControl.microhardManager.connectingChannel &&
+                                    _connectingBandwidth     === QGroundControl.microhardManager.connectingBandwidth
+                                    )
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
@@ -327,9 +328,11 @@ Rectangle {
                                                                               configPassword.text,
                                                                               encryptionKey.text,
                                                                               networkId.text,
-                                                                              connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin,
-                                                                              connectingBandwidth.currentIndex)
+                                                                              _connectingChannel,
+                                                                              _connectingBandwidth)
                             }
+                            property var _connectingChannel: connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin
+                            property var _connectingBandwidth: connectingBandwidth.currentIndex
                         }
                     }
                 }

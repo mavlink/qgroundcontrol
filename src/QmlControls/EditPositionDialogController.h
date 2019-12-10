@@ -28,6 +28,7 @@ public:
     Q_PROPERTY(Fact*            hemisphere  READ hemisphere                     CONSTANT)
     Q_PROPERTY(Fact*            easting     READ easting                        CONSTANT)
     Q_PROPERTY(Fact*            northing    READ northing                       CONSTANT)
+    Q_PROPERTY(Fact*            mgrs        READ mgrs                           CONSTANT)
 
     QGeoCoordinate  coordinate(void) const { return _coordinate; }
     Fact* latitude  (void) { return &_latitudeFact; }
@@ -36,12 +37,14 @@ public:
     Fact* hemisphere(void) { return &_hemisphereFact; }
     Fact* easting   (void) { return &_eastingFact; }
     Fact* northing  (void) { return &_northingFact; }
+    Fact* mgrs      (void) { return &_mgrsFact; }
 
     void setCoordinate(QGeoCoordinate coordinate);
 
     Q_INVOKABLE void initValues(void);
     Q_INVOKABLE void setFromGeo(void);
     Q_INVOKABLE void setFromUTM(void);
+    Q_INVOKABLE void setFromMGRS(void);
     Q_INVOKABLE void setFromVehicle(void);
 
 signals:
@@ -58,6 +61,7 @@ private:
     Fact _hemisphereFact;
     Fact _eastingFact;
     Fact _northingFact;
+    Fact _mgrsFact;
 
     static const char*  _latitudeFactName;
     static const char*  _longitudeFactName;
@@ -65,4 +69,5 @@ private:
     static const char*  _hemisphereFactName;
     static const char*  _eastingFactName;
     static const char*  _northingFactName;
+    static const char*  _mgrsFactName;
 };

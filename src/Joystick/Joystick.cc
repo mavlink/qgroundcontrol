@@ -64,6 +64,12 @@ const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
 const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
 const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
 const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
+const char* Joystick::_buttonActionGimbalPitchUp =      QT_TR_NOOP("Gimbal Pitching Up");
+const char* Joystick::_buttonActionGimbalPitchDown =    QT_TR_NOOP("Gimbal Pitching Down");
+const char* Joystick::_buttonActionToggleThermal =      QT_TR_NOOP("Thermal ON/OFF");
+const char* Joystick::_buttonActionThermalOn =          QT_TR_NOOP("Thermal ON");
+const char* Joystick::_buttonActionThermalOff =         QT_TR_NOOP("Thermal OFF");
+const char* Joystick::_buttonActionThermalNextPalette = QT_TR_NOOP("Thermal Next Palette");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -125,6 +131,12 @@ Joystick::~Joystick()
             _buttonActionArray[button]->deleteLater();
         }
     }
+}
+
+void Joystick::handleManualControlGimbal(float gimbalPitch, float gimbalYaw) {
+    _localPitch += static_cast<double>(gimbalPitch);
+    _localYaw += static_cast<double>(gimbalYaw);
+    emit gimbalControlValue(_localPitch, _localYaw);
 }
 
 void Joystick::_setDefaultCalibration(void) {
@@ -647,7 +659,7 @@ void Joystick::_handleAxis()
             if(_activeVehicle && _axisCount > 4 && _gimbalEnabled) {
                 //-- TODO: There is nothing consuming this as there are no messages to handle gimbal
                 //   the way MANUAL_CONTROL handles the other channels.
-                emit manualControlGimbal((gimbalPitch + 1.0f) / 2.0f * 90.0f, gimbalYaw * 180.0f);
+                emit manualControlGimbal(gimbalPitch, gimbalYaw);
             }
         }
     }
@@ -667,6 +679,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -690,6 +703,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            connect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
             // FIXME: ****
             //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
@@ -715,6 +729,7 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
@@ -1011,6 +1026,28 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
             _localYaw   = 0.0;
             emit gimbalControlValue(0.0, 0.0);
         }
+    } else if(action == _buttonActionGimbalPitchUp || action == _buttonActionGimbalPitchDown) {
+        if (buttonDown) {
+            emit startContinuousGimbalPitch(action == _buttonActionGimbalPitchUp ? 1 : -1);
+        } else {
+            emit stopContinuousGimbalPitch();
+        }
+    } else if(action == _buttonActionToggleThermal) {
+        if(buttonDown) {
+            emit toggleThermal();
+        }
+    } else if(action == _buttonActionThermalOn) {
+        if(buttonDown) {
+            emit switchThermalOn();
+        }
+    } else if(action == _buttonActionThermalOff) {
+        if(buttonDown) {
+            emit switchThermalOff();
+        }
+    } else if(action == _buttonActionThermalNextPalette) {
+        if(buttonDown) {
+            emit thermalNextPalette();
+        }
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
@@ -1095,6 +1132,13 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
+
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchUp, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchDown, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleThermal));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOn));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOff));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalNextPalette));
 
     //-- Leave "No Action" out
     for(int i = 1; i < _assignableButtonActions.count(); i++) {

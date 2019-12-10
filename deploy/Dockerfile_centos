@@ -63,13 +63,12 @@ COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
 RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
 
 # Unpack Qt toolchains & clean
-RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.5124.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+RUN QT_PACKAGE_VER=$(echo "${QT_VERSION}" | tr -d .) QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
         && find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
         && rm -rf /tmp/*
 
-# create user with id 1001 (jenkins docker workflow default)
-RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
-
+# The QT offline package doesn't conain the OpenSSL binaries.
+# There is no official OpenSSL packge outside the online installer.
 # Compile OpenSSL 1.1.1.c
 RUN cd /usr/local/src/ \
     && wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
@@ -81,6 +80,10 @@ RUN cd /usr/local/src/ \
     && mkdir -p ${QT_PATH}/Tools/OpenSSL/binary/lib/ && cp -f /usr/local/ssl/lib/libcrypto.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/ \
     && cp -f /usr/local/ssl/lib/libssl.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/
 
+
+# create user with id 1001 (jenkins docker workflow default)
+RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+
 # create and start as LOCAL_USER_ID
 COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -88,4 +91,3 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]
 
 ENV DEBIAN_FRONTEND teletype
-

@@ -27,6 +27,7 @@
 #include <QStringListModel>
 #include "QGCApplication.h"
 #include "AppMessages.h"
+#include "CustomQuickInterface.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
@@ -226,6 +227,13 @@ bool checkAndroidWritePermission() {
 
 int main(int argc, char *argv[])
 {
+    // Theese have to be called before constructing main QApplication
+    CustomQuickInterface::initSettings();
+    if(CustomQuickInterface::showVirtualKeyboard()) {
+        qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+        qputenv("QT_VIRTUALKEYBOARD_STYLE", QByteArray("custom"));
+    }
+
 #ifndef __mobile__
     RunGuard guard("QGroundControlRunGuardKey");
     if (!guard.tryToRun()) {
@@ -342,6 +350,7 @@ int main(int argc, char *argv[])
     Q_CHECK_PTR(app);
     if(app->isErrorState()) {
         app->exec();
+        delete app;
         return -1;
     }
 

@@ -124,5 +124,12 @@
     "longDescription":  "Enable hardware acceleration for video decoding.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "showVideoOnSecondScreen",
+    "shortDescription": "Show Video On Second Screen",
+    "longDescription":  "Show Video On Second Screen (if available)",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

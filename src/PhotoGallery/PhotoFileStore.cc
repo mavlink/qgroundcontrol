@@ -38,6 +38,20 @@ const QString & PhotoFileStore::location() const
     return _location;
 }
 
+void
+PhotoFileStore::setVideoLocation(QString location)
+{
+    if (_videoLocation != location) {
+        _videoLocation = std::move(location);
+        rescan();
+    }
+}
+
+const QString & PhotoFileStore::videoLocation() const
+{
+    return _videoLocation;
+}
+
 const std::set<QString> & PhotoFileStore::ids() const
 {
     return _photo_ids;
