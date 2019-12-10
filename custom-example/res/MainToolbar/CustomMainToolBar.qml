@@ -215,11 +215,13 @@ Item {
                 width:                      parent.width
                 height:                     1
                 color:                      menuSeparatorColor
+                visible:                    QGroundControl.corePlugin.showAdvancedUI
             }
             CustomToolBarButton {
                 text:                       qsTr("Analyze")
                 icon.source:                "/qmlimages/Analyze.svg"
                 Layout.fillWidth:           true
+                visible:                    QGroundControl.corePlugin.showAdvancedUI
                 onClicked: {
                     checked = true
                     drawer.close()
