@@ -466,7 +466,7 @@ PairingManager::_uploadFinished()
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
             _connectRequests.remove(name);
             connectToDevice(name);
-        } else {
+        } else if (_status != PairingActive) {
             setPairingStatus(PairingIdle, "");
         }
     }
@@ -881,12 +881,6 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
         if (remotePairingMap.contains("AIP")) {
             _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
-        }
-        if (remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(remotePairingMap["CU"].toString());
-        }
-        if (remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
         }
     }
     if (linkType == "MH") {
