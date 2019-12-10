@@ -155,6 +155,7 @@ private slots:
 private:
     int                           _nfcIndex = -1;
     int                           _microhardIndex = -1;
+    int                           _mavlink_router_port = -1;
     PairingStatus                 _status = PairingIdle;
     QString                       _statusString;
     QString                       _lastConnected;

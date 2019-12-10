@@ -29,6 +29,10 @@ static const QString gcsFileName = "gcs";
 static const QString tempPrefix = "temp";
 static const QString chSeparator = "\t";
 static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
+static const int default_mavlink_router_port = 24550;
+static const int maxNumberOfDevices = 8;
+static const int deviceIPStart = 30;
+static const int mhIPStart = 20;
 
 //-----------------------------------------------------------------------------
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -158,10 +162,6 @@ PairingManager::_getDeviceIP(const QString& name)
 bool
 PairingManager::_getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip)
 {
-    const int maxNumberOfDevices = 8;
-    const int deviceIPStart = 30;
-    const int mhIPStart = 20;
-
     QString remoteIPAddr = _toolbox->microhardManager()->remoteIPAddr();
     QString prefix = remoteIPAddr.left(remoteIPAddr.lastIndexOf('.') + 1);
 
@@ -338,7 +338,7 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     _writeJson(jsonDoc, name);
 
     _lastConnected = name;
-    _createUDPLink(_lastConnected, 24550);
+    _createUDPLink(_lastConnected, _mavlink_router_port);
     _toolbox->videoManager()->startVideo();
     QString chStr = QString::number(channel) + " - " +
                     QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
@@ -1090,7 +1090,12 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
     QJsonObject jsonObj;
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
-    jsonObj.insert("P", 24550);
+
+    QString remotePairingMapIP = remotePairingMap["IP"].toString();
+    QString unique_host = remotePairingMapIP.right(remotePairingMapIP.indexOf('.') - 1);
+    _mavlink_router_port = unique_host.toInt() - deviceIPStart + default_mavlink_router_port;
+    jsonObj.insert("P", _mavlink_router_port);
+
     int cc;
     if (remotePairingMap.contains("CC")) {
         cc = remotePairingMap["CC"].toInt();
