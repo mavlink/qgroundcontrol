@@ -96,9 +96,10 @@ public:
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
     Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
+    Q_PROPERTY(bool                 isROIBeginCurrentItem           MEMBER _isROIBeginCurrentItem       NOTIFY isROIBeginCurrentItemChanged)
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
 
-    Q_INVOKABLE void removeMissionItem(int index);
+    Q_INVOKABLE void removeMissionItem(int viIndex);
 
     /// Add a new simple mission item to the list
     ///     @param coordinate: Coordinate for item
@@ -263,6 +264,7 @@ signals:
     void isInsertTakeoffValidChanged        (void);
     void isInsertLandValidChanged           (void);
     void isROIActiveChanged                 (void);
+    void isROIBeginCurrentItemChanged       (void);
     void flyThroughCommandsAllowedChanged   (void);
 
 private slots:
@@ -286,6 +288,7 @@ private:
     void _recalcSequence(void);
     void _recalcChildItems(void);
     void _recalcAllWithCoordinate(const QGeoCoordinate& coordinate);
+    void _recalcROISpecialVisuals(void);
     void _initAllVisualItems(void);
     void _deinitAllVisualItems(void);
     void _initVisualItem(VisualMissionItem* item);
@@ -317,6 +320,8 @@ private:
     VisualMissionItem* _insertSimpleMissionItemWorker(QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
     void _insertComplexMissionItemWorker(const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     void _warnIfTerrainFrameUsed(void);
+    bool _isROIBeginItem(SimpleMissionItem* simpleItem);
+    bool _isROICancelItem(SimpleMissionItem* simpleItem);
 
 private:
     MissionManager*         _missionManager;
@@ -344,6 +349,7 @@ private:
     bool                    _isInsertLandValid =            true;
     bool                    _isROIActive =                  false;
     bool                    _flyThroughCommandsAllowed =    true;
+    bool                    _isROIBeginCurrentItem =        false;
 
     static const char*  _settingsGroup;
 
