@@ -77,7 +77,8 @@ public:
     Q_PROPERTY(int                  missionItemCount                READ missionItemCount               NOTIFY missionItemCountChanged)     ///< True mission item command count (only valid in Fly View)
     Q_PROPERTY(int                  currentMissionIndex             READ currentMissionIndex            NOTIFY currentMissionIndexChanged)
     Q_PROPERTY(int                  resumeMissionIndex              READ resumeMissionIndex             NOTIFY resumeMissionIndexChanged)   ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
-    Q_PROPERTY(int                  currentPlanViewIndex            READ currentPlanViewIndex           NOTIFY currentPlanViewIndexChanged)
+    Q_PROPERTY(int                  currentPlanViewSeqNum           READ currentPlanViewSeqNum          NOTIFY currentPlanViewSeqNumChanged)
+    Q_PROPERTY(int                  currentPlanViewVIIndex          READ currentPlanViewVIIndex         NOTIFY currentPlanViewVIIndexChanged)
     Q_PROPERTY(VisualMissionItem*   currentPlanViewItem             READ currentPlanViewItem            NOTIFY currentPlanViewItemChanged)
     Q_PROPERTY(double               missionDistance                 READ missionDistance                NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime                     READ missionTime                    NOTIFY missionTimeChanged)
@@ -94,6 +95,7 @@ public:
     Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
+    Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
 
     Q_INVOKABLE void removeMissionItem(int index);
@@ -126,6 +128,12 @@ public:
     /// @return Newly created item
     Q_INVOKABLE VisualMissionItem*  insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
 
+    /// Add a new Cancel ROI mission item to the list
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem*  insertCancelROIMissionItem(int visualItemIndex, bool makeCurrentItem = false);
+
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param mapCenterCoordinate: coordinate for current center of map
@@ -150,10 +158,7 @@ public:
 
     /// Sets a new current mission item (PlanView).
     ///     @param sequenceNumber - index for new item, -1 to clear current item
-    Q_INVOKABLE void setCurrentPlanViewIndex(int sequenceNumber, bool force);
-
-    /// Returns the index of this item in the visual item list
-    Q_INVOKABLE int visualItemIndexFromSequenceNumber(int sequenceNumber) const;
+    Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
 
     /// Determines if the mission has all data needed to be saved or sent to the vehicle.
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
@@ -196,7 +201,7 @@ public:
     QVariantList        waypointPath                (void) { return _waypointPath; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
-    VisualMissionItem*  currentPlanViewItem         (void) const;
+    VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
     double              progressPct                 (void) const { return _progressPct; }
     QString             surveyComplexItemName       (void) const { return patternSurveyName; }
     QString             corridorScanComplexItemName (void) const { return patternCorridorScanName; }
@@ -206,7 +211,8 @@ public:
     int missionItemCount            (void) const { return _missionItemCount; }
     int currentMissionIndex         (void) const;
     int resumeMissionIndex          (void) const;
-    int currentPlanViewIndex        (void) const;
+    int currentPlanViewSeqNum       (void) const { return _currentPlanViewSeqNum; }
+    int currentPlanViewVIIndex      (void) const { return _currentPlanViewVIIndex; }
 
     double  missionDistance         (void) const { return _missionFlightStatus.totalDistance; }
     double  missionTime             (void) const { return _missionFlightStatus.totalTime; }
@@ -249,12 +255,14 @@ signals:
     void plannedHomePositionChanged         (QGeoCoordinate plannedHomePosition);
     void progressPctChanged                 (double progressPct);
     void currentMissionIndexChanged         (int currentMissionIndex);
-    void currentPlanViewIndexChanged        (void);
+    void currentPlanViewSeqNumChanged       (void);
+    void currentPlanViewVIIndexChanged      (void);
     void currentPlanViewItemChanged         (void);
     void missionBoundingCubeChanged         (void);
     void missionItemCountChanged            (int missionItemCount);
     void isInsertTakeoffValidChanged        (void);
     void isInsertLandValidChanged           (void);
+    void isROIActiveChanged                 (void);
     void flyThroughCommandsAllowedChanged   (void);
 
 private slots:
@@ -325,7 +333,8 @@ private:
     MissionFlightStatus_t   _missionFlightStatus;
     AppSettings*            _appSettings;
     double                  _progressPct;
-    int                     _currentPlanViewIndex;
+    int                     _currentPlanViewSeqNum;
+    int                     _currentPlanViewVIIndex;
     VisualMissionItem*      _currentPlanViewItem;
     QTimer                  _updateTimer;
     QGCGeoBoundingCube      _travelBoundingCube;
@@ -333,6 +342,7 @@ private:
     CoordinateVector*       _splitSegment;
     bool                    _isInsertTakeoffValid =         true;
     bool                    _isInsertLandValid =            true;
+    bool                    _isROIActive =                  false;
     bool                    _flyThroughCommandsAllowed =    true;
 
     static const char*  _settingsGroup;
