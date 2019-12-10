@@ -244,6 +244,17 @@ MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMa
 
 //-----------------------------------------------------------------------------
 void
+MicrohardManager::setShowRemote(bool val)
+{
+    if (_showRemote != val) {
+        _showRemote = val;
+        _reset();
+        emit showRemoteChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 MicrohardManager::_setEnabled()
 {
     bool enable = _appSettings->enableMicrohard()->rawValue().toBool();
@@ -253,7 +264,7 @@ MicrohardManager::_setEnabled()
             connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc, Qt::QueuedConnection);
             connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc, Qt::QueuedConnection);
         }
-        if(!_mhSettingsRem) {
+        if(!_mhSettingsRem && _showRemote) {
             _mhSettingsRem = new MicrohardSettings(remoteIPAddr(), this);
             connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem, Qt::QueuedConnection);
             connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem, Qt::QueuedConnection);
@@ -302,22 +313,20 @@ MicrohardManager::_connectedRem(int status)
 void
 MicrohardManager::_rssiUpdatedLoc(int rssi)
 {
-    _downlinkRSSI = rssi;
+    setDownlinkRSSI(rssi);
     _locTimer.stop();
     _locTimer.start(LONG_TIMEOUT);
     emit connectedChanged();
-    emit linkChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardManager::_rssiUpdatedRem(int rssi)
 {
-    _uplinkRSSI = rssi;
+    setUplinkRSSI(rssi);
     _remTimer.stop();
     _remTimer.start(LONG_TIMEOUT);
     emit linkConnectedChanged();
-    emit linkChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -353,7 +362,7 @@ void
 MicrohardManager::_checkMicrohard()
 {
     if(_enabled) {
-        if(!_mhSettingsLoc || !_mhSettingsRem) {
+        if(!_mhSettingsLoc) {
             _setEnabled();
             return;
         }
@@ -363,10 +372,12 @@ MicrohardManager::_checkMicrohard()
         } else {
             _mhSettingsLoc->getStatus();
         }
-        if(_linkConnectedStatus <= 0) {
-            _mhSettingsRem->start();
-        } else {
-            _mhSettingsRem->getStatus();
+        if (_mhSettingsRem) {
+            if(_linkConnectedStatus <= 0) {
+                _mhSettingsRem->start();
+            } else {
+                _mhSettingsRem->getStatus();
+            }
         }
     }
     _workTimer.start(_connectedStatus > 0 ? SHORT_TIMEOUT : LONG_TIMEOUT);

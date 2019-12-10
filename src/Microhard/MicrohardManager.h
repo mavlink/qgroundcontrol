@@ -31,9 +31,10 @@ class MicrohardManager : public QGCTool
 public:
 
     Q_PROPERTY(int          connected           READ connected                                     NOTIFY connectedChanged)
+    Q_PROPERTY(bool         showRemote          READ showRemote           WRITE setShowRemote      NOTIFY showRemoteChanged)
     Q_PROPERTY(int          linkConnected       READ linkConnected                                 NOTIFY linkConnectedChanged)
-    Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                    NOTIFY linkChanged)
-    Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                                  NOTIFY linkChanged)
+    Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI           WRITE setUplinkRSSI      NOTIFY linkChanged)
+    Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI         WRITE setDownlinkRSSI    NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSIPct     READ downlinkRSSIPct                               NOTIFY linkChanged)
     Q_PROPERTY(QString      localIPAddr         READ localIPAddr          WRITE setLocalIPAddr     NOTIFY localIPAddrChanged)
     Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr         WRITE setRemoteIPAddr    NOTIFY remoteIPAddrChanged)
@@ -63,9 +64,10 @@ public:
     void        setToolbox                      (QGCToolbox* toolbox) override;
 
     int         connected                       () { return _connectedStatus; }
+    bool        showRemote                      () { return _showRemote; }
     int         linkConnected                   () { return _linkConnectedStatus; }
-    int         uplinkRSSI                      () { return _downlinkRSSI; }
-    int         downlinkRSSI                    () { return _uplinkRSSI; }
+    int         uplinkRSSI                      () { return _uplinkRSSI; }
+    int         downlinkRSSI                    () { return _downlinkRSSI; }
     int         downlinkRSSIPct                 ();
     QString     localIPAddr                     () { return _localIPAddr; }
     QString     remoteIPAddr                    () { return _remoteIPAddr; }
@@ -85,6 +87,9 @@ public:
     int         pairingPower                    () const { return _pairingPower; }
     int         connectingPower                 () const { return _connectingPower; }
     int         getChannelFrequency             (int channel) { return channel - _channelMin + _frequencyStart; }
+    void        setShowRemote                   (bool val);
+    void        setDownlinkRSSI                 (int rssi)    { _downlinkRSSI = rssi; emit linkChanged(); }
+    void        setUplinkRSSI                   (int rssi)    { _uplinkRSSI = rssi; emit linkChanged(); }
     void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
@@ -105,6 +110,7 @@ signals:
     void    linkChanged                     ();
     void    linkConnectedChanged            ();
     void    connectedChanged                ();
+    void    showRemoteChanged               ();
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
     void    netMaskChanged                  ();
@@ -138,6 +144,7 @@ private:
 
 private:
     int                _connectedStatus = 0;
+    bool               _showRemote = true;
     AppSettings*       _appSettings = nullptr;
     MicrohardSettings* _mhSettingsLoc = nullptr;
     MicrohardSettings* _mhSettingsRem = nullptr;

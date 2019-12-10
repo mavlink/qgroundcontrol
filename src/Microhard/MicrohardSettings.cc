@@ -121,4 +121,3 @@ MicrohardSettings::_readBytes()
 
     emit rssiUpdated(_rssiVal);
 }
-

@@ -62,14 +62,16 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 void
 PairingManager::_setEnabled()
 {
-    setUsePairing(_toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool());
+    bool value = _toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool();
+    setUsePairing(value);
+    _toolbox->microhardManager()->setShowRemote(!value);
 }
 
 //-----------------------------------------------------------------------------
 void
 PairingManager::setUsePairing(bool set)
 {
-    if (_usePairing == set) {
+    if (_usePairing == set && _usePairingSet) {
         return;
     }
     _usePairing = set;
@@ -83,7 +85,10 @@ PairingManager::setUsePairing(bool set)
         _reconnectTimer.stop();
     }
 
-    _toolbox->microhardManager()->updateSettings();
+    if (_usePairingSet) {
+        _toolbox->microhardManager()->updateSettings();
+    }
+    _usePairingSet = true;
     if (!_usePairing || !_connectedDevices.empty()) {
         _toolbox->videoManager()->startVideo();
     }
@@ -466,7 +471,7 @@ PairingManager::_uploadFinished()
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
             _connectRequests.remove(name);
             connectToDevice(name);
-        } else {
+        } else if (_status != PairingActive) {
             setPairingStatus(PairingIdle, "");
         }
     }
@@ -866,7 +871,7 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     QString connectURL = "http://" + remotePairingMap["IP"].toString() + ":" + pport;
     QJsonDocument responseJsonDoc;
 
-    connectURL +=  + "/connect";
+    connectURL += "/connect";
     if (linkType == "ZT") {
         responseJsonDoc = _createZeroTierConnectJson(remotePairingMap);
     } else if (linkType == "MH") {
@@ -881,12 +886,6 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
         if (remotePairingMap.contains("AIP")) {
             _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
-        }
-        if (remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(remotePairingMap["CU"].toString());
-        }
-        if (remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
         }
     }
     if (linkType == "MH") {

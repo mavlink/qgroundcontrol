@@ -169,6 +169,7 @@ private:
     QNetworkAccessManager         _uploadManager;
     bool                          _firstBoot = true;
     bool                          _usePairing = false;
+    bool                          _usePairingSet = false;
     bool                          _confirmHighPowerMode = false;
     QMap<QString, qint64>         _devicesToConnect{};
     QTimer                        _reconnectTimer;
