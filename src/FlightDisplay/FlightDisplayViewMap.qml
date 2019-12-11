@@ -478,12 +478,11 @@ FlightMap {
     MapScale {
         id:                     mapScale
         anchors.right:          parent.right
-        anchors.margins:        ScreenTools.defaultFontPixelHeight * (0.33)
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * (0.33) + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.33)
+        anchors.margins:        _toolsMargin
+        anchors.topMargin:      _toolsMargin + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
         mapControl:             flightMap
         buttonsOnLeft:          false
-        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale
+        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale && mainIsMap
         state:                  "bottomMode"
         states: [
             State {
