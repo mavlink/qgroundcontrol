@@ -319,7 +319,6 @@ QString FirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
 
 const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
 {
-    Q_UNUSED(vehicle);
     //-- Default list of indicators for all vehicles.
     if(_toolBarIndicatorList.size() == 0) {
         _toolBarIndicatorList = QVariantList({
@@ -335,14 +334,15 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
         });
+        if(vehicle->roiModeSupported()) {
+            _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")));
+        }
     }
     return _toolBarIndicatorList;
 }
 
-const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
+const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
 {
-    Q_UNUSED(vehicle);
-
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 

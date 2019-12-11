@@ -146,6 +146,7 @@
         <file alias="RCLossLight.svg">src/AutoPilotPlugins/PX4/Images/RCLossLight.svg</file>
         <file alias="ReturnToHomeAltitude.svg">src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitude.svg</file>
         <file alias="ReturnToHomeAltitudeCopter.svg">src/AutoPilotPlugins/PX4/Images/ReturnToHomeAltitudeCopter.svg</file>
+        <file alias="roi.svg">src/ui/toolbar/Images/roi.svg</file>
         <file alias="rollDialWhite.svg">src/FlightMap/Images/rollDialWhite.svg</file>
         <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
         <file alias="RTK.svg">src/ui/toolbar/Images/RTK.svg</file>
