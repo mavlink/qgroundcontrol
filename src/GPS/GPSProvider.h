@@ -13,9 +13,11 @@
 #include <QString>
 #include <QThread>
 #include <QByteArray>
-//#include <QSerialPort>
+#ifndef __android__
+#include <QSerialPort>
+#else
 #include "qserialport.h"
-
+#endif
 
 #include <atomic>
 
