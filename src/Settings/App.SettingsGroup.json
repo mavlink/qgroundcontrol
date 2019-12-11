@@ -12,7 +12,7 @@
     "shortDescription": "Offline editing vehicle type",
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
-    "enumValues":       "1,2,19,10,12",
+    "enumValues":       "1,2,20,10,12",
     "defaultValue":     2
 },
 {
