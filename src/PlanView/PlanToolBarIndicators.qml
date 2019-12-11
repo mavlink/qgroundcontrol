@@ -38,8 +38,7 @@ Item {
     property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
     property real   _distance:                  _statusValid && _currentMissionItem ? _currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid && _currentMissionItem ? _currentMissionItem.altDifference : NaN
-    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : NaN
-    property real   _gradientPercent:           isNaN(_gradient) ? NaN : _gradient * 100
+    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? (Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) * (180.0/Math.PI)) : NaN
     property real   _azimuth:                   _statusValid && _currentMissionItem ? _currentMissionItem.azimuth : NaN
     property real   _heading:                   _statusValid && _currentMissionItem ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
@@ -53,7 +52,7 @@ Item {
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
-    property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradientPercent.toFixed(0) + " %"
+    property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradient.toFixed(0) + " %"
     property string _azimuthText:               isNaN(_azimuth) ?               "-.-" : Math.round(_azimuth) % 360
     property string _headingText:               isNaN(_azimuth) ?               "-.-" : Math.round(_heading) % 360
     property string _missionDistanceText:       isNaN(_missionDistance) ?       "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString

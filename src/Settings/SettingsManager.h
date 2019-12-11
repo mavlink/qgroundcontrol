@@ -26,6 +26,7 @@
 #include "OfflineMapsSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
 #include "FirmwareUpgradeSettings.h"
+#include "ADSBVehicleManagerSettings.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapSettings.h"
 #endif
@@ -53,6 +54,7 @@ public:
     Q_PROPERTY(QObject* brandImageSettings              READ brandImageSettings             CONSTANT)
     Q_PROPERTY(QObject* offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
     Q_PROPERTY(QObject* firmwareUpgradeSettings         READ firmwareUpgradeSettings        CONSTANT)
+    Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
@@ -73,6 +75,7 @@ public:
     BrandImageSettings*             brandImageSettings          (void) { return _brandImageSettings; }
     OfflineMapsSettings*            offlineMapsSettings         (void) { return _offlineMapsSettings; }
     FirmwareUpgradeSettings*        firmwareUpgradeSettings     (void) { return _firmwareUpgradeSettings; }
+    ADSBVehicleManagerSettings*     adsbVehicleManagerSettings  (void) { return _adsbVehicleManagerSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
@@ -91,6 +94,7 @@ private:
     BrandImageSettings*             _brandImageSettings;
     OfflineMapsSettings*            _offlineMapsSettings;
     FirmwareUpgradeSettings*        _firmwareUpgradeSettings;
+    ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif

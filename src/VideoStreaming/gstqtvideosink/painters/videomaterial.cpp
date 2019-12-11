@@ -198,11 +198,11 @@ VideoMaterial *VideoMaterial::create(const BufferFormat & format)
     case GST_VIDEO_FORMAT_BGRx:
     case GST_VIDEO_FORMAT_BGRA:
         material = new VideoMaterialImpl<qtvideosink_glsl_bgrxFragmentShader>;
-        material->initRgbTextureInfo(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, format.frameSize());
+        material->initRgbTextureInfo(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, format.videoInfo());
         break;
     case GST_VIDEO_FORMAT_BGR:
         material = new VideoMaterialImpl<qtvideosink_glsl_bgrxFragmentShader>;
-        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, format.frameSize());
+        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, format.videoInfo());
         break;
 
     // xRGB
@@ -210,27 +210,25 @@ VideoMaterial *VideoMaterial::create(const BufferFormat & format)
     case GST_VIDEO_FORMAT_ARGB:
     case GST_VIDEO_FORMAT_AYUV:
         material = new VideoMaterialImpl<qtvideosink_glsl_xrgbFragmentShader>;
-        material->initRgbTextureInfo(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, format.frameSize());
+        material->initRgbTextureInfo(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, format.videoInfo());
         break;
 
     // RGBx
     case GST_VIDEO_FORMAT_RGB:
     case GST_VIDEO_FORMAT_v308:
         material = new VideoMaterialImpl<qtvideosink_glsl_rgbxFragmentShader>;
-        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, format.frameSize());
+        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, format.videoInfo());
         break;
     case GST_VIDEO_FORMAT_RGB16:
         material = new VideoMaterialImpl<qtvideosink_glsl_rgbxFragmentShader>;
-        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, format.frameSize());
+        material->initRgbTextureInfo(GL_RGB, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, format.videoInfo());
         break;
 
     // YUV 420 planar
     case GST_VIDEO_FORMAT_I420:
     case GST_VIDEO_FORMAT_YV12:
         material = new VideoMaterialImpl<qtvideosink_glsl_yuvPlanarFragmentShader>;
-        material->initYuv420PTextureInfo(
-            (format.videoFormat() == GST_VIDEO_FORMAT_YV12) /* uvSwapped */,
-            format.frameSize());
+        material->initYuv420PTextureInfo(format.videoInfo());
         break;
 
     default:
@@ -243,7 +241,8 @@ VideoMaterial *VideoMaterial::create(const BufferFormat & format)
 }
 
 VideoMaterial::VideoMaterial()
-    : m_frame(0)
+    : m_bufferPool(0)
+    , m_frame(0)
     , m_textureCount(0)
     , m_textureFormat(0)
     , m_textureInternalFormat(0)
@@ -256,14 +255,14 @@ VideoMaterial::VideoMaterial()
 
 VideoMaterial::~VideoMaterial()
 {
-    if (!m_textureSize.isEmpty())
-    {
+    if (m_textureCount > 0) {
         QOpenGLFunctionsDef *funcs = getQOpenGLFunctions();
-        if (funcs)
-        {
+
+        if (funcs) {
             funcs->glDeleteTextures(m_textureCount, m_textureIds);
         }
     }
+
     gst_buffer_replace(&m_frame, nullptr);
 }
 
@@ -280,7 +279,7 @@ int VideoMaterial::compare(const QSGMaterial *other) const
 }
 
 void VideoMaterial::initRgbTextureInfo(
-        GLenum internalFormat, GLuint format, GLenum type, const QSize &size)
+        GLenum internalFormat, GLuint format, GLenum type, const GstVideoInfo& videoInfo)
 {
 #ifndef QT_OPENGL_ES
     //make sure we get 8 bits per component, at least on the desktop GL where we can
@@ -296,36 +295,61 @@ void VideoMaterial::initRgbTextureInfo(
     }
 #endif
 
+    m_videoInfo = videoInfo;
+
     m_textureInternalFormat = internalFormat;
     m_textureFormat = format;
     m_textureType = type;
     m_textureCount = 1;
-    m_textureWidths[0] = size.width();
-    m_textureHeights[0] = size.height();
-    m_textureOffsets[0] = 0;
+
+    m_textureWidths[0] = videoInfo.width;
+    m_textureHeights[0] = videoInfo.height;
+    m_textureOffsets[0] = videoInfo.offset[0];
+    m_textureStrides[0] = videoInfo.stride[0];
+    m_textureAllocated[0] = false;
 }
 
-void VideoMaterial::initYuv420PTextureInfo(bool uvSwapped, const QSize &size)
+void VideoMaterial::initYuv420PTextureInfo(const GstVideoInfo& videoInfo)
 {
-    int bytesPerLine = (size.width() + 3) & ~3;
-    int bytesPerLine2 = (size.width() / 2 + 3) & ~3;
+    m_videoInfo = videoInfo;
 
     m_textureInternalFormat = GL_LUMINANCE;
     m_textureFormat = GL_LUMINANCE;
     m_textureType = GL_UNSIGNED_BYTE;
     m_textureCount = 3;
-    m_textureWidths[0] = bytesPerLine;
-    m_textureHeights[0] = size.height();
-    m_textureOffsets[0] = 0;
-    m_textureWidths[1] = bytesPerLine2;
-    m_textureHeights[1] = size.height() / 2;
-    m_textureOffsets[1] = bytesPerLine * size.height();
-    m_textureWidths[2] = bytesPerLine2;
-    m_textureHeights[2] = size.height() / 2;
-    m_textureOffsets[2] = bytesPerLine * size.height() + bytesPerLine2 * size.height()/2;
 
-    if (uvSwapped)
-      qSwap (m_textureOffsets[1], m_textureOffsets[2]);
+    m_textureWidths[0] = GST_VIDEO_INFO_COMP_WIDTH(&videoInfo, 0);
+    m_textureHeights[0] = GST_VIDEO_INFO_COMP_HEIGHT(&videoInfo, 0);
+    m_textureAllocated[0] = false;
+
+    m_textureWidths[1] = GST_VIDEO_INFO_COMP_WIDTH(&videoInfo, 1);
+    m_textureHeights[1] = GST_VIDEO_INFO_COMP_HEIGHT(&videoInfo, 1);
+    m_textureAllocated[1] = false;
+
+    m_textureWidths[2] = GST_VIDEO_INFO_COMP_WIDTH(&videoInfo, 2);
+    m_textureHeights[2] = GST_VIDEO_INFO_COMP_HEIGHT(&videoInfo, 2);
+    m_textureAllocated[2] = false;
+
+    updateYuv420PTextureInfo(videoInfo);
+}
+
+void VideoMaterial::updateYuv420PTextureInfo(const GstVideoInfo& videoInfo)
+{
+    const unsigned lumaPlane = GST_VIDEO_INFO_COMP_PLANE(&videoInfo, 0);
+
+    m_textureOffsets[0] = GST_VIDEO_INFO_PLANE_OFFSET(&videoInfo, lumaPlane);
+    m_textureStrides[0] = GST_VIDEO_INFO_PLANE_STRIDE(&videoInfo, lumaPlane);
+
+    const unsigned cbPlane = GST_VIDEO_INFO_COMP_PLANE(&videoInfo, 1);
+
+    m_textureOffsets[1] = GST_VIDEO_INFO_PLANE_OFFSET(&videoInfo, cbPlane);
+    m_textureStrides[1] = GST_VIDEO_INFO_PLANE_STRIDE(&videoInfo, cbPlane);
+
+    const unsigned crPlane = GST_VIDEO_INFO_COMP_PLANE(&videoInfo, 2);
+
+    m_textureOffsets[2] = GST_VIDEO_INFO_PLANE_OFFSET(&videoInfo, crPlane);
+    m_textureStrides[2] = GST_VIDEO_INFO_PLANE_STRIDE(&videoInfo, crPlane);
+
 }
 
 void VideoMaterial::init(GstVideoColorMatrix colorMatrixType)
@@ -436,6 +460,28 @@ void VideoMaterial::bind()
     if (frame) {
         GstMapInfo info;
         gst_buffer_map(frame, &info, GST_MAP_READ);
+
+        if (m_bufferPool != frame->pool) {
+            GstStructure* structure = gst_buffer_pool_get_config(frame->pool);
+
+            if (structure != NULL) {
+                GstCaps* caps;
+
+                if(gst_buffer_pool_config_get_params(structure, &caps, NULL, NULL, NULL) != FALSE) {
+                    updateYuv420PTextureInfo(BufferFormat::fromCaps(caps).videoInfo());
+                } else {
+                    updateYuv420PTextureInfo(m_videoInfo);
+                }
+
+                gst_structure_free(structure);
+                structure = NULL;
+            } else {
+                updateYuv420PTextureInfo(m_videoInfo);
+            }
+
+            m_bufferPool = frame->pool;
+        }
+
         funcs->glActiveTexture(GL_TEXTURE1);
         bindTexture(1, info.data);
         funcs->glActiveTexture(GL_TEXTURE2);
@@ -461,16 +507,52 @@ void VideoMaterial::bindTexture(int i, const quint8 *data)
         return;
 
     funcs->glBindTexture(GL_TEXTURE_2D, m_textureIds[i]);
-    funcs->glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        m_textureInternalFormat,
-        m_textureWidths[i],
-        m_textureHeights[i],
-        0,
-        m_textureFormat,
-        m_textureType,
-        data + m_textureOffsets[i]);
+
+    if (!m_textureAllocated[i]) {
+        funcs->glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            m_textureInternalFormat,
+            m_textureWidths[i],
+            m_textureHeights[i],
+            0,
+            m_textureFormat,
+            m_textureType,
+            NULL);
+
+        m_textureAllocated[i] = true;
+    }
+
+    if (m_textureStrides[i] != m_textureWidths[i]) {
+        const unsigned char* line = data + m_textureOffsets[i];
+
+        for (int j = 0; j < m_textureHeights[i]; j++) {
+            funcs->glTexSubImage2D(
+                        GL_TEXTURE_2D,
+                        0,
+                        0,
+                        j,
+                        m_textureWidths[i],
+                        1,
+                        m_textureFormat,
+                        m_textureType,
+                        line);
+
+            line += m_textureStrides[i];
+        }
+    } else {
+        funcs->glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            m_textureInternalFormat,
+            m_textureWidths[i],
+            m_textureHeights[i],
+            0,
+            m_textureFormat,
+            m_textureType,
+            data + m_textureOffsets[i]);
+    }
+
     funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     funcs->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

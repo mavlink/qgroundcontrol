@@ -12,6 +12,11 @@
     "decimalPlaces":    7
 },
 {
+    "name":             "mgrs",
+    "shortDescription": "MGRS Position",
+    "type":             "string"
+},
+{
     "name":             "hdop",
     "shortDescription": "HDOP",
     "type":             "double",
