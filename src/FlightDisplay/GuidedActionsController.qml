@@ -51,6 +51,7 @@ Item {
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
     readonly property string gotoTitle:                     qsTr("Go To Location")
     readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
+    readonly property string roiTitle:                      qsTr("ROI")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
@@ -70,6 +71,7 @@ Item {
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
     readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
     readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
+    readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -92,6 +94,7 @@ Item {
     readonly property int actionMVStartMission:             19
     readonly property int actionVtolTransitionToFwdFlight:  20
     readonly property int actionVtolTransitionToMRFlight:   21
+    readonly property int actionROI:                        22
 
     property bool showEmergenyStop:     _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
     property bool showArm:              _guidedActionsEnabled && !_vehicleArmed
@@ -104,6 +107,7 @@ Item {
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            _guidedActionsEnabled && !_hideOrbit && _vehicleFlying && activeVehicle.orbitModeSupported && !_missionActive
+    property bool showROI:              _guidedActionsEnabled && !_hideROI && _vehicleFlying && activeVehicle.roiModeSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
 
@@ -129,6 +133,7 @@ Item {
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
     property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
+    property bool   _hideROI:               !QGroundControl.corePlugin.options.guidedBarShowOrbit
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
@@ -342,6 +347,11 @@ Item {
             confirmDialog.message = vtolTransitionMRMessage
             confirmDialog.hideTrigger = true
             break
+        case actionROI:
+            confirmDialog.title = roiTitle
+            confirmDialog.message = roiMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showROI })
+            break;
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -416,6 +426,9 @@ Item {
             break
         case actionVtolTransitionToMRFlight:
             activeVehicle.vtolInFwdFlight = false
+            break
+        case actionROI:
+            activeVehicle.guidedModeROI(actionData)
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

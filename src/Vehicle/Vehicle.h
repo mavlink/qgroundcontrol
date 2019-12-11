@@ -654,6 +654,7 @@ public:
     Q_PROPERTY(bool     guidedModeSupported     READ guidedModeSupported                            CONSTANT)                   ///< Guided mode commands are supported by this vehicle
     Q_PROPERTY(bool     pauseVehicleSupported   READ pauseVehicleSupported                          CONSTANT)                   ///< Pause vehicle command is supported
     Q_PROPERTY(bool     orbitModeSupported      READ orbitModeSupported                             CONSTANT)                   ///< Orbit mode is supported by this vehicle
+    Q_PROPERTY(bool     roiModeSupported        READ roiModeSupported                               CONSTANT)                   ///< Orbit mode is supported by this vehicle
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
 
@@ -737,6 +738,10 @@ public:
     ///     @param amslAltitude Desired vehicle altitude
     Q_INVOKABLE void guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude);
 
+    /// Command vehicle to keep given point as ROI
+    ///     @param centerCoord ROI coordinates
+    Q_INVOKABLE void guidedModeROI(const QGeoCoordinate& centerCoord);
+
     /// Command vehicle to pause at current location. If vehicle supports guide mode, vehicle will be left
     /// in guided mode after pause.
     Q_INVOKABLE void pauseVehicle(void);
@@ -786,6 +791,7 @@ public:
     bool    guidedModeSupported     (void) const;
     bool    pauseVehicleSupported   (void) const;
     bool    orbitModeSupported      (void) const;
+    bool    roiModeSupported        (void) const;
     bool    takeoffVehicleSupported (void) const;
     QString gotoFlightMode          (void) const;
 
