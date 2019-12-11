@@ -34,7 +34,7 @@ Item {
 
     readonly property int   _decimalPlaces:             8
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
-    readonly property real  _toolsTopMargin:            ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property real  _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
     readonly property real  _radius:                    ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _rightPanelWidth:           Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
@@ -367,7 +367,7 @@ Item {
             planView:                   true
 
             // This is the center rectangle of the map which is not obscured by tools
-            property rect centerViewport:   Qt.rect(_leftToolWidth + _margin, _toolsTopMargin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), mapScale.y - _margin - _toolsTopMargin)
+            property rect centerViewport:   Qt.rect(_leftToolWidth + _margin, _toolsMargin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), mapScale.y - _margin - _toolsMargin)
 
             property real _leftToolWidth:       toolStrip.x + toolStrip.width
             property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
@@ -536,12 +536,11 @@ Item {
         // Left tool strip
         ToolStrip {
             id:                 toolStrip
-            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+            anchors.margins:    _toolsMargin
             anchors.left:       parent.left
-            anchors.topMargin:  _toolsTopMargin
             anchors.top:        parent.top
             z:                  QGroundControl.zOrderWidgets
-            maxHeight:          mapScale.y - toolStrip.y
+            maxHeight:          parent.height - toolStrip.y
 
             readonly property int flyButtonIndex:       0
             readonly property int fileButtonIndex:      1
@@ -638,11 +637,16 @@ Item {
                     }
                     break
                 case roiButtonIndex:
-                    allAddClickBoolsOff()
-                    if (_missionController.isROIActive) {
-                        insertCancelROIAfterCurrent()
+                    if (_addROIOnClick) {
+                        allAddClickBoolsOff()
+                        setChecked(index, false)
                     } else {
-                        _addROIOnClick = checked
+                        allAddClickBoolsOff()
+                        if (_missionController.isROIActive) {
+                            insertCancelROIAfterCurrent()
+                        } else {
+                            _addROIOnClick = checked
+                        }
                     }
                     break
                 case patternButtonIndex:
@@ -673,13 +677,13 @@ Item {
             opacity:            planExpanded.visible ? 0.2 : 0
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
-            anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+            anchors.rightMargin: _toolsMargin
         }
         //-------------------------------------------------------
         // Right Panel Controls
         Item {
             anchors.fill:           rightPanel
-            anchors.topMargin:      _toolsTopMargin
+            anchors.topMargin:      _toolsMargin
             DeadMouseArea {
                 anchors.fill:   parent
             }
@@ -857,34 +861,34 @@ Item {
             }
         }
 
-        MapScale {
-            id:                     mapScale
-            anchors.margins:        ScreenTools.defaultFontPixelHeight * (0.66)
-            anchors.bottom:         waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
-            anchors.left:           parent.left
-            mapControl:             editorMap
-            buttonsOnLeft:          true
-            terrainButtonVisible:   _editingLayer === _layerMission
-            visible:                _toolStripBottom < y
-            terrainButtonChecked:   waypointValuesDisplay.visible
-            onTerrainButtonClicked: waypointValuesDisplay.toggleVisible()
-        }
-
         MissionItemStatus {
             id:                 waypointValuesDisplay
-            anchors.margins:    ScreenTools.defaultFontPixelWidth
-            anchors.left:       parent.left
+            anchors.margins:    _toolsMargin
+            anchors.left:       toolStrip.right
+            anchors.bottom:     mapScale.top
             height:             ScreenTools.defaultFontPixelHeight * 7
-            maxWidth:           parent.width - rightPanel.width - x
-            anchors.bottom:     parent.bottom
+            maxWidth:           rightPanel.x - x - anchors.margins
             missionItems:       _missionController.visualItems
-            visible:            _internalVisible && _editingLayer === _layerMission && (_toolStripBottom + mapScale.height) < y && QGroundControl.corePlugin.options.showMissionStatus
+            visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
             property bool _internalVisible: false
 
             function toggleVisible() {
                 _internalVisible = !_internalVisible
             }
+        }
+
+
+        MapScale {
+            id:                     mapScale
+            anchors.margins:        _toolsMargin
+            anchors.bottom:         parent.bottom
+            anchors.left:           toolStrip.right
+            mapControl:             editorMap
+            buttonsOnLeft:          true
+            terrainButtonVisible:   _editingLayer === _layerMission
+            terrainButtonChecked:   waypointValuesDisplay.visible
+            onTerrainButtonClicked: waypointValuesDisplay.toggleVisible()
         }
     }
 
