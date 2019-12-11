@@ -103,6 +103,25 @@ Rectangle {
         }
 
         QGCMenu {
+            id:         patternMenu
+            title:      qsTr("Insert pattern")
+            enabled:    !_singleComplexItem
+
+            Instantiator {
+                active: !_singleComplexItem && patternMenu.visible
+                model: _missionController.complexMissionItemNames
+
+                onObjectAdded:      patternMenu.insertItem(index, object)
+                onObjectRemoved:    patternMenu.removeItem(object)
+
+                delegate: QGCMenuItem {
+                    text:           modelData
+                    onTriggered:    insertComplexItem(modelData)
+                }
+            }
+        }
+
+        QGCMenu {
             id: hamburgerMenu
 
             QGCMenuItem {
@@ -110,21 +129,12 @@ Rectangle {
                 onTriggered:    insertWaypoint()
             }
 
-            QGCMenu {
-                id:         patternMenu
-                title:      qsTr("Insert pattern")
-                visible:    !_singleComplexItem
-
-                Instantiator {
-                    model: _missionController.complexMissionItemNames
-
-                    onObjectAdded:      patternMenu.insertItem(index, object)
-                    onObjectRemoved:    patternMenu.removeItem(object)
-
-                    QGCMenuItem {
-                        text:           modelData
-                        onTriggered:    insertComplexItem(modelData)
-                    }
+            QGCMenuItem {
+                visible:        !_singleComplexItem
+                text:           patternMenu.title
+                onTriggered:    {
+                    highlighted = false;
+                    patternMenu.popup()
                 }
             }
 
