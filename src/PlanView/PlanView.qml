@@ -941,10 +941,9 @@ Item {
             anchors.left:           parent.left
             mapControl:             editorMap
             buttonsOnLeft:          true
-            terrainButtonVisible:   true
-            visible:                _toolStripBottom < y && _editingLayer === _layerMission
+            terrainButtonVisible:   _editingLayer === _layerMission
+            visible:                _toolStripBottom < y
             terrainButtonChecked:   waypointValuesDisplay.visible
-
             onTerrainButtonClicked: waypointValuesDisplay.toggleVisible()
         }
 
