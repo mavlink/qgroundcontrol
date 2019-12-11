@@ -1112,6 +1112,11 @@ void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, dou
 
 void Vehicle::_handleAttitude(mavlink_message_t& message)
 {
+    // only accept the attitude message from the vehicle's flight controller
+    if (message.sysid != _id || message.compid != _compID) {
+        return;
+    }
+
     if (_receivingAttitudeQuaternion) {
         return;
     }
@@ -1124,6 +1129,11 @@ void Vehicle::_handleAttitude(mavlink_message_t& message)
 
 void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
 {
+    // only accept the attitude message from the vehicle's flight controller
+    if (message.sysid != _id || message.compid != _compID) {
+        return;
+    }
+
     _receivingAttitudeQuaternion = true;
 
     mavlink_attitude_quaternion_t attitudeQuaternion;
