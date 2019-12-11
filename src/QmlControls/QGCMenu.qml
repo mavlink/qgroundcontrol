@@ -11,23 +11,22 @@ Menu {
     id: _root
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
+    QGCPalette { id: qgcPalDisable; colorGroupEnabled: false }
+
+    delegate: QGCMenuItem {
+    }
 
     background: Rectangle {
 
         implicitWidth: {
-                var result = 0;
-                var padding = 0;
-                for (var i = 0; i < count; ++i) {
-                    var item = itemAt(i);
-                    result = Math.max(item.contentItem.implicitWidth, result);
-                    padding = Math.max(item.padding, padding);
-                }
-                return result + padding * 2;
+            var result = 0;
+            for (var i = 0; i < count; ++i) {
+                result = Math.max(itemAt(i).implicitWidth, result);
             }
+            return result;
+        }
 
-        implicitHeight: 40
         color: qgcPal.window
-        border.color: qgcPal.windowShadeDark
-        radius: 2
+        radius: ScreenTools.defaultFontPixelWidth * 1
     }
 }
