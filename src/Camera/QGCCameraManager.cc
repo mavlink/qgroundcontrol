@@ -68,7 +68,8 @@ QGCCameraManager::_vehicleReady(bool ready)
 void
 QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if(message.sysid == _vehicle->id()) {
+    //-- Only pay attention to camera components, as identified by their compId
+    if(message.sysid == _vehicle->id() && (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6)) {
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
@@ -110,10 +111,6 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-    //-- Only pay attention to camera components, as identified by their MAV_TYPE, and as fallback by their compId
-    if(_vehicleReadyState && _vehicle->id() == message.sysid &&
-            ((heartbeat.autopilot == MAV_AUTOPILOT_INVALID && heartbeat.type == MAV_TYPE_CAMERA) ||
-             (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6))) {
         //-- First time hearing from this one?
         if(!_cameraInfoRequest.contains(message.compid)) {
             qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
