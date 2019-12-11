@@ -1193,6 +1193,8 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     stopPairing();
     setPairingStatus(PairingActive, tr("Pairing..."));
 
+    _aes.init(pairingKey.toStdString());
+
     _toolbox->videoManager()->stopVideo();
     _toolbox->microhardManager()->switchToPairingEncryptionKey(pairingKey);
     _toolbox->microhardManager()->setNetworkId(networkId);
