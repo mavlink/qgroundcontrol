@@ -78,6 +78,7 @@ public:
     static const int boardIDFMUK66V3 = 28;      ///< FMUK66V3 board, as from USB PID
     static const int boardIDKakuteF7 = 123;     ///< Holybro KakuteF7 board, as from USB PID
     static const int boardIDDurandalV1 = 139;   ///< Holybro Durandal-v1 board, as from USB PID
+    static const int boardIDModalFCV1 = 41775;  ///< ModalAI FC V1 board, as from USB PID
 
     /// Simulated board id for V3 which is a V2 board which supports larger flash space
     /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids

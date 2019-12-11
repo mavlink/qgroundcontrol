@@ -47,11 +47,13 @@
             "specifiesAltitudeOnly":    true
         },
         {
-            "id":                   84,
-            "comment":              "MAV_CMD_NAV_VTOL_TAKEOFF",
-            "specifiesCoordinate":  true,
-            "friendlyEdit":         true,
-            "category":             "VTOL"
+            "id":                       84,
+            "comment":                  "MAV_CMD_NAV_VTOL_TAKEOFF",
+            "description":              "Takeoff to specified altitude.",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true,
+            "friendlyEdit":             true,
+            "category":                 "VTOL"
         },
         {
             "id":                   85,

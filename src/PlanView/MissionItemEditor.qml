@@ -30,8 +30,6 @@ Rectangle {
 
     signal clicked
     signal remove
-    signal insertWaypoint
-    signal insertComplexItem(string complexItemName)
     signal selectNextNotReadyItem
 
     property var    _masterController:          masterController
@@ -242,7 +240,8 @@ Rectangle {
             MissionCommandDialog {
                 missionItem:                _root.missionItem
                 map:                        _root.map
-                flyThroughCommandsAllowed:  _missionController.flyThroughCommandsAllowed
+                // FIXME: Disabling fly through commands doesn't work since you may need to change from an RTL to something else
+                flyThroughCommandsAllowed:  true //_missionController.flyThroughCommandsAllowed
             }
         }
 
