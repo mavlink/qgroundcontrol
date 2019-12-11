@@ -23,7 +23,7 @@
 #include "Drivers/src/base_station.h"
 #include "definitions.h"
 
-#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
+//#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
                                //additionally make sure to call connectGPS(""), eg. from QGCToolbox.cc
 
 
@@ -92,11 +92,13 @@ void GPSProvider::run()
         gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000.0f, _surveryInDurationSecs);
 
         if (_useFixedBaseLoction) {
+            qCDebug(RTKGPSLog) << "Setting RTK Base Location";
             gpsDriver->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters, _fixedBaseAccuracyMeters * 1000.0f);
         }
 
+        qCDebug(RTKGPSLog) << "Configuring RTK Base Station";
         if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
-
+            qCDebug(RTKGPSLog) << "Configuration Set";
             /* reset report */
             memset(&_reportGpsPos, 0, sizeof(_reportGpsPos));
 
@@ -112,11 +114,13 @@ void GPSProvider::run()
 
                     if (helperRet & 1) {
                         publishGPSPosition();
+                        qCDebug(RTKGPSLog) << "publishGPSPosition";
                         numTries = 0;
                     }
 
                     if (_pReportSatInfo && (helperRet & 2)) {
                         publishGPSSatellite();
+                        qCDebug(RTKGPSLog) << "publishGPSSatellite()";
                         numTries = 0;
                     }
                 } else {
@@ -154,6 +158,7 @@ GPSProvider::GPSProvider(const QString& device,
     , _fixedBaseAccuracyMeters  (fixedBaseAccuracyMeters)
 {
     qCDebug(RTKGPSLog) << "Survey in accuracy:duration" << surveyInAccMeters << surveryInDurationSecs;
+    qCDebug(RTKGPSLog) << "RTK Device Type: " << device;
     if (enableSatInfo) _pReportSatInfo = new satellite_info_s();
 }
 
@@ -167,6 +172,7 @@ void GPSProvider::publishGPSPosition()
 {
     GPSPositionMessage msg;
     msg.position_data = _reportGpsPos;
+    qCDebug(RTKGPSLog) << "GPSPosition: " << _reportGpsPos.satellites_used;
     emit positionUpdate(msg);
 }
 

@@ -111,7 +111,7 @@
 #include "SerialLink.h"
 #endif
 
-#ifndef __mobile__
+#ifndef __ios__
 #include "GPS/GPSManager.h"
 #endif
 
@@ -328,7 +328,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
-#ifndef __mobile__
+#ifndef __ios__
     _gpsRtkFactGroup = new GPSRTKFactGroup(this);
    GPSManager *gpsManager = _toolbox->gpsManager();
    if (gpsManager) {
@@ -336,8 +336,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
        connect(gpsManager, &GPSManager::onDisconnect,       this, &QGCApplication::_onGPSDisconnect);
        connect(gpsManager, &GPSManager::surveyInStatus,     this, &QGCApplication::_gpsSurveyInStatus);
        connect(gpsManager, &GPSManager::satelliteUpdate,    this, &QGCApplication::_gpsNumSatellites);
+       qCDebug(RTKGPSLog) << "Survery Update";
    }
-#endif /* __mobile__ */
+#endif /* __ios__ */
 
    setLanguage();
     _checkForNewVersion();

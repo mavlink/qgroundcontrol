@@ -528,7 +528,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
         // Save port name
         currentPorts << portInfo.systemLocation();
-
+        qCDebug(LinkManagerLog) << "Saving Port: " << currentPorts;
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
 
@@ -599,8 +599,10 @@ void LinkManager::_updateAutoConnectLinks(void)
 #ifndef __ios__
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
                     if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
-                        qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
+                       qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
                         _autoConnectRTKPort = portInfo.systemLocation();
+                        qCDebug(LinkManagerLog) << "currentPorts: " << currentPorts;
+                        qCDebug(LinkManagerLog) << "_autoConnectRTKPort:" << portInfo.systemLocation();
                         _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
                     }
                     break;
@@ -620,7 +622,6 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
         }
     }
-
 #ifndef __android__
     // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
     // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
@@ -673,6 +674,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         _autoConnectRTKPort.clear();
     }
 #endif
+
 
 #endif // NO_SERIAL_LINK
 }

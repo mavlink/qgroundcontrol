@@ -56,7 +56,7 @@ void GPSManager::connectGPS(const QString& device, const QString& gps_type)
                                    rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
                                    _requestGpsStop);
     _gpsProvider->start();
-
+    qCDebug(RTKGPSLog) << "RTK GPS Started";
     //create RTCM device
     _rtcmMavlink = new RTCMMavlink(*_toolbox);
 
