@@ -4693,7 +4693,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="10.0" name="MPC_LAND_ALT1" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" to enable a smooth descent experience Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4701,7 +4701,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_LAND_ALT2" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED" Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4710,6 +4710,13 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     <parameter default="0.7" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.6</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="2." name="MPC_LAND_VEL_XY" type="FLOAT">
+      <short_desc>Maximum horizontal velocity during landing
+Set the value higher than the otherwise expected maximum to disable any slowdown</short_desc>
+      <min>0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
