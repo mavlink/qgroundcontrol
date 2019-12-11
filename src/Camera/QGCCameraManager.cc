@@ -111,39 +111,38 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-        //-- First time hearing from this one?
-        if(!_cameraInfoRequest.contains(message.compid)) {
-            qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
-            CameraStruct* pInfo = new CameraStruct(this, message.compid);
-            pInfo->lastHeartbeat.start();
-            _cameraInfoRequest[message.compid] = pInfo;
-            //-- Request camera info
-            _requestCameraInfo(message.compid);
-        } else {
-            if(_cameraInfoRequest[message.compid]) {
-                CameraStruct* pInfo = _cameraInfoRequest[message.compid];
-                //-- Check if we have indeed received the camera info
-                if(pInfo->infoReceived) {
-                    //-- We have it. Just update the heartbeat timeout
-                    pInfo->lastHeartbeat.start();
-                } else {
-                    //-- Try again. Maybe.
-                    if(pInfo->lastHeartbeat.elapsed() > 2000) {
-                        if(pInfo->tryCount > 3) {
-                            if(!pInfo->gaveUp) {
-                                pInfo->gaveUp = true;
-                                qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
-                            }
-                        } else {
-                            pInfo->tryCount++;
-                            //-- Request camera info again.
-                            _requestCameraInfo(message.compid);
+    //-- First time hearing from this one?
+    if(!_cameraInfoRequest.contains(message.compid)) {
+        qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
+        CameraStruct* pInfo = new CameraStruct(this, message.compid);
+        pInfo->lastHeartbeat.start();
+        _cameraInfoRequest[message.compid] = pInfo;
+        //-- Request camera info
+        _requestCameraInfo(message.compid);
+    } else {
+        if(_cameraInfoRequest[message.compid]) {
+            CameraStruct* pInfo = _cameraInfoRequest[message.compid];
+            //-- Check if we have indeed received the camera info
+            if(pInfo->infoReceived) {
+                //-- We have it. Just update the heartbeat timeout
+                pInfo->lastHeartbeat.start();
+            } else {
+                //-- Try again. Maybe.
+                if(pInfo->lastHeartbeat.elapsed() > 2000) {
+                    if(pInfo->tryCount > 3) {
+                        if(!pInfo->gaveUp) {
+                            pInfo->gaveUp = true;
+                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
                         }
+                    } else {
+                        pInfo->tryCount++;
+                        //-- Request camera info again.
+                        _requestCameraInfo(message.compid);
                     }
                 }
-            } else {
-                qWarning() << "_cameraInfoRequest[" << message.compid << "] is null";
             }
+        } else {
+            qWarning() << "_cameraInfoRequest[" << message.compid << "] is null";
         }
     }
 }
