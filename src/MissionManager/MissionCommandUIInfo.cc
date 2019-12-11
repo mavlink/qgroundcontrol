@@ -351,7 +351,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             MissionCmdParamInfo* paramInfo = new MissionCmdParamInfo(this);
 
             paramInfo->_label =         paramObject.value(_labelJsonKey).toString();
-            paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::unknownDecimalPlaces);
+            paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::kUnknownDecimalPlaces);
             paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();

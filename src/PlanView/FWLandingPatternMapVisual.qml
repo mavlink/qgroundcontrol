@@ -179,6 +179,8 @@ Item {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
 
+            readonly property int   _decimalPlaces:             8
+
             onClicked: {
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)

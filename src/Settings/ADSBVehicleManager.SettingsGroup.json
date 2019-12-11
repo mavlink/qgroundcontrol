@@ -1,0 +1,24 @@
+[
+{
+    "name":                 "adsbServerConnectEnabled",
+    "shortDescription":     "Connect to ADSB SBS server",
+    "longDescription":      "Connect to ADSB SBS-1 server using specified address/port",
+    "type":                 "bool",
+    "defaultValue":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "adsbServerHostAddress",
+    "shortDescription":     "Host address",
+    "type":                 "string",
+    "defaultValue":         "127.0.0.1",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "adsbServerPort",
+    "shortDescription":     "Server port",
+    "type":                 "string",
+    "defaultValue":         30003,
+    "qgcRebootRequired":    true
+}
+]

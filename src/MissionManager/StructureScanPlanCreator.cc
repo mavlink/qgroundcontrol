@@ -24,5 +24,5 @@ void StructureScanPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
     VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     _missionController->insertComplexMissionItem(MissionController::patternStructureScanName, mapCenterCoord, -1)->setWizardMode(true);
     _missionController->insertLandItem(mapCenterCoord, -1);
-    _missionController->setCurrentPlanViewIndex(takeoffItem->sequenceNumber(), true);
+    _missionController->setCurrentPlanViewSeqNum(takeoffItem->sequenceNumber(), true);
 }

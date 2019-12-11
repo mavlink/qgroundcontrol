@@ -47,17 +47,16 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject
     connect(this,               &MissionSettingsItem::specifyMissionFlightSpeedChanged, this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_cameraSection,    &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
     connect(&_speedSection,     &CameraSection::itemCountChanged,                       this, &MissionSettingsItem::_setDirtyAndUpdateLastSequenceNumber);
-
     connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
-
+    connect(&_cameraSection,    &CameraSection::dirtyChanged,                           this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_speedSection,     &SpeedSection::dirtyChanged,                            this, &MissionSettingsItem::_sectionDirtyChanged);
+    connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,              this, &MissionSettingsItem::specifiedGimbalYawChanged);
+    connect(&_cameraSection,    &CameraSection::specifiedGimbalPitchChanged,            this, &MissionSettingsItem::specifiedGimbalPitchChanged);
+    connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged,             this, &MissionSettingsItem::specifiedFlightSpeedChanged);
+    connect(_vehicle,           &Vehicle::homePositionChanged,                          this, &MissionSettingsItem::_updateHomePosition);
     connect(&_plannedHomePositionAltitudeFact,  &Fact::rawValueChanged,                 this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
-    connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
-    connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
-
-    connect(&_cameraSection,    &CameraSection::specifiedGimbalYawChanged,      this, &MissionSettingsItem::specifiedGimbalYawChanged);
-    connect(&_cameraSection,    &CameraSection::specifiedGimbalPitchChanged,    this, &MissionSettingsItem::specifiedGimbalPitchChanged);
-    connect(&_speedSection,     &SpeedSection::specifiedFlightSpeedChanged,     this, &MissionSettingsItem::specifiedFlightSpeedChanged);
+    _updateHomePosition(_vehicle->homePosition());
 }
 
 int MissionSettingsItem::lastSequenceNumber(void) const
@@ -284,4 +283,11 @@ void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 QString MissionSettingsItem::abbreviation(void) const
 {
     return _flyView ? tr("H") : tr("Launch");
+}
+
+void MissionSettingsItem::_updateHomePosition(const QGeoCoordinate& homePosition)
+{
+    if (_flyView) {
+        setCoordinate(homePosition);
+    }
 }

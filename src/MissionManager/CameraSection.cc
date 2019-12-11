@@ -67,8 +67,6 @@ CameraSection::CameraSection(Vehicle* vehicle, QObject* parent)
     connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_setDirty);
     connect(this,                               &CameraSection::specifyCameraModeChanged,   this, &CameraSection::_setDirty);
 
-    connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_updateSpecifiedGimbalYaw);
-    connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_updateSpecifiedGimbalPitch);
     connect(&_gimbalYawFact,                    &Fact::valueChanged,                        this, &CameraSection::_updateSpecifiedGimbalYaw);
     connect(&_gimbalPitchFact,                  &Fact::valueChanged,                        this, &CameraSection::_updateSpecifiedGimbalPitch);
 }
@@ -78,6 +76,8 @@ void CameraSection::setSpecifyGimbal(bool specifyGimbal)
     if (specifyGimbal != _specifyGimbal) {
         _specifyGimbal = specifyGimbal;
         emit specifyGimbalChanged(specifyGimbal);
+        emit specifiedGimbalYawChanged(specifiedGimbalYaw());
+        emit specifiedGimbalPitchChanged(specifiedGimbalPitch());
     }
 }
 

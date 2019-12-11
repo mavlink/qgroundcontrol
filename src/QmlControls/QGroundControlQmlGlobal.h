@@ -23,6 +23,7 @@
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "AirspaceManager.h"
+#include "ADSBVehicleManager.h"
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
@@ -73,6 +74,7 @@ public:
     Q_PROPERTY(SettingsManager*     settingsManager     READ settingsManager        CONSTANT)
     Q_PROPERTY(FactGroup*           gpsRtk              READ gpsRtkFactGroup        CONSTANT)
     Q_PROPERTY(AirspaceManager*     airspaceManager     READ airspaceManager        CONSTANT)
+    Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager  READ adsbVehicleManager     CONSTANT)
     Q_PROPERTY(bool                 airmapSupported     READ airmapSupported        CONSTANT)
     Q_PROPERTY(TaisyncManager*      taisyncManager      READ taisyncManager         CONSTANT)
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
@@ -179,6 +181,7 @@ public:
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
     AirspaceManager*        airspaceManager     ()  { return _airspaceManager; }
+    ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
 #if defined(QGC_ENABLE_PAIRING)
     bool                    supportsPairing     ()  { return true; }
     PairingManager*         pairingManager      ()  { return _pairingManager; }
@@ -269,6 +272,7 @@ private:
     AirspaceManager*        _airspaceManager        = nullptr;
     TaisyncManager*         _taisyncManager         = nullptr;
     MicrohardManager*       _microhardManager       = nullptr;
+    ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*         _pairingManager         = nullptr;
 #endif
