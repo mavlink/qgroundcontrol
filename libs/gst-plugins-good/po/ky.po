@@ -1,0 +1,475 @@
+# Translation of 'gst-plugins-good' messages to Kirghiz.
+# Copyright (C) 2002 Free Software Foundation, Inc.
+# Ilyas Bakirov <just_ilyas@yahoo.com>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 0.10.23\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2010-05-11 15:35+0100\n"
+"PO-Revision-Date: 2007-11-13 17:16+0600\n"
+"Last-Translator: Ilyas Bakirov <just_ilyas@yahoo.com>\n"
+"Language-Team: Kirghiz <i18n-team-ky-kyrgyz@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Kyrgyz\n"
+"X-Poedit-Country: KYRGYZSTAN\n"
+
+#: sys/oss4/oss4-mixer.c:302
+#, fuzzy
+msgid "Could not open audio device for mixer control handling."
+msgstr "\"%s\"  файлы окууга ачылган жок."
+
+#: sys/oss4/oss4-mixer.c:316
+msgid ""
+"Could not open audio device for mixer control handling. This version of the "
+"Open Sound System is not supported by this element."
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:722
+msgid "Volume"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:723
+msgid "Master"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:724
+msgid "Front"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:725
+msgid "Rear"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:726
+msgid "Headphones"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:727
+msgid "Center"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:728
+msgid "LFE"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:729
+msgid "Surround"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:730
+msgid "Side"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:731
+msgid "Built-in Speaker"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:732
+msgid "AUX 1 Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:733
+msgid "AUX 2 Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:734
+msgid "AUX Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:735
+msgid "Bass"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:736
+msgid "Treble"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:737
+msgid "3D Depth"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:738
+msgid "3D Center"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:739
+msgid "3D Enhance"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:740
+msgid "Telephone"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:741
+msgid "Microphone"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:742
+msgid "Line Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:743 sys/oss4/oss4-mixer.c:744
+msgid "Line In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:745
+msgid "Internal CD"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:746
+msgid "Video In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:747
+msgid "AUX 1 In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:748
+msgid "AUX 2 In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:749
+msgid "AUX In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:750
+msgid "PCM"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:751 sys/oss4/oss4-mixer.c:752
+msgid "Record Gain"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:753
+msgid "Output Gain"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:754
+msgid "Microphone Boost"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:755
+msgid "Loopback"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:756
+msgid "Diagnostic"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:757
+msgid "Bass Boost"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:758
+msgid "Playback Ports"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:759
+msgid "Input"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:760 sys/oss4/oss4-mixer.c:761
+msgid "Record Source"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:762
+msgid "Monitor Source"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:763
+msgid "Keyboard Beep"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:764
+msgid "Monitor"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:765
+msgid "Simulate Stereo"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:766 sys/oss4/oss4-mixer.c:786
+msgid "Stereo"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:767
+msgid "Surround Sound"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:768
+msgid "Microphone Gain"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:769
+msgid "Speaker Source"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:770
+msgid "Microphone Source"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:771
+msgid "Jack"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:772
+msgid "Center / LFE"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:773
+msgid "Stereo Mix"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:774
+msgid "Mono Mix"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:775
+msgid "Input Mix"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:776
+msgid "SPDIF In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:777
+msgid "SPDIF Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:778
+msgid "Microphone 1"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:779
+msgid "Microphone 2"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:780
+msgid "Digital Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:781
+msgid "Digital In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:782
+msgid "HDMI"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:783
+msgid "Modem"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:784
+msgid "Handset"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:785
+msgid "Other"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:787
+msgid "None"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:788
+msgid "On"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:789
+msgid "Off"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:790
+msgid "Mute"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:791
+msgid "Fast"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:792
+msgid "Very Low"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:793
+msgid "Low"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:794
+msgid "Medium"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:795
+msgid "High"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:796 sys/oss4/oss4-mixer.c:797
+msgid "Very High"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:798
+msgid "Production"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:799
+msgid "Front Panel Microphone"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:800
+msgid "Front Panel Line In"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:801
+msgid "Front Panel Headphones"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:802
+msgid "Front Panel Line Out"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:803
+msgid "Green Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:804
+msgid "Pink Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:805
+msgid "Blue Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:806
+msgid "White Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:807
+msgid "Black Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:808
+msgid "Gray Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:809
+msgid "Orange Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:810
+msgid "Red Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:811
+msgid "Yellow Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:812
+msgid "Green Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:813
+msgid "Pink Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:814
+msgid "Blue Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:815
+msgid "White Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:816
+msgid "Black Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:817
+msgid "Gray Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:818
+msgid "Orange Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:819
+msgid "Red Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:820
+msgid "Yellow Front Panel Connector"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:821
+msgid "Spread Output"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:822
+msgid "Downmix"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:866
+msgid "Virtual Mixer Input"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:868
+msgid "Virtual Mixer Output"
+msgstr ""
+
+#: sys/oss4/oss4-mixer.c:870
+msgid "Virtual Mixer Channels"
+msgstr ""
+
+#. TRANSLATORS: name + number of a volume mixer control
+#: sys/oss4/oss4-mixer.c:921
+#, c-format
+msgid "%s %d Function"
+msgstr ""
+
+#. TRANSLATORS: name of a volume mixer control
+#: sys/oss4/oss4-mixer.c:928
+#, c-format
+msgid "%s Function"
+msgstr ""
+
+#: sys/oss4/oss4-sink.c:498 sys/oss4/oss4-source.c:367
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+
+#: sys/oss4/oss4-sink.c:508 sys/oss4/oss4-source.c:377
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+
+#: sys/oss4/oss4-sink.c:519 sys/oss4/oss4-source.c:388
+#, fuzzy
+msgid "Could not open audio device for playback."
+msgstr "Алдын \"%s\" жабдыкты ачалган жок."
+
+#: sys/oss4/oss4-sink.c:528 sys/oss4/oss4-source.c:398
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+
+#: sys/oss4/oss4-sink.c:644
+msgid "Playback is not supported by this audio device."
+msgstr ""
+
+#: sys/oss4/oss4-sink.c:651
+msgid "Audio playback error."
+msgstr ""
+
+#: sys/oss4/oss4-source.c:520
+msgid "Recording is not supported by this audio device."
+msgstr ""
+
+#: sys/oss4/oss4-source.c:527
+msgid "Error recording from audio device."
+msgstr ""

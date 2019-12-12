@@ -1,0 +1,99 @@
+This is GStreamer gst-plugins-good 1.17.0.1.
+
+The GStreamer team is thrilled to announce a new major feature release in the
+stable 1.0 API series of your favourite cross-platform multimedia framework!
+
+As always, this release is again packed with new features, bug fixes and
+other improvements.
+
+The 1.16 release series adds new features on top of the 1.14 series and is
+part of the API and ABI-stable 1.x release series of the GStreamer multimedia
+framework.
+
+Full release notes will one day be found at:
+
+  https://gstreamer.freedesktop.org/releases/1.16/
+
+Binaries for Android, iOS, Mac OS X and Windows will usually be provided
+shortly after the release.
+
+This module will not be very useful by itself and should be used in conjunction
+with other GStreamer modules for a complete multimedia experience.
+
+ - gstreamer: provides the core GStreamer libraries and some generic plugins
+
+ - gst-plugins-base: a basic set of well-supported plugins and additional
+                     media-specific GStreamer helper libraries for audio,
+                     video, rtsp, rtp, tags, OpenGL, etc.
+
+ - gst-plugins-good: a set of well-supported plugins under our preferred
+                     license
+
+ - gst-plugins-ugly: a set of well-supported plugins which might pose
+                     problems for distributors
+
+ - gst-plugins-bad: a set of plugins of varying quality that have not made
+                    their way into one of core/base/good/ugly yet, for one
+                    reason or another. Many of these are are production quality
+                    elements, but may still be missing documentation or unit
+                    tests; others haven't passed the rigorous quality testing
+                    we expect yet.
+
+ - gst-libav: a set of codecs plugins based on the ffmpeg library. This is
+                    where you can find audio and video decoders and encoders
+                    for a wide variety of formats including H.264, AAC, etc.
+
+ - gstreamer-vaapi: hardware-accelerated video decoding and encoding using
+                    VA-API on Linux. Primarily for Intel graphics hardware.
+
+ - gst-omx: hardware-accelerated video decoding and encoding, primarily for
+                    embedded Linux systems that provide an OpenMax
+                    implementation layer such as the Raspberry Pi.
+
+ - gst-rtsp-server: library to serve files or streaming pipelines via RTSP
+
+ - gst-editing-services: library an plugins for non-linear editing
+
+==== Download ====
+
+You can find source releases of gstreamer in the download
+directory: https://gstreamer.freedesktop.org/src/gstreamer/
+
+The git repository and details how to clone it can be found at
+https://cgit.freedesktop.org/gstreamer/gstreamer/
+
+==== Homepage ====
+
+The project's website is https://gstreamer.freedesktop.org/
+
+==== Support and Bugs ====
+
+We have recently moved from GNOME Bugzilla to GitLab on freedesktop.org
+for bug reports and feature requests:
+
+  https://gitlab.freedesktop.org/gstreamer
+
+Please submit patches via GitLab as well, in form of Merge Requests. See
+
+  https://gstreamer.freedesktop.org/documentation/contribute/
+
+for more details.
+
+For help and support, please subscribe to and send questions to the
+gstreamer-devel mailing list (see below for details).
+
+There is also a #gstreamer IRC channel on the Freenode IRC network.
+
+==== Developers ====
+
+GStreamer source code repositories can be found on GitLab on freedesktop.org:
+
+  https://gitlab.freedesktop.org/gstreamer
+
+and can also be cloned from there and this is also where you can submit
+Merge Requests or file issues for bugs or feature requests.
+
+Interested developers of the core library, plugins, and applications should
+subscribe to the gstreamer-devel list:
+
+  https://lists.freedesktop.org/mailman/listinfo/gstreamer-devel

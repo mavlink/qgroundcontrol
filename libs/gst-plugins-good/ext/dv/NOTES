@@ -1,0 +1,13 @@
+Packets come from 1394 480 bytes at a time.  This is not a video segment
+length.  This causes problems, since a packet boundary crossing a video
+segment can split a video segment if we lose an iso packet.  We can
+recover from this, sorta, with significant changes to the parser.  We have
+to deal with the idea that a) some macroblocks just don't exist (we have
+zero's for them) and b) when any of the 5 macroblocks doesn't exist, we
+can't do pass 3.
+
+Since things are bitstream-based, we can deal with this, but we have to
+add a layer of code that tries to save time (maybe) by not decoding things
+that don't exist.  Not sure how this is gonna work with the parse code
+being based on video segments, and not easily splittable into
+macroblock-level parsing (or is it?).

@@ -1,0 +1,467 @@
+# Czech translation of gst-plugins-good.
+# Copyright (C) 2007, 2008, 2009, 2010, 2011 the author(s) of gst-plugins-good.
+# This file is put in the public domain.
+#
+# Miloslav Trmac <mitr@volny.cz>, 2004.
+# Petr Kovar <pknbe@volny.cz>, 2007, 2008, 2009, 2010, 2011.
+# Marek Černocký <marek@manet.cz>, 2013, 2015, 2016, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2017-09-13 15:00+0200\n"
+"Last-Translator: Marek Černocký <marek@manet.cz>\n"
+"Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Gtranslator 2.91.6\n"
+
+msgid "Jack server not found"
+msgstr "Server Jack nebyl nalezen"
+
+msgid "Failed to decode JPEG image"
+msgstr "Selhalo dekódování obrázku JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "„%s“ od „%s“"
+
+msgid "Could not connect to server"
+msgstr "Nezdařilo se spojení se serverem"
+
+msgid "No URL set."
+msgstr "Není nastavena žádná adresa URL."
+
+msgid "Could not resolve server name."
+msgstr "Nezdařil se překlad názvu serveru."
+
+msgid "Could not establish connection to server."
+msgstr "Nezdařilo se navázání spojení se serverem."
+
+msgid "Secure connection setup failed."
+msgstr "Selhalo nastavení zabezpečeného připojení."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Došlo k chybě sítě nebo server neočekávaně ukončil spojení."
+
+msgid "Server sent bad data."
+msgstr "Server odeslal chybná data."
+
+msgid "Server does not support seeking."
+msgstr "Server nepodporuje přeskakování."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Žádný nebo neplatný zvukový vstup, proud AVI bude poškozen."
+
+msgid "This file contains no playable streams."
+msgstr "Tento soubor neobsahuje hratelné proudy."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Tento soubor je neplatný a nelze jej přehrát."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr "Nelze přehrát proud, protože je šifrován pomocí DRM PlayReady."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Tento soubor je poškozen a nelze jej přehrát."
+
+msgid "Invalid atom size."
+msgstr "Neplatná atomická velikost."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Tento soubor není úplný a nelze jej přehrát."
+
+msgid "The video in this file might not play correctly."
+msgstr "Video v tomto souboru se nemusí přehrát správně."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Nebyl nalezen žádný podporovaný proud. Bude patrně nutné nainstalovat "
+"zásuvný modul rozšíření GStreamer RTSP pro multimediální proudy Real."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Nebyl nalezen žádný podporovaný proud. Patrně bude nutné povolit více "
+"přenosových protokolů, jinak nejspíš bude scházet potřebný zásuvný modul "
+"rozšíření GStreamer RTSP."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Zvukové zařízení nelze otevřít pro přehrávání. Zařízení je používáno jinou "
+"aplikací."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Zvukové zařízení nelze otevřít pro přehrávání. Nemáte oprávnění k otevření "
+"zařízení."
+
+msgid "Could not open audio device for playback."
+msgstr "Zvukové zařízení nelze otevřít pro čtení."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Nezdařilo se otevření zvukového zařízení pro přehrávání. Tato verze Open "
+"Sound System není příslušným prvkem podporována."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Přehrávání není tímto zvukovým zařízením podporováno."
+
+msgid "Audio playback error."
+msgstr "Chyba přehrávání zvuku."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Toto zvukové zařízení nepodporuje nahrávání."
+
+msgid "Error recording from audio device."
+msgstr "Chyba při nahrávání ze zvukového zařízení."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Zvukové zařízení nelze otevřít pro nahrávání. Nemáte oprávnění k otevření "
+"zařízení."
+
+msgid "Could not open audio device for recording."
+msgstr "Zvukové zařízení nelze otevřít pro nahrávání."
+
+msgid "CoreAudio device not found"
+msgstr "Nebylo nalezeno zařízení CoreAudio"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Nelze otevřít zařízení CoreAudio"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Chyba při čtení %d bajtů na zařízení „%s“."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Selhalo vytvoření seznamu možných formátů videa, se kterými umí zařízení "
+"„%s“ pracovat"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Nezdařilo se mapování vyrovnávací paměti ze zařízení „%s“"
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Ovladač zařízení „%s“ nepodporuje V/V metodu %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Ovladač zařízení „%s“ nepodporuje žádnou známou V/V metodu."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Kodér na zařízení „%s“ nepodporuje vstupní formát"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "Zařízení „%s“ je zaneprázdněno"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Zařízení „%s“ neumí zachytávat v rozměru %d × %d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Zařízení „%s“ neumí zachytávat v tomto konkrétním formátu"
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Zařízení „%s“ nepodporuje nesousedící složky obrazu"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Server nepodporuje přeskakování."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Zařízení „%s“ nepodporuje nesousedící složky obrazu"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Nezdařilo se zjištění parametrů na zařízení „%s“"
+
+msgid "Video device did not accept new frame rate setting."
+msgstr "Videozařízení nepřijalo nové nastavení snímkové rychlosti."
+
+msgid "Video device did not provide output format."
+msgstr "Videozařízení neposkytuje výstupní formát."
+
+msgid "Video device returned invalid dimensions."
+msgstr "Videozařízení sdělilo neplatné rozměry."
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Videozařízení používá nepodporovanou metodu prokládání."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "Videozařízení používá nepodporovaný rastrový formát."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Selhalo nastavení vnitřní společné vyrovnávací paměti."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "Videozařízení nedoporučuje nijakou velikost vyrovnávací paměti."
+
+msgid "No downstream pool to import from."
+msgstr "Neexistuje žádný společný proud dat, ze kterého by šlo importovat."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Selhalo zjištění nastavení tuneru %d u zařízení „%s“."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Chyba při zjišťování schopností zařízení „%s“."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Zařízení „%s“ není tuner."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Selhalo získání rádiového vstupu u zařízení „%s“."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Nezdařilo se nastavení vstupu %d u zařízení „%s“."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Selhala změna stavu zapnutí/vypnutí zvuku u zařízení „%s“."
+
+msgid "Failed to allocated required memory."
+msgstr "Selhalo přidělení požadované paměti."
+
+msgid "Failed to allocate required memory."
+msgstr "Selhalo přidělení požadované paměti."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Převodník na zařízení „%s“ nepodporuje vstupní formát"
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Převodník na zařízení „%s“ nepodporuje výstupní formát"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Kodér na zařízení „%s“ nepodporuje vstupní formát"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Kodér na zařízení „%s“ nepodporuje výstupní formát"
+
+msgid "Failed to start decoding thread."
+msgstr "Selhalo spuštění vlákna dekodéru."
+
+msgid "Failed to process frame."
+msgstr "Selhalo zpracování snímku."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Kodér na zařízení „%s“ nepodporuje výstupní formát"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Kodér na zařízení „%s“ nepodporuje vstupní formát"
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Selhalo spuštění vlákna dekodéru."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Chyba při získávání informací o schopnostech u zařízení „%s“: Nejedná se o "
+"ovladač v4l2. Zkontrolujte, zda se nejedná o ovladač v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Nezdařilo se dotázání na vlastnosti vstupu %d u zařízení „%s“"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Selhalo zjištění nastavení tuneru %d u zařízení „%s“."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Nezdařilo se dotázání na normu na zařízení „%s“."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Nezdařilo se zjištění vlastností ovládacích prvků u zařízení „%s“."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Nezdařilo se rozpoznat zařízení „%s“."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Toto není zařízení „%s“."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Nezdařilo se otevřít zařízení „%s“ pro čtení a zápis."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Zařízení „%s“ není zachytávacím zařízením."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Zařízení „%s“ není výstupním zařízením."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Zařízení „%s“ není zařízením M2M."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Nezdařilo se duplikovat zařízení „%s“ pro čtení a zápis."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Selhalo nastavení normy u zařízení „%s“."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Selhalo zjištění aktuální frekvence tuneru u zařízení „%s“."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr "Selhalo nastavení aktuální frekvence tuneru u zařízení „%s“ na %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Selhalo zjištění síly signálu u zařízení „%s“."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Selhalo zjištění hodnoty u ovládacího prvku %d na zařízení „%s“."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Selhalo nastavení hodnoty %d u ovládacího prvku %d na zařízení „%s“."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Selhalo získání aktuálního vstupu na zařízení „%s“. Možná se jedná o "
+"radiopřijímač."
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Selhalo získání aktuálního výstupu na zařízení „%s“. Možná se jedná o "
+"radiopřijímač"
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Selhalo nastavení výstupu %d na zařízení %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Změna rozlišení za běhu zatím není podporována."
+
+msgid "Cannot operate without a clock"
+msgstr "Není možné fungovat bez hodin"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Tento soubor obsahuje příliš mnoho proudů. Přehrává se pouze první %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Zdroj nahrávání"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#~ msgid "Line In"
+#~ msgstr "Linkový vstup"
+
+#~ msgid "Internal CD"
+#~ msgstr "Interní CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Vstup SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Vstup AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Vstup AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Kodeková smyčka"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Smyčka SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Hlasitost"
+
+#~ msgid "Gain"
+#~ msgstr "Zesílení"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Zabudovaný reproduktor"
+
+#~ msgid "Headphone"
+#~ msgstr "Sluchátko"
+
+#~ msgid "Line Out"
+#~ msgstr "Linkový výstup"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Výstup SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Výstup AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Výstup AUX 2"

@@ -1,0 +1,2 @@
+subdir('qmlsink')
+subdir('qmlsrc')

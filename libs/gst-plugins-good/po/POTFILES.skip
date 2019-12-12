@@ -1,0 +1,4 @@
+gst/goom/convolve_fx.c
+gst/goom/mmx.c
+gst/goom/xmmx.c
+gst/oldcore/gstmultifilesrc.c

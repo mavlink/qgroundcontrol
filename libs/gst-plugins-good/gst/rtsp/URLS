@@ -1,0 +1,38 @@
+Some test URLS:
+
+SVQ3 video: 
+  rtsp://cumulus.creative.auckland.ac.nz/~shado/nelson_iv_512k.mov
+  rtsp://streamr.hitpops.jp/ngc/mov/m0609.mov 
+
+ASF (audio/video): 
+  rtsp://aod.mylisten.com/aod/8/03/069803_0903135.wma
+  rtsp://195.246.8.69/dur_pull_hi
+  rtsp://195.219.160.200/mcp?chid=25&pid=196&vid=2402201&br=800&tid=1&void=2844&muk=H1J4yFr0mJB
+  rtsp://a1174.v26630f.c26630.g.vm.akamaistream.net/7/1174/26630/361/od-video.msn.com/8/mbr/rs_perf_dilana_091206_finale9135.wmv
+
+MP4V-ES/mpeg4-generic(ACC):
+  rtsp://vod.nwec.jp/quicktime/505.mov
+  rtsp://203.140.68.241:554/hirakataeizou9.mp4
+  rtsp://kmdi.utoronto.ca:555/osconf/2004_may9.1.mp4
+
+X-QT(h264)/mpeg4-generic(ACC):
+  rtsp://a2047.v1413b.c1413.g.vq.akamaistream.net/5/2047/1413/1_h264_110/1a1a1ae656c632970267e04ebd3196c428970e7ce857b81c4aab1677e445aedc3fae1b4a7bafe013/8848125_1_110.mov
+
+MP4V-ES/MP4A-LATM
+  rtsp://68.251.168.13/thisislove.3gp
+
+H264/MPA
+  rtsp://130.192.86.166/ed.mov
+
+REAL:
+  rtsp://213.254.239.61/farm/*/encoder/tagesschau/live1high.rm
+  rtsp://64.192.137.105:554/real.amazon-de.eu2/phononet/B/0/0/0/H/W/Y/4/K/S/01.01.rm?cloakport=80,554,7070
+
+  rtsp://211.89.225.1/encoder/cnr7_p
+  rtsp://stream2.visual.cz/broadcast/ct/CT24-High.rm
+
+AAC, interleaved:
+  rtsp://ia300135.us.archive.org:554/0/items/uncovered_interviews/uncovered_interviews_3_256kb.mp4
+
+Various samples here:
+  http://www.jet-stream.nl/samples/mp4.html

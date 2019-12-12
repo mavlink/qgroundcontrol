@@ -1,0 +1,38 @@
+cutter plugin by thomas <thomas@apestaart.org>
+
+SYNOPSIS
+
+This plugin emits signals when RMS level of audio signal crosses a
+threshold for a given amount of time.  
+
+As soon as the buffer's RMS is greater than the threshold value, the plugin fires a CUT_START signal.
+
+When the buffer's RMS level drops below the threshold value for a consecutive run length longer than the given runlength, it sends a CUT_STOP signal.
+
+When a pre-recording buffer is used, the plugin will delay throughput of data when it's in "silent" mode for a maximum length equal to the pre-recording buffer length.  As soon as the input level crosses the threshold level, this pre-recorded buffer is flushed to the src pad (so you can actually record the audio just before the threshold crossing) after sending the signal.
+
+ARGUMENTS
+
+GstCutter::threshold
+	level (between 0 and 1) of threshold
+GstCutter::threshold_dB
+	level of threshold in dB (between -inf and 0)
+GstCutter::runlength
+	minimum length (in seconds) before plugin sends cut_stop signal
+GstCutter::prelength
+        length of pre-recording buffer
+        
+SIGNALS
+
+	CUT_START
+	gets sent when the level of the signal goes above threshold level
+	CUT_STOP
+	gets sent when the level of the signal has been below the
+	threshold level for a number of consecutive iterations of which
+	the cumulative length is more than the runlength
+
+LIMITATIONS
+
+	* RMS value is calculated over the whole data buffer, so
+	  the time resolution is limited to the buffer length
+	* RMS value is calculated over all of the channels combined
