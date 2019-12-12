@@ -67,6 +67,8 @@ public:
     GstElement *videoSink() const { return _videoSink; }
     GstElement *pipeline() const { return _pipeline; }
 
+    void takeSnapshot();
+
 signals:
     void videoRunningChanged                ();
     void imageFileChanged                   ();

@@ -75,6 +75,9 @@ void VideoSurface::setVideoReceiver(VideoReceiver *videoReceiver)
     startVideo();
 }
 
+void VideoSurface::takeSnapshot() {
+    _videoReceiver->takeSnapshot();
+}
 
 VideoReceiver *VideoSurface::videoReceiver() const
 {

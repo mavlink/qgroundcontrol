@@ -70,6 +70,10 @@ Item {
             onPause: {
                 videoSurface.pauseVideo()
             }
+
+            onTakeSnapshot: {
+                videoSurface.takeSnapshot();
+            }
         }
     }
 }

@@ -26,6 +26,8 @@
 #include <QDir>
 #include <QDateTime>
 #include <QSysInfo>
+#include <QImage>
+#include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -645,6 +647,52 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
     return GST_PAD_PROBE_REMOVE;
 }
 #endif
+
+void VideoReceiver::takeSnapshot() {
+    qDebug() << "Trying to take a snapshot";
+    GstSample *videobuffer = nullptr;
+    GstCaps *caps;
+    gint width, height;
+    GstMapInfo map;
+
+    g_object_get(G_OBJECT(_videoSink), "last-sample", &videobuffer, NULL);
+    if (!videobuffer) {
+        qDebug() << "No video buffer, exiting";
+        return;
+    }
+
+    caps = gst_sample_get_caps(videobuffer);
+    if (!caps) {
+        qDebug() << "Cant get caps from video buffer, exiting";
+        return;
+    }
+
+    GstStructure *s = gst_caps_get_structure(caps, 0);
+    gboolean res = gst_structure_get_int (s, "width", &width)
+                && gst_structure_get_int (s, "height", &height);
+    if (!res) {
+        qDebug() << "Cant get width or height from caps";
+        return;
+    }
+
+    GstBuffer *snapbuffer = gst_sample_get_buffer(videobuffer);
+    gst_buffer_map (snapbuffer, &map, GST_MAP_READ);
+
+    uchar* bufferData = reinterpret_cast<uchar*>(map.data);
+    QImage::Format imageFormat = QImage::Format_RGB32;
+    // QImage::InvertMode invertMode = QImage::InvertRgb;
+
+    QImage image(bufferData, width, height, imageFormat);
+
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    if(savePath.isEmpty()) {
+        savePath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    }
+    savePath += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".png";
+
+    image.save(savePath);
+    qDebug() << "Image saved in" << savePath;
+}
 
 //-----------------------------------------------------------------------------
 void
