@@ -271,18 +271,15 @@ void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordina
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double)
 {
     // Not supported by generic vehicle
-    Q_UNUSED(vehicle);
-    Q_UNUSED(altitudeRel);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::startMission(Vehicle* vehicle)
+void FirmwarePlugin::startMission(Vehicle*)
 {
     // Not supported by generic vehicle
-    Q_UNUSED(vehicle);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
@@ -293,31 +290,27 @@ const FirmwarePlugin::remapParamNameMajorVersionMap_t& FirmwarePlugin::paramName
     return remap;
 }
 
-int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int) const
 {
-    Q_UNUSED(majorVersionNumber);
     return 0;
 }
 
-QString FirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageOpaque(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/vehicleArrowOpaque.svg");
 }
 
-QString FirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageOutline(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/vehicleArrowOutline.svg");
 }
 
-QString FirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageCompass(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
 }
 
-const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle*)
 {
     //-- Default list of indicators for all vehicles.
     if(_toolBarIndicatorList.size() == 0) {
@@ -328,15 +321,13 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VTOLModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
         });
-        if(vehicle->roiModeSupported()) {
-            _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")));
-        }
     }
     return _toolBarIndicatorList;
 }
