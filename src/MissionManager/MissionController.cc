@@ -2243,6 +2243,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _isROIActive =                  false;
         _isROIBeginCurrentItem =        false;
         _flyThroughCommandsAllowed =    true;
+        _previousCoordinate =           QGeoCoordinate();
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
             VisualMissionItem* pVI =        qobject_cast<VisualMissionItem*>(_visualItems->get(viIndex));
@@ -2282,8 +2283,13 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                 }
             }
 
-            // ROI state handling
             if (simpleItem) {
+                // Remember previous coordinate
+                if (pVI->sequenceNumber() < sequenceNumber && simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate()) {
+                    _previousCoordinate = simpleItem->coordinate();
+                }
+
+                // ROI state handling
                 if (pVI->sequenceNumber() <= sequenceNumber) {
                     if (_isROIActive) {
                         if (_isROICancelItem(simpleItem)) {
@@ -2351,6 +2357,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         emit isROIActiveChanged();
         emit isROIBeginCurrentItemChanged();
         emit flyThroughCommandsAllowedChanged();
+        emit previousCoordinateChanged();
     }
 }
 
