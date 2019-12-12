@@ -49,6 +49,7 @@ ApplicationWindow {
     property bool               communicationLost:          activeVehicle ? activeVehicle.connectionLost : false
     property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
     property real               availableHeight:            mainWindow.height - mainWindow.header.height - mainWindow.footer.height
+    property bool               preventViewSwitch:          false
 
     property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlan:   null
@@ -151,8 +152,10 @@ ApplicationWindow {
         mainWindowDialog.dialogComponent = component
         mainWindowDialog.dialogTitle = title
         mainWindowDialog.dialogButtons = buttons
+        console.log("Prevent view switch")
+        mainWindow.preventViewSwitch = true
         mainWindowDialog.open()
-        if(buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
+        if (buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
             mainWindowDialog.closePolicy = Popup.NoAutoClose;
             mainWindowDialog.interactive = false;
         } else {
@@ -184,6 +187,8 @@ ApplicationWindow {
             dlgLoader.source = "QGCViewDialogContainer.qml"
         }
         onClosed: {
+            console.log("View switch ok")
+            mainWindow.preventViewSwitch = false
             dlgLoader.source = ""
         }
     }
