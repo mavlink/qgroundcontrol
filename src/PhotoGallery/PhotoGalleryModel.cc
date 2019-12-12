@@ -111,12 +111,14 @@ void PhotoGalleryModel::addedByStore(const std::set<QString> & ids)
     // in the worst case.
     // This is however called in two ways only:
     // - when store is empty: everything is filled in correct sequence, so it
-    //   it O(n) then
+    //   is O(n) then
     // - when taking new photo: in all likelihood, things are sorted by date
     //   already so new image goes to end, meaning O(1). In rare circumstances,
     //   it is O(n) if an image is put into the middle, but this is still not
     //   worth worrying as we are not taking millions of pictures per second.
-    for (auto & id : ids) {
+    for (auto j = ids.rbegin(); j != ids.rend(); ++j) {
+        const QString& id = *j;
+        qDebug() << id;
         auto i = std::lower_bound(_ids.begin(), _ids.end(), id, std::greater<QString>());
         std::unique_ptr<Item> item(new Item);
         i = _ids.insert(i, std::move(id));

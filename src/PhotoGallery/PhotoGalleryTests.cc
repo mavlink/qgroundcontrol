@@ -608,25 +608,25 @@ void PhotoGalleryTests::testPhotoGalleryModel()
     QCOMPARE(removed, (index_set_t{}));
 
     auto id4 = store.add("2019-09-04.jpg", createJPEGImageByteArray(15, 15));
-    QCOMPARE(added, (index_set_t{2}));
+    QCOMPARE(added, (index_set_t{0}));
 
     auto id3 = store.add("2019-09-03.jpg", createJPEGImageByteArray(14, 14));
-    QCOMPARE(added, (index_set_t{2}));
+    QCOMPARE(added, (index_set_t{1}));
 
     store.remove({"2019-09-02.jpg"});
-    QCOMPARE(removed, (index_set_t{1}));
+    QCOMPARE(removed, (index_set_t{2}));
 
     auto pic0 = model.data(0);
-    QCOMPARE(pic0.id, "2019-09-01.jpg");
-    verifyImage(*pic0.image, 16, 16);
+    QCOMPARE(pic0.id, "2019-09-04.jpg");
+    verifyImage(*pic0.image, 15, 15);
 
     auto pic1 = model.data(1);
     QCOMPARE(pic1.id, "2019-09-03.jpg");
     verifyImage(*pic1.image, 14, 14);
 
     auto pic2 = model.data(2);
-    QCOMPARE(pic2.id, "2019-09-04.jpg");
-    verifyImage(*pic2.image, 15, 15);
+    QCOMPARE(pic2.id, "2019-09-01.jpg");
+    verifyImage(*pic2.image, 16, 16);
 }
 
 QTEST_MAIN(PhotoGalleryTests)
