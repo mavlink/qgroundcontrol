@@ -1484,7 +1484,7 @@ private:
     uint                _messagesSent;
     uint                _messagesLost;
     uint8_t             _messageSeq;
-    uint8_t             _compID;
+    uint8_t             _mainCompID;
     bool                _heardFrom;
 
     float               _curGimbalRoll  = 0.0f;

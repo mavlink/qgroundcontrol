@@ -818,13 +818,14 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _messagesReceived++;
     emit messagesReceivedChanged();
     if(!_heardFrom) {
-        if(message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+            // This first hearbeat which comes through the vehicle is always the main autopilot component.
             _heardFrom = true;
-            _compID = message.compid;
+            _mainCompID = message.compid;
             _messageSeq = message.seq + 1;
         }
     } else {
-        if(_compID == message.compid) {
+        if(_mainCompID == message.compid) {
             uint16_t seq_received = static_cast<uint16_t>(message.seq);
             uint16_t packet_lost_count = 0;
             //-- Account for overflow during packet loss
@@ -850,7 +851,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         return;
     }
 
-    if (message.compid == MAV_COMP_ID_AUTOPILOT1) {
+    if (message.compid == _mainCompID) {
         _mavlinkMessageFromAutopilotOnly(link, message);
     } else {
         _mavlinkMessageFromAnyComponent(link, message);
