@@ -41,7 +41,7 @@ Rectangle {
 
     function showSummaryPanel()
     {
-        if (mainWindow.preventViewSwitch) {
+        if (mainWindow.preventViewSwitch()) {
             return
         }
         if (_fullParameterVehicleAvailable) {
@@ -58,7 +58,7 @@ Rectangle {
     }
 
     function showPanel(button, qmlSource) {
-        if (mainWindow.preventViewSwitch) {
+        if (mainWindow.preventViewSwitch()) {
             return
         }
         button.checked = true
@@ -67,7 +67,7 @@ Rectangle {
 
     function showVehicleComponentPanel(vehicleComponent)
     {
-        if (mainWindow.preventViewSwitch) {
+        if (mainWindow.preventViewSwitch()) {
             return
         }
         var autopilotPlugin = QGroundControl.multiVehicleManager.activeVehicle.autopilot
