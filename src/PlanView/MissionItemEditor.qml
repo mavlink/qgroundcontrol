@@ -40,6 +40,7 @@ Rectangle {
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
     property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave
+    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
 
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -136,6 +137,19 @@ Rectangle {
 
         QGCMenu {
             id: hamburgerMenu
+
+            QGCMenuItem {
+                text:           qsTr("Move to vehicle position")
+                visible:        missionItem.specifiesCoordinate
+                enabled:        _activeVehicle
+                onTriggered:    missionItem.coordinate = _activeVehicle.coordinate
+            }
+
+            QGCMenuItem {
+                text:           qsTr("Move to previous item position")
+                visible:        _missionController.previousCoordinate.isValid
+                onTriggered:    missionItem.coordinate = _missionController.previousCoordinate
+            }
 
             QGCMenuItem {
                 text:           qsTr("Edit position...")
