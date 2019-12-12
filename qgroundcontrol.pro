@@ -1105,6 +1105,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSafetyComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
+        src/AutoPilotPlugins/APM/APMSubMotorComponentController.h \
         src/AutoPilotPlugins/APM/APMTuningComponent.h \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
         src/FirmwarePlugin/APM/APMParameterMetaData.h \
@@ -1132,6 +1133,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
         src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
+        src/AutoPilotPlugins/APM/APMSubMotorComponentController.cc \
         src/AutoPilotPlugins/APM/APMTuningComponent.cc \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
         src/FirmwarePlugin/APM/APMParameterMetaData.cc \
