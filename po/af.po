@@ -1,0 +1,617 @@
+# Translation of gstreamer plugin messages to Afrikaans. 
+# Copyright (C) 2004 Free Software Foundation, Inc.
+# This file is put in the public domain.
+# Petri Jooste <rkwjpj@puk.ac.za>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2004-03-18 14:16+0200\n"
+"Last-Translator: Petri Jooste <rkwjpj@puk.ac.za>\n"
+"Language-Team: Afrikaans <i18n@af.org.za>\n"
+"Language: af\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr ""
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr ""
+
+#, fuzzy
+msgid "Could not connect to server"
+msgstr "Kon nie beheertoestel \"%s\" toemaak nie."
+
+msgid "No URL set."
+msgstr ""
+
+#, fuzzy
+msgid "Could not resolve server name."
+msgstr "Kon nie beheertoestel \"%s\" toemaak nie."
+
+#, fuzzy
+msgid "Could not establish connection to server."
+msgstr "Kon nie beheertoestel \"%s\" toemaak nie."
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+msgid "Server does not support seeking."
+msgstr ""
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Geen of ongeldige klanktoevoer, AVI-stroom sal korrup wees."
+
+msgid "This file contains no playable streams."
+msgstr ""
+
+msgid "This file is invalid and cannot be played."
+msgstr ""
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr ""
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr ""
+
+msgid "The video in this file might not play correctly."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+
+#, fuzzy
+msgid "Could not open audio device for playback."
+msgstr "Kon nie oudio-toestel \"%s\" oopmaak vir skryf nie."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+
+msgid "Playback is not supported by this audio device."
+msgstr ""
+
+msgid "Audio playback error."
+msgstr ""
+
+msgid "Recording is not supported by this audio device."
+msgstr ""
+
+msgid "Error recording from audio device."
+msgstr ""
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+
+#, fuzzy
+msgid "Could not open audio device for recording."
+msgstr "Kon nie CD-toestel oopmaak om te lees nie."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr ""
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+
+msgid "Video device did not provide output format."
+msgstr ""
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+
+msgid "Video device uses an unsupported pixel format."
+msgstr ""
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Kon nie genoeg buffers vanaf toestel \"%s\" kry nie."
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Kon nie oudio-toestel \"%s\" toemaak nie."
+
+#, fuzzy, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Kon nie oudio-toestel \"%s\" toemaak nie."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+
+msgid "Failed to start decoding thread."
+msgstr ""
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+
+msgid "Failed to start encoding thread."
+msgstr ""
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Kon nie genoeg buffers vanaf toestel \"%s\" kry nie."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Kon nie skryf na toestel \"%s\" nie."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Kon nie toestel \"%s\" oopmaak vir lees en skryf nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Toestel \"%s\" is nie 'n vasleggingtoestel nie."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Kon nie toestel \"%s\" oopmaak vir lees en skryf nie."
+
+#, fuzzy, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+#, fuzzy, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Kon nie genoeg buffers vanaf toestel \"%s\" kry nie."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Kon nie beheertoestel \"%s\" toemaak nie."
+
+#, fuzzy, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Kon nie beheertoestel \"%s\" toemaak nie."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr "Kon nie genoeg buffers vanaf toestel \"%s\" kry nie."
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Kon nie oudio-toestel \"%s\" toemaak nie."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+
+msgid "Cannot operate without a clock"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Record Source"
+#~ msgstr "Neem op"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Line In"
+#~ msgstr "Lyn-in"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#, fuzzy
+#~ msgid "Built-in Speaker"
+#~ msgstr "Luidspreker"
+
+#, fuzzy
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Kon nie genoeg buffers vanaf toestel \"%s\" kry nie."
+
+#~ msgid "Bass"
+#~ msgstr "Bas"
+
+#~ msgid "Treble"
+#~ msgstr "Treble"
+
+#~ msgid "Synth"
+#~ msgstr "Sintetiseerder"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Luidspreker"
+
+#~ msgid "Line-in"
+#~ msgstr "Lyn-in"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Menger"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Neem op"
+
+#~ msgid "In-gain"
+#~ msgstr "In-versterking"
+
+#~ msgid "Out-gain"
+#~ msgstr "Uit-versterking"
+
+#~ msgid "Line-1"
+#~ msgstr "Lyn-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Lyn-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Lyn-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Digitaal-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Digitaal-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Digitaal-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Telefoon-in"
+
+#~ msgid "Phone-out"
+#~ msgstr "Telefoon-uit"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Radio"
+#~ msgstr "Radio"
+
+#, fuzzy
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "Kon nie oudio-toestel \"%s\" oopmaak vir skryf nie."
+
+#, fuzzy
+#~ msgid "Rear"
+#~ msgstr "Neem op"
+
+#, fuzzy
+#~ msgid "Side"
+#~ msgstr "Video"
+
+#, fuzzy
+#~ msgid "Video In"
+#~ msgstr "Video"
+
+#, fuzzy
+#~ msgid "Record Gain"
+#~ msgstr "Neem op"
+
+#, fuzzy
+#~ msgid "Output Gain"
+#~ msgstr "Uit-versterking"
+
+#, fuzzy
+#~ msgid "Microphone Boost"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Monitor Source"
+#~ msgstr "Monitor"
+
+#, fuzzy
+#~ msgid "Microphone Gain"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Speaker Source"
+#~ msgstr "Luidspreker"
+
+#, fuzzy
+#~ msgid "Microphone Source"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Microphone 1"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Microphone 2"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Digital Out"
+#~ msgstr "Digitaal-1"
+
+#, fuzzy
+#~ msgid "Digital In"
+#~ msgstr "Digitaal-1"
+
+#, fuzzy
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Mikrofoon"
+
+#, fuzzy
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Kon nie buffers vanaf toestel \"%s\" verkry nie."
+
+#~ msgid "Could not open file \"%s\" for writing."
+#~ msgstr "Kon nie lêer \"%s\" oopmaak om in te skryf nie."
+
+#~ msgid "Error closing file \"%s\"."
+#~ msgstr "Fout tydens toemaak van lêer \"%s\"."
+
+#~ msgid "Could not open file \"%s\" for reading."
+#~ msgstr "Kon nie lêer \"%s\" oopmaak om te lees nie."
+
+#~ msgid "No filename specified."
+#~ msgstr "Geen lêernaam gespesifiseer."
+
+#~ msgid "Could not write to file \"%s\"."
+#~ msgstr "Kon nie skryf na lêer \"%s\" nie."
+
+#~ msgid "Could not open control device \"%s\" for writing."
+#~ msgstr "Kon nie beheertoestel \"%s\" oopmaak vir skryf nie."
+
+#~ msgid "Could not configure audio device \"%s\"."
+#~ msgstr "Kon nie oudio-toestel \"%s\" konfigureer nie."
+
+#~ msgid "Could not set audio device \"%s\" to %d Hz."
+#~ msgstr "Kon nie klanktoestel \"%s\" verstel na %d Hz nie."
+
+#~ msgid "Could not open video device \"%s\" for writing."
+#~ msgstr "Kon nie video-toestel \"%s\" oopmaak vir skryf nie."
+
+#~ msgid "Could not close video device \"%s\"."
+#~ msgstr "Kon nie video-toestel \"%s\" toemaak nie."
+
+#~ msgid "OSS device \"%s\" is already in use by another program."
+#~ msgstr "OSS-toestel \"%s\" is reeds in gebruik deur 'n ander program."
+
+#~ msgid "Could not access device \"%s\", check its permissions."
+#~ msgstr "Kon nie toegang kry tot toestel \"%s\" nie, kyk na toegangsregte."
+
+#~ msgid "Device \"%s\" does not exist."
+#~ msgstr "Toestel \"%s\" bestaan nie."
+
+#~ msgid "Could not open device \"%s\" for writing."
+#~ msgstr "Kon nie toestel \"%s\" oopmaak vir skryf nie."
+
+#~ msgid "Could not open device \"%s\" for reading."
+#~ msgstr "Kon nie toestel \"%s\" oopmaak vir lees nie."
+
+#~ msgid "Could not open vfs file \"%s\" for reading."
+#~ msgstr "Kon nie vfs-lêer \"%s\" oopmaak vir lees nie."
+
+#, fuzzy
+#~ msgid "No filename given."
+#~ msgstr "Geen lêernaam gespesifiseer."
+
+#, fuzzy
+#~ msgid "Could not open vfs file \"%s\" for writing: %s."
+#~ msgstr "Kon nie vfs-lêer \"%s\" oopmaak vir skryf nie."
+
+#, fuzzy
+#~ msgid "No filename given"
+#~ msgstr "Geen lêernaam gespesifiseer."
+
+#~ msgid "Could not close vfs file \"%s\"."
+#~ msgstr "Kon nie vfs-lêer \"%s\" toemaak nie."
+
+#~ msgid "No device specified."
+#~ msgstr "Geen toestel gespesifiseer"
+
+#~ msgid "Device is not open."
+#~ msgstr "Toestel is nie oop nie."
+
+#~ msgid "Device is open."
+#~ msgstr "Toestel is oop."

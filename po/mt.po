@@ -1,0 +1,777 @@
+# Maltese translation for gst-plugins-good.
+# This file is distributed under the same license as the gst-plugins-good package.
+# NAME OF AUTHOR <michelbugeja@rabatmalta.com>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good-0.10.10.3\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2008-10-26 19:09+0100\n"
+"Last-Translator: Michel Bugeja <michelbugeja@rabatmalta.com>\n"
+"Language-Team: Maltese <translation-team-mt@lists.sourceforge.net>\n"
+"Language: mt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Maltese\n"
+"X-Poedit-Country: MALTA\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Problem fid-decoding tal-istampa JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr ""
+
+msgid "Could not connect to server"
+msgstr "Mhux possibli naqbad mas-server"
+
+msgid "No URL set."
+msgstr ""
+
+#, fuzzy
+msgid "Could not resolve server name."
+msgstr "Mhux possibli naqbad mas-server"
+
+#, fuzzy
+msgid "Could not establish connection to server."
+msgstr "Kuntatt mas-sound server ma ġiex stabbilit"
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+#, fuzzy
+msgid "Server does not support seeking."
+msgstr "Appart '%s' ma jagħmilx video capture"
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Input audio ma nstabx jew mhux validu. AVI stream jista jkun korrott."
+
+msgid "This file contains no playable streams."
+msgstr "Il-fajl ma fiħ l-ebda stream li tista tindaqq."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Il-fajl mhux validu u ma jistax jindaqq"
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Il-fajl huwa korrott u ma jistax jinfetaħ."
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Il-fajl mhux komplut u ma jistax jindaqq,"
+
+msgid "The video in this file might not play correctly."
+msgstr "Jista jkun illi l-vidjo ġo dan il-fajl ma jidhirx sewwa."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr "Audio device ma jistax jintuża. Qed jintuża minn programm ieħor."
+
+#, fuzzy
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr "Audio device ma jistax jintuża. M'għandex aċċess għalih."
+
+msgid "Could not open audio device for playback."
+msgstr "Audio device ma jistax jintuża."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Ma nistax niftaħ apparat tal-awdjo biex indoqq. Dil il-verżjoni ta' Open "
+"Sound System mhux issapportjatha minn dan l-element."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Id-daqq mhux issappartjat minn dan l-apparat tal-awdjo."
+
+msgid "Audio playback error."
+msgstr "Żball fiid-daqq tal-awdjo."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Irrekordjar mhux issapportjat minn dan l-apparat tal-awdjo."
+
+msgid "Error recording from audio device."
+msgstr "Żball fl-irrekordjar mill-apparat tal-awdjo."
+
+#, fuzzy
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Audio device ma jistax jintuża biex tirrekordja. M'għandex aċċess għalih."
+
+msgid "Could not open audio device for recording."
+msgstr "Audio device ma jistax jintuża biex tirrekordja."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Problema fil-qar()i %d bytes fid-device '%s'."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr "Failed to enumerate possible video formats device '%s' can work with"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Ma nistax nqabbel buffers mill-apparat '%s'."
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr ""
+"Id-driver tal-apparat '%s' ma jissapportja l-ebda capture method mifhum."
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+"Id-driver tal-apparat '%s' ma jissapportja l-ebda capture method mifhum."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "Device '%s' mhux capture device."
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Appart '%s' ma jistax jagħmel capture bi %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Appart '%s' ma jistax jagħmel capture f'dan il-format"
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Device '%s' mhux capture device."
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Mhux possibli nġib parametri tal-apparat '%s'"
+
+#, fuzzy
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy
+msgid "Video device did not provide output format."
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+#, fuzzy
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+"Id-driver tal-apparat '%s' ma jissapportja l-ebda capture method mifhum."
+
+#, fuzzy
+msgid "Video device uses an unsupported pixel format."
+msgstr ""
+"Id-driver tal-apparat '%s' ma jissapportja l-ebda capture method mifhum."
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+#, fuzzy
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Problema biex inġib settings tat-tuner %d fuq l-appart '%s'"
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Problema fil-qar()i %d bytes fid-device '%s'."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Problema biex nissettja input %d fuq apparat %s."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Problema biex nissettja input %d fuq apparat %s."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Problema biex inġib signal strength fuq l-apparat '%s'."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+"Id-driver tal-apparat '%s' ma jissapportja l-ebda capture method mifhum."
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy
+msgid "Failed to start decoding thread."
+msgstr "Problem fid-decoding tal-istampa JPEG"
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"Apparat li jaqra video input ma aċċettax is-settings ġodda tal-frame rate."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Problem fid-decoding tal-istampa JPEG"
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Problema biex nġib il-kapaċitajiet tal-apparat '%s': Mhux v4l2 driver. "
+"Iċċekkja jekk hux v4l1 driver. "
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Mhux possibli tfittxja għal attributi ta' input %d ġol-apparat %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Problema biex inġib settings tat-tuner %d fuq l-appart '%s'"
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Ma stajx nfittex norm fuq apparat '%s'."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "L-attributi ta' kontroll ta' device '%s' ma nqrawx."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Device '%s' mhux identifikat."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Dan mhux device %s."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Device '%s' ma nistax niftaħu biex naqra jew nikteb."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Device '%s' mhux capture device."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Device '%s' ma nistax niftaħu biex naqra jew nikteb."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Ma stajtx nissetja norm fuq apparat '%s'."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Problema biex inġib il-frekwenza li jitrażmetti fuqha apparat '%s'."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Problema biex nissettja l-frekwenza li jitrażmetti fuqha apparat '%s' għal "
+"%lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Problema biex inġib signal strength fuq l-apparat '%s'."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Problema biex inġib valur ta' control %d fuq l-apparat '%s'."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Problema biex nissetja valur %d lil control %d fuq l-apparat '%s'."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Problema biex inġib current input fuq apparat '%s'. Jista jkun li huwa "
+"apparat tar-radju."
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Problema biex inġib current input fuq apparat '%s'. Jista jkun li huwa "
+"apparat tar-radju."
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Problema biex nissettja input %d fuq apparat %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Ma tistax tibdel ir-resolution waqt runtime."
+
+msgid "Cannot operate without a clock"
+msgstr "Ma nistax nħaddem mingħajr arloġġ"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Il-fajl fiħ aktar streams milli suppost. Ser indoqq l-ewwel %d"
+
+#, fuzzy
+#~ msgid "Record Source"
+#~ msgstr "Record"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofonu"
+
+#, fuzzy
+#~ msgid "Line In"
+#~ msgstr "Line-in"
+
+#~ msgid "Volume"
+#~ msgstr "Volum"
+
+#~ msgid "Gain"
+#~ msgstr "Gain"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#, fuzzy
+#~ msgid "Built-in Speaker"
+#~ msgstr "Speaker"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Problema interna fid-data stream"
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Problema interna ta' data flow"
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Irċivejt frame size ta' %u minflok kif kien mistenni ta' %u."
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Problema biex inġib video frames mill-apparat '%s'."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr ""
+#~ "Problema wara li pruvajt %d drabi. apparat %s. żball fis-sistema: %s"
+
+#~ msgid "Bass"
+#~ msgstr "Bass"
+
+#~ msgid "Treble"
+#~ msgstr "Treble"
+
+#~ msgid "Synth"
+#~ msgstr "Synth"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Speaker"
+
+#~ msgid "Line-in"
+#~ msgstr "Line-in"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Mixer"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "In-gain"
+#~ msgstr "In-gain"
+
+#~ msgid "Out-gain"
+#~ msgstr "Out-gain"
+
+#~ msgid "Line-1"
+#~ msgstr "Line-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Line-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Line-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Digital-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Digital-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Digital-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Phone-in"
+
+#~ msgid "Phone-out"
+#~ msgstr "Phone-out"
+
+#~ msgid "Video"
+#~ msgstr "Vidjo"
+
+#~ msgid "Radio"
+#~ msgstr "Radju"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "Ma nistax niftaħ apparat tal-awdjo għal mixer control handling."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Ma nistax niftaħ apparat tal-awdjo għal mixer control handling. Din il-"
+#~ "verzjoni ta' Open Sound System mhux issapportjata minn din l-element."
+
+#, fuzzy
+#~ msgid "Master"
+#~ msgstr "Fast"
+
+#~ msgid "Front"
+#~ msgstr "Quddiem"
+
+#~ msgid "Rear"
+#~ msgstr "Wara"
+
+#~ msgid "Headphones"
+#~ msgstr "Headphones"
+
+#, fuzzy
+#~ msgid "Center"
+#~ msgstr "Center / LFE"
+
+#, fuzzy
+#~ msgid "Surround"
+#~ msgstr "Surround sound"
+
+#~ msgid "Side"
+#~ msgstr "Ġenb"
+
+#, fuzzy
+#~ msgid "Telephone"
+#~ msgstr "Headphones"
+
+#, fuzzy
+#~ msgid "Microphone Boost"
+#~ msgstr "Mikrofonu"
+
+#~ msgid "Input"
+#~ msgstr "Input"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#, fuzzy
+#~ msgid "Surround Sound"
+#~ msgstr "Surround sound"
+
+#, fuzzy
+#~ msgid "Microphone Gain"
+#~ msgstr "Mikrofonu"
+
+#, fuzzy
+#~ msgid "Microphone Source"
+#~ msgstr "Mikrofonu"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Center / LFE"
+
+#, fuzzy
+#~ msgid "Stereo Mix"
+#~ msgstr "Stereo"
+
+#, fuzzy
+#~ msgid "Input Mix"
+#~ msgstr "Input mix"
+
+#, fuzzy
+#~ msgid "Microphone 1"
+#~ msgstr "Mikrofonu"
+
+#, fuzzy
+#~ msgid "Microphone 2"
+#~ msgstr "Mikrofonu"
+
+#~ msgid "On"
+#~ msgstr "On"
+
+#~ msgid "Off"
+#~ msgstr "Off"
+
+#~ msgid "Fast"
+#~ msgstr "Fast"
+
+#~ msgid "Low"
+#~ msgstr "Low"
+
+#~ msgid "Medium"
+#~ msgstr "Medium"
+
+#~ msgid "High"
+#~ msgstr "High"
+
+#, fuzzy
+#~ msgid "Very High"
+#~ msgstr "Very high"
+
+#~ msgid "Production"
+#~ msgstr "Production"
+
+#, fuzzy
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Mikrofonu tal-panella ta' quddiem"
+
+#, fuzzy
+#~ msgid "Front Panel Line In"
+#~ msgstr "Front panel line-in"
+
+#, fuzzy
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Front panel headphones"
+
+#, fuzzy
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Front panel line-in"
+
+#, fuzzy
+#~ msgid "Green Connector"
+#~ msgstr "Connector aħdar"
+
+#, fuzzy
+#~ msgid "Pink Connector"
+#~ msgstr "Connector roża"
+
+#, fuzzy
+#~ msgid "Blue Connector"
+#~ msgstr "Connector Blu"
+
+#, fuzzy
+#~ msgid "White Connector"
+#~ msgstr "Connector abjad"
+
+#, fuzzy
+#~ msgid "Black Connector"
+#~ msgstr "Connector iswed"
+
+#, fuzzy
+#~ msgid "Gray Connector"
+#~ msgstr "Connector Griż"
+
+#, fuzzy
+#~ msgid "Orange Connector"
+#~ msgstr "Connector oranġjo"
+
+#, fuzzy
+#~ msgid "Red Connector"
+#~ msgstr "Connector aħmar"
+
+#, fuzzy
+#~ msgid "Yellow Connector"
+#~ msgstr "Connector isfar"
+
+#, fuzzy
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Front panel connector aħdar"
+
+#, fuzzy
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Front panel connector roża"
+
+#, fuzzy
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Front panel connector blu"
+
+#, fuzzy
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Front panel connector abjad"
+
+#, fuzzy
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Front panel connector iswed"
+
+#, fuzzy
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Front panel connector Griż"
+
+#, fuzzy
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Front Panel connector oranġjo"
+
+#, fuzzy
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Front panel connector aħmar"
+
+#, fuzzy
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Front panel connector isfar"
+
+#, fuzzy
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Virtual mixer input"
+
+#, fuzzy
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Virtual mixer output"
+
+#, fuzzy
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Virtual mixer input"
+
+#, fuzzy
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Problema fil-qar()i %d bytes fid-device '%s'."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Could not enqueue buffers in device '%s'."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Kuntatt mas-sound server ma ġiex stabbilit"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Mhux possibli t-tfittxija għall-kapaċita tas-sound server"
+
+#~ msgid "Error stopping streaming capture from device '%s'."
+#~ msgstr "Problem biex inwaqqaf streaming capture mill-apparat '%s'."
+
+#~ msgid "Error starting streaming capture from device '%s'."
+#~ msgstr "Problem biex nibda streaming capture mill-apparat '%s'."
+
+#~ msgid "Could not get enough buffers from device '%s'."
+#~ msgstr "Ma nistax nirċievi biżżejjed buffers mill-apparat '%s'."
+
+#~ msgid "Could not get buffers from device '%s'."
+#~ msgstr "Ma nistax nirċievi buffers mill-apparat '%s'."
+
+#~ msgid "No free buffers found in the pool at index %d."
+#~ msgstr "Ma nstab l-ebda buffer free fl-indiċi %d tal-pool."
+
+#~ msgid "insufficient memory to enqueue a user pointer buffer. device %s."
+#~ msgstr "insufficient memory to enqueue a user pointer buffer. device %s."
+
+#~ msgid ""
+#~ "Failed trying to get video frames from device '%s'. Not enough memory."
+#~ msgstr ""
+#~ "Problema biex inġib video frames mill-apparat '%s'. Il-memorja allokata "
+#~ "mhijiex biżżejjed."
+
+#~ msgid ""
+#~ "The buffer type is not supported, or the index is out of bounds, or no "
+#~ "buffers have been allocated yet, or the userptr or length are invalid. "
+#~ "device %s"
+#~ msgstr ""
+#~ "The buffer type is not supported, or the index is out of bounds, or no "
+#~ "buffers have been allocated yet, or the userptr or length are invalid. "
+#~ "device %s"
+
+#~ msgid "Failed getting controls attributes on device '%s.'"
+#~ msgstr "L-attributi ta' kontroll ta' device '%s' ma nqrawx."

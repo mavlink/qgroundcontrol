@@ -1,0 +1,690 @@
+# Chinese (Hong Kong) translation of gst-plugins-good-0.10.2.
+# This file is put in the public domain.
+# Abel Cheung <abelcheung@gmail.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good-0.10.2 0.10.2\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2006-08-29 01:08+0800\n"
+"Last-Translator: Abel Cheung <abelcheung@gmail.com>\n"
+"Language-Team: Chinese (Hong Kong) <community@linuxhall.org>\n"
+"Language: zh_HK\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr ""
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr ""
+
+msgid "Could not connect to server"
+msgstr ""
+
+msgid "No URL set."
+msgstr ""
+
+msgid "Could not resolve server name."
+msgstr ""
+
+msgid "Could not establish connection to server."
+msgstr ""
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+msgid "Server does not support seeking."
+msgstr ""
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "沒有任何輸入的音效資料或者資料無效，表示 AVI 串流出現錯誤。"
+
+msgid "This file contains no playable streams."
+msgstr ""
+
+msgid "This file is invalid and cannot be played."
+msgstr ""
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr ""
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr ""
+
+msgid "The video in this file might not play correctly."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+
+msgid "Could not open audio device for playback."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr "无法打开音频设备播放音频。此组件不支持开放声音系统(OSS)版本。"
+
+msgid "Playback is not supported by this audio device."
+msgstr "此音频设备不支持音频播放。"
+
+msgid "Audio playback error."
+msgstr "音频播放错误。"
+
+msgid "Recording is not supported by this audio device."
+msgstr "此音频设备不支持录音。"
+
+msgid "Error recording from audio device."
+msgstr "从音频设备录音时发生错误。"
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+
+msgid "Could not open audio device for recording."
+msgstr ""
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr ""
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr ""
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+
+#, c-format
+msgid "Device '%s' has no supported format"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr ""
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr ""
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+
+msgid "Video device did not provide output format."
+msgstr ""
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+
+msgid "Video device uses an unsupported pixel format."
+msgstr ""
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr ""
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr ""
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr ""
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr ""
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+
+msgid "Failed to start decoding thread."
+msgstr ""
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+
+msgid "Failed to start encoding thread."
+msgstr ""
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr ""
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr ""
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "无法打开音频文件进行混音控制操作。"
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr ""
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+
+msgid "Cannot operate without a clock"
+msgstr ""
+
+#~ msgid "Record Source"
+#~ msgstr "录音来源"
+
+#, fuzzy
+#~ msgid "Microphone"
+#~ msgstr "麦克风 1"
+
+#~ msgid "Line In"
+#~ msgstr "线路输入"
+
+#~ msgid "Internal CD"
+#~ msgstr "内部 CD 音频"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF 输入"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 输入"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 输入"
+
+#, fuzzy
+#~ msgid "Codec Loopback"
+#~ msgstr "Loopback"
+
+#, fuzzy
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Loopback"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "內部資料串流發生錯誤。"
+
+#, fuzzy
+#~ msgid "Internal data flow error."
+#~ msgstr "內部資料串流發生錯誤。"
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "无法打开音频设备进行音量控制操作。此部件不支持开放声音系统(OSS)的版本。"
+
+#~ msgid "Master"
+#~ msgstr "主声道"
+
+#~ msgid "Front"
+#~ msgstr "前置声道"
+
+#~ msgid "Rear"
+#~ msgstr "后置声道"
+
+#~ msgid "Headphones"
+#~ msgstr "头戴式耳机"
+
+#~ msgid "Center"
+#~ msgstr "中置"
+
+#~ msgid "LFE"
+#~ msgstr "低音炮"
+
+#~ msgid "Surround"
+#~ msgstr "立体声环绕"
+
+#~ msgid "Side"
+#~ msgstr "左右声道"
+
+#~ msgid "AUX Out"
+#~ msgstr "AUX 输出"
+
+#~ msgid "3D Depth"
+#~ msgstr "3D Depth"
+
+#~ msgid "3D Center"
+#~ msgstr "3D Center"
+
+#~ msgid "3D Enhance"
+#~ msgstr "3D Enhance"
+
+#~ msgid "Telephone"
+#~ msgstr "话筒"
+
+#~ msgid "Video In"
+#~ msgstr "视频输入"
+
+#~ msgid "AUX In"
+#~ msgstr "AUX 输入"
+
+#~ msgid "Record Gain"
+#~ msgstr "录音增益"
+
+#~ msgid "Output Gain"
+#~ msgstr "输出增益"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "麦克风增益"
+
+#, fuzzy
+#~ msgid "Diagnostic"
+#~ msgstr "采样分析"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Bass 增益"
+
+#~ msgid "Playback Ports"
+#~ msgstr "回放端口"
+
+#~ msgid "Input"
+#~ msgstr "输入"
+
+#~ msgid "Monitor Source"
+#~ msgstr "监视器来源"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "按键声音"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "模拟立体声"
+
+#~ msgid "Stereo"
+#~ msgstr "立体声"
+
+#~ msgid "Surround Sound"
+#~ msgstr "立体声环绕"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "麦克风增益"
+
+#~ msgid "Speaker Source"
+#~ msgstr "扬声器音源"
+
+#~ msgid "Microphone Source"
+#~ msgstr "麦克风音源"
+
+#~ msgid "Jack"
+#~ msgstr "Jack"
+
+#~ msgid "Center / LFE"
+#~ msgstr "中置/低音炮"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "立体声"
+
+#~ msgid "Mono Mix"
+#~ msgstr "单声道"
+
+#~ msgid "Input Mix"
+#~ msgstr "混音输入"
+
+#~ msgid "Microphone 2"
+#~ msgstr "麦克风 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "数字输出"
+
+#~ msgid "Digital In"
+#~ msgstr "数字输入"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI(高清)"
+
+#~ msgid "Modem"
+#~ msgstr "Modem"
+
+#~ msgid "Handset"
+#~ msgstr "手持设备"
+
+#~ msgid "Other"
+#~ msgstr "其它设备"
+
+#~ msgid "None"
+#~ msgstr "无"
+
+#~ msgid "On"
+#~ msgstr "开"
+
+#~ msgid "Off"
+#~ msgstr "关"
+
+#~ msgid "Mute"
+#~ msgstr "静音"
+
+#~ msgid "Fast"
+#~ msgstr "快"
+
+#~ msgid "Very Low"
+#~ msgstr "很慢"
+
+#~ msgid "Low"
+#~ msgstr "慢"
+
+#~ msgid "Medium"
+#~ msgstr "中等"
+
+#~ msgid "High"
+#~ msgstr "高"
+
+#~ msgid "Very High"
+#~ msgstr "很高"
+
+#~ msgid "Production"
+#~ msgstr "生产商"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "麦克风面板"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "线路输入面板"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "头戴式耳机面板"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "线路输出面板"
+
+#, fuzzy
+#~ msgid "Green Connector"
+#~ msgstr "线路输出"
+
+#, fuzzy
+#~ msgid "Pink Connector"
+#~ msgstr "话筒输出"
+
+#, fuzzy
+#~ msgid "Blue Connector"
+#~ msgstr "立体声输入"
+
+#, fuzzy
+#~ msgid "White Connector"
+#~ msgstr "左/单声道"
+
+#, fuzzy
+#~ msgid "Black Connector"
+#~ msgstr "后置声道输出"
+
+#, fuzzy
+#~ msgid "Gray Connector"
+#~ msgstr "中置声道输出"
+
+#, fuzzy
+#~ msgid "Orange Connector"
+#~ msgstr "低音炮输出"
+
+#, fuzzy
+#~ msgid "Red Connector"
+#~ msgstr "右声道"
+
+#, fuzzy
+#~ msgid "Yellow Connector"
+#~ msgstr "Midi 输出/游戏摇杆"
+
+#, fuzzy
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "线路输出面板"
+
+#, fuzzy
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "话筒输出面板"
+
+#, fuzzy
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "立体声输入面板"
+
+#, fuzzy
+#~ msgid "White Front Panel Connector"
+#~ msgstr "左/单声道面板"
+
+#, fuzzy
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "后置声道输出面板"
+
+#, fuzzy
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "中置声道输出面板"
+
+#, fuzzy
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "低音炮输出面板"
+
+#, fuzzy
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "右声道面板"
+
+#, fuzzy
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Midi 输出/游戏摇杆面板"
+
+#~ msgid "Spread Output"
+#~ msgstr "Spread 输出"
+
+#~ msgid "Downmix"
+#~ msgstr "Downmix"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "模拟混音输入"
+
+#, fuzzy
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "模拟混音输出"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "模拟混音输入"
+
+#, fuzzy
+#~ msgid "%s %d Function"
+#~ msgstr "%s 功能"
+
+#~ msgid "%s Function"
+#~ msgstr "%s 功能"

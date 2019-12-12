@@ -1,0 +1,27 @@
+Video Mixer
+-----------
+
+A generice video mixer, it blends the ayuv buffers from all pads onto 
+a new buffer. The new buffer has by default a checkerboard pattern but
+its color can be changed with a property.
+The mixer can mix streams with different framerates and video sizes. It
+uses the duration value of the buffer to schedule the rendering of the
+buffers. For streams with a different resolution than the final output
+resolution one can specify the position of the top left corner where this
+image should be placed with the pad properties xpos and ypos.
+The overall alpha value of a stream can also be specified with a pad
+property.
+By default, the streams are blended in the order that the pads were 
+requested from the element. This can be overridden by changing the 
+zorder pad property of the stream, a stream with lower zorder gets
+drawn first.
+
+
+TODO
+----
+
+- really implement zorder
+- take I420 yuv as well
+- output AYUV if possible.
+- implement different blend modes, some code is already done
+- use filter caps on srcpad to decide on the final output size

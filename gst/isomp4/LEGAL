@@ -1,0 +1,10 @@
+This is a demuxer supporting a subset of the Quicktime video container
+format developed by Apple. Apple and others have some patents on
+some features of the Quicktime container format in regards to technologies
+such as QuicktimeVR and RTP hinting. Due to that be aware that if ever
+such features are added to this demuxer it would need to be moved to the
+-ugly module or those features need to come as add-in functionality stored in 
+another module.
+
+As the plugin is as of today's date (19th of June 2007) it does not 
+violate any software patents we know of.

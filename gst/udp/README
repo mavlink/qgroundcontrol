@@ -1,0 +1,7 @@
+* What is UDP src/sink?
+
+It is a set of element to transfer data using UDP, nothing more, nothing less.
+Its main purpose is to be used in conjunction with RTP but they are kept as
+separate elements because we can.
+
+

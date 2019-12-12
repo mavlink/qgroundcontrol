@@ -1,0 +1,9 @@
+This is a visualization based on on the monoscope output plugin from
+alsaplayer.
+
+The monoscope convolution matching code was written by Ralph Loader.
+
+The monoscope.c and monoscope.h files are under the BSD license (without advertising clause).
+
+This implementation is taken from alsaplayer version 0.99.54, at
+http://www.alsaplayer.org/

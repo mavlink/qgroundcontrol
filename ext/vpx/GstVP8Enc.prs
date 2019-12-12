@@ -1,0 +1,8 @@
+[_presets_]
+version=0.10
+element-name=GstVP8Enc
+
+[Profile Realtime]
+deadline=1
+cpu-used=4
+lag-in-frames=0

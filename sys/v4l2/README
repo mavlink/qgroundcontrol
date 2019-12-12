@@ -1,0 +1,32 @@
+v4l2 plugins
+============
+
+The idea is a bit the same as the idea for the v4l1 plugins. We want
+one generic v4l2element, and a few child objects (probably only two:
+v4l2src and v4l2sink):
+
+                /-------- v4l2src
+v4l2element ---=
+                \-------- v4l2sink
+
+Both v4l2src and v4l2sink have a uncompressed and a compressed
+recording-/playback-mode. Since this is all part of v4l2, the 'client'
+of these elements, i.e. an application using v4l2src/v4l2sink, will
+hardly notice this. All capsnego stuff is done inside, and the plugin
+knows which formats are compressed and which are not.
+
+Please note that the v4l1 and the v4l2 plugins are *not* compatible
+concerning properties. Naming has been kept the same where possible,
+but in some cases, properties had to be removed or added to make
+full use of v4l2.
+
+V4L2 API: http://linux.bytesex.org/v4l2/.
+          http://v4l2spec.bytesex.org/
+          /usr/include/linux/videodev2.h or
+
+Kernel patches available from
+          http://dl.bytesex.org/patches/.
+
+Articles:
+          http://lwn.net/Articles/203924/
+

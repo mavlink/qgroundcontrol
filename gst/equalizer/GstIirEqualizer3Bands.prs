@@ -1,0 +1,14 @@
+[_presets_]
+version=0.10
+element-name=GstIirEqualizer3Bands
+
+[more bass]
+band0=7.75
+band1=0
+band2=0
+
+[more trebble]
+band0=0
+band1=0
+band2=6.0
+

@@ -1,0 +1,943 @@
+# This file is distributed under the same license as the gst-plugins-good package.
+# Finnish messages for gst-plugins-good.
+# Copyright (C) 2009-2010 Tommi Vainikainen.
+# Copyright (C) 2007 Ilkka Tuohela.
+# Suomennos: http://gnome.fi/
+#
+# Tommi Vainikainen <thv@iki.fi>, 2009-2010.
+# Ilkka Tuohela <hile@iki.fi>, 2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 0.10.25.3\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2010-11-17 23:03+0200\n"
+"Last-Translator: Tommi Vainikainen <Tommi.Vainikainen@iki.fi>\n"
+"Language-Team: Finnish <translation-team-fi@lists.sourceforge.net>\n"
+"Language: fi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "JPEG-kuvan purku epäonnistui"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "”%s” artistilta ”%s”"
+
+msgid "Could not connect to server"
+msgstr "Palvelimeen ei saatu yhteyttä"
+
+msgid "No URL set."
+msgstr "Ei URL:ää asetettuna."
+
+msgid "Could not resolve server name."
+msgstr "Palvelimen nimeä ei saatu selvitettyä."
+
+msgid "Could not establish connection to server."
+msgstr "Yhteyttä palvelimeen ei voitu avata."
+
+msgid "Secure connection setup failed."
+msgstr "Turvallisen yhteyden avaus epäonnistui."
+
+#, fuzzy
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Tapahtui verkkovirhe tai palvelin sulki yhteyden yllättäen."
+
+msgid "Server sent bad data."
+msgstr "Palvelin lähetti virheellistä dataa."
+
+msgid "Server does not support seeking."
+msgstr "Pavelin ei tue kelausta."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr ""
+"Ääntä ei ole tai äänilähde on viallinen, AVI-virta tulee olemaan "
+"vaurioitunut."
+
+msgid "This file contains no playable streams."
+msgstr "Tiedosto ei sisällä soitettavia virtoja."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Tiedosto on virheellinen eikä sitä voida esittää."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Tiedosto on vioittunut eikä sitä voida näyttää."
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Tiedosto on vajaa eikä sitä voida esittää."
+
+msgid "The video in this file might not play correctly."
+msgstr "Tiedostossa olevaa videota ei ehkä voida näyttää oikein."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Tuettua virtaa ei löytynyt. Kenties sinun tarvitsee asentaa GStreamer-RTSP-"
+"laajennus käyttääksesi Real-media-virtoja."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Tuettua virtaa ei löytynyt. Sinun kenties tarvitsee sallia useampia "
+"siirtoprotokollia, tai vaihtoehtoisesti sinulta saattaa puuttua oikea "
+"GStreamer-RTSP-laajennusliitännäinen."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Äänilaitetta ei voitu avata toistettavaksi. Laite on toisen sovelluksen "
+"käytössä."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Äänilaitetta ei voitu avata toistamista varten. Laitteen avaamiseen ei ole "
+"oikeuksia."
+
+msgid "Could not open audio device for playback."
+msgstr "Äänilaitetta ei voitu avata toistettavaksi."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Äänilaitetta ei voitu avata toistamista varten. Tämä elementti ei tue tätä "
+"versiota Open Sound Systemistä."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Tämä äänilaite ei tue toistamista."
+
+msgid "Audio playback error."
+msgstr "Äänentoistovirhe."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Tämä äänilaite ei tue nauhoitusta."
+
+msgid "Error recording from audio device."
+msgstr "Virhe luettaessa äänilaitteelta."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Äänilaitetta ei voitu avata nauhoitusta varten. Laitteen avaamiseen ei ole "
+"oikeuksia."
+
+msgid "Could not open audio device for recording."
+msgstr "Äänilaitetta ei voitu avata nauhoitusta varten."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Virhe luettaessa %d tavua laitteelta ”%s”."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Puskereita laitteelta ”%s” ei voitu kartoittaa"
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Laitteen ”%s” ajuri ei tue mitään tunnettua kaappaustapaa."
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Laitteen ”%s” ajuri ei tue mitään tunnettua kaappaustapaa."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Laitteelta ”%s” ei voi kaapata."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Laitteelta ”%s” ei voi kaapata."
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Laitteelta ”%s” ei voitu saada parametreja"
+
+#, fuzzy
+msgid "Video device did not accept new frame rate setting."
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy
+msgid "Video device did not provide output format."
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+#, fuzzy
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Laitteen ”%s” ajuri ei tue mitään tunnettua kaappaustapaa."
+
+#, fuzzy
+msgid "Video device uses an unsupported pixel format."
+msgstr "Laitteen ”%s” ajuri ei tue mitään tunnettua kaappaustapaa."
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+#, fuzzy
+msgid "Video device did not suggest any buffer size."
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Virittimen %d asetuksia ei voitu lukea laitteelta ”%s”."
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Virhe luettaessa %d tavua laitteelta ”%s”."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Sisääntuloa %d ei voitu asettaa laitteelle %s."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Sisääntuloa %d ei voitu asettaa laitteelle %s."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Laitteelta ”%s” ei saatu signaalinvoimakkuutta."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Laitteen ”%s” ajuri ei tue mitään tunnettua kaappaustapaa."
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy
+msgid "Failed to start decoding thread."
+msgstr "JPEG-kuvan purku epäonnistui"
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Videosyötelaite ei hyväksy uutta kehysnopeusasetusta."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "JPEG-kuvan purku epäonnistui"
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Virhe haettaessa laitteen ”%s” ominaisuuksia: se ei ole v4l2-ajuri.Tarkista, "
+"onko se v4l1-ajuri."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Lähteen %d ominaisuuksia laitteelta %s ei voitu kysyä"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Virittimen %d asetuksia ei voitu lukea laitteelta ”%s”."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Laitteen ”%s” videostandardia ei voitu kysyä."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Laitteen ”%s” ohjainattribuutteja ei voitu lukea."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Laitetta ”%s” ei voi tunnistaa."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Tämä ei ole laite ”%s”."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Laitetta ”%s” ei voitu avata luettavaksi ja kirjoitettavaksi."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Laitteelta ”%s” ei voi kaapata."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Laite ”%s” ei ole ulostulolaite."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Laitetta ”%s” ei voitu avata luettavaksi ja kirjoitettavaksi."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Laitteen ”%s” videostandardia ei voitu asettaa."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Nyt viritettyä taajuutta ei voitu lukea laitteelta ”%s”."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr "Laitteen ”%s” virittimen taajutta ei voitu asettaa arvoon %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Laitteelta ”%s” ei saatu signaalinvoimakkuutta."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Ohjaimelle %d ei saatu arvoa laitteelta ”%s”."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Arvoa %d ei voitu asettaa ohjaimelle %d laitteella ”%s”."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Laitteen ”%s” tämänhetkistä sisääntuloa ei voitu lukea, se ei ehkä ole "
+"radiolaite"
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Laitteen ”%s” tämänhetkistä sisääntuloa ei voitu lukea, se ei ehkä ole "
+"radiolaite"
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Sisääntuloa %d ei voitu asettaa laitteelle %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Resoluution vaihto käytön aikana ei ole vielä mahdollista."
+
+msgid "Cannot operate without a clock"
+msgstr "Ei voitu toimia ilman kelloa"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Tiedosto sisältää useita virtoja. Soitetaan vain ensimmäiset %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Nauhoituslähde"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofoni"
+
+#~ msgid "Line In"
+#~ msgstr "Linjatulo"
+
+#~ msgid "Internal CD"
+#~ msgstr "Sisäinen CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF sisään"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 sisään"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 sisään"
+
+#, fuzzy
+#~ msgid "Codec Loopback"
+#~ msgstr "Takaisinkytkentä"
+
+#, fuzzy
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Takaisinkytkentä"
+
+#~ msgid "Volume"
+#~ msgstr "Äänenvoimakkuus"
+
+#~ msgid "Gain"
+#~ msgstr "Herkkyys"
+
+#~ msgid "Monitor"
+#~ msgstr "Tarkkailu"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Sisäänrakennettu kaiutin"
+
+#~ msgid "Headphone"
+#~ msgstr "Kuulokkeet"
+
+#~ msgid "Line Out"
+#~ msgstr "Linja ulos"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF ulos"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 ulos"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 ulos"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Sisäisen tietovirran virhe."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Sisäisen tietovirran virhe."
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Saatiin odottamaton kehys kooltaan %u odotetun %u sijaan."
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Videoruutujen noutaminen laitteelta ”%s” epäonnistui."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr "Epäonnistui %d yrityksen jälkeen: laite %s, järjestelmävirhe: %s"
+
+#~ msgid "Bass"
+#~ msgstr "Basso"
+
+#~ msgid "Treble"
+#~ msgstr "Ylä-äänet"
+
+#~ msgid "Synth"
+#~ msgstr "Synth"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Kaiutin"
+
+#~ msgid "Line-in"
+#~ msgstr "Linjatulo"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Mikseri"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Nauhoitus"
+
+#~ msgid "In-gain"
+#~ msgstr "Gain-sisään"
+
+#~ msgid "Out-gain"
+#~ msgstr "Gain-ulos"
+
+#~ msgid "Line-1"
+#~ msgstr "Linja-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Linja-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Linja-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Digitaalinen-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Digitaalinen-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Digitaalinen-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Levysoitintulo"
+
+#~ msgid "Phone-out"
+#~ msgstr "Levysoitinlähtö"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Radio"
+#~ msgstr "Radio"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "Äänilaitetta ei voitu avata mikserinhallintaa varten."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Äänilaitetta ei voitu avata mikserinhallintaa varten. Tämä elementti ei "
+#~ "tue tätä versiota Open Sound Systemistä."
+
+#~ msgid "Master"
+#~ msgstr "Pää"
+
+#~ msgid "Front"
+#~ msgstr "Etu"
+
+#~ msgid "Rear"
+#~ msgstr "Taka"
+
+#~ msgid "Headphones"
+#~ msgstr "Kuulokkeet"
+
+#~ msgid "Center"
+#~ msgstr "Keski"
+
+#~ msgid "LFE"
+#~ msgstr "LFE"
+
+#~ msgid "Surround"
+#~ msgstr "Surround"
+
+#~ msgid "Side"
+#~ msgstr "Sivu"
+
+#~ msgid "AUX Out"
+#~ msgstr "AUX ulos"
+
+#~ msgid "3D Depth"
+#~ msgstr "3D-syvyys"
+
+#~ msgid "3D Center"
+#~ msgstr "3D-keski"
+
+#~ msgid "3D Enhance"
+#~ msgstr "3D-tehostus"
+
+#~ msgid "Telephone"
+#~ msgstr "Puhelin"
+
+#~ msgid "Video In"
+#~ msgstr "Videotulo"
+
+#~ msgid "AUX In"
+#~ msgstr "AUX sisään"
+
+#~ msgid "Record Gain"
+#~ msgstr "Nauhoitusgain"
+
+#~ msgid "Output Gain"
+#~ msgstr "Gain-ulos"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "Mikrofonitehostin"
+
+#~ msgid "Diagnostic"
+#~ msgstr "Diagnosointi"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Bassotehostin"
+
+#~ msgid "Playback Ports"
+#~ msgstr "Toistoportit"
+
+#~ msgid "Input"
+#~ msgstr "Sisään"
+
+#~ msgid "Monitor Source"
+#~ msgstr "Tarkkailulähde"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "Näppäimistöpiippaus"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "Simuloitu stereo"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "Surround Sound"
+#~ msgstr "Surround-ääni"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "Mikrofoni-gain"
+
+#~ msgid "Speaker Source"
+#~ msgstr "Kaiutinlähde"
+
+#~ msgid "Microphone Source"
+#~ msgstr "Mikrofonilähde"
+
+#~ msgid "Jack"
+#~ msgstr "Pistoke"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Keski / LFE"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "Stereo Mix"
+
+#~ msgid "Mono Mix"
+#~ msgstr "Mono Mix"
+
+#~ msgid "Input Mix"
+#~ msgstr "Sisään Mix"
+
+#~ msgid "Microphone 1"
+#~ msgstr "Mikrofoni 1"
+
+#~ msgid "Microphone 2"
+#~ msgstr "Mikrofoni 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "Digitaalinen ulos"
+
+#~ msgid "Digital In"
+#~ msgstr "Digitaalinen sisään"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI"
+
+#~ msgid "Modem"
+#~ msgstr "Modeemi"
+
+#~ msgid "Handset"
+#~ msgstr "Kuulokkeet"
+
+#~ msgid "Other"
+#~ msgstr "Muu"
+
+#~ msgid "None"
+#~ msgstr "Ei mikään"
+
+#~ msgid "On"
+#~ msgstr "Päällä"
+
+#~ msgid "Off"
+#~ msgstr "Poissa"
+
+#~ msgid "Mute"
+#~ msgstr "Vaimennettu"
+
+#~ msgid "Fast"
+#~ msgstr "Nopea"
+
+#~ msgid "Very Low"
+#~ msgstr "Erittäin matala"
+
+#~ msgid "Low"
+#~ msgstr "Matala"
+
+#~ msgid "Medium"
+#~ msgstr "Medium"
+
+#~ msgid "High"
+#~ msgstr "Korkea"
+
+#~ msgid "Very High"
+#~ msgstr "Erittäin korkea"
+
+#~ msgid "Production"
+#~ msgstr "Tuotanto"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Etupaneelin mikrofoni"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "Etupaneelin linjatulo"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Etupaneelin kuulokkeet"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Etupaneelin linja ulos"
+
+#~ msgid "Green Connector"
+#~ msgstr "Vihreä liitin"
+
+#~ msgid "Pink Connector"
+#~ msgstr "Vaaleanpunainen liitin"
+
+#~ msgid "Blue Connector"
+#~ msgstr "Sininen liitin"
+
+#~ msgid "White Connector"
+#~ msgstr "Valkoinen liitin"
+
+#~ msgid "Black Connector"
+#~ msgstr "Musta liitin"
+
+#~ msgid "Gray Connector"
+#~ msgstr "Harmaa liitin"
+
+#~ msgid "Orange Connector"
+#~ msgstr "Oranssi liitin"
+
+#~ msgid "Red Connector"
+#~ msgstr "Punainen liitin"
+
+#~ msgid "Yellow Connector"
+#~ msgstr "Keltainen liitin"
+
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Vihreä etupaneeliliitin"
+
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Vaaleanpunainen etupaneeliliitin"
+
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Sininen etupaneeliliitin"
+
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Valkoinen etupaneeliliitin"
+
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Musta etupaneeliliitin"
+
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Harmaa etupaneeliliitin"
+
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Oranssi etupaneeliliitin"
+
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Punainen etupaneeliliitin"
+
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Keltainen etupaneeliliitin"
+
+#~ msgid "Spread Output"
+#~ msgstr "Levitetty ulos"
+
+#~ msgid "Downmix"
+#~ msgstr "Alasmiksaus"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Virtuaalinen mikseritulo"
+
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Virtuaalinen mikseri ulos"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Virtuaaliset mikserikanavat"
+
+#~ msgid "%s %d Function"
+#~ msgstr "%s %d -toiminto"
+
+#~ msgid "%s Function"
+#~ msgstr "%s -toiminto"
+
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Virhe luettaessa %d tavua laitteelta ”%s”."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Puskureita ei voitu laittaa jonoon laitteella ”%s”."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Yhteyttä äänipalvelimeen ei voitu avata"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Äänipalvelimen ominaisuuksia ei voitu selvittää"
+
+#~ msgid ""
+#~ "The buffer type is not supported, or the index is out of bounds, or no "
+#~ "buffers have been allocated yet, or the userptr or length are invalid. "
+#~ "device %s"
+#~ msgstr ""
+#~ "Puskurityyppi ei ole tuettu, indeksi on rajojen ulkopuolella, puskureita "
+#~ "ei ole vielä varattu tai käyttäjän osoitin tai pituus ovat virheelliset. "
+#~ "laite %s"
+
+#~ msgid "insufficient memory to enqueue a user pointer buffer. device %s."
+#~ msgstr ""
+#~ "muisti ei riitä käyttäjän osoitinpuskurin jonoon lisäämiseen. laite %s"
+
+#~ msgid "No free buffers found in the pool at index %d."
+#~ msgstr "Vapaita puskureita ei löytynyt indeksillä %d."
+
+#~ msgid "Could not read from CD."
+#~ msgstr "CD-levyltä ei voitu lukea."
+
+#~ msgid "Disc is not an Audio CD."
+#~ msgstr "Levy ei ole ääni-CD."
+
+#~ msgid "This file is encrypted and cannot be played."
+#~ msgstr "Tiedosto on salattu eikä sitä voida näyttää."
+
+#~ msgid "Describes the selected input element."
+#~ msgstr "Kuvaa valitun lähde-elementin."
+
+#~ msgid "Describes the selected output element for Audio/Video Conferencing."
+#~ msgstr "Kuvaa ääni- ja videoneuvotteluille valitun ulostuloelementin."
+
+#~ msgid "Describes the selected output element for Music and Movies."
+#~ msgstr "Kuvaa musiikille ja elokuville valitun ulostuloelementin."
+
+#~ msgid "Describes the selected output element."
+#~ msgstr "Kuvaa valitun ulostuloelementin."
+
+#~ msgid "GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr "GStreamer-ääninielu ääni- ja videoneuvotteluille"
+
+#~ msgid "GStreamer audiosink for Music and Movies"
+#~ msgstr "GStreamer-ääninielu äänelle ja elokuville"
+
+#~ msgid ""
+#~ "GStreamer can play audio using any number of output elements. Some "
+#~ "possible choices are osssink, esdsink and alsasink. The audiosink can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer voi soittaa ääntä käyttäen useita eri nieluelementtejä. "
+#~ "Muutamia vaihtoehtoja ovat osssink, esdsink ja alsasink. Ääninielu voi "
+#~ "olla myös liukuhihnan osa eikä vain yksi elementti."
+
+#~ msgid ""
+#~ "GStreamer can play video using any number of output elements. Some "
+#~ "possible choices are xvimagesink, ximagesink, sdlvideosink and aasink. "
+#~ "The videosink can be a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer voi toistaa videota käyttäen useita eri nieluelementtejä. "
+#~ "Muutamia vaihtoehtoja ovat xvimagesink, ximagesink, sdlvideosink ja "
+#~ "aasink. Videonielu voi olla myös liukuhihnan osa eikä vain yksi elementti."
+
+#~ msgid ""
+#~ "GStreamer can put visualization plugins in a pipeline to transform audio "
+#~ "stream in video frames. Default is goom but more visualization plugins "
+#~ "will be ported soon. The visualization plugin can be a partial pipeline "
+#~ "instead of just one element."
+#~ msgstr ""
+#~ "Gstreamer voi laittaa visualisointiliitännäisiä liukuhihnalle, jolle se "
+#~ "muuntaa äänivirran videoruuduiksi. Oletusliitännäinen on goom, mutta "
+#~ "muita ollaan lisäämässä pian. Visualisoinnin liitännäinen voi olla myös "
+#~ "liukuhihnan osa eikä vain yksi elementti."
+
+#~ msgid ""
+#~ "GStreamer can record audio using any number of input elements. Some "
+#~ "possible choices are osssrc, esdsrc and alsasrc. The audio source can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer voi nauhoittaa ääntä käyttäen useita eri lähde-elementtejä. "
+#~ "Muutamia vaihtoehtoja ovat osssrc, esdsrc ja alsasrc. Äänilähde voi olla "
+#~ "myös liukuhihnan osa eikä vain yksi elementti."
+
+#~ msgid ""
+#~ "GStreamer can record video from any number of input elements. Some "
+#~ "possible choices are v4lsrc and videotestsrc. The video source can be a "
+#~ "partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer voi nauhoittaa videota käyttäen useita eri lähde-elementtejä. "
+#~ "Muutamia vaihtoehtoja ovat v4lsrc ja videotestsrc.. Videolähde voi olla "
+#~ "myös liukuhihnan osa eikä vain yksi elementti."
+
+#~ msgid "default GStreamer audio source"
+#~ msgstr "GStreamerin oletusäänilähde"
+
+#~ msgid "default GStreamer audiosink"
+#~ msgstr "GStreamerin oletusääninielu"
+
+#~ msgid "default GStreamer video source"
+#~ msgstr "GStreamerin oletusvideolähde"
+
+#~ msgid "default GStreamer videosink"
+#~ msgstr "GStreamerin oletusvideonielu"
+
+#~ msgid "default GStreamer visualization plugin"
+#~ msgstr "Gstreamerin visualisointien oletusliitännäinen"
+
+#~ msgid "description for GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr "kuvaus ääni- ja videoneuvottelun GStreamer-ääninielulle"
+
+#~ msgid "description for GStreamer audiosink for Music and Movies"
+#~ msgstr "kuvaus musiikin ja elokuvien GStreamer-ääninielulle"
+
+#~ msgid "description for default GStreamer audiosink"
+#~ msgstr "GStreamerin oletusääninielun kuvaus"
+
+#~ msgid "description for default GStreamer audiosrc"
+#~ msgstr "GStreamerin oletusäänilähteen kuvaus"

@@ -1,0 +1,465 @@
+# Bulgarian translation of gst-plugins-good.
+# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2016 Free Software Foundation, Inc.
+# Copyright (C) 2017 Free Software Foundation, Inc.
+# This file is distributed under the same license as the gst-plugins-good package.
+# Alexander Shopov <ash@kambanaria.org>, 2007, 2008, 2009, 2010, 2011, 2016.
+# Alexander Shopov <ash@kambanaria.org>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 1.12.0\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2017-05-07 22:46+0200\n"
+"Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
+"Language-Team: Bulgarian <dict@ludost.net>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Jack server not found"
+msgstr "Сървърът Jack не е открит."
+
+msgid "Failed to decode JPEG image"
+msgstr "Неуспешно декодиране на изображение, формат JPEG."
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "„%s“ от „%s“"
+
+msgid "Could not connect to server"
+msgstr "Не може да се осъществи връзка към сървър."
+
+msgid "No URL set."
+msgstr "Не е зададен адрес."
+
+msgid "Could not resolve server name."
+msgstr "Сървърът не може да се открие по име."
+
+msgid "Could not establish connection to server."
+msgstr "Не може да се осъществи връзка към сървъра."
+
+msgid "Secure connection setup failed."
+msgstr "Неуспешно осъществяване на шифрирана връзка."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Възникна мрежова грешка или сървърът неочаквано прекъсна връзката."
+
+msgid "Server sent bad data."
+msgstr "Сървърът изпрати лоши данни."
+
+msgid "Server does not support seeking."
+msgstr "Сървърът не поддържа търсене."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Аудио входът липсва или е грешен. Потокът с AVI ще бъде повреден."
+
+msgid "This file contains no playable streams."
+msgstr "Този файл не съдържа изпълними потоци."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Този файл е повреден и не може да бъде изпълнен."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr "Потокът не може да се изпълни, защото е шифриран с PlayReady DRM."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Този файл е повреден и не може да бъде изпълнен."
+
+msgid "Invalid atom size."
+msgstr "Неправилен размер на атом."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Този файл е непълен и не може да бъде изпълнен."
+
+msgid "The video in this file might not play correctly."
+msgstr "Видео потокът в този файл може да не се покаже правилно."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Не е открит поддържан поток. Пробвайте да инсталирате приставката на "
+"GStreamer — RTSP, която поддържа потоци на Real."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Не е открит поддържан поток. Пробвайте да разрешите повече транспортни "
+"протоколи или ви липсва правилната приставка на GStreamer за RTSP."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Аудио устройството не може да се отвори за изпълнение, използва се от друго "
+"приложение."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Аудио устройството не може да се отвори за изпълнение, нямате права за това."
+
+msgid "Could not open audio device for playback."
+msgstr "Устройството не може да се отвори за изпълнение."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Аудио устройството не може да се отвори за изпълнение. Елементът не поддържа "
+"тази версия на OSS."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Това аудио устройство не поддържа изпълнение."
+
+msgid "Audio playback error."
+msgstr "Грешка при изпълнение на аудиото."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Това аудио устройство не поддържа запис."
+
+msgid "Error recording from audio device."
+msgstr "Грешка при записа от аудио устройството."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Аудио устройството не може да се отвори за запис, нямате права за това."
+
+msgid "Could not open audio device for recording."
+msgstr "Аудио устройството не може да се отвори за запис."
+
+msgid "CoreAudio device not found"
+msgstr "Устройството CoreAudio не е открито"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Устройството CoreAudio не може да се отвори"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Грешка при прочитане на %d байта от устройство „%s“."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Неуспешно изброяване на поддържаните от устройството „%s“ видео формати"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Не могат да се получат буферите от устройството „%s“."
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Драйверът за устройството „%s“ не поддържа метода за В/И %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Драйверът за устройството „%s“ не поддържа познат метод за В/И."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "Устройството „%s“ е заето"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Устройството „%s“ не може да записва с разделителна способност %d×%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Устройството „%s“ не може да записва в указания формат."
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Устройството „%s“ не поддържа несъседни равнини"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Сървърът не поддържа търсене."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Устройството „%s“ не поддържа несъседни равнини"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Не могат да се получат параметрите на устройството „%s“."
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+"Устройството за видео не приема новите настройки за честотата на кадри."
+
+msgid "Video device did not provide output format."
+msgstr "Видео устройството не указва формат."
+
+msgid "Video device returned invalid dimensions."
+msgstr "Видео устройството върна неправилни размери"
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Видео устройството използва неподдържана презредова развивка."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "Видео устройството използва неподдържан формат на пикселите."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Неуспешно настройване на вътрешните буфери."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "Видео устройството не указва размер на буфера."
+
+msgid "No downstream pool to import from."
+msgstr "Няма буфери, които да се внесат."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Неуспешно получаване на настройките на тунер %d на устройство „%s“."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Грешка при получаване на възможностите на устройство „%s“."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Устройството „%s“ не е тунер."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Неуспешно получаване на радио входа на устройство „%s“."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Неуспешно задаване на вход %d на устройство „%s“."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Неуспешна смяна на заглушаването устройство „%s“."
+
+msgid "Failed to allocated required memory."
+msgstr "Неуспешно заделяне на необходимата памет."
+
+msgid "Failed to allocate required memory."
+msgstr "Неуспешно заделяне на необходимата памет."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Конверторът на устройството „%s“ не поддържа познати метод за вход."
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Конверторът на устройството „%s“ не поддържа познати метод за изход."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Кодерът на устройството „%s“ не поддържа познати метод за изход."
+
+msgid "Failed to start decoding thread."
+msgstr "Неуспешно стартиране на нишката за декодиране."
+
+msgid "Failed to process frame."
+msgstr "Неуспешна обработка на кадър."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Кодерът на устройството „%s“ не поддържа познати метод за изход."
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Кодерът устройството „%s“ не поддържа познати метод за вход."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Неуспешно стартиране на нишката за декодиране."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Грешка при получаването на възможностите на устройството „%s“: не е драйвер "
+"v4l2. Проверете дали всъщност не е драйвер v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Неуспешно запитване за атрибутите за вход %d на устройство „%s“."
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Неуспешно получаване на настройките на тунер %d на устройство „%s“."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Неуспешно запитване за нормата на устройство „%s“."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Неуспешно получаване на контролните атрибути на устройството „%s“."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Устройството „%s“ не може да се идентифицира."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "„%s“ не е устройство."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Устройството „%s“ не може да се отвори за четене и запис."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Устройството „%s“ не е устройство за запис."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Устройството „%s“ не е изходно устройство."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Устройството „%s“ не е M2M."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Устройството „%s“ не може да се дуплексира за четене и запис."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Неуспешно задаване на нормата на устройство „%s“."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr ""
+"Неуспешно получаване на текущата настройка на честотата за устройство „%s“."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Неуспешно задаване на текущата настройка на честотата на устройство „%s“ да "
+"е %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Неуспешно получаване на силата на сигнала на устройство „%s“."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Неуспешно получаване на стойността на контрол %d на устройство „%s“."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Неуспешно задаване на стойността %d на контрол %d на устройство „%s“."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Неуспешно получаване на текущия вход на устройство „%s“. Може би е радио."
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Неуспешно получаване на текущия изход на устройство „%s“. Може би е радио."
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Неуспешно задаване на изход %d на устройство „%s“."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+"Промяната на разделителната способност по време на работа все още не се "
+"поддържа."
+
+msgid "Cannot operate without a clock"
+msgstr "Работата без часовник е невъзможна."
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Този файл съдържа прекалено много потоци. Изпълняват се само първите %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Източник за запис"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Вход"
+
+#~ msgid "Internal CD"
+#~ msgstr "Вътрешно CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Вход SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Вход AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Вход AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Обратна връзка на кодека"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Обратна връзка на SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Сила на звука"
+
+#~ msgid "Gain"
+#~ msgstr "Усилване"
+
+#~ msgid "Monitor"
+#~ msgstr "Монитор"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Вграден високоговорител"
+
+#~ msgid "Headphone"
+#~ msgstr "Слушалки"
+
+#~ msgid "Line Out"
+#~ msgstr "Изход"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Изход SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Изход AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Изход AUX 2"

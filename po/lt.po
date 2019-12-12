@@ -1,0 +1,925 @@
+# Lithuanian translation for gst-plugins-good.
+# This file is put in the public domain.
+# Gintautas Miliauskas <gintas@akl.lt>, 2008.
+# Aurimas Černius <aurisc4@gmail.com>, 2010.
+# Žygimantas Beručka <uid0@akl.lt>, 2010.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 0.10.23.2\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2010-07-16 19:34+0300\n"
+"Last-Translator: Žygimantas Beručka <uid0@akl.lt>\n"
+"Language-Team: Lithuanian <komp_lt@konferencijos.lt>\n"
+"Language: lt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
+"%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.6.1\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Nepavyko dekoduoti JPEG paveikslėlio"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "„%s“ atlieka „%s“"
+
+msgid "Could not connect to server"
+msgstr "Nepavyko prisijungti prie serverio"
+
+msgid "No URL set."
+msgstr ""
+
+#, fuzzy
+msgid "Could not resolve server name."
+msgstr "Nepavyko prisijungti prie serverio"
+
+#, fuzzy
+msgid "Could not establish connection to server."
+msgstr "Nepavyko prisijungti prie garso serverio"
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+msgid "Server does not support seeking."
+msgstr ""
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Nėra įvesties garso arba jis netinkamas, AVI srautas bus sugadintas."
+
+msgid "This file contains no playable streams."
+msgstr "Šiame faile nėra atkurtinų srautų."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Failas netinkamas ir negali būti atkurtas."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Failas sugadintas ir negali būti atkurtas."
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Failas nebaigtas ir negali būti atkurtas."
+
+msgid "The video in this file might not play correctly."
+msgstr "Šiame faile esantis vaizdo įrašas gali būti atkurtas nekorektiškai."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Nerasta palaikomų srautų. Jums gali reikėti įdiegti GStreamer RTSP "
+"papildinio įskiepį Real media srautams."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Nerasta palaikomų srautų. Jums gali reikėti leisti daugiau transporto "
+"protokolų, arba jūs neturite tinkamo GStreamer RTSP papildinio įskiepio."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Nepavyko atverti garso įrenginio grojimui. Įrenginį naudoja kita programa."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Nepavyko atverti garso įrenginio grojimui. Jūs neturite leidimo atverti "
+"įrenginį."
+
+msgid "Could not open audio device for playback."
+msgstr "Nepavyko atverti garso įrenginio grojimui. "
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Nepavyko atverti garso įrenginio grojimui. Šis elementas nepalaiko šios Open "
+"Sound System versijos."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Šis garso įrenginys nepalaiko grojimo."
+
+msgid "Audio playback error."
+msgstr "Garso grojimo klaida."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Šis garso įrenginys nepalaiko grojimo."
+
+msgid "Error recording from audio device."
+msgstr "Klaida įrašant iš garso įrenginio."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Nepavyko atverti garso įrenginio įrašymui. Jūs neturite leidimo atverti "
+"įrenginį."
+
+msgid "Could not open audio device for recording."
+msgstr "Nepavyko atverti garso įrenginio įrašymui."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Klaida skaitant %d baitus (-ų) iš įrenginio „%s“."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Nepavyko išdėstyti buferių iš įrenginio „%s“"
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
+
+#, fuzzy, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Įrenginys „%s“ nėra įrašymo įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Įrenginys „%s“ nėra įrašymo įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Nepavyko įrenginio „%s“ parametrų"
+
+#, fuzzy
+msgid "Video device did not accept new frame rate setting."
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy
+msgid "Video device did not provide output format."
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+#, fuzzy
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
+
+#, fuzzy
+msgid "Video device uses an unsupported pixel format."
+msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+#, fuzzy
+msgid "Video device did not suggest any buffer size."
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Nepavyko gauti derintuvo %d įrenginyje „%s“ parametrų."
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Klaida skaitant %d baitus (-ų) iš įrenginio „%s“."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Nepavyko nustatyti įvesties %d įrenginyje %s."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Nepavyko nustatyti įvesties %d įrenginyje %s."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Nepavyko gauti įrenginio „%s“ signalo stiprumo."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy
+msgid "Failed to start decoding thread."
+msgstr "Nepavyko dekoduoti JPEG paveikslėlio"
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Nepavyko dekoduoti JPEG paveikslėlio"
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Klaida gaunant įrenginio „%s“ funkcijas: tai nėra v4l2 tvarkyklė. "
+"Patikrinkite, ar tai v4l1 tvarkyklė."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Nepavyko užklausti įvesties %d įrenginyje %s atributų"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Nepavyko gauti derintuvo %d įrenginyje „%s“ parametrų."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Nepavyko užklausti normalės įrenginyje „%s“."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Nepavyko gauti valdymo atributų įrenginyje „%s“."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Nepavyko nustatyti įrenginio „%s“."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Tai nėra įrenginys „%s“."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Nepavyko atverti įrenginio „%s“ skaitymui ir rašymui."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Įrenginys „%s“ nėra įrašymo įrenginys."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Nepavyko atverti įrenginio „%s“ skaitymui ir rašymui."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Nepavyko nustatyti normalės įrenginiui „%s“."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Nepavyko gauti įrenginio „%s“ dabartinio derintuvo dažnio."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr "Nepavyko nustatyti įrenginio „%s“ derintuvo dažnio į %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Nepavyko gauti įrenginio „%s“ signalo stiprumo."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Nepavyko gauti valdiklio %d reikšmės įrenginyje „%s“."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Nepavyko nustatyti valdiklio %2$d įrenginyje „%3$s“ reikšmės %1$d."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Nepavyko gauti dabartinės įvesties įrenginyje „%s“. Galbūt tai radijo "
+"įrenginys"
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Nepavyko gauti dabartinės įvesties įrenginyje „%s“. Galbūt tai radijo "
+"įrenginys"
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Nepavyko nustatyti įvesties %d įrenginyje %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Galimybės keisti skiriamąją gebą operacijos vykdymo metu dar nėra."
+
+msgid "Cannot operate without a clock"
+msgstr "Negali veikti be laikrodžio"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Šiame faile per daug srautų. Grojami tik pirmieji %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Įrašymo šaltinis"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofonas"
+
+#~ msgid "Line In"
+#~ msgstr "Įeinanti linija"
+
+#~ msgid "Internal CD"
+#~ msgstr "Vidinis CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "SPDIF įvestis"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "AUX 1 įvestis"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "AUX 2 įvestis"
+
+#, fuzzy
+#~ msgid "Codec Loopback"
+#~ msgstr "Perduoti ratu"
+
+#, fuzzy
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Perduoti ratu"
+
+#~ msgid "Volume"
+#~ msgstr "Garsumas"
+
+#~ msgid "Gain"
+#~ msgstr "Garsinimas"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitorius"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Integruotas garsiakalbis"
+
+#~ msgid "Headphone"
+#~ msgstr "Ausinės"
+
+#~ msgid "Line Out"
+#~ msgstr "Išeinanti linija"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "SPDIF išvestis"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "AUX 1 išvestis"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "AUX 2 išvestis"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Vidinė duomenų srauto klaida."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Vidinė duomenų srauto klaida."
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Gautas netikėtas kadro dydis %u vietoje %u."
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Nepavyko gauti vaizdo kadrų iš įrenginio „%s“."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr "Nepavyko po %d bandymų. Įrenginys %s. Sistemos klaida: %s"
+
+#~ msgid "Bass"
+#~ msgstr "Žemi dažniai"
+
+#~ msgid "Treble"
+#~ msgstr "Aukšti dažniai"
+
+#~ msgid "Synth"
+#~ msgstr "Sintezatorius"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Garsiakalbiai"
+
+#~ msgid "Line-in"
+#~ msgstr "Įvedimas"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Maišiklis"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Įrašymas"
+
+#~ msgid "In-gain"
+#~ msgstr "Garsinimo ribose"
+
+#~ msgid "Out-gain"
+#~ msgstr "Už garsinimo ribų"
+
+#~ msgid "Line-1"
+#~ msgstr "Linija-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Linija-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Linija-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Skaitmeninis-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Skaitmeninis-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Skaitmeninis-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Telefonas-įv"
+
+#~ msgid "Phone-out"
+#~ msgstr "Telefonas-išv"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Radio"
+#~ msgstr "Radijas"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "Nepavyko atverti garso įrenginio maišiklio valdymo apdorojimui."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Nepavyko atverti garso įrenginio maišiklio valdymo apdorojimui. Šis "
+#~ "elementas nepalaiko šios Open Sound System versijos."
+
+#~ msgid "Master"
+#~ msgstr "Pagrindinis"
+
+#~ msgid "Front"
+#~ msgstr "Priekinis"
+
+#~ msgid "Rear"
+#~ msgstr "Galinis"
+
+#~ msgid "Headphones"
+#~ msgstr "Ausinės"
+
+#~ msgid "Center"
+#~ msgstr "Vidurinis"
+
+#~ msgid "LFE"
+#~ msgstr "LFE"
+
+#~ msgid "Surround"
+#~ msgstr "Supantis"
+
+#~ msgid "Side"
+#~ msgstr "Šoninis"
+
+#~ msgid "AUX Out"
+#~ msgstr "AUX išvestis"
+
+#~ msgid "3D Depth"
+#~ msgstr "3D giluminis"
+
+#~ msgid "3D Center"
+#~ msgstr "3D vidurinis"
+
+#~ msgid "3D Enhance"
+#~ msgstr "3D pakeltas"
+
+#~ msgid "Telephone"
+#~ msgstr "Telefonas"
+
+#~ msgid "Video In"
+#~ msgstr "Vaizdo įvestis"
+
+#~ msgid "AUX In"
+#~ msgstr "AUX įvestis"
+
+#~ msgid "Record Gain"
+#~ msgstr "Įrašymo garsinimas"
+
+#~ msgid "Output Gain"
+#~ msgstr "Išvesties garsinimas"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "Mikrofono pagarsinimas"
+
+#~ msgid "Diagnostic"
+#~ msgstr "Diagnostika"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Žemųjų dažnių sustiprinimas"
+
+#~ msgid "Playback Ports"
+#~ msgstr "Grojimo prievadai"
+
+#~ msgid "Input"
+#~ msgstr "Įvestis"
+
+#~ msgid "Monitor Source"
+#~ msgstr "Monitoriaus šaltinis"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "Klaviatūros pypsėjimas"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "Imituoti stereo"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "Surround Sound"
+#~ msgstr "Erdvinis garsas"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "Mikrofono garsinimas"
+
+#~ msgid "Speaker Source"
+#~ msgstr "Garsiakalbio šaltinis"
+
+#~ msgid "Microphone Source"
+#~ msgstr "Mikrofono šaltinis"
+
+#~ msgid "Jack"
+#~ msgstr "Jack"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Centras / LFE"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "Stereo maiša"
+
+#~ msgid "Mono Mix"
+#~ msgstr "Mono maiša"
+
+#~ msgid "Input Mix"
+#~ msgstr "Įvesties maiša"
+
+#~ msgid "Microphone 1"
+#~ msgstr "Mikrofonas 1"
+
+#~ msgid "Microphone 2"
+#~ msgstr "Mikrofonas 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "Skaitmeninė išvestis"
+
+#~ msgid "Digital In"
+#~ msgstr "Skaitmeninė įvestis"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI"
+
+#~ msgid "Modem"
+#~ msgstr "Modemas"
+
+#~ msgid "Handset"
+#~ msgstr "Ragelis"
+
+#~ msgid "Other"
+#~ msgstr "Kita"
+
+#~ msgid "None"
+#~ msgstr "Nėra"
+
+#~ msgid "On"
+#~ msgstr "Įjungta"
+
+#~ msgid "Off"
+#~ msgstr "Išjungta"
+
+#~ msgid "Mute"
+#~ msgstr "Nutildyta"
+
+#~ msgid "Fast"
+#~ msgstr "Greitas"
+
+#~ msgid "Very Low"
+#~ msgstr "Labai žema"
+
+#~ msgid "Low"
+#~ msgstr "Žema"
+
+#~ msgid "Medium"
+#~ msgstr "Vidutinė"
+
+#~ msgid "High"
+#~ msgstr "Aukšta"
+
+#~ msgid "Very High"
+#~ msgstr "Labai aukšta"
+
+#~ msgid "Production"
+#~ msgstr "Sukūrimo"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Priekinio skydelio mikrofonas"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "Priekinio skydelio įeinanti linija"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Priekinio skydelio ausinės"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Priekinio skydelio išeinanti linija"
+
+#~ msgid "Green Connector"
+#~ msgstr "Žalias kištukas"
+
+#~ msgid "Pink Connector"
+#~ msgstr "Rožinis kištukas"
+
+#~ msgid "Blue Connector"
+#~ msgstr "Mėlynas kištukas"
+
+#~ msgid "White Connector"
+#~ msgstr "Baltas kištukas"
+
+#~ msgid "Black Connector"
+#~ msgstr "Juodas kištukas"
+
+#~ msgid "Gray Connector"
+#~ msgstr "Pilkas kištukas"
+
+#~ msgid "Orange Connector"
+#~ msgstr "Oranžinis kištukas"
+
+#~ msgid "Red Connector"
+#~ msgstr "Raudonas kištukas"
+
+#~ msgid "Yellow Connector"
+#~ msgstr "Geltonas kištukas"
+
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Žalias priekinio skydelio kištukas"
+
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Rožinis priekinio skydelio kištukas"
+
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Mėlynas priekinio skydelio kištukas"
+
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Baltas priekinio skydelio kištukas"
+
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Juodas priekinio skydelio kištukas"
+
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Pilkas priekinio skydelio kištukas"
+
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Oranžinis priekinio skydelio kištukas"
+
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Raudonas priekinio skydelio kištukas"
+
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Geltonas priekinio skydelio kištukas"
+
+#~ msgid "Spread Output"
+#~ msgstr "Skleisti išvestį"
+
+#~ msgid "Downmix"
+#~ msgstr "Sumaišyti"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Virtualaus maišiklio įvestis"
+
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Virtualaus maišiklio išvestis"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Virtualaus maišiklio kanalai"
+
+#~ msgid "%s %d Function"
+#~ msgstr "%s %d funkcija"
+
+#~ msgid "%s Function"
+#~ msgstr "%s funkcija"
+
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Klaida skaitant %d baitus (-ų) įrenginyje „%s“."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Nepavyko sustatyti į eilė buferių įrenginyje „%s“."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Nepavyko prisijungti prie garso serverio"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Nepavyko užklausti garso serverio galimybių"
+
+#~ msgid "Describes the selected input element."
+#~ msgstr "Aprašo pasirinktą įvesties elementą."
+
+#~ msgid "Describes the selected output element for Audio/Video Conferencing."
+#~ msgstr "Aprašo pasirinktą išvesties elementą garso/vaizdo konferencijoms."
+
+#~ msgid "Describes the selected output element for Music and Movies."
+#~ msgstr "Aprašo pasirinktą išvesties elementą muzikai ir filmams."
+
+#~ msgid "Describes the selected output element."
+#~ msgstr "Aprašo pasirinktą išvesties elementą."
+
+#~ msgid "GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr "GStreamer garso išvesties elementas garso/vaizdo konferencijoms"
+
+#~ msgid "GStreamer audiosink for Music and Movies"
+#~ msgstr "GStreamer garso išvesties elementas muzikai ir filmams"
+
+#~ msgid ""
+#~ "GStreamer can play audio using any number of output elements. Some "
+#~ "possible choices are osssink, esdsink and alsasink. The audiosink can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer gali groti garsą naudodamas bet kokį išvesties elementų kiekį. "
+#~ "Keletas galimų pasirinkimų: osssink, esdsink ir alsasink. Garso išvesties "
+#~ "elementą gali sudaryti dalinis konvejeris, ne tik vienas elementas."
+
+#~ msgid ""
+#~ "GStreamer can play video using any number of output elements. Some "
+#~ "possible choices are xvimagesink, ximagesink, sdlvideosink and aasink. "
+#~ "The videosink can be a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer gali groti vaizdo įrašus naudodamas bet kokį išvesties elementų "
+#~ "kiekį. Keletas galimų pasirinkimų: xvimagesink, ximagesink, sdlvideosink "
+#~ "ir aasink. Vaizdo išvesties elementą gali sudaryti dalinis konvejeris, ne "
+#~ "tik vienas elementas."
+
+#~ msgid ""
+#~ "GStreamer can put visualization plugins in a pipeline to transform audio "
+#~ "stream in video frames. Default is goom but more visualization plugins "
+#~ "will be ported soon. The visualization plugin can be a partial pipeline "
+#~ "instead of just one element."
+#~ msgstr ""
+#~ "GStreamer gali įdėti vaizdo efektų įskiepius į konvejerį, kad "
+#~ "transformuotų garso srautą vaizdo kadruose. Numatytasis įskiepis yra "
+#~ "goom, tačiau greitu metu bus realizuota daugiau vaizdo efektų įskiepių. "
+#~ "Vaizdo efekto įskiepį gali sudaryti dalinis konvejeris, ne tik vienas "
+#~ "elementas."
+
+#~ msgid ""
+#~ "GStreamer can record audio using any number of input elements. Some "
+#~ "possible choices are osssrc, esdsrc and alsasrc. The audio source can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer gali įrašyti garsą naudodamas bet kokį įvesties elementų "
+#~ "skaičių. Keletas galimų pasirinkimų: osssrc, esdsrc ir alsasrc. Garso "
+#~ "šaltinį gali sudaryti dalinis konvejeris, ne tik vienas elementas."
+
+#~ msgid ""
+#~ "GStreamer can record video from any number of input elements. Some "
+#~ "possible choices are v4lsrc and videotestsrc. The video source can be a "
+#~ "partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer gali įrašyti vaizdą iš bet kokio skaičiaus įvesties elementų. "
+#~ "Keletas galimų pasirinkimų: v4lsrc ir videotestsrc. Vaizdo šaltinį gali "
+#~ "sudaryti dalinis konvejeris, ne tik vienas elementas."
+
+#~ msgid "default GStreamer audio source"
+#~ msgstr "numatytasis GStreamer garso šaltinis"
+
+#~ msgid "default GStreamer audiosink"
+#~ msgstr "numatytasis GStreamer garso išvesties elementas"
+
+#~ msgid "default GStreamer video source"
+#~ msgstr "numatytasis GStreamer vaizdo šaltinis"
+
+#~ msgid "default GStreamer videosink"
+#~ msgstr "numatytasis GStreamer vaizdo išvesties elementas"
+
+#~ msgid "default GStreamer visualization plugin"
+#~ msgstr "numatytasis GStreamer vaizdo efekto įskiepis"
+
+#~ msgid "description for GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr ""
+#~ "GStreamer garso išvesties elemento garso/vaizdo konferencijoms aprašymas"
+
+#~ msgid "description for GStreamer audiosink for Music and Movies"
+#~ msgstr "GStreamer garso išvesties elemento muzikai ir filmams aprašymas"
+
+#~ msgid "description for default GStreamer audiosink"
+#~ msgstr "numatytojo GStreamer garso išvesties elemento aprašymas"
+
+#~ msgid "description for default GStreamer audiosrc"
+#~ msgstr "numatytojo GStreamer garso šaltinio aprašymas"
+
+#~ msgid "This file is encrypted and cannot be played."
+#~ msgstr "Šis failas užšifruotas ir negali būti pagrotas."
+
+#~ msgid "Disc is not an Audio CD."
+#~ msgstr "Diskas nėra Audio CD"
+
+#~ msgid "Could not read from CD."
+#~ msgstr "Nepavyko skaityti iš CD."

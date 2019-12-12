@@ -1,0 +1,182 @@
+GStreamer uses a *large* array of tools and libraries, most of which are
+optional. We have attempted to make sure that any code that depends on
+optional libraries doesn't get built unless you have those libraries. If
+you find this not to be the case, please, let us know by filing a bug
+report at http://bugzilla.gnome.org/.
+
+On Debian/Ubuntu, the easiest way to install most build requirements is:
+
+        sudo apt-get build-dep gst-plugins-good1.0
+
+Required tools:
+===============
+
+An extra set of tools is required if you wish to build GStreamer
+from git (using autogen.sh):
+
+autoconf  >= 2.68   https://www.gnu.org/software/autoconf/
+automake  >= 1.11   https://www.gnu.org/software/automake/
+gettext   >= 0.17   https://www.gnu.org/software/gettext/
+libtool   >= 2.2.6  https://www.gnu.org/software/libtool/
+pkgconfig >= 0.9.0  https://www.freedesktop.org/software/pkgconfig/
+
+Required libraries:
+===================
+
+Package:        GStreamer
+Version:        1.x (same 1.x version as this package)
+Recommended:    Latest 1.x
+URL:            http://gstreamer.freedesktop.org/
+DebianPackage:  libgstreamer1.0-dev
+Notes:          The required version is updated frequently, so the version
+                listed in this file is often out of date. If you are compiling
+                from git master, you will usually need GStreamer core and
+                gst-plugins-base from git master as well.
+
+Package:        GStreamer Base Plugins
+Version:        1.x (same 1.x version as this package)
+Recommended:    Latest 1.x
+URL:            http://gstreamer.freedesktop.org/
+DebianPackage:  libgstreamer-plugins-base1.0-dev
+Notes:          The required version is updated frequently, so the version
+                listed in this file is often out of date. If you are compiling
+                from git master, you will usually need GStreamer core and
+                gst-plugins-base from git master as well.
+
+
+Optional libraries:
+===================
+
+This file lists supporting libraries for which gst-plugins-good contains
+plugins, as well as their minimum required version. You can find the
+corresponding plugins in ext/(library)
+
+Package:        Orc
+Version:        >= 0.4.17
+Recommended:    Latest 0.4.x
+URL:            http://gstreamer.freedesktop.org/data/src/orc/
+DebianPackage:  liborc-0.4-dev
+Notes:		Used by many plugins for accelerating SIMD processing using
+                run-time generated assembly. Not a hard requirement, but
+                highly recommended. Packagers, please hard-depend on liborc.
+                The git repository is http://cgit.freedesktop.org/gstreamer/orc/
+                (all versions on entropywave.com are outdated)
+
+Package:        gdk-pixbuf Library
+Version:        >= 2.8.0
+Recommended:    Latest 2.x
+URL:            http://www.gtk.org/
+DebianPackage:  libgdk-pixbuf2.0-dev
+Plugins:        gdkpixbuf (gdkpixbufdec, gdkpixbufoverlay)
+Notes:          This library does not depend on Gtk+ or Gdk or any window system
+
+Package:        GTK+
+Version:        >= 3.0
+Recommended:    Latest 3.x
+URL:            http://www.gtk.org/
+DebianPackage:  libgtk-3-dev
+Plugins:        None
+Notes:	        Only needed by some of the examples, not by any plugins.
+
+Package:        Xlib
+Plugins:        ximagesrc
+DebianPackage:  libx11-dev libxv-dev libxt-dev
+
+Package:        AALib
+Plugins:        aasink
+URL:            http://aa-project.sourceforge.net/aalib/
+
+Package:        Cairo
+Version:        >= 1.10
+DebianPackage:  libcairo2-dev
+Plugins:        cairo (cairooverlay)
+URL:            http://cairographics.org/
+
+Package:        FLAC
+Version:        >= 1.1.4
+DebianPackage:  libflac-dev
+Plugins:        flac (flacenc, flacdec)
+URL:            http://flac.sourceforge.net/
+
+Package:        gudev
+Version:        >= 147
+DebianPackage:  libgudev-1.0-dev
+Plugins:        v4l2 (v4l2src)
+URL:            http://www.freedesktop.org/software/systemd/
+Notes:          This dependency is entirely optional, the video4linux plugin
+                will work just fine without it. gudev is only required for
+                the device probing and monitoring functionality to detect
+                video4linux devices appearing/disappearing at run-time.
+
+Package:        JPEG library
+Plugins:        jpeg (jpegenc, jpegdec, smokeenc, smokedec)
+DebianPackage:  libjpeg62-turbo-dev
+URL:            http://www.libjpeg-turbo.org/
+                or http://www.ijg.org/ for the IJG version
+
+Package:        Libcaca
+Plugins:        cacasink
+DebianPackage:  libcaca-dev
+URL:            http://libcaca.zoy.org/
+
+Package:        Libdv
+Version:        >= 0.100
+DebianPackage:  libdv4-dev
+Plugins:        dv (dvdec)
+URL:            http://libdv.sourceforge.net/
+
+Package:	liblame
+Version:	>= 3.98
+DebianPackage:	libmp3lame-dev
+Plugins:	lame (lamemp3enc)
+URL:		http://www.mp3dev.org/mp3/
+
+Package:	libmpg123
+Version:        >= 1.3
+DebianPackage:  libpng12-dev
+Plugins:        mpg123 (mpg123audiodec)
+URL:		https://www.mpg123.de/api/
+
+Package:        Libpng
+Version:        >= 1.2
+DebianPackage:  libpng12-dev
+Plugins:        png (pngenc, pngdec)
+URL:            http://www.libpng.org/pub/png/libpng.html
+
+Package:        libraw1394
+Plugins:        dv1394
+URL:            http://www.linux1394.org/
+
+Package:        libshout
+Version:        >= 2.0
+DebianPackage:  libshout3-dev
+plugins:        shout2 (shout2send)
+URL:            http://www.icecast.org/
+
+Package:        speex
+Version:        >= 1.1.6
+Plugins:        speex (speexenc, speexdec)
+URL:            http://www.speex.org/
+
+Package:        taglib
+Version:        >= 1.5
+DebianPackage:  libtag1-dev
+Plugins:        taglib (id3v2mux)
+URL:            http://taglib.github.io/
+
+Package:	twolame
+Version:	>= 0.3.13
+DebianPackage:	libtwolame-dev
+Plugins:	twolame (twolamemp2enc)
+URL:		http://www.twolame.org
+
+Package:        zlib
+DebianPackage:  zlib1g-dev
+Plugins:        isomp4 (qtdemux), matroska (matroskademux)
+URL:            http://www.zlib.net/
+
+Optional (debian) packages:
+===========================
+
+gtk-doc-tools >= 1.12  -- needed to build documentation
+python-xml  -- needed to build plugin documentation

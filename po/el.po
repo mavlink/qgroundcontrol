@@ -1,0 +1,847 @@
+# Greek translation for gst-plugins-good package of GStreamer project.
+# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009 GStreamer core team
+# This file is distributed under the same license as the gst-plugins-good package.
+# Simos Xenitellis <simos.lists@googlemail.com>, 2009.
+# Michael Kotsarinis <mk73628@gmail.com>, 2010
+# Savvas Radevic <vicedar@gmail.com>, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 0.10.28.2\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2011-04-16 16:25+0100\n"
+"PO-Revision-Date: 2012-05-05 19:05+0100\n"
+"Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
+"Language-Team: Greek <team@lists.gnome.gr>\n"
+"Language: el\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 0.3\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ext/esd/esdsink.c:253 ext/esd/esdsink.c:358
+msgid "Could not establish connection to sound server"
+msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή ήχου"
+
+#: ext/esd/esdsink.c:260
+msgid "Failed to query sound server capabilities"
+msgstr "Αποτυχία αναζήτησης των δυνατοτήτων του διακομιστή ήχου"
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#: ext/pulse/pulsesink.c:2686
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "'%s' από '%s'"
+
+#: ext/flac/gstflacdec.c:1117 ext/libpng/gstpngdec.c:349
+#: ext/libpng/gstpngdec.c:360 ext/libpng/gstpngdec.c:559
+#: ext/wavpack/gstwavpackparse.c:1170 gst/avi/gstavidemux.c:5203
+msgid "Internal data stream error."
+msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
+
+#: ext/jpeg/gstjpegdec.c:286
+msgid "Failed to decode JPEG image"
+msgstr "Αποτυχία αποκωδικοποίησης της εικόνας JPEG"
+
+#: ext/shout2/gstshout2.c:578
+msgid "Could not connect to server"
+msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή"
+
+#: ext/soup/gstsouphttpsrc.c:871
+msgid "Server does not support seeking."
+msgstr "Ο διακομιστής δεν υποστηρίζει αναζήτηση."
+
+#: ext/soup/gstsouphttpsrc.c:1078
+msgid "Could not resolve server name."
+msgstr "Δεν ήταν δυνατός ο προσδιορισμός του ονόματος του διακομιστή."
+
+#: ext/soup/gstsouphttpsrc.c:1084
+msgid "Could not establish connection to server."
+msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή."
+
+#: ext/soup/gstsouphttpsrc.c:1089
+msgid "Secure connection setup failed."
+msgstr "Αποτυχία εκκίνησης ασφαλούς σύνδεσης."
+
+#: ext/soup/gstsouphttpsrc.c:1094
+msgid "A network error occured, or the server closed the connection unexpectedly."
+msgstr "Προέκυψε ένα σφάλμα δικτύου ή ο διακομιστής έκλεισε ξαφνικά τη σύνδεση."
+
+#: ext/soup/gstsouphttpsrc.c:1100
+msgid "Server sent bad data."
+msgstr "Ο διακομιστής έστειλε λάθος δεδομένα."
+
+#: ext/soup/gstsouphttpsrc.c:1249
+msgid "No URL set."
+msgstr "Δεν ορίσθηκε URL."
+
+#: gst/avi/gstavimux.c:1810
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Καμία ή άκυρη εισαγωγή ήχου, η AVI ροή θα καταρρεύσει."
+
+#: gst/quicktime/qtdemux.c:519 gst/quicktime/qtdemux.c:523
+msgid "This file contains no playable streams."
+msgstr "Αυτό το αρχείο δεν περιέχει αναπαραγώγιμες ροές."
+
+#: gst/quicktime/qtdemux.c:558 gst/quicktime/qtdemux.c:4009
+#: gst/quicktime/qtdemux.c:4071 gst/quicktime/qtdemux.c:4219
+msgid "This file is invalid and cannot be played."
+msgstr "Το αρχείο αυτό δεν είναι έγκυρο και δεν μπορεί να αναπαραχθεί."
+
+#: gst/quicktime/qtdemux.c:2439 gst/quicktime/qtdemux.c:2515
+#: gst/quicktime/qtdemux.c:2558 gst/quicktime/qtdemux.c:4798
+#: gst/quicktime/qtdemux.c:4805 gst/quicktime/qtdemux.c:5391
+#: gst/quicktime/qtdemux.c:5817 gst/quicktime/qtdemux.c:5824
+#: gst/quicktime/qtdemux.c:7305
+msgid "This file is corrupt and cannot be played."
+msgstr "Το αρχείο αυτό είναι κατεστραμμένο και δεν μπορεί να αναπαραχθεί. "
+
+#: gst/quicktime/qtdemux.c:2647
+msgid "Invalid atom size."
+msgstr "Άκυρο μέγεθος ατόμου."
+
+#: gst/quicktime/qtdemux.c:2716
+msgid "This file is incomplete and cannot be played."
+msgstr "Το αρχείο αυτό είναι ανολοκλήρωτο και δεν μπορεί να αναπαραχθεί."
+
+#: gst/quicktime/qtdemux.c:4994
+msgid "The video in this file might not play correctly."
+msgstr "Το βίντεο σε αυτό το αρχείο μπορεί να μην αναπαραχθεί σωστά."
+
+#: gst/quicktime/qtdemux.c:7334
+#, c-format
+msgid "This file contains too many streams. Only playing first %d"
+msgstr "Αυτό το αρχείο περιέχει πολλές ροές. Αναπαράγεται μόνο η πρώτη %d"
+
+#: gst/rtsp/gstrtspsrc.c:5187
+msgid "No supported stream was found. You might need to install a GStreamer RTSP extension plugin for Real media streams."
+msgstr "Δεν βρέθηκε καμία υποστηριζόμενη ροή. Είναι πιθανόν να πρέπει να κάνετε εγκατάσταση ένα πρόσθετο GStreamer RTSP για τις ροές Real μέσων. "
+
+#: gst/rtsp/gstrtspsrc.c:5192
+msgid "No supported stream was found. You might need to allow more transport protocols or may otherwise be missing the right GStreamer RTSP extension plugin."
+msgstr "Δεν βρέθηκε καμία υποστηριζόμενη ροή. Είναι πιθανόν να χρειασθεί να επιτρέψετε περισσότερα πρωτόκολλα μεταγωγής ή αλλιώς να σας λείπει το σωστό πρόσθετο RTSP του GStreamer."
+
+#: gst/wavparse/gstwavparse.c:2103
+msgid "Internal data flow error."
+msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
+
+#: sys/oss/gstossmixertrack.c:98 sys/oss4/oss4-mixer.c:722
+#: sys/sunaudio/gstsunaudiomixertrack.c:69
+msgid "Volume"
+msgstr "Ένταση"
+
+#: sys/oss/gstossmixertrack.c:99 sys/oss4/oss4-mixer.c:735
+msgid "Bass"
+msgstr "Μπάσα"
+
+#: sys/oss/gstossmixertrack.c:100 sys/oss4/oss4-mixer.c:736
+msgid "Treble"
+msgstr "Πρίμα (treble)"
+
+#: sys/oss/gstossmixertrack.c:101
+msgid "Synth"
+msgstr "Synth"
+
+#: sys/oss/gstossmixertrack.c:102 sys/oss4/oss4-mixer.c:750
+msgid "PCM"
+msgstr "PCM"
+
+#: sys/oss/gstossmixertrack.c:103
+msgid "Speaker"
+msgstr "Μεγάφωνο"
+
+#: sys/oss/gstossmixertrack.c:104
+msgid "Line-in"
+msgstr "Γραμμή-εισόδου"
+
+#: sys/oss/gstossmixertrack.c:105 sys/oss4/oss4-mixer.c:741
+msgid "Microphone"
+msgstr "Μικρόφωνο"
+
+#: sys/oss/gstossmixertrack.c:106
+msgid "CD"
+msgstr "CD"
+
+#: sys/oss/gstossmixertrack.c:107
+msgid "Mixer"
+msgstr "Μείκτης"
+
+#: sys/oss/gstossmixertrack.c:108
+msgid "PCM-2"
+msgstr "PCM-2"
+
+#: sys/oss/gstossmixertrack.c:109
+msgid "Record"
+msgstr "Εγγραφή"
+
+#: sys/oss/gstossmixertrack.c:110
+msgid "In-gain"
+msgstr "Κέρδος εισόδου"
+
+#: sys/oss/gstossmixertrack.c:111
+msgid "Out-gain"
+msgstr "Κέρδος εξόδου"
+
+#: sys/oss/gstossmixertrack.c:112
+msgid "Line-1"
+msgstr "Γραμμή-1"
+
+#: sys/oss/gstossmixertrack.c:113
+msgid "Line-2"
+msgstr "Γραμμή-2"
+
+#: sys/oss/gstossmixertrack.c:114
+msgid "Line-3"
+msgstr "Γραμμή-3"
+
+#: sys/oss/gstossmixertrack.c:115
+msgid "Digital-1"
+msgstr "Ψηφιακό-1"
+
+#: sys/oss/gstossmixertrack.c:116
+msgid "Digital-2"
+msgstr "Ψηφιακό-2"
+
+#: sys/oss/gstossmixertrack.c:117
+msgid "Digital-3"
+msgstr "Ψηφιακό-3"
+
+#: sys/oss/gstossmixertrack.c:118
+msgid "Phone-in"
+msgstr "Είσοδος τηλεφώνου"
+
+#: sys/oss/gstossmixertrack.c:119
+msgid "Phone-out"
+msgstr "Έξοδος τηλεφώνου"
+
+#: sys/oss/gstossmixertrack.c:120
+msgid "Video"
+msgstr "Βίντεο"
+
+#: sys/oss/gstossmixertrack.c:121
+msgid "Radio"
+msgstr "Ράδιο"
+
+#: sys/oss/gstossmixertrack.c:122 sys/oss4/oss4-mixer.c:764
+#: sys/sunaudio/gstsunaudiomixertrack.c:71
+msgid "Monitor"
+msgstr "Οθόνη"
+
+#: sys/oss/gstosssink.c:399 sys/oss4/oss4-sink.c:494
+#: sys/oss4/oss4-source.c:361
+msgid "Could not open audio device for playback. Device is being used by another application."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για αναπαραγωγή. Η συσκευή χρησιμοποιείται από μια άλλη εφαρμογή."
+
+#: sys/oss/gstosssink.c:406 sys/oss4/oss4-sink.c:504
+#: sys/oss4/oss4-source.c:371
+msgid "Could not open audio device for playback. You don't have permission to open the device."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για αναπαραγωγή. Δεν έχετε τα δικαιώματα να ανοίξετε την συσκευή."
+
+#: sys/oss/gstosssink.c:414 sys/oss4/oss4-sink.c:515
+#: sys/oss4/oss4-source.c:382
+msgid "Could not open audio device for playback."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για αναπαραγωγή. "
+
+#: sys/oss/gstosssrc.c:370
+msgid "Could not open audio device for recording. You don't have permission to open the device."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για εγγραφή. Δεν έχετε τα δικαιώματα να ανοίξετε την συσκευή."
+
+#: sys/oss/gstosssrc.c:378
+msgid "Could not open audio device for recording."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για εγγραφή. "
+
+#: sys/oss4/oss4-mixer.c:302
+msgid "Could not open audio device for mixer control handling."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για χειρισμό του ελέγχου του μίκτη. "
+
+#: sys/oss4/oss4-mixer.c:316
+msgid "Could not open audio device for mixer control handling. This version of the Open Sound System is not supported by this element."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για χειρισμό του ελέγχου του μίκτη. Αυτή η έκδοση του Open Sound System δεν υποστηρίζεται από αυτό οτ στοιχείο."
+
+#: sys/oss4/oss4-mixer.c:723
+msgid "Master"
+msgstr "Γενικός (Master)"
+
+#: sys/oss4/oss4-mixer.c:724
+msgid "Front"
+msgstr "Μπροστά"
+
+#: sys/oss4/oss4-mixer.c:725
+msgid "Rear"
+msgstr "Πίσω"
+
+#: sys/oss4/oss4-mixer.c:726
+msgid "Headphones"
+msgstr "Ακουστικά"
+
+#: sys/oss4/oss4-mixer.c:727
+msgid "Center"
+msgstr "Κέντρο"
+
+#: sys/oss4/oss4-mixer.c:728
+msgid "LFE"
+msgstr "Χαμηλών συχνοτήτων (LFE)"
+
+#: sys/oss4/oss4-mixer.c:729
+msgid "Surround"
+msgstr "Περιβάλλων (Surround)"
+
+#: sys/oss4/oss4-mixer.c:730
+msgid "Side"
+msgstr "Πλευρικό"
+
+#: sys/oss4/oss4-mixer.c:731 sys/sunaudio/gstsunaudiomixertrack.c:72
+msgid "Built-in Speaker"
+msgstr "Ενσωματωμένο μεγάφωνο"
+
+#: sys/oss4/oss4-mixer.c:732 sys/sunaudio/gstsunaudiomixertrack.c:76
+msgid "AUX 1 Out"
+msgstr "AUX 1 Out"
+
+#: sys/oss4/oss4-mixer.c:733 sys/sunaudio/gstsunaudiomixertrack.c:77
+msgid "AUX 2 Out"
+msgstr "AUX 2 Out"
+
+#: sys/oss4/oss4-mixer.c:734
+msgid "AUX Out"
+msgstr "Έξοδος AUX"
+
+#: sys/oss4/oss4-mixer.c:737
+msgid "3D Depth"
+msgstr "Βάθος 3D"
+
+#: sys/oss4/oss4-mixer.c:738
+msgid "3D Center"
+msgstr "Κέντρο 3D"
+
+#: sys/oss4/oss4-mixer.c:739
+msgid "3D Enhance"
+msgstr "Ενίσχυση 3D"
+
+#: sys/oss4/oss4-mixer.c:740
+msgid "Telephone"
+msgstr "Τηλέφωνο"
+
+#: sys/oss4/oss4-mixer.c:742 sys/sunaudio/gstsunaudiomixertrack.c:74
+msgid "Line Out"
+msgstr "Γραμμή εξόδου"
+
+#: sys/oss4/oss4-mixer.c:743 sys/oss4/oss4-mixer.c:744
+msgid "Line In"
+msgstr "Είσοδος γραμμής"
+
+#: sys/oss4/oss4-mixer.c:745
+msgid "Internal CD"
+msgstr "Εσωτερικό CD"
+
+#: sys/oss4/oss4-mixer.c:746
+msgid "Video In"
+msgstr "Είσοδος βίντεο"
+
+#: sys/oss4/oss4-mixer.c:747
+msgid "AUX 1 In"
+msgstr "Είσοδις AUX 1"
+
+#: sys/oss4/oss4-mixer.c:748
+msgid "AUX 2 In"
+msgstr "Είσοδος AUX 2"
+
+#: sys/oss4/oss4-mixer.c:749
+msgid "AUX In"
+msgstr "Είσοδος AUX"
+
+#: sys/oss4/oss4-mixer.c:751 sys/oss4/oss4-mixer.c:752
+msgid "Record Gain"
+msgstr "Κέρδος Εγγραφής"
+
+#: sys/oss4/oss4-mixer.c:753
+msgid "Output Gain"
+msgstr "Κέρδος εξόδου"
+
+#: sys/oss4/oss4-mixer.c:754
+msgid "Microphone Boost"
+msgstr "Ενίσχυση μικροφώνου"
+
+#: sys/oss4/oss4-mixer.c:755
+msgid "Loopback"
+msgstr "Ανατροφοδότηση"
+
+#: sys/oss4/oss4-mixer.c:756
+msgid "Diagnostic"
+msgstr "Διαγνωστικό"
+
+#: sys/oss4/oss4-mixer.c:757
+msgid "Bass Boost"
+msgstr "Ενίσχυση χαμηλών"
+
+#: sys/oss4/oss4-mixer.c:758
+msgid "Playback Ports"
+msgstr "Θύρες Αναπαραγωγής"
+
+#: sys/oss4/oss4-mixer.c:759
+msgid "Input"
+msgstr "Είσοδος"
+
+#: sys/oss4/oss4-mixer.c:760 sys/oss4/oss4-mixer.c:761
+msgid "Record Source"
+msgstr "Πηγή εγγραφής"
+
+#: sys/oss4/oss4-mixer.c:762
+msgid "Monitor Source"
+msgstr "Παρακολούθηση πηγής"
+
+#: sys/oss4/oss4-mixer.c:763
+msgid "Keyboard Beep"
+msgstr "Ήχος πληκτρολογίου"
+
+#: sys/oss4/oss4-mixer.c:765
+msgid "Simulate Stereo"
+msgstr "Προσομοίωση στέρεο"
+
+#: sys/oss4/oss4-mixer.c:766 sys/oss4/oss4-mixer.c:786
+msgid "Stereo"
+msgstr "Στέρεο"
+
+#: sys/oss4/oss4-mixer.c:767
+msgid "Surround Sound"
+msgstr "Ήχος Surround"
+
+#: sys/oss4/oss4-mixer.c:768
+msgid "Microphone Gain"
+msgstr "Κέρδος μικροφώνου"
+
+#: sys/oss4/oss4-mixer.c:769
+msgid "Speaker Source"
+msgstr "Πηγή μεγαφώνου"
+
+#: sys/oss4/oss4-mixer.c:770
+msgid "Microphone Source"
+msgstr "Πηγή μικροφώνου"
+
+#: sys/oss4/oss4-mixer.c:771
+msgid "Jack"
+msgstr "Βύσμα"
+
+#: sys/oss4/oss4-mixer.c:772
+msgid "Center / LFE"
+msgstr "Κεντρικό / Χαμηλών συχνοτήτων"
+
+#: sys/oss4/oss4-mixer.c:773
+msgid "Stereo Mix"
+msgstr "Στερεοφωνική μίξη"
+
+#: sys/oss4/oss4-mixer.c:774
+msgid "Mono Mix"
+msgstr "Μονοφωνική μίξη"
+
+#: sys/oss4/oss4-mixer.c:775
+msgid "Input Mix"
+msgstr "Μίξη εισόδου"
+
+#: sys/oss4/oss4-mixer.c:776
+msgid "SPDIF In"
+msgstr "Είσδος SPDIF"
+
+#: sys/oss4/oss4-mixer.c:777 sys/sunaudio/gstsunaudiomixertrack.c:75
+msgid "SPDIF Out"
+msgstr "SPDIF Out"
+
+#: sys/oss4/oss4-mixer.c:778
+msgid "Microphone 1"
+msgstr "Μικρόφωνο 1"
+
+#: sys/oss4/oss4-mixer.c:779
+msgid "Microphone 2"
+msgstr "Μικρόφωνο 2"
+
+#: sys/oss4/oss4-mixer.c:780
+msgid "Digital Out"
+msgstr "Ψηφιακή έξοδος"
+
+#: sys/oss4/oss4-mixer.c:781
+msgid "Digital In"
+msgstr "Ψηφιακή είσοδος"
+
+#: sys/oss4/oss4-mixer.c:782
+msgid "HDMI"
+msgstr "HDMI"
+
+#: sys/oss4/oss4-mixer.c:783
+msgid "Modem"
+msgstr "Modem"
+
+#: sys/oss4/oss4-mixer.c:784
+msgid "Handset"
+msgstr "Τηλεφωνική συσκευή"
+
+#: sys/oss4/oss4-mixer.c:785
+msgid "Other"
+msgstr "Άλλο"
+
+#: sys/oss4/oss4-mixer.c:787
+msgid "None"
+msgstr "Κανένα"
+
+#: sys/oss4/oss4-mixer.c:788
+msgid "On"
+msgstr "On"
+
+#: sys/oss4/oss4-mixer.c:789
+msgid "Off"
+msgstr "Off"
+
+#: sys/oss4/oss4-mixer.c:790
+msgid "Mute"
+msgstr "Σίγαση"
+
+#: sys/oss4/oss4-mixer.c:791
+msgid "Fast"
+msgstr "Γρήγορα"
+
+#. TRANSLATORS: "Very Low" is a quality setting here
+#: sys/oss4/oss4-mixer.c:793
+msgid "Very Low"
+msgstr "Πολύ χαμηλή"
+
+#. TRANSLATORS: "Low" is a quality setting here
+#: sys/oss4/oss4-mixer.c:795
+msgid "Low"
+msgstr "Χαμηλή"
+
+#. TRANSLATORS: "Medium" is a quality setting here
+#: sys/oss4/oss4-mixer.c:797
+msgid "Medium"
+msgstr "Μεσαία"
+
+#. TRANSLATORS: "High" is a quality setting here
+#: sys/oss4/oss4-mixer.c:799
+msgid "High"
+msgstr "Υψηλή"
+
+#. TRANSLATORS: "Very High" is a quality setting here
+#: sys/oss4/oss4-mixer.c:801 sys/oss4/oss4-mixer.c:802
+msgid "Very High"
+msgstr "Πολύ υψηλή"
+
+#. TRANSLATORS: "Production" is a quality setting here
+#: sys/oss4/oss4-mixer.c:804
+msgid "Production"
+msgstr "Παραγωγής"
+
+#: sys/oss4/oss4-mixer.c:805
+msgid "Front Panel Microphone"
+msgstr "Μικρόφωνο μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:806
+msgid "Front Panel Line In"
+msgstr "Είσοδος γραμμής μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:807
+msgid "Front Panel Headphones"
+msgstr "Ακουστικά μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:808
+msgid "Front Panel Line Out"
+msgstr "Έξοδος γραμμής μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:809
+msgid "Green Connector"
+msgstr "Πράσινη υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:810
+msgid "Pink Connector"
+msgstr "Ροζ υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:811
+msgid "Blue Connector"
+msgstr "Μπλε υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:812
+msgid "White Connector"
+msgstr "Λευκή υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:813
+msgid "Black Connector"
+msgstr "Μαύρη υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:814
+msgid "Gray Connector"
+msgstr "Γκρι υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:815
+msgid "Orange Connector"
+msgstr "Πορτοκαλί υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:816
+msgid "Red Connector"
+msgstr "Κόκκινη υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:817
+msgid "Yellow Connector"
+msgstr "Κίτρινη υποδοχή"
+
+#: sys/oss4/oss4-mixer.c:818
+msgid "Green Front Panel Connector"
+msgstr "Πράσινη υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:819
+msgid "Pink Front Panel Connector"
+msgstr "Ροζ υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:820
+msgid "Blue Front Panel Connector"
+msgstr "Μπλε υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:821
+msgid "White Front Panel Connector"
+msgstr "Λευκή υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:822
+msgid "Black Front Panel Connector"
+msgstr "Μαύρη υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:823
+msgid "Gray Front Panel Connector"
+msgstr "Γκρι υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:824
+msgid "Orange Front Panel Connector"
+msgstr "Πορτοκαλί υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:825
+msgid "Red Front Panel Connector"
+msgstr "Κόκκινη υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:826
+msgid "Yellow Front Panel Connector"
+msgstr "Κίτρινη υποδοχή μπροστινού πάνελ"
+
+#: sys/oss4/oss4-mixer.c:827
+msgid "Spread Output"
+msgstr "Ευρεία έξοδος"
+
+#: sys/oss4/oss4-mixer.c:828
+msgid "Downmix"
+msgstr "Μίξη συγχώνευσης (Downmix)"
+
+#: sys/oss4/oss4-mixer.c:872
+msgid "Virtual Mixer Input"
+msgstr "Είσοδος εικονικού μίκτη"
+
+#: sys/oss4/oss4-mixer.c:874
+msgid "Virtual Mixer Output"
+msgstr "Έξοδος εικονικού μίκτη"
+
+#: sys/oss4/oss4-mixer.c:876
+msgid "Virtual Mixer Channels"
+msgstr "Κανάλια εικονικού μίκτη"
+
+#. TRANSLATORS: name + number of a volume mixer control
+#: sys/oss4/oss4-mixer.c:927
+#, c-format
+msgid "%s %d Function"
+msgstr "Λειτουργία %s %d"
+
+#. TRANSLATORS: name of a volume mixer control
+#: sys/oss4/oss4-mixer.c:934
+#, c-format
+msgid "%s Function"
+msgstr "Λειτουργία %s"
+
+#: sys/oss4/oss4-sink.c:524 sys/oss4/oss4-source.c:392
+msgid "Could not open audio device for playback. This version of the Open Sound System is not supported by this element."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής ήχου για αναπαραγωγή. Αυτή η έκδοση του Open Sound System δεν υποστηρίζεται από αυτό το στοιχείο."
+
+#: sys/oss4/oss4-sink.c:640
+msgid "Playback is not supported by this audio device."
+msgstr "Αυτή η συσκευή ήχου δεν υποστηρίζει αναπαραγωγή."
+
+#: sys/oss4/oss4-sink.c:647
+msgid "Audio playback error."
+msgstr "Σφάλμα αναπαραγωγής ήχου"
+
+#: sys/oss4/oss4-source.c:514
+msgid "Recording is not supported by this audio device."
+msgstr "Αυτή η συσκευή ήχου δεν υποστηρίζει εγγραφή."
+
+#: sys/oss4/oss4-source.c:521
+msgid "Error recording from audio device."
+msgstr "Σφάλμα κατά την εγγραφή από τη συσκευή ήχου."
+
+#: sys/sunaudio/gstsunaudiomixertrack.c:70
+msgid "Gain"
+msgstr "Κέρδος"
+
+#: sys/sunaudio/gstsunaudiomixertrack.c:73
+msgid "Headphone"
+msgstr "Ακουστικό"
+
+#: sys/v4l2/gstv4l2src.c:887
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Σφάλμα κατά την ανάγνωση %d bytes απο την συσκευή '%s'."
+
+#: sys/v4l2/gstv4l2src.c:913
+#, c-format
+msgid "Got unexpected frame size of %u instead of %u."
+msgstr "Απροσδόκητο μέγεθος πλαισίου από %u αντί του %u"
+
+#: sys/v4l2/gstv4l2src.c:931
+#, c-format
+msgid "Error reading %d bytes on device '%s'."
+msgstr "Σφάλμα κατά την ανάγνωση %d bytes στην συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:99
+#, c-format
+msgid "Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if it is a v4l1 driver."
+msgstr "Σφάλμα κατά τη λήψη δυνατοτήτων της συσκευής '%s': Δεν είναι οδηγός v4l2. Ελέγξτε αν είναι οδηγός v4l2."
+
+#: sys/v4l2/v4l2_calls.c:139
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Αποτυχία ανίχνευσης ιδιοτήτων της εισόδου %d στη συσκευή %s"
+
+#: sys/v4l2/v4l2_calls.c:169
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Αποτυχία ανάγνωσης των ρυθμίσεων δέκτη %d στην συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:213
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Αποτυχία ανίχνευσης κανονικοποίησης στη συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:264 sys/v4l2/v4l2_calls.c:347
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Αποτυχία κατά την ανάγνωση των χαρακτηριστικών ελέγχου στην συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:492
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Δεν ήταν δυνατή η ταυτοποίηση της συσκευής '%s'."
+
+#: sys/v4l2/v4l2_calls.c:499
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Αυτή δεν είναι μια συκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:506
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Δεν ήταν δυνατό το άνοιγμα της συσκευής '%s' για ανάγνωση και γράψιμο. "
+
+#: sys/v4l2/v4l2_calls.c:513
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Η συσκευή '%s' δεν είναι μια συσκευή λήψης."
+
+#: sys/v4l2/v4l2_calls.c:522
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Η συσκευή '%s' δεν είναι συσκευή εξόδου."
+
+#: sys/v4l2/v4l2_calls.c:622
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Αποτυχία ρύθμισης κανόνα για την συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:660
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Αποτυχία ανάγνωσης της τρέχουσας συχνότητας δέκτη για την συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:702
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr "Αποτυχία ρύθμισης τρέχουσας συχνότητας δέκτη για την συσκευή '%s' στα %lu Hz"
+
+#: sys/v4l2/v4l2_calls.c:736
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Αποτυχία ανάγνωσης ισχύς σήματος για την συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:772
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Αποτυχία ανάγνωσης τιμής για τον έλεγχο %d στην συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:807
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Αποτυχία ρύθμισης τιμής %d για τον έλεγχο %d στην συσκευή '%s'."
+
+#: sys/v4l2/v4l2_calls.c:839
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr "Αποτυχία ανάγνωσης της τρέχουσας εισαγωγής στην συσκευή '%s'. Πιθανόν να είναι μια συσκευή ράδιο"
+
+#: sys/v4l2/v4l2_calls.c:864
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Αποτυχία ρύθμισης εισαγωγής %d στην συσκευή %s."
+
+#: sys/v4l2/v4l2_calls.c:896
+#, c-format
+msgid "Failed to get current output on device '%s'. May be it is a radio device"
+msgstr "Αποτυχία ανάγνωσης της τρέχουσας εξόδου στην συσκευή '%s'. Πιθανόν να είναι μια συσκευή ράδιο"
+
+#: sys/v4l2/v4l2_calls.c:921
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Αποτυχία ορισμού εξόδου %d στην συσκευή %s."
+
+#: sys/v4l2/v4l2src_calls.c:81
+#, c-format
+msgid "Could not enqueue buffers in device '%s'."
+msgstr "Αδυναμία θέσης σε σειρά των buffer στη συσκευή '%s'."
+
+#: sys/v4l2/v4l2src_calls.c:197
+#, c-format
+msgid "Failed trying to get video frames from device '%s'."
+msgstr "Αποτυχία ανάγνωσης πλαισίων βίντεο από την συσκευή '%s'."
+
+#: sys/v4l2/v4l2src_calls.c:199
+#, c-format
+msgid "Failed after %d tries. device %s. system error: %s"
+msgstr "Αποτυχία έπειτα από %d προσπάθειες. συσκευή %s. σφάλμα συστήματος: %s"
+
+#: sys/v4l2/v4l2src_calls.c:239
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Δεν ήταν δυνατή η ανάγνωση των παραμέτρων στην συσκευή '%s'"
+
+#: sys/v4l2/v4l2src_calls.c:267
+msgid "Video input device did not accept new frame rate setting."
+msgstr "Η συσκευή εισόδου βίντεο δεν αποδέχθηκε τη νέα ρύθμιση ταχύτητας καρέ."
+
+#: sys/v4l2/v4l2src_calls.c:339
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Αδυναμία χαρτογράφησης buffer για τη συσκευή '%s'"
+
+#: sys/v4l2/v4l2src_calls.c:347
+#, c-format
+msgid "The driver of device '%s' does not support any known capture method."
+msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζει κάποια γνωστή μέθοδο λήψης."
+
+#: sys/ximage/gstximagesrc.c:719
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Η αλλαγή της ανάλυσης κατά τη διάρκεια λειτουργίας δεν υποστηρίζεται ακόμα."
+
+#: sys/ximage/gstximagesrc.c:733
+msgid "Cannot operate without a clock"
+msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολόι "
+
+#~ msgid "Describes the selected input element."
+#~ msgstr "Περιγράφει το επιλεγμένο στοιχείο εισαγωγής."
+
+#~ msgid "Describes the selected output element for Audio/Video Conferencing."
+#~ msgstr "Περιγράφει το επιλεγμένο στοιχείο εξόδου για το Audio/Video Conferencing."
+
+#~ msgid "Describes the selected output element for Music and Movies."
+#~ msgstr "Περιγράφει το επιλεγμένο στοιχείο εξόδου για μουσική και ταινίες."
+
+#~ msgid "Describes the selected output element."
+#~ msgstr "Περιγράφει το επιλεγμένο στοιχείο εξαγωγής."

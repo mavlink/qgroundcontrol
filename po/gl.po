@@ -1,0 +1,953 @@
+# Galician translation of gst-plugins-good.
+# Copyright (C) 2009 gst-plugins-good's COPYRIGHT HOLDER
+# This file is distributed under the same license as the gst-plugins-good package.
+# Fran Diéguez <frandieguez@ubuntu.com>, 2009, 2010, 2011.
+# Fran Dieguez <frandieguez@gnome.org>, 2012.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 1.0.3\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2012-12-15 03:46+0200\n"
+"Last-Translator: Fran Dieguez <frandieguez@ubuntu.com>\n"
+"Language-Team: Galician <proxecto@trasno.net>\n"
+"Language: gl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Virtaal 0.7.1\n"
+"X-Project-Style: gnome\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Produciuse un erro ao descodificar a imaxe JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "«%s» por «%s»"
+
+msgid "Could not connect to server"
+msgstr "Non foi posíbel conectarse ao servidor"
+
+msgid "No URL set."
+msgstr "No existe un URL estabelecido."
+
+msgid "Could not resolve server name."
+msgstr "Non foi posíbel resolver o nome do servidor."
+
+msgid "Could not establish connection to server."
+msgstr "Non foi posíbel estabelecer a conexión co servidor."
+
+msgid "Secure connection setup failed."
+msgstr "Produciuse un fallo de configuración da conexión segura."
+
+#, fuzzy
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+"Produciuse un erro de rede ou o servidor pechou a conexión de forma "
+"inesperada."
+
+msgid "Server sent bad data."
+msgstr "O servidor enviou datos erróneos."
+
+msgid "Server does not support seeking."
+msgstr "O servidor non admite a busca."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "O audio non existe ou non é válido, o fluxo AVI está corrompido."
+
+msgid "This file contains no playable streams."
+msgstr "Este ficheiro non contén ningún fluxo reproducíbel."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Este ficheiro é incorrecto e non pode reproducirse."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Este ficheiro está danado e non pode reproducirse."
+
+msgid "Invalid atom size."
+msgstr "Tamaño atom non válido."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Este ficheiro está incompleto e non pode reproducirse."
+
+msgid "The video in this file might not play correctly."
+msgstr "Este vídeo neste ficheiro podería non reproducirse correctamente."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Non se encontrou un fluxo compatíbel. Pode que necesite instalar unha "
+"extensión RTSP de GStreamer para os formatos de fluxo Real."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Non se encontrou un fluxo compatíbel. Pode que necesite permitir máis "
+"protocolos de transporte ou de outra forma pode que lle falte a extensión "
+"correcta de RTSP de GStreamer."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Non foi posíbel abrir o dispositivo de son para a reprodución. O dispositivo "
+"está sendo empregado por outro aplicativo."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Non foi posíbel abrir o dispositivo de son. Vostede non ten permisos para "
+"abrir o dispositivo."
+
+msgid "Could not open audio device for playback."
+msgstr "Non foi posíbel abrir o dispositivo de son para a reprodución."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Non foi posíbel abrir o dispositivo de son para a reprodución. Esta versión "
+"do Open Sound System non está admitida por este elemento."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Este dispositivo de son non admite a reprodución."
+
+msgid "Audio playback error."
+msgstr "Erro de reprodución de son."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Este dispositivo de son non admite a gravación."
+
+msgid "Error recording from audio device."
+msgstr "Erro ao gravar do dispositivo de son."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Non foi posíbel abrir o dispositivo de son para a gravación. Vostede non ten "
+"permisos para abrir o dispositivo."
+
+msgid "Could not open audio device for recording."
+msgstr "Non foi posíbel abrir o dispositivo de son para a gravación."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Produciuse un erro ao ler %d bytes desde o dispositivo «%s»."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Produciuse un fallo ao enumerar os formatos de vídeo posíbeis cos que o "
+"dispositivo «%s» pode reproducir"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Non foi posíbel mapear os búferes do dispositivo «%s»"
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "O controlador do dispositivo «%s» non admite o método IO %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+"O controlador do dispositivo «%s» non admite calquera método IO coñecido."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "O dispositivo «%s» está ocupado"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "O dispositivo «%s» non pode capturar a %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "O dispositivo «%s» non pode capturar o formato especificado"
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "O dispositivo «%s» non admite a captura de vídeo."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "O dispositivo «%s» non admite a captura de vídeo."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "O dispositivo «%s» non admite a captura de vídeo."
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Non foi posíbel obter os parámetros para o dispositivo «%s»"
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy
+msgid "Video device did not provide output format."
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+#, fuzzy
+msgid "Video device uses an unsupported interlacing method."
+msgstr "O controlador do dispositivo «%s» non admite o método IO %d"
+
+#, fuzzy
+msgid "Video device uses an unsupported pixel format."
+msgstr "O controlador do dispositivo «%s» non admite o método IO %d"
+
+#, fuzzy
+msgid "Failed to configure internal buffer pool."
+msgstr "O dispositivo de vídeo non pode crear un pool de búfer."
+
+#, fuzzy
+msgid "Video device did not suggest any buffer size."
+msgstr "O dispositivo de vídeo non pode crear un pool de búfer."
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr ""
+"Produciuse un erro ao obter as configuracións do sintonizador %d no "
+"dispositivo «%s»."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Produciuse un erro ao ler as capacidades para o dispositivo «%s»."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "O dispositivo «%s» non é un sintonizador."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Produciuse un fallo ao obter a entrada do radio no dispositivo %s."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Produciuse un fallo ao estabelecer a entrada %d no dispositivo %s."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr ""
+"Produciuse un erro ao cambiar o estado de enmudecido para o dispositivo «%s»."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "O controlador do dispositivo «%s» non admite o método IO %d"
+
+#, fuzzy, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy
+msgid "Failed to start decoding thread."
+msgstr "Produciuse un erro ao descodificar a imaxe JPEG"
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Produciuse un erro ao descodificar a imaxe JPEG"
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Produciuse un erro ao obter as capacidades do dispositivo «%s»: Non é un "
+"controlador v4l2. Comprobe se é un controlador v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr ""
+"Produciuse un erro ao consultar os atributos de entrada %d no dispositivo %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr ""
+"Produciuse un erro ao configurar o sintonizador %d no dispositivo «%s»."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Produciuse un erro ao consultar a norma no dispositivo «%s»."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr ""
+"Produciuse un erro ao obter os atributos de control do dispositivo «%s»."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Non foi posíbel identificar o dispositivo «%s»."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Este non é un dispositivo «%s»."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Non foi posíbel abrir o dispositivo «%s» para lectura e escritura."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Non foi posíbel abrir o dispositivo «%s» para lectura e escritura."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Produciuse un fallo ao estabelecer a norma no dispositivo «%s»."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr ""
+"Produciuse un fallo  ao obter a frecuencia actual do sintonizador para o "
+"dispositivo «%s»."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Produciuse un erro ao estabelecer a frecuencia actual do sintonizador para o "
+"dispositivo «%s» a %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr ""
+"Produciuse un erro ao obter a potencia do sinal para o dispositivo «%s»."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr ""
+"Produciuse un erro ao obter o valor para o control %d do dispositivo «%s»."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr ""
+"Produciuse un fallo ao estabelecer o valor %ds para o control %d do "
+"dispositivo «%s»."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Produciuse un fallo ao obter a entrada actual no dispositivo «%s». Cicáis "
+"sexa un dispositivo de radio."
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Produciuse un fallo ao obter a entrada actual no dispositivo «%s». Quizais "
+"sexa un dispositivo de radio"
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Produciuse un fallo ao estabelecer a saída %d no dispositivo %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Aínda non se admite o cambio de resolución durante a reprodución."
+
+msgid "Cannot operate without a clock"
+msgstr "Non é posíbel operar sen reloxo"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Este ficheiro contén demasiados fluxos. Só se reproducirá o primeiro %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Orixe da gravación"
+
+#~ msgid "Microphone"
+#~ msgstr "Micrófono"
+
+#~ msgid "Line In"
+#~ msgstr "Liña de entrada"
+
+#~ msgid "Internal CD"
+#~ msgstr "CD interno"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Entrada SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Entrada AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Entrada AUX 2"
+
+#, fuzzy
+#~ msgid "Codec Loopback"
+#~ msgstr "Bucle local"
+
+#, fuzzy
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Bucle local"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Gain"
+#~ msgstr "Ganancia"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Altofalante interno"
+
+#~ msgid "Headphone"
+#~ msgstr "Cascos"
+
+#~ msgid "Line Out"
+#~ msgstr "Liña de saída"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Saída SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Saída AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Saída AUX 2"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Produciuse un erro no fluxo de datos interno."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Produciuse un erro interno no fluxo de datos."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Non foi posíbel estabelecer a conexión co servidor de son"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Produciuse un erro ao consultar as capacidades do servidor de son"
+
+#~ msgid "Bass"
+#~ msgstr "Baixos"
+
+#~ msgid "Treble"
+#~ msgstr "Agudos"
+
+#~ msgid "Synth"
+#~ msgstr "Sintetizador"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Altofalante"
+
+#~ msgid "Line-in"
+#~ msgstr "Liña de entrada"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Misturador"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Gravar"
+
+#~ msgid "In-gain"
+#~ msgstr "Ganancia de entrada"
+
+#~ msgid "Out-gain"
+#~ msgstr "Ganancia de saída"
+
+#~ msgid "Line-1"
+#~ msgstr "Liña 1"
+
+#~ msgid "Line-2"
+#~ msgstr "Liña 2"
+
+#~ msgid "Line-3"
+#~ msgstr "Liña 3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Dixital 1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Dixital 2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Dixital 3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Entrada teléfono"
+
+#~ msgid "Phone-out"
+#~ msgstr "Saída teléfono"
+
+#~ msgid "Video"
+#~ msgstr "Vídeo"
+
+#~ msgid "Radio"
+#~ msgstr "Radio"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr ""
+#~ "Non foi posíbel abrir o dispositivo de son para a súa xestión polo "
+#~ "control de misturado."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Non foi posíbel abrir o dispositivo de son para a súa xestión polo "
+#~ "control de misturado. Este elemento non admite esta versión do Open Sound "
+#~ "System."
+
+#~ msgid "Master"
+#~ msgstr "Mestre"
+
+#~ msgid "Front"
+#~ msgstr "Frontal"
+
+#~ msgid "Rear"
+#~ msgstr "Treseiro"
+
+#~ msgid "Headphones"
+#~ msgstr "Auriculares"
+
+#~ msgid "Center"
+#~ msgstr "Centro"
+
+#~ msgid "LFE"
+#~ msgstr "LFE"
+
+#~ msgid "Surround"
+#~ msgstr "Envolvente"
+
+#~ msgid "Side"
+#~ msgstr "Lateral"
+
+#~ msgid "AUX Out"
+#~ msgstr "Saída AUX"
+
+#~ msgid "3D Depth"
+#~ msgstr "Profundidade 3D"
+
+#~ msgid "3D Center"
+#~ msgstr "Centro 3D"
+
+#~ msgid "3D Enhance"
+#~ msgstr "Mellora 3D"
+
+#~ msgid "Telephone"
+#~ msgstr "Teléfono"
+
+#~ msgid "Video In"
+#~ msgstr "Entrada de vídeo"
+
+#~ msgid "AUX In"
+#~ msgstr "Entrada AUX"
+
+#~ msgid "Record Gain"
+#~ msgstr "Ganancia de gravación"
+
+#~ msgid "Output Gain"
+#~ msgstr "Ganancia de saída"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "Aumento do micrófono"
+
+#~ msgid "Diagnostic"
+#~ msgstr "Diagnóstico"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Aumento de baixos"
+
+#~ msgid "Playback Ports"
+#~ msgstr "Portos de reprodución"
+
+#~ msgid "Input"
+#~ msgstr "Entrada"
+
+#~ msgid "Monitor Source"
+#~ msgstr "Monitor de orixe"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "Pitido de teclado"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "Simular estéreo"
+
+#~ msgid "Stereo"
+#~ msgstr "Estéreo"
+
+#~ msgid "Surround Sound"
+#~ msgstr "Son envolvente"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "Ganancia do micrófono"
+
+#~ msgid "Speaker Source"
+#~ msgstr "Altofalante de orixe"
+
+#~ msgid "Microphone Source"
+#~ msgstr "Micrófono de orixe"
+
+#~ msgid "Jack"
+#~ msgstr "Jack"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Centro / LFE"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "Misturador estéreo"
+
+#~ msgid "Mono Mix"
+#~ msgstr "Misturador mono"
+
+#~ msgid "Input Mix"
+#~ msgstr "Misturador de entrada"
+
+#~ msgid "Microphone 1"
+#~ msgstr "Micrófono 1"
+
+#~ msgid "Microphone 2"
+#~ msgstr "Micrófono 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "Saída dixital"
+
+#~ msgid "Digital In"
+#~ msgstr "Entrada dixital"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI"
+
+#~ msgid "Modem"
+#~ msgstr "Módem"
+
+#~ msgid "Handset"
+#~ msgstr "Auriculares"
+
+#~ msgid "Other"
+#~ msgstr "Outro"
+
+#~ msgid "None"
+#~ msgstr "Ningún"
+
+#~ msgid "On"
+#~ msgstr "Acendido"
+
+#~ msgid "Off"
+#~ msgstr "Apagado"
+
+#~ msgid "Mute"
+#~ msgstr "Silenciar"
+
+#~ msgid "Fast"
+#~ msgstr "Rápido"
+
+#~ msgid "Very Low"
+#~ msgstr "Moi baixo"
+
+#~ msgid "Low"
+#~ msgstr "Baixo"
+
+#~ msgid "Medium"
+#~ msgstr "Medio"
+
+#~ msgid "High"
+#~ msgstr "Alto"
+
+#~ msgid "Very High"
+#~ msgstr "Moi alto"
+
+#~ msgid "Production"
+#~ msgstr "Produción"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Micrófono do panel frontal"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "Entrada do panel frontal"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Auriculares do panel frontal"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Saída do panel frontal"
+
+#~ msgid "Green Connector"
+#~ msgstr "Conectador verde"
+
+#~ msgid "Pink Connector"
+#~ msgstr "Conectador rosa"
+
+#~ msgid "Blue Connector"
+#~ msgstr "Conectador azul"
+
+#~ msgid "White Connector"
+#~ msgstr "Conectador branco"
+
+#~ msgid "Black Connector"
+#~ msgstr "Conectador negro"
+
+#~ msgid "Gray Connector"
+#~ msgstr "Conectador gris"
+
+#~ msgid "Orange Connector"
+#~ msgstr "Conectador laranxa"
+
+#~ msgid "Red Connector"
+#~ msgstr "Conectador vermello"
+
+#~ msgid "Yellow Connector"
+#~ msgstr "Conectador amarelo"
+
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Conectador verde do panel frontal"
+
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Conectador rosa do panel frontal"
+
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Conectador azul do panel frontal"
+
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Conectador branco do panel frontal"
+
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Conectador negro do panel frontal"
+
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Conectador gris do panel frontal"
+
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Conectador laranxado panel frontal"
+
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Conectador vermello do panel frontal"
+
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Conectador amarelo do panel frontal"
+
+#~ msgid "Spread Output"
+#~ msgstr "Expandir saída"
+
+#~ msgid "Downmix"
+#~ msgstr "Redución de canles"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Entrada do misturador virtual"
+
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Saída do misturador virtual"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Canles do misturador virtual"
+
+#~ msgid "%s %d Function"
+#~ msgstr "Función %s %d"
+
+#~ msgid "%s Function"
+#~ msgstr "Función %s"
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Obtívose un tamaño de marco de %u non esperado no lugar de %u."
+
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Produciuse un erro ao ler %d bytes do dispositivo «%s»."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Non é posíbel meter na cola os búferes no dispositivo «%s»."
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr ""
+#~ "Produciuse un fallo ao tentar obter cadros de vídeo do dispositivo «%s»."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr ""
+#~ "Prouciuse un fallo despois de %d intentos. Dispositivo %s. Error do "
+#~ "sistema: %s"
+
+#~ msgid "Describes the selected input element."
+#~ msgstr "Describe o elemento de entrada seleccionado."
+
+#~ msgid "Describes the selected output element for Audio/Video Conferencing."
+#~ msgstr ""
+#~ "Describe o elemento de saída seleccionado para a Conferencia de Audio/"
+#~ "Vídeo."
+
+#~ msgid "Describes the selected output element for Music and Movies."
+#~ msgstr ""
+#~ "Describe o elemento de saída seleccionado para a Música e Películas."
+
+#~ msgid "Describes the selected output element."
+#~ msgstr "Describe o elemento de saída seleccionado."
+
+#~ msgid "GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr "GStreamer audiosink para a Conferencia de Audio/Video"
+
+#~ msgid "GStreamer audiosink for Music and Movies"
+#~ msgstr "GStreamer audiosink para Música e Filmes"
+
+#~ msgid ""
+#~ "GStreamer can play audio using any number of output elements. Some "
+#~ "possible choices are osssink, esdsink and alsasink. The audiosink can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer pode reproducir audio empregando calquera número de elementos "
+#~ "de saída. Algunha elección posíbel é ossink, esdsink e alsasink. O "
+#~ "audiosink pode ser un pipeline parcial no cando de só un elemento único."
+
+#~ msgid ""
+#~ "GStreamer can play video using any number of output elements. Some "
+#~ "possible choices are xvimagesink, ximagesink, sdlvideosink and aasink. "
+#~ "The videosink can be a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer pode reproducir vídeo usando calquera número de elementos de "
+#~ "saída. As posíbeis eleccións son xvimagesink, ximagesink, sdlvideosink e "
+#~ "aasink. O videosink pode ser un pipeline parcial no lugar de un elemento "
+#~ "único."
+
+#~ msgid ""
+#~ "GStreamer can put visualization plugins in a pipeline to transform audio "
+#~ "stream in video frames. Default is goom but more visualization plugins "
+#~ "will be ported soon. The visualization plugin can be a partial pipeline "
+#~ "instead of just one element."
+#~ msgstr ""
+#~ "GStreamer pode poñer engadidos de visualización nun pipeline para "
+#~ "transformar un fluxo de audio en marcos de vídeo. Por omisión é goom pero "
+#~ "pronto convertiránse máis visualizacións. O engadido de visualización "
+#~ "pode ser un pipeline parcial no lugar de só un elemento."
+
+#~ msgid ""
+#~ "GStreamer can record audio using any number of input elements. Some "
+#~ "possible choices are osssrc, esdsrc and alsasrc. The audio source can be "
+#~ "a partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer pode gravar audio usando calquera número de elementos de "
+#~ "entrada. Algunhas das posíbeis eleccións son osssrc, esdsrc e alsasrc. A "
+#~ "orixe do audio pode ser un pipeline parcial no lugar de un só elemento."
+
+#~ msgid ""
+#~ "GStreamer can record video from any number of input elements. Some "
+#~ "possible choices are v4lsrc and videotestsrc. The video source can be a "
+#~ "partial pipeline instead of just one element."
+#~ msgstr ""
+#~ "GStreamer pode gravar audio usando calquera número de elementos de "
+#~ "entrada. Algunhas das posíbeis eleccións son v4lsrc e videotestsrc. A "
+#~ "orixe do audio pode ser un pipeline parcial no lugar de un só elemento."
+
+#~ msgid "default GStreamer audio source"
+#~ msgstr "orixe de son de GStreamer predefinida"
+
+#~ msgid "default GStreamer audiosink"
+#~ msgstr "orixe do audiosink GStreamer predefinida"
+
+#~ msgid "default GStreamer video source"
+#~ msgstr "orixe do vídeo de GStreamer predefinido"
+
+#~ msgid "default GStreamer videosink"
+#~ msgstr "videosink de GStreamer predefinido"
+
+#~ msgid "default GStreamer visualization plugin"
+#~ msgstr "engadido de visualización GStreamer predefinido"
+
+#~ msgid "description for GStreamer audiosink for Audio/Video Conferencing"
+#~ msgstr ""
+#~ "descrición para o audiosink GStreamer para a conferencia de audio/vídeo"
+
+#~ msgid "description for GStreamer audiosink for Music and Movies"
+#~ msgstr "descrición para o audiosink de GStreamer para Música e Filmes"
+
+#~ msgid "description for default GStreamer audiosink"
+#~ msgstr "descrición para o audiosink de GStreamer predefinido"
+
+#~ msgid "description for default GStreamer audiosrc"
+#~ msgstr "descrición para o audiosrc de GStreamer predefinido"

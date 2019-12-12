@@ -1,0 +1,233 @@
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_finish_decompress
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_consume_input
+   fun:jpeg_read_header
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   fun:jpeg_fill_bit_buffer
+   fun:jpeg_huff_decode
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_read_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   fun:jpeg_fill_bit_buffer
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_read_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_consume_input
+   fun:jpeg_read_header
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_finish_compress
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_finish_compress
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_finish_compress
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_write_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_write_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_write_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jpeg_write_raw_data
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jinit_compress_master
+   fun:jpeg_start_compress
+}
+
+{
+   <several valgrind warnings as found with libjpeg 6b on Debian>
+   Memcheck:Cond
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   obj:/usr/lib/libjpeg.so.*
+   fun:jinit_compress_master
+   fun:jpeg_start_compress
+}
+
+{
+   <well known zlib bug>
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:png_create_read_struct_2
+   fun:png_create_read_struct
+}
+
+{
+   <apparent strtod bug when trying to parse "infinity" from "interleaved">
+   Memcheck:Addr8
+   fun:__GI___strncasecmp_l
+   fun:____strtod_l_internal
+   fun:gst_value_deserialize_double
+}
+
+## lame
+
+{
+   <lame Conditional jump or move depends on uninitialised values>
+   Memcheck:Cond
+   fun:L3psycho_anal_vbr
+   fun:lame_encode_mp3_frame
+   ...
+   fun:lame_encode_flush
+   fun:gst_lamemp3enc_sink_event
+}
+
+{
+   <twolame Conditional jump or move depends on uninitialised values>
+   Memcheck:Cond
+   ...
+   fun:psycho_3
+   fun:encode_frame
+}
+
+{
+   <twolame Conditional jump or move depends on uninitialised values>
+   Memcheck:Cond
+   fun:psycho_3
+   ...
+   fun:twolame_encode_flush
+}
+
+{
+   <getaddrinfo can leak when resolving addresses, see https://lists.debian.org/debian-glibc/2016/03/msg00243.html>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__libc_alloc_buffer_allocate
+   ...
+   fun:__res_vinit
+   ...
+   fun:context_get.part.1
+   fun:gaih_inet.constprop.7
+   fun:getaddrinfo
+   ...
+}
+
+{
+  <gnutls sessions leak the certificates, even though gnutls_deinit is correctly called>
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:malloc
+  ...
+  fun:g_tls_certificate_gnutls_real_copy
+  fun:g_tls_server_connection_gnutls_retrieve_function
+}
+
+{
+  <gnutls sessions leak the certificates, even though gnutls_deinit is correctly called>
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:calloc
+  ...
+  fun:g_tls_certificate_gnutls_real_copy
+  fun:g_tls_server_connection_gnutls_retrieve_function
+}
+
+{
+  <shout leaks through sethostent, ignoring all sethostent leaks as this is using global>
+  Memcheck:Leak
+  match-leak-kinds: definite
+  fun:malloc
+  ...
+  fun:sethostent
+}
+# Some gnutls conditional failure, taken from
+# https://salsa.debian.org/debian/flatpak/commit/fb4a8dda211c4bc036781f2b0d706266e95ce068
+{
+   gnutls_import_fail
+   Memcheck:Cond
+   ...
+   fun:gnutls_x509_ext_import_subject_alt_names
+   fun:gnutls_x509_crt_import
+}
+{
+   gnutls_x509_trust_list_add_cas cond failure
+   Memcheck:Cond
+   ...
+   fun:gnutls_x509_trust_list_add_cas
+   fun:gnutls_x509_trust_list_add_trust_mem
+   fun:gnutls_x509_trust_list_add_trust_file
+}

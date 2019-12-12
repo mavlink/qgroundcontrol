@@ -1,0 +1,841 @@
+# Brazilian Portuguese translation of gst-plugins-good.
+# This file is distributed under the same license as the gst-plugins-good package.
+# Copyright (C) 2008-2018 Free Software Foundation, Inc.
+# Fabrício Godoy <skarllot@gmail.com>, 2008-2018.
+#
+# data flow -> fluxo de dados
+# streaming -> fluxo contínuo
+# clock -> temporizador
+# plane (overlay plane) -> plano de sobreposição
+# pool -> coleção, conjunto, agrupamento
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2018-10-20 17:12-0300\n"
+"Last-Translator: Fabrício Godoy <skarllot@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
+"net>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Jack server not found"
+msgstr "Servidor Jack não encontrado"
+
+msgid "Failed to decode JPEG image"
+msgstr "Falha ao decodificar a imagem JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "\"%s\" por \"%s\""
+
+msgid "Could not connect to server"
+msgstr "Não foi possível conectar ao servidor"
+
+msgid "No URL set."
+msgstr "Nenhum URL definido."
+
+msgid "Could not resolve server name."
+msgstr "Não foi possível resolver o nome do servidor."
+
+msgid "Could not establish connection to server."
+msgstr "Não foi possível estabelecer uma conexão com servidor."
+
+msgid "Secure connection setup failed."
+msgstr "Configuração de conexão segura falhou."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+"Um erro de rede ocorreu, ou o servidor fechou a conexão inesperadamente."
+
+msgid "Server sent bad data."
+msgstr "O servidor enviou dados ruins."
+
+msgid "Server does not support seeking."
+msgstr "Nâo há suporte a busca pelo servidor."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Entrada de áudio nula ou inválida, o fluxo AVI pode estar corrompido."
+
+msgid "This file contains no playable streams."
+msgstr "Este arquivo não contêm fluxos reproduzíveis."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Este arquivo é inválido e não pôde ser reproduzido."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+"Não foi possível reproduzir o fluxo por estar criptografado com PlayReady "
+"DRM."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Este arquivo está corrompido e não pôde ser reproduzido."
+
+msgid "Invalid atom size."
+msgstr "Tamanho de Atom inválido."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Este arquivo está incompleto e não pôde ser reproduzido."
+
+msgid "The video in this file might not play correctly."
+msgstr "O vídeo neste arquivo pode não ser reproduzido corretamente."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Nenhum fluxo com suporte foi localizado. Você pode precisar instalar um plug-"
+"in de extensão GStreamer RTSP para fluxos Real media."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Nenhum fluxo com suporte foi localizado. Talvez haja necessidade de que mais "
+"protocolos de transporte sejam permitidos ou senão o plug-in de extensão "
+"GStreamer RTSP pode estar incorreto."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Não foi possível abrir o dispositivo de áudio para reprodução. O dispositivo "
+"está sendo usado por outro aplicativo."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Não foi possível abrir o dispositivo de áudio para reprodução. Você não tem "
+"permissão para abrir o dispositivo."
+
+msgid "Could not open audio device for playback."
+msgstr "Não foi possível abrir o dispositivo de áudio para reprodução."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Não foi possível abrir o dispositivo de áudio para reprodução. Não há "
+"suporte a este elemento nesta versão do Sistema Aberto de Som (OSS)."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Não há suporte a reprodução por este dispositivo de áudio."
+
+msgid "Audio playback error."
+msgstr "Erro de reprodução de áudio."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Não há suporte a gravação por este dispositivo de áudio."
+
+msgid "Error recording from audio device."
+msgstr "Erro ao gravar do dispositivo de áudio."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Não foi possível abrir o dispositivo de áudio para gravação. Você não tem "
+"permissão para abrir o dispositivo."
+
+msgid "Could not open audio device for recording."
+msgstr "Não foi possível abrir o dispositivo de áudio para gravação."
+
+msgid "CoreAudio device not found"
+msgstr "Dispositivo CoreAudio não encontrado"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Dispositivo CoreAudio não pôde ser aberto"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Erro ao ler %d bytes do dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Falha ao relacionar os formatos de vídeo que o dispositivo \"%s\" oferece "
+"suporte"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Não foi possível mapear buffers do dispositivo \"%s\""
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "O driver do dispositivo \"%s\" não tem suporte ao método %d de E/S"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+"O driver do dispositivo \"%s\" não tem suporte a nenhum método conhecido de "
+"E/S."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de entrada com suporte"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "O dispositivo \"%s\" está ocupado"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "O dispositivo \"%s\" não realiza captura a %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "O dispositivo \"%s\" não realiza captura no formato especificado"
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr ""
+"O dispositivo \"%s\" não tem suporte a planos de sobreposição não-contínuos"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "O dispositivo \"%s\" não tem suporte a captura de vídeo"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "O dispositivo \"%s\" não tem suporte a captura de vídeo"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Não foi possível obter os parâmetros no dispositivo \"%s\""
+
+msgid "Video device did not accept new frame rate setting."
+msgstr "O dispositivo de vídeo não aceita definir uma nova taxa de quadros."
+
+msgid "Video device did not provide output format."
+msgstr "O dispositivo de vídeo não forneceu um formato de saída."
+
+msgid "Video device returned invalid dimensions."
+msgstr "O dispositivo de vídeo retornou dimensões inválidas."
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+"O dispositivo de vídeo utiliza um método de entrelaçamento não suportado."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "O dispositivo de vídeo utiliza um formato para pixel não suportado."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Falha ao configurar uma coleção de buffer interno."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "O dispositivo de vídeo não sugeriu nenhum tamanho de buffer."
+
+msgid "No downstream pool to import from."
+msgstr "Nenhuma coleção de fluxo de recebimento para importar."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Falha ao obter configurações do sintonizador %d no dispositivo \"%s\"."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Erro ao obter funcionalidades do dispositivo \"%s\"."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "O dispositivo \"%s\" não é um sintonizador."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Falha ao obter a entrada de rádio do dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Falha ao definir a entrada %d no dispositivo %s."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Falha ao alternar entre com e sem áudio para o dispositivo \"%s\"."
+
+msgid "Failed to allocated required memory."
+msgstr "Falha ao alocar a memória necessária."
+
+msgid "Failed to allocate required memory."
+msgstr "Falha ao alocar a memória necessária."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+"O conversor no dispositivo %s não tem um formato de entrada com suporte"
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "O conversor no dispositivo %s não tem um formato de saída com suporte"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de entrada com suporte"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de saída com suporte"
+
+msgid "Failed to start decoding thread."
+msgstr "Falha ao iniciar o segmento de decodificação."
+
+msgid "Failed to process frame."
+msgstr "Falha ao processar quadro."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de saída com suporte"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+"O codificador no dispositivo %s não tem um formato de entrada com suporte"
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Falha ao iniciar o segmento de decodificação."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Erro ao obter recursos do dispositivo \"%s\": Ele não é um driver v4l2. "
+"Verifique se ele é um driver v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Falha ao examinar os atributos da entrada %d no dispositivo %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Falha ao obter configurações do sintonizador %d no dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Falha ao examinar as normas no dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Falha ao obter atributos de controle no dispositivo \"%s\"."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "O dispositivo \"%s\" não pôde ser identificado."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "\"%s\" não é um dispositivo."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Não foi possível abrir o dispositivo \"%s\" para leitura e gravação."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "O dispositivo \"%s\" não é um dispositivo de captura."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "O dispositivo \"%s\" não é um dispositivo de saída."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "O dispositivo \"%s\" não é um dispositivo M2M."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr ""
+"Não foi possível duplicar o dispositivo \"%s\" para leitura e gravação."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Falha ao definir as normas para o dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Falha ao obter a freqüência do sintonizador para o dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Falha ao definir a freqüência do sintonizador para o dispositivo \"%s\" à "
+"%lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Falha ao obter a força do sinal para o dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Falha ao obter o valor para o controle %d no dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Falha ao definir o valor %d para o controle %d no dispositivo \"%s\"."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Falha ao obter a entrada atual no dispositivo \"%s\". Talvez seja um "
+"dispositivo de rádio"
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Falha ao obter a saída atual no dispositivo \"%s\". Talvez seja um "
+"dispositivo de rádio"
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Falha ao definir a saída %d no dispositivo %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Ainda não há suporte a mudança de resolução enquanto está executando."
+
+msgid "Cannot operate without a clock"
+msgstr "Não é possível operar sem um temporizador"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Este arquivo contêm muitos fluxos. Apenas reproduzindo o primeiro %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Origem de gravação"
+
+#~ msgid "Microphone"
+#~ msgstr "Microfone"
+
+#~ msgid "Line In"
+#~ msgstr "Entrada de linha"
+
+#~ msgid "Internal CD"
+#~ msgstr "CD interno"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Entrada SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Entrada aux. 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Entrada aux. 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "CODEC Loopback"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "SunVTS Loopback"
+
+#~ msgid "Volume"
+#~ msgstr "Volume"
+
+#~ msgid "Gain"
+#~ msgstr "Ganho"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitorador"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Alto-falante interno"
+
+#~ msgid "Headphone"
+#~ msgstr "Fone de ouvido"
+
+#~ msgid "Line Out"
+#~ msgstr "Saída de linha"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Saída SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Saída aux. 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Saída aux. 2"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Erro interno no fluxo de dados."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Erro interno no fluxo de dados."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Não foi possível estabelecer uma conexão com servidor de som"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Falha ao examinar os recursos do servidor de som"
+
+#~ msgid "Bass"
+#~ msgstr "Grave"
+
+#~ msgid "Treble"
+#~ msgstr "Agudo"
+
+#~ msgid "Synth"
+#~ msgstr "Sintetizador"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Alto-falante"
+
+#~ msgid "Line-in"
+#~ msgstr "Entrada de linha"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Mixer"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Gravação"
+
+#~ msgid "In-gain"
+#~ msgstr "Ganho de entrada"
+
+#~ msgid "Out-gain"
+#~ msgstr "Ganho de saída"
+
+#~ msgid "Line-1"
+#~ msgstr "Linha 1"
+
+#~ msgid "Line-2"
+#~ msgstr "Linha 2"
+
+#~ msgid "Line-3"
+#~ msgstr "Linha 3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Digital 1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Digital 2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Digital 3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Entrada de fone"
+
+#~ msgid "Phone-out"
+#~ msgstr "Saída de fone"
+
+#~ msgid "Video"
+#~ msgstr "Vídeo"
+
+#~ msgid "Radio"
+#~ msgstr "Rádio"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr ""
+#~ "Não foi possível abrir o dispositivo de áudio para manipulação do "
+#~ "controlador do mixer."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Não foi possível abrir o dispositivo de áudio para manipulação do "
+#~ "controlador do mixer. Não há suporte a este elemento com esta versão do "
+#~ "Sistema Aberto de Som (OSS)."
+
+#~ msgid "Master"
+#~ msgstr "Principal"
+
+#~ msgid "Front"
+#~ msgstr "Frontal"
+
+#~ msgid "Rear"
+#~ msgstr "Traseira"
+
+#~ msgid "Headphones"
+#~ msgstr "Fones de ouvido"
+
+#~ msgid "Center"
+#~ msgstr "Central"
+
+#~ msgid "LFE"
+#~ msgstr "LFE"
+
+#~ msgid "Surround"
+#~ msgstr "Surround"
+
+#~ msgid "Side"
+#~ msgstr "Lateral"
+
+#~ msgid "AUX Out"
+#~ msgstr "Saída aux."
+
+#~ msgid "3D Depth"
+#~ msgstr "Profundidade 3D"
+
+#~ msgid "3D Center"
+#~ msgstr "3D central"
+
+#~ msgid "3D Enhance"
+#~ msgstr "Realce 3D"
+
+#~ msgid "Telephone"
+#~ msgstr "Telefone"
+
+#~ msgid "Video In"
+#~ msgstr "Entrada de vídeo"
+
+#~ msgid "AUX In"
+#~ msgstr "Entrada aux."
+
+#~ msgid "Record Gain"
+#~ msgstr "Ganho de gravação"
+
+#~ msgid "Output Gain"
+#~ msgstr "Ganho de saída"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "Aumento do microfone"
+
+#~ msgid "Diagnostic"
+#~ msgstr "Diagnóstico"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Aumento de graves"
+
+#~ msgid "Playback Ports"
+#~ msgstr "Portas de reprodução"
+
+#~ msgid "Input"
+#~ msgstr "Entrada"
+
+#~ msgid "Monitor Source"
+#~ msgstr "Origem de monitoração"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "Bip do teclado"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "Simular estéreo"
+
+#~ msgid "Stereo"
+#~ msgstr "Estéreo"
+
+#~ msgid "Surround Sound"
+#~ msgstr "Som surround"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "Ganho do microfone"
+
+#~ msgid "Speaker Source"
+#~ msgstr "Origem do alto-falante"
+
+#~ msgid "Microphone Source"
+#~ msgstr "Origem do microfone"
+
+#~ msgid "Jack"
+#~ msgstr "Jack"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Central/LFE"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "Mixagem estéreo"
+
+#~ msgid "Mono Mix"
+#~ msgstr "Mixagem mono"
+
+#~ msgid "Input Mix"
+#~ msgstr "Mixagem de entrada"
+
+#~ msgid "Microphone 1"
+#~ msgstr "Microfone 1"
+
+#~ msgid "Microphone 2"
+#~ msgstr "Microfone 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "Saída digital"
+
+#~ msgid "Digital In"
+#~ msgstr "Entrada digital"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI"
+
+#~ msgid "Modem"
+#~ msgstr "Modem"
+
+#~ msgid "Handset"
+#~ msgstr "Monofone"
+
+#~ msgid "Other"
+#~ msgstr "Outro"
+
+#~ msgid "None"
+#~ msgstr "Nenhum"
+
+#~ msgid "On"
+#~ msgstr "Ligado"
+
+#~ msgid "Off"
+#~ msgstr "Desligado"
+
+#~ msgid "Mute"
+#~ msgstr "Mudo"
+
+#~ msgid "Fast"
+#~ msgstr "Rápido"
+
+#~ msgid "Very Low"
+#~ msgstr "Muito baixa"
+
+#~ msgid "Low"
+#~ msgstr "Baixa"
+
+#~ msgid "Medium"
+#~ msgstr "Média"
+
+#~ msgid "High"
+#~ msgstr "Alta"
+
+#~ msgid "Very High"
+#~ msgstr "Muito alta"
+
+#~ msgid "Production"
+#~ msgstr "Produção"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Microfone do painel frontal"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "Entrada de linha do painel frontal"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Fones de ouvido do painel frontal"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Saída de linha do painel frontal"
+
+#~ msgid "Green Connector"
+#~ msgstr "Conector verde"
+
+#~ msgid "Pink Connector"
+#~ msgstr "Conector rosa"
+
+#~ msgid "Blue Connector"
+#~ msgstr "Conector azul"
+
+#~ msgid "White Connector"
+#~ msgstr "Conector branco"
+
+#~ msgid "Black Connector"
+#~ msgstr "Conector preto"
+
+#~ msgid "Gray Connector"
+#~ msgstr "Conector cinza"
+
+#~ msgid "Orange Connector"
+#~ msgstr "Conector laranja"
+
+#~ msgid "Red Connector"
+#~ msgstr "Conector vermelho"
+
+#~ msgid "Yellow Connector"
+#~ msgstr "Conector amarelo"
+
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Conector verde do painel frontal"
+
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Conector rosa do painel frontal"
+
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Conector azul do painel frontal"
+
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Conector branco do painel frontal"
+
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Conector preto do painel frontal"
+
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Conector cinza do painel frontal"
+
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Conector laranja do painel frontal"
+
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Conector vermelho do painel frontal"
+
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Conector amarelo do painel frontal"
+
+#~ msgid "Spread Output"
+#~ msgstr "Saída comum"
+
+#~ msgid "Downmix"
+#~ msgstr "Mesclar canais"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Entrada do mixer virtual"
+
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Saída do mixer virtual"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Canais do mixer virtual"
+
+#~ msgid "%s %d Function"
+#~ msgstr "%s %d"
+
+#~ msgid "%s Function"
+#~ msgstr "%s"
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Foi obtido um tamanho de quadro inesperado de %u, ao invés de %u."
+
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Erro ao ler %d bytes no dispositivo \"%s\"."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Não possível adicionar buffers à fila no dispositivo \"%s\"."
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Falha ao tentar obter os quadros de vídeo do dispositivo \"%s\"."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr "Falha após %d tentativas. Dispositivo %s. Erro do sistema: %s"
