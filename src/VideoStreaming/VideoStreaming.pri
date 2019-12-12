@@ -134,9 +134,9 @@ VideoEnabled {
 
     iOSBuild {
         OBJECTIVE_SOURCES += \
-            $$PWD/ios/gst_ios_init.m
+            $$PWD/iOS/gst_ios_init.m
         INCLUDEPATH += \
-            $$PWD/ios
+            $$PWD/iOS
     }
 
 } else {
