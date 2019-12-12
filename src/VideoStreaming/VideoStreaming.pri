@@ -12,9 +12,10 @@
 #
 
 LinuxBuild {
+    QT += x11extras waylandclient
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
-        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0
+        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0 gstreamer-gl-1.0
         CONFIG      += VideoEnabled
     }
 } else:MacBuild {
@@ -39,10 +40,11 @@ LinuxBuild {
     exists($$GST_ROOT) {
         CONFIG      += VideoEnabled
 
-        LIBS        += -L$$GST_ROOT/lib -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
+        LIBS        += -L$$GST_ROOT/lib -lgstreamer-1.0 -lgstgl-1.0 -lgstvideo-1.0 -lgstbase-1.0
         LIBS        += -lglib-2.0 -lintl -lgobject-2.0
 
         INCLUDEPATH += \
+            $$GST_ROOT/include \
             $$GST_ROOT/include/gstreamer-1.0 \
             $$GST_ROOT/include/glib-2.0 \
             $$GST_ROOT/lib/gstreamer-1.0/include \
@@ -86,10 +88,12 @@ LinuxBuild {
             -lgstrtpmanager \
             -lgstisomp4 \
             -lgstmatroska \
-            -lgstandroidmedia
+            -lgstandroidmedia \
+            -lgstopengl
 
         # Rest of GStreamer dependencies
         LIBS += -L$$GST_ROOT/lib \
+            -lgraphene-1.0 -ljpeg -lpng16 \
             -lgstfft-1.0 -lm  \
             -lgstnet-1.0 -lgio-2.0 \
             -lgstphotography-1.0 -lgstgl-1.0 -lEGL \
