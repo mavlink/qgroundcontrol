@@ -124,7 +124,7 @@ Item {
                     logo:               true
                     visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
@@ -138,7 +138,7 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/Gears.svg"
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
@@ -152,7 +152,7 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/Plan.svg"
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
@@ -166,7 +166,7 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/PaperPlane.svg"
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
@@ -181,7 +181,7 @@ Item {
                     icon.source:        "/qmlimages/Analyze.svg"
                     visible:            QGroundControl.corePlugin.showAdvancedUI
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
