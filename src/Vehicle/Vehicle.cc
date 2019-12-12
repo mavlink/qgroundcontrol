@@ -178,7 +178,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _messagesSent(0)
     , _messagesLost(0)
     , _messageSeq(0)
-    , _compID(0)
+    , _mainCompID(0)
     , _heardFrom(false)
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
@@ -378,7 +378,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _messagesSent(0)
     , _messagesLost(0)
     , _messageSeq(0)
-    , _compID(0)
+    , _mainCompID(0)
     , _heardFrom(false)
     , _firmwareMajorVersion(versionNotSetValue)
     , _firmwareMinorVersion(versionNotSetValue)
@@ -818,12 +818,14 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _messagesReceived++;
     emit messagesReceivedChanged();
     if(!_heardFrom) {
-        if (message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-            // This first hearbeat which comes through the vehicle is always the main autopilot component.
-            _heardFrom = true;
-            _mainCompID = message.compid;
-            _messageSeq = message.seq + 1;
+        // This message to a vehicle is alway a hearbeat from the main autopilot component.
+        if (message.msgid != MAVLINK_MSG_ID_HEARTBEAT) {
+            qWarning() << "Internal error: First message to vehicle is not HEARTBEAT" << message.msgid;
+            return;
         }
+        _heardFrom = true;
+        _mainCompID = message.compid;
+        _messageSeq = message.seq + 1;
     } else {
         if(_mainCompID == message.compid) {
             uint16_t seq_received = static_cast<uint16_t>(message.seq);
@@ -2130,7 +2132,7 @@ int Vehicle::motorCount(void)
             SUB_FRAME_CUSTOM
         };
 
-        uint8_t frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
+        uint8_t frameType = parameterManager()->getParameter(_mainCompID, "FRAME_CONFIG")->rawValue().toInt();
 
         switch (frameType) {  // ardupilot/libraries/AP_Motors/AP_Motors6DOF.h sub_frame_t
 
@@ -3160,7 +3162,7 @@ void Vehicle::setCurrentMissionSequence(int seq)
         priorityLink()->mavlinkChannel(),
         &msg,
         static_cast<uint8_t>(id()),
-        _compID,
+        _mainCompID,
         static_cast<uint8_t>(seq));
     sendMessageOnLink(priorityLink(), msg);
 }
