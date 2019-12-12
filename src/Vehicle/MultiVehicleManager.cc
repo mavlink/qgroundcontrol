@@ -74,26 +74,10 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
-    // Special case PX4 Flow since depending on firmware it can have different settings. We force to the PX4 Firmware settings.
+    // Special case PX4 Flow to force a vehicle creation.
     if (link->isPX4Flow()) {
-        vehicleId = 81;
-        componentId = 50;//MAV_COMP_ID_AUTOPILOT1;
         vehicleFirmwareType = MAV_AUTOPILOT_GENERIC;
         vehicleType = 0;
-    }
-
-    if (componentId != MAV_COMP_ID_AUTOPILOT1) {
-        // Special case for PX4 Flow
-        if (vehicleId != 81 || componentId != 50) {
-            // Don't create vehicles for components other than the autopilot
-            qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component "
-                                              << link->getName()
-                                              << vehicleId
-                                              << componentId
-                                              << vehicleFirmwareType
-                                              << vehicleType;
-            return;
-        }
     }
 
     if (_vehicles.count() > 0 && !qgcApp()->toolbox()->corePlugin()->options()->multiVehicleEnabled()) {
@@ -103,16 +87,9 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         return;
     }
 
-    switch (vehicleType) {
-    case MAV_TYPE_GCS:
-    case MAV_TYPE_ONBOARD_CONTROLLER:
-    case MAV_TYPE_GIMBAL:
-    case MAV_TYPE_ADSB:
-        // These are not vehicles, so don't create a vehicle for them
+    if (vehicleFirmwareType == MAV_AUTOPILOT_INVALID) {
+        // This is not a vehicle
         return;
-    default:
-        // All other MAV_TYPEs create vehicles
-        break;
     }
 
     qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:componentId:vehicleFirmwareType:vehicleType "
