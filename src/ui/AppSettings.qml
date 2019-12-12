@@ -74,7 +74,7 @@ Rectangle {
                     Layout.fillWidth:   true
 
                     onClicked: {
-                        if (mainWindow.preventViewSwitch) {
+                        if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         if (__rightPanel.source !== modelData.url) {
