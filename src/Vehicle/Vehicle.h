@@ -1335,6 +1335,8 @@ private:
     void _writeCsvLine();
     void _flightTimerStart(void);
     void _flightTimerStop(void);
+    void _mavlinkMessageFromAutopilotOnly(LinkInterface* link, mavlink_message_t message);
+    void _mavlinkMessageFromAnyComponent(LinkInterface* link, mavlink_message_t message);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;

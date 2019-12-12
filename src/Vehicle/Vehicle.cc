@@ -635,6 +635,165 @@ void Vehicle::resetCounters()
     _heardFrom          = false;
 }
 
+void Vehicle::_mavlinkMessageFromAutopilotOnly(LinkInterface* link, mavlink_message_t message)
+{
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_HOME_POSITION:
+        _handleHomePosition(message);
+        break;
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartbeat(message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS:
+        _handleRCChannels(message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+        _handleRCChannelsRaw(message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_STATUS:
+        _handleBatteryStatus(message);
+        break;
+    case MAVLINK_MSG_ID_SYS_STATUS:
+        _handleSysStatus(message);
+        break;
+    case MAVLINK_MSG_ID_RAW_IMU:
+        emit mavlinkRawImu(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU:
+        emit mavlinkScaledImu1(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU2:
+        emit mavlinkScaledImu2(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_IMU3:
+        emit mavlinkScaledImu3(message);
+        break;
+    case MAVLINK_MSG_ID_VIBRATION:
+        _handleVibration(message);
+        break;
+    case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
+        _handleExtendedSysState(message);
+        break;
+    case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
+        _handleAutopilotVersion(link, message);
+        break;
+    case MAVLINK_MSG_ID_PROTOCOL_VERSION:
+        _handleProtocolVersion(link, message);
+        break;
+    case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+        _handleHilActuatorControls(message);
+        break;
+    case MAVLINK_MSG_ID_GPS_RAW_INT:
+        _handleGpsRawInt(message);
+        break;
+    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+        _handleGlobalPositionInt(message);
+        break;
+    case MAVLINK_MSG_ID_ALTITUDE:
+        _handleAltitude(message);
+        break;
+    case MAVLINK_MSG_ID_VFR_HUD:
+        _handleVfrHud(message);
+        break;
+    case MAVLINK_MSG_ID_HIGH_LATENCY2:
+        _handleHighLatency2(message);
+        break;
+    case MAVLINK_MSG_ID_ATTITUDE:
+        _handleAttitude(message);
+        break;
+    case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+        _handleAttitudeQuaternion(message);
+        break;
+    case MAVLINK_MSG_ID_ATTITUDE_TARGET:
+        _handleAttitudeTarget(message);
+        break;
+    case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
+        _handleEstimatorStatus(message);
+        break;
+    case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
+        _handleOrbitExecutionStatus(message);
+        break;
+    case MAVLINK_MSG_ID_MESSAGE_INTERVAL:
+        _handleMessageInterval(message);
+        break;
+    }
+}
+
+void Vehicle::_mavlinkMessageFromAnyComponent(LinkInterface* link, mavlink_message_t message)
+{
+    switch (message.msgid) {
+    case MAVLINK_MSG_ID_RADIO_STATUS:
+        _handleRadioStatus(message);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_ACK:
+        _handleCommandAck(message);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(message);
+        break;
+    case MAVLINK_MSG_ID_STATUSTEXT:
+        _handleStatusText(message, false /* longVersion */);
+        break;
+    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+        _handleStatusText(message, true /* longVersion */);
+        break;
+    case MAVLINK_MSG_ID_PING:
+        _handlePing(link, message);
+        break;
+    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
+        _handleGimbalOrientation(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA:
+        _handleMavlinkLoggingData(message);
+        break;
+    case MAVLINK_MSG_ID_LOGGING_DATA_ACKED:
+        _handleMavlinkLoggingDataAcked(message);
+        break;
+    case MAVLINK_MSG_ID_ADSB_VEHICLE:
+        _handleADSBVehicle(message);
+        break;
+    case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
+        _handleCameraImageCaptured(message);
+        break;
+    case MAVLINK_MSG_ID_DISTANCE_SENSOR:
+        _handleDistanceSensor(message);
+        break;
+    case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
+        _handleObstacleDistance(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE:
+        _handleScaledPressure(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE2:
+        _handleScaledPressure2(message);
+        break;
+    case MAVLINK_MSG_ID_SCALED_PRESSURE3:
+        _handleScaledPressure3(message);
+        break;
+    case MAVLINK_MSG_ID_WIND_COV:
+        _handleWindCov(message);
+        break;
+
+    case MAVLINK_MSG_ID_SERIAL_CONTROL:
+    {
+        mavlink_serial_control_t ser;
+        mavlink_msg_serial_control_decode(&message, &ser);
+        emit mavlinkSerialControl(ser.device, ser.flags, ser.timeout, ser.baudrate, QByteArray(reinterpret_cast<const char*>(ser.data), ser.count));
+    }
+        break;
+
+        // Following are ArduPilot dialect messages
+#if !defined(NO_ARDUPILOT_DIALECT)
+    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
+        _handleCameraFeedback(message);
+        break;
+    case MAVLINK_MSG_ID_WIND:
+        _handleWind(message);
+        break;
+#endif
+    }
+}
+
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     // If the link is already running at Mavlink V2 set our max proto version to it.
@@ -691,154 +850,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         return;
     }
 
-    switch (message.msgid) {
-    case MAVLINK_MSG_ID_HOME_POSITION:
-        _handleHomePosition(message);
-        break;
-    case MAVLINK_MSG_ID_HEARTBEAT:
-        _handleHeartbeat(message);
-        break;
-    case MAVLINK_MSG_ID_RADIO_STATUS:
-        _handleRadioStatus(message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS:
-        _handleRCChannels(message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-        _handleRCChannelsRaw(message);
-        break;
-    case MAVLINK_MSG_ID_BATTERY_STATUS:
-        _handleBatteryStatus(message);
-        break;
-    case MAVLINK_MSG_ID_SYS_STATUS:
-        _handleSysStatus(message);
-        break;
-    case MAVLINK_MSG_ID_RAW_IMU:
-        emit mavlinkRawImu(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU:
-        emit mavlinkScaledImu1(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU2:
-        emit mavlinkScaledImu2(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_IMU3:
-        emit mavlinkScaledImu3(message);
-        break;
-    case MAVLINK_MSG_ID_VIBRATION:
-        _handleVibration(message);
-        break;
-    case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
-        _handleExtendedSysState(message);
-        break;
-    case MAVLINK_MSG_ID_COMMAND_ACK:
-        _handleCommandAck(message);
-        break;
-    case MAVLINK_MSG_ID_COMMAND_LONG:
-        _handleCommandLong(message);
-        break;
-    case MAVLINK_MSG_ID_AUTOPILOT_VERSION:
-        _handleAutopilotVersion(link, message);
-        break;
-    case MAVLINK_MSG_ID_PROTOCOL_VERSION:
-        _handleProtocolVersion(link, message);
-        break;
-    case MAVLINK_MSG_ID_WIND_COV:
-        _handleWindCov(message);
-        break;
-    case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
-        _handleHilActuatorControls(message);
-        break;
-    case MAVLINK_MSG_ID_LOGGING_DATA:
-        _handleMavlinkLoggingData(message);
-        break;
-    case MAVLINK_MSG_ID_LOGGING_DATA_ACKED:
-        _handleMavlinkLoggingDataAcked(message);
-        break;
-    case MAVLINK_MSG_ID_GPS_RAW_INT:
-        _handleGpsRawInt(message);
-        break;
-    case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-        _handleGlobalPositionInt(message);
-        break;
-    case MAVLINK_MSG_ID_ALTITUDE:
-        _handleAltitude(message);
-        break;
-    case MAVLINK_MSG_ID_VFR_HUD:
-        _handleVfrHud(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE:
-        _handleScaledPressure(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE2:
-        _handleScaledPressure2(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE3:
-        _handleScaledPressure3(message);
-        break;
-    case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
-        _handleCameraImageCaptured(message);
-        break;
-    case MAVLINK_MSG_ID_ADSB_VEHICLE:
-        _handleADSBVehicle(message);
-        break;
-    case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        _handleHighLatency2(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE:
-        _handleAttitude(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-        _handleAttitudeQuaternion(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE_TARGET:
-        _handleAttitudeTarget(message);
-        break;
-    case MAVLINK_MSG_ID_DISTANCE_SENSOR:
-        _handleDistanceSensor(message);
-        break;
-    case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
-        _handleEstimatorStatus(message);
-        break;
-    case MAVLINK_MSG_ID_STATUSTEXT:
-        _handleStatusText(message, false /* longVersion */);
-        break;
-    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
-        _handleStatusText(message, true /* longVersion */);
-        break;
-    case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
-        _handleOrbitExecutionStatus(message);
-        break;
-    case MAVLINK_MSG_ID_MESSAGE_INTERVAL:
-        _handleMessageInterval(message);
-        break;
-    case MAVLINK_MSG_ID_PING:
-        _handlePing(link, message);
-        break;
-    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
-        _handleGimbalOrientation(message);
-        break;
-    case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
-        _handleObstacleDistance(message);
-        break;
-
-    case MAVLINK_MSG_ID_SERIAL_CONTROL:
-    {
-        mavlink_serial_control_t ser;
-        mavlink_msg_serial_control_decode(&message, &ser);
-        emit mavlinkSerialControl(ser.device, ser.flags, ser.timeout, ser.baudrate, QByteArray(reinterpret_cast<const char*>(ser.data), ser.count));
-    }
-        break;
-
-        // Following are ArduPilot dialect messages
-#if !defined(NO_ARDUPILOT_DIALECT)
-    case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
-        _handleCameraFeedback(message);
-        break;
-    case MAVLINK_MSG_ID_WIND:
-        _handleWind(message);
-        break;
-#endif
+    if (message.compid == MAV_COMP_ID_AUTOPILOT1) {
+        _mavlinkMessageFromAutopilotOnly(link, message);
+    } else {
+        _mavlinkMessageFromAnyComponent(link, message);
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
