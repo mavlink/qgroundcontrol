@@ -187,13 +187,14 @@ class MavLinkInspectorPO(QGroundControlPO):
     EXTENDED_SYS_STATE_button = mav_link_button("EXTENDED_SYS_STATE")
     ODOMETRY_button = mav_link_button("ODOMETRY")
     UTM_GLOBAL_POSITION_button = mav_link_button("UTM_GLOBAL_POSITION")
-    header = {
+    header_row = {
         "container": mavlink_inscpector_page,
         "id": "header",
-        "type": "Text",
+        "type": "RowLayout",
         "unnamed": 1,
         "visible": True,
     }
+    header = {"container": header_row, "type": "Text", "unnamed": 1, "visible": True}
     menu_layout = {
         "container": mavlink_inscpector_page,
         "id": "buttonCol",
@@ -225,11 +226,30 @@ class MavLinkInspector:
     @staticmethod
     def get_message_buttons():
         return squish.findAllObjects(
-            {"type": "MAVLinkMessageButton", "unnamed": 1, "visible": True}
+            {
+                "container": MavLinkInspectorPO.menu_layout,
+                "type": "MAVLinkMessageButton",
+                "unnamed": 1,
+                "visible": True,
+            }
         )
 
     @staticmethod
-    def scroll_messages(delta):
+    def get_message_buttons_texts():
+        return [
+            str(button.text)
+            for button in squish.findAllObjects(
+                {
+                    "container": MavLinkInspectorPO.menu_layout,
+                    "type": "MAVLinkMessageButton",
+                    "unnamed": 1,
+                    "visible": True,
+                }
+            )
+        ]
+
+    @staticmethod
+    def scroll_menu(delta):
         squish.flick(
             squish.waitForObject(
                 {
