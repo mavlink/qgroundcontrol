@@ -131,7 +131,7 @@ Item {
             width:              parent.getWidth()
             anchors.centerIn:   parent
             visible:            _videoReceiver && _videoReceiver.videoRunning
-            sourceComponent:    videoDisabled ? null : videoBackgroundComponent
+            sourceComponent:    videoBackgroundComponent
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
