@@ -542,25 +542,25 @@ Item {
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          parent.height - toolStrip.y
 
-            readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      1
-            readonly property int takeoffButtonIndex:   2
-            readonly property int waypointButtonIndex:  3
-            readonly property int roiButtonIndex:       4
-            readonly property int patternButtonIndex:   5
-            readonly property int landButtonIndex:      6
-            readonly property int centerButtonIndex:    7
+            //readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      0
+            readonly property int takeoffButtonIndex:   1
+            readonly property int waypointButtonIndex:  2
+            readonly property int roiButtonIndex:       3
+            readonly property int patternButtonIndex:   4
+            readonly property int landButtonIndex:      5
+            readonly property int centerButtonIndex:    6
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
 
             model: [
-                {
+                /*{
                     name:               qsTr("Fly"),
                     iconSource:         "/qmlimages/PaperPlane.svg",
                     buttonEnabled:      true,
                     buttonVisible:      true,
-                },
+                },*/
                 {
                     name:               qsTr("File"),
                     iconSource:         "/qmlimages/MapSync.svg",
@@ -620,9 +620,9 @@ Item {
 
             onClicked: {
                 switch (index) {
-                case flyButtonIndex:
+                /*case flyButtonIndex:
                     mainWindow.showFlyView()
-                    break
+                    break*/
                 case takeoffButtonIndex:
                     allAddClickBoolsOff()
                     _missionController.insertTakeoffItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
