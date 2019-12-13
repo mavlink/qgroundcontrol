@@ -150,7 +150,7 @@ gst_qt_get_gl_display ()
 
 gboolean
 gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
-    GstGLContext **wrap_glcontext, GstGLContext **context)
+    GstGLContext **wrap_glcontext, GstGLContext **context, void * wgl_device)
 {
   GstGLPlatform platform = (GstGLPlatform) 0;
   GstGLAPI gl_api;
@@ -221,13 +221,10 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
     return FALSE;
   } else {
     gst_gl_display_filter_gl_api (display, gst_gl_context_get_gl_api (*wrap_glcontext));
-#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)  
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
     g_return_val_if_fail (context != NULL, FALSE);
 
     G_STMT_START {
-      GstGLWindow *window;
-      HDC device;
-
       /* If there's no wglCreateContextAttribsARB() support, then we would fallback to
        * wglShareLists() which will fail with ERROR_BUSY (0xaa) if either of the GL
        * contexts are current in any other thread.
@@ -240,21 +237,19 @@ gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
        * unconditionally.
        */
       *context = gst_gl_context_new (display);
-      window = gst_gl_context_get_window (*context);
-      device = (HDC) gst_gl_window_get_display (window);
 
-      wglMakeCurrent (device, 0);
-      gst_object_unref (window);
+      wglMakeCurrent ((HDC) wgl_device, 0);
+
       if (!gst_gl_context_create (*context, *wrap_glcontext, &error)) {
         GST_ERROR ("failed to create shared GL context: %s", error->message);
         g_object_unref (*context);
         *context = NULL;
         g_object_unref (*wrap_glcontext);
         *wrap_glcontext = NULL;
-        wglMakeCurrent (device, (HGLRC) gl_handle);
+        wglMakeCurrent ((HDC) wgl_device, (HGLRC) gl_handle);
         return FALSE;
       }
-      wglMakeCurrent (device, (HGLRC) gl_handle);
+      wglMakeCurrent ((HDC) wgl_device, (HGLRC) gl_handle);
     } G_STMT_END;
 #endif
     gst_gl_context_activate (*wrap_glcontext, FALSE);

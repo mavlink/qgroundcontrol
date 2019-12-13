@@ -36,6 +36,8 @@
 #include <QtQuick/QQuickWindow>
 #include <QOpenGLFramebufferObject>
 
+#include <qpa/qplatformnativeinterface.h>
+
 /* compatibility definitions... */
 #ifndef GL_READ_FRAMEBUFFER
 #define GL_READ_FRAMEBUFFER 0x8CA8
@@ -292,8 +294,30 @@ QtGLWindow::onSceneGraphInitialized()
   GST_DEBUG ("scene graph initialization with Qt GL context %p",
       this->source->openglContext ());
 
+  void* wgl_device = nullptr;
+
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+  HWND hWnd = nullptr;
+
+  if (handle()) {
+      QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+      hWnd = static_cast<HWND>(pni->nativeResourceForWindow(QByteArrayLiteral("handle"), this));
+
+      if (hWnd != nullptr) {
+         wgl_device = GetWindowDC(hWnd);
+      }
+  }
+#endif
+
   this->priv->initted = gst_qt_get_gl_wrapcontext (this->priv->display,
-      &this->priv->other_context, NULL);
+      &this->priv->other_context, NULL, wgl_device);
+
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+  if (wgl_device != nullptr) {
+      ReleaseDC(hWnd, static_cast<HDC>(wgl_device));
+      wgl_device = nullptr;
+  }
+#endif
 
   if (this->priv->initted && this->priv->other_context) {
     const GstGLFuncs *gl;

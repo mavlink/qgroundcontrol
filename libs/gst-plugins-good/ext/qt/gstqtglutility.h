@@ -28,7 +28,7 @@ G_BEGIN_DECLS
 
 GstGLDisplay * gst_qt_get_gl_display ();
 gboolean       gst_qt_get_gl_wrapcontext (GstGLDisplay * display,
-    GstGLContext **wrap_glcontext, GstGLContext **context);
+    GstGLContext **wrap_glcontext, GstGLContext **context, void * wgl_device);
 
 G_END_DECLS
 #endif /* __QT_GL_UTILS_H__ */

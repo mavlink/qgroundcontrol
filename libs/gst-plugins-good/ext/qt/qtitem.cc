@@ -35,6 +35,8 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGSimpleTextureNode>
 
+#include <qpa/qplatformnativeinterface.h>
+
 /**
  * SECTION:gtkgstglwidget
  * @short_description: a #GtkGLArea that renders GStreamer video #GstBuffers
@@ -290,8 +292,35 @@ QtGLVideoItem::onSceneGraphInitialized ()
     return;
   }
 
+  void* wgl_device = nullptr;
+
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+  HWND hWnd = nullptr;
+
+  QWindow* window = this->window();
+
+  if (window && window->handle()) {
+      QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
+      hWnd = static_cast<HWND>(pni->nativeResourceForWindow(QByteArrayLiteral("handle"), window));
+
+      if (hWnd != nullptr) {
+         wgl_device = GetWindowDC(hWnd);
+      }
+  }
+#endif
+
   m_openGlContextInitialized = gst_qt_get_gl_wrapcontext (this->priv->display,
-      &this->priv->other_context, &this->priv->context);
+      &this->priv->other_context, &this->priv->context, wgl_device);
+
+#if GST_GL_HAVE_WINDOW_WIN32 && GST_GL_HAVE_PLATFORM_WGL && defined (HAVE_QT_WIN32)
+  if (wgl_device != nullptr) {
+      ReleaseDC(hWnd, static_cast<HDC>(wgl_device));
+      wgl_device = nullptr;
+  }
+
+  hWnd = nullptr;
+  window = nullptr;
+#endif
 
   GST_DEBUG ("%p created wrapped GL context %" GST_PTR_FORMAT, this,
       this->priv->other_context);
