@@ -109,29 +109,29 @@ protected:
         TransactionRemoveAll
     } TransactionType_t;
 
-    void _startAckTimeout(AckType_t ack);
-    bool _checkForExpectedAck(AckType_t receivedAck);
-    void _readTransactionComplete(void);
-    void _handleMissionCount(const mavlink_message_t& message);
-    void _handleMissionItem(const mavlink_message_t& message, bool missionItemInt);
-    void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
-    void _handleMissionAck(const mavlink_message_t& message);
-    void _requestNextMissionItem(void);
-    void _clearMissionItems(void);
-    void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
-    QString _ackTypeToString(AckType_t ackType);
-    QString _missionResultToString(MAV_MISSION_RESULT result);
-    void _finishTransaction(bool success, bool apmGuidedItemWrite = false);
-    void _requestList(void);
-    void _writeMissionCount(void);
-    void _writeMissionItemsWorker(void);
-    void _clearAndDeleteMissionItems(void);
-    void _clearAndDeleteWriteMissionItems(void);
-    QString _lastMissionReqestString(MAV_MISSION_RESULT result);
-    void _removeAllWorker(void);
-    void _connectToMavlink(void);
-    void _disconnectFromMavlink(void);
-    QString _planTypeString(void);
+    void    _startAckTimeout                (AckType_t ack);
+    bool    _checkForExpectedAck            (AckType_t receivedAck);
+    void    _readTransactionComplete        (void);
+    void    _handleMissionCount             (const mavlink_message_t& message);
+    void    _handleMissionItem              (const mavlink_message_t& message, bool missionItemInt);
+    void    _handleMissionRequest           (const mavlink_message_t& message);
+    void    _handleMissionAck               (const mavlink_message_t& message);
+    void    _requestNextMissionItem         (void);
+    void    _clearMissionItems              (void);
+    void    _sendError                      (ErrorCode_t errorCode, const QString& errorMsg);
+    QString _ackTypeToString                (AckType_t ackType);
+    QString _missionResultToString          (MAV_MISSION_RESULT result);
+    void    _finishTransaction              (bool success, bool apmGuidedItemWrite = false);
+    void    _requestList                    (void);
+    void    _writeMissionCount              (void);
+    void    _writeMissionItemsWorker        (void);
+    void    _clearAndDeleteMissionItems     (void);
+    void    _clearAndDeleteWriteMissionItems(void);
+    QString _lastMissionReqestString        (MAV_MISSION_RESULT result);
+    void    _removeAllWorker                (void);
+    void    _connectToMavlink               (void);
+    void    _disconnectFromMavlink          (void);
+    QString _planTypeString                 (void);
 
 protected:
     Vehicle*            _vehicle;
