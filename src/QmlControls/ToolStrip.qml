@@ -19,7 +19,7 @@ Rectangle {
     id:         _root
     color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
-    height:     Math.min(maxHeight, toolStripColumn.height + (toolStripColumn.anchors.margins * 2))
+    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model
@@ -56,6 +56,7 @@ Rectangle {
     }
 
     QGCFlickable {
+        id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
