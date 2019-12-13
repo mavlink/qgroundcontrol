@@ -4047,9 +4047,8 @@ void Vehicle::requestMicroserviceVersion(uint16_t serviceID, uint16_t minVersion
     if(iter == _microserviceVersions.end()){
         sendMavCommand(
                 defaultComponentId(),
-                MAV_CMD_REQUEST_MESSAGE,
+                MAV_CMD_REQUEST_SERVICE_VERSION,
                 false,
-                MAVLINK_MSG_ID_MAVLINK_SERVICE_VERSION,
                 serviceID,
                 minVersion,
                 maxVersion
