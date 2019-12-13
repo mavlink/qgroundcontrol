@@ -17,14 +17,16 @@ def main():
         'The header message should be "Inspect real time MAVLink messages"',
     )
 
-    menu_width = analyze.MavLinkInspector.get_menu_witdh()
-    for record in testData.dataset("messages.tsv"):
-        message = testData.field(record, "message")
+    snooze(5)  # Are 5s enough? Missing indicator for loading all the menu items
 
+    menu_width = analyze.MavLinkInspector.get_menu_witdh()
+
+    for message in analyze.MavLinkInspector.get_message_buttons_texts():
         test.compare(
             analyze.MavLinkInspector.get_menu_elem_width(message),
             menu_width,
             f"{message} button width should be {menu_width}",
         )
         menu_elem_height = analyze.MavLinkInspector.get_menu_elem_height(message)
-        analyze.MavLinkInspector.scroll_messages(menu_elem_height)
+        analyze.MavLinkInspector.scroll_menu(menu_elem_height)
+        print("Asad")

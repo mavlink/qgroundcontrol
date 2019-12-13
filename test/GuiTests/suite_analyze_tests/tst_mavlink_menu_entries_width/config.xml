@@ -3,5 +3,8 @@
 <summary>07 MAVLink Inspector</summary>
 <description>Shows invoking the MAVLink Inspector. It would be great if we could detect if an UI element’s size is wrong due to an overly long label.</description>
 </information>
+<tags>
+<tag>sim</tag>
+</tags>
 <testsettings/>
 </testconfig>

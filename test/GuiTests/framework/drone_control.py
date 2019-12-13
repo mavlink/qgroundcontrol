@@ -118,7 +118,7 @@ def set_altitude(altitude, epsilon=0.3):
         f'[Drone Control] Set target altitude to "{altitude}m" with epsilon "{epsilon}"'
     )
     initial_altitude = float(
-        str(squish.waitForObject(AltitudeSliderPO.sliderAltField).text)[:-1]
+        str(squish.waitForObject(AltitudeSliderPO.sliderAltField).text).split()[0]
     )
     handler = squish.waitForObject(AltitudeSliderPO.fakeHandle_Item)
     center_h = builtins.int(handler.height / 2)
@@ -127,7 +127,7 @@ def set_altitude(altitude, epsilon=0.3):
     current_alt_label = squish.waitForObject(AltitudeSliderPO.sliderAltField)
     try:
         squish.mousePress(handler)
-        while abs(float(str(current_alt_label.text)[:-1]) - altitude) > epsilon:
+        while abs(float(str(current_alt_label.text).split()[0]) - altitude) > epsilon:
             squish.mouseMove(handler, x, y)
     except:
         raise

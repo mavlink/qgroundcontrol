@@ -37,18 +37,20 @@ class DroneParamsPO(QGroundControlPO):
 
 def get_altitude():
     return float(
-        str(squish.waitForObject(DroneParamsPO.currentDroneAltitude).text)[:-1]
+        str(squish.waitForObject(DroneParamsPO.currentDroneAltitude).text).split()[0]
     )
 
 
 def get_distance():
     return builtins.int(
-        str(squish.waitForObject(DroneParamsPO.currentDroneDistance).text)[:-1]
+        str(squish.waitForObject(DroneParamsPO.currentDroneDistance).text).split()[0]
     )
 
 
 def get_speed():
-    return float(str(squish.waitForObject(DroneParamsPO.currentDroneSpeed).text)[:-3])
+    return float(
+        str(squish.waitForObject(DroneParamsPO.currentDroneSpeed).text).split()[0]
+    )
 
 
 def get_position():

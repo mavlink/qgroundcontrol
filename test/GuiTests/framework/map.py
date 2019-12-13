@@ -1,4 +1,6 @@
 from qgroundcontrol import QGroundControlPO
+import squish
+import test
 
 
 class MapPO(QGroundControlPO):
@@ -35,3 +37,40 @@ class MapPO(QGroundControlPO):
         "unnamed": 1,
         "visible": True,
     }
+    zoomUp_Button = {
+        "container": QGroundControlPO.application_window,
+        "id": "zoomUpButton",
+        "type": "QGCButton",
+        "unnamed": 1,
+        "visible": True,
+    }
+    zoomDown_Button = {
+        "container": QGroundControlPO.application_window,
+        "id": "zoomDownButton",
+        "type": "QGCButton",
+        "unnamed": 1,
+        "visible": True,
+    }
+    zoomValue_Label = {
+        "container": QGroundControlPO.application_window,
+        "id": "scaleText",
+        "type": "QGCMapLabel",
+        "unnamed": 1,
+        "visible": True,
+    }
+
+
+def zoom_in(times=1):
+    for _ in range(times):
+        test.log("[Map] Zoom In")
+        squish.mouseClick(squish.waitForObject(MapPO.zoomUp_Button))
+
+
+def zoom_out(times=1):
+    for _ in range(times):
+        test.log("[Map] Zoom Out")
+        squish.mouseClick(squish.waitForObject(MapPO.zoomDown_Button))
+
+
+def zoom_level():
+    return str(squish.waitForObject(MapPO.zoomValue_Label).text)
