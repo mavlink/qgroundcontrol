@@ -833,12 +833,21 @@ gst_flv_mux_create_metadata (GstFlvMux * mux)
   const GstTagList *tags;
   GstBuffer *script_tag, *tmp;
   GstMapInfo map;
+  guint32 dts;
   guint8 *data;
   gint i, n_tags, tags_written = 0;
 
   tags = gst_tag_setter_get_tag_list (GST_TAG_SETTER (mux));
 
-  GST_DEBUG_OBJECT (mux, "tags = %" GST_PTR_FORMAT, tags);
+  dts = mux->last_dts;
+
+  /* Timestamp must start at zero */
+  if (GST_CLOCK_STIME_IS_VALID (mux->first_timestamp)) {
+    dts -= mux->first_timestamp / GST_MSECOND;
+  }
+
+  GST_DEBUG_OBJECT (mux, "Creating metadata, dts %i, tags = %" GST_PTR_FORMAT,
+      dts, tags);
 
   /* FIXME perhaps some bytewriter'ing here ... */
 
@@ -852,7 +861,8 @@ gst_flv_mux_create_metadata (GstFlvMux * mux)
   data[3] = 0;
 
   /* Timestamp */
-  data[4] = data[5] = data[6] = data[7] = 0;
+  GST_WRITE_UINT24_BE (data + 4, dts);
+  data[7] = (((guint) dts) >> 24) & 0xff;
 
   /* Stream ID */
   data[8] = data[9] = data[10] = 0;
