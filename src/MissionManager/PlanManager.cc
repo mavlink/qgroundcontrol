@@ -198,12 +198,19 @@ void PlanManager::_ackTimeout(void)
         break;
     case AckServiceVersion:
         if(_retryCount > _maxRetryCount){
-            _sendError(VehicleError, tr("Request mission service version failed, maximum retries exceeded."));
-            _finishTransaction(false);
+            //_sendError(VehicleError, tr("Request mission service version failed, maximum retries exceeded."));
+            //qCInfo(PlanManagerLog) << QStringLiteral("Service version handshake failed, moving on with old behavior.");
+            qInfo("Service version handshake failed, moving on with old behavior.");
+            // A selected version of 0 means that the autopilot did not respond to a microservice version handshake.
+            // In order to support old autopilots that have not implemented microservice versioning, don't treat this
+            // as an error. Just continue as if nothing is wrong, but indicate that there was no handshake.
+            _serviceVersionReceived(SERVICE_ID, 0);
         }else{
             _retryCount++;
-            qCDebug(PlanManagerLog) << tr("Retrying %1 Request microservice version (MAV_CMD_REQUEST_MESSAGE) retry Count").arg(_planTypeString()) << _retryCount;
+            qCDebug(PlanManagerLog) << tr("Retrying %1 Request microservice version (MAV_CMD_REQUEST_SERVICE_VERSION) retry Count").arg(_planTypeString()) << _retryCount;
+            qDebug("===== Requesting microservice version AGAIN =====");
             _vehicle->requestMicroserviceVersion(SERVICE_ID, SERVICE_MIN_VERSION, SERVICE_MAX_VERSION);
+            _startAckTimeout(AckServiceVersion);
         }
         break;
     case AckMissionCount:
@@ -382,7 +389,7 @@ void PlanManager::_requestNextMissionItem(void)
 
     mavlink_message_t message;
     //if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
-    if (_serviceVersion > 1) {
+    if (_serviceVersion > 1 || _vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
         mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                   _dedicatedLink->mavlinkChannel(),
@@ -714,19 +721,21 @@ void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
         break;
 
     case MAVLINK_MSG_ID_MISSION_ITEM:
-        _handleMissionItem(message, false /* missionItemInt */);
+        // If the microservice handshake has been done, then use the results of that to determine whether to use
+        // mission item int. If the handshake has not been done (_serviceVersion == 0), default to old behavior.
+        _handleMissionItem(message, _serviceVersion == 0 ? false : _serviceVersion > 1 /* missionItemInt */);
         break;
 
     case MAVLINK_MSG_ID_MISSION_ITEM_INT:
-        _handleMissionItem(message, true /* missionItemInt */);
+        _handleMissionItem(message, _serviceVersion == 0 ? true : _serviceVersion > 1  /* missionItemInt */);
         break;
 
     case MAVLINK_MSG_ID_MISSION_REQUEST:
-        _handleMissionRequest(message, false /* missionItemInt */);
+        _handleMissionRequest(message, _serviceVersion == 0 ? false : _serviceVersion > 1  /* missionItemInt */);
         break;
 
     case MAVLINK_MSG_ID_MISSION_REQUEST_INT:
-        _handleMissionRequest(message, true /* missionItemInt */);
+        _handleMissionRequest(message, _serviceVersion == 0 ? true : _serviceVersion > 1  /* missionItemInt */);
         break;
 
     case MAVLINK_MSG_ID_MISSION_ACK:
@@ -1038,6 +1047,7 @@ void PlanManager::_startTransaction(TransactionType_t type){
     // a signal immediately. So I need to start the timeout before actually making the request, so we don't
     // receive the signal before the timeout is actually set up.
     _startAckTimeout(AckServiceVersion);
+    qDebug("===== Requesting microservice version first time =====");
     _vehicle->requestMicroserviceVersion(SERVICE_ID, SERVICE_MIN_VERSION, SERVICE_MAX_VERSION);
 
 }

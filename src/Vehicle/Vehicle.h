@@ -1183,9 +1183,15 @@ signals:
     void checkListStateChanged          ();
     /**
      * Emitted when the microservice version handshake is complete. To initiate this handshake,
-     * see Vehicle::requestMicroserviceVersion
+     * see Vehicle::requestMicroserviceVersion.
+     *
+     * This signal will be emitted even if the vehicle has not implemented microservice versioning! In that case,
+     * after using requestMicroserviceVersion, the response will never be received, so there will be a timeout
+     * after some amount of time. Then, this signal will be emitted with serviceVersion = 0.
+     *
      * @param serviceID ID of the service
      * @param serviceVersion The version of the service which was agreed upon, OR 0 if no compatible versions were found
+     *     or if the message was never received from the vehicle.
      */
     void serviceVersionReceived         (uint16_t serviceID, uint16_t serviceVersion);
 
@@ -1299,6 +1305,7 @@ private slots:
     void _trafficUpdate                 (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _orbitTelemetryTimeout         ();
     void _protocolVersionTimeOut        ();
+    void _serviceVersionTimeout         (uint16_t serviceID);
     void _updateFlightTime              ();
 
 private:

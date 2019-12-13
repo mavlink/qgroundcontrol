@@ -3410,7 +3410,17 @@ void Vehicle::_protocolVersionTimeOut()
     _startPlanRequest();
 }
 
-void Vehicle::_handleUnsupportedRequestAutopilotCapabilities()
+void Vehicle::_serviceVersionTimeout (uint16_t serviceID)
+{
+    qDebug("===== _serviceVersionTimeout ===");
+    auto iter = _microserviceVersions.find(serviceID);
+    if(iter == _microserviceVersions.end()){
+        _microserviceVersions.insert(serviceID, 0);
+        emit serviceVersionReceived(serviceID, 0);
+    }
+}
+
+void Vehicle::_handleUnsupportedRequestAutopilotCapabilities(void)
 {
     // We end up here if either the vehicle does not support the MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES command or if
     // we never received an Ack back for the command.
@@ -4053,6 +4063,7 @@ void Vehicle::requestMicroserviceVersion(uint16_t serviceID, uint16_t minVersion
                 minVersion,
                 maxVersion
                 );
+        QTimer::singleShot(1000, this, [serviceID, this](){this->_serviceVersionTimeout(serviceID);});
     }else{
         uint16_t version = iter.value();
         emit serviceVersionReceived(serviceID, version);
