@@ -134,13 +134,13 @@ Rectangle {
             Repeater {
                 id:                     buttonRepeater
                 model:                  ScreenTools.isMobile ? mobileModel : desktopModel
-                Component.onCompleted: itemAt(0).checked = true
+                Component.onCompleted:  itemAt(0).checked = true
                 SubMenuButton {
                     imageResource:      buttonImage
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
                     text:               buttonText
-                    onClicked:          panelLoader.source = pageSource
+                    onClicked:          { panelLoader.source = pageSource; checked = true; }
                 }
             }
         }
