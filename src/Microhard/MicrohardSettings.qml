@@ -48,7 +48,7 @@ Rectangle {
             contentWidth:       settingsColumn.width
             Column {
                 id:                 settingsColumn
-            width:              _root.width
+                width:              _root.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
@@ -121,44 +121,34 @@ Rectangle {
                                 Layout.minimumWidth: _labelWidth
                             }
                             QGCLabel {
-                                function getStatus(status) {
-                                    if (status === 1)
-                                        return qsTr("Connected");
-                                    else if (status === -1)
-                                        return qsTr("Login Error")
-                                    else
-                                        return qsTr("Not Connected")
-                                }
-                                text:           getStatus(QGroundControl.microhardManager.connected)
-                                color:          QGroundControl.microhardManager.connected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
+                                text:           QGroundControl.microhardManager.connected
+                                color:          QGroundControl.microhardManager.connected === qsTr("Connected") ? qgcPal.colorGreen : qgcPal.colorRed
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
                                 text:           qsTr("Air Unit:")
+                                visible:        QGroundControl.microhardManager.showRemote
                             }
                             QGCLabel {
-                                function getStatus(status) {
-                                    if (status === 1)
-                                        return qsTr("Connected");
-                                    else if (status === -1)
-                                        return qsTr("Login Error")
-                                    else
-                                        return qsTr("Not Connected")
-                                }
-                                text:           getStatus(QGroundControl.microhardManager.linkConnected)
-                                color:          QGroundControl.microhardManager.linkConnected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
+                                text:           QGroundControl.microhardManager.linkConnected
+                                visible:        QGroundControl.microhardManager.showRemote
+                                color:          QGroundControl.microhardManager.linkConnected === qsTr("Connected") ? qgcPal.colorGreen : qgcPal.colorRed
                             }
                             QGCLabel {
                                 text:           qsTr("Uplink RSSI:")
+                                visible:        QGroundControl.microhardManager.uplinkRSSI < 0
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.uplinkRSSI < 0 ? QGroundControl.microhardManager.uplinkRSSI : ""
+                                text:           QGroundControl.microhardManager.uplinkRSSI
+                                visible:        QGroundControl.microhardManager.uplinkRSSI < 0
                             }
                             QGCLabel {
                                 text:           qsTr("Downlink RSSI:")
+                                visible:        QGroundControl.microhardManager.downlinkRSSI < 0
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.downlinkRSSI < 0 ? QGroundControl.microhardManager.downlinkRSSI : ""
+                                text:           QGroundControl.microhardManager.downlinkRSSI
+                                visible:        QGroundControl.microhardManager.downlinkRSSI < 0
                             }
                         }
                     }
