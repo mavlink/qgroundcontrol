@@ -1,6 +1,8 @@
 add_library(PhotoGallery
     AbstractPhotoTrigger.cc
     AsyncDownloadPhotoTrigger.cc
+    ExtractJPEGMetadata.cc
+    JPEGSegmentParser.cc
     PhotoFileStore.cc
     PhotoGalleryModel.cc
     PhotoGalleryVehicleGlue.cc
