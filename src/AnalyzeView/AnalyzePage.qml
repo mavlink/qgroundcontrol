@@ -25,7 +25,7 @@ Item {
     property alias  pageDescription:    pageDescriptionLabel.text
     property alias  headerComponent:    headerLoader.sourceComponent
     property real   availableWidth:     width  - pageLoader.x
-    property real   availableHeight:    height - pageLoader.y
+    property real   availableHeight:    height - mainContent.y
     property bool   poped:              false
     property real   _margins:           ScreenTools.defaultFontPixelHeight * 0.5
 
@@ -36,7 +36,9 @@ Item {
         anchors.topMargin:      _margins
         anchors.top:            parent.top
         anchors.left:           parent.left
+        anchors.rightMargin:    _margins
         anchors.right:          floatIcon.left
+        visible:                !ScreenTools.isShortScreen && headerLoader.sourceComponent !== null
     }
 
     Column {
@@ -44,12 +46,14 @@ Item {
         anchors.topMargin:      _margins
         anchors.top:            parent.top
         anchors.left:           parent.left
+        anchors.rightMargin:    _margins
         anchors.right:          floatIcon.left
         spacing:                _margins
         visible:                !ScreenTools.isShortScreen && headerLoader.sourceComponent === null
         QGCLabel {
             id:                 pageNameLabel
             font.pointSize:     ScreenTools.largeFontPointSize
+            visible:            !poped
         }
         QGCLabel {
             id:                 pageDescriptionLabel
@@ -60,6 +64,7 @@ Item {
     }
 
     QGCFlickable {
+        id:                     mainContent
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight
         anchors.top:            headerLoader.sourceComponent === null ? (headingColumn.visible ? headingColumn.bottom : parent.top) : headerLoader.bottom
         anchors.bottom:         parent.bottom
@@ -75,7 +80,7 @@ Item {
 
     QGCColoredImage {
         id:                     floatIcon
-        anchors.top:            parent.top
+        anchors.verticalCenter: headerLoader.visible ? headerLoader.verticalCenter : headingColumn.verticalCenter
         anchors.right:          parent.right
         width:                  ScreenTools.defaultFontPixelHeight * 2
         height:                 width
