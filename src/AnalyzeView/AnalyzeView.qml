@@ -13,6 +13,7 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 import QtQuick          2.3
+import QtQuick.Window   2.2
 import QtQuick.Controls 1.2
 
 import QGroundControl               1.0
@@ -33,6 +34,8 @@ Rectangle {
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
     readonly property real  _verticalMargin:        _defaultTextHeight / 2
     readonly property real  _buttonWidth:           _defaultTextWidth * 18
+
+    property int _curIndex: 0
 
     GeoTagController {
         id: geoController
@@ -136,11 +139,41 @@ Rectangle {
                 model:                  ScreenTools.isMobile ? mobileModel : desktopModel
                 Component.onCompleted:  itemAt(0).checked = true
                 SubMenuButton {
+                    id:                 subMenu
                     imageResource:      buttonImage
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
                     text:               buttonText
-                    onClicked:          { panelLoader.source = pageSource; checked = true; }
+                    property var window:    analyzeWidgetWindow
+                    property var loader:    analyzeWidgetLoader
+                    onClicked: {
+                        _curIndex = index
+                        panelLoader.source = pageSource
+                        checked = true
+                    }
+                    Window {
+                        id:             analyzeWidgetWindow
+                        width:          mainWindow.width  * 0.5
+                        height:         mainWindow.height * 0.5
+                        visible:        false
+                        title:          buttonText
+                        Rectangle {
+                            color:      qgcPal.window
+                            anchors.fill:  parent
+                            Loader {
+                                id:             analyzeWidgetLoader
+                                anchors.fill:   parent
+                            }
+                        }
+                        onClosing: {
+                            analyzeWidgetWindow.visible = false
+                            analyzeWidgetLoader.source = ""
+                            _curIndex = index
+                            panelLoader.source = pageSource
+                            subMenu.visible = true
+                            subMenu.checked = true
+                        }
+                    }
                 }
             }
         }
@@ -156,6 +189,18 @@ Rectangle {
         anchors.bottom:         parent.bottom
         width:                  1
         color:                  qgcPal.windowShade
+    }
+
+    Connections {
+        target:                 panelLoader.item
+        onPopout: {
+            buttonRepeater.itemAt(_curIndex).window.visible = true
+            var source = panelLoader.source
+            panelLoader.source = ""
+            buttonRepeater.itemAt(_curIndex).loader.source = source
+            buttonRepeater.itemAt(_curIndex).visible = false
+            buttonRepeater.itemAt(_curIndex).loader.item.poped = true
+        }
     }
 
     Loader {
