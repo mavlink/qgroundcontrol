@@ -16,6 +16,7 @@
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
+CONFIG -= debug_and_release
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
@@ -63,14 +64,14 @@ linux {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
-    win32-msvc2015 {
+    contains(QMAKE_TARGET.arch, x86_64) {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
     } else {
-        error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
+        error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
 } else : macx {
     macx-clang | macx-llvm {
@@ -179,6 +180,7 @@ installer {
 
 # Setup our supported build flavors
 
+message($$CONFIG)
 CONFIG(debug, debug|release) {
     message(Debug flavor)
     CONFIG += DebugBuild
