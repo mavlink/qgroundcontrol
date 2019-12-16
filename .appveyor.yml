@@ -1,5 +1,7 @@
 version: '{branch}-{build}'
 
+image: Visual Studio 2017
+
 build:
   verbosity: minimal
 
@@ -13,18 +15,8 @@ environment:
     SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_install
 
 install:
-  - cd "C:\Program Files (x86)"
-  - dir
-  - cd "C:\Program Files"
-  - dir
   - git submodule update --init --recursive
-  - cd "Microsoft Visual Studio"
-  - cd "2017"
-  - cd "Community"
-  - cd "VC"
-  - cd "Auxiliary"
-  - cd "Build"
-  - dir
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.12.5\msvc2017_64\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
