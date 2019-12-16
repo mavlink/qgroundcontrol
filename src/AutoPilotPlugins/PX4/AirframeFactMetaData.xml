@@ -361,6 +361,14 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
+    <airframe id="4016" maintainer="John Doe &lt;john@example.com&gt;" name="PX4 Vision DevKit Platform">
+      <class>Copter</class>
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
     <airframe id="4020" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="Hobbyking Micro PCB">
       <class>Copter</class>
       <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>

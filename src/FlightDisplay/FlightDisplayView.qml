@@ -54,6 +54,7 @@ Item {
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
     property alias  _altitudeSlider:                altitudeSlider
+    property real   _toolsMargin:                   ScreenTools.defaultFontPixelWidth * 0.75
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -357,7 +358,7 @@ Item {
                     // Do anchors again after popup
                     anchors.left =       _mapAndVideo.left
                     anchors.bottom =     _mapAndVideo.bottom
-                    anchors.margins =    ScreenTools.defaultFontPixelHeight
+                    anchors.margins =    _toolsMargin
                 }
             }
 
@@ -365,8 +366,8 @@ Item {
                 State {
                     name:   "pipMode"
                     PropertyChanges {
-                        target: _flightVideo
-                        anchors.margins: ScreenTools.defaultFontPixelHeight
+                        target:             _flightVideo
+                        anchors.margins:    _toolsMargin
                     }
                     PropertyChanges {
                         target: _flightVideoPipControl
@@ -376,12 +377,12 @@ Item {
                 State {
                     name:   "fullMode"
                     PropertyChanges {
-                        target: _flightVideo
+                        target:             _flightVideo
                         anchors.margins:    0
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:     _flightVideoPipControl
+                        inPopup:    false
                     }
                 },
                 State {
@@ -404,9 +405,9 @@ Item {
                     ParentChange {
                         target: _flightVideo
                         parent: videoItem
-                        x: 0
-                        y: 0
-                        width: videoItem.width
+                        x:      0
+                        y:      0
+                        width:  videoItem.width
                         height: videoItem.height
                     }
                 },
@@ -473,8 +474,8 @@ Item {
 
         Row {
             id:                     singleMultiSelector
-            anchors.topMargin:      ScreenTools.toolbarHeight + _margins
-            anchors.rightMargin:    _margins
+            anchors.topMargin:      ScreenTools.toolbarHeight + _toolsMargin
+            anchors.rightMargin:    _toolsMargin
             anchors.right:          parent.right
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
@@ -496,7 +497,7 @@ Item {
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
             z:                  _mapAndVideo.z + 4
-            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0) - (ScreenTools.defaultFontPixelHeight * 0.5)
+            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _toolsMargin : 0) - _toolsMargin
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
@@ -519,7 +520,7 @@ Item {
         }
 
         MultiVehicleList {
-            anchors.margins:            _margins
+            anchors.margins:            _toolsMargin
             anchors.top:                singleMultiSelector.bottom
             anchors.right:              parent.right
             anchors.bottom:             parent.bottom
@@ -554,14 +555,14 @@ Item {
             visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
 
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
+            anchors.leftMargin: isInstrumentRight() ? _toolsMargin : undefined
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.topMargin:  _toolsMargin
             anchors.top:        parent.top
             z:                  _mapAndVideo.z + 4
-            maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
+            maxHeight:          parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -592,12 +593,12 @@ Item {
             ]
 
             model: [
-                {
+                /*{
                     name:               "Plan",
                     iconSource:         "/qmlimages/Plan.svg",
                     buttonVisible:      true,
                     buttonEnabled:      true,
-                },
+                },*/
                 {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
@@ -643,9 +644,10 @@ Item {
 
             onClicked: {
                 guidedActionsController.closeAll()
-                if(index === 0) {
+                /*if(index === 0) {
                     mainWindow.showPlanView()
-                } else if(index === 1) {
+                } else*/
+                if(index === 0) {
                     checklistDropPanel.open()
                 } else {
                     var action = model[index].action

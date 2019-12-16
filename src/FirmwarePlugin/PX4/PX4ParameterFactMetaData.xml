@@ -4579,17 +4579,6 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="0.5" name="MPC_ACC_HOR_ESTM" type="FLOAT">
-      <short_desc>Horizontal acceleration in manual modes when te estimator speed limit is removed.
-If full stick is being applied and the estimator stops demanding a speed limit,
-which it had been before (e.g if GPS is gained while flying on optical flow/vision only),
-the vehicle will accelerate at this rate until the normal position control speed is achieved</short_desc>
-      <min>0.2</min>
-      <max>2.0</max>
-      <unit>m/s/s</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
-    </parameter>
     <parameter default="5.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
       <long_desc>Manual mode: Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3. Auto mode: Used with MPC_AUTO_MODE 0 only. For MPC_AUTO_MODE 1, MPC_ACC_HOR is always used.</long_desc>
@@ -4693,7 +4682,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="10.0" name="MPC_LAND_ALT1" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" to enable a smooth descent experience Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4701,7 +4690,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_LAND_ALT2" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED" Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4710,6 +4699,13 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     <parameter default="0.7" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.6</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="2." name="MPC_LAND_VEL_XY" type="FLOAT">
+      <short_desc>Maximum horizontal velocity during landing
+Set the value higher than the otherwise expected maximum to disable any slowdown</short_desc>
+      <min>0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>

@@ -178,7 +178,7 @@ Rectangle {
 
         QGCCheckBox {
             anchors.right:  parent.right
-            text:           qsTr("Altitudes relative to home")
+            text:           qsTr("Altitudes relative to launch")
             checked:        missionItem.altitudesAreRelative
             visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || !missionItem.altitudesAreRelative
             onClicked:      missionItem.altitudesAreRelative = checked
