@@ -15,6 +15,7 @@ environment:
 install:
   - git submodule update --init --recursive
   - cd "C:\Program Files (x86)"
+  - dir
   - cd "Microsoft Visual Studio"
   - cd "2017"
   - cd "Community"
