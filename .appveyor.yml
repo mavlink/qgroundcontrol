@@ -14,7 +14,7 @@ environment:
 
 install:
   - git submodule update --init --recursive
-  - call "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.12.5\msvc2017_64\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
