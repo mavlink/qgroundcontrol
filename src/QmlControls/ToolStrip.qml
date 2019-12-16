@@ -19,7 +19,7 @@ Rectangle {
     id:         _root
     color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
-    height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
+    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model
@@ -51,48 +51,61 @@ Rectangle {
         buttons:    toolStripColumn.children
     }
 
-    Column {
-        id:                 toolStripColumn
+    DeadMouseArea {
+        anchors.fill: parent
+    }
+
+    QGCFlickable {
+        id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+        height:             parent.height
+        contentHeight:      toolStripColumn.height
+        flickableDirection: Flickable.VerticalFlick
 
-        Repeater {
-            id: repeater
+        Column {
+            id:             toolStripColumn
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelWidth * 0.25
 
-            QGCHoverButton {
-                id:             buttonTemplate
+            Repeater {
+                id: repeater
 
-                anchors.left:   toolStripColumn.left
-                anchors.right:  toolStripColumn.right
-                height:         width
-                radius:         ScreenTools.defaultFontPixelWidth / 2
-                fontPointSize:  ScreenTools.smallFontPointSize
-                autoExclusive:  true
+                QGCHoverButton {
+                    id:             buttonTemplate
 
-                enabled:        modelData.buttonEnabled
-                visible:        modelData.buttonVisible
-                imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
-                text:           modelData.name
-                checked:        modelData.checked !== undefined ? modelData.checked : checked
+                    anchors.left:   toolStripColumn.left
+                    anchors.right:  toolStripColumn.right
+                    height:         width
+                    radius:         ScreenTools.defaultFontPixelWidth / 2
+                    fontPointSize:  ScreenTools.smallFontPointSize
+                    autoExclusive:  true
 
-                ButtonGroup.group: buttonGroup
-                // Only drop panel and toggleable are checkable
-                checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
+                    enabled:        modelData.buttonEnabled
+                    visible:        modelData.buttonVisible
+                    imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
+                    text:           modelData.name
+                    checked:        modelData.checked !== undefined ? modelData.checked : checked
 
-                onClicked: {
-                    dropPanel.hide()    // DropPanel will call hide on "lastClickedButton"
-                    if (modelData.dropPanelComponent === undefined) {
-                        _root.clicked(index, checked)
-                    } else if (checked) {
-                        var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                        dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
-                        _root.dropped(index)
+                    ButtonGroup.group: buttonGroup
+                    // Only drop panel and toggleable are checkable
+                    checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
+
+                    onClicked: {
+                        dropPanel.hide()    // DropPanel will call hide on "lastClickedButton"
+                        if (modelData.dropPanelComponent === undefined) {
+                            _root.clicked(index, checked)
+                        } else if (checked) {
+                            var panelEdgeTopPoint = mapToItem(_root, width, 0)
+                            dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                            _root.dropped(index)
+                        }
+                        if(_root && buttonTemplate)
+                            _root.lastClickedButton = buttonTemplate
                     }
-                    if(_root && buttonTemplate)
-                        _root.lastClickedButton = buttonTemplate
                 }
             }
         }

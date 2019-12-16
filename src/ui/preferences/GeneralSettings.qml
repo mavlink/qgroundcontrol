@@ -173,6 +173,7 @@ Rectangle {
                                     }
                                     Component.onCompleted: {
                                         var index = mapCombo.find(_mapProvider)
+                                        if(index < 0) index = 0
                                         mapCombo.currentIndex = index
                                     }
                                 }
@@ -190,6 +191,7 @@ Rectangle {
                                     }
                                     Component.onCompleted: {
                                         var index = mapTypeCombo.find(_mapType)
+                                        if(index < 0) index = 0
                                         mapTypeCombo.currentIndex = index
                                     }
                                 }

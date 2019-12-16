@@ -80,6 +80,7 @@
         <file alias="FirmwareUpgradeIcon.png">src/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
+        <file alias="FloatingWindow.svg">src/AnalyzeView/FloatingWindow.svg</file>
         <file alias="Frames/BlueROV1.png">src/AutoPilotPlugins/APM/Images/bluerov-frame.png</file>
         <file alias="Frames/SimpleROV-3.png">src/AutoPilotPlugins/APM/Images/simple3-frame.png</file>
         <file alias="Frames/SimpleROV-4.png">src/AutoPilotPlugins/APM/Images/simple4-frame.png</file>

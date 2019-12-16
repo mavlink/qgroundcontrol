@@ -2,10 +2,13 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 3.6
+## 4.0
 
-### 3.6.0 - Daily Build
+### 4.0.0 - Daily Build
 
+* Windows: Move builds to 64 bit, Qt 5.12.5
+* Plan: ROI button will switch to Cancel ROI at appropriate times
+* Plan: When ROI is selected the flight path lines which are affected by the ROI will change color
 * ADSB: Added support for connecting to SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump1090 --net' for example.
 * Toolbar: Scrollable left/right on small screens like phones
 * Plan View: New create plan UI for initial plan creation

@@ -519,7 +519,7 @@ int Fact::decimalPlaces(void) const
         return _metaData->decimalPlaces();
     } else {
         qWarning() << kMissingMetadata << name();
-        return FactMetaData::defaultDecimalPlaces;
+        return FactMetaData::kDefaultDecimalPlaces;
     }
 }
 

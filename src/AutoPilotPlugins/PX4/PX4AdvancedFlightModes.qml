@@ -80,7 +80,7 @@ Item {
     readonly property string mrLoiterModeDescription:   qsTr("The multirotor hovers at the current position and altitude. ")
 
     readonly property string returnModeName:            qsTr("Return")
-    readonly property string returnModeDescription:     qsTr("The vehicle returns to the home position, loiters and then lands. ")
+    readonly property string returnModeDescription:     qsTr("The vehicle returns to the launch position, loiters and then lands. ")
 
     readonly property string offboardModeName:          qsTr("Offboard")
     readonly property string offboardModeDescription:   qsTr("All flight control aspects are controlled by an offboard system.")
