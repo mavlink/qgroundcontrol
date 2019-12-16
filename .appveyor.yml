@@ -41,12 +41,12 @@ build_script:
   - cd %SHADOW_BUILD_DIR% && jom
   - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
 # Generate the source server information to embed in the PDB
-  - '"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv'
+  - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv'
 # write the source server info
-  - '"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\srcsrv\pdbstr.exe" -w -i:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv -p:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb -s:srcsrv'
+  - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\pdbstr.exe" -w -i:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv -p:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb -s:srcsrv'
 # build the symbol / PE store
-  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb /t qgroundcontrol'
-  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.exe /t qgroundcontrol'
+  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb /t qgroundcontrol'
+  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.exe /t qgroundcontrol'
   - ps: 'cd $env:appveyor_build_folder; .\deploy\lowercaseify_symbolstore.ps1'
 
 test_script:
