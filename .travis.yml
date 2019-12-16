@@ -16,12 +16,12 @@ matrix:
     include:
         - name: "Linux Installer"
           os: linux
-          dist: xenial
+          dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
         - name: "Linux Debug"
           os: linux
-          dist: xenial
+          dist: bionic
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
