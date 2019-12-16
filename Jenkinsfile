@@ -73,7 +73,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.6/gcc_64/bin/qmake"
           }
           agent {
             docker {
@@ -102,7 +102,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Debug'
-            QT_VERSION = "5.12.5"
+            QT_VERSION = "5.12.6"
             QT_MKSPEC = "gcc_64"
           }
           agent {
@@ -132,7 +132,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.12.5/gcc_64/bin/qmake"
+            QMAKE_VER = "5.12.6/gcc_64/bin/qmake"
           }
           agent {
             docker {
@@ -165,7 +165,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             CMAKE_BUILD_TYPE = 'Release'
-            QT_VERSION = "5.12.5"
+            QT_VERSION = "5.12.6"
             QT_MKSPEC = "gcc_64"
           }
           agent {
