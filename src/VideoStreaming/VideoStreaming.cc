@@ -25,6 +25,8 @@
 #if defined(__ios__)
 #include "gst_ios_init.h"
 #endif
+#else
+#include "GLVideoItemStub.h"
 #endif
 
 #include "VideoStreaming.h"
@@ -183,6 +185,7 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
 #else
+    qmlRegisterType<GLVideoItemStub> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)
     Q_UNUSED(argv)
     Q_UNUSED(logpath)
