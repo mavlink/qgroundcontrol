@@ -1916,7 +1916,7 @@ bool Vehicle::_containsLink(LinkInterface* link)
 void Vehicle::_addLink(LinkInterface* link)
 {
     if (!_containsLink(link)) {
-        qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
+        qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((qulonglong)link, 0, 16);
         _links += link;
         if (_links.count() <= 1) {
             _updatePriorityLink(true /* updateActive */, false /* sendCommand */);

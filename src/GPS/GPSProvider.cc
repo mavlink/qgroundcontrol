@@ -179,7 +179,7 @@ void GPSProvider::publishGPSSatellite()
 
 void GPSProvider::gotRTCMData(uint8_t* data, size_t len)
 {
-    QByteArray message((char*)data, len);
+    QByteArray message((char*)data, static_cast<int>(len));
     emit RTCMDataUpdate(message);
 }
 
