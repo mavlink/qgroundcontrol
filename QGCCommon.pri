@@ -67,6 +67,7 @@ linux {
     contains(QMAKE_TARGET.arch, x86_64) {
         message("Windows build")
         CONFIG += WindowsBuild
+        CONFIG += WarningsAsErrorsOn
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
@@ -210,14 +211,6 @@ LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-#
-# By default warnings as errors are turned off. Even so, in order for a pull request
-# to be accepted you must compile cleanly with warnings as errors turned on the default
-# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details.
-# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your
-# own builds.
-#
-
 MacBuild | LinuxBuild {
     QMAKE_CXXFLAGS_WARN_ON += -Wall
     WarningsAsErrorsOn {
@@ -234,20 +227,17 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
-    win32-msvc2015 {
-        QMAKE_CFLAGS -= -Zc:strictStrings
-        QMAKE_CXXFLAGS -= -Zc:strictStrings
-    }
+    QMAKE_CFLAGS -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-
+    QMAKE_CXXFLAGS -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
-        /wd4005 \   # silence warnings about macro redefinition
-        /wd4290     # ignore exception specifications
-
+        /wd4996 \   # silence warnings about deprecated strcpy and whatnot, these come from the shapefile code with is external
+        /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
+        /wd4290 \   # ignore exception specifications
+        /wd4267     # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
@@ -267,10 +257,9 @@ ReleaseBuild {
     }
 
     WindowsBuild {
-        *msvc* { # visual studio spec filter
-            # Run compilation using VS compiler using multiple threads
-            QMAKE_CXXFLAGS += -MP
-        }
+        # Run compilation using VS compiler using multiple threads
+        QMAKE_CXXFLAGS += -MP
+
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
         QMAKE_CXXFLAGS_RELEASE += /Gy /Zo
