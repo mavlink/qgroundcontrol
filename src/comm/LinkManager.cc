@@ -558,6 +558,19 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
         } else
 #endif
+#ifdef __android__
+        if (portInfo.systemLocation().trimmed() == "/dev/ttyHSL2") {
+            SerialConfiguration* pSerialConfig = new SerialConfiguration("Serialport on ttyHSL2");
+            if (pSerialConfig) {
+                qWarning() << "New auto-connect port added: " << pSerialConfig->name() << portInfo.systemLocation();
+                pSerialConfig->setBaud(115200);
+                pSerialConfig->setDynamic(true);
+                pSerialConfig->setPortName(portInfo.systemLocation());
+                _sharedAutoconnectConfigurations.append(SharedLinkConfigurationPointer(pSerialConfig));
+                createConnectedLink(_sharedAutoconnectConfigurations.last(), false);
+            }
+        } else
+#endif
 #endif
         if (portInfo.getBoardInfo(boardType, boardName)) {
             if (portInfo.isBootloader()) {

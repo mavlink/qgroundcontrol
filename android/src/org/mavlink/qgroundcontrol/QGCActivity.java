@@ -76,6 +76,7 @@ public class QGCActivity extends QtActivity
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
+    private static UsbSerialDriver                      mSerialDriver;
 
     public static Context m_context;
 
@@ -119,6 +120,10 @@ public class QGCActivity extends QtActivity
         };
 
     private static UsbSerialDriver _findDriverByDeviceId(int deviceId) {
+        if (deviceId == SerialPortDriver.DEVICE_ID) {
+            return mSerialDriver;
+        }
+
         for (UsbSerialDriver driver: _drivers) {
             if (driver.getDevice().getDeviceId() == deviceId) {
                 return driver;
@@ -128,6 +133,10 @@ public class QGCActivity extends QtActivity
     }
 
     private static UsbSerialDriver _findDriverByDeviceName(String deviceName) {
+        if (SerialPortDriver.DEVICE_NAME.equals(deviceName)) {
+            return mSerialDriver;
+        }
+
         for (UsbSerialDriver driver: _drivers) {
             if (driver.getDevice().getDeviceName().equals(deviceName)) {
                 return driver;
@@ -190,6 +199,7 @@ public class QGCActivity extends QtActivity
         _drivers =                  new ArrayList<UsbSerialDriver>();
         _userDataHashByDeviceId =   new HashMap<Integer, Integer>();
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
+        mSerialDriver =             new SerialPortDriver(null);
     }
 
     @Override
@@ -308,7 +318,9 @@ public class QGCActivity extends QtActivity
         updateCurrentDrivers();
 
         if (_drivers.size() <= 0) {
-            return null;
+            // return null;
+            String[] rgDeviceInfo = new String[]{SerialPortDriver.DEVICE_NAME + ":" + SerialPortDriver.MANUFACTURER + ":0:0:"};
+            return rgDeviceInfo;
         }
 
         List<String> deviceInfoList = new ArrayList<String>();
@@ -360,34 +372,35 @@ public class QGCActivity extends QtActivity
 
         m_context = parentContext;
 
-        UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
-        if (driver == null) {
-            qgcLogWarning("Attempt to open unknown device " + deviceName);
-            return BAD_DEVICE_ID;
-        }
+        // UsbSerialDriver driver = _findDriverByDeviceName(deviceName);
+        // if (driver == null) {
+        //     qgcLogWarning("Attempt to open unknown device " + deviceName);
+        //     return BAD_DEVICE_ID;
+        // }
 
-        if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
-            qgcLogWarning("Attempt to open device with incorrect permission status " + deviceName + " " + driver.permissionStatus());
-            return BAD_DEVICE_ID;
-        }
+        // if (driver.permissionStatus() != UsbSerialDriver.permissionStatusSuccess) {
+        //     qgcLogWarning("Attempt to open device with incorrect permission status " + deviceName + " " + driver.permissionStatus());
+        //     return BAD_DEVICE_ID;
+        // }
 
-        UsbDevice device = driver.getDevice();
-        deviceId = device.getDeviceId();
+        // UsbDevice device = driver.getDevice();
+        // deviceId = device.getDeviceId();
 
+        deviceId = SerialPortDriver.DEVICE_ID;
         try {
-            driver.setConnection(_usbManager.openDevice(device));
-            driver.open();
-            driver.setPermissionStatus(UsbSerialDriver.permissionStatusOpen);
+            // driver.setConnection(_usbManager.openDevice(device));
+            mSerialDriver.open();
+            mSerialDriver.setPermissionStatus(UsbSerialDriver.permissionStatusOpen);
 
             _userDataHashByDeviceId.put(deviceId, userData);
 
-            UsbIoManager ioManager = new UsbIoManager(driver, m_Listener, userData);
+            UsbIoManager ioManager = new UsbIoManager(mSerialDriver, m_Listener, userData);
             m_ioManager.put(deviceId, ioManager);
             m_Executor.submit(ioManager);
 
             qgcLogDebug("Port open successful");
         } catch(IOException exA) {
-            driver.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
+            mSerialDriver.setPermissionStatus(UsbSerialDriver.permissionStatusRequestRequired);
             _userDataHashByDeviceId.remove(deviceId);
 
             if(m_ioManager.get(deviceId) != null) {
