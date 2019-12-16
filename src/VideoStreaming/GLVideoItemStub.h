@@ -11,7 +11,6 @@ public:
     ~GLVideoItemStub();
 
 protected:
-//    QSGNode* updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData* updatePaintNodeData);
 
 private:
 
