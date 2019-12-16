@@ -126,6 +126,7 @@ VideoEnabled {
             $$PWD/iOS
     }
 
+    include($$PWD/../../qmlglsink.pri)
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
         message("Skipping support for video streaming (GStreamer libraries not installed)")
@@ -133,5 +134,10 @@ VideoEnabled {
     } else {
         message("Skipping support for video streaming (Unsupported platform)")
     }
-}
 
+    SOURCES += \
+        $$PWD/GLVideoItemStub.cc
+
+    HEADERS += \
+        $$PWD/GLVideoItemStub.h
+}

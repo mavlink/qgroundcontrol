@@ -331,13 +331,6 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
     DEFINES += QGC_ENABLE_PAIRING
 }
 
-
-#
-# Add qmlglsink (libs/gst-plugins-good/ext/qt)
-#
-
-include(qmlglsink.pri)
-
 #
 # External library configuration
 #
