@@ -10,34 +10,39 @@ MenuItem {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     implicitWidth: visible ? contentItem.implicitWidth : 0
-    implicitHeight: visible ? contentItem.implicitHeight * 1.5 : 0
+    implicitHeight: visible ? contentItem.implicitHeight : 0
 
-    arrow: Canvas {
+    arrow: Item {
         x: parent.width - width
-        implicitWidth: parent.implicitHeight
-        implicitHeight: implicitWidth
-        visible: _root.subMenu
-        property real _arrwSize: implicitWidth * 0.2
+        y: (parent.height - height)/2
+        implicitWidth: ScreenTools.defaultFontPixelWidth * 4
+        implicitHeight: ScreenTools.defaultFontPixelWidth * 6
 
-        onPaint: {
-            var ctx = getContext("2d")
-            ctx.fillStyle = textLabel.color
-            ctx.globalAlpha = background.opacity
-            ctx.moveTo(_arrwSize, _arrwSize)
-            ctx.lineTo(width/2, height / 2)
-            ctx.lineTo(_arrwSize, height - _arrwSize)
-            ctx.closePath()
-            ctx.fill()
+        Canvas {
+            anchors.fill: parent
+            anchors.margins: ScreenTools.defaultFontPixelWidth
+            visible: _root.subMenu
+            onPaint: {
+                var ctx = getContext("2d")
+                ctx.fillStyle = textLabel.color
+                ctx.globalAlpha = background.opacity
+                ctx.moveTo(0, 0)
+                ctx.lineTo(width, height / 2)
+                ctx.lineTo(0, height)
+                ctx.closePath()
+                ctx.fill()
+            }
         }
     }
 
     indicator: Item {
-        implicitWidth: implicitHeight
-        implicitHeight: parent.implicitHeight
+        x: 0
+        y: (parent.height - height)/2
+        implicitWidth: ScreenTools.defaultFontPixelWidth * 6
+        implicitHeight: implicitWidth
         Rectangle {
-            width: parent.height * 0.7
-            height: width
-            anchors.centerIn: parent
+            anchors.fill: parent
+            anchors.margins: ScreenTools.defaultFontPixelWidth
             visible: _root.checkable
             border.color: qgcPal.windowShadeDark
             radius: ScreenTools.defaultFontPixelWidth * 0.2
@@ -56,13 +61,14 @@ MenuItem {
         id: textLabel
         leftPadding: _root.indicator.width
         rightPadding: _root.arrow.width
+        topPadding: ScreenTools.defaultFontPixelHeight * 0.5
+        bottomPadding: topPadding
         text: _root.text
         font.pointSize: ScreenTools.defaultFontPointSize * 1.25
         opacity: enabled ? 1.0 : 0.3
         color: _root.highlighted ? qgcPal.buttonHighlightText : qgcPal.buttonText
         horizontalAlignment: Text.AlignLeft
         verticalAlignment: Text.AlignVCenter
-        elide: Text.ElideRight
     }
 
     background: Rectangle {
