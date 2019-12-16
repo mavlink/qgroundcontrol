@@ -13,9 +13,11 @@ environment:
     SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_install
 
 install:
-  - git submodule update --init --recursive
   - cd "C:\Program Files (x86)"
   - dir
+  - cd "C:\Program Files"
+  - dir
+  - git submodule update --init --recursive
   - cd "Microsoft Visual Studio"
   - cd "2017"
   - cd "Community"
