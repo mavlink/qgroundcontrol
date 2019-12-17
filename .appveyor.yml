@@ -23,7 +23,7 @@ install:
       Write-Host "Installing Qt..." -ForegroundColor Cyan
       $qt7zPath = "$($env:USERPROFILE)\Qt-QGC-5.12.6.7z"
       Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/Qt-QGC-5.12.6.7z', $msiPath)
+      (New-Object Net.WebClient).DownloadFile('https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/Qt-QGC-5.12.6.7z', $qt7zPath)
       Write-Host "Unzipping..."
       cmd /c start /wait 7z x $qt7zPath -oC:\
       Write-Host "Installed" -ForegroundColor Green
