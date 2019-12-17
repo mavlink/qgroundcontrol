@@ -9,6 +9,7 @@ SOURCES += \
     $$PWD/PhotoFileStore.cc \
     $$PWD/PhotoGalleryModel.cc \
     $$PWD/PhotoGalleryView.cc \
+    $$PWD/easyexif.cpp \
 
 HEADERS += \
     $$PWD/AbstractPhotoTrigger.h \
@@ -16,3 +17,4 @@ HEADERS += \
     $$PWD/PhotoFileStore.h \
     $$PWD/PhotoGalleryModel.h \
     $$PWD/PhotoGalleryView.h \
+    $$PWD/easyexif.h \

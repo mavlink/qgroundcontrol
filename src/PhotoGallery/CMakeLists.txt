@@ -5,6 +5,7 @@ add_library(PhotoGallery
     PhotoGalleryModel.cc
     PhotoGalleryVehicleGlue.cc
     PhotoGalleryView.cc
+    easyexif.cpp
 )
 
 add_custom_target(
