@@ -67,10 +67,16 @@ QRectF exitZoomBounds(const QSizeF & view_bounds)
     return QRectF(scale * 0.4, scale * 0.4, scale, scale);
 }
 
+QRectF toggleMetadataBounds(const QSizeF & view_bounds)
+{
+    double scale = std::min(view_bounds.width(), view_bounds.height()) * 0.1;
+    return QRectF(scale * 0.4, scale * 1.6, scale, scale);
+}
+
 QRectF openExternalBounds(const QSizeF & view_bounds)
 {
-    auto topIcon = exitZoomBounds(view_bounds);
-    return QRectF(topIcon.left(), 2 * topIcon.top() + topIcon.width(), topIcon.width(), topIcon.height());
+    double scale = std::min(view_bounds.width(), view_bounds.height()) * 0.1;
+    return QRectF(scale * 0.4, scale * 2.8, scale, scale);
 }
 
 void drawExitZoom(QPainter * painter, const QRectF & bounds)
@@ -138,6 +144,49 @@ void drawCameraTrigger(QPainter * painter, const QRectF & bounds, bool active)
     painter->drawPath(path);
 }
 
+// Utility functions for formatting image metadata.
+
+// Checks if item of given key exists in given metadata map. If yes, appends
+// it to the list with specified label.
+void maybeAddMetadataItem(
+    const std::map<QString, QString>& metadata,
+    const QString& key,
+    const QString& label,
+    std::vector<std::pair<QString, QString>>* out)
+{
+    auto i = metadata.find(key);
+    if (i != metadata.end()) {
+        out->push_back(std::make_pair(label, i->second));
+    }
+}
+
+// Takes metadata map (using internal exif and xmp keys) and generates human-
+// readable label for each of these.
+std::vector<std::pair<QString, QString>> formatMetadata(const std::map<QString, QString>& metadata)
+{
+    std::vector<std::pair<QString, QString>> result;
+
+    maybeAddMetadataItem(metadata, "Exif:Make", "Make", &result);
+    maybeAddMetadataItem(metadata, "Exif:Model", "Model", &result);
+    maybeAddMetadataItem(metadata, "Exif:FocalLength", "Focal Length", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSLatitude", "GPS Latitude", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSLatitudeRef", "GPS LatitudeRef", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSLongitude", "GPS Longitude", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSLongitudeRef", "GPS LongitudeRef", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSAltitude", "GPS Altitude", &result);
+    maybeAddMetadataItem(metadata, "Exif:GPSAltitudeRef", "GPS AltitudeRef", &result);
+    maybeAddMetadataItem(metadata, "Camera:Roll", "Gimbal Roll", &result);
+    maybeAddMetadataItem(metadata, "Camera:Yaw", "Gimbal Yaw", &result);
+    maybeAddMetadataItem(metadata, "Camera:Pitch", "Gimbal Pitch", &result);
+    maybeAddMetadataItem(metadata, "Exif:DateTime", "Timestamp", &result);
+
+    if (result.empty()) {
+        result.emplace_back(QString("No"), QString("metadata"));
+    }
+
+    return result;
+}
+
 }  // namespace
 
 class PhotoGalleryView::InteractionState {
@@ -187,6 +236,7 @@ public:
 
 PhotoGalleryView::PhotoGalleryView(QQuickItem * parent)
     : QQuickPaintedItem(parent)
+    , _toggle_metadata_svg(QString(":/qmlimages/toggle-metadata.svg"))
     , _open_photos_folder_svg(QString(":/qmlimages/photos-folder-open.svg"))
     , _open_videos_folder_svg(QString(":/qmlimages/videos-folder-open.svg"))
 {
@@ -239,6 +289,8 @@ void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, co
         return;
     }
     const auto & image = *item.image;
+    const auto & metadata = *item.metadata;
+
     QRect img_bounds = image.rect();
     double img_aspect = static_cast<double>(img_bounds.width()) / img_bounds.height();
     double view_aspect = bounds.width() / bounds.height();
@@ -249,10 +301,49 @@ void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, co
     painter->drawImage(dst, image, src);
 
     drawTrashCan(painter, trashCanBounds(bounds));
+    _toggle_metadata_svg.paint(painter, toggleMetadataBounds(bounds).toRect());
 
   #ifndef __mobile__
     _open_photos_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
   #endif
+
+    if (view.show_metadata) {
+        auto formatted_metadata = formatMetadata(metadata);
+        QFont font("sans", std::min(bounds.width(), bounds.height()) / 40);
+        QFontMetrics metrics(font);
+
+        int line_height = metrics.height();
+        int label_width = 0;
+        int value_width = 0;
+        int sep_width = metrics.boundingRect("M").width();
+        int total_height = 0;
+        for (const auto& item : formatted_metadata) {
+            label_width = std::max(label_width, metrics.boundingRect(item.first).width());
+            value_width = std::max(value_width, metrics.boundingRect(item.second).width());
+            total_height += line_height;
+        }
+        int total_width = label_width + sep_width + value_width;
+        double y = (bounds.height() - total_height) / 2;
+        double text_y = y + metrics.ascent();
+        double label_x = (bounds.width() - total_width) / 2;
+        double value_x = label_x + label_width + sep_width;
+
+        // Draw a background box so font is legible regardless of background.
+        double pad = std::min(bounds.width(), bounds.height()) * 0.02;
+
+        QRectF bg(label_x - pad, y - pad, total_width + 2 * pad, total_height + 2 * pad);
+        painter->fillRect(bg, QColor(0, 0, 0, 128));
+
+        QPen font_pen(Qt::green);
+        painter->setFont(font);
+        for (const auto& item : formatted_metadata) {
+            painter->setPen(font_pen);
+            painter->drawText(label_x, text_y, item.first);
+            painter->drawText(value_x, text_y, item.second);
+
+            text_y += line_height;
+        }
+    }
 }
 
 void PhotoGalleryView::paint(QPainter * painter, const QSizeF & bounds, const ViewState & view) const
@@ -594,6 +685,7 @@ void PhotoGalleryView::applyInteraction(const InteractionState * interaction, Vi
                         if (index >= 0 && index < imageIndexLimit()) {
                             view.mode = ViewMode::Single;
                             view.single.index = index;
+                            view.single.show_metadata = false;
                         }
                     } else {
                         QRectF original = imageIndexToScreen(view.gallery, bounds, index);
@@ -688,6 +780,9 @@ void PhotoGalleryView::handleShortClick(const QPointF & where)
             _view_state.mode = ViewMode::Gallery;
             update();
             return;
+        }
+        if (toggleMetadataBounds(size()).contains(where)) {
+            _view_state.single.show_metadata = !_view_state.single.show_metadata;
         }
       #ifndef __mobile__
         else if (_view_state.mode == ViewMode::Single
@@ -860,6 +955,7 @@ void PhotoGalleryView::magnifyImageAt(const GalleryViewState & view, const QPoin
     if (!item.id.isEmpty()) {
         _view_state.mode = ViewMode::Single;
         _view_state.single.index = index;
+        _view_state.single.show_metadata = false;
         update();
     }
 }

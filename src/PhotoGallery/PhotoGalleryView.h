@@ -75,6 +75,9 @@ public:
     struct SingleViewState {
         /// Identify image currently shown
         int index;
+
+        /// Whether to scribble metadata information all over the image.
+        bool show_metadata = false;
     };
 
     /// Detail state for "gallery" view mode.
@@ -270,6 +273,7 @@ private:
     /// operations.
     QTimer _long_click_timeout;
 
+    QIcon _toggle_metadata_svg;
     QIcon _open_photos_folder_svg;
     QIcon _open_videos_folder_svg;
 
