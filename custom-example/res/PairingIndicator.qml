@@ -211,7 +211,6 @@ Item {
                         Layout.row:         2
                         Layout.column:      1
                         Layout.fillWidth:   true
-                        onActivated:        QGroundControl.pairingManager.pairingChannel = currentIndex + QGroundControl.microhardManager.channelMin
                     }
                     QGCLabel {
                         text:               qsTr("Connect channel:")
@@ -226,7 +225,6 @@ Item {
                         Layout.row:         3
                         Layout.column:      1
                         Layout.fillWidth:   true
-                        onActivated:        QGroundControl.pairingManager.setConnectingChannel(currentIndex + QGroundControl.microhardManager.channelMin, QGroundControl.microhardManager.pairingPower)
                     }
                 }
                 Item { width: 1; height: ScreenTools.defaultFontPixelHeight; }
