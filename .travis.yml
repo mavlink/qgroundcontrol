@@ -20,7 +20,7 @@ env:
     - QGC_CUSTOM_APP_NAME="Custom QGS"
     - QGC_CUSTOM_GENERIC_NAME="Custom Ground Station"
     - QGC_CUSTOM_BINARY_NAME="CustomQGC"
-    - QGC_CUSTOM_LINUX_START_SH="$PWD/custom/deploy/qgroundcontrol-start.sh"
+    - QGC_CUSTOM_LINUX_START_SH="$PWD/$QGC_CUSTOM_BUILD_FOLDER/deploy/qgroundcontrol-start.sh"
     - QGC_CUSTOM_APP_ICON="$PWD/resources/icons/qgroundcontrol.png"
     - QGC_CUSTOM_APP_ICON_NAME="qgroundcontrol"
     - GIT_USER="Auterion_CI"
