@@ -77,7 +77,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-12'
+              image 'mavlink/qgc-build-linux:2019-12-16'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -107,7 +107,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-12'
+              image 'mavlink/qgc-build-linux:2019-12-16'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -136,7 +136,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-12'
+              image 'mavlink/qgc-build-linux:2019-12-16'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -170,7 +170,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2019-11-12'
+              image 'mavlink/qgc-build-linux:2019-12-16'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
