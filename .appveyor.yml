@@ -7,17 +7,15 @@ build:
 
 environment:
   matrix:
-#  - BUILD: 'Debug'
-#    CONFIG: debug
-#    SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_debug
   - BUILD: 'Release'
     CONFIG: installer
     SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_install
+    QT_JOM_DIR: C:\Qt-QGC-5.12.6\Tools\QtCreator\bin
+    QT_QMAKE_DIR: C:\Qt-QGC-5.12.6\5.12.6\msvc2017_64\bin
 
 install:
   - git submodule update --init --recursive
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
-  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.12.5\msvc2017_64\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
       Write-Host "Installing Qt..." -ForegroundColor Cyan
@@ -45,8 +43,8 @@ install:
       Write-Host "Installed" -ForegroundColor Green
 
 build_script:
-  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt-QGC-5.12.6\5.12.6\msvc2017_64\bin\qmake -r CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
-  - cd %SHADOW_BUILD_DIR% && jom
+  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && %QT_QMAKE_DIR%\qmake -r CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
+  - cd %SHADOW_BUILD_DIR% && %QT_JOM_DIR%\jom
   - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
 # Generate the source server information to embed in the PDB
   - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv'
