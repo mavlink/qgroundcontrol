@@ -29,7 +29,7 @@ std::unique_ptr<QSettings> CustomQuickInterface::_settings;
 bool CustomQuickInterface::_showGimbalControl = false;
 bool CustomQuickInterface::_useEmbeddedGimbal = true;
 bool CustomQuickInterface::_showAttitudeWidget = false;
-bool CustomQuickInterface::_showVirtualKeyboard = false;
+bool CustomQuickInterface::_showVirtualKeyboard = true;
 
 static const char* kGroupName       = "CustomSettings";
 static const char* kShowGimbalCtl   = "ShowGimbalCtl";
@@ -59,7 +59,7 @@ CustomQuickInterface::initSettings() {
     _showGimbalControl = _settings->value(kShowGimbalCtl, false).toBool();
     _useEmbeddedGimbal = _settings->value(kUseEmbeddedGimbal, false).toBool();
     _showAttitudeWidget = _settings->value(kShowAttitudeWidget, false).toBool();
-    _showVirtualKeyboard = _settings->value(kVirtualKeyboard, false).toBool();
+    _showVirtualKeyboard = _settings->value(kVirtualKeyboard, true).toBool();
 }
 
 //-----------------------------------------------------------------------------
