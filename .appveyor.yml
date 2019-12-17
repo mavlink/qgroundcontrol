@@ -20,6 +20,14 @@ install:
   - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.12.5\msvc2017_64\bin;%PATH%
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
+      Write-Host "Installing Qt..." -ForegroundColor Cyan
+      $qt7zPath = "$($env:USERPROFILE)\Qt-QGC-5.12.6.7z"
+      Write-Host "Downloading..."
+      (New-Object Net.WebClient).DownloadFile('https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/Qt-QGC-5.12.6.7z', $msiPath)
+      Write-Host "Unzipping..."
+      cmd /c start /wait 7z x $qt7zPath -oC:\
+      Write-Host "Installed" -ForegroundColor Green
+  - ps: |
       Write-Host "Installing GStreamer..." -ForegroundColor Cyan
       $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86_64-1.14.4.msi"
       Write-Host "Downloading..."
