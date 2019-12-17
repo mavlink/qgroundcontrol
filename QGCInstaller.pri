@@ -29,10 +29,6 @@ installer {
         # links to plugins will not be created correctly.
         QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
 
-        # macdeployqt does not deploy texttospeech plugin
-        QMAKE_POST_LINK += && mkdir $${TARGET}.app/Contents/PlugIns/texttospeech
-        QMAKE_POST_LINK += && cp $$[QT_INSTALL_PLUGINS]/texttospeech/libqtexttospeech_speechosx.dylib $${TARGET}.app/Contents/PlugIns/texttospeech
-
         # macdeployqt is missing some relocations once in a while. "Fix" it:
         QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
