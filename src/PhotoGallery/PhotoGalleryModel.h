@@ -40,6 +40,7 @@ public:
     struct Item {
         QString id;
         std::shared_ptr<const QImage> image;
+        std::shared_ptr<const std::map<QString, QString>> metadata;
     };
 
     ~PhotoGalleryModel() override;
@@ -92,6 +93,11 @@ private slots:
     void removedByStore(const std::set<QString> & ids);
 
 private:
+    struct CacheItem {
+        std::shared_ptr<QImage> image;
+        std::shared_ptr<std::map<QString, QString>> metadata;
+    };
+
     /// Delete all data in model.
     void clear();
 
@@ -102,5 +108,5 @@ private:
     ///
     /// Keep a bounded number of images in memory (avoid consuming all
     /// memory in case we have a large number of images stored).
-    mutable QCache<QString, std::shared_ptr<QImage>> _cache;
+    mutable QCache<QString, CacheItem> _cache;
 };

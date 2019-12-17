@@ -2,8 +2,10 @@
 # features. The build pulls in only those sources that are required in the
 # context of the test cases, and is independent of the bulk of QGroundControl.
 
-CONFIG += testcase
-QT += testlib
+QT_CONFIG -= no-pkg-config
+PKGCONFIG += libexif
+CONFIG += testcase link_pkgconfig
+QT += testlib xml
 TARGET = PhotoGalleryTests
 SOURCES = \
     PhotoGalleryTests.cc
