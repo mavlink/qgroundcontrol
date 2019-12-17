@@ -57,7 +57,7 @@ CustomQuickInterface::initSettings() {
     _settings.reset(new QSettings(QString(QGC_ORG_NAME), QString(QGC_APPLICATION_NAME)));
     _settings->beginGroup(kGroupName);
     _showGimbalControl = _settings->value(kShowGimbalCtl, false).toBool();
-    _useEmbeddedGimbal = _settings->value(kUseEmbeddedGimbal, false).toBool();
+    _useEmbeddedGimbal = _settings->value(kUseEmbeddedGimbal, true).toBool();
     _showAttitudeWidget = _settings->value(kShowAttitudeWidget, false).toBool();
     _showVirtualKeyboard = _settings->value(kVirtualKeyboard, true).toBool();
 }
