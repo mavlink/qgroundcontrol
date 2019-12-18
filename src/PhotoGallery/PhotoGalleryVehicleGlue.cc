@@ -12,7 +12,7 @@
 #include "AbstractPhotoTrigger.h"
 #include "AsyncDownloadPhotoTrigger.h"
 #include "MultiVehicleManager.h"
-#include "PhotoFileStore.h"
+#include "PhotoFileStoreInterface.h"
 #include "QGCCameraManager.h"
 #include "Vehicle.h"
 
@@ -56,12 +56,12 @@ void PhotoGalleryVehicleGlue::setMultiVehicleManager(MultiVehicleManager* manage
     }
 }
 
-PhotoFileStore* PhotoGalleryVehicleGlue::store() const
+PhotoFileStoreInterface* PhotoGalleryVehicleGlue::store() const
 {
     return _trigger->store();
 }
 
-void PhotoGalleryVehicleGlue::setStore(PhotoFileStore * store)
+void PhotoGalleryVehicleGlue::setStore(PhotoFileStoreInterface * store)
 {
     _trigger->setStore(store);
 }

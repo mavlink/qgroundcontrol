@@ -17,7 +17,7 @@
 #include "ExtractJPEGMetadata.h"
 
 PhotoFileStore::PhotoFileStore(QObject * parent)
-    : QObject(parent)
+    : PhotoFileStoreInterface(parent)
 {
 }
 
@@ -25,6 +25,10 @@ PhotoFileStore::PhotoFileStore(QString location, QObject * parent)
     : PhotoFileStore(parent)
 {
     setLocation(std::move(location));
+}
+
+PhotoFileStore::~PhotoFileStore()
+{
 }
 
 void
