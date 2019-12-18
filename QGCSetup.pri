@@ -96,6 +96,7 @@ LinuxBuild {
         libQt5Charts.so.5 \
         libQt5Core.so.5 \
         libQt5DBus.so.5 \
+        libQt5EglFSDeviceIntegration.so.5 \
         libQt5Gui.so.5 \
         libQt5Location.so.5 \
         libQt5Multimedia.so.5 \
@@ -114,11 +115,11 @@ LinuxBuild {
         libQt5Sql.so.5 \
         libQt5Svg.so.5 \
         libQt5Test.so.5 \
+        libQt5TextToSpeech.so.5 \
         libQt5Widgets.so.5 \
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
-        libicui18n.so* \
-        libQt5TextToSpeech.so.5
+        libicui18n.so*
 
     !contains(DEFINES, __rasp_pi2__) {
         # Some Qt distributions link with *.so.56
