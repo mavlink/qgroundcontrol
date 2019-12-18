@@ -239,6 +239,7 @@ PhotoGalleryView::PhotoGalleryView(QQuickItem * parent)
     , _toggle_metadata_svg(QString(":/qmlimages/toggle-metadata.svg"))
     , _open_photos_folder_svg(QString(":/qmlimages/photos-folder-open.svg"))
     , _open_videos_folder_svg(QString(":/qmlimages/videos-folder-open.svg"))
+    , _missing_image_svg(QString(":/qmlimages/missing-image.svg"))
 {
     setAcceptedMouseButtons(Qt::AllButtons);
     _zoom_timeout.setSingleShot(true);
@@ -277,6 +278,8 @@ void PhotoGalleryView::paintGallery(QPainter * painter, const QSizeF & bounds, c
                     (_selected_images.find(item.id) != _selected_images.end() ?
                         SelectionState::Selected : SelectionState::Deselected)
                     : SelectionState::None);
+        } else {
+            drawMissingImagePlaceholder(painter, dst);
         }
         ++n;
     }
@@ -285,29 +288,23 @@ void PhotoGalleryView::paintGallery(QPainter * painter, const QSizeF & bounds, c
 void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, const SingleViewState & view) const
 {
     const auto & item = _model->data(PhotoGalleryModelIndex(view.index));
-    if (!item.image) {
-        return;
+    if (item.image) {
+        const auto & image = *item.image;
+        QRect img_bounds = image.rect();
+        double img_aspect = static_cast<double>(img_bounds.width()) / img_bounds.height();
+        double view_aspect = bounds.width() / bounds.height();
+        double base_scale = (img_aspect > view_aspect) ? (img_bounds.width() / bounds.width()) : (img_bounds.height() / bounds.height());
+
+        QRectF src(0, 0, image.width(), image.height());
+        QRectF dst(bounds.width() / 2 - image.width() / base_scale / 2,  bounds.height() / 2 - image.height() / base_scale / 2, image.width() / base_scale, image.height() / base_scale);
+        painter->drawImage(dst, image, src);
+    } else {
+        QRectF dst(0, 0, bounds.width(), bounds.height());
+        drawMissingImagePlaceholder(painter, dst);
     }
-    const auto & image = *item.image;
-    const auto & metadata = *item.metadata;
 
-    QRect img_bounds = image.rect();
-    double img_aspect = static_cast<double>(img_bounds.width()) / img_bounds.height();
-    double view_aspect = bounds.width() / bounds.height();
-    double base_scale = (img_aspect > view_aspect) ? (img_bounds.width() / bounds.width()) : (img_bounds.height() / bounds.height());
-
-    QRectF src(0, 0, image.width(), image.height());
-    QRectF dst(bounds.width() / 2 - image.width() / base_scale / 2,  bounds.height() / 2 - image.height() / base_scale / 2, image.width() / base_scale, image.height() / base_scale);
-    painter->drawImage(dst, image, src);
-
-    drawTrashCan(painter, trashCanBounds(bounds));
-    _toggle_metadata_svg.paint(painter, toggleMetadataBounds(bounds).toRect());
-
-  #ifndef __mobile__
-    _open_photos_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
-  #endif
-
-    if (view.show_metadata) {
+    if (item.metadata && view.show_metadata) {
+        const auto & metadata = *item.metadata;
         auto formatted_metadata = formatMetadata(metadata);
         QFont font("sans", std::min(bounds.width(), bounds.height()) / 40);
         QFontMetrics metrics(font);
@@ -344,6 +341,14 @@ void PhotoGalleryView::paintSingle(QPainter * painter, const QSizeF & bounds, co
             text_y += line_height;
         }
     }
+
+    drawTrashCan(painter, trashCanBounds(bounds));
+
+    _toggle_metadata_svg.paint(painter, toggleMetadataBounds(bounds).toRect());
+
+  #ifndef __mobile__
+    _open_photos_folder_svg.paint(painter, openExternalBounds(bounds).toRect());
+  #endif
 }
 
 void PhotoGalleryView::paint(QPainter * painter, const QSizeF & bounds, const ViewState & view) const
@@ -480,6 +485,7 @@ void PhotoGalleryView::setModel(PhotoGalleryModel * model)
     _model = model;
     connect(model, &PhotoGalleryModel::added, this, &PhotoGalleryView::modelAdded);
     connect(model, &PhotoGalleryModel::removed, this, &PhotoGalleryView::modelRemoved);
+    connect(model, &PhotoGalleryModel::loaded, this, &PhotoGalleryView::modelLoaded);
 }
 
 PhotoGalleryModel * PhotoGalleryView::model() const
@@ -608,6 +614,10 @@ void PhotoGalleryView::modelRemoved(const std::set<PhotoGalleryModelIndex> & /*i
     update();
 }
 
+void PhotoGalleryView::modelLoaded()
+{
+    update();
+}
 
 namespace {
 
@@ -976,7 +986,10 @@ void PhotoGalleryView::triggerPhoto()
     update();
 }
 
-
+void PhotoGalleryView::drawMissingImagePlaceholder(QPainter * painter, const QRectF & bounds) const
+{
+    _missing_image_svg.paint(painter, bounds.toRect());
+}
 
 namespace {
 
