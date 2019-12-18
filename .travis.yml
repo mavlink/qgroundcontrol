@@ -64,7 +64,7 @@ addons:
     - libgstreamer-plugins-base1.0-dev
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
-    - libudev-dev
+    - libxkbx
     - wget
 
 before_install:
@@ -82,7 +82,7 @@ before_install:
 
   # Linux needs sdl2 but not android
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        sudo apt-get install -y libsdl2-dev;
+        sudo apt-get install -y libsdl2-dev libxkbcommon-x11-0;
     fi
 
 install:
