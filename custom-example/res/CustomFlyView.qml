@@ -672,14 +672,7 @@ Item {
         property real _currentPitch:    _hasGimbal ? activeVehicle.gimbalPitch : 0
         property real _currentYaw:      _hasGimbal ? activeVehicle.gimbalYaw : 0
         property real time_last_seconds:0
-        property real speedMultiplier:  5
-
-        property real maxRate:          20
-        property real exponentialFactor:0.6
-        property real kPFactor:         3
-
-        property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
-        property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
+        property real speedMultiplier:  2.5
 
         property bool _centerGimbal: false
         property bool _haveJoystick: joystickManager.activeJoystick
@@ -729,44 +722,14 @@ Item {
                         }
                     }
 
-                    if(_camera && _camera.vendor === "NextVision") {
-                        var time_current_seconds = ((new Date()).getTime())/1000.0
-                        if(gimbalControl.time_last_seconds === 0.0)
-                            gimbalControl.time_last_seconds = time_current_seconds
-                        var pitch_angle = gimbalControl._currentPitch
-                        // Preparing stick input with exponential curve and maximum rate
-                        var pitch_expo = (1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
-                        var pitch_rate = pitch_stick * gimbalControl.maxRate
-                        var pitch_angle_reported = gimbalControl.reportedPitchDeg
-                        // Integrate the angular rate to an angle time abstracted
-                        pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)
-                        // Control the angle quicker by driving the gimbal internal angle controller into saturation
-                        var pitch_angle_error = pitch_angle - pitch_angle_reported
-                        pitch_angle_error = Math.round(pitch_angle_error)
-                        var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
-                        //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
-                        pitch = pitch_setpoint
-                        yaw += yaw_stick * gimbalControl.speedMultiplier
-
-                        yaw = clamp(yaw, -180, 180)
-                        pitch = clamp(pitch, -90, 45)
-                        pitch_angle = clamp(pitch_angle, -90, 45)
-
-                        //console.info("P: " + pitch + "; Y: " + yaw)
-                        activeVehicle.gimbalControlValue(pitch, yaw);
+                    yaw += yaw_stick * gimbalControl.speedMultiplier
+                    pitch += pitch_stick * gimbalControl.speedMultiplier
+                    yaw = clamp(yaw, -180, 180)
+                    pitch = clamp(pitch, -90, 90)
+                    if(yaw !== oldYaw || pitch !== oldPitch) {
+                        activeVehicle.gimbalControlValue(pitch, yaw)
+                        gimbalControl._currentPitch = pitch
                         gimbalControl._currentYaw = yaw
-                        gimbalControl._currentPitch = pitch_angle
-                        gimbalControl.time_last_seconds = time_current_seconds
-                    } else {
-                        yaw += yaw_stick * gimbalControl.speedMultiplier
-                        pitch += pitch_stick * gimbalControl.speedMultiplier
-                        yaw = clamp(yaw, -180, 180)
-                        pitch = clamp(pitch, -90, 90)
-                        if(yaw !== oldYaw || pitch !== oldPitch) {
-                            activeVehicle.gimbalControlValue(pitch, yaw)
-                            gimbalControl._currentPitch = pitch
-                            gimbalControl._currentYaw = yaw
-                        }
                     }
                 }
             }
