@@ -61,6 +61,11 @@ KeyboardStyle {
     keyboardRelativeBottomMargin: 86 / keyboardDesignHeight
 
     property string alpha: "55"
+    property string keysAlpha: "99"
+    property string textAlpha: "BB"
+    property string cursorAlpha: "BB"
+    property string previewAlpha: "FF"
+    property string popupAlpha: "FF"
 
     keyboardBackground: Rectangle {
         color: "#" + alpha + "000000"
@@ -71,7 +76,7 @@ KeyboardStyle {
         Rectangle {
             id: keyBackground
             radius: 5
-            color: "#" + alpha + "383533"
+            color: "#" + keysAlpha + "383533"
             anchors.fill: keyPanel
             anchors.margins: keyBackgroundMargin
             Text {
@@ -141,7 +146,7 @@ KeyboardStyle {
         Rectangle {
             id: backspaceKeyBackground
             radius: 5
-            color: "#" + alpha + "23211E"
+            color: "#" + keysAlpha + "23211E"
             anchors.fill: backspaceKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -186,7 +191,7 @@ KeyboardStyle {
         Rectangle {
             id: languageKeyBackground
             radius: 5
-            color: "#" + alpha + "35322f"
+            color: "#" + keysAlpha + "35322f"
             anchors.fill: languageKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -231,7 +236,7 @@ KeyboardStyle {
         Rectangle {
             id: enterKeyBackground
             radius: 5
-            color: "#" + alpha + "1e1b18"
+            color: "#" + keysAlpha + "1e1b18"
             anchors.fill: enterKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -276,7 +281,7 @@ KeyboardStyle {
                 fontSizeMode: Text.HorizontalFit
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                color: "#" + alpha + "80c342"
+                color: "#" + textAlpha + "80c342"
                 font {
                     family: fontFamily
                     weight: Font.Normal
@@ -328,7 +333,7 @@ KeyboardStyle {
         Rectangle {
             id: hideKeyBackground
             radius: 5
-            color: "#" + alpha + "1e1b18"
+            color: "#" + keysAlpha + "1e1b18"
             anchors.fill: hideKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -373,7 +378,7 @@ KeyboardStyle {
         Rectangle {
             id: shiftKeyBackground
             radius: 5
-            color: "#" + alpha + "1e1b18"
+            color: "#" + keysAlpha + "1e1b18"
             anchors.fill: shiftKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -390,7 +395,7 @@ KeyboardStyle {
                     when: InputContext.capsLockActive
                     PropertyChanges {
                         target: shiftKeyBackground
-                        color: "#" + alpha + "5a892e"
+                        color: "#" + keysAlpha + "5a892e"
                     }
                     PropertyChanges {
                         target: shiftKeyIcon
@@ -440,7 +445,7 @@ KeyboardStyle {
         Rectangle {
             id: spaceKeyBackground
             radius: 5
-            color: "#" + alpha + "35322f"
+            color: "#" + keysAlpha + "35322f"
             anchors.fill: spaceKeyPanel
             anchors.margins: keyBackgroundMargin
             Text {
@@ -481,7 +486,7 @@ KeyboardStyle {
         Rectangle {
             id: symbolKeyBackground
             radius: 5
-            color: "#" + alpha + "1e1b18"
+            color: "#" + keysAlpha + "1e1b18"
             anchors.fill: symbolKeyPanel
             anchors.margins: keyBackgroundMargin
             Text {
@@ -533,7 +538,7 @@ KeyboardStyle {
         Rectangle {
             id: modeKeyBackground
             radius: 5
-            color: "#" + alpha + "1e1b18"
+            color: "#" + keysAlpha + "1e1b18"
             anchors.fill: modeKeyPanel
             anchors.margins: keyBackgroundMargin
             Text {
@@ -560,7 +565,7 @@ KeyboardStyle {
                 anchors.leftMargin: parent.width * 0.4
                 anchors.rightMargin: parent.width * 0.4
                 anchors.bottomMargin: parent.height * 0.12
-                color: "#" + alpha + "80c342"
+                color: "#" + keysAlpha + "80c342"
                 radius: 3
                 visible: control.mode
             }
@@ -598,7 +603,7 @@ KeyboardStyle {
         Rectangle {
             id: hwrKeyBackground
             radius: 5
-            color: "#" + alpha + "35322f"
+            color: "#" + keysAlpha + "35322f"
             anchors.fill: handwritingKeyPanel
             anchors.margins: keyBackgroundMargin
             Image {
@@ -646,7 +651,7 @@ KeyboardStyle {
         Rectangle {
             id: characterPreviewBackground
             anchors.fill: parent
-            color: "#" + alpha + "5d5b59"
+            color: "#" + previewAlpha + "5d5b59"
             radius: 5
             Text {
                 id: characterPreviewText
@@ -675,7 +680,7 @@ KeyboardStyle {
         Text {
             id: listItemText
             text: model.text
-            color: "#" + alpha + "868482"
+            color: "#" + textAlpha + "868482"
             font {
                 family: fontFamily
                 weight: Font.Normal
@@ -693,11 +698,11 @@ KeyboardStyle {
         }
     }
     alternateKeysListHighlight: Rectangle {
-        color: "#" + alpha + "5d5b59"
+        color: "#" + keysAlpha + "5d5b59"
         radius: 5
     }
     alternateKeysListBackground: Rectangle {
-        color: "#" + alpha + "1e1b18"
+        color: "#" + keysAlpha + "1e1b18"
         radius: 5
     }
 
@@ -711,7 +716,7 @@ KeyboardStyle {
             anchors.leftMargin: Math.round((compactSelectionList ? 50 : 140) * scaleHint)
             anchors.verticalCenter: parent.verticalCenter
             text: decorateText(display, wordCompletionLength)
-            color: "#" + alpha + "80c342"
+            color: "#" + textAlpha + "80c342"
             font {
                 family: fontFamily
                 weight: Font.Normal
@@ -743,7 +748,7 @@ KeyboardStyle {
         }
     }
     selectionListBackground: Rectangle {
-        color: "#" + alpha + "1e1b18"
+        color: "#" + keysAlpha + "1e1b18"
     }
     selectionListAdd: Transition {
         NumberAnimation { property: "y"; from: wordCandidateView.height; duration: 200 }
@@ -766,7 +771,7 @@ KeyboardStyle {
         Rectangle {
             id: traceInputKeyPanelBackground
             radius: 5
-            color: "#" + alpha + "35322f"
+            color: "#" + keysAlpha + "35322f"
             anchors.fill: traceInputKeyPanel
             anchors.margins: keyBackgroundMargin
             Text {
@@ -902,7 +907,7 @@ KeyboardStyle {
             anchors.leftMargin: popupListLabel.height / 2
             anchors.topMargin: popupListLabel.height / 3
             text: decorateText(display, wordCompletionLength)
-            color: "#" + alpha + "5CAA15"
+            color: "#" + textAlpha + "5CAA15"
             font {
                 family: fontFamily
                 weight: Font.Normal
@@ -929,10 +934,10 @@ KeyboardStyle {
         Rectangle {
             width: parent.width
             height: parent.height
-            color: "white"
+            color: "#" + popupAlpha + "FFFFFF"
             border {
                 width: 1
-                color: "#" + alpha + "929495"
+                color: "#" + popupAlpha + "929495"
             }
         }
     }
@@ -960,7 +965,7 @@ KeyboardStyle {
             anchors.topMargin: languageNameTextMetrics.height / 3
             anchors.bottomMargin: anchors.topMargin
             text: languageNameFormatter.elidedText
-            color: "#" + alpha + "5CAA15"
+            color: "#" + textAlpha + "5CAA15"
             font {
                 family: fontFamily
                 weight: Font.Normal
@@ -998,10 +1003,10 @@ KeyboardStyle {
     }
 
     languageListBackground: Rectangle {
-        color: "white"
+        color: "#" + popupAlpha + "FFFFFF"
         border {
             width: 1
-            color: "#" + alpha + "929495"
+            color: "#" + popupAlpha + "929495"
         }
     }
 
@@ -1032,7 +1037,7 @@ KeyboardStyle {
 
     fullScreenInputCursor: Rectangle {
         width: 1
-        color: "#" + alpha + "0000000"
+        color: "#" + cursorAlpha + "0000000"
         visible: parent.blinkStatus
     }
 
