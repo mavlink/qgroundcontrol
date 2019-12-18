@@ -82,15 +82,15 @@ before_install:
 
   # Linux needs sdl2 but not android
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        sudo apt-get install -y libsdl2-dev;
+        sudo apt-get install -y libsdl2-dev libxkbcommon-x11-0;
     fi
 
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.3-gcc_64-min.tar.bz2 &&
-        tar jxf Qt5.11.3-gcc_64-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.11-gcc_64/5.11.3/gcc_64/bin:$PATH
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-gcc_64-min.tar.bz2 &&
+        tar jxf Qt5.12.6-gcc_64-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-gcc_64/5.12.6/gcc_64/bin:$PATH
         ;
     fi
 
