@@ -1,0 +1,11 @@
+<testconfig version="1.0">
+<information>
+<summary>08 Takeoff Goto RTL</summary>
+<description>Shows a whole process of taking off (at a set altitude), reaching that altitude, selecting a point on the map and directing vehicle to go to that point. The distance indicator shows the vehicle is moving (along with speed indicator). Mid way to the destination, the RTL button is clicked (Return To Land). The vehicle climbs to RTL altitude and once that altitude is reached, it returns to the launch point. Once the launch point is reached, vehicle automatically lands.&#13;
+</description>
+</information>
+<tags>
+<tag>sim</tag>
+</tags>
+<testsettings/>
+</testconfig>

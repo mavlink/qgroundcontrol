@@ -1,0 +1,10 @@
+<testconfig version="1.0">
+<information>
+<summary>02 Change Unit</summary>
+<description>This type of change requires a restart. Dialog alerts the user that is the case.</description>
+</information>
+<tags>
+<tag>no-sim</tag>
+</tags>
+<testsettings/>
+</testconfig>
