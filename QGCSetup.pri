@@ -125,7 +125,8 @@ LinuxBuild {
     }
 
     for(QT_PLUGIN, QT_PLUGIN_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+#        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS] $$DESTDIR/Qt/
     }
 
     # QT_INSTALL_QML
