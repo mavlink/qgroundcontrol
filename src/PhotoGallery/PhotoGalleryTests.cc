@@ -217,6 +217,7 @@ private:
 QByteArray createJPEGImageByteArray(int width, int height)
 {
     QImage image(width, height, QImage::Format_ARGB32);
+    image.fill(0);
     QByteArray ba;
     QBuffer buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
