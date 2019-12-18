@@ -669,8 +669,11 @@ Item {
         color:                  Qt.rgba(1,1,1,0.25)
         radius:                 width * 0.5
 
+        // Initialized with latest values. The binding is broken at first control loop pass
         property real _currentPitch:    _hasGimbal ? activeVehicle.gimbalPitch : 0
         property real _currentYaw:      _hasGimbal ? activeVehicle.gimbalYaw : 0
+        property real _lastPitch:       NaN
+        property real _lastYaw:         NaN
         property real time_last_seconds:0
         property real speedMultiplier:  2.5
 
@@ -681,15 +684,16 @@ Item {
         property real _joystickYaw: 0
         property bool _doJoystickYawStep: false
 
+        property real _cameraPitchControlAngleRange: 45
+
         Timer {
             interval:   100  //-- 10Hz
             running:    camControlLoader.visible && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl || gimbalControl._haveJoystick)
             repeat:     true
 
             onTriggered: {
+                var gimbalRateMode = true;
                 if (activeVehicle) {
-                    var oldYaw = gimbalControl._currentYaw;
-                    var oldPitch = gimbalControl._currentPitch;
                     if(gimbalControl._centerGimbal) {
                         gimbalControl._currentYaw = 0
                         gimbalControl._currentPitch = 0
@@ -706,8 +710,9 @@ Item {
                         yaw_stick = stick.xAxis;
                     }
                     else if(CustomQuickInterface.useEmbeddedGimbal && camControlLoader.status === Loader.Ready) {
-                        pitch_stick = camControlLoader.item.joystickPitchNormalized;
+                        pitch_stick = camControlLoader.item.joystickPitchNormalized * gimbalControl._cameraPitchControlAngleRange;
                         yaw_stick = stick.xAxis;
+                        gimbalRateMode = false;
                     }
                     else if(gimbalControl._haveJoystick) {
                         pitch_stick = gimbalControl._joystickPitch;
@@ -722,14 +727,18 @@ Item {
                         }
                     }
 
-                    yaw += yaw_stick * gimbalControl.speedMultiplier
-                    pitch += pitch_stick * gimbalControl.speedMultiplier
+                    yaw += yaw_stick * (gimbalRateMode ? 1 : gimbalControl.speedMultiplier)
+                    pitch += pitch_stick * (gimbalRateMode ? 1 : gimbalControl.speedMultiplier)
                     yaw = clamp(yaw, -180, 180)
                     pitch = clamp(pitch, -90, 90)
-                    if(yaw !== oldYaw || pitch !== oldPitch) {
-                        activeVehicle.gimbalControlValue(pitch, yaw)
-                        gimbalControl._currentPitch = pitch
-                        gimbalControl._currentYaw = yaw
+                    if(yaw !== gimbalControl._lastPitch || pitch !== gimbalControl._lastPitch) {
+                        activeVehicle.gimbalControlValue(pitch, yaw);
+                        gimbalControl._lastPitch = pitch;
+                        gimbalControl._lastYaw = yaw;
+                        if(gimbalRateMode) {
+                            gimbalControl._currentPitch = pitch
+                            gimbalControl._currentYaw = yaw
+                        }
                     }
                 }
             }
@@ -747,6 +756,21 @@ Item {
             yAxisThrottleCentered:  true
             xAxis:                  0
             yAxis:                  0.5
+        }
+
+        Connections {
+            enabled: camControlLoader.status === Loader.Ready && _hasGimbal
+            target: camControlLoader.item
+            onJoystickPitchActiveChanged: {
+                if(camControlLoader.item.joystickPitchActive) {
+                    gimbalControl._currentPitch = activeVehicle.gimbalPitch
+                    gimbalControl._currentYaw = activeVehicle.gimbalYaw
+                }
+                else {
+                    gimbalControl._currentPitch = gimbalControl._lastPitch
+                    gimbalControl._currentYaw = gimbalControl._lastYaw
+                }
+            }
         }
 
         Connections {
