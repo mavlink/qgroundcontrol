@@ -38,8 +38,9 @@ Item {
     visible:        !QGroundControl.videoManager.fullScreen
 
     // Temporary until we implement gimbal abstractization upstream
-    // the we call gimbal.pitchJoystick(joystickPitchNormalized)
+    // then we call gimbal.pitchJoystick(joystickPitchNormalized)
     property real joystickPitchNormalized: gimbalPitchMouseArea.pitchNormalized
+    property bool joystickPitchActive: gimbalPitchMouseArea.pressed
 
     readonly property string _commLostStr:  qsTr("NO CAMERA")
     readonly property real   buttonSize:    ScreenTools.defaultFontPixelWidth * 5
