@@ -669,10 +669,9 @@ Item {
         color:                  Qt.rgba(1,1,1,0.25)
         radius:                 width * 0.5
 
-        property real _currentPitch:    0
-        property real _currentYaw:      0
+        property real _currentPitch:    _hasGimbal ? activeVehicle.gimbalPitch : 0
+        property real _currentYaw:      _hasGimbal ? activeVehicle.gimbalYaw : 0
         property real time_last_seconds:0
-        property real _lastHackedYaw:   0
         property real speedMultiplier:  5
 
         property real maxRate:          20
@@ -682,17 +681,54 @@ Item {
         property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
         property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
 
+        property bool _centerGimbal: false
+        property bool _haveJoystick: joystickManager.activeJoystick
+        property real _joystickPitch: 0
+        property bool _doJoystickPitchStep: false
+        property real _joystickYaw: 0
+        property bool _doJoystickYawStep: false
+
         Timer {
             interval:   100  //-- 10Hz
-            running:    camControlLoader.visible && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl)
+            running:    camControlLoader.visible && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl || gimbalControl._haveJoystick)
             repeat:     true
+
             onTriggered: {
                 if (activeVehicle) {
+                    var oldYaw = gimbalControl._currentYaw;
+                    var oldPitch = gimbalControl._currentPitch;
+                    if(gimbalControl._centerGimbal) {
+                        gimbalControl._currentYaw = 0
+                        gimbalControl._currentPitch = 0
+                        gimbalControl._centerGimbal = false
+                    }
+
                     var yaw = gimbalControl._currentYaw
-                    var oldYaw = yaw;
                     var pitch = gimbalControl._currentPitch
-                    var oldPitch = pitch;
-                    var pitch_stick = gimbalControl.visible ? (stick.yAxis * 2.0 - 1.0) : (camControlLoader.status === Loader.Ready ?  camControlLoader.item.joystickPitchNormalized : 0)
+
+                    var pitch_stick = 0
+                    var yaw_stick = 0
+                    if(gimbalControl.visible) {
+                        pitch_stick = (stick.yAxis * 2.0 - 1.0);
+                        yaw_stick = stick.xAxis;
+                    }
+                    else if(CustomQuickInterface.useEmbeddedGimbal && camControlLoader.status === Loader.Ready) {
+                        pitch_stick = camControlLoader.item.joystickPitchNormalized;
+                        yaw_stick = stick.xAxis;
+                    }
+                    else if(gimbalControl._haveJoystick) {
+                        pitch_stick = gimbalControl._joystickPitch;
+                        yaw_stick = gimbalControl._joystickYaw;
+                        if(gimbalControl._doJoystickPitchStep) {
+                            gimbalControl._joystickPitch = 0;
+                            gimbalControl._doJoystickPitchStep = false;
+                        }
+                        if(gimbalControl._doJoystickYawStep) {
+                            gimbalControl._joystickYaw = 0;
+                            gimbalControl._doJoystickYawStep = false;
+                        }
+                    }
+
                     if(_camera && _camera.vendor === "NextVision") {
                         var time_current_seconds = ((new Date()).getTime())/1000.0
                         if(gimbalControl.time_last_seconds === 0.0)
@@ -710,7 +746,7 @@ Item {
                         var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
                         //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
                         pitch = pitch_setpoint
-                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+                        yaw += yaw_stick * gimbalControl.speedMultiplier
 
                         yaw = clamp(yaw, -180, 180)
                         pitch = clamp(pitch, -90, 45)
@@ -722,25 +758,24 @@ Item {
                         gimbalControl._currentPitch = pitch_angle
                         gimbalControl.time_last_seconds = time_current_seconds
                     } else {
-                        yaw += stick.xAxis * gimbalControl.speedMultiplier
-                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 50)
+                        yaw += yaw_stick * gimbalControl.speedMultiplier
                         pitch += pitch_stick * gimbalControl.speedMultiplier
-                        hackedYaw = clamp(hackedYaw, -180, 180)
                         yaw = clamp(yaw, -180, 180)
                         pitch = clamp(pitch, -90, 90)
-                        if(gimbalControl._lastHackedYaw !== hackedYaw || gimbalControl.hackedYaw !== oldYaw || pitch !== oldPitch) {
-                            activeVehicle.gimbalControlValue(pitch, hackedYaw)
-                            gimbalControl._lastHackedYaw = hackedYaw
+                        if(yaw !== oldYaw || pitch !== oldPitch) {
+                            activeVehicle.gimbalControlValue(pitch, yaw)
                             gimbalControl._currentPitch = pitch
                             gimbalControl._currentYaw = yaw
                         }
                     }
                 }
             }
+
             function clamp(num, min, max) {
                 return Math.min(Math.max(num, min), max);
             }
         }
+
         JoystickThumbPad {
             id:                     stick
             anchors.fill:           parent
@@ -749,6 +784,22 @@ Item {
             yAxisThrottleCentered:  true
             xAxis:                  0
             yAxis:                  0.5
+        }
+
+        Connections {
+            enabled: gimbalControl._haveJoystick
+            target: joystickManager.activeJoystick
+            onStartContinuousGimbalPitch: gimbalControl._joystickPitch = direction
+            onStopContinuousGimbalPitch: gimbalControl._joystickPitch = 0
+            onGimbalPitchStep: {
+                gimbalControl._joystickPitch = direction;
+                gimbalControl._doJoystickPitchStep = true;
+            }
+            onGimbalYawStep: {
+                gimbalControl._joystickYaw = direction;
+                gimbalControl._doJoystickYawStep = true;
+            }
+            onCenterGimbal: gimbalControl._centerGimbal = true;
         }
     }
     //-------------------------------------------------------------------------

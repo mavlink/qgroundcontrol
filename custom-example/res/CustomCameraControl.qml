@@ -98,18 +98,7 @@ Item {
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
             visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact
             anchors.horizontalCenter: parent.horizontalCenter
-            Component.onCompleted: {
-                if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
-                        standardMode.checked = true
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP)
-                        thermalPip.checked = true
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
-                        thermalFull.checked = true
-                }
-                else
-                    standardMode.checked = true
-            }
+
             ButtonGroup {
                 id:         buttonGroup
                 exclusive:  true
@@ -136,6 +125,7 @@ Item {
                     width:              buttonSize
                     height:             buttonSize
                     visible:            _camera && _camera.thermalStreamInstance
+                    checked:            _camera ? _camera.thermalMode === QGCCameraControl.THERMAL_PIP : false
                     iconSource:        "/custom/img/thermal-pip.svg"
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_PIP
@@ -164,7 +154,33 @@ Item {
                     }
                 }
             }
+
+            Connections {
+                enabled: parent.visible
+                target: _irPaletteFact
+                onValueChanged: {
+                    if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
+                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                }
+            }
+            /*Connections {
+                enabled: parent.visible
+                target: _camera
+                onThermalModeChanged: {
+                    if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
+                        if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
+                            standardMode.checked = true
+                        if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP)
+                            thermalPip.checked = true
+                        if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+                            thermalFull.checked = true
+                    }
+                    else
+                        standardMode.checked = true
+                }
+            }*/
         }
+
         //---------------------------------------------------------------------
         //-- Main Camera Control
         Row {
@@ -1098,13 +1114,6 @@ Item {
                             checked:                index === _irPaletteFact.value
                             onClicked: {
                                 _irPaletteFact.value = index
-                                if(thermalBackgroundRect.visible) {
-                                    if(_camera.thermalMode !== QGCCameraControl.THERMAL_PIP && _camera.thermalMode !== QGCCameraControl.THERMAL_FULL) {
-                                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
-                                        thermalFull.checked = true
-                                    }
-                                }
-
                                 thermalPalettes.close()
                             }
                         }
