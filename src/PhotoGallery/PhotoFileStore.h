@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QMutex>
 #include <QObject>
 
 #include <set>
@@ -71,6 +72,9 @@ public:
     /// Check via .canConvert<QByteArray> and access via .value<QByteArray>.
     ///
     /// Read failure should be considered as a "broken image".
+    ///
+    /// This function is thread-safe with respect to all other member functions
+    /// including concurrent reads.
     QVariant read(const QString & id) const override;
 
     void setLocation(QString local_storage) override;
@@ -83,7 +87,8 @@ private:
     /// Check filesystem whether any file added/removed.
     void rescan();
 
-    QString _location;
     QString _videoLocation;
     std::set<QString> _photo_ids;
+    QString _location;  // GUARDED_BY(_mutex)
+    mutable QMutex _mutex;
 };
