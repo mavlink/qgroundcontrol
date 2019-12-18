@@ -64,7 +64,6 @@ addons:
     - libgstreamer-plugins-base1.0-dev
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
-    - libxkbx
     - wget
 
 before_install:
