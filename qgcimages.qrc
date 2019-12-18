@@ -184,5 +184,6 @@
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="photos-folder-open.svg">src/PhotoGallery/photos-folder-open.svg</file>
         <file alias="videos-folder-open.svg">src/PhotoGallery/videos-folder-open.svg</file>
+        <file alias="missing-image.svg">src/PhotoGallery/missing-image.svg</file>
     </qresource>
 </RCC>
