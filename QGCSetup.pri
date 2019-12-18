@@ -93,32 +93,7 @@ LinuxBuild {
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST = \
-        libQt5Charts.so.5 \
-        libQt5Core.so.5 \
-        libQt5DBus.so.5 \
-        libQt5EglFSDeviceIntegration.so.5 \
-        libQt5Gui.so.5 \
-        libQt5Location.so.5 \
-        libQt5Multimedia.so.5 \
-        libQt5MultimediaQuick.so.5 \
-        libQt5Network.so.5 \
-        libQt5OpenGL.so.5 \
-        libQt5Positioning.so.5 \
-        libQt5PositioningQuick.so.5 \
-        libQt5PrintSupport.so.5 \
-        libQt5Qml.so.5 \
-        libQt5Quick.so.5 \
-        libQt5QuickControls2.so.5 \
-        libQt5QuickTemplates2.so.5 \
-        libQt5QuickWidgets.so.5 \
-        libQt5SerialPort.so.5 \
-        libQt5Sql.so.5 \
-        libQt5Svg.so.5 \
-        libQt5Test.so.5 \
-        libQt5TextToSpeech.so.5 \
-        libQt5Widgets.so.5 \
-        libQt5XcbQpa.so.5 \
-        libQt5Xml.so.5 \
+        libQt5*.so.5 \
         libicui18n.so*
 
     !contains(DEFINES, __rasp_pi2__) {
