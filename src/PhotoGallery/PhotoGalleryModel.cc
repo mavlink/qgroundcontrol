@@ -13,13 +13,13 @@
 #include <QVariant>
 #include <QtQml>
 
-#include "PhotoFileStore.h"
+#include "PhotoFileStoreInterface.h"
 
 PhotoGalleryModel::~PhotoGalleryModel()
 {
 }
 
-PhotoGalleryModel::PhotoGalleryModel(PhotoFileStore * store, QObject * parent)
+PhotoGalleryModel::PhotoGalleryModel(PhotoFileStoreInterface * store, QObject * parent)
     : PhotoGalleryModel(parent)
 {
     setStore(store);
@@ -30,19 +30,19 @@ PhotoGalleryModel::PhotoGalleryModel(QObject * parent)
 {
 }
 
-PhotoFileStore * PhotoGalleryModel::store() const
+PhotoFileStoreInterface * PhotoGalleryModel::store() const
 {
     return _store;
 }
 
-void PhotoGalleryModel::setStore(PhotoFileStore * store)
+void PhotoGalleryModel::setStore(PhotoFileStoreInterface * store)
 {
     clear();
     _store = store;
     if (_store) {
         addedByStore(_store->ids());
-        connect(_store, &PhotoFileStore::added, this, &PhotoGalleryModel::addedByStore);
-        connect(_store, &PhotoFileStore::removed, this, &PhotoGalleryModel::removedByStore);
+        connect(_store, &PhotoFileStoreInterface::added, this, &PhotoGalleryModel::addedByStore);
+        connect(_store, &PhotoFileStoreInterface::removed, this, &PhotoGalleryModel::removedByStore);
     }
 }
 
@@ -143,8 +143,8 @@ void PhotoGalleryModel::removedByStore(const std::set<QString> & ids)
 void PhotoGalleryModel::clear()
 {
     if (_store) {
-        disconnect(_store, &PhotoFileStore::added, this, &PhotoGalleryModel::addedByStore);
-        disconnect(_store, &PhotoFileStore::removed, this, &PhotoGalleryModel::removedByStore);
+        disconnect(_store, &PhotoFileStoreInterface::added, this, &PhotoGalleryModel::addedByStore);
+        disconnect(_store, &PhotoFileStoreInterface::removed, this, &PhotoGalleryModel::removedByStore);
     }
     _cache.clear();
     _ids.clear();

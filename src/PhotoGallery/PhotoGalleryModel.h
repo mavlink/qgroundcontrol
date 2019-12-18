@@ -16,7 +16,7 @@
 #include <QCache>
 #include <QObject>
 
-class PhotoFileStore;
+class PhotoFileStoreInterface;
 
 /// Index into photo PhotoGalleryModel
 ///
@@ -34,7 +34,7 @@ using PhotoGalleryModelIndex = std::size_t;
 class PhotoGalleryModel : public QObject {
     Q_OBJECT
 
-    Q_PROPERTY(PhotoFileStore* store READ store WRITE setStore);
+    Q_PROPERTY(PhotoFileStoreInterface* store READ store WRITE setStore);
 
 public:
     struct Item {
@@ -44,11 +44,11 @@ public:
 
     ~PhotoGalleryModel() override;
 
-    explicit PhotoGalleryModel(PhotoFileStore * store, QObject * parent = nullptr);
+    explicit PhotoGalleryModel(PhotoFileStoreInterface * store, QObject * parent = nullptr);
     explicit PhotoGalleryModel(QObject * parent = nullptr);
 
-    PhotoFileStore * store() const;
-    void setStore(PhotoFileStore * store);
+    PhotoFileStoreInterface * store() const;
+    void setStore(PhotoFileStoreInterface * store);
 
     /// Get item at index.
     ///
@@ -95,7 +95,7 @@ private:
     /// Delete all data in model.
     void clear();
 
-    PhotoFileStore * _store = nullptr;
+    PhotoFileStoreInterface * _store = nullptr;
     std::vector<QString> _ids;
 
     /// Cache of images.

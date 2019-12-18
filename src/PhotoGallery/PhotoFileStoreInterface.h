@@ -13,8 +13,6 @@
 
 #include <set>
 
-#include "PhotoFileStoreInterface.h"
-
 /// Represent photo collection stored on filesystem
 ///
 /// Manages a collection of photos stored as files in some filesystem. It
@@ -32,14 +30,14 @@
 ///
 /// Another feature that is not fully clear whether this is the best place is
 /// synchronization with external storage -- might go here or elsewhere.
-class PhotoFileStore : public PhotoFileStoreInterface {
+class PhotoFileStoreInterface : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString location READ location WRITE setLocation)
+    Q_PROPERTY(QString videoLocation READ videoLocation WRITE setVideoLocation)
 
 public:
-    explicit PhotoFileStore(QObject * parent = nullptr);
-    explicit PhotoFileStore(QString location, QObject * parent = nullptr);
-
-    ~PhotoFileStore() override;
+    explicit PhotoFileStoreInterface(QObject* parent = nullptr);
+    ~PhotoFileStoreInterface() override;
 
     /// Adds photo to the store.
     ///
@@ -52,15 +50,15 @@ public:
     /// such that the resulting file has the same name as on the origin device
     /// (simplifies diagnostics), but ultimately this may choose a new name
     /// to avoid collisions and/or help with maintaining internal sorting.
-    QString add(QString name_hint, QByteArray data) override;
+    virtual QString add(QString name_hint, QByteArray data) = 0;
 
     /// Gets list of photo ids held.
-    const std::set<QString> & ids() const override;
+    virtual const std::set<QString> & ids() const = 0;
 
     /// Permanently erases photos from store.
     ///
     /// \param ids Identifiers of photos to be erased.
-    void remove(const std::set<QString> & ids) override;
+    virtual void remove(const std::set<QString> & ids) = 0;
 
     /// Reads photo data.
     ///
@@ -71,19 +69,20 @@ public:
     /// Check via .canConvert<QByteArray> and access via .value<QByteArray>.
     ///
     /// Read failure should be considered as a "broken image".
-    QVariant read(const QString & id) const override;
+    ///
+    /// This function is thread-safe with respect to all other member functions
+    /// including concurrent reads.
+    virtual QVariant read(const QString & id) const = 0;
 
-    void setLocation(QString local_storage) override;
-    const QString & location() const override;
+    virtual void setLocation(QString local_storage) = 0;
+    virtual const QString & location() const = 0;
 
-    void setVideoLocation(QString local_storage);
-    const QString & videoLocation() const;
+    virtual void setVideoLocation(QString local_storage) = 0;
+    virtual const QString & videoLocation() const = 0;
 
-private:
-    /// Check filesystem whether any file added/removed.
-    void rescan();
-
-    QString _location;
-    QString _videoLocation;
-    std::set<QString> _photo_ids;
+signals:
+    /// Notify of photos being added.
+    void added(const std::set<QString> & ids);
+    /// Notify of photos being deleted.
+    void removed(const std::set<QString> & ids);
 };

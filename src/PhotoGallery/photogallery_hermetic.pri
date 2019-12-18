@@ -7,6 +7,7 @@ SOURCES += \
     $$PWD/AbstractPhotoTrigger.cc \
     $$PWD/AsyncDownloadPhotoTrigger.cc \
     $$PWD/PhotoFileStore.cc \
+    $$PWD/PhotoFileStoreInterface.cc \
     $$PWD/PhotoGalleryModel.cc \
     $$PWD/PhotoGalleryView.cc \
 
@@ -14,5 +15,6 @@ HEADERS += \
     $$PWD/AbstractPhotoTrigger.h \
     $$PWD/AsyncDownloadPhotoTrigger.h \
     $$PWD/PhotoFileStore.h \
+    $$PWD/PhotoFileStoreInterface.h \
     $$PWD/PhotoGalleryModel.h \
     $$PWD/PhotoGalleryView.h \
