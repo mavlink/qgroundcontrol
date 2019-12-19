@@ -44,10 +44,9 @@ installer {
     }
     LinuxBuild {
         #-- TODO: This uses hardcoded paths. It should use $${DESTDIR}
-        QMAKE_POST_LINK += && mkdir -p release/package
-        QMAKE_POST_LINK += && tar --warning=no-file-changed -cjf release/package/QGroundControl.tar.bz2 release --exclude='package' --transform 's/release/qgroundcontrol/'
-        #QMAKE_POST_LINK += && tar --warning=no-file-changed --exclude='package' --transform 's/release/qgroundcontrol/' -cjf release/package/QGroundControl.tar.bz2 release
-
+        QMAKE_POST_LINK += && rm -rf release/package
+        QMAKE_POST_LINK += && tar -cjf QGroundControl.tar.bz2 release --transform 's/release/qgroundcontrol/'
+        QMAKE_POST_LINK += && mkdir -p release/package && mv QGroundControl.tar.bz2 release/package
     }
     AndroidBuild {
         QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
