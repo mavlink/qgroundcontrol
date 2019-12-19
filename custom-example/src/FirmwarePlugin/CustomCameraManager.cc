@@ -26,12 +26,14 @@ void
 CustomCameraManager::_thermalNextPalette()
 {
     CustomCameraControl* pCamera = qobject_cast<CustomCameraControl*>(currentCameraInstance());
-    auto palettes = pCamera->irPalette();
-    if(pCamera && palettes) {
-        qCDebug(CameraManagerLog) << "Switch to Next Palette";
-        auto newIdx = palettes->enumIndex() + 1;
-        if(newIdx >= palettes->enumValues().count() )
-            newIdx = 0;
-        palettes->setEnumIndex(newIdx);
+    if(pCamera) {
+        auto palettes = pCamera->irPalette();
+        if(palettes) {
+            qCDebug(CameraManagerLog) << "Switch to Next Palette";
+            auto newIdx = palettes->enumIndex() + 1;
+            if(newIdx >= palettes->enumValues().count() )
+                newIdx = 0;
+            palettes->setEnumIndex(newIdx);
+        }
     }
 }
