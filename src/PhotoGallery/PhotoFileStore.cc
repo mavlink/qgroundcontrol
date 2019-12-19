@@ -17,7 +17,7 @@
 #include "ExtractJPEGMetadata.h"
 
 PhotoFileStore::PhotoFileStore(QObject * parent)
-    : QObject(parent)
+    : PhotoFileStoreInterface(parent)
 {
 }
 
@@ -25,6 +25,10 @@ PhotoFileStore::PhotoFileStore(QString location, QObject * parent)
     : PhotoFileStore(parent)
 {
     setLocation(std::move(location));
+}
+
+PhotoFileStore::~PhotoFileStore()
+{
 }
 
 void
@@ -133,10 +137,16 @@ void PhotoFileStore::remove(const std::set<QString> & ids)
 
 QVariant PhotoFileStore::read(const QString & id) const
 {
-    if (_location.isEmpty()) {
+    QString location;
+    {
+        QMutexLocker guard(&_mutex);
+        location = _location;
+    }
+
+    if (location.isEmpty()) {
         return {};
     }
-    QFile file(QDir(_location).filePath(id));
+    QFile file(QDir(location).filePath(id));
     if (!file.open(QIODevice::ReadOnly)) {
         return {};
     }

@@ -4,6 +4,7 @@ add_library(PhotoGallery
     ExtractJPEGMetadata.cc
     JPEGSegmentParser.cc
     PhotoFileStore.cc
+    PhotoFileStoreInterface.cc
     PhotoGalleryModel.cc
     PhotoGalleryVehicleGlue.cc
     PhotoGalleryView.cc

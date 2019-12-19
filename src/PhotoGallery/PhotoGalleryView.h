@@ -138,7 +138,7 @@ private slots:
 
     void modelAdded(const std::set<PhotoGalleryModelIndex> & indices);
     void modelRemoved(const std::set<PhotoGalleryModelIndex> & indices);
-
+    void modelLoaded();
 
 private:
     /// Control how view changes should be applied
@@ -241,6 +241,8 @@ private:
 
     void triggerPhoto();
 
+    void drawMissingImagePlaceholder(QPainter * painter, const QRectF & bounds) const;
+
     Parameters _parameters;
 
     PhotoGalleryModel * _model = nullptr;
@@ -276,6 +278,7 @@ private:
     QIcon _toggle_metadata_svg;
     QIcon _open_photos_folder_svg;
     QIcon _open_videos_folder_svg;
+    QIcon _missing_image_svg;
 
     std::set<QString> _selected_images;
 };
