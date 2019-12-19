@@ -368,6 +368,8 @@ private slots:
     void testPhotoUnsolicitedDownload();
     void testPhotoGalleryModel();
     void testAsyncLoading();
+    void testDownScaling();
+    void testCacheAndEviction();
 };
 
 /// Verify photo store interacts correctly with filesystem.
@@ -767,6 +769,122 @@ void PhotoGalleryTests::testAsyncLoading()
     item = model.data(0);
     QCOMPARE(item.id, "foo");
     QVERIFY(item.image);
+}
+
+// Verify that large images are actually scaled down to reasonable in-memory
+// sizes. This guards against memory usage growing out of bounds.
+void PhotoGalleryTests::testDownScaling()
+{
+    QTemporaryDir temp_dir;
+    QVERIFY(temp_dir.isValid());
+
+    setFileContents(temp_dir.filePath("2019-09-01.jpg"), createJPEGImageByteArray(10000, 10000));
+    setFileContents(temp_dir.filePath("2019-09-02.jpg"), createJPEGImageByteArray(10, 1600));
+
+    PhotoFileStore store;
+    store.setLocation(temp_dir.path());
+    PhotoGalleryModel model(&store);
+
+    auto item0 = model.dataSync(0);
+    QCOMPARE(item0.id, "2019-09-02.jpg");
+    QVERIFY(item0.image->width() <= 1280);
+    QVERIFY(item0.image->height() <= 800);
+
+    auto item1 = model.dataSync(1);
+    QCOMPARE(item1.id, "2019-09-01.jpg");
+    QVERIFY(item1.image->width() <= 1280);
+    QVERIFY(item1.image->height() <= 800);
+}
+
+void PhotoGalleryTests::testCacheAndEviction()
+{
+    // Helpers to verify thread interaction.
+    // Loader thread reached loading.
+    Barrier reached_loading;
+    // Loader thread waits to proceed on loading.
+    Barrier proceed_loading;
+
+    // Set up a store with some mock data.
+    std::set<QString> ids;
+    for (int n = 0; n < 100; ++n) {
+        ids.insert(QString().sprintf("%04d.jpg", n));
+    }
+    QByteArray data = createJPEGImageByteArray(12, 12);
+
+    MockPhotoFileStore store;
+    store.mock_ids = [&ids]() -> const std::set<QString>& { return ids; };
+    store.mock_read =
+        [&data, &reached_loading, &proceed_loading](const QString&)
+        {
+            reached_loading.Post();
+            proceed_loading.Wait();
+            return data;
+        };
+
+    PhotoGalleryModel model(&store);
+
+    // Instrument model so we know when loading completes
+    int load_ops_completed = 0;
+    QObject::connect(
+        &model, &PhotoGalleryModel::loaded,
+        [&load_ops_completed]() {
+            ++load_ops_completed;
+        });
+
+    // Request first 50 images. Since loader is asynchronous (and actually
+    // blocked on barrier in our setup) they cannot be in memory yet.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    // Loader will perform 50 load operations.
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
+    // Wait until they are finished.
+    while (load_ops_completed < 50) {
+        QTest::qWait(10);
+    }
+
+    // Now all 50 images are there, and in cache. Accessing them now will not
+    // trigger loader.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(item.image);
+    }
+
+    // Repeat all of the above with the next 50 images:
+    for (int n = 50; n < 100; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
+    while (load_ops_completed < 100) {
+        QTest::qWait(10);
+    }
+
+    // Now all of our new 50 images are there:
+    for (int n = 50; n < 100; ++n) {
+        auto item = model.data(n);
+        QVERIFY(item.image);
+    }
+
+    // The previous 50 images should have been evicted from cache.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    // Since we asked for the images again, loaders are now stuck trying to
+    // get them. Unblock them before leaving (otherwise might deadlock
+    // at end of test).
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
 }
 
 QTEST_MAIN(PhotoGalleryTests)

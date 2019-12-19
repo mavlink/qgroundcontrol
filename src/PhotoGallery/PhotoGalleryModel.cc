@@ -18,6 +18,8 @@
 namespace {
 
 constexpr size_t num_loader_threads = 2;
+constexpr int limit_memory_image_width = 1280;
+constexpr int limit_memory_image_height = 800;
 
 }  // namespace
 
@@ -240,7 +242,14 @@ void PhotoGalleryModel::loaderFunction()
         if (data.canConvert<QByteArray>()) {
             const auto& bytes = data.value<QByteArray>();
             item->image = std::make_shared<QImage>();
-            item->image->loadFromData(bytes);
+            if (item->image->loadFromData(bytes)) {
+                if (item->image->width() > limit_memory_image_width
+                    || item->image->height() > limit_memory_image_height) {
+                    *item->image = item->image->scaled(
+                        QSize(limit_memory_image_width, limit_memory_image_height),
+                        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                }
+            }
         }
 
         {
