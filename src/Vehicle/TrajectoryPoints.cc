@@ -22,7 +22,7 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
     if (_lastPoint.isValid()) {
         if (_lastPoint.distanceTo(coordinate) > _distanceTolerance) {
             double newAzimuth = _lastPoint.azimuthTo(coordinate);
-            if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance) {
+            if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance || _points.count() == 0) {
                 _lastAzimuth = _lastPoint.azimuthTo(coordinate);
                 _lastPoint = coordinate;
                 _points.append(QVariant::fromValue(coordinate));
@@ -34,7 +34,7 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
             }
         }
     } else {
-        _lastAzimuth = _lastPoint.azimuthTo(coordinate);
+        _lastAzimuth = qQNaN();
         _lastPoint = coordinate;
         _points.append(QVariant::fromValue(coordinate));
         emit pointAdded(coordinate);

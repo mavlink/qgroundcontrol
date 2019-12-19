@@ -133,6 +133,12 @@ Joystick::~Joystick()
     }
 }
 
+void Joystick::handleManualControlGimbal(float gimbalPitch, float gimbalYaw) {
+    _localPitch += static_cast<double>(gimbalPitch);
+    _localYaw += static_cast<double>(gimbalYaw);
+    emit gimbalControlValue(_localPitch, _localYaw);
+}
+
 void Joystick::_setDefaultCalibration(void) {
     QSettings settings;
     settings.beginGroup(_settingsGroup);
@@ -653,7 +659,7 @@ void Joystick::_handleAxis()
             if(_activeVehicle && _axisCount > 4 && _gimbalEnabled) {
                 //-- TODO: There is nothing consuming this as there are no messages to handle gimbal
                 //   the way MANUAL_CONTROL handles the other channels.
-                emit manualControlGimbal((gimbalPitch + 1.0f) / 2.0f * 90.0f, gimbalYaw * 180.0f);
+                emit manualControlGimbal(gimbalPitch, gimbalYaw);
             }
         }
     }
@@ -669,10 +675,14 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
-            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
-            disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
-            disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
-            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            // Commenting out for the time being as we already have a gimbal control source in qml that is conflicting with this
+            // TODO: Implement a proper gimbal manager with support for mutliple sources based on priorities and redirect
+            // the events to that
+            //disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
+            //disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
+            //disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
+            //disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -692,10 +702,11 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
-            connect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
+            /*connect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
             connect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
-            connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);*/
+            connect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
             // FIXME: ****
             //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
@@ -717,10 +728,11 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
-            disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
+            /*disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
-            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);*/
+            disconnect(this, &Joystick::manualControlGimbal, this,          &Joystick::handleManualControlGimbal);
         }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
@@ -1015,7 +1027,7 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) {
             _localPitch = 0.0;
             _localYaw   = 0.0;
-            emit gimbalControlValue(0.0, 0.0);
+            emit centerGimbal();
         }
     } else if(action == _buttonActionGimbalPitchUp || action == _buttonActionGimbalPitchDown) {
         if (buttonDown) {
@@ -1046,19 +1058,21 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
 
 void Joystick::_pitchStep(int direction)
 {
-    _localPitch += static_cast<double>(direction);
-    //-- Arbitrary range
-    if(_localPitch < -90.0) _localPitch = -90.0;
-    if(_localPitch >  35.0) _localPitch =  35.0;
-    emit gimbalControlValue(_localPitch, _localYaw);
+//    _localPitch += static_cast<double>(direction);
+//    //-- Arbitrary range
+//    if(_localPitch < -90.0) _localPitch = -90.0;
+//    if(_localPitch >  35.0) _localPitch =  35.0;
+//    emit gimbalControlValue(_localPitch, _localYaw);
+    emit gimbalPitchStep(direction);
 }
 
 void Joystick::_yawStep(int direction)
 {
-    _localYaw += static_cast<double>(direction);
-    if(_localYaw < -180.0) _localYaw = -180.0;
-    if(_localYaw >  180.0) _localYaw =  180.0;
-    emit gimbalControlValue(_localPitch, _localYaw);
+//    _localYaw += static_cast<double>(direction);
+//    if(_localYaw < -180.0) _localYaw = -180.0;
+//    if(_localYaw >  180.0) _localYaw =  180.0;
+//    emit gimbalControlValue(_localPitch, _localYaw);
+    emit gimbalYawStep(direction);
 }
 
 bool Joystick::_validAxis(int axis)

@@ -1,10 +1,14 @@
 add_library(PhotoGallery
     AbstractPhotoTrigger.cc
     AsyncDownloadPhotoTrigger.cc
+    ExtractJPEGMetadata.cc
+    JPEGSegmentParser.cc
     PhotoFileStore.cc
+    PhotoFileStoreInterface.cc
     PhotoGalleryModel.cc
     PhotoGalleryVehicleGlue.cc
     PhotoGalleryView.cc
+    easyexif.cpp
 )
 
 add_custom_target(

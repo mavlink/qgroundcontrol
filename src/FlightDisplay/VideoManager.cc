@@ -30,10 +30,6 @@
 #include "Vehicle.h"
 #include "QGCCameraManager.h"
 
-#ifdef QGC_ENABLE_PAIRING
-#include "PairingManager.h"
-#endif
-
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
 //-----------------------------------------------------------------------------
@@ -98,6 +94,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 void
 VideoManager::startVideo(VideoReceiver *receiver)
 {
+    _videoStarted = true;
     if(_videoReceiver && (!receiver || receiver == _videoReceiver)) {
         _videoReceiver->start();
     }
@@ -116,6 +113,7 @@ VideoManager::stopVideo(VideoReceiver *receiver)
     if(_thermalVideoReceiver && (!receiver || receiver == _thermalVideoReceiver)) {
         _thermalVideoReceiver->stop();
     }
+    _videoStarted = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -377,12 +375,10 @@ VideoManager::restartVideo()
 void
 VideoManager::restartVideoReceiver(VideoReceiver *receiver)
 {
-#if defined(QGC_GST_STREAMING)
-#if defined(QGC_ENABLE_PAIRING)
-    if (!qgcApp()->toolbox()->pairingManager()->videoCanRestart()) {
+    if (!_videoStarted) {
         return;
     }
-#endif
+#if defined(QGC_GST_STREAMING)
     qCDebug(VideoManagerLog) << "Restart video streaming";
     stopVideo(receiver);
     _updateSettings();

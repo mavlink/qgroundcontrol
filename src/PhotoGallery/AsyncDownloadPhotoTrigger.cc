@@ -11,7 +11,7 @@
 
 #include <QNetworkReply>
 
-#include "PhotoFileStore.h"
+#include "PhotoFileStoreInterface.h"
 
 AsyncDownloadPhotoTriggerOperation::~AsyncDownloadPhotoTriggerOperation()
 {
@@ -56,7 +56,7 @@ AsyncDownloadPhotoTrigger::~AsyncDownloadPhotoTrigger()
 AsyncDownloadPhotoTrigger::AsyncDownloadPhotoTrigger(
     std::function<bool()> photo_trigger_fn,
     const Config & config,
-    PhotoFileStore * store ,
+    PhotoFileStoreInterface * store ,
     QObject * parent)
     : AbstractPhotoTrigger(parent),
       _photo_trigger_fn(std::move(photo_trigger_fn)),
@@ -85,12 +85,12 @@ AsyncDownloadPhotoTriggerOperation * AsyncDownloadPhotoTrigger::takePhoto()
     }
 }
 
-PhotoFileStore * AsyncDownloadPhotoTrigger::store() const
+PhotoFileStoreInterface * AsyncDownloadPhotoTrigger::store() const
 {
     return _store;
 }
 
-void AsyncDownloadPhotoTrigger::setStore(PhotoFileStore * store)
+void AsyncDownloadPhotoTrigger::setStore(PhotoFileStoreInterface * store)
 {
     failPhotoOperation();
     _store = store;

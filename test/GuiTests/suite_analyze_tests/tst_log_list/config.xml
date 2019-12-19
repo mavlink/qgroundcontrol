@@ -1,0 +1,12 @@
+<testconfig version="1.0">
+<information>
+<summary>05 Log List</summary>
+<description>Requirement: The simulator without any Analyze Logs is running&#13;
+Takeoff and Land the drone to generate a log file. Open Analyze view and refresh logs list. Check all cells if the displayed text has fits in the Text field&#13;
+</description>
+</information>
+<tags>
+<tag>sim</tag>
+</tags>
+<testsettings/>
+</testconfig>

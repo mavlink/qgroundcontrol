@@ -21,6 +21,7 @@
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
 #include "UDPLink.h"
+#include "Vehicle.h"
 #if defined QGC_ENABLE_NFC
 #include "PairingNFC.h"
 #endif
@@ -52,12 +53,15 @@ public:
     enum PairingStatus {
         PairingIdle,
         PairingActive,
-        PairingSuccess,
-        PairingConnecting,
-        PairingConnected,
-        PairingRejected,
-        PairingConnectionRejected,
-        PairingError
+        PairingError,
+        Success,
+        Error,
+        Connecting,
+        Connected,
+        Disconnecting,
+        Disconnected,
+        Unpairing,
+        ConfiguringModem
     };
 
     Q_ENUM(PairingStatus)
@@ -72,14 +76,13 @@ public:
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
     bool            usePairing                  () { return _usePairing; }
-    bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
-    bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     bool            confirmHighPowerMode        () { return _confirmHighPowerMode; }
     QString         nidPrefix                   () { return _nidPrefix; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
     void            setNidPrefix                (QString nidPrefix) { _nidPrefix = nidPrefix; emit nidPrefixChanged(); }
+    void            setConfirmHPM               (bool set) { _confirmHighPowerMode = set; emit confirmHighPowerModeChanged(); }
     void            jsonReceivedStartPairing    (const QString& jsonEnc);
     QString         pairingKey                  ();
     QString         networkId                   ();
@@ -89,7 +92,7 @@ public:
     static void     setNativeMethods            (void);
 #endif
     Q_INVOKABLE void    connectToDevice         (const QString& deviceName, bool confirm = false);
-    Q_INVOKABLE void    removePairedDevice      (const QString& name);
+    Q_INVOKABLE void    unpairDevice            (const QString& name);
     Q_INVOKABLE void    stopConnectingDevice    (const QString& name);
     Q_INVOKABLE bool    isDeviceConnecting      (const QString& name);
     Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
@@ -116,8 +119,7 @@ public:
     Q_PROPERTY(QString          nidPrefix               READ nidPrefix               WRITE setNidPrefix  NOTIFY nidPrefixChanged)
     Q_PROPERTY(int              pairingChannel          READ pairingChannel                              NOTIFY pairingChannelChanged)
     Q_PROPERTY(int              connectingChannel       READ connectingChannel                           NOTIFY connectingChannelChanged)
-    Q_PROPERTY(bool             errorState              READ errorState                                  NOTIFY pairingStatusChanged)
-    Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode                        NOTIFY confirmHighPowerModeChanged)
+    Q_PROPERTY(bool             confirmHighPowerMode    READ confirmHighPowerMode    WRITE setConfirmHPM NOTIFY confirmHighPowerModeChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
@@ -153,6 +155,7 @@ private slots:
 private:
     int                           _nfcIndex = -1;
     int                           _microhardIndex = -1;
+    int                           _mavlink_router_port = -1;
     PairingStatus                 _status = PairingIdle;
     QString                       _statusString;
     QString                       _lastConnected;
@@ -167,6 +170,7 @@ private:
     QNetworkAccessManager         _uploadManager;
     bool                          _firstBoot = true;
     bool                          _usePairing = false;
+    bool                          _usePairingSet = false;
     bool                          _confirmHighPowerMode = false;
     QMap<QString, qint64>         _devicesToConnect{};
     QTimer                        _reconnectTimer;
@@ -183,7 +187,7 @@ private:
     QString                 _getLocalIPInNetwork        (const QString& remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey, const int channel);
+    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& ip, const QString& devicePublicKey, const int channel);
     void                    _connectionCompleted        (const QString& name, const int channel);
     void                    _disconnectCompleted        (const QString& name);
     void                    _channelCompleted           (const QString& name, int channel);
@@ -199,6 +203,7 @@ private:
     void                    _createUDPLink              (const QString& name, quint16 port);
     void                    _removeUDPLink              (const QString& name);
     void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
+    void                    _vehicleAuxiliaryLinkAdded  (Vehicle *vehicle, LinkInterface* link);
     void                    _linkInactiveOrDeleted      (LinkInterface* link);
     void                    _autoConnect                ();
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
@@ -208,6 +213,7 @@ private:
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);
     QString                 _getDeviceIP                (const QString& name);
+    bool                    _getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip);
     QString                 _getDeviceConnectNid        (int channel);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
