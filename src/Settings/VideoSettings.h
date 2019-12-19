@@ -35,6 +35,7 @@ public:
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(enableHardwareAcceleration)
+    DEFINE_SETTINGFACT(showVideoOnSecondScreen)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)

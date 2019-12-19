@@ -1,0 +1,10 @@
+<testconfig version="1.0">
+<information>
+<summary>01 Map Zoom</summary>
+<description>Zooming out. Map scale reflects current map scale and new tiles are downloaded and/or fetched from cache.</description>
+</information>
+<tags>
+<tag>no-sim</tag>
+</tags>
+<testsettings/>
+</testconfig>

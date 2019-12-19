@@ -182,7 +182,9 @@
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+        <file alias="toggle-metadata.svg">src/PhotoGallery/toggle-metadata.svg</file>
         <file alias="photos-folder-open.svg">src/PhotoGallery/photos-folder-open.svg</file>
         <file alias="videos-folder-open.svg">src/PhotoGallery/videos-folder-open.svg</file>
+        <file alias="missing-image.svg">src/PhotoGallery/missing-image.svg</file>
     </qresource>
 </RCC>

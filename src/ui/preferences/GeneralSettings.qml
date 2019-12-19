@@ -257,7 +257,10 @@ Rectangle {
                                     visible:    _usePairing.visible && QGroundControl.supportsPairing
                                     property Fact _usePairing: QGroundControl.settingsManager.appSettings.usePairing
                                 }
-
+                                FactCheckBox {
+                                    text:       qsTr("Display MGRS coordinates")
+                                    fact:       QGroundControl.settingsManager.appSettings.displayMGRSCoordinates
+                                }
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
@@ -306,7 +309,7 @@ Rectangle {
                                 }
 
                                 QGCCheckBox {
-                                    text:       qsTr("Use Embedded Virtual Keyboard")
+                                    text:       qsTr("Use Embedded Virtual Keyboard (requires restart)")
                                     checked:    CustomQuickInterface.showVirtualKeyboard
                                     onClicked:  CustomQuickInterface.showVirtualKeyboard = checked
                                 }
@@ -556,8 +559,17 @@ Rectangle {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor
                                 }
-                                QGCLabel { text: qsTr("Show Gimbal Control") }
+                                QGCLabel { text: qsTr("Use Camera Gimbal Control") }
                                 CustomOnOffSwitch {
+                                    checked:    CustomQuickInterface.useEmbeddedGimbal
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.useEmbeddedGimbal = checked
+                                }
+                                QGCLabel {
+                                    visible: !CustomQuickInterface.useEmbeddedGimbal
+                                    text: qsTr("Show Gimbal Control") }
+                                CustomOnOffSwitch {
+                                    visible:    !CustomQuickInterface.useEmbeddedGimbal
                                     checked:    CustomQuickInterface.showGimbalControl
                                     width:      _valueFieldWidth
                                     onClicked:  CustomQuickInterface.showGimbalControl = checked
@@ -944,6 +956,16 @@ Rectangle {
                                 fact:                   QGroundControl.settingsManager.videoSettings.disableWhenDisarmed
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }
+
+                            QGCLabel {
+                                text:                   qsTr("Show Video On Second Screen")
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.visible
+                            }
+                            FactCheckBox {
+                                text:                   "(Requires Restart)"
+                                fact:                   QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.visible
+                            }
                         }
                     }
 
@@ -1094,17 +1116,12 @@ Rectangle {
                     Item {
                         height:  ScreenTools.defaultFontPixelHeight * 2
                         width:   1
-                        visible: _devVersion.visible
+                        visible: _coreVersion.visible
                     }
                     QGCLabel {
-                        id: _devVersion
-                        text:               qsTr("Custom Dev Version: %1").arg(QGroundControl.corePlugin.customGitVersion)
+                        id: _coreVersion
+                        text:               qsTr("Core Version: %1").arg(QGroundControl.qgcVersion)
                         visible:            QGroundControl.corePlugin.customVersion !== undefined && QGroundControl.corePlugin.showAdvancedUI
-                        Layout.alignment:   Qt.AlignHCenter
-                    }
-                    QGCLabel {
-                        text:               qsTr("Core Dev Version: %1").arg(QGroundControl.qgcVersion)
-                        visible:            _devVersion.visible
                         Layout.alignment:   Qt.AlignHCenter
                     }
                 } // settingsColumn

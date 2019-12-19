@@ -64,7 +64,9 @@ SetupPage {
             ExclusiveGroup { id: returnAltRadioGroup }
 
             Component.onCompleted: {
+                // We use QtCharts only on Desktop platforms
                 showAdvanced = !ScreenTools.isMobile
+
                 // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
                 // setting and then set Slider::value to the bound properties value. If you have an onValueChanged
                 // handler which updates your property with the new value, this first value change will trash

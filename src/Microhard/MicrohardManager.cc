@@ -19,9 +19,6 @@
 
 #include <QSettings>
 
-#define SHORT_TIMEOUT 2500
-#define LONG_TIMEOUT  5000
-
 static const char *kMICROHARD_GROUP     = "Microhard";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
@@ -52,10 +49,6 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard, Qt::QueuedConnection);
-    _workTimer.setSingleShot(true);
-    connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout, Qt::QueuedConnection);
-    connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout, Qt::QueuedConnection);
     connect(this, &MicrohardManager::pairingChannelChanged, this, &MicrohardManager::_updateSettings, Qt::QueuedConnection);
 
     QSettings settings;
@@ -82,19 +75,16 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 void
 MicrohardManager::_close()
 {
-    _workTimer.stop();
-    _locTimer.stop();
-    _remTimer.stop();
-    if(_mhSettingsLoc) {
-        _mhSettingsLoc->close();
-        _mhSettingsLoc->deleteLater();
-        _mhSettingsLoc = nullptr;
+    if (_mhSettingsLocThread) {
+        _mhSettingsLocThread->quit();
+        _mhSettingsLocThread = nullptr;
     }
-    if(_mhSettingsRem) {
-        _mhSettingsRem->close();
-        _mhSettingsRem->deleteLater();
-        _mhSettingsRem = nullptr;
+    _mhSettingsLoc = nullptr;
+    if (_mhSettingsRemThread) {
+        _mhSettingsRemThread->quit();
+        _mhSettingsRemThread = nullptr;
     }
+    _mhSettingsRem = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -102,11 +92,10 @@ void
 MicrohardManager::_reset()
 {
     _close();
-    _connectedStatus = 0;
+    _connectedStatus = _linkConnectedStatus = tr("Not Connected");
     emit connectedChanged();
-    _linkConnectedStatus = 0;
     emit linkConnectedChanged();
-    if(!_appSettings) {
+    if (!_appSettings) {
         _appSettings = _toolbox->settingsManager()->appSettings();
         connect(_appSettings->enableMicrohard(), &Fact::rawValueChanged, this, &MicrohardManager::_setEnabled, Qt::QueuedConnection);
     }
@@ -152,21 +141,17 @@ MicrohardManager::switchToPairingEncryptionKey(QString pairingKey)
 void
 MicrohardManager::configure()
 {
-    if (_mhSettingsLoc) {
 #ifdef QGC_ENABLE_PAIRING
-        if (_toolbox->pairingManager()->usePairing()) {
-            if (_usePairingSettings) {
-                _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
-                                          _pairingChannel, _pairingBandwidth, _networkId);
-            } else {
-                _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower,
-                                          _connectingChannel, _connectingBandwidth, _connectingNetworkId);
-            }
-            return;
+    if (_toolbox->pairingManager()->usePairing()) {
+        if (_usePairingSettings) {
+            emit configureMicrohard(_encryptionKey, _pairingPower, _pairingChannel, _pairingBandwidth, _networkId);
+        } else {
+            emit configureMicrohard(_communicationEncryptionKey, _connectingPower, _connectingChannel, _connectingBandwidth, _connectingNetworkId);
         }
-#endif
-        _mhSettingsLoc->configure(_encryptionKey, 0, _connectingChannel, _connectingBandwidth, _networkId);
+        return;
     }
+#endif
+    emit configureMicrohard(_encryptionKey, 0, _connectingChannel, _connectingBandwidth, _networkId);
 }
 
 //-----------------------------------------------------------------------------
@@ -244,21 +229,43 @@ MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMa
 
 //-----------------------------------------------------------------------------
 void
+MicrohardManager::setShowRemote(bool val)
+{
+    if (_showRemote != val) {
+        _showRemote = val;
+        _reset();
+        emit showRemoteChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 MicrohardManager::_setEnabled()
 {
     bool enable = _appSettings->enableMicrohard()->rawValue().toBool();
-    if(enable) {
-        if(!_mhSettingsLoc) {
-            _mhSettingsLoc = new MicrohardSettings(localIPAddr(), this, true);
-            connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc, Qt::QueuedConnection);
-            connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc, Qt::QueuedConnection);
+    if (enable) {
+        if (!_mhSettingsLoc) {
+            _mhSettingsLocThread = new QThread(this);
+            _mhSettingsLoc = new MicrohardSettings(localIPAddr(), true);
+            _mhSettingsLoc->moveToThread(_mhSettingsLocThread);
+            connect(_mhSettingsLocThread, &QThread::finished, _mhSettingsLoc, &QObject::deleteLater, Qt::QueuedConnection);
+            connect(this, &MicrohardManager::run, _mhSettingsLoc, &MicrohardSettings::run, Qt::QueuedConnection);
+            connect(this, &MicrohardManager::configureMicrohard, _mhSettingsLoc, &MicrohardSettings::configure, Qt::QueuedConnection);
+            connect(_mhSettingsLoc, &MicrohardSettings::connected, this, &MicrohardManager::_connectedLoc, Qt::QueuedConnection);
+            connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated, this, &MicrohardManager::_rssiUpdatedLoc, Qt::QueuedConnection);
+            _mhSettingsLocThread->start();
         }
-        if(!_mhSettingsRem) {
-            _mhSettingsRem = new MicrohardSettings(remoteIPAddr(), this);
-            connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem, Qt::QueuedConnection);
-            connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem, Qt::QueuedConnection);
+        if(!_mhSettingsRem && _showRemote) {
+            _mhSettingsRemThread = new QThread(this);
+            _mhSettingsRem = new MicrohardSettings(remoteIPAddr());
+            _mhSettingsRem->moveToThread(_mhSettingsRemThread);
+            connect(_mhSettingsLocThread, &QThread::finished, _mhSettingsRem, &QObject::deleteLater, Qt::QueuedConnection);
+            connect(this, &MicrohardManager::run, _mhSettingsRem, &MicrohardSettings::run, Qt::QueuedConnection);
+            connect(_mhSettingsRem, &MicrohardSettings::connected, this, &MicrohardManager::_connectedRem, Qt::QueuedConnection);
+            connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated, this, &MicrohardManager::_rssiUpdatedRem, Qt::QueuedConnection);
+            _mhSettingsRemThread->start();
         }
-        _workTimer.start(SHORT_TIMEOUT);
+        emit run();
     } else {
         //-- Stop everything
         _close();
@@ -268,108 +275,40 @@ MicrohardManager::_setEnabled()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::_connectedLoc(int status)
+MicrohardManager::_connectedLoc(const QString& status)
 {
-    static const char* msg = "GND Microhard Settings: ";
-    if(status > 0)
-        qCDebug(MicrohardLog) << msg << "Connected";
-    else if(status < 0)
-        qCDebug(MicrohardLog) << msg << "Error";
-    else
-        qCDebug(MicrohardLog) << msg << "Not Connected";
-    _connectedStatus = status;
-    _locTimer.start(LONG_TIMEOUT);
-    emit connectedChanged();
+    if (_connectedStatus != status) {
+        _connectedStatus = status;
+        qCDebug(MicrohardLog) << "Ground Microhard Settings: " << _connectedStatus;
+        emit connectedChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::_connectedRem(int status)
+MicrohardManager::_connectedRem(const QString& status)
 {
-    static const char* msg = "AIR Microhard Settings: ";
-    if(status > 0)
-        qCDebug(MicrohardLog) << msg << "Connected";
-    else if(status < 0)
-        qCDebug(MicrohardLog) << msg << "Error";
-    else
-        qCDebug(MicrohardLog) << msg << "Not Connected";
-    _linkConnectedStatus = status;
-    _remTimer.start(LONG_TIMEOUT);
-    emit linkConnectedChanged();
+    if (_linkConnectedStatus != status) {
+        _linkConnectedStatus = status;
+        qCDebug(MicrohardLog) << "Air Microhard Settings: " << _linkConnectedStatus;
+        emit linkConnectedChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardManager::_rssiUpdatedLoc(int rssi)
 {
-    _downlinkRSSI = rssi;
-    _locTimer.stop();
-    _locTimer.start(LONG_TIMEOUT);
+    setDownlinkRSSI(rssi);
     emit connectedChanged();
-    emit linkChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardManager::_rssiUpdatedRem(int rssi)
 {
-    _uplinkRSSI = rssi;
-    _remTimer.stop();
-    _remTimer.start(LONG_TIMEOUT);
+    setUplinkRSSI(rssi);
     emit linkConnectedChanged();
-    emit linkChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-MicrohardManager::_locTimeout()
-{
-    _locTimer.stop();
-    _connectedStatus = 0;
-    if(_mhSettingsLoc) {
-        _mhSettingsLoc->close();
-        _mhSettingsLoc->deleteLater();
-        _mhSettingsLoc = nullptr;
-    }
-    emit connectedChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-MicrohardManager::_remTimeout()
-{
-    _remTimer.stop();
-    _linkConnectedStatus = 0;
-    if(_mhSettingsRem) {
-        _mhSettingsRem->close();
-        _mhSettingsRem->deleteLater();
-        _mhSettingsRem = nullptr;
-    }
-    emit linkConnectedChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
-MicrohardManager::_checkMicrohard()
-{
-    if(_enabled) {
-        if(!_mhSettingsLoc || !_mhSettingsRem) {
-            _setEnabled();
-            return;
-        }
-
-        if(_connectedStatus <= 0) {
-            _mhSettingsLoc->start();
-        } else {
-            _mhSettingsLoc->getStatus();
-        }
-        if(_linkConnectedStatus <= 0) {
-            _mhSettingsRem->start();
-        } else {
-            _mhSettingsRem->getStatus();
-        }
-    }
-    _workTimer.start(_connectedStatus > 0 ? SHORT_TIMEOUT : LONG_TIMEOUT);
 }
 
 //-----------------------------------------------------------------------------
@@ -437,8 +376,8 @@ int
 MicrohardManager::downlinkRSSIPct()
 {
     double dbm = static_cast<double>(_downlinkRSSI);
-    if(dbm < -92) return 0;
-    if(dbm > -21) return 100;
+    if (dbm < -92) return 0;
+    if (dbm > -21) return 100;
     return static_cast<int>(round((-0.0154 * dbm * dbm) - (0.3794 * dbm) + 98.182));
 }
 

@@ -228,6 +228,9 @@ signals:
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
 
+private slots:
+    void handleManualControlGimbal(float gimbalPitch, float gimbalYaw);
+
 protected:
     void    _setDefaultCalibration  ();
     void    _saveSettings           ();

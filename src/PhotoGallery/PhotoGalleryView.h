@@ -75,6 +75,9 @@ public:
     struct SingleViewState {
         /// Identify image currently shown
         int index;
+
+        /// Whether to scribble metadata information all over the image.
+        bool show_metadata = false;
     };
 
     /// Detail state for "gallery" view mode.
@@ -135,7 +138,7 @@ private slots:
 
     void modelAdded(const std::set<PhotoGalleryModelIndex> & indices);
     void modelRemoved(const std::set<PhotoGalleryModelIndex> & indices);
-
+    void modelLoaded();
 
 private:
     /// Control how view changes should be applied
@@ -238,6 +241,8 @@ private:
 
     void triggerPhoto();
 
+    void drawMissingImagePlaceholder(QPainter * painter, const QRectF & bounds) const;
+
     Parameters _parameters;
 
     PhotoGalleryModel * _model = nullptr;
@@ -270,8 +275,10 @@ private:
     /// operations.
     QTimer _long_click_timeout;
 
+    QIcon _toggle_metadata_svg;
     QIcon _open_photos_folder_svg;
     QIcon _open_videos_folder_svg;
+    QIcon _missing_image_svg;
 
     std::set<QString> _selected_images;
 };

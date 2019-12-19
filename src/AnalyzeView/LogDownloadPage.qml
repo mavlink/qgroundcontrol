@@ -50,23 +50,25 @@ AnalyzePage {
             }
 
             TableView {
-                id: tableView
+                id:                 tableView
                 Layout.fillHeight:  true
                 model:              logController.model
                 selectionMode:      SelectionMode.MultiSelection
                 Layout.fillWidth:   true
 
                 TableViewColumn {
-                    title: qsTr("Id")
-                    width: ScreenTools.defaultFontPixelWidth * 6
+                    id:             logIDCol
+                    title:          qsTr("Id")
+                    width:          ScreenTools.defaultFontPixelWidth * 6
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Rectangle {
-                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        color:      styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
                         Text  {
+                            id:     logIDText
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignHCenter
-                            color: palette.text
+                            color:  palette.text
                             text: {
                                 var o = logController.model.get(styleData.row)
                                 return o ? o.id : ""
@@ -76,12 +78,14 @@ AnalyzePage {
                 }
 
                 TableViewColumn {
-                    title: qsTr("Date")
-                    width: ScreenTools.defaultFontPixelWidth * 34
+                    id:             logDateCol
+                    title:          qsTr("Date")
+                    width:          ScreenTools.defaultFontPixelWidth * 34
                     horizontalAlignment: Text.AlignHCenter
                     delegate: Rectangle {
                         color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
                         Text  {
+                            id:     logDateText
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             color: palette.text
@@ -104,12 +108,14 @@ AnalyzePage {
                 }
 
                 TableViewColumn {
-                    title: qsTr("Size")
-                    width: ScreenTools.defaultFontPixelWidth * 18
+                    id:             logSizeCol
+                    title:          qsTr("Size")
+                    width:          ScreenTools.defaultFontPixelWidth * 18
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Rectangle {
-                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        color:      styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
                         Text  {
+                            id:     logSizeText
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignRight
@@ -123,16 +129,18 @@ AnalyzePage {
                 }
 
                 TableViewColumn {
-                    title: qsTr("Status")
-                    width: ScreenTools.defaultFontPixelWidth * 22
+                    id:             logStatusCol
+                    title:          qsTr("Status")
+                    width:          ScreenTools.defaultFontPixelWidth * 22
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Rectangle {
                         color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
                         Text  {
+                            id:     logStatusText
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             horizontalAlignment: Text.AlignHCenter
-                            color: palette.text
+                            color:  palette.text
                             text: {
                                 var o = logController.model.get(styleData.row)
                                 return o ? o.status : ""
@@ -145,9 +153,10 @@ AnalyzePage {
                 spacing:            _margin
                 Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs
-                    text:       qsTr("Refresh")
-                    width:      _butttonWidth
+                    id:             logRefreshButton
+                    enabled:        !logController.requestingList && !logController.downloadingLogs
+                    text:           qsTr("Refresh")
+                    width:          _butttonWidth
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
                             mainWindow.showMessageDialog(qsTr("Log Refresh"), qsTr("You must be connected to a vehicle in order to download logs."))
@@ -157,9 +166,10 @@ AnalyzePage {
                     }
                 }
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs && tableView.selection.count > 0
-                    text:       qsTr("Download")
-                    width:      _butttonWidth
+                    id:             logDownloadButton
+                    enabled:        !logController.requestingList && !logController.downloadingLogs && tableView.selection.count > 0
+                    text:           qsTr("Download")
+                    width:          _butttonWidth
                     onClicked: {
                         //-- Clear selection
                         for(var i = 0; i < logController.model.count; i++) {
@@ -186,10 +196,11 @@ AnalyzePage {
                     }
                 }
                 QGCButton {
-                    enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
-                    text:       qsTr("Erase All")
-                    width:      _butttonWidth
-                    onClicked:  mainWindow.showComponentDialog(
+                    id:             logEraseAllButton
+                    enabled:        !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
+                    text:           qsTr("Erase All")
+                    width:          _butttonWidth
+                    onClicked:      mainWindow.showComponentDialog(
                         eraseAllMessage,
                         qsTr("Delete All Log Files"),
                         mainWindow.showDialogDefaultWidth,
@@ -205,10 +216,11 @@ AnalyzePage {
                     }
                 }
                 QGCButton {
-                    text:       qsTr("Cancel")
-                    width:      _butttonWidth
-                    enabled:    logController.requestingList || logController.downloadingLogs
-                    onClicked:  logController.cancel()
+                    id:             logDownloadCancelButton
+                    text:           qsTr("Cancel")
+                    width:          _butttonWidth
+                    enabled:        logController.requestingList || logController.downloadingLogs
+                    onClicked:      logController.cancel()
                 }
             }
         }

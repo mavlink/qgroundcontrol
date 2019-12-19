@@ -29,6 +29,7 @@ SetupPage {
             width: availableWidth
 
             Component.onCompleted: {
+                // We use QtCharts only on Desktop platforms
                 showAdvanced = !ScreenTools.isMobile
             }
 
