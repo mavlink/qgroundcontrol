@@ -19,6 +19,8 @@
 namespace {
 
 constexpr size_t num_loader_threads = 2;
+constexpr int limit_memory_image_width = 1280;
+constexpr int limit_memory_image_height = 800;
 
 /// Sort two strings representing (relative) file thas in descending order of
 /// base names.
@@ -269,6 +271,12 @@ void PhotoGalleryModel::loaderFunction()
             item->metadata = std::make_shared<std::map<QString, QString>>();
 
             if (item->image->loadFromData(bytes)) {
+                if (item->image->width() > limit_memory_image_width
+                    || item->image->height() > limit_memory_image_height) {
+                    *item->image = item->image->scaled(
+                        QSize(limit_memory_image_width, limit_memory_image_height),
+                        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                }
                 *item->metadata = extractJPEGMetadata(bytes);
             }
         }
