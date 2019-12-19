@@ -17,7 +17,7 @@
 class AbstractPhotoTrigger;
 class AsyncDownloadPhotoTrigger;
 class MultiVehicleManager;
-class PhotoFileStore;
+class PhotoFileStoreInterface;
 class QGCCameraManager;
 class Vehicle;
 
@@ -34,7 +34,7 @@ class PhotoGalleryVehicleGlue : public QObject {
 
     Q_PROPERTY(AbstractPhotoTrigger* trigger READ trigger CONSTANT)
     Q_PROPERTY(MultiVehicleManager* manager READ multiVehicleManager WRITE setMultiVehicleManager)
-    Q_PROPERTY(PhotoFileStore* store READ store WRITE setStore)
+    Q_PROPERTY(PhotoFileStoreInterface* store READ store WRITE setStore)
 
 public:
     ~PhotoGalleryVehicleGlue() override;
@@ -44,8 +44,8 @@ public:
     AbstractPhotoTrigger* trigger() const;
     MultiVehicleManager* multiVehicleManager() const;
     void setMultiVehicleManager(MultiVehicleManager* manager);
-    PhotoFileStore* store() const;
-    void setStore(PhotoFileStore* store);
+    PhotoFileStoreInterface* store() const;
+    void setStore(PhotoFileStoreInterface* store);
 
 public slots:
     /// Connected to vehicle manager to detect new vehicles connecting.

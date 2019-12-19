@@ -13,36 +13,57 @@
 #include <QVariant>
 #include <QtQml>
 
-#include "PhotoFileStore.h"
+#include "PhotoFileStoreInterface.h"
+
+namespace {
+
+constexpr size_t num_loader_threads = 2;
+constexpr int limit_memory_image_width = 1280;
+constexpr int limit_memory_image_height = 800;
+
+}  // namespace
 
 PhotoGalleryModel::~PhotoGalleryModel()
 {
+    {
+        QMutexLocker guard(&_mutex);
+        _loader_thread_request_exit = true;
+        _queue_condition.notify_all();
+    }
+    for (const auto& thread : _loader_threads) {
+        thread->wait();
+    }
 }
 
-PhotoGalleryModel::PhotoGalleryModel(PhotoFileStore * store, QObject * parent)
+PhotoGalleryModel::PhotoGalleryModel(PhotoFileStoreInterface * store, QObject * parent)
     : PhotoGalleryModel(parent)
 {
     setStore(store);
 }
 
 PhotoGalleryModel::PhotoGalleryModel(QObject * parent)
-    : QObject(parent), _cache(100)
+    : QObject(parent), _cache(50)
 {
+    for (std::size_t n = 0; n < num_loader_threads; ++n) {
+        std::unique_ptr<PhotoLoaderThread> thread(new PhotoLoaderThread(this));
+        thread->start();
+        _loader_threads.push_back(std::move(thread));
+    }
 }
 
-PhotoFileStore * PhotoGalleryModel::store() const
+PhotoFileStoreInterface * PhotoGalleryModel::store() const
 {
     return _store;
 }
 
-void PhotoGalleryModel::setStore(PhotoFileStore * store)
+void PhotoGalleryModel::setStore(PhotoFileStoreInterface * store)
 {
     clear();
     _store = store;
     if (_store) {
         addedByStore(_store->ids());
-        connect(_store, &PhotoFileStore::added, this, &PhotoGalleryModel::addedByStore);
-        connect(_store, &PhotoFileStore::removed, this, &PhotoGalleryModel::removedByStore);
+        connect(_store, &PhotoFileStoreInterface::added, this, &PhotoGalleryModel::addedByStore);
+        connect(_store, &PhotoFileStoreInterface::removed, this, &PhotoGalleryModel::removedByStore);
     }
 }
 
@@ -52,19 +73,37 @@ PhotoGalleryModel::Item PhotoGalleryModel::data(PhotoGalleryModelIndex index) co
         const QString & id = _ids[index];
         Item item;
         item.id = id;
+
+        QMutexLocker guard(&_mutex);
         auto cached_item = _cache.object(id);
         if (cached_item) {
-            item.image = *cached_item;
+            item.image = cached_item->image;
         } else {
-            auto data = _store->read(id);
-            if (data.canConvert<QByteArray>()) {
-                auto ptr = std::make_shared<QImage>();
-                if (ptr->loadFromData(data.value<QByteArray>())) {
-                    _cache.insert(id, new std::shared_ptr<QImage>(ptr));
-                    item.image = std::move(ptr);
-                }
-            }
+            loadAsync(id);
         }
+        return item;
+    } else {
+        return {};
+    }
+}
+
+PhotoGalleryModel::Item PhotoGalleryModel::dataSync(PhotoGalleryModelIndex index) const
+{
+    if (index < _ids.size()) {
+        const QString & id = _ids[index];
+        Item item;
+        item.id = id;
+        CacheItem* cached_item = nullptr;
+
+        QMutexLocker guard(&_mutex);
+        do {
+            cached_item = _cache.object(id);
+            if (!cached_item) {
+                loadAsync(id);
+                _completion_condition.wait(&_mutex);
+            }
+        } while (!cached_item);
+        item.image = cached_item->image;
         return item;
     } else {
         return {};
@@ -116,7 +155,8 @@ void PhotoGalleryModel::addedByStore(const std::set<QString> & ids)
     //   already so new image goes to end, meaning O(1). In rare circumstances,
     //   it is O(n) if an image is put into the middle, but this is still not
     //   worth worrying as we are not taking millions of pictures per second.
-    for (auto & id : ids) {
+    for (auto iter = ids.rbegin(); iter != ids.rend(); ++iter) {
+        const auto & id = *iter;
         auto i = std::lower_bound(_ids.begin(), _ids.end(), id, std::greater<QString>());
         std::unique_ptr<Item> item(new Item);
         i = _ids.insert(i, std::move(id));
@@ -140,13 +180,35 @@ void PhotoGalleryModel::removedByStore(const std::set<QString> & ids)
     emit removed(indices_removed);
 }
 
+void PhotoGalleryModel::loadAsync(const QString& id) const
+{
+    if (_load_items.find(id) != _load_items.end()) {
+        return;
+    }
+    _load_items.insert(id);
+    _load_queue.push_back(id);
+    _queue_condition.notify_one();
+}
+
 void PhotoGalleryModel::clear()
 {
-    if (_store) {
-        disconnect(_store, &PhotoFileStore::added, this, &PhotoGalleryModel::addedByStore);
-        disconnect(_store, &PhotoFileStore::removed, this, &PhotoGalleryModel::removedByStore);
+    {
+        // Make sure that asychronous load operations are quiet before resetting
+        // store to a different value. See concurrency notes on the "_store"
+        // member.
+        QMutexLocker guard(&_mutex);
+        _load_queue.clear();
+        _load_items.clear();
+        while (_loader_threads_idle != _loader_threads.size()) {
+            _idle_condition.wait(&_mutex);
+        }
+        _cache.clear();
     }
-    _cache.clear();
+
+    if (_store) {
+        disconnect(_store, &PhotoFileStoreInterface::added, this, &PhotoGalleryModel::addedByStore);
+        disconnect(_store, &PhotoFileStoreInterface::removed, this, &PhotoGalleryModel::removedByStore);
+    }
     _ids.clear();
     std::set<PhotoGalleryModelIndex> indices_removed;
     for (std::size_t n = 0; n < _ids.size(); ++n) {
@@ -156,9 +218,69 @@ void PhotoGalleryModel::clear()
     emit removed(indices_removed);
 }
 
+void PhotoGalleryModel::loaderFunction()
+{
+    for (;;) {
+        QString id;
+        {
+            QMutexLocker guard(&_mutex);
+            while (_load_queue.empty() && !_loader_thread_request_exit) {
+                ++_loader_threads_idle;
+                _idle_condition.notify_one();
+                _queue_condition.wait(&_mutex);
+                --_loader_threads_idle;
+            }
+            if (_loader_thread_request_exit) {
+                break;
+            }
+            id = _load_queue.front();
+            _load_queue.pop_front();
+        }
+
+        auto data = _store->read(id);
+        CacheItem* item = new CacheItem;
+        if (data.canConvert<QByteArray>()) {
+            const auto& bytes = data.value<QByteArray>();
+            item->image = std::make_shared<QImage>();
+            if (item->image->loadFromData(bytes)) {
+                if (item->image->width() > limit_memory_image_width
+                    || item->image->height() > limit_memory_image_height) {
+                    *item->image = item->image->scaled(
+                        QSize(limit_memory_image_width, limit_memory_image_height),
+                        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                }
+            }
+        }
+
+        {
+            QMutexLocker guard(&_mutex);
+            _cache.insert(id, item);
+            _load_items.erase(id);
+            _completion_condition.notify_all();
+        }
+
+        emit loaded();
+    }
+}
+
+PhotoLoaderThread::PhotoLoaderThread(PhotoGalleryModel* model)
+    : QThread(model), _model(model)
+{
+}
+
+PhotoLoaderThread::~PhotoLoaderThread()
+{
+}
+
+void PhotoLoaderThread::run()
+{
+    _model->loaderFunction();
+}
+
+
 namespace {
 
-void registerPhotoFileStoreMetaType()
+void registerPhotoGalleryModelMetaType()
 {
     // XXX: correct namespace
     qmlRegisterType<PhotoGalleryModel>("QGroundControl.Controllers", 1, 0, "PhotoGalleryModel");
@@ -166,4 +288,4 @@ void registerPhotoFileStoreMetaType()
 
 }  // namespace
 
-Q_COREAPP_STARTUP_FUNCTION(registerPhotoFileStoreMetaType);
+Q_COREAPP_STARTUP_FUNCTION(registerPhotoGalleryModelMetaType);

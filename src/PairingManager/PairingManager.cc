@@ -62,14 +62,16 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 void
 PairingManager::_setEnabled()
 {
-    setUsePairing(_toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool());
+    bool value = _toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool();
+    setUsePairing(value);
+    _toolbox->microhardManager()->setShowRemote(!value);
 }
 
 //-----------------------------------------------------------------------------
 void
 PairingManager::setUsePairing(bool set)
 {
-    if (_usePairing == set) {
+    if (_usePairing == set && _usePairingSet) {
         return;
     }
     _usePairing = set;
@@ -83,8 +85,11 @@ PairingManager::setUsePairing(bool set)
         _reconnectTimer.stop();
     }
 
-    _toolbox->microhardManager()->updateSettings();
-    if (videoCanRestart()) {
+    if (_usePairingSet) {
+        _toolbox->microhardManager()->updateSettings();
+    }
+    _usePairingSet = true;
+    if (!_usePairing || !_connectedDevices.empty()) {
         _toolbox->videoManager()->startVideo();
     }
     emit usePairingChanged();
@@ -103,7 +108,7 @@ PairingManager::_pairingCompleted(const QString& tempName, const QString& newNam
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, newName);
     _updatePairedDeviceNameList();
-    setPairingStatus(PairingSuccess, tr("Pairing Successful"));
+    setPairingStatus(Success, tr("Pairing Successful"));
     _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
     // Automatically connect to newly paired device
     connectToDevice(newName, true);
@@ -199,6 +204,10 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
 {
     Q_UNUSED(vehicleID)
 
+    if (link == nullptr) {
+        return;
+    }
+
     if (!active) {
         _linkInactiveOrDeleted(link);
     }
@@ -208,6 +217,9 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
 void
 PairingManager::_linkInactiveOrDeleted(LinkInterface* link)
 {
+    if (link == nullptr) {
+        return;
+    }
     QMapIterator<QString, LinkInterface*> i(_connectedDevices);
     while (i.hasNext()) {
         i.next();
@@ -229,9 +241,21 @@ PairingManager::_createUDPLink(const QString& name, quint16 port)
     udpConfig->setLocalPort(port);
     udpConfig->setDynamic(true);
     SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);
+    if (linkConfig.isNull()) {
+        return;
+    }
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
+    if (link == nullptr) {
+        return;
+    }
     connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged, Qt::QueuedConnection);
     _connectedDevices[name] = link;
+
+    QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+    for (int i=0; i<vehicles->count(); i++) {
+        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        connect(vehicle, &Vehicle::auxiliaryLinkAdded, this, &PairingManager::_vehicleAuxiliaryLinkAdded);
+    }
 
     _updateConnectedDevices();
 }
@@ -245,6 +269,21 @@ PairingManager::_removeUDPLink(const QString& name)
         _connectedDevices.remove(name);
         _toolbox->linkManager()->disconnectLink(link);
         _toolbox->videoManager()->stopVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_vehicleAuxiliaryLinkAdded(Vehicle *vehicle, LinkInterface* link)
+{
+    QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+    while (i.hasNext()) {
+        i.next();
+        if (i.value() == link) {
+            // We want our link to be priority link
+            _toolbox->linkManager()->disconnectLink(vehicle->priorityLink());
+            break;
+        }
     }
 }
 
@@ -265,10 +304,11 @@ PairingManager::_connectionCompleted(const QString& name, const int channel)
     _lastConnected = name;
     _createUDPLink(_lastConnected, 24550);
     _toolbox->videoManager()->startVideo();
-    emit connectedVehicleChanged();
     QString chStr = QString::number(channel) + " - " +
                     QString::number(_toolbox->microhardManager()->getChannelFrequency(channel)) + " MHz";
-    setPairingStatus(PairingConnected, tr("Connection Successful\nChannel: %1").arg(chStr));
+    setPairingStatus(Connected, tr("Connection Successful\nChannel: %1").arg(chStr));
+    emit connectedVehicleChanged();
+    emit _toolbox->pairingManager()->connectingChannelChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -281,6 +321,7 @@ PairingManager::_disconnectCompleted(const QString& name)
     jsonDoc.setObject(jsonObj);
     _devices[name] = jsonDoc;
     _writeJson(jsonDoc, name);
+    setPairingStatus(Disconnected, tr("Disconnected %1").arg(name));
 }
 
 //-----------------------------------------------------------------------------
@@ -306,6 +347,7 @@ PairingManager::_startUploadRequest(const QString& name, const QString& url, con
     if (url.contains("/pair")) {
         emit stopUpload();
         _devicesToConnect.clear();
+        stopConnectingDevice("");
     }
     QNetworkRequest req;
     req.setUrl(QUrl(url));
@@ -344,11 +386,15 @@ PairingManager::_uploadFinished()
             if (a.length() != 2 || !_device_rsa.verify(a[0].toStdString(), a[1].toStdString())) {
                 qCDebug(PairingManagerLog) << "Failed to verify remote vehicle ID";
                 if (url.contains("/connect")) {
-                    setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
+                    _connectRequests.remove(name);
+                    setPairingStatus(Error, tr("Connection rejected"));
                 } else if (url.contains("/channel")) {
-                    setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
+                    setPairingStatus(Error, tr("Modem configuration command rejected"));
+                } else if (url.contains("/disconnect")) {
+                    setPairingStatus(Error, tr("Disconnect rejected"));
                 } else if (url.contains("/unpair")) {
                     _updatePairedDeviceNameList();
+                    setPairingStatus(Error, tr("Unpair rejected"));
                 }
             } else {
                 json = a[0];
@@ -363,30 +409,39 @@ PairingManager::_uploadFinished()
             if (map["RES"] == "accepted") {
                 _pairingCompleted(name, map["NM"].toString(), map["PublicKey"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
-                setPairingStatus(PairingRejected, tr("Pairing rejected"));
+                setPairingStatus(PairingError, tr("Pairing rejected"));
                 qCDebug(PairingManagerLog) << "Pairing rejected";
             }
         } else if (map["CMD"] == "connect") {
             if (map["RES"] == "accepted") {
                 _connectionCompleted(map["NM"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
-                setPairingStatus(PairingConnectionRejected, tr("Connection rejected"));
+                setPairingStatus(Error, tr("Connection rejected"));
                 qCDebug(PairingManagerLog) << "Connection rejected.";
             }
             _connectRequests.remove(name);
-            emit deviceListChanged();
         } else if (map["CMD"] == "disconnect") {
-            if (map["RES"] == "rejected") {
+            if (map["RES"] == "accepted") {
+                setPairingStatus(Disconnected, tr("Disconnected %1").arg(name));
+                _disconnectCompleted(name);
+            } else if (map["RES"] == "rejected") {
+                setPairingStatus(Error, tr("Disconnect rejected"));
                 qCDebug(PairingManagerLog) << "Disconnect rejected.";
             }
         } else if (map["CMD"] == "channel") {
             if (map["RES"] == "accepted") {
                 _channelCompleted(map["NM"].toString(), map["CC"].toInt());
             } else if (map["RES"] == "rejected") {
-                setPairingStatus(PairingConnectionRejected, tr("Set channel rejected"));
+                setPairingStatus(Error, tr("Set channel rejected"));
                 qCDebug(PairingManagerLog) << "Set channel rejected.";
             }
         } else if (map["CMD"] == "unpair") {
+            if (map["RES"] == "accepted") {
+                setPairingStatus(Success, tr("Unpaired %1").arg(name));
+            } else if (map["RES"] == "rejected") {
+                setPairingStatus(Error, tr("Unpair rejected"));
+                qCDebug(PairingManagerLog) << "Unpair rejected.";
+            }
             _updatePairedDeviceNameList();
         } else {
             qCDebug(PairingManagerLog) << map["CMD"] << " " << map["RES"];
@@ -403,15 +458,25 @@ PairingManager::_uploadFinished()
     } else if (url.contains("/unpair")) {
         qCDebug(PairingManagerLog) << "Unpair error: " + reply->errorString();
         if (!reply->errorString().contains("canceled")) {
+            // We unpair device even if we don't get confirmation from the vehicle
+            setPairingStatus(Success, tr("Unpaired %1").arg(name));
             _updatePairedDeviceNameList();
+        }
+    } else if (url.contains("/channel")) {
+        qCDebug(PairingManagerLog) << "Modem configuration error: " + reply->errorString();
+        if (!reply->errorString().contains("canceled")) {
+            setPairingStatus(Error, tr("Modem configuration command error."));
         }
     } else {
         qCDebug(PairingManagerLog) << "Request " << url << " error: " + reply->errorString();
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
             _connectRequests.remove(name);
             connectToDevice(name);
+        } else if (_status != PairingActive) {
+            setPairingStatus(PairingIdle, "");
         }
     }
+    emit deviceListChanged();
     reply->deleteLater();
     if (removeTempFile) {
         QFile file(_pairingCacheFile(name));
@@ -435,6 +500,7 @@ PairingManager::_channelCompleted(const QString& name, int channel)
     _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
     _toolbox->microhardManager()->updateSettings();
     emit _toolbox->pairingManager()->connectingChannelChanged();
+    setPairingStatus(Success, tr("Modem configured"));
 }
 
 //-----------------------------------------------------------------------------
@@ -447,7 +513,7 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
         return;
     }
 
-    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
+    setPairingStatus(Connecting, tr("Connecting to %1").arg(name));
 
     if (confirm && !_devicesToConnect.contains(name)) {
         QJsonObject jsonObj = _devices[name].object();
@@ -508,9 +574,7 @@ PairingManager::stopConnectingDevice(const QString& name)
 bool
 PairingManager::isDeviceConnecting(const QString& name)
 {
-    bool isConnecting = _devicesToConnect.contains(name) || _connectRequests.contains(name);
-    qCDebug(PairingManagerLog) << "isDeviceConnecting: " << name << " = " << isConnecting;
-    return isConnecting;
+    return _devicesToConnect.contains(name) || _connectRequests.contains(name);
 }
 
 //-----------------------------------------------------------------------------
@@ -532,7 +596,7 @@ PairingManager::_autoConnect()
         }
     }
     if (!connectingTo.isEmpty()) {
-        setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(connectingTo));
+        setPairingStatus(Connecting, tr("Connecting to %1").arg(connectingTo));
     }
 }
 
@@ -619,7 +683,7 @@ PairingManager::extractName(const QString& name)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::removePairedDevice(const QString& name)
+PairingManager::unpairDevice(const QString& name)
 {
     QVariantMap map = _getPairingMap(name);
     QFile file(_pairingCacheFile(name));
@@ -627,6 +691,7 @@ PairingManager::removePairedDevice(const QString& name)
     _removeUDPLink(name);
     _updateConnectedDevices();
     if (_getDeviceChannel(name) == _toolbox->microhardManager()->connectingChannel()) {
+        setPairingStatus(Unpairing, tr("Unpairing %1").arg(name));
         QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
         QJsonDocument jsonDoc;
         QJsonObject jsonObj;
@@ -639,8 +704,6 @@ PairingManager::removePairedDevice(const QString& name)
     if (_connectedDevices.empty() && _devicesToConnect.empty()) {
         _resetMicrohardModem();
     }
-
-    setPairingStatus(PairingIdle, "");
 }
 
 //-----------------------------------------------------------------------------
@@ -683,6 +746,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     jsonObj["PW"] = power;
     jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
     jsonDoc.setObject(jsonObj);
+    setPairingStatus(ConfiguringModem, tr("Configuring modem"));
     emit startUpload(name, channelURL, jsonDoc, true);
 }
 
@@ -769,19 +833,19 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     QJsonDocument receivedJsonDoc = _getPairingJsonDoc(deviceName);
 
     if (receivedJsonDoc.isNull()) {
-        setPairingStatus(PairingError, tr("Invalid Pairing File"));
+        setPairingStatus(Error, tr("Invalid Pairing File"));
         qCDebug(PairingManagerLog) << "Failed to create Pairing JSON doc.";
         return;
     }
     if (!receivedJsonDoc.isObject()) {
-        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
+        setPairingStatus(Error, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is not an object.";
         return;
     }
 
     QJsonObject jsonObj = receivedJsonDoc.object();
     if (jsonObj.isEmpty()) {
-        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
+        setPairingStatus(Error, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON object is empty.";
         return;
     }
@@ -800,7 +864,7 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     }
 
     if (linkType.length() == 0) {
-        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
+        setPairingStatus(Error, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is malformed.";
         return;
     }
@@ -808,7 +872,7 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
     QString connectURL = "http://" + remotePairingMap["IP"].toString() + ":" + pport;
     QJsonDocument responseJsonDoc;
 
-    connectURL +=  + "/connect";
+    connectURL += "/connect";
     if (linkType == "ZT") {
         responseJsonDoc = _createZeroTierConnectJson(remotePairingMap);
     } else if (linkType == "MH") {
@@ -823,12 +887,6 @@ PairingManager::_connectToPairedDevice(const QString& deviceName)
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
         if (remotePairingMap.contains("AIP")) {
             _toolbox->microhardManager()->setRemoteIPAddr(remotePairingMap["AIP"].toString());
-        }
-        if (remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(remotePairingMap["CU"].toString());
-        }
-        if (remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(remotePairingMap["CP"].toString());
         }
     }
     if (linkType == "MH") {
@@ -925,7 +983,7 @@ void
 PairingManager::_writeJson(const QJsonDocument& jsonDoc, const QString& name)
 {
     QString val = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
-    qCDebug(PairingManagerLog) << "Write json " << _removeRSAkey(val);
+    qCDebug(PairingManagerLog) << "Write json" << name << _removeRSAkey(val);
     QString enc = QString::fromStdString(_aes_config.encrypt(val.toStdString()));
 
     QFile file(_pairingCacheFile(name));
@@ -1033,8 +1091,12 @@ PairingManager::pairingLinkTypeStrings()
 void
 PairingManager::_setPairingStatus(PairingStatus status, const QString& statusStr)
 {
+    if (_status == status && _statusString == statusStr) {
+        return;
+    }
     _status = status;
     _statusString = statusStr;
+    qCDebug(PairingManagerLog) << "Status: " << status << " = " << statusStr;
     emit pairingStatusChanged();
 }
 
@@ -1232,12 +1294,14 @@ PairingManager::disconnectDevice(const QString& name)
     if (!_connectedDevices.contains(name)) {
         return;
     }
+    bool uploading = false;
     LinkInterface *link = _connectedDevices[name];
     QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
     for (int i=0; i<vehicles->count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
         if (vehicle->containsLink(link)) {
             if (!vehicle->armed()) {
+                setPairingStatus(Disconnecting, tr("Disconnecting %1").arg(name));
                 QVariantMap map = _getPairingMap(name);
                 QString disconnectURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/disconnect";
                 QJsonDocument jsonDoc;
@@ -1249,21 +1313,20 @@ PairingManager::disconnectDevice(const QString& name)
                 jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
                 jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
                 jsonDoc.setObject(jsonObj);
+                uploading = true;
                 emit startUpload(name, disconnectURL, jsonDoc, true);
-                _disconnectCompleted(name);
             }
             break;
         }
     }
 
     _removeUDPLink(name);
-    _updateConnectedDevices();
 
-    if (_connectedDevices.empty() && _devicesToConnect.empty()) {
-        _resetMicrohardModem();
+    if (!uploading) {
+        _disconnectCompleted(name);
     }
 
-    setPairingStatus(PairingIdle, "");
+    _updateConnectedDevices();
 }
 
 //-----------------------------------------------------------------------------

@@ -94,8 +94,8 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # this will also trigger enabling of custom build
 QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
 isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
-    # Build custom by default
-    QGC_CUSTOM_BUILD_FOLDER=custom
+    # Default build is enabled for AGS and disabled upstream
+    QGC_CUSTOM_BUILD_FOLDER=custom-example
 } else {
     message("Externally triggered custom build override")
 }
@@ -104,7 +104,7 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
     exists($${QGC_CUSTOM_BUILD_FOLDER}) {
-        message("Found custom build")
+        message("Found custom build in folder: $$QGC_CUSTOM_BUILD_FOLDER")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
@@ -331,6 +331,10 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
     DEFINES -= QGC_ENABLE_NFC
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_NFC
+} else:AndroidBuild:contains(QT_ARCH, arm64) {
+    # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
+    message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
     DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")

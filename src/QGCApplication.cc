@@ -158,7 +158,11 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
+  #if defined(__mobile__)
     : QGuiApplication           (argc, argv)
+  #else
+    : QApplication              (argc, argv)
+  #endif
     , _runningUnitTests         (unitTesting)
 {
     _app = this;
@@ -559,9 +563,6 @@ bool QGCApplication::_initForNormalAppBoot()
 
     QSettings settings;
 
-    // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit, Qt::QueuedConnection);
-
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 
     // Now that main window is up check for lost log files
@@ -742,7 +743,7 @@ void QGCApplication::showMessage(const QString& message)
 
 QQuickItem* QGCApplication::mainRootWindow()
 {
-    if(_mainRootWindow) {
+    if(!_mainRootWindow) {
         _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
     }
     return _mainRootWindow;
