@@ -178,6 +178,7 @@ private:
     QMap<QString, QNetworkReply*> _connectRequests;
     QString                       _lastDeviceNameToConnect = "";
     QString                       _nidPrefix = "SRR_";
+    std::function<void(void)>     _disconnect_callback;
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);

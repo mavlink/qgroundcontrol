@@ -358,6 +358,9 @@ PairingManager::_disconnectCompleted(const QString& name)
     _devices[name] = jsonDoc;
     _writeJson(jsonDoc, name);
     setPairingStatus(Disconnected, tr("Disconnected %1").arg(name));
+    if (_disconnect_callback) {
+        _disconnect_callback();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1259,6 +1262,14 @@ void
 PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& networkId, int pairingChannel, int connectingChannel)
 {
     stopPairing();
+
+    for (QString n : _connectedDevices.keys()) {
+        _disconnect_callback = std::move([this, pairingKey, networkId, pairingChannel, connectingChannel] { startMicrohardPairing(pairingKey, networkId, pairingChannel, connectingChannel); });
+        disconnectDevice(n);
+        return;
+    }
+    _disconnect_callback = {};
+
     setPairingStatus(PairingActive, tr("Pairing..."));
 
     _aes.init(pairingKey.toStdString());
