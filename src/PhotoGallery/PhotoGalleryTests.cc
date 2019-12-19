@@ -216,6 +216,7 @@ private:
 QByteArray createJPEGImageByteArray(int width, int height)
 {
     QImage image(width, height, QImage::Format_ARGB32);
+    image.fill(0);
     QByteArray ba;
     QBuffer buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
@@ -270,6 +271,84 @@ verifyFileMissing(const QString & path)
     QVERIFY(!file.open(QIODevice::ReadOnly));
 }
 
+// Helper to control execution of other thread.
+struct Barrier {
+    void Wait()
+    {
+        QMutexLocker guard(&_mutex);
+        while (!_allow_finish) {
+            _condition.wait(&_mutex);
+        }
+        --_allow_finish;
+    }
+    void Post()
+    {
+        QMutexLocker guard(&_mutex);
+        ++_allow_finish;
+        _condition.notify_all();
+    }
+private:
+    int _allow_finish = 0;
+    QMutex _mutex;
+    QWaitCondition _condition;
+};
+
+// Mock of file store for testing below
+class MockPhotoFileStore : public PhotoFileStoreInterface {
+    Q_OBJECT
+
+public:
+    ~MockPhotoFileStore() override {}
+
+    QString add(QString name_hint, QByteArray data) override
+    {
+        return mock_add(name_hint, data);
+    }
+    std::function<QString(QString, QByteArray)> mock_add;
+
+    const std::set<QString> & ids() const override
+    {
+        return mock_ids();
+    }
+    std::function<const std::set<QString> & ()> mock_ids;
+
+    void remove(const std::set<QString> & ids) override
+    {
+        mock_remove(ids);
+    }
+    std::function<void(const std::set<QString>&)> mock_remove;
+
+    QVariant read(const QString & id) const override
+    {
+        return mock_read(id);
+    }
+    std::function<QVariant(const QString&)> mock_read;
+
+    void setLocation(QString local_storage) override
+    {
+        mock_setLocation(local_storage);
+    }
+    std::function<void(QString)> mock_setLocation;
+
+    const QString & location() const override
+    {
+        return mock_location();
+    }
+    std::function<const QString&()> mock_location;
+
+    void setVideoLocation(QString local_storage) override
+    {
+        mock_setVideoLocation(local_storage);
+    }
+    std::function<void(QString)> mock_setVideoLocation;
+
+    const QString & videoLocation() const override
+    {
+        return mock_videoLocation();
+    }
+    std::function<const QString&()> mock_videoLocation;
+};
+
 }  // namespace
 
 /* Actual tests. */
@@ -288,6 +367,9 @@ private slots:
     void testPhotoTriggerDownloadTimeout();
     void testPhotoUnsolicitedDownload();
     void testPhotoGalleryModel();
+    void testAsyncLoading();
+    void testDownScaling();
+    void testCacheAndEviction();
 };
 
 /// Verify photo store interacts correctly with filesystem.
@@ -608,25 +690,201 @@ void PhotoGalleryTests::testPhotoGalleryModel()
     QCOMPARE(removed, (index_set_t{}));
 
     auto id4 = store.add("2019-09-04.jpg", createJPEGImageByteArray(15, 15));
-    QCOMPARE(added, (index_set_t{2}));
+    QCOMPARE(added, (index_set_t{0}));
 
     auto id3 = store.add("2019-09-03.jpg", createJPEGImageByteArray(14, 14));
-    QCOMPARE(added, (index_set_t{2}));
+    QCOMPARE(added, (index_set_t{1}));
 
     store.remove({"2019-09-02.jpg"});
-    QCOMPARE(removed, (index_set_t{1}));
+    QCOMPARE(removed, (index_set_t{2}));
 
-    auto pic0 = model.data(0);
-    QCOMPARE(pic0.id, "2019-09-01.jpg");
-    verifyImage(*pic0.image, 16, 16);
+    auto pic0 = model.dataSync(0);
+    QCOMPARE(pic0.id, "2019-09-04.jpg");
+    verifyImage(*pic0.image, 15, 15);
 
-    auto pic1 = model.data(1);
+    auto pic1 = model.dataSync(1);
     QCOMPARE(pic1.id, "2019-09-03.jpg");
     verifyImage(*pic1.image, 14, 14);
 
-    auto pic2 = model.data(2);
-    QCOMPARE(pic2.id, "2019-09-04.jpg");
-    verifyImage(*pic2.image, 15, 15);
+    auto pic2 = model.dataSync(2);
+    QCOMPARE(pic2.id, "2019-09-01.jpg");
+    verifyImage(*pic2.image, 16, 16);
+}
+
+// Verify that images are actually loaded asynchronous: When view needs an
+// image, the load operation is deferred to another thread which could
+// (potentially) block for significant amounts of time loading data and
+// processing it (decompression). Main GUI thread must not block on this, but
+// be able to continue without image present, but receive notification when
+// it becomes available.
+void PhotoGalleryTests::testAsyncLoading()
+{
+    // Set up some data that can be accessod through store.
+    std::set<QString> ids = {"foo"};
+    QByteArray data = createJPEGImageByteArray(12, 12);
+
+    // Helpers to verify thread interaction.
+    // Loader thread reached loading.
+    Barrier reached_loading;
+    // Loader thread waits to proceed on loading.
+    Barrier proceed_loading;
+    // Loader has finished: written through event posted to the Qt main loop,
+    // no thread synchronization.
+    bool load_finished = false;
+
+    MockPhotoFileStore store;
+    store.mock_ids = [&ids]() -> const std::set<QString>& { return ids; };
+    store.mock_read =
+        [&data, &reached_loading, &proceed_loading](const QString&)
+        {
+            reached_loading.Post(); proceed_loading.Wait(); return data;
+        };
+
+    PhotoGalleryModel model(&store);
+    QObject::connect(
+        &model, &PhotoGalleryModel::loaded,
+        [&load_finished]() {
+            load_finished = true;
+        });
+
+
+    QCOMPARE(model.numPhotos(), 1);
+
+    // Look at image, it will not be there yet, but loader thread will start
+    // processing.
+    auto item = model.data(0);
+    QCOMPARE(item.id, "foo");
+    QVERIFY(!item.image);
+
+    // Wait until loader thread manages to start loading.
+    reached_loading.Wait();
+    // Allow loader thread to proceed.
+    proceed_loading.Post();
+    // Wait for loader to finish and post signal through Qt.
+    while (!load_finished) {
+        QTest::qWait(10);
+    }
+
+    // Look at image again, it is supposed to be there now.
+    item = model.data(0);
+    QCOMPARE(item.id, "foo");
+    QVERIFY(item.image);
+}
+
+// Verify that large images are actually scaled down to reasonable in-memory
+// sizes. This guards against memory usage growing out of bounds.
+void PhotoGalleryTests::testDownScaling()
+{
+    QTemporaryDir temp_dir;
+    QVERIFY(temp_dir.isValid());
+
+    setFileContents(temp_dir.filePath("2019-09-01.jpg"), createJPEGImageByteArray(10000, 10000));
+    setFileContents(temp_dir.filePath("2019-09-02.jpg"), createJPEGImageByteArray(10, 1600));
+
+    PhotoFileStore store;
+    store.setLocation(temp_dir.path());
+    PhotoGalleryModel model(&store);
+
+    auto item0 = model.dataSync(0);
+    QCOMPARE(item0.id, "2019-09-02.jpg");
+    QVERIFY(item0.image->width() <= 1280);
+    QVERIFY(item0.image->height() <= 800);
+
+    auto item1 = model.dataSync(1);
+    QCOMPARE(item1.id, "2019-09-01.jpg");
+    QVERIFY(item1.image->width() <= 1280);
+    QVERIFY(item1.image->height() <= 800);
+}
+
+void PhotoGalleryTests::testCacheAndEviction()
+{
+    // Helpers to verify thread interaction.
+    // Loader thread reached loading.
+    Barrier reached_loading;
+    // Loader thread waits to proceed on loading.
+    Barrier proceed_loading;
+
+    // Set up a store with some mock data.
+    std::set<QString> ids;
+    for (int n = 0; n < 100; ++n) {
+        ids.insert(QString().sprintf("%04d.jpg", n));
+    }
+    QByteArray data = createJPEGImageByteArray(12, 12);
+
+    MockPhotoFileStore store;
+    store.mock_ids = [&ids]() -> const std::set<QString>& { return ids; };
+    store.mock_read =
+        [&data, &reached_loading, &proceed_loading](const QString&)
+        {
+            reached_loading.Post();
+            proceed_loading.Wait();
+            return data;
+        };
+
+    PhotoGalleryModel model(&store);
+
+    // Instrument model so we know when loading completes
+    int load_ops_completed = 0;
+    QObject::connect(
+        &model, &PhotoGalleryModel::loaded,
+        [&load_ops_completed]() {
+            ++load_ops_completed;
+        });
+
+    // Request first 50 images. Since loader is asynchronous (and actually
+    // blocked on barrier in our setup) they cannot be in memory yet.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    // Loader will perform 50 load operations.
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
+    // Wait until they are finished.
+    while (load_ops_completed < 50) {
+        QTest::qWait(10);
+    }
+
+    // Now all 50 images are there, and in cache. Accessing them now will not
+    // trigger loader.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(item.image);
+    }
+
+    // Repeat all of the above with the next 50 images:
+    for (int n = 50; n < 100; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
+    while (load_ops_completed < 100) {
+        QTest::qWait(10);
+    }
+
+    // Now all of our new 50 images are there:
+    for (int n = 50; n < 100; ++n) {
+        auto item = model.data(n);
+        QVERIFY(item.image);
+    }
+
+    // The previous 50 images should have been evicted from cache.
+    for (int n = 0; n < 50; ++n) {
+        auto item = model.data(n);
+        QVERIFY(!item.image);
+    }
+    // Since we asked for the images again, loaders are now stuck trying to
+    // get them. Unblock them before leaving (otherwise might deadlock
+    // at end of test).
+    for (int n = 0; n < 50; ++n) {
+        reached_loading.Wait();
+        proceed_loading.Post();
+    }
 }
 
 QTEST_MAIN(PhotoGalleryTests)

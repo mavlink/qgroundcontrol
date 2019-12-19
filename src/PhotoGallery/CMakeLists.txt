@@ -2,6 +2,7 @@ add_library(PhotoGallery
     AbstractPhotoTrigger.cc
     AsyncDownloadPhotoTrigger.cc
     PhotoFileStore.cc
+    PhotoFileStoreInterface.cc
     PhotoGalleryModel.cc
     PhotoGalleryVehicleGlue.cc
     PhotoGalleryView.cc

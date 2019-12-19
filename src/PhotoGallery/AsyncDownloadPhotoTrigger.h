@@ -16,7 +16,7 @@
 #include "AbstractPhotoTrigger.h"
 
 class AsyncDownloadPhotoTrigger;
-class PhotoFileStore;
+class PhotoFileStoreInterface;
 
 
 /// A "photo" operation in progress
@@ -61,7 +61,7 @@ private:
 /// mavlink camera (for real integration), or a mock (for testing).
 class AsyncDownloadPhotoTrigger final : public AbstractPhotoTrigger {
     Q_OBJECT
-    Q_PROPERTY(PhotoFileStore* store READ store WRITE setStore)
+    Q_PROPERTY(PhotoFileStoreInterface* store READ store WRITE setStore)
 public:
     class Config {
     public:
@@ -84,7 +84,7 @@ public:
     AsyncDownloadPhotoTrigger(
         std::function<bool()> photo_trigger_fn,
         const Config & config,
-        PhotoFileStore * store = nullptr,
+        PhotoFileStoreInterface * store = nullptr,
         QObject * parent = nullptr);
 
     /// Take a photo.
@@ -100,8 +100,8 @@ public:
     /// progress, up and until its "finish" signal has been emitted.
     AsyncDownloadPhotoTriggerOperation * takePhoto() override;
 
-    PhotoFileStore * store() const;
-    void setStore(PhotoFileStore * store);
+    PhotoFileStoreInterface * store() const;
+    void setStore(PhotoFileStoreInterface * store);
 
 public slots:
     /// External notice of completed photo operation
@@ -137,7 +137,7 @@ private:
     Config _config;
 
     /// Store where to put acquired photos.
-    PhotoFileStore * _store = nullptr;
+    PhotoFileStoreInterface * _store = nullptr;
 
     /// Currently  ongoing operation.
     AsyncDownloadPhotoTriggerOperation * _active_op = nullptr;
