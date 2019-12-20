@@ -25,11 +25,11 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - name: "Android 32 bit"
-          dist: trusty
-          language: android
-          env: SPEC=android-clang CONFIG=installer BITNESS=32
-          sudo: false
+#        - name: "Android 32 bit"
+#          dist: trusty
+#          language: android
+#          env: SPEC=android-clang CONFIG=installer BITNESS=32
+#          sudo: false
         - name: "Android 64 bit"
           dist: trusty
           language: android
@@ -199,11 +199,11 @@ after_success:
   - cd ${TRAVIS_BUILD_DIR}
 
   # master development builds to beta track
-  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontroldaily
+  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
-        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontroldaily;
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
     else
         GOOGLE_PLAY_PKG=none;
     fi
