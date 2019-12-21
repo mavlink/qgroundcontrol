@@ -1707,14 +1707,21 @@ void MissionController::_recalcChildItems(void)
     currentParentItem->childItems()->clear();
 
     for (int i=1; i<_visualItems->count(); i++) {
-        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
+
+        item->setParentItem(nullptr);
+        item->setHasCurrentChildItem(false);
 
         // Set up non-coordinate item child hierarchy
         if (item->specifiesCoordinate()) {
             item->childItems()->clear();
             currentParentItem = item;
         } else if (item->isSimpleItem()) {
+            item->setParentItem(currentParentItem);
             currentParentItem->childItems()->append(item);
+            if (item->isCurrentItem()) {
+                currentParentItem->setHasCurrentChildItem(true);
+            }
         }
     }
 }
@@ -2308,21 +2315,27 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 
             if (pVI->sequenceNumber() == sequenceNumber) {
                 pVI->setIsCurrentItem(true);
+                pVI->setHasCurrentChildItem(false);
+
                 _currentPlanViewItem  = pVI;
                 _currentPlanViewSeqNum = sequenceNumber;
                 _currentPlanViewVIIndex = viIndex;
 
-                if (pVI->specifiesCoordinate() && !pVI->isStandaloneCoordinate()) {
-                    // Determine split segment used to display line split editing ui.
-                    for (int j=viIndex-1; j>0; j--) {
-                        VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
-                        if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
-                            VisualItemPair splitPair(pPrev, pVI);
-                            if (_linesTable.contains(splitPair)) {
-                                _splitSegment = _linesTable[splitPair];
+                if (pVI->specifiesCoordinate()) {
+                    if (!pVI->isStandaloneCoordinate()) {
+                        // Determine split segment used to display line split editing ui.
+                        for (int j=viIndex-1; j>0; j--) {
+                            VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
+                            if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
+                                VisualItemPair splitPair(pPrev, pVI);
+                                if (_linesTable.contains(splitPair)) {
+                                    _splitSegment = _linesTable[splitPair];
+                                }
                             }
                         }
                     }
+                } else if (pVI->parentItem()) {
+                    pVI->parentItem()->setHasCurrentChildItem(true);
                 }
             } else {
                 pVI->setIsCurrentItem(false);
