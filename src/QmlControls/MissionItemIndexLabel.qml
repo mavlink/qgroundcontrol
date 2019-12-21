@@ -30,7 +30,7 @@ Canvas {
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
-    property real   _smallRadius:       (ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2
+    property real   _smallRadius:       ((ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2) + 1
     property real   _normalRadius:      ScreenTools.defaultFontPixelHeight * 0.66
     property real   _indicatorRadius:   small ? _smallRadius : _normalRadius
     property real   _gimbalRadians:     degreesToRadians(vehicleYaw + gimbalYaw - 90)

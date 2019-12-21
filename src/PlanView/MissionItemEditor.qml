@@ -222,11 +222,11 @@ Rectangle {
         border.color:       qgcPal.text
 
         RowLayout {
-            id:                 innerLayout
-            anchors.margins:    _padding
-            anchors.left:       parent.left
-            anchors.top:        parent.top
-            spacing:            _padding
+            id:                     innerLayout
+            anchors.margins:        _padding
+            anchors.left:           parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            spacing:                _padding
 
             property real _padding: ScreenTools.comboBoxPadding
 
