@@ -29,14 +29,15 @@ MapQuickItem {
 
     sourceItem:
         MissionItemIndexLabel {
-            id:             _label
-            checked:        _isCurrentItem
-            label:          missionItem ? missionItem.abbreviation : ""
-            gimbalYaw:      missionItem.missionGimbalYaw
-            vehicleYaw:     missionItem.missionVehicleYaw
-            showGimbalYaw:  !isNaN(missionItem.missionGimbalYaw)
-            highlightSelected: true
-            onClicked:      _item.clicked()
-            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
+            id:                 _label
+            checked:            _isCurrentItem
+            label:              missionItem ? missionItem.abbreviation : ""
+            gimbalYaw:          missionItem.missionGimbalYaw
+            vehicleYaw:         missionItem.missionVehicleYaw
+            showGimbalYaw:      !isNaN(missionItem.missionGimbalYaw)
+            highlightSelected:  true
+            onClicked:          _item.clicked()
+
+            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem || missionItem.hasCurrentChildItem : false
         }
 }
