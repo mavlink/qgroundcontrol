@@ -211,7 +211,7 @@ after_success:
         pip install --user --upgrade oauth2client &&
         pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./deploy/google_play_upload.py ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
+        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
     fi
 
 before_deploy:
