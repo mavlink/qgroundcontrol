@@ -47,7 +47,7 @@ def main():
   http = httplib2.Http()
   http = credentials.authorize(http)
 
-  service = build('androidpublisher', 'v2', http=http)
+  service = build('androidpublisher', 'v3', http=http)
 
   # Process flags and read their values.
   flags = argparser.parse_args()
