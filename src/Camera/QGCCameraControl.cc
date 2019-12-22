@@ -1255,6 +1255,14 @@ QGCCameraControl::_updateActiveList()
     }
     if(active != _activeSettings) {
         qCDebug(CameraControlVerboseLog) << "Excluding" << exclusionList;
+        //-- Go through all active facts and respect parameterranges
+        for(QString param: active) {
+            Fact* pFact = getFact(param);
+            if(pFact) {
+                _updateRanges(pFact);
+            }
+        }
+        //-- Make them active
         _activeSettings = active;
         emit activeSettingsChanged();
         //-- Force validity of "Facts" based on active set
