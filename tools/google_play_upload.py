@@ -78,12 +78,6 @@ def main():
             u'status': u'completed',
         }]}).execute()
 
-    track_response = service.edits().tracks().update(
-        editId=edit_id,
-        track=release_track,
-        packageName=package_name,
-        body={u'versionCodes': [apk_response['versionCode']]}).execute()
-
     print 'Track %s is set for version code(s) %s' % (
         track_response['track'], str(track_response['versionCodes']))
 
