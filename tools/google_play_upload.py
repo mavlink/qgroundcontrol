@@ -78,8 +78,8 @@ def main():
             u'status': u'completed',
         }]}).execute()
 
-    print 'Track %s is set for version code(s) %s' % (
-        track_response['track'], str(track_response['versionCodes']))
+    print 'Track %s is set with releases: %s' % (
+        track_response['track'], str(track_response['releases']))
 
     commit_request = service.edits().commit(
         editId=edit_id, packageName=package_name).execute()
