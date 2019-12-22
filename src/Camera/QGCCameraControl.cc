@@ -1237,6 +1237,7 @@ QGCCameraControl::handleParamValue(const mavlink_param_ext_value_t& value)
 void
 QGCCameraControl::_updateActiveList()
 {
+    qCDebug(CameraControlVerboseLog) << "_updateActiveList()";
     //-- Clear out excluded parameters based on exclusion rules
     QStringList exclusionList;
     for(QGCCameraOptionExclusion* param: _valueExclusions) {
@@ -1347,6 +1348,7 @@ QGCCameraControl::_processCondition(const QString condition)
 void
 QGCCameraControl::_updateRanges(Fact* pFact)
 {
+    qCDebug(CameraControlVerboseLog) << "_updateRanges()" << pFact->name();
     QMap<Fact*, QGCCameraOptionRange*> rangesSet;
     QMap<Fact*, QString> rangesReset;
     QStringList changedList;
@@ -1899,6 +1901,7 @@ QGCCameraControl::_loadRanges(QDomNode option, const QString factName, QString p
 void
 QGCCameraControl::_processRanges()
 {
+    qCDebug(CameraControlVerboseLog) << "_processRanges()";
     //-- After all parameter are loaded, process parameter ranges
     for(QGCCameraOptionRange* pRange: _optionRanges) {
         Fact* pRFact = getFact(pRange->targetParam);
