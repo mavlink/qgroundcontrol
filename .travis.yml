@@ -35,27 +35,17 @@ git:
   sudo: required
   install:
     - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-    - travis_wait 30 docker pull "$DOCKER_IMAGE" || true
-    - travis_wait 60 docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
+    - docker pull "$DOCKER_IMAGE"
     - docker run --privileged --name $CONTAINER_NAME --rm -td  -e PROJECT_ROOT="$PROJECT_ROOT" -e CCACHE_DIR="$CCACHE_DIR"
       -e QGC_CUSTOM_APP_NAME="$QGC_CUSTOM_APP_NAME" -e QGC_CUSTOM_GENERIC_NAME="$QGC_CUSTOM_GENERIC_NAME"
       -e QGC_CUSTOM_BINARY_NAME="$QGC_CUSTOM_BINARY_NAME" -e QGC_CUSTOM_LINUX_START_SH="$QGC_CUSTOM_LINUX_START_SH"
       -e QGC_CUSTOM_APP_ICON="$QGC_CUSTOM_APP_ICON" -e QGC_CUSTOM_APP_ICON_NAME="$QGC_CUSTOM_APP_ICON_NAME"
-      -e CONFIG="$CONFIG"
+      -e CONFIG="$CONFIG" -e SHADOW_BUILD_DIR="$SHADOW_BUILD_DIR"
+      -e QGC_CUSTOM_BUILD_FOLDER="$QGC_CUSTOM_BUILD_FOLDER"
       -v `pwd`:`pwd` -v "$CCACHE_DIR:$CCACHE_DIR" -w `pwd` $DOCKER_IMAGE
   script:
-    - $SH 'ccache -z'
-    - $SH 'mkdir $SHADOW_BUILD_DIR && cd $SHADOW_BUILD_DIR && qmake -r $PROJECT_ROOT/qgroundcontrol.pro CONFIG+=$CONFIG && make -j`nproc --all`'
-    - $SH 'ccache -s'
-  after_success:
-    # Compose build tag used to identify a release in GitHub releases page
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/$QGC_CUSTOM_BUILD_FOLDER/deploy/custom_build_version.txt /tmp
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/deploy/build_version.txt /tmp
-    - export QGC_CUSTOM_VERSION=$(< /tmp/custom_build_version.txt)
-    - export QGC_VERSION=$(< /tmp/build_version.txt)
-    - export VERSION_NAME=v$QGC_CUSTOM_VERSION$(if [ "$CURRENT_BRANCH" == "wip-todo" ] || [[ $CURRENT_BRANCH =~ ^qgc-srr-v[1-9][0-9]{0,1}\.[0-9]{1,3}$ ]]; then echo ""; else echo "-$CURRENT_BRANCH"; fi)
-    # Push the docker image to the  if already
-    - travis_wait 30 docker push $DOCKER_IMAGE
+    - $SH 'mkdir -p $SHADOW_BUILD_DIR'
+    - $SH 'ccache -z && cd $SHADOW_BUILD_DIR && qmake -r $PROJECT_ROOT/qgroundcontrol.pro CONFIG+=$CONFIG && make -j`nproc --all` && ccache -s'
   before_deploy:
     - mkdir -p $RELEASE_DIR
     # create linux appimage
@@ -66,21 +56,18 @@ git:
     # rename to add version number to file name
     - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $QGC_CUSTOM_BINARY_NAME.AppImage
     - zip -r $QGC_CUSTOM_BINARY_NAME.AppImage.zip $QGC_CUSTOM_BINARY_NAME.AppImage
-    - mv $QGC_CUSTOM_BINARY_NAME.AppImage.zip $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME-linux-$VERSION_NAME.AppImage.zip
-    - cp /tmp/build_version.txt $RELEASE_DIR/core_git_version.txt
-    # generate release note
-    #- go get -u github.com/git-chglog/git-chglog/cmd/git-chglog
-    #- $GOPATH/bin/git-chglog --output $RELEASE_DIR/CHANGELOG_$VERSION_NAME.md $(git describe --tags $(git rev-list --tags --max-count=1))
-
+    - mv $QGC_CUSTOM_BINARY_NAME.AppImage.zip $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME-linux-$TRAVIS_BRANCH-release.AppImage.zip
 matrix:
   include:
+    # Linux Installer - only built on tags
     - name: Linux Installer
       <<: *template_linux
       env:
-        - DOCKERFILE=Dockerfile_linux
-        - DOCKER_IMAGE=auterion/ags_builder_linux
-        #to rename the duplicated CustomQGC.AppImage name during Github Release deploy, avoid overwrite
+        - DOCKER_IMAGE=mavlink/qgc-build-linux
+        #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
         - APPIMAGE_BINARY_NAME="CustomQGC_linux"
+      # We only build tags / deployment - the rest is built in Github Actions
+      if: tag IS present
 
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
@@ -95,9 +82,9 @@ before_install:
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-        export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1));
+        export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`));
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
-        export JOBS=$((`sysctl -n hw.ncpu`+1));
+        export JOBS=$((`sysctl -n hw.ncpu`));
     fi
 
   # TODO Revisit from upstream
@@ -112,10 +99,6 @@ before_install:
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
   overwrite: true
-#  Can not use release_notes_file due to an open overwrite bug in dplv2
-#  https://github.com/travis-ci/dpl/issues/846
-#  edge: true
-#  release_notes_file: $RELEASE_DIR/CHANGELOG_$VERSION_NAME.md
   file_glob: true
   file:
     - $RELEASE_DIR/*
