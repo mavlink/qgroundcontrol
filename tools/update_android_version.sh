@@ -13,7 +13,7 @@ MANIFEST_FILE=android/AndroidManifest.xml
 
 # manifest package
 if [ "$2" = "master" ]; then
-	QGC_PKG_NAME="org.mavlink.qgroundcontroldaily"
+	QGC_PKG_NAME="org.mavlink.qgroundcontrolbeta"
 	sed -i -e 's/package *= *"[^"]*"/package="'$QGC_PKG_NAME'"/' $MANIFEST_FILE
 	echo "Android package name: $QGC_PKG_NAME"
 fi
