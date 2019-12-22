@@ -74,7 +74,7 @@ def main():
         track=release_track,
         packageName=package_name,
         body={u'releases': [{
-            u'versionCodes': apk_response['versionCode'],
+            u'versionCodes': [str(apk_response['versionCode'])],
             u'status': u'completed',
         }]}).execute()
 
