@@ -65,6 +65,9 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _pipelineStopRec(nullptr)
     , _videoSink(nullptr)
     , _restart_time_ms(1389)
+    , _socket(nullptr)
+    , _serverPresent(false)
+    , _tcpTestInterval_ms(5000)
     , _udpReconnect_us(5000000)
 #endif
     , _videoSurface(nullptr)
@@ -81,6 +84,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _setVideoSink(_videoSurface->videoSink());
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
+    _tcp_timer.setSingleShot(true);
+    connect(&_tcp_timer, &QTimer::timeout, this, &VideoReceiver::_tcp_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
     connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
@@ -93,6 +98,10 @@ VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
     stop();
+    if(_socket) {
+        delete _socket;
+        _socket = nullptr;
+    }
     if (_videoSink) {
         gst_object_unref(_videoSink);
     }
@@ -150,6 +159,69 @@ VideoReceiver::_restart_timeout()
 #endif
 
 //-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_tcp_timeout()
+{
+    //-- If socket is live, we got no connection nor a socket error
+    if(_socket) {
+        delete _socket;
+        _socket = nullptr;
+    }
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
+        //-- RTSP will try to connect to the server. If it cannot connect,
+        //   it will simply give up and never try again. Instead, we keep
+        //   attempting a connection on this timer. Once a connection is
+        //   found to be working, only then we actually start the stream.
+        QUrl url(_uri);
+        //-- If RTSP and no port is defined, set default RTSP port (554)
+        if(_uri.contains("rtsp://") && url.port() <= 0) {
+            url.setPort(554);
+        }
+        _socket = new QTcpSocket;
+        QNetworkProxy tempProxy;
+        tempProxy.setType(QNetworkProxy::DefaultProxy);
+        _socket->setProxy(tempProxy);
+        connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
+        connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
+        _socket->connectToHost(url.host(), static_cast<uint16_t>(url.port()));
+        _tcp_timer.start(_tcpTestInterval_ms);
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_connected()
+{
+    //-- Server showed up. Now we start the stream.
+    _tcp_timer.stop();
+    _socket->deleteLater();
+    _socket = nullptr;
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
+        _serverPresent = true;
+        start();
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
+{
+    Q_UNUSED(socketError);
+    _socket->deleteLater();
+    _socket = nullptr;
+    //-- Try again in a while
+    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
+        _tcp_timer.start(_tcpTestInterval_ms);
+    }
+}
+#endif
+
+//-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
 //                                   +-->queue-->decoder-->_videosink
@@ -184,6 +256,7 @@ VideoReceiver::start()
     bool isTaisyncUSB = false;
 #endif
     bool isUdp264   = _uri.contains("udp://")  && !isTaisyncUSB;
+    bool isRtsp     = _uri.contains("rtsp://") && !isTaisyncUSB;
     bool isUdp265   = _uri.contains("udp265://")  && !isTaisyncUSB;
     bool isTCP      = _uri.contains("tcp://")  && !isTaisyncUSB;
     bool isMPEGTS   = _uri.contains("mpegts://")  && !isTaisyncUSB;
@@ -207,6 +280,12 @@ VideoReceiver::start()
     }
 
     _starting = true;
+
+    //-- For RTSP and TCP, check to see if server is there first
+    if(!_serverPresent && (isRtsp || isTCP)) {
+        _tcp_timer.start(100);
+        return;
+    }
 
     bool running    = false;
     bool pipelineUp = false;
@@ -477,6 +556,7 @@ VideoReceiver::_shutdownPipeline() {
     _pipeline = nullptr;
     delete _sink;
     _sink = nullptr;
+    _serverPresent = false;
     _streaming = false;
     _recording = false;
     _stopping = false;
