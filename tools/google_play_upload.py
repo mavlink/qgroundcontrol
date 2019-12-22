@@ -73,7 +73,10 @@ def main():
         editId=edit_id,
         track=release_track,
         packageName=package_name,
-        body={u'versionCodes': [apk_response['versionCode']]}).execute()
+        body={u'releases': [{
+            u'versionCodes': [str([apk_response['versionCode']])],
+            u'status': u'completed',
+        }]}).execute()
 
     print 'Track %s is set for version code(s) %s' % (
         track_response['track'], str(track_response['versionCodes']))
