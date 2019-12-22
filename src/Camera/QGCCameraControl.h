@@ -199,6 +199,7 @@ public:
     Q_INVOKABLE virtual bool toggleVideo    ();
     Q_INVOKABLE virtual void resetSettings  ();
     Q_INVOKABLE virtual void formatCard     (int id = 1);
+    Q_INVOKABLE virtual void setZoom        (int level){ setZoomLevel(level); } //invokable wrapper to setZoomLevel()
     Q_INVOKABLE virtual void stepZoom       (int direction);
     Q_INVOKABLE virtual void startZoom      (int direction);
     Q_INVOKABLE virtual void stopZoom       ();

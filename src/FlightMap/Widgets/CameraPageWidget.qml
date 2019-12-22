@@ -51,6 +51,7 @@ Column {
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool   _canShoot:              !_cameraModeUndefined && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
     property bool   _isShooting:            (_cameraVideoMode && _videoRecording) || (_cameraPhotoMode && !_photoIdle)
+    property bool   _hasZoom:               _camera && _camera.hasZoom
 
     function showSettings() {
         mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -198,6 +199,32 @@ Column {
         font.pointSize: ScreenTools.defaultFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    //-- Zoom
+    Item {
+        width:      pageWidth * 0.7
+        height:     ScreenTools.defaultFontPixelHeight * 2
+        visible:    _hasZoom
+        anchors.horizontalCenter: parent.horizontalCenter
+        //we would need a QGCSilder which allows to set the value without triggering a signal, in order to break the recursive loop
+        // e.g., according to docs a QML Slider has a signal moved(), so onMoved instead of onValueChanged should exist, but it doesn't! Why?
+        // how else could we do that?
+        QGCSlider {
+            maximumValue:   100
+            minimumValue:   0
+            stepSize:       1
+            //value:          _camera ? _camera.zoomLevel : 0 //this produces a recursive loop
+            displayValue:   true
+            updateValueWhileDragging: true
+            anchors.fill:   parent
+            Component.onCompleted: { //this often correctly sets it at init, but not always
+                value = _camera ? _camera.zoomLevel : 0
+            }
+            onValueChanged: { //onMoved doesn't exist
+                _camera.setZoom(value)
+            }
+        }
     }
     //-- Settings
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _camera; }
