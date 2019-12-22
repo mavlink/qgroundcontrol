@@ -71,7 +71,7 @@ def main():
 
     track_response = service.edits().tracks().update(
         editId=edit_id,
-        track=TRACK,
+        track=release_track,
         packageName=package_name,
         body={u'releases': [{
             u'versionCodes': [str([apk_response['versionCode']])],
