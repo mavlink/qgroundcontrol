@@ -9,6 +9,12 @@ VERSIONCODE=$(($(($minor*10000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($dev)) + $VERSIONCODE))
 
+# The android versionCode is for the entire package. It is the same for the 32 and 64 bit APKs.
+# At one point it was thought the versionCode was specific to APK. Hence the 32/64 bitness was
+# included as a prefix. That was incorrect. But now we are stuck with version codes starting with
+# a prefix of 64.
+VERSIONCODE=64$VERSIONCODE
+
 MANIFEST_FILE=android/AndroidManifest.xml
 
 # manifest package
