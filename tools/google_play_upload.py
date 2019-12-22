@@ -71,6 +71,15 @@ def main():
 
     track_response = service.edits().tracks().update(
         editId=edit_id,
+        track=TRACK,
+        packageName=package_name,
+        body={u'releases': [{
+            u'versionCodes': [str([apk_response['versionCode']])],
+            u'status': u'completed',
+        }]}).execute()
+
+    track_response = service.edits().tracks().update(
+        editId=edit_id,
         track=release_track,
         packageName=package_name,
         body={u'versionCodes': [apk_response['versionCode']]}).execute()
