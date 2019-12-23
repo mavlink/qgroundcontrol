@@ -434,6 +434,7 @@ Item {
                 model:              _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
+            // Direction arrows in waypoint lines
             MapItemView {
                 model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
 
@@ -442,6 +443,18 @@ Item {
                     toCoord:        object ? object.coordinate2 : undefined
                     arrowPosition:  3
                     z:              QGroundControl.zOrderWaypointLines + 1
+                }
+            }
+
+            // Incomplete segment lines
+            MapItemView {
+                model: _editingLayer == _layerMission ? _missionController.incompleteComplexItemLines : undefined
+
+                delegate: MapPolyline {
+                    path:       [ object.coordinate1, object.coordinate2 ]
+                    line.width: 1
+                    line.color: "red"
+                    z:          QGroundControl.zOrderWaypointLines
                 }
             }
 

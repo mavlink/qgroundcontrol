@@ -66,6 +66,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     , _altitudesAreRelative     (true)
 {
     _editorQml = "qrc:/qml/FWLandingPatternEditor.qml";
+    _isIncomplete = false;
 
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact);
     connect(&_landingAltitudeFact,      &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_updateLandingCoodinateAltitudeFromFact);

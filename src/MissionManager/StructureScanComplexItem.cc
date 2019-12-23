@@ -264,6 +264,11 @@ void StructureScanComplexItem::_flightPathChanged(void)
     emit coordinateChanged(coordinate());
     emit exitCoordinateChanged(exitCoordinate());
     emit greatestDistanceToChanged();
+
+    if (_isIncomplete) {
+        _isIncomplete = false;
+        emit isIncompleteChanged();
+    }
 }
 
 double StructureScanComplexItem::greatestDistanceTo(const QGeoCoordinate &other) const
@@ -280,11 +285,6 @@ double StructureScanComplexItem::greatestDistanceTo(const QGeoCoordinate &other)
     }
 
     return greatestDistance;
-}
-
-bool StructureScanComplexItem::specifiesCoordinate(void) const
-{
-    return _flightPolygon.count() > 2;
 }
 
 void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)

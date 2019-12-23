@@ -1139,6 +1139,26 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
+CoordinateVector* MissionController::_createCoordinateVectorWorker(VisualItemPair& pair)
+{
+    CoordinateVector* coordVector = nullptr;
+
+    // Create a new segment and wire update notifiers
+    coordVector         = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
+    auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
+    auto endNotifier    = &VisualMissionItem::coordinateChanged;
+
+    // Use signals/slots to update the coordinate endpoints
+    connect(pair.first,     originNotifier, coordVector, &CoordinateVector::setCoordinate1);
+    connect(pair.second,    endNotifier,    coordVector, &CoordinateVector::setCoordinate2);
+
+    // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
+    // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
+    connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
+
+    return coordVector;
+}
+
 CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
 {
     CoordinateVector* coordVector = nullptr;
@@ -1147,18 +1167,7 @@ CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable&
         // Pair already exists and connected, just re-use
         _linesTable[pair] = coordVector = prevItemPairHashTable.take(pair);
     } else {
-        // Create a new segment and wire update notifiers
-        coordVector         = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
-        auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
-        auto endNotifier    = &VisualMissionItem::coordinateChanged;
-
-        // Use signals/slots to update the coordinate endpoints
-        connect(pair.first,     originNotifier, coordVector, &CoordinateVector::setCoordinate1);
-        connect(pair.second,    endNotifier,    coordVector, &CoordinateVector::setCoordinate2);
-
-        // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
-        // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
-        connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
+        coordVector = _createCoordinateVectorWorker(pair);
         _linesTable[pair] = coordVector;
     }
 
@@ -1209,6 +1218,8 @@ void MissionController::_recalcWaypointLines(void)
     bool                foundRTL =                      false;
     bool                homePositionValid =             _settingsItem->coordinate().isValid();
     bool                roiActive =                     false;
+    bool                setupIncompleteItem =           false;
+    VisualMissionItem*  startVIForIncompleteItem =      nullptr;
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
 
@@ -1219,15 +1230,18 @@ void MissionController::_recalcWaypointLines(void)
 
     _waypointLines.beginReset();
     _directionArrows.beginReset();
+    _incompleteComplexItemLines.beginReset();
 
     _waypointLines.clear();
     _directionArrows.clear();
+    _incompleteComplexItemLines.clearAndDeleteContents();
 
     // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
 
     for (int i=1; i<_visualItems->count(); i++) {
-        VisualMissionItem*  visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-        SimpleMissionItem*  simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
+        VisualMissionItem*  visualItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        SimpleMissionItem*  simpleItem =    qobject_cast<SimpleMissionItem*>(visualItem);
+        ComplexMissionItem* complexItem =   qobject_cast<ComplexMissionItem*>(visualItem);
 
         if (simpleItem) {
             if (roiActive) {
@@ -1267,29 +1281,47 @@ void MissionController::_recalcWaypointLines(void)
         }
 
         if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
-            if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
-                // Direction arrows are added to the first segment and every 5 segments in the middle.
-                bool addDirectionArrow = false;
-                if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
-                    addDirectionArrow = true;
-                } else if (segmentCount > 5) {
-                    segmentCount = 0;
-                    addDirectionArrow = true;
-                }
-                segmentCount++;
+            // Incomplete items are complex items which are waiting for the user to complete setup before there visuals can become valid.
+            // For example a Survey which has no polygon set for it yet. For these cases we draw incomplete segment lines so that there
+            // isn't a hole in the flight path lines.
+            if (complexItem && complexItem->isIncomplete()) {
+                setupIncompleteItem = true;
+            } else {
+                if (setupIncompleteItem) {
+                    VisualItemPair viPair(startVIForIncompleteItem, visualItem);
+                    CoordinateVector* coordVector = _createCoordinateVectorWorker(viPair);
 
-                lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, visualItem);
-                if (!_flyView || addDirectionArrow) {
-                    CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
-                    coordVector->setSpecialVisual(roiActive);
-                    if (addDirectionArrow) {
-                        _directionArrows.append(coordVector);
+                    _incompleteComplexItemLines.append(coordVector);
+                    startVIForIncompleteItem = nullptr;
+                    setupIncompleteItem = false;
+                } else {
+                    startVIForIncompleteItem = visualItem;
+                }
+
+                if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
+                    // Direction arrows are added to the first segment and every 5 segments in the middle.
+                    bool addDirectionArrow = false;
+                    if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
+                        addDirectionArrow = true;
+                    } else if (segmentCount > 5) {
+                        segmentCount = 0;
+                        addDirectionArrow = true;
+                    }
+                    segmentCount++;
+
+                    lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, visualItem);
+                    if (!_flyView || addDirectionArrow) {
+                        CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
+                        coordVector->setSpecialVisual(roiActive);
+                        if (addDirectionArrow) {
+                            _directionArrows.append(coordVector);
+                        }
                     }
                 }
+                firstCoordinateNotFound = false;
+                _waypointPath.append(QVariant::fromValue(visualItem->coordinate()));
+                lastCoordinateItemBeforeRTL = visualItem;
             }
-            firstCoordinateNotFound = false;
-            _waypointPath.append(QVariant::fromValue(visualItem->coordinate()));
-            lastCoordinateItemBeforeRTL = visualItem;
         }
     }
 
@@ -1342,6 +1374,7 @@ void MissionController::_recalcWaypointLines(void)
 
     _waypointLines.endReset();
     _directionArrows.endReset();
+    _incompleteComplexItemLines.endReset();
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(old_table);
@@ -1852,6 +1885,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
         if (complexItem) {
             connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatus);
             connect(complexItem, &ComplexMissionItem::greatestDistanceToChanged,    this, &MissionController::_recalcMissionFlightStatus);
+            connect(complexItem, &ComplexMissionItem::isIncompleteChanged,          this, &MissionController::_recalcWaypointLines);
         } else {
             qWarning() << "ComplexMissionItem not found";
         }
