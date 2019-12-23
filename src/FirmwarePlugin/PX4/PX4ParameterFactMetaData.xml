@@ -8061,7 +8061,7 @@ FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
 A taildragger with stearable wheel might need to pitch up
 a little to keep it's wheel on the ground before airspeed
 to takeoff is reached</short_desc>
-      <min>0.0</min>
+      <min>-10.0</min>
       <max>20.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
