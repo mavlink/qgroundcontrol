@@ -25,11 +25,11 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-#        - name: "Android 32 bit"
-#          dist: trusty
-#          language: android
-#          env: SPEC=android-clang CONFIG=installer BITNESS=32
-#          sudo: false
+        - name: "Android 32 bit"
+          dist: trusty
+          language: android
+          env: SPEC=android-clang CONFIG=installer BITNESS=32
+          sudo: false
         - name: "Android 64 bit"
           dist: trusty
           language: android
