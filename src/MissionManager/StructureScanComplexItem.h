@@ -73,7 +73,7 @@ public:
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final;
+    bool            specifiesCoordinate     (void) const final { return true; }
     bool            specifiesAltitudeOnly   (void) const final { return false; }
     QString         commandDescription      (void) const final { return tr("Structure Scan"); }
     QString         commandName             (void) const final { return tr("Structure Scan"); }
@@ -129,7 +129,6 @@ private slots:
     void _recalcScanDistance        (void);
 
 private:
-    void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _setCameraShots(int cameraShots);
     double _triggerDistance(void) const;
 
