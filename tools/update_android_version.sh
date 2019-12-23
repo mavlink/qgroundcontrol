@@ -10,9 +10,9 @@ VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($dev)) + $VERSIONCODE))
 
 # The android versionCode is for the entire package. It is the same for the 32 and 64 bit APKs.
-# Due to various screwups in versioning/tagging the version code needs to be prepended with 65 to
+# Due to various screwups in versioning/tagging the version code needs to be prepended with 650 to
 # make it larger than all previous version codes.
-VERSIONCODE=65$VERSIONCODE
+VERSIONCODE=650$VERSIONCODE
 
 MANIFEST_FILE=android/AndroidManifest.xml
 
