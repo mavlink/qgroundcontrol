@@ -375,6 +375,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -383,6 +384,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="FlightMode2" name="ArduPlane:FLTMODE2" documentation="Flight mode for switch position 2 (1231 to 1360)" user="Standard">
@@ -399,6 +401,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -407,6 +410,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="FlightMode3" name="ArduPlane:FLTMODE3" documentation="Flight mode for switch position 3 (1361 to 1490)" user="Standard">
@@ -423,6 +427,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -431,6 +436,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="FlightMode4" name="ArduPlane:FLTMODE4" documentation="Flight mode for switch position 4 (1491 to 1620)" user="Standard">
@@ -447,6 +453,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -455,6 +462,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="FlightMode5" name="ArduPlane:FLTMODE5" documentation="Flight mode for switch position 5 (1621 to 1749)" user="Standard">
@@ -471,6 +479,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -479,6 +488,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="FlightMode6" name="ArduPlane:FLTMODE6" documentation="Flight mode for switch position 6 (1750 to 2049)" user="Standard">
@@ -495,6 +505,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -503,6 +514,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="Initial flight mode" name="ArduPlane:INITIAL_MODE" documentation="This selects the mode to start in on boot. This is useful for when you want to start in AUTO mode on boot without a receiver." user="Advanced">
@@ -519,6 +531,7 @@
 <value code="10">Auto</value>
 <value code="11">RTL</value>
 <value code="12">Loiter</value>
+<value code="13">TAKEOFF</value>
 <value code="14">AVOID_ADSB</value>
 <value code="15">Guided</value>
 <value code="17">QSTABILIZE</value>
@@ -527,6 +540,7 @@
 <value code="20">QLAND</value>
 <value code="21">QRTL</value>
 <value code="22">QAUTOTUNE</value>
+<value code="23">QACRO</value>
 </values>
 </param>
 <param humanName="Maximum Bank Angle" name="ArduPlane:LIM_ROLL_CD" documentation="Maximum bank angle commanded in modes with stabilized limits. Increase this value for sharper turns, but decrease to prevent accelerated stalls." user="Standard">
@@ -2609,6 +2623,9 @@
 <parameters name="BRD_RTC">
 <param humanName="Allowed sources of RTC time" name="BRD_RTC_TYPES" documentation="Specifies which sources of UTC time will be accepted" user="Advanced">
 <field name="Bitmask">0:GPS,1:MAVLINK_SYSTEM_TIME,2:HW</field>
+</param>
+<param humanName="Timezone offset from UTC" name="BRD_RTC_TZ_MIN" documentation="Adds offset in +- minutes from UTC to calculate local time" user="Advanced">
+<field name="Range">-720 +840</field>
 </param>
 </parameters>
 <parameters name="BTN_">
@@ -5952,6 +5969,18 @@
 <param humanName="ASPD1_Y" name="OSD1_ASPD1_Y" documentation="Vertical position on screen">
 <field name="Range">0 15</field>
 </param>
+<param humanName="CLK_EN" name="OSD1_CLK_EN" documentation="Displays a clock panel based on AP_RTC local time">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="CLK_X" name="OSD1_CLK_X" documentation="Horizontal position on screen">
+<field name="Range">0 29</field>
+</param>
+<param humanName="CLK_Y" name="OSD1_CLK_Y" documentation="Vertical position on screen">
+<field name="Range">0 15</field>
+</param>
 </parameters>
 <parameters name="OSD2_">
 <param humanName="Enable screen" name="OSD2_ENABLE" documentation="Enable this screen" user="Standard">
@@ -6423,6 +6452,18 @@
 <field name="Range">0 15</field>
 </param>
 <param humanName="ASPD1_Y" name="OSD2_ASPD1_Y" documentation="Vertical position on screen">
+<field name="Range">0 15</field>
+</param>
+<param humanName="CLK_EN" name="OSD2_CLK_EN" documentation="Displays a clock panel based on AP_RTC local time">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="CLK_X" name="OSD2_CLK_X" documentation="Horizontal position on screen">
+<field name="Range">0 29</field>
+</param>
+<param humanName="CLK_Y" name="OSD2_CLK_Y" documentation="Vertical position on screen">
 <field name="Range">0 15</field>
 </param>
 </parameters>
@@ -6898,6 +6939,18 @@
 <param humanName="ASPD1_Y" name="OSD3_ASPD1_Y" documentation="Vertical position on screen">
 <field name="Range">0 15</field>
 </param>
+<param humanName="CLK_EN" name="OSD3_CLK_EN" documentation="Displays a clock panel based on AP_RTC local time">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="CLK_X" name="OSD3_CLK_X" documentation="Horizontal position on screen">
+<field name="Range">0 29</field>
+</param>
+<param humanName="CLK_Y" name="OSD3_CLK_Y" documentation="Vertical position on screen">
+<field name="Range">0 15</field>
+</param>
 </parameters>
 <parameters name="OSD4_">
 <param humanName="Enable screen" name="OSD4_ENABLE" documentation="Enable this screen" user="Standard">
@@ -7371,6 +7424,18 @@
 <param humanName="ASPD1_Y" name="OSD4_ASPD1_Y" documentation="Vertical position on screen">
 <field name="Range">0 15</field>
 </param>
+<param humanName="CLK_EN" name="OSD4_CLK_EN" documentation="Displays a clock panel based on AP_RTC local time">
+<values>
+<value code="0">Disabled</value>
+<value code="1">Enabled</value>
+</values>
+</param>
+<param humanName="CLK_X" name="OSD4_CLK_X" documentation="Horizontal position on screen">
+<field name="Range">0 29</field>
+</param>
+<param humanName="CLK_Y" name="OSD4_CLK_Y" documentation="Vertical position on screen">
+<field name="Range">0 15</field>
+</param>
 </parameters>
 <parameters name="PTCH2SRV_">
 <param humanName="Pitch Time Constant" name="PTCH2SRV_TCONST" documentation="Time constant in seconds from demanded to achieved pitch angle. Most models respond well to 0.5. May be reduced for faster responses, but setting lower than a model can achieve will not help." user="Advanced">
@@ -7737,6 +7802,12 @@
 <field name="Increment">1</field>
 <field name="Units">m/s</field>
 <field name="UnitText">meters per second</field>
+</param>
+<param humanName="Quadplane assistance altitude" name="Q_ASSIST_ALT" documentation="This is the altitude below which quadplane assistance will be triggered. This acts the same way as Q_ASSIST_ANGLE and Q_ASSIST_SPEED, but triggers if the aircraft drops below the given altitude while the VTOL motors are not running. A value of zero disables this feature. The altutude is calculated as being above ground level. The height above ground is given from a Lidar used if available and RNGFND_LANDING=1. Otherwise it comes from terrain data if TERRAIN_FOLLOW=1 and comes from height above home otherwise." user="Standard">
+<field name="Range">0 120</field>
+<field name="Increment">1</field>
+<field name="Units">m</field>
+<field name="UnitText">meters</field>
 </param>
 </parameters>
 <parameters name="Q_A_">
@@ -8344,6 +8415,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8405,6 +8477,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8466,6 +8539,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8527,6 +8601,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8588,6 +8663,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8649,6 +8725,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8710,6 +8787,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8771,6 +8849,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8832,6 +8911,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8893,6 +8973,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -8954,6 +9035,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -9015,6 +9097,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -9076,6 +9159,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -9137,6 +9221,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -9198,6 +9283,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -9259,6 +9345,7 @@
 <value code=" 66">Relay5</value>
 <value code=" 67">Relay6</value>
 <value code=" 72">ModeCircle</value>
+<value code=" 77">ModeTakeoff</value>
 <value code=" 100">KillIMU1</value>
 <value code=" 101">KillIMU2</value>
 </values>
@@ -14198,6 +14285,32 @@
 </values>
 </param>
 <param humanName="Terrain grid spacing" name="TERRAIN_SPACING" documentation="Distance between terrain grid points in meters. This controls the horizontal resolution of the terrain data that is stored on te SD card and requested from the ground station. If your GCS is using the worldwide SRTM database then a resolution of 100 meters is appropriate. Some parts of the world may have higher resolution data available, such as 30 meter data available in the SRTM database in the USA. The grid spacing also controls how much data is kept in memory during flight. A larger grid spacing will allow for a larger amount of data in memory. A grid spacing of 100 meters results in the vehicle keeping 12 grid squares in memory with each grid square having a size of 2.7 kilometers by 3.2 kilometers. Any additional grid squares are stored on the SD once they are fetched from the GCS and will be demand loaded as needed." user="Advanced">
+<field name="Increment">1</field>
+<field name="Units">m</field>
+<field name="UnitText">meters</field>
+</param>
+</parameters>
+<parameters name="TKOFF_">
+<param humanName="Takeoff mode altitude" name="TKOFF_ALT" documentation="This is the target altitude for TAKEOFF mode" user="User">
+<field name="Range">0 200</field>
+<field name="Increment">1</field>
+<field name="Units">m</field>
+<field name="UnitText">meters</field>
+</param>
+<param humanName="Takeoff mode altitude level altitude" name="TKOFF_LVL_ALT" documentation="This is the altitude below which wings are held level for TAKEOFF mode" user="User">
+<field name="Range">0 50</field>
+<field name="Increment">1</field>
+<field name="Units">m</field>
+<field name="UnitText">meters</field>
+</param>
+<param humanName="Takeoff mode altitude initial pitch" name="TKOFF_LVL_PITCH" documentation="This is the target pitch for the initial climb to TKOFF_LVL_ALT" user="User">
+<field name="Range">0 30</field>
+<field name="Increment">1</field>
+<field name="Units">deg</field>
+<field name="UnitText">degrees</field>
+</param>
+<param humanName="Takeoff mode distance" name="TKOFF_DIST" documentation="This is the distance from the takeoff location where the plane will loiter. The loiter point will be in the direction of takeoff (the direction the plane is facing when the motor starts)" user="User">
+<field name="Range">0 500</field>
 <field name="Increment">1</field>
 <field name="Units">m</field>
 <field name="UnitText">meters</field>
