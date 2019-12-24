@@ -181,7 +181,6 @@ installer {
 
 # Setup our supported build flavors
 
-message($$CONFIG)
 CONFIG(debug, debug|release) {
     message(Debug flavor)
     CONFIG += DebugBuild
