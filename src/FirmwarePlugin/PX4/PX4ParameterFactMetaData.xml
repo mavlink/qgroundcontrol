@@ -980,12 +980,6 @@ Set -1 to disable the check</short_desc>
     <parameter default="0" name="COM_ARM_SWISBTN" type="INT32">
       <short_desc>Arm switch is only a button</short_desc>
       <long_desc>The default uses the arm switch as real switch. If parameter set button gets handled like stick arming.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Arm switch is a switch that stays on when armed</value>
-        <value code="1">Arm switch is a button that only triggers arming and disarming</value>
-      </values>
     </parameter>
     <parameter default="1" name="COM_ARM_WO_GPS" type="INT32">
       <short_desc>Allow arming without GPS</short_desc>
