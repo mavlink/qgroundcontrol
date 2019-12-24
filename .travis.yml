@@ -37,7 +37,7 @@ matrix:
           sudo: false
         - name: "OSX Installer"
           os: osx
-          osx_image: xcode9.2
+          osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
 # iOS build needs updating Qt to > 5.10
