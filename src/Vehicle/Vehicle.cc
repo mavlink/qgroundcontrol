@@ -1030,17 +1030,9 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
 {
     mavlink_distance_sensor_t distanceSensor;
 
-    mavlink_msg_distance_sensor_decode(&message, &distanceSensor);\
+    mavlink_msg_distance_sensor_decode(&message, &distanceSensor);
 
-    if (!_distanceSensorFactGroup.idSet()) {
-        _distanceSensorFactGroup.setIdSet(true);
-        _distanceSensorFactGroup.setId(distanceSensor.id);
-    }
-
-    if (_distanceSensorFactGroup.id() != distanceSensor.id) {
-        // We can only handle a single sensor reporting
-        return;
-    }
+    qDebug() << distanceSensor.id << distanceSensor.orientation << distanceSensor.current_distance;
 
     struct orientation2Fact_s {
         MAV_SENSOR_ORIENTATION  orientation;
@@ -4354,8 +4346,6 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     , _rotationYaw315Fact   (0, _rotationYaw315FactName,    FactMetaData::valueTypeDouble)
     , _rotationPitch90Fact  (0, _rotationPitch90FactName,   FactMetaData::valueTypeDouble)
     , _rotationPitch270Fact (0, _rotationPitch270FactName,  FactMetaData::valueTypeDouble)
-    , _idSet                (false)
-    , _id                   (0)
 {
     _addFact(&_rotationNoneFact,        _rotationNoneFactName);
     _addFact(&_rotationYaw45Fact,       _rotationYaw45FactName);
