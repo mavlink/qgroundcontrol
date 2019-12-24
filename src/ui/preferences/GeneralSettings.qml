@@ -469,6 +469,14 @@ Rectangle {
                             }
 
                             FactCheckBox {
+                                text:       qsTr("Keep Map Centered On Vehicle")
+                                fact:       _keepMapCenteredOnVehicle
+                                visible:    _keepMapCenteredOnVehicle.visible
+
+                                property Fact _keepMapCenteredOnVehicle: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle
+                            }
+
+                            FactCheckBox {
                                 text:       qsTr("Show Telemetry Log Replay Status Bar")
                                 fact:       _showLogReplayStatusBar
                                 visible:    _showLogReplayStatusBar.visible

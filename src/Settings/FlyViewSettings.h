@@ -26,4 +26,5 @@ public:
     DEFINE_SETTINGFACT(showAdditionalIndicatorsCompass)
     DEFINE_SETTINGFACT(lockNoseUpCompass)
     DEFINE_SETTINGFACT(maxGoToLocationDistance)
+    DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
 };
