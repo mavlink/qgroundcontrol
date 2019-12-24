@@ -25,9 +25,11 @@ Rectangle {
     opacity:    0.80
     clip:       true
 
-    property var missionItems                ///< List of all available mission items
+    property var    missionItems                    ///< List of all available mission items
+    property real   maxWidth:          parent.width
 
-    property real maxWidth:          parent.width
+    signal setCurrentSeqNum(int seqNum)
+
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     onMaxWidthChanged: {
@@ -97,7 +99,9 @@ Rectangle {
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
                 index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
+                showSequenceNumbers:        true
                 visible:                    true
+                onClicked:                  root.setCurrentSeqNum(object.sequenceNumber)
             }
         }
     }
