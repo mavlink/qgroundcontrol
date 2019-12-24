@@ -1032,8 +1032,6 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
 
     mavlink_msg_distance_sensor_decode(&message, &distanceSensor);
 
-    qDebug() << distanceSensor.id << distanceSensor.orientation << distanceSensor.current_distance;
-
     struct orientation2Fact_s {
         MAV_SENSOR_ORIENTATION  orientation;
         Fact*                   fact;
