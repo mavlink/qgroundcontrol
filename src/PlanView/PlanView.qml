@@ -52,6 +52,7 @@ Item {
     property int    _editingLayer:                      bar.currentIndex ? _layers[bar.currentIndex] : _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
+    property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -886,10 +887,11 @@ Item {
 
             onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
 
-            property bool _internalVisible: false
+            property bool _internalVisible: _planViewSettings.showMissionItemStatus.rawValue
 
             function toggleVisible() {
                 _internalVisible = !_internalVisible
+                _planViewSettings.showMissionItemStatus.rawValue = _internalVisible
             }
         }
 
