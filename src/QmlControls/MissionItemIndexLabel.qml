@@ -92,7 +92,7 @@ Canvas {
         anchors.left:           indicator.right
         anchors.top:            indicator.top
         anchors.bottom:         indicator.bottom
-        color:                  "white"
+        color:                  "black"
         text:                   _label
         verticalAlignment:      Text.AlignVCenter
         visible:                labelControl.visible

@@ -256,7 +256,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Loiter"
+                label:      qsTr("Loiter")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
@@ -457,6 +457,7 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters)) +
                             QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
@@ -488,6 +489,7 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters)) +
                             QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
@@ -522,6 +524,7 @@ Item {
             coordinate:     _missionItem.loiterTangentCoordinate
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: _missionItem.loiterAltitude.value.toFixed(1) + QGroundControl.appSettingsDistanceUnitsString
             }
         }
