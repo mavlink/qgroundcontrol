@@ -70,9 +70,10 @@ public:
     Q_PROPERTY(QString          editorQml                           MEMBER _editorQml                                                       CONSTANT)                                           ///< Qml code for editing this item
     Q_PROPERTY(QString          mapVisualQML                        READ mapVisualQML                                                       CONSTANT)                                           ///< QMl code for map visuals
     Q_PROPERTY(QmlObjectListModel* childItems                       READ childItems                                                         CONSTANT)
-    Q_PROPERTY(double           specifiedFlightSpeed                READ specifiedFlightSpeed                                               NOTIFY specifiedFlightSpeedChanged)                 ///< NaN if this item does not specify flight speed
-    Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                                 NOTIFY specifiedGimbalYawChanged)                   ///< Gimbal yaw, NaN for not specified
-    Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                               NOTIFY specifiedGimbalPitchChanged)                 ///< Gimbal pitch, NaN for not specified
+    Q_PROPERTY(double           specifiedFlightSpeed                READ specifiedFlightSpeed                                               NOTIFY specifiedFlightSpeedChanged)                 ///< NaN for not specified
+    Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                                 NOTIFY specifiedGimbalYawChanged)                   ///< NaN for not specified
+    Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                               NOTIFY specifiedGimbalPitchChanged)                 ///< NaN for not specified
+    Q_PROPERTY(double           specifiedVehicleYaw                 READ specifiedVehicleYaw                                                NOTIFY specifiedVehicleYawChanged)                  ///< NaN for not specified
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                                   NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                                  NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
     Q_PROPERTY(bool             flyView                             READ flyView                                                            CONSTANT)
@@ -140,6 +141,7 @@ public:
     virtual double          specifiedFlightSpeed    (void) = 0;
     virtual double          specifiedGimbalYaw      (void) = 0;
     virtual double          specifiedGimbalPitch    (void) = 0;
+    virtual double          specifiedVehicleYaw     (void) { return qQNaN(); }
 
     //-- Default implementation returns an invalid bounding cube
     virtual QGCGeoBoundingCube* boundingCube        (void) { return &_boundingCube; }
@@ -210,6 +212,7 @@ signals:
     void specifiedFlightSpeedChanged    (void);
     void specifiedGimbalYawChanged      (void);
     void specifiedGimbalPitchChanged    (void);
+    void specifiedVehicleYawChanged     (void);
     void lastSequenceNumberChanged      (int sequenceNumber);
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);

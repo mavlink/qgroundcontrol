@@ -114,6 +114,7 @@ public:
     double          specifiedFlightSpeed    (void) override;
     double          specifiedGimbalYaw      (void) override;
     double          specifiedGimbalPitch    (void) override;
+    double          specifiedVehicleYaw     (void) override;
     QString         mapVisualQML            (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
@@ -155,6 +156,7 @@ private slots:
     void _rebuildTextFieldFacts             (void);
     void _possibleAdditionalTimeDelayChanged(void);
     void _setDefaultsForCommand             (void);
+    void _possibleVehicleYawChanged   (void);
 
 private:
     void _connectSignals        (void);
