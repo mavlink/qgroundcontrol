@@ -884,6 +884,8 @@ Item {
             missionItems:       _missionController.visualItems
             visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
+            onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
+
             property bool _internalVisible: false
 
             function toggleVisible() {
