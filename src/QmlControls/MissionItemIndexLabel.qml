@@ -25,6 +25,7 @@ Canvas {
     property real   gimbalYaw
     property real   vehicleYaw
     property bool   showGimbalYaw:          false
+    property bool   showSequenceNumbers:    false
 
     property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
@@ -37,7 +38,7 @@ Canvas {
     property real   _labelMargin:       2
     property real   _labelRadius:       _indicatorRadius + _labelMargin
     property string _label:             label.length > 1 ? label : ""
-    property string _index:             index === 0 || index === -1 ? label.charAt(0) : "" /*index*/
+    property string _index:             index === 0 || index === -1 ? label.charAt(0) : (showSequenceNumbers ? index : "")
 
     onColorChanged:         requestPaint()
     onShowGimbalYawChanged: requestPaint()
