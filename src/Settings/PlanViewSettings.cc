@@ -19,3 +19,4 @@ DECLARE_SETTINGGROUP(PlanView, "PlanView")
 
 DECLARE_SETTINGSFACT(PlanViewSettings, displayPresetsTabFirst)
 DECLARE_SETTINGSFACT(PlanViewSettings, aboveTerrainWarning)
+DECLARE_SETTINGSFACT(PlanViewSettings, showMissionItemStatus)
