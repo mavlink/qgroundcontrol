@@ -222,7 +222,7 @@ Rectangle {
             color:                  qgcPal.warningText
             font.pointSize:         ScreenTools.smallFontPointSize
             horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("* Glide slope altitudes are approximate. Actual flight path will vary due to environmental conditions and vehicle settings.")
+            text:                   qsTr("* Approximate glide slope altitudes. Actual flight path will vary.")
         }
     }
 
