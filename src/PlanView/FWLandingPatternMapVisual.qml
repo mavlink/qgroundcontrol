@@ -256,7 +256,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Loiter"
+                label:      qsTr("Loiter")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
