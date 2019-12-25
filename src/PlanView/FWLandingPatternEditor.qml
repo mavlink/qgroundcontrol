@@ -215,14 +215,37 @@ Rectangle {
             }
         }
 
-        QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            wrapMode:               Text.WordWrap
-            color:                  qgcPal.warningText
-            font.pointSize:         ScreenTools.smallFontPointSize
-            horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("* Approximate glide slope altitudes. Actual flight path will vary.")
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            0
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Approximate glide slope altitudes.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Actual flight path will vary.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Avoid tailwind on landing.")
+            }
         }
     }
 
