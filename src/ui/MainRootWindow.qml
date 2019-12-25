@@ -83,7 +83,7 @@ ApplicationWindow {
     /// Allow view switching
     function popPreventViewSwitch() {
         if (_rgPreventViewSwitch.length == 1) {
-            console.warning("mainWindow.popPreventViewSwitch called when nothing pushed")
+            console.warn("mainWindow.popPreventViewSwitch called when nothing pushed")
             return
         }
         _rgPreventViewSwitch.pop()
