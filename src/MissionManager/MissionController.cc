@@ -1484,6 +1484,7 @@ void MissionController::_recalcMissionFlightStatus()
     bool vtolInHover = true;
     bool linkStartToHome = false;
     bool foundRTL = false;
+    bool vehicleYawSpecificallySet = false;
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem*  item =          qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1614,9 +1615,14 @@ void MissionController::_recalcMissionFlightStatus()
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
 
-                // Update vehicle yaw assuming direction to next waypoint
+                // Update vehicle yaw assuming direction to next waypoint and/or mission item change
                 if (item != lastCoordinateItemBeforeRTL) {
-                    _missionFlightStatus.vehicleYaw = lastCoordinateItemBeforeRTL->exitCoordinate().azimuthTo(item->coordinate());
+                    if (simpleItem && !qIsNaN(simpleItem->specifiedVehicleYaw())) {
+                        vehicleYawSpecificallySet = true;
+                        _missionFlightStatus.vehicleYaw = simpleItem->specifiedVehicleYaw();
+                    } else if (!vehicleYawSpecificallySet) {
+                        _missionFlightStatus.vehicleYaw = lastCoordinateItemBeforeRTL->exitCoordinate().azimuthTo(item->coordinate());
+                    }
                     lastCoordinateItemBeforeRTL->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
                 }
 
@@ -1868,6 +1874,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     connect(visualItem, &VisualMissionItem::specifiedFlightSpeedChanged,                this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::specifiedGimbalYawChanged,                  this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::specifiedGimbalPitchChanged,                this, &MissionController::_recalcMissionFlightStatus);
+    connect(visualItem, &VisualMissionItem::specifiedVehicleYawChanged,                 this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::additionalTimeDelayChanged,                 this, &MissionController::_recalcMissionFlightStatus);
     connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
