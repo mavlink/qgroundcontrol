@@ -257,7 +257,7 @@ Rectangle {
                 setupIndicator:     false
                 text:               qsTr("PX4Flow")
                 Layout.fillWidth:   true
-                onClicked:          showPX4FlowPanel(this, "PX4FlowSensor.qml")
+                onClicked:          showPanel(this, "PX4FlowSensor.qml")
             }
 
             SubMenuButton {
@@ -268,7 +268,7 @@ Rectangle {
                 visible:            _fullParameterVehicleAvailable && joystickManager.joysticks.length !== 0
                 text:               qsTr("Joystick")
                 Layout.fillWidth:   true
-                onClicked:          showJoystickPanel(this, "JoystickConfig.qml")
+                onClicked:          showPanel(this, "JoystickConfig.qml")
             }
 
             Repeater {

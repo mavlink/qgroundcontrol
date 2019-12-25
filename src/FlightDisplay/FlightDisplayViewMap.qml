@@ -48,6 +48,8 @@ FlightMap {
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
+    property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
+    property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       mainIsMap ? false : true
@@ -129,7 +131,7 @@ FlightMap {
 
     function updateMapToVehiclePosition() {
         // We let FlightMap handle first vehicle position
-        if (firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
+        if (!_keepMapCenteredOnVehicle && firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             if (_keepVehicleCentered) {
                 flightMap.center = _activeVehicleCoordinate
             } else {
@@ -137,6 +139,12 @@ FlightMap {
                     animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
                 }
             }
+        }
+    }
+
+    on_ActiveVehicleCoordinateChanged: {
+        if (_keepMapCenteredOnVehicle && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
+            flightMap.center = _activeVehicleCoordinate
         }
     }
 
