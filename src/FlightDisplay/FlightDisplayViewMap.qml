@@ -44,7 +44,6 @@ FlightMap {
 
     property var    _geoFenceController:        missionController.geoFenceController
     property var    _rallyPointController:      missionController.rallyPointController
-    property var    activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
@@ -409,6 +408,34 @@ FlightMap {
         }
     }
 
+    // ROI Location visuals
+    MapQuickItem {
+        id:             roiLocationItem
+        visible:        activeVehicle && activeVehicle.isROIEnabled
+        z:              QGroundControl.zOrderMapItems
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("ROI here", "Make this a Region Of Interest")
+        }
+
+        //-- Visibilty controlled by actual state
+        function show(coord) {
+            roiLocationItem.coordinate = coord
+        }
+
+        function hide() {
+        }
+
+        function actionConfirmed() {
+        }
+
+        function actionCancelled() {
+        }
+    }
+
     // Orbit telemetry visuals
     QGCMapCircleVisuals {
         id:             orbitTelemetryCircle
@@ -437,9 +464,7 @@ FlightMap {
 
         QGCMenu {
             id: clickMenu
-
             property var coord
-
             QGCMenuItem {
                 text:           qsTr("Go to location")
                 visible:        guidedActionsController.showGotoLocation
@@ -450,7 +475,6 @@ FlightMap {
                     guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickMenu.coord, gotoLocationItem)
                 }
             }
-
             QGCMenuItem {
                 text:           qsTr("Orbit at location")
                 visible:        guidedActionsController.showOrbit
@@ -459,6 +483,15 @@ FlightMap {
                     orbitMapCircle.show(clickMenu.coord)
                     gotoLocationItem.hide()
                     guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickMenu.coord, orbitMapCircle)
+                }
+            }
+            QGCMenuItem {
+                text:           qsTr("ROI at location")
+                visible:        guidedActionsController.showROI
+
+                onTriggered: {
+                    roiLocationItem.show(clickMenu.coord)
+                    guidedActionsController.confirmAction(guidedActionsController.actionROI, clickMenu.coord, orbitMapCircle)
                 }
             }
         }
