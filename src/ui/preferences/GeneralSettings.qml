@@ -173,6 +173,7 @@ Rectangle {
                                     }
                                     Component.onCompleted: {
                                         var index = mapCombo.find(_mapProvider)
+                                        if(index < 0) index = 0
                                         mapCombo.currentIndex = index
                                     }
                                 }
@@ -190,6 +191,7 @@ Rectangle {
                                     }
                                     Component.onCompleted: {
                                         var index = mapTypeCombo.find(_mapType)
+                                        if(index < 0) index = 0
                                         mapTypeCombo.currentIndex = index
                                     }
                                 }
@@ -464,6 +466,14 @@ Rectangle {
                                 visible:    _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Keep Map Centered On Vehicle")
+                                fact:       _keepMapCenteredOnVehicle
+                                visible:    _keepMapCenteredOnVehicle.visible
+
+                                property Fact _keepMapCenteredOnVehicle: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle
                             }
 
                             FactCheckBox {

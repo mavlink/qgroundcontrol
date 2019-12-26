@@ -21,7 +21,7 @@ Rectangle {
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
     property bool _supportsTerrainFrame:    missionItem
 
-    property string _altModeRelativeHelpText:       qsTr("Altitude relative to home altitude")
+    property string _altModeRelativeHelpText:       qsTr("Altitude relative to launch altitude")
     property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
     property string _altModeAboveTerrainHelpText:   qsTr("Altitude above terrain\nActual AMSL altitude: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
     property string _altModeTerrainFrameHelpText:   qsTr("Using terrain reference frame")
@@ -188,7 +188,7 @@ Rectangle {
                             id: altHamburgerMenu
 
                             QGCMenuItem {
-                                text:           qsTr("Altitude Relative To Home")
+                                text:           qsTr("Altitude Relative To Launch")
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeRelative
                                 onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeRelative

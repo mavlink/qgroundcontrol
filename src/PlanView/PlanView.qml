@@ -52,6 +52,7 @@ Item {
     property int    _editingLayer:                      bar.currentIndex ? _layers[bar.currentIndex] : _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
+    property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -434,6 +435,7 @@ Item {
                 model:              _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
+            // Direction arrows in waypoint lines
             MapItemView {
                 model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
 
@@ -442,6 +444,18 @@ Item {
                     toCoord:        object ? object.coordinate2 : undefined
                     arrowPosition:  3
                     z:              QGroundControl.zOrderWaypointLines + 1
+                }
+            }
+
+            // Incomplete segment lines
+            MapItemView {
+                model: _editingLayer == _layerMission ? _missionController.incompleteComplexItemLines : undefined
+
+                delegate: MapPolyline {
+                    path:       [ object.coordinate1, object.coordinate2 ]
+                    line.width: 1
+                    line.color: "red"
+                    z:          QGroundControl.zOrderWaypointLines
                 }
             }
 
@@ -542,25 +556,25 @@ Item {
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          parent.height - toolStrip.y
 
-            readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      1
-            readonly property int takeoffButtonIndex:   2
-            readonly property int waypointButtonIndex:  3
-            readonly property int roiButtonIndex:       4
-            readonly property int patternButtonIndex:   5
-            readonly property int landButtonIndex:      6
-            readonly property int centerButtonIndex:    7
+            //readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      0
+            readonly property int takeoffButtonIndex:   1
+            readonly property int waypointButtonIndex:  2
+            readonly property int roiButtonIndex:       3
+            readonly property int patternButtonIndex:   4
+            readonly property int landButtonIndex:      5
+            readonly property int centerButtonIndex:    6
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
 
             model: [
-                {
+                /*{
                     name:               qsTr("Fly"),
                     iconSource:         "/qmlimages/PaperPlane.svg",
                     buttonEnabled:      true,
                     buttonVisible:      true,
-                },
+                },*/
                 {
                     name:               qsTr("File"),
                     iconSource:         "/qmlimages/MapSync.svg",
@@ -620,9 +634,9 @@ Item {
 
             onClicked: {
                 switch (index) {
-                case flyButtonIndex:
+                /*case flyButtonIndex:
                     mainWindow.showFlyView()
-                    break
+                    break*/
                 case takeoffButtonIndex:
                     allAddClickBoolsOff()
                     _missionController.insertTakeoffItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
@@ -871,10 +885,13 @@ Item {
             missionItems:       _missionController.visualItems
             visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
-            property bool _internalVisible: false
+            onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
+
+            property bool _internalVisible: _planViewSettings.showMissionItemStatus.rawValue
 
             function toggleVisible() {
                 _internalVisible = !_internalVisible
+                _planViewSettings.showMissionItemStatus.rawValue = _internalVisible
             }
         }
 
