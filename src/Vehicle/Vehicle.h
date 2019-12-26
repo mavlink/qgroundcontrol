@@ -634,6 +634,7 @@ public:
     Q_PROPERTY(qreal                gimbalPitch             READ gimbalPitch                                            NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal                gimbalYaw               READ gimbalYaw                                              NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
+    Q_PROPERTY(bool                 isROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -646,6 +647,7 @@ public:
     Q_PROPERTY(bool     guidedModeSupported     READ guidedModeSupported                            CONSTANT)                   ///< Guided mode commands are supported by this vehicle
     Q_PROPERTY(bool     pauseVehicleSupported   READ pauseVehicleSupported                          CONSTANT)                   ///< Pause vehicle command is supported
     Q_PROPERTY(bool     orbitModeSupported      READ orbitModeSupported                             CONSTANT)                   ///< Orbit mode is supported by this vehicle
+    Q_PROPERTY(bool     roiModeSupported        READ roiModeSupported                               CONSTANT)                   ///< Orbit mode is supported by this vehicle
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
 
@@ -729,6 +731,11 @@ public:
     ///     @param amslAltitude Desired vehicle altitude
     Q_INVOKABLE void guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude);
 
+    /// Command vehicle to keep given point as ROI
+    ///     @param centerCoord ROI coordinates
+    Q_INVOKABLE void guidedModeROI(const QGeoCoordinate& centerCoord);
+    Q_INVOKABLE void stopGuidedModeROI();
+
     /// Command vehicle to pause at current location. If vehicle supports guide mode, vehicle will be left
     /// in guided mode after pause.
     Q_INVOKABLE void pauseVehicle(void);
@@ -778,6 +785,7 @@ public:
     bool    guidedModeSupported     (void) const;
     bool    pauseVehicleSupported   (void) const;
     bool    orbitModeSupported      (void) const;
+    bool    roiModeSupported        (void) const;
     bool    takeoffVehicleSupported (void) const;
     QString gotoFlightMode          (void) const;
 
@@ -1100,6 +1108,7 @@ public:
     qreal       gimbalPitch             () { return static_cast<qreal>(_curGimbalPitch); }
     qreal       gimbalYaw               () { return static_cast<qreal>(_curGinmbalYaw); }
     bool        gimbalData              () { return _haveGimbalData; }
+    bool        isROIEnabled            () { return _isROIEnabled; }
 
 public slots:
     void setVtolInFwdFlight             (bool vtolInFwdFlight);
@@ -1215,6 +1224,7 @@ signals:
     void gimbalPitchChanged         ();
     void gimbalYawChanged           ();
     void gimbalDataChanged          ();
+    void isROIEnabledChanged        ();
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -1481,6 +1491,7 @@ private:
     float               _curGimbalPitch = 0.0f;
     float               _curGinmbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
+    bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
 
     int _firmwareMajorVersion;

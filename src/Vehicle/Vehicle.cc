@@ -2979,6 +2979,11 @@ bool Vehicle::orbitModeSupported() const
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::OrbitModeCapability);
 }
 
+bool Vehicle::roiModeSupported() const
+{
+    return _firmwarePlugin->isCapable(this, FirmwarePlugin::ROIModeCapability);
+}
+
 bool Vehicle::takeoffVehicleSupported() const
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
@@ -3081,6 +3086,74 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
             static_cast<float>(centerCoord.latitude()),
             static_cast<float>(centerCoord.longitude()),
             static_cast<float>(amslAltitude));
+    }
+}
+
+void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
+{
+    if (!roiModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        return;
+    }
+    if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        sendMavCommandInt(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_LOCATION,
+            MAV_FRAME_GLOBAL,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            centerCoord.latitude(),
+            centerCoord.longitude(),
+            static_cast<float>(centerCoord.altitude()));
+    } else {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_LOCATION,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(centerCoord.latitude()),
+            static_cast<float>(centerCoord.longitude()),
+            static_cast<float>(centerCoord.altitude()));
+    }
+}
+
+void Vehicle::stopGuidedModeROI()
+{
+    if (!roiModeSupported()) {
+        qgcApp()->showMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        return;
+    }
+    if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        sendMavCommandInt(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_NONE,
+            MAV_FRAME_GLOBAL,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<double>(qQNaN()),   // Empty
+            static_cast<double>(qQNaN()),   // Empty
+            static_cast<float>(qQNaN()));   // Empty
+    } else {
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_SET_ROI_NONE,
+            true,                           // show error if fails
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()),    // Empty
+            static_cast<float>(qQNaN()));   // Empty
     }
 }
 
@@ -3349,6 +3422,20 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         } else {
             qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_PROTOCOL_VERSION with error(%1).").arg(ack.result);
             _handleUnsupportedRequestProtocolVersion();
+        }
+    }
+
+    if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            _isROIEnabled = true;
+            emit isROIEnabledChanged();
+        }
+    }
+
+    if (ack.command == MAV_CMD_DO_SET_ROI_NONE) {
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            _isROIEnabled = false;
+            emit isROIEnabledChanged();
         }
     }
 
