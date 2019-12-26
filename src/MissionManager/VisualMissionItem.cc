@@ -26,21 +26,6 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* pa
     : QObject                   (parent)
     , _vehicle                  (vehicle)
     , _flyView                  (flyView)
-    , _isCurrentItem            (false)
-    , _dirty                    (false)
-    , _homePositionSpecialCase  (false)
-    , _terrainAltitude          (qQNaN())
-    , _altDifference            (0.0)
-    , _altPercent               (0.0)
-    , _terrainPercent           (qQNaN())
-    , _terrainCollision         (false)
-    , _azimuth                  (0.0)
-    , _distance                 (0.0)
-    , _missionGimbalYaw         (qQNaN())
-    , _missionVehicleYaw        (qQNaN())
-    , _wizardMode               (false)
-    , _lastLatTerrainQuery      (0)
-    , _lastLonTerrainQuery      (0)
 {
     _commonInit();
 }
@@ -49,16 +34,6 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyVie
     : QObject                   (parent)
     , _vehicle                  (nullptr)
     , _flyView                  (flyView)
-    , _isCurrentItem            (false)
-    , _dirty                    (false)
-    , _homePositionSpecialCase  (false)
-    , _altDifference            (0.0)
-    , _altPercent               (0.0)
-    , _terrainPercent           (qQNaN())
-    , _terrainCollision         (false)
-    , _azimuth                  (0.0)
-    , _distance                 (0.0)
-    , _wizardMode               (false)
 {
     *this = other;
 
@@ -103,6 +78,14 @@ void VisualMissionItem::setIsCurrentItem(bool isCurrentItem)
     if (_isCurrentItem != isCurrentItem) {
         _isCurrentItem = isCurrentItem;
         emit isCurrentItemChanged(isCurrentItem);
+    }
+}
+
+void VisualMissionItem::setHasCurrentChildItem(bool hasCurrentChildItem)
+{
+    if (_hasCurrentChildItem != hasCurrentChildItem) {
+        _hasCurrentChildItem = hasCurrentChildItem;
+        emit hasCurrentChildItemChanged(hasCurrentChildItem);
     }
 }
 
@@ -226,5 +209,13 @@ void VisualMissionItem::setWizardMode(bool wizardMode)
     if (wizardMode != _wizardMode) {
         _wizardMode = wizardMode;
         emit wizardModeChanged(_wizardMode);
+    }
+}
+
+void VisualMissionItem::setParentItem(VisualMissionItem* parentItem)
+{
+    if (_parentItem != parentItem) {
+        _parentItem = parentItem;
+        emit parentItemChanged(parentItem);
     }
 }

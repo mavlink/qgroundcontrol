@@ -2,7 +2,7 @@
 # [REQUIRED] Add support for <inttypes.h> to Windows.
 #
 WindowsBuild {
-    INCLUDEPATH += libs/lib/msinttypes
+    INCLUDEPATH += libs/msinttypes
 }
 
 #
@@ -106,41 +106,25 @@ SOURCES += \
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
+        $$BASEDIR/libs/Frameworks/SDL2.framework/Headers
     LIBS += \
-        -F$$BASEDIR/libs/lib/Frameworks \
+        -F$$BASEDIR/libs/Frameworks \
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
-    INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
-    contains(QT_ARCH, i386) {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x86/include
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x86/lib
-    } else {
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
-        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x64/lib
-    }
-    LIBS += \
-        -lSDL2main \
-        -lSDL2
+    INCLUDEPATH += $$BASEDIR/libs/sdl2/msvc/include
+    INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
+    LIBS += -L$$BASEDIR/libs/sdl2/msvc/lib/x64
+    LIBS += -lSDL2
 }
 
-# Include Android OpenSSL libs in order to make Qt OpenSSL support work
+# Include Android OpenSSL libs
 AndroidBuild {
-    equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-    } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
-        # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
-    } else:equals(ANDROID_TARGET_ARCH, x86)  {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
-    } else {
-        error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
-    }
+    include($$BASEDIR/libs/OpenSSL/android_openssl/openssl.pri)
+    message("ANDROID_EXTRA_LIBS")
+    message($$ANDROID_TARGET_ARCH)
+    message($$ANDROID_EXTRA_LIBS)
 }
 
 # Pairing

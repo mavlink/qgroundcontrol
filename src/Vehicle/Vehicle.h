@@ -76,11 +76,6 @@ public:
     Fact* rotationPitch90   (void) { return &_rotationPitch90Fact; }
     Fact* rotationPitch270  (void) { return &_rotationPitch270Fact; }
 
-    bool idSet(void) { return _idSet; }
-    void setIdSet(bool idSet) { _idSet = idSet; }
-    uint8_t id(void) { return _id; }
-    void setId(uint8_t id) { _id = id; }
-
     static const char* _rotationNoneFactName;
     static const char* _rotationYaw45FactName;
     static const char* _rotationYaw90FactName;
@@ -103,9 +98,6 @@ private:
     Fact _rotationYaw315Fact;
     Fact _rotationPitch90Fact;
     Fact _rotationPitch270Fact;
-
-    bool    _idSet; // true: _id is set to seen sensor id
-    uint8_t _id;    // The id for the sensor being tracked. Current support for only a single sensor.
 };
 
 class VehicleSetpointFactGroup : public FactGroup

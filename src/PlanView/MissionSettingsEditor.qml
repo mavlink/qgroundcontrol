@@ -177,7 +177,7 @@ Rectangle {
                 id:             plannedHomePositionSection
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-                text:           qsTr("Planned Home Position")
+                text:           qsTr("Launch Position")
                 visible:        !_vehicleHasHomePosition
                 checked:        false
             }
@@ -213,7 +213,7 @@ Rectangle {
                 }
 
                 QGCButton {
-                    text:                       qsTr("Set Home To Map Center")
+                    text:                       qsTr("Set To Map Center")
                     onClicked:                  missionItem.coordinate = map.center
                     anchors.horizontalCenter:   parent.horizontalCenter
                 }

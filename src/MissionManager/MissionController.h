@@ -70,8 +70,10 @@ public:
     Q_PROPERTY(QmlObjectListModel*  waypointLines                   READ waypointLines                  CONSTANT)                           ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QVariantList         waypointPath                    READ waypointPath                   NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  incompleteComplexItemLines      READ incompleteComplexItemLines     CONSTANT)                           ///< Segments which are not yet completed.
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition             READ plannedHomePosition            NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(QGeoCoordinate       previousCoordinate              MEMBER _previousCoordinate          NOTIFY previousCoordinateChanged)
     Q_PROPERTY(CoordinateVector*    splitSegment                    MEMBER _splitSegment                NOTIFY splitSegmentChanged)         ///< Segment which show show + split ui element
     Q_PROPERTY(double               progressPct                     READ progressPct                    NOTIFY progressPctChanged)
     Q_PROPERTY(int                  missionItemCount                READ missionItemCount               NOTIFY missionItemCountChanged)     ///< True mission item command count (only valid in Fly View)
@@ -199,6 +201,7 @@ public:
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
     QmlObjectListModel* waypointLines               (void) { return &_waypointLines; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
+    QmlObjectListModel* incompleteComplexItemLines  (void) { return &_incompleteComplexItemLines; }
     QVariantList        waypointPath                (void) { return _waypointPath; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
@@ -266,22 +269,23 @@ signals:
     void isROIActiveChanged                 (void);
     void isROIBeginCurrentItemChanged       (void);
     void flyThroughCommandsAllowedChanged   (void);
+    void previousCoordinateChanged          (void);
 
 private slots:
-    void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
-    void _itemCommandChanged(void);
-    void _inProgressChanged(bool inProgress);
-    void _currentMissionIndexChanged(int sequenceNumber);
-    void _recalcWaypointLines(void);
-    void _recalcMissionFlightStatus(void);
-    void _updateContainsItems(void);
-    void _progressPctChanged(double progressPct);
-    void _visualItemsDirtyChanged(bool dirty);
-    void _managerSendComplete(bool error);
-    void _managerRemoveAllComplete(bool error);
-    void _updateTimeout();
-    void _complexBoundingBoxChanged();
-    void _recalcAll(void);
+    void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
+    void _itemCommandChanged                    (void);
+    void _inProgressChanged                     (bool inProgress);
+    void _currentMissionIndexChanged            (int sequenceNumber);
+    void _recalcWaypointLines                   (void);
+    void _recalcMissionFlightStatus             (void);
+    void _updateContainsItems                   (void);
+    void _progressPctChanged                    (double progressPct);
+    void _visualItemsDirtyChanged               (bool dirty);
+    void _managerSendComplete                   (bool error);
+    void _managerRemoveAllComplete              (bool error);
+    void _updateTimeout                         (void);
+    void _complexBoundingBoxChanged             (void);
+    void _recalcAll                             (void);
 
 private:
     void _init(void);
@@ -322,6 +326,7 @@ private:
     void _warnIfTerrainFrameUsed(void);
     bool _isROIBeginItem(SimpleMissionItem* simpleItem);
     bool _isROICancelItem(SimpleMissionItem* simpleItem);
+    CoordinateVector* _createCoordinateVectorWorker(VisualItemPair& pair);
 
 private:
     MissionManager*         _missionManager;
@@ -331,6 +336,7 @@ private:
     QmlObjectListModel      _waypointLines;
     QVariantList            _waypointPath;
     QmlObjectListModel      _directionArrows;
+    QmlObjectListModel      _incompleteComplexItemLines;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
@@ -344,6 +350,7 @@ private:
     QTimer                  _updateTimer;
     QGCGeoBoundingCube      _travelBoundingCube;
     QGeoCoordinate          _takeoffCoordinate;
+    QGeoCoordinate          _previousCoordinate;
     CoordinateVector*       _splitSegment;
     bool                    _isInsertTakeoffValid =         true;
     bool                    _isInsertLandValid =            true;

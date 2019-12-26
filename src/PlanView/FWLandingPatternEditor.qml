@@ -178,7 +178,7 @@ Rectangle {
 
         QGCCheckBox {
             anchors.right:  parent.right
-            text:           qsTr("Altitudes relative to home")
+            text:           qsTr("Altitudes relative to launch")
             checked:        missionItem.altitudesAreRelative
             visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || !missionItem.altitudesAreRelative
             onClicked:      missionItem.altitudesAreRelative = checked
@@ -215,14 +215,37 @@ Rectangle {
             }
         }
 
-        QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            wrapMode:               Text.WordWrap
-            color:                  qgcPal.warningText
-            font.pointSize:         ScreenTools.smallFontPointSize
-            horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("* Glide slope altitudes are approximate. Actual flight path will vary due to environmental conditions and vehicle settings.")
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            0
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Approximate glide slope altitudes.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Actual flight path will vary.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Avoid tailwind on landing.")
+            }
         }
     }
 
