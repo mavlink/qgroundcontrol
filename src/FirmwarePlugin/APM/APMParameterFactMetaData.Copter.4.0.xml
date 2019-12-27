@@ -5028,12 +5028,13 @@
 </param>
 </parameters>
 <parameters name="H_">
-<param humanName="Tail Type" name="H_TAIL_TYPE" documentation="Tail type selection.  Simpler yaw controller used if external gyro is selected" user="Standard">
+<param humanName="Tail Type" name="H_TAIL_TYPE" documentation="Tail type selection.  Simpler yaw controller used if external gyro is selected. Direct Drive Variable Pitch is used for tails that have a motor that is governed at constant speed by an ESC. Tail pitch is still accomplished with a servo. Direct Drive Fixed Pitch (DDFP) CW is used for helicopters with a rotor that spins clockwise when viewed from above. Direct Drive Fixed Pitch (DDFP) CCW is used for helicopters with a rotor that spins counter clockwise when viewed from above. In both DDFP cases, no servo is used for the tail and the tail motor esc is controlled by the yaw axis." user="Standard">
 <values>
 <value code="0">Servo only</value>
 <value code="1">Servo with ExtGyro</value>
 <value code="2">DirectDrive VarPitch</value>
-<value code="3">DirectDrive FixedPitch</value>
+<value code="3">DirectDrive FixedPitch CW</value>
+<value code="4">DirectDrive FixedPitch CCW</value>
 </values>
 </param>
 <param humanName="External Gyro Gain" name="H_GYR_GAIN" documentation="PWM in microseconds sent to external gyro on ch7 when tail type is Servo w/ ExtGyro" user="Standard">
@@ -5042,7 +5043,7 @@
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Collective-Yaw Mixing" name="H_COLYAW" documentation="Feed-forward compensation to automatically add rudder input when collective pitch is increased. Can be positive or negative depending on mechanics." user="Advanced">
+<param humanName="Collective-Yaw Mixing" name="H_COLYAW" documentation="Feed-forward compensation to automatically add rudder input when collective pitch is increased. Can be positive or negative depending on mechanics." user="Standard">
 <field name="Range">-10 10</field>
 <field name="Increment">0.1</field>
 </param>
@@ -5052,61 +5053,17 @@
 <value code="1">Flybar</value>
 </values>
 </param>
-<param humanName="Direct Drive VarPitch Tail ESC speed" name="H_TAIL_SPEED" documentation="Direct Drive VarPitch Tail ESC speed in PWM microseconds.  Only used when TailType is DirectDrive VarPitch" user="Standard">
+<param humanName="DDVP Tail ESC speed" name="H_TAIL_SPEED" documentation="Direct drive, variable pitch tail ESC speed in percent output to the tail motor esc (HeliTailRSC Servo) when motor interlock enabled (throttle hold off)." user="Standard">
+<field name="Range">0 100</field>
+<field name="Increment">1</field>
+<field name="Units">%</field>
+<field name="UnitText">percent</field>
+</param>
+<param humanName="ACRO External Gyro Gain" name="H_GYR_GAIN_ACRO" documentation="PWM in microseconds sent to external gyro on ch7 when tail type is Servo w/ ExtGyro. A value of zero means to use H_GYR_GAIN" user="Standard">
 <field name="Range">0 1000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
-</param>
-<param humanName="External Gyro Gain for ACRO" name="H_GYR_GAIN_ACRO" documentation="PWM in microseconds sent to external gyro on ch7 when tail type is Servo w/ ExtGyro. A value of zero means to use H_GYR_GAIN" user="Standard">
-<field name="Range">0 1000</field>
-<field name="Increment">1</field>
-<field name="Units">PWM</field>
-<field name="UnitText">PWM in microseconds</field>
-</param>
-<param humanName="Swashplate 1 Type" name="H_SW_TYPE" documentation="H3 is generic, three-servo only. H3_120/H3_140 plates have Motor1 left side, Motor2 right side, Motor3 elevator in rear. HR3_120/HR3_140 have Motor1 right side, Motor2 left side, Motor3 elevator in front - use H3_120/H3_140 and reverse servo and collective directions as necessary. For all H3_90 swashplates use H4_90 and don't use servo output for the missing servo. For H4-90 Motors1&amp;2 are left/right respectively, Motors3&amp;4 are rear/front respectively. For H4-45 Motors1&amp;2 are LF/RF, Motors3&amp;4 are LR/RR " user="Standard">
-<values>
-<value code="0">H3 Generic</value>
-<value code="1">H1 non-CPPM</value>
-<value code="2">H3_140</value>
-<value code="3">H3_120</value>
-<value code="4">H4_90</value>
-<value code="5">H4_45</value>
-</values>
-</param>
-<param humanName="Swashplate 1 Collective Control Direction" name="H_SW_COL_DIR" documentation="Direction collective moves for positive pitch. 0 for Normal, 1 for Reversed" user="Standard">
-<values>
-<value code="0">Normal</value>
-<value code="1">Reversed</value>
-</values>
-</param>
-<param humanName="Linearize Swashplate 1 Servo Mechanical Throw" name="H_SW_LIN_SVO" documentation="This linearizes the swashplate 1 servo's mechanical output to account for nonlinear output due to arm rotation.  This requires a specific setup procedure to work properly.  The servo arm must be centered on the mechanical throw at the servo trim position and the servo trim position kept as close to 1500 as possible. Leveling the swashplate can only be done through the pitch links.  See the ardupilot wiki for more details on setup." user="Standard">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-</values>
-</param>
-<param humanName="Swashplate 1 Enable Generic H3 Settings" name="H_SW_H3_ENABLE" documentation="Automatically set when H3 generic swash type is selected for swashplate 1. Do not set manually." user="Advanced">
-<values>
-<value code="0">Disabled</value>
-<value code="1">Enabled</value>
-</values>
-</param>
-<param humanName="Swashplate 1 Servo 1 Position" name="H_SW_H3_SV1_POS" documentation="Azimuth position on swashplate for servo 1 with the front of the heli being 0 deg" user="Advanced">
-<field name="Range">-180 180</field>
-<field name="Units">deg</field>
-<field name="UnitText">degrees</field>
-</param>
-<param humanName="Swashplate 1 Servo 2 Position" name="H_SW_H3_SV2_POS" documentation="Azimuth position on swashplate 1 for servo 2 with the front of the heli being 0 deg" user="Advanced">
-<field name="Range">-180 180</field>
-<field name="Units">deg</field>
-<field name="UnitText">degrees</field>
-</param>
-<param humanName="Swashplate 1 Phase Angle Compensation" name="H_SW_H3_PHANG" documentation="Only for H3 swashplate.  If pitching the swash forward induces a roll, this can be correct the problem" user="Advanced">
-<field name="Range">-30 30</field>
-<field name="Increment">1</field>
-<field name="Units">deg</field>
-<field name="UnitText">degrees</field>
 </param>
 <param humanName="Dual Mode" name="H_DUAL_MODE" documentation="Sets the dual mode of the heli, either as tandem or as transverse." user="Standard">
 <values>
@@ -5125,25 +5082,25 @@
 <field name="Range">-10 10</field>
 <field name="Increment">0.1</field>
 </param>
-<param humanName="Collective Pitch Minimum for rear swashplate" name="H_COL2_MIN" documentation="Lowest possible servo position in PWM microseconds for the rear swashplate" user="Standard">
+<param humanName="Swash 2 Minimum Collective Pitch" name="H_COL2_MIN" documentation="Lowest possible servo position in PWM microseconds for swashplate 2" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Collective Pitch Maximum for rear swashplate" name="H_COL2_MAX" documentation="Highest possible servo position in PWM microseconds for the rear swashplate" user="Standard">
+<param humanName="Swash 2 Maximum Collective Pitch" name="H_COL2_MAX" documentation="Highest possible servo position in PWM microseconds for swashplate 2" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Collective Pitch Mid-Point for rear swashplate" name="H_COL2_MID" documentation="Swash servo position in PWM microseconds corresponding to zero collective pitch for the rear swashplate (or zero lift for Asymmetrical blades)" user="Standard">
+<param humanName="Swash 2 Zero-Thrust Collective Pitch" name="H_COL2_MID" documentation="Swash servo position in PWM microseconds corresponding to zero collective pitch for the rear swashplate (or zero lift for Asymmetrical blades)" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Swashplate 1 Type" name="H_SW_TYPE" documentation="H3 is generic, three-servo only. H3_120/H3_140 plates have Motor1 left side, Motor2 right side, Motor3 elevator in rear. HR3_120/HR3_140 have Motor1 right side, Motor2 left side, Motor3 elevator in front - use H3_120/H3_140 and reverse servo and collective directions as necessary. For all H3_90 swashplates use H4_90 and don't use servo output for the missing servo. For H4-90 Motors1&amp;2 are left/right respectively, Motors3&amp;4 are rear/front respectively. For H4-45 Motors1&amp;2 are LF/RF, Motors3&amp;4 are LR/RR " user="Standard">
+<param humanName="Swashplate Type" name="H_SW_TYPE" documentation="H3 is generic, three-servo only. H3_120/H3_140 plates have Motor1 left side, Motor2 right side, Motor3 elevator in rear. HR3_120/HR3_140 have Motor1 right side, Motor2 left side, Motor3 elevator in front - use H3_120/H3_140 and reverse servo and collective directions as necessary. For all H3_90 swashplates use H4_90 and don't use servo output for the missing servo. For H4-90 Motors1&amp;2 are left/right respectively, Motors3&amp;4 are rear/front respectively. For H4-45 Motors1&amp;2 are LF/RF, Motors3&amp;4 are LR/RR " user="Standard">
 <values>
 <value code="0">H3 Generic</value>
 <value code="1">H1 non-CPPM</value>
@@ -5153,41 +5110,46 @@
 <value code="5">H4_45</value>
 </values>
 </param>
-<param humanName="Swashplate 1 Collective Control Direction" name="H_SW_COL_DIR" documentation="Direction collective moves for positive pitch. 0 for Normal, 1 for Reversed" user="Standard">
+<param humanName="Swashplate Collective Control Direction" name="H_SW_COL_DIR" documentation="Direction collective moves for positive pitch. 0 for Normal, 1 for Reversed" user="Standard">
 <values>
 <value code="0">Normal</value>
 <value code="1">Reversed</value>
 </values>
 </param>
-<param humanName="Linearize Swashplate 1 Servo Mechanical Throw" name="H_SW_LIN_SVO" documentation="This linearizes the swashplate 1 servo's mechanical output to account for nonlinear output due to arm rotation.  This requires a specific setup procedure to work properly.  The servo arm must be centered on the mechanical throw at the servo trim position and the servo trim position kept as close to 1500 as possible. Leveling the swashplate can only be done through the pitch links.  See the ardupilot wiki for more details on setup." user="Standard">
+<param humanName="Linearize Swashplate Servo Mechanical Throw" name="H_SW_LIN_SVO" documentation="This linearizes the swashplate 1 servo's mechanical output to account for nonlinear output due to arm rotation.  This requires a specific setup procedure to work properly.  The servo arm must be centered on the mechanical throw at the servo trim position and the servo trim position kept as close to 1500 as possible. Leveling the swashplate can only be done through the pitch links.  See the ardupilot wiki for more details on setup." user="Standard">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Swashplate 1 Enable Generic H3 Settings" name="H_SW_H3_ENABLE" documentation="Automatically set when H3 generic swash type is selected for swashplate 1. Do not set manually." user="Advanced">
+<param humanName="Enable Generic H3 Swashplate Settings" name="H_SW_H3_ENABLE" documentation="Automatically set when H3 generic swash type is selected for swashplate 1. Do not set manually." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Swashplate 1 Servo 1 Position" name="H_SW_H3_SV1_POS" documentation="Azimuth position on swashplate for servo 1 with the front of the heli being 0 deg" user="Advanced">
+<param humanName="Swashplate Servo 1 Position" name="H_SW_H3_SV1_POS" documentation="Azimuth position on swashplate for servo 1 with the front of the heli being 0 deg" user="Advanced">
 <field name="Range">-180 180</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Swashplate 1 Servo 2 Position" name="H_SW_H3_SV2_POS" documentation="Azimuth position on swashplate 1 for servo 2 with the front of the heli being 0 deg" user="Advanced">
+<param humanName="Swashplate Servo 2 Position" name="H_SW_H3_SV2_POS" documentation="Azimuth position on swashplate 1 for servo 2 with the front of the heli being 0 deg" user="Advanced">
 <field name="Range">-180 180</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Swashplate 1 Phase Angle Compensation" name="H_SW_H3_PHANG" documentation="Only for H3 swashplate.  If pitching the swash forward induces a roll, this can be correct the problem" user="Advanced">
+<param humanName="Swashplate Servo 3 Position" name="H_SW_H3_SV3_POS" documentation="Azimuth position on swashplate 1 for servo 3 with the front of the heli being 0 deg" user="Advanced">
+<field name="Range">-180 180</field>
+<field name="Units">deg</field>
+<field name="UnitText">degrees</field>
+</param>
+<param humanName="Swashplate Phase Angle Compensation" name="H_SW_H3_PHANG" documentation="Only for H3 swashplate.  If pitching the swash forward induces a roll, this can be correct the problem" user="Advanced">
 <field name="Range">-30 30</field>
 <field name="Increment">1</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Swashplate 2 Type" name="H_SW2_TYPE" documentation="H3 is generic, three-servo only. H3_120/H3_140 plates have Motor1 left side, Motor2 right side, Motor3 elevator in rear. HR3_120/HR3_140 have Motor1 right side, Motor2 left side, Motor3 elevator in front - use H3_120/H3_140 and reverse servo and collective directions as necessary. For all H3_90 swashplates use H4_90 and don't use servo output for the missing servo. For H4-90 Motors1&amp;2 are left/right respectively, Motors3&amp;4 are rear/front respectively. For H4-45 Motors1&amp;2 are LF/RF, Motors3&amp;4 are LR/RR " user="Standard">
+<param humanName="Swash 2 Type" name="H_SW2_TYPE" documentation="H3 is generic, three-servo only. H3_120/H3_140 plates have Motor1 left side, Motor2 right side, Motor3 elevator in rear. HR3_120/HR3_140 have Motor1 right side, Motor2 left side, Motor3 elevator in front - use H3_120/H3_140 and reverse servo and collective directions as necessary. For all H3_90 swashplates use H4_90 and don't use servo output for the missing servo. For H4-90 Motors1&amp;2 are left/right respectively, Motors3&amp;4 are rear/front respectively. For H4-45 Motors1&amp;2 are LF/RF, Motors3&amp;4 are LR/RR " user="Standard">
 <values>
 <value code="0">H3 Generic</value>
 <value code="1">H1 non-CPPM</value>
@@ -5197,53 +5159,58 @@
 <value code="5">H4_45</value>
 </values>
 </param>
-<param humanName="Swashplate 2 Collective Control Direction" name="H_SW2_COL_DIR" documentation="Direction collective moves for positive pitch. 0 for Normal, 1 for Reversed" user="Standard">
+<param humanName="Swash 2 Collective Direction" name="H_SW2_COL_DIR" documentation="Direction collective moves for positive pitch. 0 for Normal, 1 for Reversed" user="Standard">
 <values>
 <value code="0">Normal</value>
 <value code="1">Reversed</value>
 </values>
 </param>
-<param humanName="Linearize Swashplate 2 Servo Mechanical Throw" name="H_SW2_LIN_SVO" documentation="This linearizes the swashplate 2 servo's mechanical output to account for nonlinear output due to arm rotation.  This requires a specific setup procedure to work properly.  The servo arm must be centered on the mechanical throw at the servo trim position and the servo trim position kept as close to 1500 as possible. Leveling the swashplate can only be done through the pitch links.  See the ardupilot wiki for more details on setup." user="Standard">
+<param humanName="Linearize Swash 2 Servos" name="H_SW2_LIN_SVO" documentation="This linearizes the swashplate 2 servo's mechanical output to account for nonlinear output due to arm rotation.  This requires a specific setup procedure to work properly.  The servo arm must be centered on the mechanical throw at the servo trim position and the servo trim position kept as close to 1500 as possible. Leveling the swashplate can only be done through the pitch links.  See the ardupilot wiki for more details on setup." user="Standard">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Swashplate 2 Enable Generic H3 Settings" name="H_SW2_H3_ENABLE" documentation="Automatically set when H3 generic swash type is selected for swashplate 2. Do not set manually." user="Advanced">
+<param humanName="Swash 2 H3 Generic Enable" name="H_SW2_H3_ENABLE" documentation="Automatically set when H3 generic swash type is selected for swashplate 2. Do not set manually." user="Advanced">
 <values>
 <value code="0">Disabled</value>
 <value code="1">Enabled</value>
 </values>
 </param>
-<param humanName="Swashplate 2 Servo 1 Position" name="H_SW2_H3_SV1_POS" documentation="Azimuth position on swashplate for servo 1 with the front of the heli being 0 deg" user="Advanced">
+<param humanName="Swash 2 H3 Generic Servo 1 Position" name="H_SW2_H3_SV1_POS" documentation="Azimuth position on swashplate for servo 1 with the front of the heli being 0 deg" user="Advanced">
 <field name="Range">-180 180</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Swashplate 2 Servo 2 Position" name="H_SW2_H3_SV2_POS" documentation="Azimuth position on swashplate 2 for servo 2 with the front of the heli being 0 deg" user="Advanced">
+<param humanName="Swash 2 H3 Generic Servo 2 Position" name="H_SW2_H3_SV2_POS" documentation="Azimuth position on swashplate 2 for servo 2 with the front of the heli being 0 deg" user="Advanced">
 <field name="Range">-180 180</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Swashplate 2 Phase Angle Compensation" name="H_SW2_H3_PHANG" documentation="Only for H3 swashplate.  If pitching the swash forward induces a roll, this can be correct the problem" user="Advanced">
+<param humanName="Swash 2 H3 Generic Servo 3 Position" name="H_SW2_H3_SV3_POS" documentation="Azimuth position on swashplate 2 for servo 3 with the front of the heli being 0 deg" user="Advanced">
+<field name="Range">-180 180</field>
+<field name="Units">deg</field>
+<field name="UnitText">degrees</field>
+</param>
+<param humanName="Swash 2 H3 Generic Phase Angle Comp" name="H_SW2_H3_PHANG" documentation="Only for H3 swashplate.  If pitching the swash forward induces a roll, this can be correct the problem" user="Advanced">
 <field name="Range">-30 30</field>
 <field name="Increment">1</field>
 <field name="Units">deg</field>
 <field name="UnitText">degrees</field>
 </param>
-<param humanName="Collective Pitch Minimum" name="H_COL_MIN" documentation="Lowest possible servo position in PWM microseconds for the swashplate" user="Standard">
+<param humanName="Minimum Collective Pitch" name="H_COL_MIN" documentation="Lowest possible servo position in PWM microseconds for the swashplate" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Collective Pitch Maximum" name="H_COL_MAX" documentation="Highest possible servo position in PWM microseconds for the swashplate" user="Standard">
+<param humanName="Maximum Collective Pitch" name="H_COL_MAX" documentation="Highest possible servo position in PWM microseconds for the swashplate" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
 <field name="UnitText">PWM in microseconds</field>
 </param>
-<param humanName="Collective Pitch Mid-Point" name="H_COL_MID" documentation="Swash servo position in PWM microseconds corresponding to zero collective pitch (or zero lift for Asymmetrical blades)" user="Standard">
+<param humanName="Zero-Thrust Collective Pitch" name="H_COL_MID" documentation="Swash servo position in PWM microseconds corresponding to zero collective pitch (or zero lift for Asymmetrical blades)" user="Standard">
 <field name="Range">1000 2000</field>
 <field name="Increment">1</field>
 <field name="Units">PWM</field>
@@ -5258,11 +5225,9 @@
 <value code="4">Min collective</value>
 </values>
 </param>
-<param humanName="Cyclic Pitch Angle Max" name="H_CYC_MAX" documentation="Maximum pitch angle of the swash plate" user="Advanced">
-<field name="Range">0 18000</field>
+<param humanName="Maximum Cyclic Pitch Angle" name="H_CYC_MAX" documentation="Maximum cyclic pitch angle of the swash plate.  There are no units to this parameter.  This should be adjusted to get the desired cyclic blade pitch for the pitch and roll axes.  Typically this should be 6-7 deg (measured blade pitch angle difference between stick centered and stick max deflection." user="Standard">
+<field name="Range">0 4500</field>
 <field name="Increment">100</field>
-<field name="Units">cdeg</field>
-<field name="UnitText">centidegrees</field>
 </param>
 <param humanName="Boot-up Servo Test Cycles" name="H_SV_TEST" documentation="Number of cycles to run servo test on boot-up" user="Standard">
 <field name="Range">0 10</field>
@@ -5284,7 +5249,7 @@
 <value code=" 4">Governor</value>
 </values>
 </param>
-<param humanName="RSC Throttle Output Ramp Time" name="H_RSC_RAMP_TIME" documentation="Time in seconds for throttle output (HeliRSC servo) to ramp from ground idle (RSC_IDLE) to flight idle throttle setting when motor interlock is enabled (throttle hold off)." user="Standard">
+<param humanName="Throttle Ramp Time" name="H_RSC_RAMP_TIME" documentation="Time in seconds for throttle output (HeliRSC servo) to ramp from ground idle (RSC_IDLE) to flight idle throttle setting when motor interlock is enabled (throttle hold off)." user="Standard">
 <field name="Range">0 60</field>
 <field name="Units">s</field>
 <field name="UnitText">seconds</field>
@@ -5300,59 +5265,59 @@
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output at Idle" name="H_RSC_IDLE" documentation="Throttle output (HeliRSC Servo) in percent while armed but motor interlock is disabled (throttle hold on). FOR COMBUSTION ENGINES. Sets the engine ground idle throttle percentage with clutch disengaged. This must be set to zero for electric helicopters under most situations. If the ESC has an autorotation window this can be set to keep the autorotation window open in the ESC. Consult the operating manual for your ESC to set it properly for this purpose" user="Standard">
+<param humanName="Throttle Output at Idle" name="H_RSC_IDLE" documentation="Throttle output (HeliRSC Servo) in percent while armed but motor interlock is disabled (throttle hold on). FOR COMBUSTION ENGINES. Sets the engine ground idle throttle percentage with clutch disengaged. This must be set to zero for electric helicopters under most situations. If the ESC has an autorotation window this can be set to keep the autorotation window open in the ESC. Consult the operating manual for your ESC to set it properly for this purpose" user="Standard">
 <field name="Range">0 50</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output Slew Rate" name="H_RSC_SLEWRATE" documentation="This controls the maximum rate at which the throttle output (HeliRSC servo) can change, as a percentage per second. A value of 100 means the throttle can change over its full range in one second. A value of zero gives unlimited slew rate." user="Standard">
+<param humanName="Throttle Slew Rate" name="H_RSC_SLEWRATE" documentation="This controls the maximum rate at which the throttle output (HeliRSC servo) can change, as a percentage per second. A value of 100 means the throttle can change over its full range in one second. A value of zero gives unlimited slew rate." user="Standard">
 <field name="Range">0 500</field>
 <field name="Increment">10</field>
 </param>
-<param humanName="RSC Throttle Output at 0% collective" name="H_RSC_THRCRV_0" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at the minimum collective pitch position. The 0 percent collective is defined by H_COL_MIN. Example: if the setup has -2 degree to +10 degree collective pitch setup, this setting would correspond to -2 degree of pitch." user="Standard">
+<param humanName="Throttle Curve at 0% Coll" name="H_RSC_THRCRV_0" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at the minimum collective pitch position. The 0 percent collective is defined by H_COL_MIN. Example: if the setup has -2 degree to +10 degree collective pitch setup, this setting would correspond to -2 degree of pitch." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output at 25% collective" name="H_RSC_THRCRV_25" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 25% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 25% of 12 degrees is 3 degrees, so this setting would correspond to +1 degree of pitch." user="Standard">
+<param humanName="Throttle Curve at 25% Coll" name="H_RSC_THRCRV_25" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 25% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 25% of 12 degrees is 3 degrees, so this setting would correspond to +1 degree of pitch." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output at 50% collective" name="H_RSC_THRCRV_50" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 50% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 50% of 12 degrees is 6 degrees, so this setting would correspond to +4 degree of pitch." user="Standard">
+<param humanName="Throttle Curve at 50% Coll" name="H_RSC_THRCRV_50" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 50% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 50% of 12 degrees is 6 degrees, so this setting would correspond to +4 degree of pitch." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output at 75% collective" name="H_RSC_THRCRV_75" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 75% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 75% of 12 degrees is 9 degrees, so this setting would correspond to +7 degree of pitch." user="Standard">
+<param humanName="Throttle Curve at 75% Coll" name="H_RSC_THRCRV_75" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at 75% of full collective travel where he 0 percent collective is defined by H_COL_MIN and 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, the total range is 12 degrees. 75% of 12 degrees is 9 degrees, so this setting would correspond to +7 degree of pitch." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="RSC Throttle Output at 100% collective" name="H_RSC_THRCRV_100" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at the minimum collective pitch position. The 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, this setting would correspond to +10 degree of pitch." user="Standard">
+<param humanName="Throttle Curve at 100% Coll" name="H_RSC_THRCRV_100" documentation="Sets the throttle output (HeliRSC servo) in percent for the throttle curve at the minimum collective pitch position. The 100 percent collective is defined by H_COL_MAX.  Example: if the setup has -2 degree to +10 degree collective pitch setup, this setting would correspond to +10 degree of pitch." user="Standard">
 <field name="Range">0 100</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="Main Rotor Governor RPM Setpoint" name="H_RSC_GOV_SETPNT" documentation="Main rotor rpm setting that governor maintains when engaged.  Set to the rotor rpm your helicopter runs in flight. When a speed sensor is installed the rotor governor maintains this speed. For governor operation this should be set 10 rpm higher than the actual desired headspeed to allow for governor droop" user="Standard">
+<param humanName="Rotor Governor Setpoint" name="H_RSC_GOV_SETPNT" documentation="Main rotor rpm setting that governor maintains when engaged.  Set to the rotor rpm your helicopter runs in flight. When a speed sensor is installed the rotor governor maintains this speed. For governor operation this should be set 10 rpm higher than the actual desired headspeed to allow for governor droop" user="Standard">
 <field name="Range">800 3500</field>
 <field name="Increment">10</field>
 <field name="Units">RPM</field>
 <field name="UnitText">Revolutions Per Minute</field>
 </param>
-<param humanName="Throttle Percentage for Governor Disengage" name="H_RSC_GOV_DISGAG" documentation="Percentage of throttle where the governor will disengage to allow return to flight idle power. Typically should be set to the same value as flight idle throttle (the very lowest throttle setting on the throttle curve). The governor disengage can be disabled by setting this value to zero and using the pull-down from the governor TCGAIN to reduce power to flight idle with the collective at it's lowest throttle setting on the throttle curve." user="Standard">
+<param humanName="Governor Disengage Throttle" name="H_RSC_GOV_DISGAG" documentation="Percentage of throttle where the governor will disengage to allow return to flight idle power. Typically should be set to the same value as flight idle throttle (the very lowest throttle setting on the throttle curve). The governor disengage can be disabled by setting this value to zero and using the pull-down from the governor TCGAIN to reduce power to flight idle with the collective at it's lowest throttle setting on the throttle curve." user="Standard">
 <field name="Range">0 50</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
 <field name="UnitText">percent</field>
 </param>
-<param humanName="Governor Droop Response Setting" name="H_RSC_GOV_DROOP" documentation="Governor droop response under load, normal settings of 0-100%. Higher value is quicker response but may cause surging. Setting to zero disables the governor. Adjust this to be as aggressive as possible without getting surging or over-run on headspeed when the governor engages. Setting over 100% is allowable for some two-stage turbine engines to provide scheduling of the gas generator for proper torque response of the N2 spool" user="Standard">
+<param humanName="Governor Droop Response" name="H_RSC_GOV_DROOP" documentation="Governor droop response under load, normal settings of 0-100%. Higher value is quicker response but may cause surging. Setting to zero disables the governor. Adjust this to be as aggressive as possible without getting surging or over-run on headspeed when the governor engages. Setting over 100% is allowable for some two-stage turbine engines to provide scheduling of the gas generator for proper torque response of the N2 spool" user="Standard">
 <field name="Range">0 150</field>
 <field name="Increment">1</field>
 <field name="Units">%</field>
@@ -5372,29 +5337,29 @@
 </param>
 </parameters>
 <parameters name="IM_">
-<param humanName="Stabilize Mode Collective Point 1" name="IM_STAB_COL_1" documentation="Helicopter's minimum collective pitch setting at zero throttle input in Stabilize mode" user="Standard">
-<field name="Range">0 500</field>
+<param humanName="Stabilize Collective Low" name="IM_STB_COL_1" documentation="Helicopter's minimum collective pitch setting at zero collective stick input in Stabilize mode.  Set this as a percent of collective range given by H_COL_MAX minus H_COL_MIN." user="Standard">
+<field name="Range">0 50</field>
 <field name="Increment">1</field>
-<field name="Units">d%</field>
-<field name="UnitText">decipercent</field>
+<field name="Units">%</field>
+<field name="UnitText">percent</field>
 </param>
-<param humanName="Stabilize Mode Collective Point 2" name="IM_STAB_COL_2" documentation="Helicopter's collective pitch setting at mid-low throttle input in Stabilize mode" user="Standard">
-<field name="Range">0 500</field>
+<param humanName="Stabilize Collective Mid-Low" name="IM_STB_COL_2" documentation="Helicopter's collective pitch setting at mid-low (40%) collective stick input in Stabilize mode. Set this as a percent of collective range given by H_COL_MAX minus H_COL_MIN." user="Standard">
+<field name="Range">0 50</field>
 <field name="Increment">1</field>
-<field name="Units">d%</field>
-<field name="UnitText">decipercent</field>
+<field name="Units">%</field>
+<field name="UnitText">percent</field>
 </param>
-<param humanName="Stabilize Mode Collective Point 3" name="IM_STAB_COL_3" documentation="Helicopter's collective pitch setting at mid-high throttle input in Stabilize mode" user="Standard">
-<field name="Range">500 1000</field>
+<param humanName="Stabilize Collective Mid-High" name="IM_STB_COL_3" documentation="Helicopter's collective pitch setting at mid-high (60%) collective stick input in Stabilize mode. Set this as a percent of collective range given by H_COL_MAX minus H_COL_MIN." user="Standard">
+<field name="Range">50 100</field>
 <field name="Increment">1</field>
-<field name="Units">d%</field>
-<field name="UnitText">decipercent</field>
+<field name="Units">%</field>
+<field name="UnitText">percent</field>
 </param>
-<param humanName="Stabilize Mode Collective Point 4" name="IM_STAB_COL_4" documentation="Helicopter's maximum collective pitch setting at full throttle input in Stabilize mode" user="Standard">
-<field name="Range">500 1000</field>
+<param humanName="Stabilize Collective High" name="IM_STB_COL_4" documentation="Helicopter's maximum collective pitch setting at full collective stick input in Stabilize mode. Set this as a percent of collective range given by H_COL_MAX minus H_COL_MIN." user="Standard">
+<field name="Range">50 100</field>
 <field name="Increment">1</field>
-<field name="Units">d%</field>
-<field name="UnitText">decipercent</field>
+<field name="Units">%</field>
+<field name="UnitText">percent</field>
 </param>
 <param humanName="Acro Mode Collective Expo" name="IM_ACRO_COL_EXP" documentation="Used to soften collective pitch inputs near center point in Acro mode." user="Advanced">
 <values>
