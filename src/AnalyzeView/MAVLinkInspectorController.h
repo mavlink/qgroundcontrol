@@ -29,6 +29,7 @@ class MAVLinkInspectorController;
 class QGCMAVLinkMessageField : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString      name        READ name       CONSTANT)
+    Q_PROPERTY(QString      label       READ label      CONSTANT)
     Q_PROPERTY(QString      type        READ type       CONSTANT)
     Q_PROPERTY(QString      value       READ value      NOTIFY valueChanged)
     Q_PROPERTY(qreal        rangeMin    READ rangeMin   NOTIFY rangeMinChanged)
@@ -40,6 +41,7 @@ public:
     QGCMAVLinkMessageField(QGCMAVLinkMessage* parent, QString name, QString type);
 
     QString     name            () { return _name;  }
+    QString     label           ();
     QString     type            () { return _type;  }
     QString     value           () { return _value; }
     qreal       rangeMin        () { return _rangeMin; }
@@ -173,6 +175,7 @@ public:
     Q_PROPERTY(QDateTime            rangeXMin       READ rangeXMin          NOTIFY rangeMinXChanged)
     Q_PROPERTY(QDateTime            rangeXMax       READ rangeXMax          NOTIFY rangeMaxXChanged)
 
+    Q_PROPERTY(QStringList          timeScales      READ timeScales         CONSTANT)
     Q_PROPERTY(quint32              timeScale       READ timeScale          WRITE  setTimeScale  NOTIFY timeScaleChanged)
 
     Q_INVOKABLE void        updateSeries    (int index, QAbstractSeries *series);
@@ -180,12 +183,13 @@ public:
     QmlObjectListModel*     vehicles        () { return &_vehicles;     }
     QGCMAVLinkVehicle*      activeVehicle   () { return _activeVehicle; }
     QStringList             vehicleNames    () { return _vehicleNames;  }
-    quint32                 timeScale       () { return _timeScale; }
-    QVariantList            chartFields     () { return _chartFields; }
-    QDateTime               rangeXMin       () { return _rangeXMin; }
-    QDateTime               rangeXMax       () { return _rangeXMax; }
+    quint32                 timeScale       () { return _timeScale;     }
+    QStringList             timeScales      () { return _timeScales;    }
+    QVariantList            chartFields     () { return _chartFields;   }
+    QDateTime               rangeXMin       () { return _rangeXMin;     }
+    QDateTime               rangeXMax       () { return _rangeXMax;     }
 
-    void                    setTimeScale    (quint32 t) { _timeScale = t; emit timeScaleChanged(); }
+    void                    setTimeScale    (quint32 t);
     int                     chartFieldCount () { return _chartFields.count(); }
     void                    addChartField   (QGCMAVLinkMessageField* field);
     void                    delChartField   (QGCMAVLinkMessageField* field);
@@ -212,15 +216,15 @@ private:
     QGCMAVLinkVehicle*  _findVehicle    (uint8_t id);
 
 private:
-    int         _selectedSystemID       = 0;                    ///< Currently selected system
-    int         _selectedComponentID    = 0;                    ///< Currently selected component
-    quint32     _timeScale              = 10;                   ///< 10 Seconds
-    QDateTime   _rangeXMin;
-    QDateTime   _rangeXMax;
-
-    QGCMAVLinkVehicle*  _activeVehicle = nullptr;
+    int                 _selectedSystemID       = 0;                    ///< Currently selected system
+    int                 _selectedComponentID    = 0;                    ///< Currently selected component
+    QStringList         _timeScales;
+    quint32             _timeScale              = 0;                    ///< 5 Seconds
+    QDateTime           _rangeXMin;
+    QDateTime           _rangeXMax;
+    QGCMAVLinkVehicle*  _activeVehicle          = nullptr;
     QTimer              _updateTimer;
     QStringList         _vehicleNames;
-    QmlObjectListModel  _vehicles;                              //-- List of QGCMAVLinkVehicle
+    QmlObjectListModel  _vehicles;                                      ///< List of QGCMAVLinkVehicle
     QVariantList        _chartFields;
 };

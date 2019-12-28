@@ -29,6 +29,13 @@ QGCMAVLinkMessageField::QGCMAVLinkMessageField(QGCMAVLinkMessage *parent, QStrin
 }
 
 //-----------------------------------------------------------------------------
+QString
+QGCMAVLinkMessageField::label()
+{
+    return QString(_msg->name() + ": " + _name);
+}
+
+//-----------------------------------------------------------------------------
 void
 QGCMAVLinkMessageField::setSelectable(bool sel)
 {
@@ -486,6 +493,12 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(0);
     _rangeXMin = QDateTime::fromMSecsSinceEpoch(std::numeric_limits<qint64>::max());
+    _timeScales << tr("5 Sec");
+    _timeScales << tr("10 Sec");
+    _timeScales << tr("30 Sec");
+    _timeScales << tr("1 Min");
+    _timeScales << tr("2 Min");
+    _timeScales << tr("5 Min");
 }
 
 //-----------------------------------------------------------------------------
@@ -651,11 +664,28 @@ MAVLinkInspectorController::updateSeries(int index, QAbstractSeries* series)
 
 //-----------------------------------------------------------------------------
 void
+MAVLinkInspectorController::setTimeScale(quint32 t)
+{
+    _timeScale = t;
+    emit timeScaleChanged();
+    updateXRange();
+}
+
+//-----------------------------------------------------------------------------
+void
 MAVLinkInspectorController::updateXRange()
 {
+    int ts = 5 * 1000;
+    switch(_timeScale) {
+        case 1: ts = 10 * 1000; break;
+        case 2: ts = 30 * 1000; break;
+        case 3: ts = 60 * 1000; break;
+        case 4: ts = 2 * 60 * 1000; break;
+        case 5: ts = 5 * 60 * 1000; break;
+    }
     qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
-    _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - (60 * 1000));
+    _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - ts);
     emit rangeMinXChanged();
     emit rangeMaxXChanged();
 }
