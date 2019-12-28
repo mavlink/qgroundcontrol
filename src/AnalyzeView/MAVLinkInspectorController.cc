@@ -496,9 +496,7 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     _timeScales << tr("5 Sec");
     _timeScales << tr("10 Sec");
     _timeScales << tr("30 Sec");
-    _timeScales << tr("1 Min");
-    _timeScales << tr("2 Min");
-    _timeScales << tr("5 Min");
+    _timeScales << tr("60 Sec");
 }
 
 //-----------------------------------------------------------------------------
@@ -680,8 +678,6 @@ MAVLinkInspectorController::updateXRange()
         case 1: ts = 10 * 1000; break;
         case 2: ts = 30 * 1000; break;
         case 3: ts = 60 * 1000; break;
-        case 4: ts = 2 * 60 * 1000; break;
-        case 5: ts = 5 * 60 * 1000; break;
     }
     qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
