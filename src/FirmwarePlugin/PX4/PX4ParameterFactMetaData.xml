@@ -973,6 +973,10 @@ Set -1 to disable the check</short_desc>
       <max>180</max>
       <unit>deg</unit>
     </parameter>
+    <parameter default="1" name="COM_ARM_MAG_STR" type="INT32">
+      <short_desc>Enable mag strength preflight check</short_desc>
+      <long_desc>Deny arming if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+    </parameter>
     <parameter default="0" name="COM_ARM_MIS_REQ" type="INT32">
       <short_desc>Require valid mission to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a valid mission.</long_desc>
