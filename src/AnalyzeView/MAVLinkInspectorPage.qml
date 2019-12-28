@@ -12,7 +12,7 @@ import QtQuick.Controls             2.4
 import QtQuick.Layouts              1.11
 import QtQuick.Dialogs              1.3
 import QtQuick.Window               2.2
-import QtCharts                     2.1
+import QtCharts                     2.3
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -37,8 +37,8 @@ AnalyzePage {
 
     Window {
         id:             chartWindow
-        width:          mainWindow.width  * 0.5
-        height:         mainWindow.height * 0.5
+        width:          ScreenTools.defaultFontPixelWidth  * 80
+        height:         ScreenTools.defaultFontPixelHeight * 20
         visible:        true
         title:          "Chart"
         Rectangle {
@@ -64,12 +64,27 @@ AnalyzePage {
                 theme:          ChartView.ChartThemeDark
                 antialiasing:   true
                 animationOptions: ChartView.NoAnimation
+                legend.font.pixelSize: ScreenTools.smallFontPointSize
+                margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
+
+                DateTimeAxis {
+                    id:             axisX
+                    min:            visible ? controller.rangeXMin : new Date()
+                    max:            visible ? controller.rangeXMax : new Date()
+                    visible:        controller.chartFieldCount > 0
+                    format:         "mm:ss"
+                    tickCount:      5
+                    gridVisible:    true
+                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                }
 
                 ValueAxis {
                     id:             axisY1
                     min:            visible ? controller.chartFields[0].rangeMin : 0
                     max:            visible ? controller.chartFields[0].rangeMax : 0
                     visible:        controller.chartFieldCount > 0
+                    lineVisible:    false
+                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
                 }
 
                 ValueAxis {
@@ -77,13 +92,8 @@ AnalyzePage {
                     min:            visible ? controller.chartFields[1].rangeMin : 0
                     max:            visible ? controller.chartFields[1].rangeMax : 0
                     visible:        controller.chartFieldCount > 1
-                }
-
-                DateTimeAxis {
-                    id:             axisX
-                    min:            visible ? controller.rangeXMin : new Date()
-                    max:            visible ? controller.rangeXMax : new Date()
-                    visible:        controller.chartFieldCount > 0
+                    lineVisible:    false
+                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
                 }
 
                 LineSeries {
@@ -107,7 +117,7 @@ AnalyzePage {
             }
             Timer {
                 id:         refreshTimer
-                interval:   1 / 30 * 1000 // 30 Hz
+                interval:   1 / 20 * 1000 // 20 Hz
                 running:    controller.chartFieldCount > 0
                 repeat:     true
                 onTriggered: {
@@ -116,6 +126,17 @@ AnalyzePage {
                     }
                     if(controller.chartFieldCount > 1) {
                         controller.updateSeries(1, lineSeries2)
+                    } else {
+                        if(lineSeries2.count > 0) {
+                            lineSeries2.removePoints(0,lineSeries2.count)
+                        }
+                    }
+                }
+                onRunningChanged: {
+                    if(!running) {
+                        if(lineSeries1.count > 0) {
+                            lineSeries1.removePoints(0,lineSeries1.count)
+                        }
                     }
                 }
             }
