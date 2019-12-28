@@ -153,8 +153,8 @@ Rectangle {
                     }
                     Window {
                         id:             analyzeWidgetWindow
-                        width:          mainWindow.width  * 0.5
-                        height:         mainWindow.height * 0.5
+                        width:          ScreenTools.defaultFontPixelWidth  * 100
+                        height:         ScreenTools.defaultFontPixelHeight * 40
                         visible:        false
                         title:          buttonText
                         Rectangle {
