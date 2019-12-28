@@ -35,6 +35,7 @@ AnalyzePage {
         id: controller
     }
 
+    /*
     Window {
         id:             chartWindow
         width:          ScreenTools.defaultFontPixelWidth  * 80
@@ -142,6 +143,7 @@ AnalyzePage {
             }
         }
     }
+    */
 
     Component {
         id:  headerComponent
@@ -281,7 +283,6 @@ AnalyzePage {
                                 Layout.column:      1
                                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 30
                                 Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 30
-                                wrapMode:           Text.WordWrap
                                 text:               object.value
                             }
                         }
@@ -302,6 +303,104 @@ AnalyzePage {
                                 checked:            enabled ? object.selected : false
                                 onClicked:          { if(enabled) object.selected = checked }
                             }
+                        }
+                    }
+                    Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
+                    ChartView {
+                        id:             chartView
+                        Layout.fillWidth: true
+                        height:         ScreenTools.defaultFontPixelHeight * 20
+                        theme:          ChartView.ChartThemeDark
+                        antialiasing:   true
+                        visible:        controller.chartFieldCount > 0
+                        animationOptions: ChartView.NoAnimation
+                        legend.font.pixelSize: ScreenTools.smallFontPointSize
+                        margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
+                        margins.top:    ScreenTools.defaultFontPixelHeight * 1.5
+
+                        DateTimeAxis {
+                            id:             axisX
+                            min:            visible ? controller.rangeXMin : new Date()
+                            max:            visible ? controller.rangeXMax : new Date()
+                            visible:        controller.chartFieldCount > 0
+                            format:         "mm:ss"
+                            tickCount:      5
+                            gridVisible:    true
+                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                        }
+
+                        ValueAxis {
+                            id:             axisY1
+                            min:            visible ? controller.chartFields[0].rangeMin : 0
+                            max:            visible ? controller.chartFields[0].rangeMax : 0
+                            visible:        controller.chartFieldCount > 0
+                            lineVisible:    false
+                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                        }
+
+                        ValueAxis {
+                            id:             axisY2
+                            min:            visible ? controller.chartFields[1].rangeMin : 0
+                            max:            visible ? controller.chartFields[1].rangeMax : 0
+                            visible:        controller.chartFieldCount > 1
+                            lineVisible:    false
+                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                        }
+
+                        LineSeries {
+                            id:             lineSeries1
+                            name:           controller.chartFieldCount ? controller.chartFields[0].label : ""
+                            axisX:          axisX
+                            axisY:          axisY1
+                            color:          qgcPal.colorRed
+                            useOpenGL:      true
+                        }
+
+                        LineSeries {
+                            id:             lineSeries2
+                            name:           controller.chartFieldCount > 1 ? controller.chartFields[1].label : ""
+                            axisX:          axisX
+                            axisYRight:     axisY2
+                            color:          qgcPal.colorGreen
+                            useOpenGL:      true
+                        }
+
+                        Timer {
+                            id:         refreshTimer
+                            interval:   1 / 20 * 1000 // 20 Hz
+                            running:    controller.chartFieldCount > 0
+                            repeat:     true
+                            onTriggered: {
+                                if(controller.chartFieldCount > 0) {
+                                    controller.updateSeries(0, lineSeries1)
+                                }
+                                if(controller.chartFieldCount > 1) {
+                                    controller.updateSeries(1, lineSeries2)
+                                } else {
+                                    if(lineSeries2.count > 0) {
+                                        lineSeries2.removePoints(0,lineSeries2.count)
+                                    }
+                                }
+                            }
+                            onRunningChanged: {
+                                if(!running) {
+                                    if(lineSeries1.count > 0) {
+                                        lineSeries1.removePoints(0,lineSeries1.count)
+                                    }
+                                }
+                            }
+                        }
+                        QGCComboBox {
+                            id:                 timeScaleSelector
+                            anchors.left:       parent.left
+                            anchors.leftMargin: ScreenTools.defaultFontPixelWidth  * 4
+                            anchors.top:        parent.top
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 1.5
+                            width:              ScreenTools.defaultFontPixelWidth  * 10
+                            height:             ScreenTools.defaultFontPixelHeight * 1.5
+                            model:              controller.timeScales
+                            currentIndex:       controller.timeScale
+                            onActivated:        controller.timeScale = index
                         }
                     }
                 }
