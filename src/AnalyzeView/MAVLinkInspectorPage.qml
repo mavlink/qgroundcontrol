@@ -44,50 +44,64 @@ AnalyzePage {
         Rectangle {
             color:          qgcPal.window
             anchors.fill:   parent
+            QGCComboBox {
+                id:             timeScaleSelector
+                anchors.margins: ScreenTools.defaultFontPixelWidth
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                width:          ScreenTools.defaultFontPixelWidth  * 10
+                height:         ScreenTools.defaultFontPixelHeight * 1.5
+                model:          controller.timeScales
+                currentIndex:   controller.timeScale
+                onActivated:    controller.timeScale = index
+            }
             ChartView {
                 id:             chartView
-                anchors.fill:   parent
+                anchors.right:  parent.right
+                anchors.left:   parent.left
+                anchors.top:    timeScaleSelector.bottom
+                anchors.bottom: parent.bottom
                 theme:          ChartView.ChartThemeDark
                 antialiasing:   true
                 animationOptions: ChartView.NoAnimation
 
                 ValueAxis {
-                    id:         axisY1
-                    min:        visible ? controller.chartFields[0].rangeMin : 0
-                    max:        visible ? controller.chartFields[0].rangeMax : 0
-                    visible:    controller.chartFieldCount > 0
+                    id:             axisY1
+                    min:            visible ? controller.chartFields[0].rangeMin : 0
+                    max:            visible ? controller.chartFields[0].rangeMax : 0
+                    visible:        controller.chartFieldCount > 0
                 }
 
                 ValueAxis {
-                    id:         axisY2
-                    min:        visible ? controller.chartFields[1].rangeMin : 0
-                    max:        visible ? controller.chartFields[1].rangeMax : 0
-                    visible:    controller.chartFieldCount > 1
+                    id:             axisY2
+                    min:            visible ? controller.chartFields[1].rangeMin : 0
+                    max:            visible ? controller.chartFields[1].rangeMax : 0
+                    visible:        controller.chartFieldCount > 1
                 }
 
                 DateTimeAxis {
-                    id:         axisX
-                    min:        visible ? controller.rangeXMin : new Date()
-                    max:        visible ? controller.rangeXMax : new Date()
-                    format:     "hh:mm:ss.zzz"
-                    tickCount:  6
-                    visible:    controller.chartFieldCount > 0
+                    id:             axisX
+                    min:            visible ? controller.rangeXMin : new Date()
+                    max:            visible ? controller.rangeXMax : new Date()
+                    visible:        controller.chartFieldCount > 0
                 }
 
                 LineSeries {
-                    id:         lineSeries1
-                    name:       controller.chartFieldCount ? controller.chartFields[0].name : ""
-                    axisX:      axisX
-                    axisY:      axisY1
-                    useOpenGL:  true
+                    id:             lineSeries1
+                    name:           controller.chartFieldCount ? controller.chartFields[0].label : ""
+                    axisX:          axisX
+                    axisY:          axisY1
+                    color:          qgcPal.colorRed
+                    useOpenGL:      true
                 }
 
                 LineSeries {
-                    id:         lineSeries2
-                    name:       controller.chartFieldCount > 1 ? controller.chartFields[1].name : ""
-                    axisX:      axisX
-                    axisYRight: axisY2
-                    useOpenGL:  true
+                    id:             lineSeries2
+                    name:           controller.chartFieldCount > 1 ? controller.chartFields[1].label : ""
+                    axisX:          axisX
+                    axisYRight:     axisY2
+                    color:          qgcPal.colorGreen
+                    useOpenGL:      true
                 }
 
             }
