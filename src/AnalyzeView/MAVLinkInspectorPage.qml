@@ -11,6 +11,8 @@ import QtQuick                      2.11
 import QtQuick.Controls             2.4
 import QtQuick.Layouts              1.11
 import QtQuick.Dialogs              1.3
+import QtQuick.Window               2.2
+import QtCharts                     2.1
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -31,6 +33,79 @@ AnalyzePage {
 
     MAVLinkInspectorController {
         id: controller
+    }
+
+    Window {
+        id:             chartWindow
+        width:          mainWindow.width  * 0.5
+        height:         mainWindow.height * 0.5
+        visible:        true
+        title:          "Chart"
+        Rectangle {
+            color:          qgcPal.window
+            anchors.fill:   parent
+            ChartView {
+                id:             chartView
+                anchors.fill:   parent
+                theme:          ChartView.ChartThemeDark
+                antialiasing:   true
+                animationOptions: ChartView.NoAnimation
+
+                ValueAxis {
+                    id:         axisY1
+                    min:        visible ? controller.chartFields[0].rangeMin : 0
+                    max:        visible ? controller.chartFields[0].rangeMax : 0
+                    visible:    controller.chartFieldCount > 0
+                }
+
+                ValueAxis {
+                    id:         axisY2
+                    min:        visible ? controller.chartFields[1].rangeMin : 0
+                    max:        visible ? controller.chartFields[1].rangeMax : 0
+                    visible:    controller.chartFieldCount > 1
+                }
+
+                DateTimeAxis {
+                    id:         axisX
+                    min:        visible ? controller.rangeXMin : new Date()
+                    max:        visible ? controller.rangeXMax : new Date()
+                    format:     "hh:mm:ss.zzz"
+                    tickCount:  6
+                    visible:    controller.chartFieldCount > 0
+                }
+
+                LineSeries {
+                    id:         lineSeries1
+                    name:       controller.chartFieldCount ? controller.chartFields[0].name : ""
+                    axisX:      axisX
+                    axisY:      axisY1
+                    useOpenGL:  true
+                }
+
+                LineSeries {
+                    id:         lineSeries2
+                    name:       controller.chartFieldCount > 1 ? controller.chartFields[1].name : ""
+                    axisX:      axisX
+                    axisYRight: axisY2
+                    useOpenGL:  true
+                }
+
+            }
+            Timer {
+                id:         refreshTimer
+                interval:   1 / 30 * 1000 // 30 Hz
+                running:    controller.chartFieldCount > 0
+                repeat:     true
+                onTriggered: {
+                    if(controller.chartFieldCount > 0) {
+                        controller.updateSeries(0, lineSeries1)
+                    }
+                    if(controller.chartFieldCount > 1) {
+                        controller.updateSeries(1, lineSeries2)
+                    }
+                }
+            }
+        }
     }
 
     Component {
@@ -73,6 +148,7 @@ AnalyzePage {
         RowLayout {
             width:                  availableWidth
             height:                 availableHeight
+            spacing:                ScreenTools.defaultFontPixelWidth
             //-- Messages (Buttons)
             QGCFlickable {
                 id:                 buttonGrid
@@ -90,7 +166,7 @@ AnalyzePage {
                     Repeater {
                         model:      curVehicle ? curVehicle.messages : []
                         delegate:   MAVLinkMessageButton {
-                            text:       object.name
+                            text:       object.name + (object.selected ?  " *" : "")
                             compID:     object.cid
                             checked:    curMessageIndex === index
                             messageHz:  object.messageHz
@@ -151,7 +227,7 @@ AnalyzePage {
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
                     GridLayout {
-                        columns:        3
+                        columns:        4
                         columnSpacing:  ScreenTools.defaultFontPixelWidth
                         rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
                         Repeater {
@@ -180,6 +256,16 @@ AnalyzePage {
                                 Layout.row:         index
                                 Layout.column:      2
                                 text:               object.type
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index
+                                Layout.column:      3
+                                enabled:            object.selected || (object.selectable && controller.chartFieldCount < 2)
+                                checked:            enabled ? object.selected : false
+                                onClicked:          { if(enabled) object.selected = checked }
                             }
                         }
                     }
