@@ -314,9 +314,9 @@ AnalyzePage {
                         antialiasing:   true
                         visible:        controller.chartFieldCount > 0
                         animationOptions: ChartView.NoAnimation
-                        legend.font.pixelSize: ScreenTools.smallFontPointSize
+                        legend.visible: false
                         margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
-                        margins.top:    ScreenTools.defaultFontPixelHeight * 1.5
+                        margins.top:    chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 
                         DateTimeAxis {
                             id:             axisX
@@ -336,6 +336,7 @@ AnalyzePage {
                             visible:        controller.chartFieldCount > 0
                             lineVisible:    false
                             labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                            labelsColor:    qgcPal.colorRed
                         }
 
                         ValueAxis {
@@ -345,6 +346,7 @@ AnalyzePage {
                             visible:        controller.chartFieldCount > 1
                             lineVisible:    false
                             labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                            labelsColor:    qgcPal.colorGreen
                         }
 
                         LineSeries {
@@ -390,17 +392,72 @@ AnalyzePage {
                                 }
                             }
                         }
-                        QGCComboBox {
-                            id:                 timeScaleSelector
+                        RowLayout {
+                            id:                 chartHeader
                             anchors.left:       parent.left
                             anchors.leftMargin: ScreenTools.defaultFontPixelWidth  * 4
+                            anchors.right:      parent.right
+                            anchors.rightMargin:ScreenTools.defaultFontPixelWidth  * 4
                             anchors.top:        parent.top
                             anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 1.5
-                            width:              ScreenTools.defaultFontPixelWidth  * 10
-                            height:             ScreenTools.defaultFontPixelHeight * 1.5
-                            model:              controller.timeScales
-                            currentIndex:       controller.timeScale
-                            onActivated:        controller.timeScale = index
+                            spacing:            0
+                            QGCLabel {
+                                text:               qsTr("Scale:");
+                                font.pixelSize:     ScreenTools.smallFontPointSize
+                                Layout.alignment:   Qt.AlignVCenter
+                            }
+                            QGCComboBox {
+                                id:                 timeScaleSelector
+                                width:              ScreenTools.defaultFontPixelWidth  * 10
+                                height:             ScreenTools.defaultFontPixelHeight
+                                model:              controller.timeScales
+                                currentIndex:       controller.timeScale
+                                onActivated:        controller.timeScale = index
+                                font.pixelSize:     ScreenTools.smallFontPointSize
+                                Layout.alignment:   Qt.AlignVCenter
+                            }
+                            GridLayout {
+                                columns:            3
+                                columnSpacing:      ScreenTools.defaultFontPixelWidth
+                                rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
+                                Layout.alignment:   Qt.AlignRight | Qt.AlignVCenter
+                                Layout.fillWidth:   true
+                                Repeater {
+                                    model:          controller.chartFieldCount ? controller.chartFields : []
+                                    delegate: QGCLabel {
+                                        text:               chartView.series(index).name
+                                        color:              chartView.series(index).color
+                                        font.pixelSize:     ScreenTools.smallFontPointSize
+                                        Layout.row:         index
+                                        Layout.column:      0
+                                        Layout.alignment:   Qt.AlignVCenter
+                                    }
+                                }
+                                Repeater {
+                                    model:          controller.chartFieldCount ? controller.chartFields : []
+                                    delegate: QGCLabel {
+                                        text:               qsTr("Range:");
+                                        font.pixelSize:     ScreenTools.smallFontPointSize
+                                        Layout.row:         index
+                                        Layout.column:      1
+                                        Layout.alignment:   Qt.AlignVCenter
+                                    }
+                                }
+                                Repeater {
+                                    model:          controller.chartFieldCount ? controller.chartFields : []
+                                    delegate: QGCComboBox {
+                                        width:              ScreenTools.defaultFontPixelWidth  * 12
+                                        height:             ScreenTools.defaultFontPixelHeight * 1.5
+                                        model:              modelData.rangeList
+                                        currentIndex:       modelData.range
+                                        onActivated:        modelData.range = index
+                                        font.pixelSize:     ScreenTools.smallFontPointSize
+                                        Layout.row:         index
+                                        Layout.column:      2
+                                        Layout.alignment:   Qt.AlignVCenter
+                                    }
+                                }
+                            }
                         }
                     }
                 }
