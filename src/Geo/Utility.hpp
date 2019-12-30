@@ -1,4 +1,4 @@
-/**
+﻿/**
  * \file Utility.hpp
  * \brief Header for GeographicLib::Utility class
  *
