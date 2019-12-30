@@ -32,10 +32,12 @@ class QGCMAVLinkMessageField : public QObject {
     Q_PROPERTY(QString      label       READ label      CONSTANT)
     Q_PROPERTY(QString      type        READ type       CONSTANT)
     Q_PROPERTY(QString      value       READ value      NOTIFY valueChanged)
+    Q_PROPERTY(QStringList  rangeList   READ rangeList  NOTIFY rangeListChanged)
     Q_PROPERTY(qreal        rangeMin    READ rangeMin   NOTIFY rangeMinChanged)
     Q_PROPERTY(qreal        rangeMax    READ rangeMax   NOTIFY rangeMaxChanged)
     Q_PROPERTY(bool         selectable  READ selectable NOTIFY selectableChanged)
     Q_PROPERTY(bool         selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(quint32      range       READ range      WRITE setRange      NOTIFY rangeChanged)
 
 public:
     QGCMAVLinkMessageField(QGCMAVLinkMessage* parent, QString name, QString type);
@@ -44,14 +46,17 @@ public:
     QString     label           ();
     QString     type            () { return _type;  }
     QString     value           () { return _value; }
+    QStringList rangeList       ();
     qreal       rangeMin        () { return _rangeMin; }
     qreal       rangeMax        () { return _rangeMax; }
     QList<QPointF> series       () { return _series; }
     bool        selectable      () { return _selectable; }
     bool        selected        () { return _selected; }
+    quint32     range           () { return _rangeIndex; }
 
     void        setSelectable   (bool sel);
     void        setSelected     (bool sel);
+    void        setRange        (quint32 r);
     void        updateValue     (QString newValue, qreal v);
 
 signals:
@@ -61,11 +66,21 @@ signals:
     void        selectableChanged   ();
     void        selectedChanged     ();
     void        valueChanged        ();
+    void        rangeListChanged    ();
+    void        rangeChanged        ();
 
 private:
     void        _updateSeries       ();
 
 private:
+
+    class Range_st : public QObject {
+    public:
+        Range_st(QObject* parent, const QString& l, qreal r);
+        QString     label;
+        qreal       range;
+    };
+
     QString     _type;
     QString     _name;
     QString     _value;
@@ -75,9 +90,13 @@ private:
     int         _dataIndex  = 0;
     qreal       _rangeMin   = 0;
     qreal       _rangeMax   = 0;
+    quint32     _rangeIndex = 0;    ///> Auto Range
+    qreal       _range      = 0;
+    QStringList _rangeList;
     QVector<qreal>      _values;
     QVector<quint64>    _times;
     QList<QPointF>      _series;
+    QList<Range_st*>    _rangeSt;
 };
 
 //-----------------------------------------------------------------------------
@@ -174,8 +193,7 @@ public:
     Q_PROPERTY(QVariantList         chartFields     READ chartFields        NOTIFY chartFieldCountChanged)
     Q_PROPERTY(QDateTime            rangeXMin       READ rangeXMin          NOTIFY rangeMinXChanged)
     Q_PROPERTY(QDateTime            rangeXMax       READ rangeXMax          NOTIFY rangeMaxXChanged)
-
-    Q_PROPERTY(QStringList          timeScales      READ timeScales         CONSTANT)
+    Q_PROPERTY(QStringList          timeScales      READ timeScales         NOTIFY timeScalesChanged)
     Q_PROPERTY(quint32              timeScale       READ timeScale          WRITE  setTimeScale  NOTIFY timeScaleChanged)
 
     Q_INVOKABLE void        updateSeries    (int index, QAbstractSeries *series);
@@ -184,7 +202,7 @@ public:
     QGCMAVLinkVehicle*      activeVehicle   () { return _activeVehicle; }
     QStringList             vehicleNames    () { return _vehicleNames;  }
     quint32                 timeScale       () { return _timeScale;     }
-    QStringList             timeScales      () { return _timeScales;    }
+    QStringList             timeScales      ();
     QVariantList            chartFields     () { return _chartFields;   }
     QDateTime               rangeXMin       () { return _rangeXMin;     }
     QDateTime               rangeXMax       () { return _rangeXMax;     }
@@ -202,6 +220,7 @@ signals:
     void timeScaleChanged               ();
     void rangeMinXChanged               ();
     void rangeMaxXChanged               ();
+    void timeScalesChanged              ();
 
 private slots:
     void _receiveMessage                (LinkInterface* link, mavlink_message_t message);
@@ -211,11 +230,18 @@ private slots:
     void _refreshFrequency              ();
 
 private:
-    void _reset                         ();
-
+    void                _reset          ();
     QGCMAVLinkVehicle*  _findVehicle    (uint8_t id);
 
 private:
+
+    class TimeScale_st : public QObject {
+    public:
+        TimeScale_st(QObject* parent, const QString& l, uint32_t t);
+        QString     label;
+        uint32_t    timeScale;
+    };
+
     int                 _selectedSystemID       = 0;                    ///< Currently selected system
     int                 _selectedComponentID    = 0;                    ///< Currently selected component
     QStringList         _timeScales;
@@ -227,4 +253,5 @@ private:
     QStringList         _vehicleNames;
     QmlObjectListModel  _vehicles;                                      ///< List of QGCMAVLinkVehicle
     QVariantList        _chartFields;
+    QList<TimeScale_st*>_timeScaleSt;
 };

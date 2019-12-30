@@ -19,6 +19,14 @@ QT_CHARTS_USE_NAMESPACE
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
 //-----------------------------------------------------------------------------
+QGCMAVLinkMessageField::Range_st::Range_st(QObject* parent, const QString& l, qreal r)
+    : QObject(parent)
+    , label(l)
+    , range(r)
+{
+}
+
+//-----------------------------------------------------------------------------
 QGCMAVLinkMessageField::QGCMAVLinkMessageField(QGCMAVLinkMessage *parent, QString name, QString type)
     : QObject(parent)
     , _type(type)
@@ -26,6 +34,47 @@ QGCMAVLinkMessageField::QGCMAVLinkMessageField(QGCMAVLinkMessage *parent, QStrin
     , _msg(parent)
 {
     qCDebug(MAVLinkInspectorLog) << "Field:" << name << type;
+    _rangeSt.append(new Range_st(this, tr("Auto"),    0));
+    _rangeSt.append(new Range_st(this, tr("10,000"),  10000));
+    _rangeSt.append(new Range_st(this, tr("1,000"),   1000));
+    _rangeSt.append(new Range_st(this, tr("100"),     100));
+    _rangeSt.append(new Range_st(this, tr("10"),      10));
+    _rangeSt.append(new Range_st(this, tr("1"),       1));
+    _rangeSt.append(new Range_st(this, tr("0.1"),     0.1));
+    _rangeSt.append(new Range_st(this, tr("0.01"),    0.01));
+    _rangeSt.append(new Range_st(this, tr("0.001"),   0.001));
+    _rangeSt.append(new Range_st(this, tr("0.0001"),  0.0001));
+    emit rangeListChanged();
+}
+
+//----------------------------------------------------------------------------------------
+QStringList
+QGCMAVLinkMessageField::rangeList()
+{
+    if(!_rangeList.count()) {
+        for(int i = 0; i < _rangeSt.count(); i++) {
+            _rangeList << _rangeSt[i]->label;
+        }
+    }
+    return _rangeList;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMAVLinkMessageField::setRange(quint32 r)
+{
+    if(r < static_cast<quint32>(_rangeSt.count())) {
+        _rangeIndex = r;
+        _range = _rangeSt[static_cast<int>(r)]->range;
+        emit rangeChanged();
+        //-- If not Auto, use defined range
+        if(_rangeIndex > 0) {
+            _rangeMin = -_range;
+            emit rangeMinChanged();
+            _rangeMax = _range;
+            emit rangeMaxChanged();
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -88,20 +137,23 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
             _times[_dataIndex]  = QGC::groundTimeMilliseconds();
             _dataIndex++;
         }
-        qreal vmin  = std::numeric_limits<qreal>::max();
-        qreal vmax  = std::numeric_limits<qreal>::min();
-        for(int i = 0; i < _values.count(); i++) {
-            qreal v = _values[i];
-            if(vmax < v) vmax = v;
-            if(vmin > v) vmin = v;
-        }
-        if(std::abs(_rangeMin - vmin) > 0.000001) {
-            _rangeMin = vmin;
-            emit rangeMinChanged();
-        }
-        if(std::abs(_rangeMax - vmax) > 0.000001) {
-            _rangeMax = vmax;
-            emit rangeMaxChanged();
+        //-- Auto Range
+        if(_rangeIndex == 0) {
+            qreal vmin  = std::numeric_limits<qreal>::max();
+            qreal vmax  = std::numeric_limits<qreal>::min();
+            for(int i = 0; i < _values.count(); i++) {
+                qreal v = _values[i];
+                if(vmax < v) vmax = v;
+                if(vmin > v) vmin = v;
+            }
+            if(std::abs(_rangeMin - vmin) > 0.000001) {
+                _rangeMin = vmin;
+                emit rangeMinChanged();
+            }
+            if(std::abs(_rangeMax - vmax) > 0.000001) {
+                _rangeMax = vmax;
+                emit rangeMaxChanged();
+            }
         }
         _msg->msgCtl()->updateXRange();
         _updateSeries();
@@ -480,6 +532,14 @@ QGCMAVLinkVehicle::_checkCompID(QGCMAVLinkMessage* message)
 }
 
 //-----------------------------------------------------------------------------
+MAVLinkInspectorController::TimeScale_st::TimeScale_st(QObject* parent, const QString& l, uint32_t t)
+    : QObject(parent)
+    , label(l)
+    , timeScale(t)
+{
+}
+
+//-----------------------------------------------------------------------------
 MAVLinkInspectorController::MAVLinkInspectorController()
 {
     MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
@@ -493,10 +553,11 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     _rangeXMax = QDateTime::fromMSecsSinceEpoch(0);
     _rangeXMin = QDateTime::fromMSecsSinceEpoch(std::numeric_limits<qint64>::max());
-    _timeScales << tr("5 Sec");
-    _timeScales << tr("10 Sec");
-    _timeScales << tr("30 Sec");
-    _timeScales << tr("60 Sec");
+    _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));
+    _timeScaleSt.append(new TimeScale_st(this, tr("10 Sec"), 10 * 1000));
+    _timeScaleSt.append(new TimeScale_st(this, tr("30 Sec"), 30 * 1000));
+    _timeScaleSt.append(new TimeScale_st(this, tr("60 Sec"), 60 * 1000));
+    emit timeScalesChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -505,6 +566,18 @@ MAVLinkInspectorController::~MAVLinkInspectorController()
     _reset();
 }
 
+
+//----------------------------------------------------------------------------------------
+QStringList
+MAVLinkInspectorController::timeScales()
+{
+    if(!_timeScales.count()) {
+        for(int i = 0; i < _timeScaleSt.count(); i++) {
+            _timeScales << _timeScaleSt[i]->label;
+        }
+    }
+    return _timeScales;
+}
 
 //----------------------------------------------------------------------------------------
 void
@@ -673,15 +746,11 @@ MAVLinkInspectorController::setTimeScale(quint32 t)
 void
 MAVLinkInspectorController::updateXRange()
 {
-    int ts = 5 * 1000;
-    switch(_timeScale) {
-        case 1: ts = 10 * 1000; break;
-        case 2: ts = 30 * 1000; break;
-        case 3: ts = 60 * 1000; break;
+    if(_timeScale < static_cast<quint32>(_timeScaleSt.count())) {
+        qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
+        _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
+        _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - _timeScaleSt[static_cast<int>(_timeScale)]->timeScale);
+        emit rangeMinXChanged();
+        emit rangeMaxXChanged();
     }
-    qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
-    _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
-    _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - ts);
-    emit rangeMinXChanged();
-    emit rangeMaxXChanged();
 }
