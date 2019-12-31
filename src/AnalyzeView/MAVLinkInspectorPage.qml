@@ -286,6 +286,7 @@ AnalyzePage {
                                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 30
                                 Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 30
                                 text:               object.value
+                                elide:              Text.ElideRight
                             }
                         }
                         Repeater {
@@ -301,14 +302,14 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      3
-                                enabled:            (object.series !== null && object.left) || (object.selectable && controller.seriesCount < chartView.maxSeriesCount)
+                                enabled:            (object.series !== null && object.left) || (object.selectable && controller.seriesCount < 12)
                                 checked:            enabled ? (object.series !== null && object.left) : false
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {
-                                            chartView.addDimension(object, true)
+                                            chart1.addDimension(object, true)
                                         } else {
-                                            chartView.delDimension(object)
+                                            chart1.delDimension(object)
                                         }
                                     }
                                 }
@@ -319,14 +320,14 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      4
-                                enabled:            (object.series !== null && !object.left) || (object.selectable && controller.seriesCount < chartView.maxSeriesCount && (object.series === null && !object.left))
+                                enabled:            (object.series !== null && !object.left) || (object.selectable && controller.seriesCount < 12 && (object.series === null && !object.left))
                                 checked:            enabled ? (object.series !== null && !object.left) : false
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {
-                                            chartView.addDimension(object, false)
+                                            chart2.addDimension(object, false)
                                         } else {
-                                            chartView.delDimension(object)
+                                            chart2.delDimension(object)
                                         }
                                     }
                                 }
@@ -334,135 +335,21 @@ AnalyzePage {
                         }
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
-                    ChartView {
-                        id:             chartView
+                    MAVLinkChart {
+                        id:         chart1
+                        height:     ScreenTools.defaultFontPixelHeight * 20
+                        visible:    controller.leftChartFields.length > 0
+                        min:        controller.leftRangeMin
+                        max:        controller.leftRangeMax
                         Layout.fillWidth: true
-                        height:         ScreenTools.defaultFontPixelHeight * 20
-                        theme:          ChartView.ChartThemeDark
-                        antialiasing:   true
-                        visible:        controller.leftChartFields.length > 0 || controller.rightChartFields.length > 0
-                        animationOptions: ChartView.NoAnimation
-                        legend.visible: false
-                        margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
-                        margins.top:    chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
-
-                        property int maxSeriesCount:    seriesColors.length
-                        property var seriesColors:      ["antiquewhite", "aqua", "chartreuse", "chocolate", "crimson", "darkturquoise", "aquamarine", "azure", "coral", "cornflowerblue", "darkorange", "gold", "hotpink", "lavenderblush", "lightskyblue"]
-
-                        function addDimension(field, left) {
-                            console.log(field.name + ' ' + field + ' AxisY1: ' + axisY1 + ' AxisY2: ' + axisY2)
-                            console.log(controller.seriesCount + ' ' + chartView.seriesColors[controller.seriesCount])
-                            var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
-                            serie.axisX = axisX
-                            if(left) {
-                                serie.axisY = axisY1
-                            } else {
-                                serie.axisYRight = axisY2
-                            }
-                            serie.useOpenGL = true
-                            serie.color = chartView.seriesColors[controller.seriesCount]
-                            controller.addSeries(field, serie, left)
-                        }
-
-                        function delDimension(field) {
-                            chartView.removeSeries(field.series)
-                            controller.delSeries(field)
-                            console.log('Remove: ' + controller.seriesCount + ' ' + field.name)
-                        }
-
-                        DateTimeAxis {
-                            id:             axisX
-                            min:            visible ? controller.rangeXMin : new Date()
-                            max:            visible ? controller.rangeXMax : new Date()
-                            format:         "hh:mm:ss"
-                            tickCount:      5
-                            gridVisible:    true
-                            labelsFont.family:      "Fixed"
-                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
-                        }
-
-                        ValueAxis {
-                            id:             axisY1
-                            min:            visible ? controller.leftRangeMin : 0
-                            max:            visible ? controller.leftRangeMax : 0
-                            visible:        controller.leftChartFields.length > 0
-                            lineVisible:    false
-                            labelsFont.family:      "Fixed"
-                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
-                            //labelsColor:    qgcPal.colorRed
-                        }
-
-                        ValueAxis {
-                            id:             axisY2
-                            min:            visible ? controller.rightRangeMin : 0
-                            max:            visible ? controller.rightRangeMax : 0
-                            visible:        controller.rightChartFields.length > 0
-                            lineVisible:    false
-                            labelsFont.family:      "Fixed"
-                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
-                            //labelsColor:    qgcPal.colorGreen
-                        }
-
-                        RowLayout {
-                            id:                 chartHeader
-                            anchors.left:       parent.left
-                            anchors.leftMargin: ScreenTools.defaultFontPixelWidth  * 4
-                            anchors.right:      parent.right
-                            anchors.rightMargin:ScreenTools.defaultFontPixelWidth  * 4
-                            anchors.top:        parent.top
-                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 1.5
-                            spacing:            0
-                            QGCLabel {
-                                text:               qsTr("Scale:");
-                                font.pixelSize:     ScreenTools.smallFontPointSize
-                                Layout.alignment:   Qt.AlignVCenter
-                            }
-                            QGCComboBox {
-                                id:                 timeScaleSelector
-                                width:              ScreenTools.defaultFontPixelWidth  * 10
-                                height:             ScreenTools.defaultFontPixelHeight
-                                model:              controller.timeScales
-                                currentIndex:       controller.timeScale
-                                onActivated:        controller.timeScale = index
-                                font.pixelSize:     ScreenTools.smallFontPointSize
-                                Layout.alignment:   Qt.AlignVCenter
-                            }
-                            GridLayout {
-                                columns:            2
-                                columnSpacing:      ScreenTools.defaultFontPixelWidth
-                                rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-                                Layout.alignment:   Qt.AlignRight | Qt.AlignVCenter
-                                Layout.fillWidth:   true
-                                QGCLabel {
-                                    text:               qsTr("Range Left:");
-                                    font.pixelSize:     ScreenTools.smallFontPointSize
-                                    Layout.alignment:   Qt.AlignVCenter
-                                }
-                                QGCComboBox {
-                                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                                    height:             ScreenTools.defaultFontPixelHeight * 1.5
-                                    model:              controller.rangeList
-                                    currentIndex:       controller.leftRangeIdx
-                                    onActivated:        controller.leftRangeIdx = index
-                                    font.pixelSize:     ScreenTools.smallFontPointSize
-                                    Layout.alignment:   Qt.AlignVCenter
-                                }
-                                QGCLabel {
-                                    text:               qsTr("Range Right:");
-                                    font.pixelSize:     ScreenTools.smallFontPointSize
-                                    Layout.alignment:   Qt.AlignVCenter
-                                }
-                                QGCComboBox {
-                                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                                    height:             ScreenTools.defaultFontPixelHeight * 1.5
-                                    model:              controller.rangeList
-                                    currentIndex:       controller.rightRangeIdx
-                                    onActivated:        controller.rightRangeIdx = index
-                                    font.pixelSize:     ScreenTools.smallFontPointSize
-                                    Layout.alignment:   Qt.AlignVCenter
-                                }
-                            }
-                        }
+                    }
+                    MAVLinkChart {
+                        id:         chart2
+                        height:     ScreenTools.defaultFontPixelHeight * 20
+                        visible:    controller.rightChartFields.length > 0
+                        min:        controller.rightRangeMin
+                        max:        controller.rightRangeMax
+                        Layout.fillWidth: true
                     }
                 }
             }

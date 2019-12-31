@@ -56,6 +56,7 @@ public:
 
     void            addSeries       (QAbstractSeries* series, bool left);
     void            delSeries       ();
+    void            updateSeries    ();
 
 signals:
     void            seriesChanged       ();
@@ -63,10 +64,6 @@ signals:
     void            valueChanged        ();
 
 private:
-    void            _updateSeries       ();
-
-private:
-
     QString     _type;
     QString     _name;
     QString     _value;
@@ -242,6 +239,7 @@ private slots:
     void _vehicleRemoved                (Vehicle* vehicle);
     void _setActiveVehicle              (Vehicle* vehicle);
     void _refreshFrequency              ();
+    void _refreshSeries                 ();
 
 private:
     QGCMAVLinkVehicle*  _findVehicle    (uint8_t id);
@@ -275,9 +273,9 @@ private:
     qreal               _rightRangeMin          = 0;
     qreal               _rightRangeMax          = 1;
     quint32             _rightRangeIndex        = 0;                    ///> Auto Range
-    qreal               _timeRange              = 0;
     QGCMAVLinkVehicle*  _activeVehicle          = nullptr;
-    QTimer              _updateTimer;
+    QTimer              _updateFrequencyTimer;
+    QTimer              _updateSeriesTimer;
     QStringList         _vehicleNames;
     QmlObjectListModel  _vehicles;                                      ///< List of QGCMAVLinkVehicle
     QVariantList        _rightChartFields;
