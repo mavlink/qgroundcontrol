@@ -302,12 +302,12 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      3
-                                enabled:            (object.series !== null && object.left) || (object.selectable && controller.seriesCount < 12)
-                                checked:            enabled ? (object.series !== null && object.left) : false
+                                enabled:            (object.series !== null) || (object.selectable)
+                                checked:            enabled ? (object.series !== null) : false
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {
-                                            chart1.addDimension(object, true)
+                                            chart1.addDimension(object)
                                         } else {
                                             chart1.delDimension(object)
                                         }
@@ -320,12 +320,12 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      4
-                                enabled:            (object.series !== null && !object.left) || (object.selectable && controller.seriesCount < 12 && (object.series === null && !object.left))
-                                checked:            enabled ? (object.series !== null && !object.left) : false
+                                enabled:            (object.series !== null) || (object.selectable)
+                                checked:            enabled ? (object.series !== null) : false
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {
-                                            chart2.addDimension(object, false)
+                                            chart2.addDimension(object)
                                         } else {
                                             chart2.delDimension(object)
                                         }
@@ -338,17 +338,11 @@ AnalyzePage {
                     MAVLinkChart {
                         id:         chart1
                         height:     ScreenTools.defaultFontPixelHeight * 20
-                        visible:    controller.leftChartFields.length > 0
-                        min:        controller.leftRangeMin
-                        max:        controller.leftRangeMax
                         Layout.fillWidth: true
                     }
                     MAVLinkChart {
                         id:         chart2
                         height:     ScreenTools.defaultFontPixelHeight * 20
-                        visible:    controller.rightChartFields.length > 0
-                        min:        controller.rightRangeMin
-                        max:        controller.rightRangeMax
                         Layout.fillWidth: true
                     }
                 }
