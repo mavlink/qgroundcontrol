@@ -257,14 +257,16 @@ AnalyzePage {
                     QGCLabel {
                         text:       qsTr("Message Fields:")
                     }
+                    //---------------------------------------------------------
                     Rectangle {
                         Layout.fillWidth: true
                         height:     1
                         color:      qgcPal.text
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
+                    //---------------------------------------------------------
                     GridLayout {
-                        columns:        4
+                        columns:        5
                         columnSpacing:  ScreenTools.defaultFontPixelWidth
                         rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
                         Repeater {
@@ -299,9 +301,35 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      3
-                                enabled:            object.selected || (object.selectable && controller.chartFieldCount < 2)
-                                checked:            enabled ? object.selected : false
-                                onClicked:          { if(enabled) object.selected = checked }
+                                enabled:            (object.series !== null && object.left) || (object.selectable && controller.seriesCount < chartView.maxSeriesCount)
+                                checked:            enabled ? (object.series !== null && object.left) : false
+                                onClicked: {
+                                    if(enabled) {
+                                        if(checked) {
+                                            chartView.addDimension(object, true)
+                                        } else {
+                                            chartView.delDimension(object)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index
+                                Layout.column:      4
+                                enabled:            (object.series !== null && !object.left) || (object.selectable && controller.seriesCount < chartView.maxSeriesCount && (object.series === null && !object.left))
+                                checked:            enabled ? (object.series !== null && !object.left) : false
+                                onClicked: {
+                                    if(enabled) {
+                                        if(checked) {
+                                            chartView.addDimension(object, false)
+                                        } else {
+                                            chartView.delDimension(object)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -312,86 +340,69 @@ AnalyzePage {
                         height:         ScreenTools.defaultFontPixelHeight * 20
                         theme:          ChartView.ChartThemeDark
                         antialiasing:   true
-                        visible:        controller.chartFieldCount > 0
+                        visible:        controller.leftChartFields.length > 0 || controller.rightChartFields.length > 0
                         animationOptions: ChartView.NoAnimation
                         legend.visible: false
                         margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
                         margins.top:    chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 
+                        property int maxSeriesCount:    seriesColors.length
+                        property var seriesColors:      ["antiquewhite", "aqua", "chartreuse", "chocolate", "crimson", "darkturquoise", "aquamarine", "azure", "coral", "cornflowerblue", "darkorange", "gold", "hotpink", "lavenderblush", "lightskyblue"]
+
+                        function addDimension(field, left) {
+                            console.log(field.name + ' ' + field + ' AxisY1: ' + axisY1 + ' AxisY2: ' + axisY2)
+                            console.log(controller.seriesCount + ' ' + chartView.seriesColors[controller.seriesCount])
+                            var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
+                            serie.axisX = axisX
+                            if(left) {
+                                serie.axisY = axisY1
+                            } else {
+                                serie.axisYRight = axisY2
+                            }
+                            serie.useOpenGL = true
+                            serie.color = chartView.seriesColors[controller.seriesCount]
+                            controller.addSeries(field, serie, left)
+                        }
+
+                        function delDimension(field) {
+                            chartView.removeSeries(field.series)
+                            controller.delSeries(field)
+                            console.log('Remove: ' + controller.seriesCount + ' ' + field.name)
+                        }
+
                         DateTimeAxis {
                             id:             axisX
                             min:            visible ? controller.rangeXMin : new Date()
                             max:            visible ? controller.rangeXMax : new Date()
-                            visible:        controller.chartFieldCount > 0
-                            format:         "mm:ss"
+                            format:         "hh:mm:ss"
                             tickCount:      5
                             gridVisible:    true
-                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
+                            labelsFont.family:      "Fixed"
+                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
                         }
 
                         ValueAxis {
                             id:             axisY1
-                            min:            visible ? controller.chartFields[0].rangeMin : 0
-                            max:            visible ? controller.chartFields[0].rangeMax : 0
-                            visible:        controller.chartFieldCount > 0
+                            min:            visible ? controller.leftRangeMin : 0
+                            max:            visible ? controller.leftRangeMax : 0
+                            visible:        controller.leftChartFields.length > 0
                             lineVisible:    false
-                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
-                            labelsColor:    qgcPal.colorRed
+                            labelsFont.family:      "Fixed"
+                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
+                            //labelsColor:    qgcPal.colorRed
                         }
 
                         ValueAxis {
                             id:             axisY2
-                            min:            visible ? controller.chartFields[1].rangeMin : 0
-                            max:            visible ? controller.chartFields[1].rangeMax : 0
-                            visible:        controller.chartFieldCount > 1
+                            min:            visible ? controller.rightRangeMin : 0
+                            max:            visible ? controller.rightRangeMax : 0
+                            visible:        controller.rightChartFields.length > 0
                             lineVisible:    false
-                            labelsFont.pixelSize: ScreenTools.smallFontPointSize
-                            labelsColor:    qgcPal.colorGreen
+                            labelsFont.family:      "Fixed"
+                            labelsFont.pixelSize:   ScreenTools.smallFontPointSize
+                            //labelsColor:    qgcPal.colorGreen
                         }
 
-                        LineSeries {
-                            id:             lineSeries1
-                            name:           controller.chartFieldCount ? controller.chartFields[0].label : ""
-                            axisX:          axisX
-                            axisY:          axisY1
-                            color:          qgcPal.colorRed
-                            useOpenGL:      true
-                        }
-
-                        LineSeries {
-                            id:             lineSeries2
-                            name:           controller.chartFieldCount > 1 ? controller.chartFields[1].label : ""
-                            axisX:          axisX
-                            axisYRight:     axisY2
-                            color:          qgcPal.colorGreen
-                            useOpenGL:      true
-                        }
-
-                        Timer {
-                            id:         refreshTimer
-                            interval:   1 / 20 * 1000 // 20 Hz
-                            running:    controller.chartFieldCount > 0
-                            repeat:     true
-                            onTriggered: {
-                                if(controller.chartFieldCount > 0) {
-                                    controller.updateSeries(0, lineSeries1)
-                                }
-                                if(controller.chartFieldCount > 1) {
-                                    controller.updateSeries(1, lineSeries2)
-                                } else {
-                                    if(lineSeries2.count > 0) {
-                                        lineSeries2.removePoints(0,lineSeries2.count)
-                                    }
-                                }
-                            }
-                            onRunningChanged: {
-                                if(!running) {
-                                    if(lineSeries1.count > 0) {
-                                        lineSeries1.removePoints(0,lineSeries1.count)
-                                    }
-                                }
-                            }
-                        }
                         RowLayout {
                             id:                 chartHeader
                             anchors.left:       parent.left
@@ -417,45 +428,38 @@ AnalyzePage {
                                 Layout.alignment:   Qt.AlignVCenter
                             }
                             GridLayout {
-                                columns:            3
+                                columns:            2
                                 columnSpacing:      ScreenTools.defaultFontPixelWidth
                                 rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                                 Layout.alignment:   Qt.AlignRight | Qt.AlignVCenter
                                 Layout.fillWidth:   true
-                                Repeater {
-                                    model:          controller.chartFieldCount ? controller.chartFields : []
-                                    delegate: QGCLabel {
-                                        text:               chartView.series(index).name
-                                        color:              chartView.series(index).color
-                                        font.pixelSize:     ScreenTools.smallFontPointSize
-                                        Layout.row:         index
-                                        Layout.column:      0
-                                        Layout.alignment:   Qt.AlignVCenter
-                                    }
+                                QGCLabel {
+                                    text:               qsTr("Range Left:");
+                                    font.pixelSize:     ScreenTools.smallFontPointSize
+                                    Layout.alignment:   Qt.AlignVCenter
                                 }
-                                Repeater {
-                                    model:          controller.chartFieldCount ? controller.chartFields : []
-                                    delegate: QGCLabel {
-                                        text:               qsTr("Range:");
-                                        font.pixelSize:     ScreenTools.smallFontPointSize
-                                        Layout.row:         index
-                                        Layout.column:      1
-                                        Layout.alignment:   Qt.AlignVCenter
-                                    }
+                                QGCComboBox {
+                                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
+                                    height:             ScreenTools.defaultFontPixelHeight * 1.5
+                                    model:              controller.rangeList
+                                    currentIndex:       controller.leftRangeIdx
+                                    onActivated:        controller.leftRangeIdx = index
+                                    font.pixelSize:     ScreenTools.smallFontPointSize
+                                    Layout.alignment:   Qt.AlignVCenter
                                 }
-                                Repeater {
-                                    model:          controller.chartFieldCount ? controller.chartFields : []
-                                    delegate: QGCComboBox {
-                                        width:              ScreenTools.defaultFontPixelWidth  * 12
-                                        height:             ScreenTools.defaultFontPixelHeight * 1.5
-                                        model:              modelData.rangeList
-                                        currentIndex:       modelData.range
-                                        onActivated:        modelData.range = index
-                                        font.pixelSize:     ScreenTools.smallFontPointSize
-                                        Layout.row:         index
-                                        Layout.column:      2
-                                        Layout.alignment:   Qt.AlignVCenter
-                                    }
+                                QGCLabel {
+                                    text:               qsTr("Range Right:");
+                                    font.pixelSize:     ScreenTools.smallFontPointSize
+                                    Layout.alignment:   Qt.AlignVCenter
+                                }
+                                QGCComboBox {
+                                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
+                                    height:             ScreenTools.defaultFontPixelHeight * 1.5
+                                    model:              controller.rangeList
+                                    currentIndex:       controller.rightRangeIdx
+                                    onActivated:        controller.rightRangeIdx = index
+                                    font.pixelSize:     ScreenTools.smallFontPointSize
+                                    Layout.alignment:   Qt.AlignVCenter
                                 }
                             }
                         }
