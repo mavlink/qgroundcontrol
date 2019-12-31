@@ -18,6 +18,8 @@ QT_CHARTS_USE_NAMESPACE
 
 Q_DECLARE_METATYPE(QAbstractSeries*)
 
+#define UPDATE_FREQUENCY (1000 / 15)    // 15Hz
+
 //-----------------------------------------------------------------------------
 QGCMAVLinkMessageField::QGCMAVLinkMessageField(QGCMAVLinkMessage *parent, QString name, QString type)
     : QObject(parent)
@@ -118,19 +120,25 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
                 _msg->msgCtl()->updateYRange(_left);
             }
         }
-        _msg->msgCtl()->updateXRange();
-        _updateSeries();
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkMessageField::_updateSeries()
+QGCMAVLinkMessageField::updateSeries()
 {
     int count = _values.count();
     if (count > 1) {
+        QList<QPointF> s;
+        s.reserve(count);
+        int idx = _dataIndex;
+        for(int i = 0; i < count; i++, idx++) {
+            if(idx >= count) idx = 0;
+            QPointF p(_values[idx]);
+            s.append(p);
+        }
         QLineSeries* lineSeries = static_cast<QLineSeries*>(_pSeries);
-        lineSeries->replace(_values);
+        lineSeries->replace(s);
     }
 }
 
@@ -512,8 +520,10 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     connect(multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkInspectorController::_vehicleRemoved);
     MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
     connect(mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
-    connect(&_updateTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
-    _updateTimer.start(1000);
+    connect(&_updateFrequencyTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
+    connect(&_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshSeries);
+    _updateFrequencyTimer.start(1000);
+    _updateSeriesTimer.start(UPDATE_FREQUENCY);
     MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));
@@ -570,13 +580,13 @@ MAVLinkInspectorController::setLeftRangeIdx(quint32 r)
 {
     if(r < static_cast<quint32>(_rangeSt.count())) {
         _leftRangeIndex = r;
-        _timeRange = _rangeSt[static_cast<int>(r)]->range;
+        qreal range = _rangeSt[static_cast<int>(r)]->range;
         emit leftRangeChanged();
         //-- If not Auto, use defined range
         if(_leftRangeIndex > 0) {
-            _leftRangeMin = -_timeRange;
+            _leftRangeMin = -range;
             emit leftRangeMinChanged();
-            _leftRangeMax = _timeRange;
+            _leftRangeMax = range;
             emit leftRangeMaxChanged();
         }
     }
@@ -588,13 +598,13 @@ MAVLinkInspectorController::setRightRangeIdx(quint32 r)
 {
     if(r < static_cast<quint32>(_rangeSt.count())) {
         _rightRangeIndex = r;
-        _timeRange = _rangeSt[static_cast<int>(r)]->range;
+        qreal range = _rangeSt[static_cast<int>(r)]->range;
         emit rightRangeChanged();
         //-- If not Auto, use defined range
         if(_rightRangeIndex > 0) {
-            _rightRangeMin = -_timeRange;
+            _rightRangeMin = -range;
             emit rightRangeMinChanged();
-            _rightRangeMax = _timeRange;
+            _rightRangeMax = range;
             emit rightRangeMaxChanged();
         }
     }
@@ -826,6 +836,7 @@ MAVLinkInspectorController::addSeries(QGCMAVLinkMessageField* field, QAbstractSe
 {
     if(field) {
         field->addSeries(series, left);
+        _updateSeriesTimer.start(UPDATE_FREQUENCY);
     }
 }
 
@@ -836,19 +847,29 @@ MAVLinkInspectorController::delSeries(QGCMAVLinkMessageField* field)
     if(field) {
         field->delSeries();
     }
-    if(_leftChartFields.count() == 0) {
-        _leftRangeMin  = 0;
-        _leftRangeMax  = 1;
-        emit leftRangeMinChanged();
-        emit leftRangeMaxChanged();
-    }
-    if(_rightChartFields.count() == 0) {
-        _rightRangeMin = 0;
-        _rightRangeMax = 1;
-        emit rightRangeMinChanged();
-        emit rightRangeMaxChanged();
-    }
     if(_leftChartFields.count() == 0 && _rightChartFields.count() == 0) {
         updateXRange();
+        _updateSeriesTimer.stop();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkInspectorController::_refreshSeries()
+{
+    updateXRange();
+    for(int i = 0; i < _leftChartFields.count(); i++) {
+        QObject* object = qvariant_cast<QObject*>(_leftChartFields.at(i));
+        QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
+        if(pField) {
+            pField->updateSeries();
+        }
+    }
+    for(int i = 0; i < _rightChartFields.count(); i++) {
+        QObject* object = qvariant_cast<QObject*>(_rightChartFields.at(i));
+        QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
+        if(pField) {
+            pField->updateSeries();
+        }
     }
 }
