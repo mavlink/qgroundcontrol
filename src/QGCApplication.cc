@@ -92,7 +92,6 @@
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
-#include "MAVLinkInspectorController.h"
 #include "GeoTagController.h"
 #include "LogReplayLink.h"
 #include "VehicleObjectAvoidance.h"
@@ -502,6 +501,7 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<CameraCalc>          (kQGroundControl,                       1, 0, "CameraCalc",                 kRefOnly);
     qmlRegisterUncreatableType<LogReplayLink>       (kQGroundControl,                       1, 0, "LogReplayLink",              kRefOnly);
     qmlRegisterType<LogReplayLinkController>        (kQGroundControl,                       1, 0, "LogReplayLinkController");
+    qmlRegisterUncreatableType<MAVLinkChartController>        (kQGroundControl,                       1, 0, "MAVLinkChart",               kRefOnly);
 #if defined(QGC_ENABLE_PAIRING)
     qmlRegisterUncreatableType<PairingManager>      (kQGroundControl,                       1, 0, "PairingManager",             kRefOnly);
 #endif
@@ -528,7 +528,6 @@ void QGCApplication::_initCommon()
     qmlRegisterType<RCChannelMonitorController>     (kQGCControllers,                       1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>       (kQGCControllers,                       1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>          (kQGCControllers,                       1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
     qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
 
@@ -617,21 +616,18 @@ QGCApplication* qgcApp(void)
     return QGCApplication::_app;
 }
 
-void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::informationMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title);
     showMessage(msg);
 }
 
-void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::warningMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title)
     showMessage(msg);
 }
 
-void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::criticalMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title)
     showMessage(msg);
 }
 
@@ -670,12 +666,11 @@ void QGCApplication::checkTelemetrySavePathOnMainThread()
     _checkTelemetrySavePath(false /* useMessageBox */);
 }
 
-bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
+bool QGCApplication::_checkTelemetrySavePath(bool /*useMessageBox*/)
 {
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        Q_UNUSED(useMessageBox);
         showMessage(error);
         return false;
     }
@@ -793,10 +788,8 @@ void QGCApplication::_checkForNewVersion()
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString localFile)
+void QGCApplication::_currentVersionDownloadFinished(QString /*remoteFile*/, QString localFile)
 {
-    Q_UNUSED(remoteFile);
-
 #ifdef __mobile__
     Q_UNUSED(localFile);
 #else
@@ -822,9 +815,8 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadError(QString errorMsg)
+void QGCApplication::_currentVersionDownloadError(QString /*errorMsg*/)
 {
-    Q_UNUSED(errorMsg);
     _currentVersionDownload->deleteLater();
 }
 
