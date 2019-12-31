@@ -89,6 +89,7 @@
         <file alias="QGroundControl/Controls/KMLOrSHPFileDialog.qml">src/QmlControls/KMLOrSHPFileDialog.qml</file>
 		<file alias="QGroundControl/Controls/LogReplayStatusBar.qml">src/QmlControls/LogReplayStatusBar.qml</file>
         <file alias="QGroundControl/Controls/MainWindowSavedState.qml">src/QmlControls/MainWindowSavedState.qml</file>
+        <file alias="QGroundControl/Controls/MAVLinkChart.qml">src/QmlControls/MAVLinkChart.qml</file>
         <file alias="QGroundControl/Controls/MAVLinkMessageButton.qml">src/QmlControls/MAVLinkMessageButton.qml</file>
         <file alias="QGroundControl/Controls/MissionCommandDialog.qml">src/QmlControls/MissionCommandDialog.qml</file>
         <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/PlanView/MissionItemEditor.qml</file>
