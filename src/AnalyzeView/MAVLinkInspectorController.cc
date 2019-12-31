@@ -32,14 +32,13 @@ QGCMAVLinkMessageField::QGCMAVLinkMessageField(QGCMAVLinkMessage *parent, QStrin
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkMessageField::addSeries(QAbstractSeries* series, bool left)
+QGCMAVLinkMessageField::addSeries(MAVLinkChartController* chart, QAbstractSeries* series)
 {
     if(!_pSeries) {
-        _left = left;
+        _chart = chart;
         _pSeries = series;
         emit seriesChanged();
         _dataIndex = 0;
-        _msg->msgCtl()->addChartField(this, left);
         _msg->select();
     }
 }
@@ -50,11 +49,10 @@ QGCMAVLinkMessageField::delSeries()
 {
     if(_pSeries) {
         _values.clear();
-        _msg->msgCtl()->delChartField(this, _left);
         QLineSeries* lineSeries = static_cast<QLineSeries*>(_pSeries);
         lineSeries->replace(_values);
         _pSeries = nullptr;
-        _left = false;
+        _chart   = nullptr;
         emit seriesChanged();
         _msg->select();
     }
@@ -86,7 +84,7 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
         _value = newValue;
         emit valueChanged();
     }
-    if(_pSeries) {
+    if(_pSeries && _chart) {
         int count = _values.count();
         //-- Arbitrary limit of 1 minute of data at 50Hz for now
         if(count < (50 * 60)) {
@@ -99,7 +97,7 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
             _dataIndex++;
         }
         //-- Auto Range
-        if((!_left && _msg->msgCtl()->rightRangeIdx() == 0) || (_left && _msg->msgCtl()->leftRangeIdx() == 0)) {
+        if(_chart->rangeYIndex() == 0) {
             qreal vmin  = std::numeric_limits<qreal>::max();
             qreal vmax  = std::numeric_limits<qreal>::min();
             for(int i = 0; i < _values.count(); i++) {
@@ -117,7 +115,7 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
                 changed = true;
             }
             if(changed) {
-                _msg->msgCtl()->updateYRange(_left);
+                _chart->updateYRange();
             }
         }
     }
@@ -143,9 +141,8 @@ QGCMAVLinkMessageField::updateSeries()
 }
 
 //-----------------------------------------------------------------------------
-QGCMAVLinkMessage::QGCMAVLinkMessage(MAVLinkInspectorController *parent, mavlink_message_t* message)
+QGCMAVLinkMessage::QGCMAVLinkMessage(QObject *parent, mavlink_message_t* message)
     : QObject(parent)
-    , _msgCtl(parent)
 {
     _message = *message;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
@@ -497,19 +494,131 @@ QGCMAVLinkVehicle::_checkCompID(QGCMAVLinkMessage* message)
 }
 
 //-----------------------------------------------------------------------------
-MAVLinkInspectorController::TimeScale_st::TimeScale_st(QObject* parent, const QString& l, uint32_t t)
+MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *parent)
     : QObject(parent)
-    , label(l)
-    , timeScale(t)
+    , _controller(parent)
 {
+    connect(&_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkChartController::_refreshSeries);
+    updateXRange();
 }
 
 //-----------------------------------------------------------------------------
-MAVLinkInspectorController::Range_st::Range_st(QObject* parent, const QString& l, qreal r)
-    : QObject(parent)
-    , label(l)
-    , range(r)
+void
+MAVLinkChartController::setRangeYIndex(quint32 r)
 {
+    if(r < static_cast<quint32>(_controller->rangeSt().count())) {
+        _rangeYIndex = r;
+        qreal range = _controller->rangeSt()[static_cast<int>(r)]->range;
+        emit rangeYIndexChanged();
+        //-- If not Auto, use defined range
+        if(_rangeYIndex > 0) {
+            _rangeYMin = -range;
+            emit rangeYMinChanged();
+            _rangeYMax = range;
+            emit rangeYMaxChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::setRangeXIndex(quint32 t)
+{
+    _rangeXIndex = t;
+    emit rangeXIndexChanged();
+    updateXRange();
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::updateXRange()
+{
+    if(_rangeXIndex < static_cast<quint32>(_controller->timeScaleSt().count())) {
+        qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
+        _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
+        _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - _controller->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
+        emit rangeXMinChanged();
+        emit rangeXMaxChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::updateYRange()
+{
+    if(_chartFields.count()) {
+        qreal vmin  = std::numeric_limits<qreal>::max();
+        qreal vmax  = std::numeric_limits<qreal>::min();
+        for(int i = 0; i < _chartFields.count(); i++) {
+            QObject* object = qvariant_cast<QObject*>(_chartFields.at(i));
+            QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
+            if(pField) {
+                if(vmax < pField->rangeMax()) vmax = pField->rangeMax();
+                if(vmin > pField->rangeMin()) vmin = pField->rangeMin();
+            }
+        }
+        if(std::abs(_rangeYMin - vmin) > 0.000001) {
+            _rangeYMin = vmin;
+            emit rangeYMinChanged();
+        }
+        if(std::abs(_rangeYMax - vmax) > 0.000001) {
+            _rangeYMax = vmax;
+            emit rangeYMaxChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::_refreshSeries()
+{
+    updateXRange();
+    for(int i = 0; i < _chartFields.count(); i++) {
+        QObject* object = qvariant_cast<QObject*>(_chartFields.at(i));
+        QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
+        if(pField) {
+            pField->updateSeries();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::addSeries(QGCMAVLinkMessageField* field, QAbstractSeries* series)
+{
+    if(field && series) {
+        QVariant f = QVariant::fromValue(field);
+        for(int i = 0; i < _chartFields.count(); i++) {
+            if(_chartFields.at(i) == f) {
+                return;
+            }
+        }
+        _chartFields.append(f);
+        field->addSeries(this, series);
+        emit chartFieldsChanged();
+        _updateSeriesTimer.start(UPDATE_FREQUENCY);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MAVLinkChartController::delSeries(QGCMAVLinkMessageField* field)
+{
+    if(field) {
+        field->delSeries();
+        QVariant f = QVariant::fromValue(field);
+        for(int i = 0; i < _chartFields.count(); i++) {
+            if(_chartFields.at(i) == f) {
+                _chartFields.removeAt(i);
+                emit chartFieldsChanged();
+                if(_chartFields.count() == 0) {
+                    updateXRange();
+                    _updateSeriesTimer.stop();
+                }
+                return;
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -521,9 +630,7 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
     connect(mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &MAVLinkInspectorController::_receiveMessage);
     connect(&_updateFrequencyTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshFrequency);
-    connect(&_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkInspectorController::_refreshSeries);
     _updateFrequencyTimer.start(1000);
-    _updateSeriesTimer.start(UPDATE_FREQUENCY);
     MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkInspectorController::_setActiveVehicle);
     _timeScaleSt.append(new TimeScale_st(this, tr("5 Sec"),   5 * 1000));
@@ -542,7 +649,6 @@ MAVLinkInspectorController::MAVLinkInspectorController()
     _rangeSt.append(new Range_st(this, tr("0.001"),   0.001));
     _rangeSt.append(new Range_st(this, tr("0.0001"),  0.0001));
     emit rangeListChanged();
-    updateXRange();
 }
 
 //-----------------------------------------------------------------------------
@@ -572,42 +678,6 @@ MAVLinkInspectorController::rangeList()
         }
     }
     return _rangeList;
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::setLeftRangeIdx(quint32 r)
-{
-    if(r < static_cast<quint32>(_rangeSt.count())) {
-        _leftRangeIndex = r;
-        qreal range = _rangeSt[static_cast<int>(r)]->range;
-        emit leftRangeChanged();
-        //-- If not Auto, use defined range
-        if(_leftRangeIndex > 0) {
-            _leftRangeMin = -range;
-            emit leftRangeMinChanged();
-            _leftRangeMax = range;
-            emit leftRangeMaxChanged();
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::setRightRangeIdx(quint32 r)
-{
-    if(r < static_cast<quint32>(_rangeSt.count())) {
-        _rightRangeIndex = r;
-        qreal range = _rangeSt[static_cast<int>(r)]->range;
-        emit rightRangeChanged();
-        //-- If not Auto, use defined range
-        if(_rightRangeIndex > 0) {
-            _rightRangeMin = -range;
-            emit rightRangeMinChanged();
-            _rightRangeMax = range;
-            emit rightRangeMaxChanged();
-        }
-    }
 }
 
 //----------------------------------------------------------------------------------------
@@ -716,160 +786,46 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t me
 }
 
 //-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::addChartField(QGCMAVLinkMessageField* field, bool left)
+MAVLinkChartController*
+MAVLinkInspectorController::createChart()
 {
-    QVariant f = QVariant::fromValue(field);
-    QVariantList* pList;
-    if(left) {
-        pList = &_leftChartFields;
-    } else {
-        pList = &_rightChartFields;
-    }
-    for(int i = 0; i < pList->count(); i++) {
-        if(pList->at(i) == f) {
-            return;
-        }
-    }
-    pList->append(f);
-    if(left) {
-        emit leftChartFieldsChanged();
-    } else {
-        emit rightChartFieldsChanged();
-    }
-    emit seriesCountChanged();
+    MAVLinkChartController* pChart = new MAVLinkChartController(this);
+    QQmlEngine::setObjectOwnership(pChart, QQmlEngine::CppOwnership);
+    _charts.append(pChart);
+    emit chartsChanged();
+    return pChart;
 }
 
 //-----------------------------------------------------------------------------
 void
-MAVLinkInspectorController::delChartField(QGCMAVLinkMessageField* field, bool left)
+MAVLinkInspectorController::deleteChart(MAVLinkChartController* chart)
 {
-    QVariant f = QVariant::fromValue(field);
-    QVariantList* pList;
-    if(left) {
-        pList = &_leftChartFields;
-    } else {
-        pList = &_rightChartFields;
-    }
-    for(int i = 0; i < pList->count(); i++) {
-        if(pList->at(i) == f) {
-            pList->removeAt(i);
-            if(left) {
-                emit leftChartFieldsChanged();
-            } else {
-                emit rightChartFieldsChanged();
-            }
-            emit seriesCountChanged();
-            return;
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::setTimeScale(quint32 t)
-{
-    _timeScale = t;
-    emit timeScaleChanged();
-    updateXRange();
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::updateXRange()
-{
-    if(_timeScale < static_cast<quint32>(_timeScaleSt.count())) {
-        qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
-        _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
-        _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - _timeScaleSt[static_cast<int>(_timeScale)]->timeScale);
-        emit rangeMinXChanged();
-        emit rangeMaxXChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::updateYRange(bool left)
-{
-    QVariantList* pList;
-    if(left) {
-        pList = &_leftChartFields;
-    } else {
-        pList = &_rightChartFields;
-    }
-    if(pList->count()) {
-        qreal vmin  = std::numeric_limits<qreal>::max();
-        qreal vmax  = std::numeric_limits<qreal>::min();
-        for(int i = 0; i < pList->count(); i++) {
-            QObject* object = qvariant_cast<QObject*>(pList->at(i));
-            QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
-            if(pField) {
-                if(vmax < pField->rangeMax()) vmax = pField->rangeMax();
-                if(vmin > pField->rangeMin()) vmin = pField->rangeMin();
+    if(chart) {
+        for(int i = 0; i < _charts.count(); i++) {
+            MAVLinkChartController* c = qobject_cast<MAVLinkChartController*>(_charts.get(i));
+            if(c) {
+                _charts.removeOne(c);
+                break;
             }
         }
-        if(left) {
-            if(std::abs(_leftRangeMin - vmin) > 0.000001) {
-                _leftRangeMin = vmin;
-                emit leftRangeMinChanged();
-            }
-            if(std::abs(_leftRangeMax - vmax) > 0.000001) {
-                _leftRangeMax = vmax;
-                emit leftRangeMaxChanged();
-            }
-        } else {
-            if(std::abs(_rightRangeMin - vmin) > 0.000001) {
-                _rightRangeMin = vmin;
-                emit rightRangeMinChanged();
-            }
-            if(std::abs(_rightRangeMax - vmax) > 0.000001) {
-                _rightRangeMax = vmax;
-                emit rightRangeMaxChanged();
-            }
-        }
+        chart->deleteLater();
+        emit chartsChanged();
     }
 }
 
 //-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::addSeries(QGCMAVLinkMessageField* field, QAbstractSeries* series, bool left)
+MAVLinkInspectorController::TimeScale_st::TimeScale_st(QObject* parent, const QString& l, uint32_t t)
+    : QObject(parent)
+    , label(l)
+    , timeScale(t)
 {
-    if(field) {
-        field->addSeries(series, left);
-        _updateSeriesTimer.start(UPDATE_FREQUENCY);
-    }
 }
 
 //-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::delSeries(QGCMAVLinkMessageField* field)
+MAVLinkInspectorController::Range_st::Range_st(QObject* parent, const QString& l, qreal r)
+    : QObject(parent)
+    , label(l)
+    , range(r)
 {
-    if(field) {
-        field->delSeries();
-    }
-    if(_leftChartFields.count() == 0 && _rightChartFields.count() == 0) {
-        updateXRange();
-        _updateSeriesTimer.stop();
-    }
 }
 
-//-----------------------------------------------------------------------------
-void
-MAVLinkInspectorController::_refreshSeries()
-{
-    updateXRange();
-    for(int i = 0; i < _leftChartFields.count(); i++) {
-        QObject* object = qvariant_cast<QObject*>(_leftChartFields.at(i));
-        QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
-        if(pField) {
-            pField->updateSeries();
-        }
-    }
-    for(int i = 0; i < _rightChartFields.count(); i++) {
-        QObject* object = qvariant_cast<QObject*>(_rightChartFields.at(i));
-        QGCMAVLinkMessageField* pField = qobject_cast<QGCMAVLinkMessageField*>(object);
-        if(pField) {
-            pField->updateSeries();
-        }
-    }
-}

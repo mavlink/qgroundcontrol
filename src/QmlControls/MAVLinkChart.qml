@@ -20,12 +20,14 @@ ChartView {
     margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 
-    property int  maxSeriesCount:    seriesColors.length
-    property var  seriesColors:      ["chartreuse", "chocolate", "yellowgreen", "thistle", "silver", "darkturquoise", "blue", "green"]
-    property alias max: axisY.max
-    property alias min: axisY.min
+    property var chartController:   null
+    property int maxSeriesCount:    seriesColors.length
+    property var seriesColors:      ["chartreuse", "chocolate", "yellowgreen", "thistle", "silver", "darkturquoise", "blue", "green"]
 
-    function addDimension(field, left) {
+    function addDimension(field) {
+        if(!chartController) {
+            chartController = controller.createChart()
+        }
         console.log(field.name + ' AxisY: ' + axisY)
         console.log(chartView.count + ' ' + chartView.seriesColors[chartView.count])
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
@@ -34,88 +36,79 @@ ChartView {
         serie.useOpenGL = true
         serie.color = chartView.seriesColors[chartView.count]
         serie.width = 1
-        controller.addSeries(field, serie, left)
+        chartController.addSeries(field, serie)
     }
 
     function delDimension(field) {
-        chartView.removeSeries(field.series)
-        controller.delSeries(field)
-        console.log('Remove: ' + chartView.count + ' ' + field.name)
+        if(chartController) {
+            chartView.removeSeries(field.series)
+            chartController.delSeries(field)
+            console.log('Remove: ' + chartView.count + ' ' + field.name)
+            if(chartView.count === 0) {
+                controller.deleteChart(chartController)
+                chartController = null
+            }
+        }
     }
 
     DateTimeAxis {
-        id:             axisX
-        min:            controller.rangeXMin
-        max:            controller.rangeXMax
-        format:         "mm:ss.zzz"
-        tickCount:      5
-        gridVisible:    true
-        labelsFont.family:      "Fixed"
-        labelsFont.pixelSize:   ScreenTools.smallFontPointSize
+        id:                         axisX
+        min:                        chartController ? chartController.rangeXMin : 0
+        max:                        chartController ? chartController.rangeXMax : 0
+        format:                     "mm:ss.zzz"
+        tickCount:                  5
+        gridVisible:                true
+        labelsFont.family:          "Fixed"
+        labelsFont.pixelSize:       ScreenTools.smallFontPointSize
     }
 
     ValueAxis {
-        id:             axisY
-        lineVisible:    false
-        labelsFont.family:      "Fixed"
-        labelsFont.pixelSize:   ScreenTools.smallFontPointSize
+        id:                         axisY
+        min:                        chartController ? chartController.rangeYMin : 0
+        max:                        chartController ? chartController.rangeYMax : 0
+        lineVisible:                false
+        labelsFont.family:          "Fixed"
+        labelsFont.pixelSize:       ScreenTools.smallFontPointSize
     }
 
     RowLayout {
-        id:                     chartHeader
-        anchors.left:           parent.left
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth  * 4
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth  * 4
-        anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 1.5
-        spacing:                0
-        QGCLabel {
-            text:               qsTr("Scale:");
-            font.pixelSize:     ScreenTools.smallFontPointSize
-            Layout.alignment:   Qt.AlignVCenter
-        }
-        QGCComboBox {
-            id:                 timeScaleSelector
-            width:              ScreenTools.defaultFontPixelWidth  * 10
-            height:             ScreenTools.defaultFontPixelHeight
-            model:              controller.timeScales
-            currentIndex:       controller.timeScale
-            onActivated:        controller.timeScale = index
-            font.pixelSize:     ScreenTools.smallFontPointSize
-            Layout.alignment:   Qt.AlignVCenter
-        }
+        id:                         chartHeader
+        anchors.left:               parent.left
+        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth  * 4
+        anchors.right:              parent.right
+        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth  * 4
+        anchors.top:                parent.top
+        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 1.5
         GridLayout {
-            columns:            2
-            columnSpacing:      ScreenTools.defaultFontPixelWidth
-            rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-            Layout.alignment:   Qt.AlignRight | Qt.AlignVCenter
-            Layout.fillWidth:   true
+            columns:                2
+            columnSpacing:          ScreenTools.defaultFontPixelWidth
+            rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.25
+            Layout.alignment:       Qt.AlignVCenter
             QGCLabel {
-                text:               qsTr("Range Left:");
+                text:               qsTr("Scale:");
                 font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCComboBox {
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                height:             ScreenTools.defaultFontPixelHeight * 1.5
-                model:              controller.rangeList
-                currentIndex:       controller.leftRangeIdx
-                onActivated:        controller.leftRangeIdx = index
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                height:             ScreenTools.defaultFontPixelHeight
+                model:              controller.timeScales
+                currentIndex:       chartController ? chartController.rangeXIndex : 0
+                onActivated:        { if(chartController) chartController.rangeXIndex = index; }
                 font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCLabel {
-                text:               qsTr("Range Right:");
+                text:               qsTr("Range:");
                 font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCComboBox {
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 8
-                height:             ScreenTools.defaultFontPixelHeight * 1.5
+                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.rangeList
-                currentIndex:       controller.rightRangeIdx
-                onActivated:        controller.rightRangeIdx = index
+                currentIndex:       chartController ? chartController.rangeYIndex : 0
+                onActivated:        { if(chartController) chartController.rangeYIndex = index; }
                 font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
