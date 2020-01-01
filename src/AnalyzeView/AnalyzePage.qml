@@ -63,15 +63,13 @@ Item {
         }
     }
 
-    QGCFlickable {
+    Item {
         id:                     mainContent
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight
         anchors.top:            headerLoader.sourceComponent === null ? (headingColumn.visible ? headingColumn.bottom : parent.top) : headerLoader.bottom
         anchors.bottom:         parent.bottom
         anchors.left:           parent.left
         anchors.right:          parent.right
-        contentWidth:           pageLoader.x + pageLoader.item.width
-        contentHeight:          pageLoader.y + pageLoader.item.height
         clip:                   true
         Loader {
             id:                 pageLoader
