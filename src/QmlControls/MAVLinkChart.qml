@@ -53,8 +53,8 @@ ChartView {
 
     DateTimeAxis {
         id:                         axisX
-        min:                        chartController ? chartController.rangeXMin : 0
-        max:                        chartController ? chartController.rangeXMax : 0
+        min:                        chartController ? chartController.rangeXMin : new Date()
+        max:                        chartController ? chartController.rangeXMax : new Date()
         format:                     "mm:ss.zzz"
         tickCount:                  5
         gridVisible:                true
@@ -91,6 +91,7 @@ ChartView {
             }
             QGCComboBox {
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.timeScales
                 currentIndex:       chartController ? chartController.rangeXIndex : 0
@@ -105,12 +106,25 @@ ChartView {
             }
             QGCComboBox {
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
                 height:             ScreenTools.defaultFontPixelHeight
                 model:              controller.rangeList
                 currentIndex:       chartController ? chartController.rangeYIndex : 0
                 onActivated:        { if(chartController) chartController.rangeYIndex = index; }
                 font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
+            }
+        }
+        ColumnLayout {
+            Layout.alignment:       Qt.AlignVCenter
+            Layout.fillWidth:       true
+            Repeater {
+                model:              chartController ? chartController.chartFields : []
+                QGCLabel {
+                    text:           modelData.label
+                    color:          chartView.series(index).color
+                    font.pixelSize: ScreenTools.smallFontPointSize
+                }
             }
         }
     }
