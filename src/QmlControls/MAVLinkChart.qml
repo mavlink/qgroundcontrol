@@ -58,7 +58,7 @@ ChartView {
         tickCount:                  5
         gridVisible:                true
         labelsFont.family:          "Fixed"
-        labelsFont.pixelSize:       ScreenTools.smallFontPointSize
+        labelsFont.pointSize:       ScreenTools.smallFontPointSize
     }
 
     ValueAxis {
@@ -68,7 +68,7 @@ ChartView {
         visible:                    chartController !== null
         lineVisible:                false
         labelsFont.family:          "Fixed"
-        labelsFont.pixelSize:       ScreenTools.smallFontPointSize
+        labelsFont.pointSize:       ScreenTools.smallFontPointSize
     }
 
     Row {
@@ -88,7 +88,6 @@ ChartView {
             anchors.verticalCenter: parent.verticalCenter
             QGCLabel {
                 text:               qsTr("Scale:");
-                font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCComboBox {
@@ -98,12 +97,10 @@ ChartView {
                 model:              controller.timeScales
                 currentIndex:       chartController ? chartController.rangeXIndex : 0
                 onActivated:        { if(chartController) chartController.rangeXIndex = index; }
-                font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCLabel {
                 text:               qsTr("Range:");
-                font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
             QGCComboBox {
@@ -113,7 +110,6 @@ ChartView {
                 model:              controller.rangeList
                 currentIndex:       chartController ? chartController.rangeYIndex : 0
                 onActivated:        { if(chartController) chartController.rangeYIndex = index; }
-                font.pixelSize:     ScreenTools.smallFontPointSize
                 Layout.alignment:   Qt.AlignVCenter
             }
         }
@@ -124,7 +120,7 @@ ChartView {
                 QGCLabel {
                     text:           modelData.label
                     color:          chartView.series(index).color
-                    font.pixelSize: ScreenTools.smallFontPointSize
+                    font.pointSize: ScreenTools.smallFontPointSize
                 }
             }
         }
