@@ -77,6 +77,15 @@ QGCMAVLinkMessageField::setSelectable(bool sel)
 }
 
 //-----------------------------------------------------------------------------
+int
+QGCMAVLinkMessageField::chartIndex()
+{
+    if(_chart)
+        return _chart->chartIndex();
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
 void
 QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
 {
@@ -494,8 +503,9 @@ QGCMAVLinkVehicle::_checkCompID(QGCMAVLinkMessage* message)
 }
 
 //-----------------------------------------------------------------------------
-MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *parent)
+MAVLinkChartController::MAVLinkChartController(MAVLinkInspectorController *parent, int index)
     : QObject(parent)
+    , _index(index)
     , _controller(parent)
 {
     connect(&_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkChartController::_refreshSeries);
@@ -789,7 +799,7 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t me
 MAVLinkChartController*
 MAVLinkInspectorController::createChart()
 {
-    MAVLinkChartController* pChart = new MAVLinkChartController(this);
+    MAVLinkChartController* pChart = new MAVLinkChartController(this, _charts.count());
     QQmlEngine::setObjectOwnership(pChart, QQmlEngine::CppOwnership);
     _charts.append(pChart);
     emit chartsChanged();
