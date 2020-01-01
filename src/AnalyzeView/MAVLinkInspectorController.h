@@ -23,6 +23,7 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkInspectorLog)
 QT_CHARTS_USE_NAMESPACE
 
 class QGCMAVLinkMessage;
+class QGCMAVLinkVehicle;
 class MAVLinkChartController;
 class MAVLinkInspectorController;
 
@@ -83,34 +84,34 @@ private:
 class QGCMAVLinkMessage : public QObject {
     Q_OBJECT
 public:
-    Q_PROPERTY(quint32              id          READ id         NOTIFY indexChanged)
-    Q_PROPERTY(quint32              cid         READ cid        NOTIFY indexChanged)
-    Q_PROPERTY(QString              name        READ name       NOTIFY indexChanged)
-    Q_PROPERTY(qreal                messageHz   READ messageHz  NOTIFY freqChanged)
-    Q_PROPERTY(quint64              count       READ count      NOTIFY messageChanged)
-    Q_PROPERTY(QmlObjectListModel*  fields      READ fields     NOTIFY indexChanged)
-    Q_PROPERTY(bool                 selected    READ selected   NOTIFY selectedChanged)
+    Q_PROPERTY(quint32              id              READ id             NOTIFY indexChanged)
+    Q_PROPERTY(quint32              cid             READ cid            NOTIFY indexChanged)
+    Q_PROPERTY(QString              name            READ name           NOTIFY indexChanged)
+    Q_PROPERTY(qreal                messageHz       READ messageHz      NOTIFY freqChanged)
+    Q_PROPERTY(quint64              count           READ count          NOTIFY messageChanged)
+    Q_PROPERTY(QmlObjectListModel*  fields          READ fields         NOTIFY indexChanged)
+    Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
 
     QGCMAVLinkMessage(QObject* parent, mavlink_message_t* message);
 
-    quint32             id          () { return _message.msgid;  }
-    quint8              cid         () { return _message.compid; }
-    QString             name        () { return _name;  }
-    qreal               messageHz   () { return _messageHz; }
-    quint64             count       () { return _count; }
-    quint64             lastCount   () { return _lastCount; }
-    QmlObjectListModel* fields      () { return &_fields; }
-    bool                selected    () { return _selected; }
+    quint32             id              () { return _message.msgid;  }
+    quint8              cid             () { return _message.compid; }
+    QString             name            () { return _name;  }
+    qreal               messageHz       () { return _messageHz; }
+    quint64             count           () { return _count; }
+    quint64             lastCount       () { return _lastCount; }
+    QmlObjectListModel* fields          () { return &_fields; }
+    bool                fieldSelected   () { return _fieldSelected; }
 
-    void                select      ();
-    void                update      (mavlink_message_t* message);
-    void                updateFreq  ();
+    void                updateFieldSelection();
+    void                update          (mavlink_message_t* message);
+    void                updateFreq      ();
 
 signals:
-    void messageChanged             ();
-    void freqChanged                ();
-    void indexChanged               ();
-    void selectedChanged            ();
+    void messageChanged                 ();
+    void freqChanged                    ();
+    void indexChanged                   ();
+    void fieldSelectedChanged           ();
 
 private:
     QmlObjectListModel  _fields;
@@ -119,7 +120,7 @@ private:
     uint64_t            _count      = 0;
     uint64_t            _lastCount  = 0;
     mavlink_message_t   _message;   //-- List of QGCMAVLinkMessageField
-    bool                _selected   = false;
+    bool                _fieldSelected   = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -131,19 +132,25 @@ public:
     Q_PROPERTY(QList<int>           compIDs         READ compIDs        NOTIFY compIDsChanged)
     Q_PROPERTY(QStringList          compIDsStr      READ compIDsStr     NOTIFY compIDsChanged)
 
+    Q_PROPERTY(int                  selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
+
     QGCMAVLinkVehicle(QObject* parent, quint8 id);
 
     quint8              id              () { return _id; }
     QmlObjectListModel* messages        () { return &_messages; }
     QList<int>          compIDs         () { return _compIDs; }
     QStringList         compIDsStr      () { return _compIDsStr; }
+    int                 selected        () { return _selected; }
 
+    void                setSelected     (int sel);
     QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t cid);
+    int                 findMessage     (QGCMAVLinkMessage* message);
     void                append          (QGCMAVLinkMessage* message);
 
 signals:
     void messagesChanged                ();
     void compIDsChanged                 ();
+    void selectedChanged                ();
 
 private:
     void _checkCompID                   (QGCMAVLinkMessage *message);
@@ -153,6 +160,7 @@ private:
     QList<int>          _compIDs;
     QStringList         _compIDsStr;
     QmlObjectListModel  _messages;      //-- List of QGCMAVLinkMessage
+    int                 _selected = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -166,6 +174,7 @@ public:
     Q_PROPERTY(QDateTime    rangeXMax           READ rangeXMax              NOTIFY rangeXMaxChanged)
     Q_PROPERTY(qreal        rangeYMin           READ rangeYMin              NOTIFY rangeYMinChanged)
     Q_PROPERTY(qreal        rangeYMax           READ rangeYMax              NOTIFY rangeYMaxChanged)
+    Q_PROPERTY(int          chartIndex          READ chartIndex             CONSTANT)
 
     Q_PROPERTY(quint32      rangeYIndex         READ rangeYIndex            WRITE setRangeYIndex    NOTIFY rangeYIndexChanged)
     Q_PROPERTY(quint32      rangeXIndex         READ rangeXIndex            WRITE setRangeXIndex    NOTIFY rangeXIndexChanged)
