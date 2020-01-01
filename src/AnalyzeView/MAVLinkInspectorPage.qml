@@ -25,10 +25,8 @@ AnalyzePage {
     pageComponent:      pageComponent
 
     property var    curVehicle:         controller ? controller.activeVehicle : null
-    property int    curMessageIndex:    0
-    property var    curMessage:         curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
+    property var    curMessage:         curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curVehicle.selected) : null
     property int    curCompID:          0
-    property bool   selectionValid:     false
     property real   maxButtonWidth:     0
 
     MAVLinkInspectorController {
@@ -168,7 +166,6 @@ AnalyzePage {
                     currentIndex:   0
                     onActivated: {
                         if(curVehicle && curVehicle.compIDsStr.length > 1) {
-                            selectionValid = false
                             if(index < 1)
                                 curCompID = 0
                             else
@@ -203,14 +200,13 @@ AnalyzePage {
                     Repeater {
                         model:      curVehicle ? curVehicle.messages : []
                         delegate:   MAVLinkMessageButton {
-                            text:       object.name + (object.selected ?  " *" : "")
+                            text:       object.name + (object.fieldSelected ?  " *" : "")
                             compID:     object.cid
-                            checked:    curMessageIndex === index
+                            checked:    curVehicle ? (curVehicle.selected === index) : false
                             messageHz:  object.messageHz
                             visible:    curCompID === 0 || curCompID === compID
                             onClicked: {
-                                selectionValid  = true
-                                curMessageIndex = index
+                                curVehicle.selected = index
                             }
                             Layout.fillWidth: true
                         }
@@ -220,7 +216,7 @@ AnalyzePage {
             //-- Message Data
             QGCFlickable {
                 id:                 messageGrid
-                visible:            curMessage !== null && selectionValid
+                visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.cid)
                 Layout.fillHeight:  true
                 Layout.fillWidth:   true
                 contentWidth:       messageCol.width
@@ -302,15 +298,25 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      3
-                                enabled:            checked || (object.selectable && object.series === null)
+                                enabled: {
+                                    if(checked)
+                                        return true
+                                    if(!object.selectable)
+                                        return false
+                                    if(object.series !== null)
+                                        return false
+                                    if(chart1.chartController !== null) {
+                                        if(chart1.chartController.chartFields.length >= chart1.seriesColors.length)
+                                            return false
+                                    }
+                                    return true;
+                                }
                                 checked:            object.series !== null && object.chartIndex === 0
                                 onClicked: {
-                                    if(enabled) {
-                                        if(checked) {
-                                            chart1.addDimension(object)
-                                        } else {
-                                            chart1.delDimension(object)
-                                        }
+                                    if(checked) {
+                                        chart1.addDimension(object)
+                                    } else {
+                                        chart1.delDimension(object)
                                     }
                                 }
                             }
@@ -320,15 +326,25 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      4
-                                enabled:            checked || (object.selectable && object.series === null)
+                                enabled: {
+                                    if(checked)
+                                        return true
+                                    if(!object.selectable)
+                                        return false
+                                    if(object.series !== null)
+                                        return false
+                                    if(chart2.chartController !== null) {
+                                        if(chart2.chartController.chartFields.length >= chart2.seriesColors.length)
+                                            return false
+                                    }
+                                    return true;
+                                }
                                 checked:            object.series !== null && object.chartIndex === 1
                                 onClicked: {
-                                    if(enabled) {
-                                        if(checked) {
-                                            chart2.addDimension(object)
-                                        } else {
-                                            chart2.delDimension(object)
-                                        }
+                                    if(checked) {
+                                        chart2.addDimension(object)
+                                    } else {
+                                        chart2.delDimension(object)
                                     }
                                 }
                             }
