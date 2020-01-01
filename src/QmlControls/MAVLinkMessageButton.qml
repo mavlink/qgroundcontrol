@@ -16,13 +16,12 @@ import QGroundControl.ScreenTools   1.0
 
 Button {
     id:                 control
-    height:             ScreenTools.defaultFontPixelHeight * 2
     autoExclusive:      true
     leftPadding:        ScreenTools.defaultFontPixelWidth
     rightPadding:       leftPadding
 
-    property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 2.5
-    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 5
+    property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 3
+    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 6
     property real _nameWidth:   nameLabel.contentWidth
 
     background: Rectangle {
@@ -40,22 +39,23 @@ Button {
         QGCLabel {
             text:                   control.compID
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            font.pointSize:         ScreenTools.smallFontPointSize
+            verticalAlignment:      Text.AlignVCenter
+            Layout.minimumHeight:   ScreenTools.isMobile ? (ScreenTools.defaultFontPixelHeight * 2) : (ScreenTools.defaultFontPixelHeight * 1.5)
             Layout.minimumWidth:    _compIDWidth
         }
         QGCLabel {
             id:                     nameLabel
             text:                   control.text
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
+            Layout.alignment:       Qt.AlignVCenter
         }
         QGCLabel {
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             text:                   messageHz.toFixed(1) + 'Hz'
-            font.pointSize:         ScreenTools.smallFontPointSize
             horizontalAlignment:    Text.AlignRight
             Layout.minimumWidth:    _hzWidth
+            Layout.alignment:       Qt.AlignVCenter
         }
     }
 

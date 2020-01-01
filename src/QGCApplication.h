@@ -43,20 +43,13 @@ class QGCFileDownload;
  *
  * Needs QApplication base to support QtCharts module. This way
  * we avoid application crashing on 5.12 when using the module.
- * We don't have QtWidgets on mobile, avoid using it.
  *
  * Note: `lastWindowClosed` will be sent by MessageBox popups and other
  * dialogs, that are spawned in QML, when they are closed
 **/
-class QGCApplication :
-      #if defined(__mobile__)
-        public QGuiApplication
-      #else
-        public QApplication
-      #endif
+class QGCApplication : public QApplication
 {
     Q_OBJECT
-
 public:
     QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();

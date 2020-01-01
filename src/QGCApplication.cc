@@ -157,11 +157,7 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-  #if defined(__mobile__)
-    : QGuiApplication       (argc, argv)
-  #else
     : QApplication          (argc, argv)
-  #endif
     , _runningUnitTests     (unitTesting)
 {
     _app = this;
