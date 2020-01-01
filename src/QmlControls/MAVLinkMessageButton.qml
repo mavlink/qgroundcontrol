@@ -21,8 +21,8 @@ Button {
     leftPadding:        ScreenTools.defaultFontPixelWidth
     rightPadding:       leftPadding
 
-    property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 3
-    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 7
+    property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 2.5
+    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 5
     property real _nameWidth:   nameLabel.contentWidth
 
     background: Rectangle {
@@ -40,17 +40,20 @@ Button {
         QGCLabel {
             text:                   control.compID
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            font.pointSize:         ScreenTools.smallFontPointSize
             Layout.minimumWidth:    _compIDWidth
         }
         QGCLabel {
-            id:                 nameLabel
-            text:               control.text
-            color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            Layout.fillWidth:   true
+            id:                     nameLabel
+            text:                   control.text
+            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
         }
         QGCLabel {
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             text:                   messageHz.toFixed(1) + 'Hz'
+            font.pointSize:         ScreenTools.smallFontPointSize
             horizontalAlignment:    Text.AlignRight
             Layout.minimumWidth:    _hzWidth
         }
