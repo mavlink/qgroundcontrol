@@ -33,116 +33,6 @@ AnalyzePage {
         id: controller
     }
 
-    /*
-    Window {
-        id:             chartWindow
-        width:          ScreenTools.defaultFontPixelWidth  * 80
-        height:         ScreenTools.defaultFontPixelHeight * 20
-        visible:        true
-        title:          "Chart"
-        Rectangle {
-            color:          qgcPal.window
-            anchors.fill:   parent
-            QGCComboBox {
-                id:             timeScaleSelector
-                anchors.margins: ScreenTools.defaultFontPixelWidth
-                anchors.right:  parent.right
-                anchors.top:    parent.top
-                width:          ScreenTools.defaultFontPixelWidth  * 10
-                height:         ScreenTools.defaultFontPixelHeight * 1.5
-                model:          controller.timeScales
-                currentIndex:   controller.timeScale
-                onActivated:    controller.timeScale = index
-            }
-            ChartView {
-                id:             chartView
-                anchors.right:  parent.right
-                anchors.left:   parent.left
-                anchors.top:    timeScaleSelector.bottom
-                anchors.bottom: parent.bottom
-                theme:          ChartView.ChartThemeDark
-                antialiasing:   true
-                animationOptions: ChartView.NoAnimation
-                legend.font.pixelSize: ScreenTools.smallFontPointSize
-                margins.bottom: ScreenTools.defaultFontPixelHeight * 1.5
-
-                DateTimeAxis {
-                    id:             axisX
-                    min:            visible ? controller.rangeXMin : new Date()
-                    max:            visible ? controller.rangeXMax : new Date()
-                    visible:        controller.chartFieldCount > 0
-                    format:         "mm:ss"
-                    tickCount:      5
-                    gridVisible:    true
-                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
-                }
-
-                ValueAxis {
-                    id:             axisY1
-                    min:            visible ? controller.chartFields[0].rangeMin : 0
-                    max:            visible ? controller.chartFields[0].rangeMax : 0
-                    visible:        controller.chartFieldCount > 0
-                    lineVisible:    false
-                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
-                }
-
-                ValueAxis {
-                    id:             axisY2
-                    min:            visible ? controller.chartFields[1].rangeMin : 0
-                    max:            visible ? controller.chartFields[1].rangeMax : 0
-                    visible:        controller.chartFieldCount > 1
-                    lineVisible:    false
-                    labelsFont.pixelSize: ScreenTools.smallFontPointSize
-                }
-
-                LineSeries {
-                    id:             lineSeries1
-                    name:           controller.chartFieldCount ? controller.chartFields[0].label : ""
-                    axisX:          axisX
-                    axisY:          axisY1
-                    color:          qgcPal.colorRed
-                    useOpenGL:      true
-                }
-
-                LineSeries {
-                    id:             lineSeries2
-                    name:           controller.chartFieldCount > 1 ? controller.chartFields[1].label : ""
-                    axisX:          axisX
-                    axisYRight:     axisY2
-                    color:          qgcPal.colorGreen
-                    useOpenGL:      true
-                }
-
-            }
-            Timer {
-                id:         refreshTimer
-                interval:   1 / 20 * 1000 // 20 Hz
-                running:    controller.chartFieldCount > 0
-                repeat:     true
-                onTriggered: {
-                    if(controller.chartFieldCount > 0) {
-                        controller.updateSeries(0, lineSeries1)
-                    }
-                    if(controller.chartFieldCount > 1) {
-                        controller.updateSeries(1, lineSeries2)
-                    } else {
-                        if(lineSeries2.count > 0) {
-                            lineSeries2.removePoints(0,lineSeries2.count)
-                        }
-                    }
-                }
-                onRunningChanged: {
-                    if(!running) {
-                        if(lineSeries1.count > 0) {
-                            lineSeries1.removePoints(0,lineSeries1.count)
-                        }
-                    }
-                }
-            }
-        }
-    }
-    */
-
     Component {
         id:  headerComponent
         //-- Header
@@ -179,17 +69,16 @@ AnalyzePage {
 
     Component {
         id:                         pageComponent
-        RowLayout {
+        Row {
             width:                  availableWidth
             height:                 availableHeight
             spacing:                ScreenTools.defaultFontPixelWidth
             //-- Messages (Buttons)
             QGCFlickable {
                 id:                 buttonGrid
+                flickableDirection: Flickable.VerticalFlick
                 width:              maxButtonWidth
-                Layout.maximumWidth:maxButtonWidth
-                Layout.fillHeight:  true
-                Layout.fillWidth:   true
+                height:             parent.height
                 contentWidth:       width
                 contentHeight:      buttonCol.height
                 ColumnLayout {
@@ -217,12 +106,14 @@ AnalyzePage {
             QGCFlickable {
                 id:                 messageGrid
                 visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.cid)
-                Layout.fillHeight:  true
-                Layout.fillWidth:   true
-                contentWidth:       messageCol.width
+                flickableDirection: Flickable.VerticalFlick
+                width:              parent.width - buttonGrid.width - ScreenTools.defaultFontPixelWidth
+                height:             parent.height
+                contentWidth:       width
                 contentHeight:      messageCol.height
-                ColumnLayout {
+                Column {
                     id:                 messageCol
+                    width:              parent.width
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.25
                     GridLayout {
                         columns:        2
@@ -250,25 +141,42 @@ AnalyzePage {
                         }
                     }
                     Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
-                    QGCLabel {
-                        text:       qsTr("Message Fields:")
-                    }
-                    //---------------------------------------------------------
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height:     1
-                        color:      qgcPal.text
-                    }
-                    Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
                     //---------------------------------------------------------
                     GridLayout {
-                        columns:        5
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth
-                        rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+                        id:                 msgInfoGrid
+                        columns:            5
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth  * 0.25
+                        rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
+                        width:              parent.width
+                        QGCLabel {
+                            text:       qsTr("Name")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Value")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Type")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Plot 1")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Plot 2")
+                        }
+
+                        //---------------------------------------------------------
+                        Rectangle {
+                            Layout.columnSpan:  5
+                            Layout.fillWidth:   true
+                            height:             1
+                            color:              qgcPal.text
+                        }
+                        //---------------------------------------------------------
+
                         Repeater {
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCLabel {
-                                Layout.row:         index
+                                Layout.row:         index + 2
                                 Layout.column:      0
                                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
                                 text:               object.name
@@ -277,10 +185,10 @@ AnalyzePage {
                         Repeater {
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCLabel {
-                                Layout.row:         index
+                                Layout.row:         index + 2
                                 Layout.column:      1
-                                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 30
-                                Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 30
+                                Layout.minimumWidth: msgInfoGrid.width * 0.25
+                                Layout.maximumWidth: msgInfoGrid.width * 0.25
                                 text:               object.value
                                 elide:              Text.ElideRight
                             }
@@ -288,16 +196,19 @@ AnalyzePage {
                         Repeater {
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCLabel {
-                                Layout.row:         index
+                                Layout.row:         index + 2
                                 Layout.column:      2
+                                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
                                 text:               object.type
+                                elide:              Text.ElideRight
                             }
                         }
                         Repeater {
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCCheckBox {
-                                Layout.row:         index
+                                Layout.row:         index + 2
                                 Layout.column:      3
+                                Layout.alignment:   Qt.AlignHCenter
                                 enabled: {
                                     if(checked)
                                         return true
@@ -324,8 +235,9 @@ AnalyzePage {
                         Repeater {
                             model:      curMessage ? curMessage.fields : []
                             delegate:   QGCCheckBox {
-                                Layout.row:         index
+                                Layout.row:         index + 2
                                 Layout.column:      4
+                                Layout.alignment:   Qt.AlignHCenter
                                 enabled: {
                                     if(checked)
                                         return true
@@ -354,12 +266,12 @@ AnalyzePage {
                     MAVLinkChart {
                         id:         chart1
                         height:     ScreenTools.defaultFontPixelHeight * 20
-                        Layout.fillWidth: true
+                        width:      parent.width
                     }
                     MAVLinkChart {
                         id:         chart2
                         height:     ScreenTools.defaultFontPixelHeight * 20
-                        Layout.fillWidth: true
+                        width:      parent.width
                     }
                 }
             }
