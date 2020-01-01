@@ -80,6 +80,7 @@ ChartView {
         anchors.top:                parent.top
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 1.5
         spacing:                    ScreenTools.defaultFontPixelWidth  * 2
+        visible:                    chartController !== null
         GridLayout {
             columns:                2
             columnSpacing:          ScreenTools.defaultFontPixelWidth
