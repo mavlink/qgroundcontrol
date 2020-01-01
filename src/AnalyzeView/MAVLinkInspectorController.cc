@@ -39,7 +39,7 @@ QGCMAVLinkMessageField::addSeries(MAVLinkChartController* chart, QAbstractSeries
         _pSeries = series;
         emit seriesChanged();
         _dataIndex = 0;
-        _msg->select();
+        _msg->updateFieldSelection();
     }
 }
 
@@ -54,7 +54,7 @@ QGCMAVLinkMessageField::delSeries()
         _pSeries = nullptr;
         _chart   = nullptr;
         emit seriesChanged();
-        _msg->select();
+        _msg->updateFieldSelection();
     }
 }
 
@@ -183,7 +183,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(QObject *parent, mavlink_message_t* message
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkMessage::select()
+QGCMAVLinkMessage::updateFieldSelection()
 {
     bool sel = false;
     for (int i = 0; i < _fields.count(); ++i) {
@@ -195,9 +195,9 @@ QGCMAVLinkMessage::select()
             }
         }
     }
-    if(sel != _selected) {
-        _selected = sel;
-        emit selectedChanged();
+    if(sel != _fieldSelected) {
+        _fieldSelected = sel;
+        emit fieldSelectedChanged();
     }
 }
 
@@ -458,6 +458,29 @@ QGCMAVLinkVehicle::findMessage(uint32_t id, uint8_t cid)
 }
 
 //-----------------------------------------------------------------------------
+int
+QGCMAVLinkVehicle::findMessage(QGCMAVLinkMessage* message)
+{
+    for(int i = 0; i < _messages.count(); i++) {
+        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
+        if(m && m == message) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMAVLinkVehicle::setSelected(int sel)
+{
+    if(sel < _messages.count()) {
+        _selected = sel;
+        emit selectedChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
 static bool
 messages_sort(QObject* a, QObject* b)
 {
@@ -472,6 +495,11 @@ messages_sort(QObject* a, QObject* b)
 void
 QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
 {
+    //-- Save selected message
+    QGCMAVLinkMessage* selectedMsg = nullptr;
+    if(_messages.count()) {
+        selectedMsg = qobject_cast<QGCMAVLinkMessage*>(_messages.get(_selected));
+    }
     _messages.append(message);
     //-- Sort messages by id and then cid
     if(_messages.count() > 0) {
@@ -485,6 +513,14 @@ QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
         _checkCompID(message);
     }
     emit messagesChanged();
+    //-- Remember selected message
+    if(selectedMsg) {
+        int idx = findMessage(selectedMsg);
+        if(idx >= 0) {
+            _selected = idx;
+            emit selectedChanged();
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

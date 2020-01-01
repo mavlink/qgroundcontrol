@@ -22,19 +22,18 @@ ChartView {
 
     property var chartController:   null
     property int maxSeriesCount:    seriesColors.length
-    property var seriesColors:      ["chartreuse", "chocolate", "yellowgreen", "thistle", "silver", "darkturquoise", "blue", "green"]
+    property var seriesColors:      ["chartreuse", "darkturquoise", "chocolate", "thistle", "silver", "blue"]
 
     function addDimension(field) {
         if(!chartController) {
             chartController = controller.createChart()
         }
-        console.log(field.name + ' AxisY: ' + axisY)
-        console.log(chartView.count + ' ' + chartView.seriesColors[chartView.count])
+        var color   = chartView.seriesColors[chartView.count]
         var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
         serie.axisX = axisX
         serie.axisY = axisY
         serie.useOpenGL = true
-        serie.color = chartView.seriesColors[chartView.count]
+        serie.color = color
         serie.width = 1
         chartController.addSeries(field, serie)
     }
@@ -43,7 +42,6 @@ ChartView {
         if(chartController) {
             chartView.removeSeries(field.series)
             chartController.delSeries(field)
-            console.log('Remove: ' + chartView.count + ' ' + field.name)
             if(chartView.count === 0) {
                 controller.deleteChart(chartController)
                 chartController = null
@@ -55,7 +53,8 @@ ChartView {
         id:                         axisX
         min:                        chartController ? chartController.rangeXMin : new Date()
         max:                        chartController ? chartController.rangeXMax : new Date()
-        format:                     "mm:ss.zzz"
+        visible:                    chartController !== null
+        format:                     "<br/>mm:ss.zzz"
         tickCount:                  5
         gridVisible:                true
         labelsFont.family:          "Fixed"
@@ -66,12 +65,13 @@ ChartView {
         id:                         axisY
         min:                        chartController ? chartController.rangeYMin : 0
         max:                        chartController ? chartController.rangeYMax : 0
+        visible:                    chartController !== null
         lineVisible:                false
         labelsFont.family:          "Fixed"
         labelsFont.pixelSize:       ScreenTools.smallFontPointSize
     }
 
-    RowLayout {
+    Row {
         id:                         chartHeader
         anchors.left:               parent.left
         anchors.leftMargin:         ScreenTools.defaultFontPixelWidth  * 4
@@ -79,11 +79,12 @@ ChartView {
         anchors.rightMargin:        ScreenTools.defaultFontPixelWidth  * 4
         anchors.top:                parent.top
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 1.5
+        spacing:                    ScreenTools.defaultFontPixelWidth  * 2
         GridLayout {
             columns:                2
             columnSpacing:          ScreenTools.defaultFontPixelWidth
             rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.25
-            Layout.alignment:       Qt.AlignVCenter
+            anchors.verticalCenter: parent.verticalCenter
             QGCLabel {
                 text:               qsTr("Scale:");
                 font.pixelSize:     ScreenTools.smallFontPointSize
@@ -116,8 +117,7 @@ ChartView {
             }
         }
         ColumnLayout {
-            Layout.alignment:       Qt.AlignVCenter
-            Layout.fillWidth:       true
+            anchors.verticalCenter: parent.verticalCenter
             Repeater {
                 model:              chartController ? chartController.chartFields : []
                 QGCLabel {
