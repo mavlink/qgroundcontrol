@@ -35,6 +35,7 @@ public:
     Q_PROPERTY(QString          type        READ type       CONSTANT)
     Q_PROPERTY(QString          value       READ value      NOTIFY valueChanged)
     Q_PROPERTY(bool             selectable  READ selectable NOTIFY selectableChanged)
+    Q_PROPERTY(int              chartIndex  READ chartIndex CONSTANT)
     Q_PROPERTY(QAbstractSeries* series      READ series     NOTIFY seriesChanged)
 
     QGCMAVLinkMessageField(QGCMAVLinkMessage* parent, QString name, QString type);
@@ -49,6 +50,7 @@ public:
     QList<QPointF>* values          () { return &_values;}
     qreal           rangeMin        () { return _rangeMin; }
     qreal           rangeMax        () { return _rangeMax; }
+    int             chartIndex      ();
 
     void            setSelectable   (bool sel);
     void            updateValue     (QString newValue, qreal v);
@@ -157,7 +159,7 @@ private:
 class MAVLinkChartController : public QObject {
     Q_OBJECT
 public:
-    MAVLinkChartController(MAVLinkInspectorController* parent);
+    MAVLinkChartController(MAVLinkInspectorController* parent, int index);
 
     Q_PROPERTY(QVariantList chartFields         READ chartFields            NOTIFY chartFieldsChanged)
     Q_PROPERTY(QDateTime    rangeXMin           READ rangeXMin              NOTIFY rangeXMinChanged)
@@ -180,6 +182,7 @@ public:
     qreal                   rangeYMax           () { return _rangeYMax;   }
     quint32                 rangeXIndex         () { return _rangeXIndex; }
     quint32                 rangeYIndex         () { return _rangeYIndex; }
+    int                     chartIndex          () { return _index; }
 
     void                    setRangeXIndex      (quint32 t);
     void                    setRangeYIndex      (quint32 r);
@@ -202,6 +205,7 @@ private:
     QTimer              _updateSeriesTimer;
     QDateTime           _rangeXMin;
     QDateTime           _rangeXMax;
+    int                 _index               = 0;
     qreal               _rangeYMin           = 0;
     qreal               _rangeYMax           = 1;
     quint32             _rangeXIndex         = 0;                    ///< 5 Seconds

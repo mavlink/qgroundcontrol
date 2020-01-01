@@ -302,8 +302,8 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      3
-                                enabled:            (object.series !== null) || (object.selectable)
-                                checked:            enabled ? (object.series !== null) : false
+                                enabled:            checked || (object.selectable && object.series === null)
+                                checked:            object.series !== null && object.chartIndex === 0
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {
@@ -320,8 +320,8 @@ AnalyzePage {
                             delegate:   QGCCheckBox {
                                 Layout.row:         index
                                 Layout.column:      4
-                                enabled:            (object.series !== null) || (object.selectable)
-                                checked:            enabled ? (object.series !== null) : false
+                                enabled:            checked || (object.selectable && object.series === null)
+                                checked:            object.series !== null && object.chartIndex === 1
                                 onClicked: {
                                     if(enabled) {
                                         if(checked) {

@@ -263,6 +263,7 @@ QT += \
     svg \
     widgets \
     xml \
+    charts \
     texttospeech
 
 # Multimedia only used if QVC is enabled
@@ -277,7 +278,6 @@ AndroidBuild || iOSBuild {
     QT += \
         printsupport \
         serialport \
-        charts \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
