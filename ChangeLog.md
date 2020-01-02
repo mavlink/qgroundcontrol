@@ -52,11 +52,13 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.5 - Not yet released
+### 3.5.6 - Not yet released
+
+### 3.5.5 - Stable
 * Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
 * Disable Pause when fixed wing is on landing approach.
 
-### 3.5.4 - Stable
+### 3.5.4
 * Update windows drivers
 * Add support for FMUK66 flashing/connection
 * Guard against null geometry coming from gstreamer which can cause crashes
