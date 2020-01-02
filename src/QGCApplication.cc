@@ -71,7 +71,9 @@
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
+#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
 #include "MAVLinkInspectorController.h"
+#endif
 #include "ValuesWidgetController.h"
 #include "AppMessages.h"
 #include "SimulatedPosition.h"
