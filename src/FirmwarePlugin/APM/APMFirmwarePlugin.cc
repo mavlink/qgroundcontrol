@@ -876,8 +876,11 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
 
     case MAV_TYPE_SUBMARINE:
-        if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.5.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.6dev.xml");
+        if (vehicle->versionCompare(4, 0, 0) >= 0) { // 4.0.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.0.xml");
+        }
+        if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.6.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.6.xml");
         }
         if (vehicle->versionCompare(3, 5, 0) >= 0) { // 3.5.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.5.xml");
