@@ -15,6 +15,18 @@
 namespace QGC
 {
 
+static quint64 gBootTime = 0;
+
+void initTimer()
+{
+    gBootTime = groundTimeMilliseconds();
+}
+
+quint64 bootTimeMilliseconds()
+{
+    return groundTimeMilliseconds() - gBootTime;
+}
+
 quint64 groundTimeUsecs()
 {
     return groundTimeMilliseconds() * 1000;
