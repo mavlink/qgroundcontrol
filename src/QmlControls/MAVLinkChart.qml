@@ -21,8 +21,7 @@ ChartView {
     margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
 
     property var chartController:   null
-    property int maxSeriesCount:    seriesColors.length
-    property var seriesColors:      ["chartreuse", "darkturquoise", "chocolate", "thistle", "silver", "blue"]
+    property var seriesColors:      ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
 
     function addDimension(field) {
         if(!chartController) {
@@ -59,6 +58,7 @@ ChartView {
         gridVisible:                true
         labelsFont.family:          "Fixed"
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
+        labelsColor:                qgcPal.text
     }
 
     ValueAxis {
@@ -69,6 +69,7 @@ ChartView {
         lineVisible:                false
         labelsFont.family:          "Fixed"
         labelsFont.pointSize:       ScreenTools.smallFontPointSize
+        labelsColor:                qgcPal.text
     }
 
     Row {
