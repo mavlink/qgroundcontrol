@@ -91,64 +91,21 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
-            ListModel {
-                id: desktopModel
-                ListElement {
-                    buttonImage:        "/qmlimages/LogDownloadIcon"
-                    buttonText:         qsTr("Log Download")
-                    pageSource:         "LogDownloadPage.qml"
-                }
-                ListElement {
-                    buttonImage:        "/qmlimages/GeoTagIcon"
-                    buttonText:         qsTr("GeoTag Images")
-                    pageSource:         "GeoTagPage.qml"
-                }
-                ListElement {
-                    buttonImage:        "/qmlimages/MavlinkConsoleIcon"
-                    buttonText:         qsTr("MAVLink Console")
-                    pageSource:         "MavlinkConsolePage.qml"
-                }
-                ListElement {
-                    buttonImage:        "/qmlimages/MAVLinkInspector"
-                    buttonText:         qsTr("MAVLink Inspector")
-                    pageSource:         "MAVLinkInspectorPage.qml"
-                }
-            }
-
-            ListModel {
-                id: mobileModel
-                ListElement {
-                    buttonImage:        "/qmlimages/LogDownloadIcon"
-                    buttonText:         qsTr("Log Download")
-                    pageSource:         "LogDownloadPage.qml"
-                }
-                ListElement {
-                    buttonImage:        "/qmlimages/MavlinkConsoleIcon"
-                    buttonText:         qsTr("MAVLink Console")
-                    pageSource:         "MavlinkConsolePage.qml"
-                }
-                ListElement {
-                    buttonImage:        "/qmlimages/MAVLinkInspector"
-                    buttonText:         qsTr("MAVLink Inspector")
-                    pageSource:         "MAVLinkInspectorPage.qml"
-                }
-            }
-
             Repeater {
                 id:                     buttonRepeater
-                model:                  ScreenTools.isMobile ? mobileModel : desktopModel
+                model:                  QGroundControl.corePlugin ? QGroundControl.corePlugin.analyzePages : []
                 Component.onCompleted:  itemAt(0).checked = true
                 SubMenuButton {
                     id:                 subMenu
-                    imageResource:      buttonImage
+                    imageResource:      modelData.icon
                     setupIndicator:     false
                     exclusiveGroup:     setupButtonGroup
-                    text:               buttonText
+                    text:               modelData.title
                     property var window:    analyzeWidgetWindow
                     property var loader:    analyzeWidgetLoader
                     onClicked: {
                         _curIndex = index
-                        panelLoader.source = pageSource
+                        panelLoader.source = modelData.url
                         checked = true
                     }
                     Window {
@@ -156,7 +113,7 @@ Rectangle {
                         width:          ScreenTools.defaultFontPixelWidth  * 100
                         height:         ScreenTools.defaultFontPixelHeight * 40
                         visible:        false
-                        title:          buttonText
+                        title:          modelData.title
                         Rectangle {
                             color:      qgcPal.window
                             anchors.fill:  parent
@@ -169,7 +126,7 @@ Rectangle {
                             analyzeWidgetWindow.visible = false
                             analyzeWidgetLoader.source = ""
                             _curIndex = index
-                            panelLoader.source = pageSource
+                            panelLoader.source = modelData.url
                             subMenu.visible = true
                             subMenu.checked = true
                         }
