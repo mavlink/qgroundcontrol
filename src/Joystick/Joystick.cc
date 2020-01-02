@@ -972,7 +972,7 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit setVtolInFwdFlight(true);
     } else if (action == _buttonActionVTOLMultiRotor) {
         if (buttonDown) emit setVtolInFwdFlight(false);
-    } else if (_activeVehicle->flightModes().contains(action)) {
+    } else if (_activeVehicle->flightModes().contains(action) || _activeVehicle->extraJoystickFlightModes().contains(action)) {
         if (buttonDown) emit setFlightMode(action);
     } else if(action == _buttonActionContinuousZoomIn || action == _buttonActionContinuousZoomOut) {
         if (buttonDown) {
@@ -1069,6 +1069,10 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleArm));
     if (activeVehicle) {
         QStringList list = activeVehicle->flightModes();
+        foreach(auto mode, list) {
+            _assignableButtonActions.append(new AssignableButtonAction(this, mode));
+        }
+        list = activeVehicle->extraJoystickFlightModes();
         foreach(auto mode, list) {
             _assignableButtonActions.append(new AssignableButtonAction(this, mode));
         }
