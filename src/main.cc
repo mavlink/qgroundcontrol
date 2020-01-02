@@ -15,6 +15,7 @@
  *
  */
 
+#include "QGC.h"
 #include <QtGlobal>
 #include <QApplication>
 #include <QIcon>
@@ -237,6 +238,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+
+    //-- Record boot time
+    QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
