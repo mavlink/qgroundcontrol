@@ -97,11 +97,11 @@ QGCMAVLinkMessageField::updateValue(QString newValue, qreal v)
         int count = _values.count();
         //-- Arbitrary limit of 1 minute of data at 50Hz for now
         if(count < (50 * 60)) {
-            QPointF p(QGC::groundTimeMilliseconds(), v);
+            QPointF p(QGC::bootTimeMilliseconds(), v);
             _values.append(p);
         } else {
             if(_dataIndex >= count) _dataIndex = 0;
-            _values[_dataIndex].setX(QGC::groundTimeMilliseconds());
+            _values[_dataIndex].setX(QGC::bootTimeMilliseconds());
             _values[_dataIndex].setY(v);
             _dataIndex++;
         }
@@ -580,7 +580,7 @@ void
 MAVLinkChartController::updateXRange()
 {
     if(_rangeXIndex < static_cast<quint32>(_controller->timeScaleSt().count())) {
-        qint64 t = static_cast<qint64>(QGC::groundTimeMilliseconds());
+        qint64 t = static_cast<qint64>(QGC::bootTimeMilliseconds());
         _rangeXMax = QDateTime::fromMSecsSinceEpoch(t);
         _rangeXMin = QDateTime::fromMSecsSinceEpoch(t - _controller->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
         emit rangeXMinChanged();
@@ -849,12 +849,12 @@ MAVLinkInspectorController::deleteChart(MAVLinkChartController* chart)
     if(chart) {
         for(int i = 0; i < _charts.count(); i++) {
             MAVLinkChartController* c = qobject_cast<MAVLinkChartController*>(_charts.get(i));
-            if(c) {
+            if(c && c == chart) {
                 _charts.removeOne(c);
+                delete c;
                 break;
             }
         }
-        chart->deleteLater();
         emit chartsChanged();
     }
 }
