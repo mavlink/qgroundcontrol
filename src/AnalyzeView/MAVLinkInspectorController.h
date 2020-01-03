@@ -91,8 +91,10 @@ public:
     Q_PROPERTY(quint64              count           READ count          NOTIFY messageChanged)
     Q_PROPERTY(QmlObjectListModel*  fields          READ fields         NOTIFY indexChanged)
     Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
+    Q_PROPERTY(bool                 selected        READ selected       NOTIFY selectedChanged)
 
-    QGCMAVLinkMessage(QObject* parent, mavlink_message_t* message);
+    QGCMAVLinkMessage   (QObject* parent, mavlink_message_t* message);
+    ~QGCMAVLinkMessage  ();
 
     quint32             id              () { return _message.msgid;  }
     quint8              cid             () { return _message.compid; }
@@ -102,16 +104,19 @@ public:
     quint64             lastCount       () { return _lastCount; }
     QmlObjectListModel* fields          () { return &_fields; }
     bool                fieldSelected   () { return _fieldSelected; }
+    bool                selected        () { return _selected; }
 
     void                updateFieldSelection();
     void                update          (mavlink_message_t* message);
     void                updateFreq      ();
+    void                setSelected     (bool sel) { _selected = sel; }
 
 signals:
     void messageChanged                 ();
     void freqChanged                    ();
     void indexChanged                   ();
     void fieldSelectedChanged           ();
+    void selectedChanged                ();
 
 private:
     QmlObjectListModel  _fields;
@@ -121,6 +126,7 @@ private:
     uint64_t            _lastCount  = 0;
     mavlink_message_t   _message;   //-- List of QGCMAVLinkMessageField
     bool                _fieldSelected   = false;
+    bool                _selected   = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -134,7 +140,8 @@ public:
 
     Q_PROPERTY(int                  selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
 
-    QGCMAVLinkVehicle(QObject* parent, quint8 id);
+    QGCMAVLinkVehicle   (QObject* parent, quint8 id);
+    ~QGCMAVLinkVehicle  ();
 
     quint8              id              () { return _id; }
     QmlObjectListModel* messages        () { return &_messages; }
@@ -154,6 +161,7 @@ signals:
 
 private:
     void _checkCompID                   (QGCMAVLinkMessage *message);
+    void _resetSelection                ();
 
 private:
     quint8              _id;
