@@ -50,6 +50,7 @@ linux {
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
             DEFINES += __androidArm32__
+            DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
             message("Android Arm 32 bit build")
         } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
             DEFINES += __androidArm64__
