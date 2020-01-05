@@ -1396,6 +1396,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3236,6 +3237,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3252,6 +3254,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3399,6 +3402,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3870,6 +3874,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3913,6 +3918,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3956,6 +3962,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -6072,6 +6079,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -6088,6 +6096,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -7783,6 +7792,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -8726,6 +8736,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -8880,6 +8891,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9304,6 +9316,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9323,6 +9336,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9339,6 +9353,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9357,6 +9372,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9396,6 +9412,39 @@ is less than 50% of this value</short_desc>
     <parameter default="0" name="SER_GPS2_BAUD" type="INT32">
       <short_desc>Baudrate for the GPS 2 Serial Port</short_desc>
       <long_desc>Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SER_GPS3_BAUD" type="INT32">
+      <short_desc>Baudrate for the GPS 3 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the GPS 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto</value>
@@ -9949,6 +9998,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9965,6 +10015,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
