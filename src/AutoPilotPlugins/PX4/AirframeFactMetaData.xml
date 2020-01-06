@@ -346,11 +346,6 @@
       <maintainer>Pavel Kirienko &lt;pavel.kirienko@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe id="4013" maintainer="Michael Schaeuble" name="Parrot Bebop Frame">
-      <class>Copter</class>
-      <maintainer>Michael Schaeuble</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
     <airframe id="4014" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="S500 Generic">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
