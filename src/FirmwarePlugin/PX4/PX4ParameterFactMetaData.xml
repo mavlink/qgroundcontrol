@@ -4586,7 +4586,7 @@ if required by the gimbal (only in AUX output mode)</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
-      <long_desc>Manual mode: Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3. Auto mode: Used with MPC_AUTO_MODE 0 only. For MPC_AUTO_MODE 1, MPC_ACC_HOR is always used.</long_desc>
+      <long_desc>Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s/s</unit>
@@ -4611,23 +4611,6 @@ if required by the gimbal (only in AUX output mode)</short_desc>
         <value code="1">Terrain following</value>
         <value code="2">Terrain hold</value>
       </values>
-    </parameter>
-    <parameter default="1" name="MPC_AUTO_MODE" type="INT32">
-      <short_desc>Auto sub-mode</short_desc>
-      <values>
-        <value code="0">Default line tracking</value>
-        <value code="1">Jerk-limited trajectory</value>
-      </values>
-    </parameter>
-    <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
-      <short_desc>Cruise speed when angle prev-current/current-next setpoint
-is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
-      <long_desc>Applies only in AUTO modes (includes also RTL / hold / etc.)</long_desc>
-      <min>1.0</min>
-      <max>20.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter default="5.0" name="MPC_DEC_HOR_SLOW" type="FLOAT">
       <short_desc>Slow horizontal manual deceleration for manual mode</short_desc>
@@ -4660,7 +4643,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="8.0" name="MPC_JERK_AUTO" type="FLOAT">
       <short_desc>Jerk limit in auto mode</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility. Note: This is only used in jerk-limited trajectory mode (MPC_AUTO_MODE 1)</long_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility.</long_desc>
       <min>5.0</min>
       <max>80.0</max>
       <unit>m/s/s/s</unit>
@@ -4918,12 +4901,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>1.5</max>
       <decimal>2</decimal>
-    </parameter>
-    <parameter default="0.3" name="MPC_Z_TRAJ_P" type="FLOAT">
-      <short_desc>Proportional gain for vertical trajectory position error</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
