@@ -922,7 +922,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF height innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -930,7 +929,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF position innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -938,7 +936,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF velocity innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -946,7 +943,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF yaw innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>rad</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
