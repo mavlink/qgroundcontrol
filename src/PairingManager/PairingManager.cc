@@ -552,23 +552,6 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
         return;
     }
 
-    setPairingStatus(Connecting, tr("Connecting to %1").arg(name));
-
-    if (confirm && !_devicesToConnect.contains(name)) {
-        QJsonObject jsonObj = _devices[name].object();
-        if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
-            _lastDeviceNameToConnect = name;
-            _confirmHighPowerMode = true;
-            emit confirmHighPowerModeChanged();
-            return;
-        }
-    }
-    _lastDeviceNameToConnect = "";
-    if (_confirmHighPowerMode) {
-        _confirmHighPowerMode = false;
-        emit confirmHighPowerModeChanged();
-    }
-
     // If multiple vehicles share same IP or do not share same channel then disconnect
     // If multiple vehicles share same IP or do not share same channel then do not try to autoconnect anymore
 
@@ -586,6 +569,23 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
 //        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
             stopConnectingDevice(n);
 //        }
+    }
+
+    setPairingStatus(Connecting, tr("Connecting to %1").arg(name));
+
+    if (confirm && !_devicesToConnect.contains(name)) {
+        QJsonObject jsonObj = _devices[name].object();
+        if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
+            _lastDeviceNameToConnect = name;
+            _confirmHighPowerMode = true;
+            emit confirmHighPowerModeChanged();
+            return;
+        }
+    }
+    _lastDeviceNameToConnect = "";
+    if (_confirmHighPowerMode) {
+        _confirmHighPowerMode = false;
+        emit confirmHighPowerModeChanged();
     }
 
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;

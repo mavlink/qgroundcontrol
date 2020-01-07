@@ -567,16 +567,6 @@ Item {
                     }
                 }
                 QGCButton {
-                    text:                   qsTr("Pair Another")
-                    width:                  _contentWidth
-                    visible:                QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.Connected) : false
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    onClicked: {
-                        progressPopup.close()
-                        mhPopup.open()
-                    }
-                }
-                QGCButton {
                     text:                   qsTr("Try Again")
                     width:                  _contentWidth
                     visible:                QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingStatus === PairingManager.PairingError: false
@@ -919,10 +909,12 @@ Item {
                     text:               qsTr("Pair Another")
                     width:              _contentWidth
                     Layout.fillWidth:   true
+                    visible:            _noConnectedDevices
                     onClicked: {
                         connectionPopup.close()
                         mhPopup.open()
                     }
+                    property bool _noConnectedDevices: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList.length <= 0 : false
                 }
                 Item { width: 1; height: 1; }
             }
