@@ -542,6 +542,7 @@ public:
     Q_PROPERTY(bool                 autoDisarm              READ autoDisarm                                             NOTIFY autoDisarmChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
     Q_PROPERTY(QStringList          flightModes             READ flightModes                                            NOTIFY flightModesChanged)
+    Q_PROPERTY(QStringList          extraJoystickFlightModes READ extraJoystickFlightModes                              NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(TrajectoryPoints*    trajectoryPoints        MEMBER _trajectoryPoints                                    CONSTANT)
@@ -851,10 +852,11 @@ public:
     bool armed      () { return _armed; }
     void setArmed   (bool armed);
 
-    bool flightModeSetAvailable(void);
-    QStringList flightModes(void);
-    QString flightMode(void) const;
-    void setFlightMode(const QString& flightMode);
+    bool flightModeSetAvailable             (void);
+    QStringList flightModes                 (void);
+    QStringList extraJoystickFlightModes    (void);
+    QString flightMode                      (void) const;
+    void setFlightMode                      (const QString& flightMode);
 
     QString priorityLinkName(void) const;
     QVariantList links(void) const;

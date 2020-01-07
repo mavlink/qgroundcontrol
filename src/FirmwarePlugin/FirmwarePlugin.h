@@ -81,12 +81,13 @@ public:
     ///         free when no longer needed.
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
 
-    /// Returns the list of available flight modes. Flight modes can be different in normal/advanced ui mode.
+    /// Returns the list of available flight modes for the Fly View dropdown. This may or may not be the full
+    /// list available from the firmware. Call will be made again if advanced mode changes.
+    virtual QStringList flightModes(Vehicle* /*vehicle*/) { return QStringList(); }
+
+    /// Returns the list of additional flight modes to add to the list for joystick button actions.
     /// Call will be made again if advanced mode changes.
-    virtual QStringList flightModes(Vehicle* vehicle) {
-        Q_UNUSED(vehicle);
-        return QStringList();
-    }
+    virtual QStringList extraJoystickFlightModes(Vehicle* /*vehicle*/) { return QStringList(); }
 
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
