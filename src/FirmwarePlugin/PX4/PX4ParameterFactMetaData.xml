@@ -3158,6 +3158,18 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
   </group>
   <group name="Failure Detector">
+    <parameter default="0" name="FD_EXT_ATS_EN" type="INT32">
+      <short_desc>Enable PWM input on AUX5 or MAIN5 (depending on board) for engaging failsafe from an external
+automatic trigger system (ATS)</short_desc>
+      <long_desc>External ATS is required by ASTM F3322-18.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="1900" name="FD_EXT_ATS_TRIG" type="INT32">
+      <short_desc>The PWM threshold from external automatic trigger system for engaging failsafe</short_desc>
+      <long_desc>External ATS is required by ASTM F3322-18.</long_desc>
+      <unit>microseconds</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter default="60" name="FD_FAIL_P" type="INT32">
       <short_desc>FailureDetector Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before FailureDetector triggers the attitude_failure flag If flight termination is enabled (@CBRK_FLIGHTTERM set to 0), the autopilot will terminate the flight and set all the outputs to their failsafe value as soon as the attitude_failure flag is set. Setting this parameter to 0 disables the check</long_desc>
