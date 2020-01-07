@@ -25,6 +25,7 @@
 
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
+        { "vendorID": 4617, "productID": 22337,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
 
         { "vendorID": 12642, "productID": 0,        "boardClass": "Pixhawk",    "name": "Holybro" },
 
