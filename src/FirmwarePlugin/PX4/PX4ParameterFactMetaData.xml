@@ -839,13 +839,6 @@ Set to 2 to use heading from motion capture</short_desc>
       <max>121212</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter category="Developer" default="0" name="CBRK_GPSFAIL" type="INT32">
-      <short_desc>Circuit breaker for GPS failure detection</short_desc>
-      <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
-      <min>0</min>
-      <max>240024</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter category="Developer" default="0" name="CBRK_IO_SAFETY" type="INT32">
       <short_desc>Circuit breaker for IO safety</short_desc>
       <long_desc>Setting this parameter to 22027 will disable IO safety. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
