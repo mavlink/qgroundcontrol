@@ -157,15 +157,15 @@ MicrohardManager::configure()
         if (_toolbox->pairingManager()->usePairing()) {
             if (_usePairingSettings) {
                 _mhSettingsLoc->configure(_encryptionKey, _pairingPower,
-                                          _pairingChannel, _pairingBandwidth, _networkId);
+                                          adjustChannelToBandwitdh(_pairingChannel, _pairingBandwidth), _pairingBandwidth, _networkId);
             } else {
                 _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower,
-                                          _connectingChannel, _connectingBandwidth, _connectingNetworkId);
+                                          adjustChannelToBandwitdh(_connectingChannel, _connectingBandwidth), _connectingBandwidth, _connectingNetworkId);
             }
             return;
         }
 #endif
-        _mhSettingsLoc->configure(_encryptionKey, 0, _connectingChannel, _connectingBandwidth, _networkId);
+        _mhSettingsLoc->configure(_encryptionKey, 0, adjustChannelToBandwitdh(_connectingChannel, _connectingBandwidth), _connectingBandwidth, _networkId);
     }
 }
 
@@ -389,9 +389,9 @@ MicrohardManager::setProductName(QString product)
 {
     qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
 
-    _channelMin = 6;
-    _channelMax = 76;
-    _frequencyStart = 2407;
+    _channelMin = 4;
+    _channelMax = 78;
+    _frequencyStart = 2405;
 
     _bandwidthLabels.clear();
     _bandwidthLabels.append("8 MHz");
@@ -401,10 +401,22 @@ MicrohardManager::setProductName(QString product)
         _channelMin = 1;
         _channelMax = 81;
         _frequencyStart = 2310;
+        _bandwidthChannelMin.clear();
+        _bandwidthChannelMin.append(3);
+        _bandwidthChannelMin.append(1);
+        _bandwidthChannelMax.clear();
+        _bandwidthChannelMax.append(79);
+        _bandwidthChannelMax.append(81);
     } else if (product == "pMDDL2450" || product == "pDDL2450") {
-        _channelMin = 6;
-        _channelMax = 76;
-        _frequencyStart = 2407;
+        _channelMin = 4;
+        _channelMax = 78;
+        _frequencyStart = 2405;
+        _bandwidthChannelMin.clear();
+        _bandwidthChannelMin.append(6);
+        _bandwidthChannelMin.append(4);
+        _bandwidthChannelMax.clear();
+        _bandwidthChannelMax.append(76);
+        _bandwidthChannelMax.append(78);
     } else if (product == "pMDDL1800" || product == "pDDL1800" ) {
         _channelMin = 3;
         _channelMax = 57;
@@ -414,6 +426,16 @@ MicrohardManager::setProductName(QString product)
         _bandwidthLabels.append("4 MHz");
         _bandwidthLabels.append("2 MHz");
         _bandwidthLabels.append("1 MHz");
+        _bandwidthChannelMin.clear();
+        _bandwidthChannelMin.append(4);
+        _bandwidthChannelMin.append(3);
+        _bandwidthChannelMin.append(2);
+        _bandwidthChannelMin.append(1);
+        _bandwidthChannelMax.clear();
+        _bandwidthChannelMax.append(56);
+        _bandwidthChannelMax.append(57);
+        _bandwidthChannelMax.append(58);
+        _bandwidthChannelMax.append(59);
         _pairingBandwidth = 3;
     }
 
@@ -440,6 +462,19 @@ MicrohardManager::setProductName(QString product)
     emit bandwidthLabelsChanged();
     emit pairingChannelChanged();
     emit connectingChannelChanged();
+}
+
+//-----------------------------------------------------------------------------
+int
+MicrohardManager::adjustChannelToBandwitdh(int channel, int bandwidth)
+{
+    if (_bandwidthChannelMin.length() > bandwidth && channel < _bandwidthChannelMin[bandwidth]) {
+        return _bandwidthChannelMin[bandwidth];
+    } else if (_bandwidthChannelMax.length() > bandwidth && channel > _bandwidthChannelMax[bandwidth]) {
+        return _bandwidthChannelMax[bandwidth];
+    } else {
+        return channel;
+    }
 }
 
 //-----------------------------------------------------------------------------
