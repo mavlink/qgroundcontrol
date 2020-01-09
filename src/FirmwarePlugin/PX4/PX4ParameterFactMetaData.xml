@@ -8125,6 +8125,14 @@ to takeoff is reached</short_desc>
     </parameter>
   </group>
   <group name="SITL">
+    <parameter default="0" name="SIM_ACCEL_BLOCK" type="INT32">
+      <short_desc>Simulator block accelerometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation accelerometer data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_BARO_BLOCK" type="INT32">
+      <short_desc>Simulator block barometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation barometer data.</long_desc>
+    </parameter>
     <parameter default="60" name="SIM_BAT_DRAIN" type="FLOAT">
       <short_desc>Simulator Battery drain interval</short_desc>
       <min>1</min>
@@ -8140,6 +8148,29 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <max>100</max>
       <unit>%</unit>
       <increment>0.1</increment>
+    </parameter>
+    <parameter default="0" name="SIM_DPRES_BLOCK" type="INT32">
+      <short_desc>Simulator block differential pressure data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation differential pressure data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_GPS_BLOCK" type="INT32">
+      <short_desc>Simulator block GPS data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation GPS data.</long_desc>
+    </parameter>
+    <parameter default="0.0" name="SIM_GPS_NOISE_X" type="FLOAT">
+      <short_desc>Simulator GPS noise multiplier</short_desc>
+      <min>0</min>
+      <max>10</max>
+      <unit>%</unit>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter default="0" name="SIM_GYRO_BLOCK" type="INT32">
+      <short_desc>Simulator block gyroscope data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation gyroscope data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_MAG_BLOCK" type="INT32">
+      <short_desc>Simulator block magnetometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation magnetometer data.</long_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
