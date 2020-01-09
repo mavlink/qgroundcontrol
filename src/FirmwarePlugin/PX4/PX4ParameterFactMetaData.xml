@@ -1332,8 +1332,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <increment>0.1</increment>
     </parameter>
     <parameter default="1" name="COM_RC_OVERRIDE" type="INT32">
-      <short_desc>Enable RC stick override of auto modes
-Enable RC stick override of auto or offboard modes</short_desc>
+      <short_desc>Enable RC stick override of auto or offboard modes</short_desc>
       <long_desc>Moving the RC sticks gives control back to the pilot in manual position mode immediately when: 0: an auto mode is active (except a critical battery reaction) 1: offboard mode is active Only has an effect on multicopters and VTOLS in multicopter mode.</long_desc>
       <min>0</min>
       <max>3</max>
