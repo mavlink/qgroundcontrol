@@ -112,10 +112,10 @@ SetupPage {
                     } else {
                         _followOffsetX.rawValue = Math.sin(angleRadians) * distance
                         _followOffsetY.rawValue = Math.cos(angleRadians) * distance
-                        if (_followOffsetX.rawValue < 0.0001) {
+                        if (Math.abs(_followOffsetX.rawValue) < 0.0001) {
                             _followOffsetX.rawValue = 0
                         }
-                        if (_followOffsetY.rawValue < 0.0001) {
+                        if (Math.abs(_followOffsetY.rawValue) < 0.0001) {
                             _followOffsetY.rawValue = 0
                         }
                     }
