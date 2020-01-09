@@ -325,7 +325,7 @@ MicrohardManager::setProductName(QString product)
     _bandwidthLabels.append("8 MHz");
     _bandwidthLabels.append("4 MHz");
 
-    if (product == "pMDDL2350" || product == "pDDL2350") {
+    if (product.contains("DDL2350")) {
         _channelMin = 1;
         _channelMax = 81;
         _frequencyStart = 2310;
@@ -335,7 +335,7 @@ MicrohardManager::setProductName(QString product)
         _bandwidthChannelMax.clear();
         _bandwidthChannelMax.append(79);
         _bandwidthChannelMax.append(81);
-    } else if (product == "pMDDL2450" || product == "pDDL2450") {
+    } else if (product.contains("DDL2450")) {
         _channelMin = 4;
         _channelMax = 78;
         _frequencyStart = 2405;
@@ -345,7 +345,7 @@ MicrohardManager::setProductName(QString product)
         _bandwidthChannelMax.clear();
         _bandwidthChannelMax.append(76);
         _bandwidthChannelMax.append(78);
-    } else if (product == "pMDDL1800" || product == "pDDL1800" ) {
+    } else if (product.contains("DDL1800")) {
         _channelMin = 3;
         _channelMax = 57;
         _frequencyStart = 1813;
