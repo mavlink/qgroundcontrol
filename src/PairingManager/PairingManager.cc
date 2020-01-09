@@ -736,6 +736,8 @@ PairingManager::unpairDevice(const QString& name)
         QJsonObject jsonObj;
         jsonObj["NM"] = name;
         jsonDoc.setObject(jsonObj);
+        // get the vehicle you're unpairing from Public Key to encrypt the unpair request
+        _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
         emit startUpload(name, unpairURL, jsonDoc, true);
     }
     _updatePairedDeviceNameList();
@@ -785,6 +787,8 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     jsonObj["PW"] = power;
     jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
     jsonDoc.setObject(jsonObj);
+    // get the vehicle you're changing the connect channel Public Key to encrypt the channel request
+    _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
     setPairingStatus(ConfiguringModem, tr("Configuring modem"));
     emit startUpload(name, channelURL, jsonDoc, true);
 }
@@ -1370,6 +1374,8 @@ PairingManager::disconnectDevice(const QString& name)
                 jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
                 jsonDoc.setObject(jsonObj);
                 uploading = true;
+                // get the vehicle you're disconnecting from Public Key to encrypt the disconnect request
+                _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
                 emit startUpload(name, disconnectURL, jsonDoc, true);
             }
             break;
