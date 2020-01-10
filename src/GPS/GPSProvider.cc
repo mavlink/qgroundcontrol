@@ -208,7 +208,7 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         }
         case GPSCallbackType::writeDeviceData:
             if (_serial->write((char*) data1, data2) >= 0) {
-                if (_serial->waitForBytesWritten(-1))
+                //if (_serial->waitForBytesWritten(-1))
                     return data2;
             }
             return -1;
