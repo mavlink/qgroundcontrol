@@ -8072,6 +8072,10 @@ to takeoff is reached</short_desc>
     </parameter>
   </group>
   <group name="SD Logging">
+    <parameter default="0" name="SDLOG_BOOT_BAT" type="INT32">
+      <short_desc>Battery-only Logging</short_desc>
+      <long_desc>When enabled, logging will not start from boot if battery power is not detected (e.g. powered via USB on a test bench). This prevents extraneous flight logs from being created during bench testing. Note that this only applies to log-from-boot modes. This has no effect on arm-based modes.</long_desc>
+    </parameter>
     <parameter default="0" name="SDLOG_DIRS_MAX" type="INT32">
       <short_desc>Maximum number of log directories to keep</short_desc>
       <long_desc>If there are more log directories than this value, the system will delete the oldest directories during startup. In addition, the system will delete old logs if there is not enough free space left. The minimum amount is 300 MB. If this is set to 0, old directories will only be removed if the free space falls below the minimum. Note: this does not apply to mission log files.</long_desc>
