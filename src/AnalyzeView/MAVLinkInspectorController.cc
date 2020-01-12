@@ -531,8 +531,8 @@ messages_sort(QObject* a, QObject* b)
     QGCMAVLinkMessage* aa = qobject_cast<QGCMAVLinkMessage*>(a);
     QGCMAVLinkMessage* bb = qobject_cast<QGCMAVLinkMessage*>(b);
     if(!aa || !bb) return false;
-    if(aa->id() == bb->id()) return aa->cid() < bb->cid();
-    return aa->id() < bb->id();
+    if(aa->name() == bb->name()) return aa->name() < bb->name();
+    return aa->name() < bb->name();
 }
 
 //-----------------------------------------------------------------------------
