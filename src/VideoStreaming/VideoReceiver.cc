@@ -75,8 +75,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
-    , _hwDecoderName(nullptr)
-    , _swDecoderName("avdec_h264")
 {
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
@@ -124,6 +122,77 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
     if(gst_element_link_pads(element, name, sink, "sink") == false)
         qCritical() << "newPadCB : failed to link elements\n";
     g_free(name);
+}
+
+static gboolean
+autoplugQueryCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
+{
+    GstElement* glupload = (GstElement* )data;
+
+    GstPad* sinkpad = gst_element_get_static_pad(glupload, "sink");
+
+    if (!sinkpad) {
+        qCritical() << "autoplugQueryCaps(): No sink pad found";
+        return FALSE;
+    }
+
+    GstCaps* filter;
+
+    gst_query_parse_caps(query, &filter);
+
+    GstCaps* sinkcaps = gst_pad_query_caps(sinkpad, filter);
+
+    gst_query_set_caps_result(query, sinkcaps);
+
+    const gboolean ret = !gst_caps_is_empty(sinkcaps);
+
+    gst_caps_unref(sinkcaps);
+    sinkcaps = nullptr;
+
+    gst_object_unref(sinkpad);
+    sinkpad = nullptr;
+
+    return ret;
+}
+
+static gboolean
+autoplugQueryContext(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
+{
+    GstElement* glsink = (GstElement* )data;
+
+    GstPad* sinkpad = gst_element_get_static_pad(glsink, "sink");
+
+    if (!sinkpad){
+        qCritical() << "autoplugQueryContext(): No sink pad found";
+        return FALSE;
+    }
+
+    const gboolean ret = gst_pad_query(sinkpad, query);
+
+    gst_object_unref(sinkpad);
+    sinkpad = nullptr;
+
+    return ret;
+}
+
+static gboolean
+autoplugQueryCB(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
+{
+    gboolean ret;
+
+    switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_CAPS:
+        ret = autoplugQueryCaps(bin, pad, element, query, data);
+        break;
+    case GST_QUERY_CONTEXT:
+        ret = autoplugQueryContext(bin, pad, element, query, data);
+        break;
+    default:
+        ret = FALSE;
+        break;
+    }
+
+    return ret;
 }
 
 //-----------------------------------------------------------------------------
@@ -274,7 +343,6 @@ VideoReceiver::start()
     GstElement*     parser      = nullptr;
     GstElement*     queue       = nullptr;
     GstElement*     decoder     = nullptr;
-    GstElement*     queue1      = nullptr;
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == nullptr) {
@@ -354,35 +422,27 @@ VideoReceiver::start()
             break;
         }
 
-        if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
-            qWarning() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
-            if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
-                break;
-            }
-        }
-
-        if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue') [1]";
+        if ((decoder = gst_element_factory_make("decodebin", "decoder")) == nullptr) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('decodebin')";
             break;
         }
 
         if(isTaisyncUSB) {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, _videoSink, nullptr);
         } else {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, _videoSink, nullptr);
         }
         pipelineUp = true;
 
         if(isUdp264 || isUdp265) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, nullptr)) {
                 qCritical() << "Unable to link UDP elements.";
                 break;
             }
         } else if(isTaisyncUSB) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, nullptr)) {
                 qCritical() << "Unable to link Taisync USB elements.";
                 break;
             }
@@ -391,20 +451,23 @@ VideoReceiver::start()
                 qCritical() << "Unable to link TCP/MPEG-TS dataSource to Demux.";
                 break;
             }
-            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(parser, _tee, queue, decoder, nullptr)) {
                 qCritical() << "Unable to link TCP/MPEG-TS pipline to parser.";
                 break;
             }
             g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
         } else {
             g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
-            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, nullptr)) {
+            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, nullptr)) {
                 qCritical() << "Unable to link RTSP elements.";
                 break;
             }
         }
 
-        dataSource = demux = parser = queue = decoder = queue1 = nullptr;
+        g_signal_connect(decoder, "pad-added", G_CALLBACK(newPadCB), _videoSink);
+        g_signal_connect(decoder, "autoplug-query", G_CALLBACK(autoplugQueryCB), _videoSink);
+
+        dataSource = demux = parser = queue = decoder = nullptr;
 
         GstBus* bus = nullptr;
 
@@ -436,11 +499,6 @@ VideoReceiver::start()
 
         // If we failed before adding items to the pipeline, then clean up
         if (!pipelineUp) {
-            if (queue1 != nullptr) {
-                gst_object_unref(queue1);
-                queue1 = nullptr;
-            }
-
             if (decoder != nullptr) {
                 gst_object_unref(decoder);
                 decoder = nullptr;
@@ -554,8 +612,6 @@ VideoReceiver::_shutdownPipeline() {
 void
 VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
-    // If there was an error we switch to software decoding only
-    _tryWithHardwareDecoding = false;
     stop();
     _restart_timer.start(_restart_time_ms);
 }
@@ -666,32 +722,12 @@ VideoReceiver::_cleanupOldVideos()
 void
 VideoReceiver::setVideoDecoder(VideoEncoding encoding)
 {
-    /*
-    #if defined(Q_OS_MAC)
-        _hwDecoderName = "vtdec";
-    #else
-        _hwDecoderName = "vaapidecode";
-    #endif
-    */
-
     if (encoding == H265_HW || encoding == H265_SW) {
         _depayName  = "rtph265depay";
         _parserName = "h265parse";
-#if defined(__android__)
-        _hwDecoderName = "amcviddec-omxgooglehevcdecoder";
-#endif
-        _swDecoderName = "avdec_h265";
     } else {
         _depayName  = "rtph264depay";
         _parserName = "h264parse";
-#if defined(__android__)
-        _hwDecoderName = "amcviddec-omxgoogleh264decoder";
-#endif
-        _swDecoderName = "avdec_h264";
-    }
-
-    if (!_tryWithHardwareDecoding) {
-        _hwDecoderName = nullptr;
     }
 }
 
