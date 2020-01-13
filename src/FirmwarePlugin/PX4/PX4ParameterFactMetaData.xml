@@ -4096,43 +4096,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <short_desc>Test mode (Identify) of MKBLCTRL Driver</short_desc>
     </parameter>
   </group>
-  <group name="MPU9x50 Configuration">
-    <parameter default="4" name="MPU_ACC_LPF_ENM" type="INT32">
-      <short_desc>Low pass filter frequency for Accelerometer</short_desc>
-      <values>
-        <value code="0">MPU9X50_ACC_LPF_460HZ</value>
-        <value code="1">MPU9X50_ACC_LPF_184HZ</value>
-        <value code="2">MPU9X50_ACC_LPF_92HZ</value>
-        <value code="3">MPU9X50_ACC_LPF_41HZ</value>
-        <value code="4">MPU9X50_ACC_LPF_20HZ</value>
-        <value code="5">MPU9X50_ACC_LPF_10HZ</value>
-        <value code="6">MPU9X50_ACC_LPF_5HZ</value>
-        <value code="7">MPU9X50_ACC_LPF_460HZ_NOLPF</value>
-      </values>
-    </parameter>
-    <parameter default="4" name="MPU_GYRO_LPF_ENM" type="INT32">
-      <short_desc>Low pass filter frequency for Gyro</short_desc>
-      <values>
-        <value code="0">MPU9X50_GYRO_LPF_250HZ</value>
-        <value code="1">MPU9X50_GYRO_LPF_184HZ</value>
-        <value code="2">MPU9X50_GYRO_LPF_92HZ</value>
-        <value code="3">MPU9X50_GYRO_LPF_41HZ</value>
-        <value code="4">MPU9X50_GYRO_LPF_20HZ</value>
-        <value code="5">MPU9X50_GYRO_LPF_10HZ</value>
-        <value code="6">MPU9X50_GYRO_LPF_5HZ</value>
-        <value code="7">MPU9X50_GYRO_LPF_3600HZ_NOLPF</value>
-      </values>
-    </parameter>
-    <parameter default="2" name="MPU_SAMPLE_R_ENM" type="INT32">
-      <short_desc>Sample rate in Hz</short_desc>
-      <values>
-        <value code="0">MPU9x50_SAMPLE_RATE_100HZ</value>
-        <value code="1">MPU9x50_SAMPLE_RATE_200HZ</value>
-        <value code="2">MPU9x50_SAMPLE_RATE_500HZ</value>
-        <value code="3">MPU9x50_SAMPLE_RATE_1000HZ</value>
-      </values>
-    </parameter>
-  </group>
   <group name="Mission">
     <parameter default="0" name="COM_OBS_AVOID" type="INT32">
       <short_desc>Flag to enable obstacle avoidance</short_desc>
@@ -6041,12 +6004,6 @@ default 1.5 turns per second</short_desc>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.1</increment>
-    </parameter>
-  </group>
-  <group name="RC Receiver Configuration">
-    <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
-      <short_desc>RC receiver type</short_desc>
-      <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
     </parameter>
   </group>
   <group name="RTPS">
@@ -9860,33 +9817,6 @@ is less than 50% of this value</short_desc>
       <unit>N</unit>
       <decimal>2</decimal>
       <increment>0.5</increment>
-    </parameter>
-  </group>
-  <group name="Snapdragon UART ESC">
-    <parameter default="250000" name="UART_ESC_BAUD" type="INT32">
-      <short_desc>ESC UART baud rate</short_desc>
-      <long_desc>Default rate is 250Kbps, whic is used in off-the-shelf QRP ESC products.</long_desc>
-    </parameter>
-    <parameter default="2" name="UART_ESC_MODEL" type="INT32">
-      <short_desc>ESC model</short_desc>
-      <long_desc>See esc_model_t enum definition in uart_esc_dev.h for all supported ESC model enum values.</long_desc>
-      <values>
-        <value code="0">ESC_200QX</value>
-        <value code="1">ESC_350QX</value>
-        <value code="2">ESC_210QC</value>
-      </values>
-    </parameter>
-    <parameter default="4" name="UART_ESC_MOTOR1" type="INT32">
-      <short_desc>Motor 1 Mapping</short_desc>
-    </parameter>
-    <parameter default="2" name="UART_ESC_MOTOR2" type="INT32">
-      <short_desc>Motor 2 Mapping</short_desc>
-    </parameter>
-    <parameter default="1" name="UART_ESC_MOTOR3" type="INT32">
-      <short_desc>Motor 3 Mapping</short_desc>
-    </parameter>
-    <parameter default="3" name="UART_ESC_MOTOR4" type="INT32">
-      <short_desc>Motor 4 Mapping</short_desc>
     </parameter>
   </group>
   <group name="System">
