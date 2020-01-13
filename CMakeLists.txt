@@ -90,6 +90,7 @@ include(Qt5QGCConfiguration)
 find_package(Qt5 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
+		Charts
 		Concurrent
 		Core
 		Location
