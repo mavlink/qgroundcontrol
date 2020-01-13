@@ -105,7 +105,8 @@ protected slots:
 protected:
     friend class FinishVideoInitialization;
 #if defined(QGC_GST_STREAMING)
-    GstElement* _makeVideoSink      (const QString& widgetName);
+    static gboolean _videoSinkQuery (GstPad* pad, GstObject* parent, GstQuery* query);
+    GstElement*     _makeVideoSink  (gpointer widget);
 #endif
     void _initVideo                 ();
     void _updateSettings            ();
