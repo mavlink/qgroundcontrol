@@ -440,7 +440,7 @@ Item {
                 id:             cameraLoader
                 anchors.fill:   parent
                 visible:        !QGroundControl.videoManager.isGStreamer
-                source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+                source:         visible ? (QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml") : ""
             }
         }
 
