@@ -69,7 +69,7 @@ SetupPage {
                     text:       qsTr("General")
                 }
                 QGCTabButton {
-                    text:       qsTr("Button Assigment")
+                    text:       qsTr("Button Assignment")
                 }
                 QGCTabButton {
                     text:       qsTr("Calibration")
