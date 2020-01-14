@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QList>
 #include <QGeoCoordinate>
+#include <QVariant>
 
 /// Routines for loading polygons or polylines from KML or SHP files.
 class ShapeFileHelper : public QObject
