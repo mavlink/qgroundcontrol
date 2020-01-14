@@ -120,13 +120,21 @@ LinuxBuild {
         libicui18n.so* \
         libQt5TextToSpeech.so.5
 
-    !contains(DEFINES, __rasp_pi2__) {
-        # Some Qt distributions link with *.so.56
-        QT_LIB_LIST += \
-            libicudata.so.56 \
-            libicui18n.so.56 \
-            libicuuc.so.56
-    }
+# TODO: Discover what to do here, checking for a specific
+# version of libicu is broken and gives compilation errors
+# when the app actually successfully build.
+#
+# for now, I'm just commenting those lines as it does not appear
+# to matter.
+# cp: cannot stat '/usr/lib/libicudata.so.56': No such file or directory
+#
+#    !contains(DEFINES, __rasp_pi2__) {
+#        # Some Qt distributions link with *.so.56
+#        QT_LIB_LIST += \
+#            libicudata.so.56 \
+#            libicui18n.so.56 \
+#            libicuuc.so.56
+#    }
 
     for(QT_LIB, QT_LIB_LIST) {
         QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
