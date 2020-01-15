@@ -346,8 +346,8 @@ MicrohardManager::setProductName(QString product)
         _bandwidthChannelMax.append(76);
         _bandwidthChannelMax.append(78);
     } else if (product.contains("DDL1800")) {
-        _channelMin = 3;
-        _channelMax = 57;
+        _channelMin = 1;
+        _channelMax = 59;
         _frequencyStart = 1813;
         _bandwidthLabels.clear();
         _bandwidthLabels.append("8 MHz");
@@ -396,13 +396,13 @@ MicrohardManager::setProductName(QString product)
 int
 MicrohardManager::adjustChannelToBandwitdh(int channel, int bandwidth)
 {
+    int result = channel;
     if (_bandwidthChannelMin.length() > bandwidth && channel < _bandwidthChannelMin[bandwidth]) {
-        return _bandwidthChannelMin[bandwidth];
+        result = _bandwidthChannelMin[bandwidth];
     } else if (_bandwidthChannelMax.length() > bandwidth && channel > _bandwidthChannelMax[bandwidth]) {
-        return _bandwidthChannelMax[bandwidth];
-    } else {
-        return channel;
+        result = _bandwidthChannelMax[bandwidth];
     }
+    return result;
 }
 
 //-----------------------------------------------------------------------------
