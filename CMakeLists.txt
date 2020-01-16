@@ -61,6 +61,19 @@ if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+#=============================================================================
+# Compile QML
+#
+option(COMPILE_QML "Pre-compile QML files using the Qt Quick compiler." FALSE)
+add_feature_info(COMPILE_QML COMPILE_QML "Pre-compile QML files using the Qt Quick compiler.")
+if(COMPILE_QML)
+    find_package(Qt5QuickCompiler)
+
+    set_package_properties(Qt5QuickCompiler PROPERTIES
+        DESCRIPTION "Pre-compile QML files using the Qt Quick compiler."
+        TYPE OPTIONAL
+    )
+endif()
 
 #=============================================================================
 # GStreamer
