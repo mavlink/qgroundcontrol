@@ -47,6 +47,7 @@
         <file alias="thermal-palette.svg">res/Images/thermal-palette.svg</file>
         <file alias="thermal-pip.svg">res/Images/thermal-pip.svg</file>
         <file alias="thermal-standard.svg">res/Images/thermal-standard.svg</file>
+        <file alias="vehicle_azimuth.svg">res/Images/vehicle_azimuth.svg</file>
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
         <file alias="void.png">res/Images/void.png</file>
         <file alias="PairingDelete.svg">res/Images/PairingDelete.svg</file>

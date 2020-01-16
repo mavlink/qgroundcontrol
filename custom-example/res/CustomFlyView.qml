@@ -56,7 +56,11 @@ Item {
 
     property string _altitude:              activeVehicle ? (isNaN(activeVehicle.altitudeRelative.value) ? "0.0" : activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (activeVehicle ? activeVehicle.altitudeRelative.units : "")
-    property real   _heading:               activeVehicle   ? activeVehicle.heading.rawValue : 0
+    property real   _heading:               activeVehicle ? activeVehicle.heading.rawValue : 0
+
+    property var    _gcsPosition:           null
+    property var    _armedPosition:         activeVehicle ? activeVehicle.armedPosition : null
+    property real   _vehicleAzimuth:        _gcsPosition ? _gcsPosition.azimuthTo(activeVehicle.coordinate) : (_armedPosition ? _armedPosition.azimuthTo(activeVehicle.coordinate) : 0)
 
     property real   _distance:              0.0
     property string _messageTitle:          ""
@@ -145,6 +149,23 @@ Item {
             connectionLostDisarmedDialog.close()
         }
     }
+
+    Connections {
+        target: activeVehicle
+        onCoordinateChanged: {
+            //-- If we don't have a local GPS, compute distance based on where the vehicle was armed
+            if(activeVehicle.armed && !_gcsPosition && _armedPosition) {
+                var veh = activeVehicle.coordinate;
+                _distance = QGroundControl.metersToAppSettingsDistanceUnits(_armedPosition.distanceTo(veh));
+                //-- Ignore absurd values
+                if(_distance > 99999)
+                    _distance = 0;
+                if(_distance < 0)
+                    _distance = 0;
+            }
+        }
+    }
+
     //-------------------------------------------------------------------------
     MessageDialog {
         id:                 connectionLostDisarmedDialog
@@ -353,6 +374,24 @@ Item {
                     anchors.centerIn:   parent
                     visible:            mainIsMap
                 }
+                //-- Vehicle Azimuth
+                Image {
+                    id:                 vAzimuth
+                    anchors.centerIn:   parent
+                    height:             parent.height * 1.65
+                    width:              height
+                    source:             "/custom/img/vehicle_azimuth.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    visible:            mainIsMap && activeVehicle && activeVehicle.armed
+                    sourceSize.height:  height
+                    transform: [
+                        Rotation {
+                            origin.x:   vAzimuth.width  / 2
+                            origin.y:   vAzimuth.height / 2
+                            angle:      _vehicleAzimuth
+                        }]
+                }
+
                 //-- North Label
                 Rectangle {
                     height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
