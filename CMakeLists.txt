@@ -26,6 +26,8 @@ endif()
 # Add folder where are supportive functions
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+# Configure Qt5 to get necessary variables
+include(Qt5QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt version: ${QT_VERSION}")
 message(STATUS "Qt spec: ${QT_MKSPEC}")
@@ -102,7 +104,6 @@ endif()
 #=============================================================================
 # Qt5
 #
-include(Qt5QGCConfiguration)
 find_package(Qt5 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
