@@ -76,6 +76,18 @@ if(COMPILE_QML)
 endif()
 
 #=============================================================================
+# Debug QML
+#
+option(DEBUG_QML "Build QGroundControl with QML debugging/profiling support." FALSE)
+add_feature_info(DEBUG_QML DEBUG_QML "Build QGroundControl with QML debugging/profiling support.")
+if(DEBUG_QML)
+    message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
+    add_definitions(-DQMLJSDEBUGGER)
+    add_definitions(-DQT_DECLARATIVE_DEBUG)
+    add_definitions(-DQT_QML_DEBUG)
+endif()
+
+#=============================================================================
 # GStreamer
 #
 find_package(PkgConfig)
