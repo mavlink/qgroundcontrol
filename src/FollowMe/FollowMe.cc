@@ -19,6 +19,8 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 
+QGC_LOGGING_CATEGORY(FollowMeLog, "FollowMeLog")
+
 FollowMe::FollowMe(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
@@ -133,6 +135,7 @@ void FollowMe::_sendGCSMotionReport()
     for (int i=0; i<vehicles->count(); i++) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
         if (_currentMode == MODE_ALWAYS || (_currentMode == MODE_FOLLOWME && _isFollowFlightMode(vehicle, vehicle->flightMode()))) {
+            qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimatation_capabilities);
         }
     }
