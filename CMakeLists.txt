@@ -140,10 +140,6 @@ endif()
 # Sets the default flags for compilation and linking.
 include(CompileOptions)
 
-# TODO: get qtquick compiler working
-#qtquick_compiler_add_resources(QGC_RESOURCES ${QGC_RESOURCES}
-#find_package(Qt5QuickCompiler)
-
 include_directories(
 	libs/eigen
 
