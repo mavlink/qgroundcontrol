@@ -34,25 +34,14 @@ set(COMPANY "Mavlink")
 set(COPYRIGHT "Copyright (c) 2018 QGroundControl. All rights reserved.")
 set(IDENTIFIER "io.mavlink.qgroundcontrol")
 
-execute_process(
-	COMMAND git submodule update --init
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	)
-
-execute_process(
-	COMMAND git describe --always --tags
-	OUTPUT_VARIABLE git_tag
-	OUTPUT_STRIP_TRAILING_WHITESPACE
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	)
-
 add_definitions(
 	-DQGC_APPLICATION_NAME="QGroundControl"
 	-DQGC_ORG_NAME="QGroundControl.org"
 	-DQGC_ORG_DOMAIN="org.qgroundcontrol"
 	)
 
-message(STATUS "QGroundControl version: ${git_tag}")
+include(Git)
+message(STATUS "QGroundControl version: ${GIT_VERSION}")
 
 #=============================================================================
 # ccache
