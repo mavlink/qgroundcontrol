@@ -627,21 +627,22 @@ Item {
     //-------------------------------------------------------------------------
     //-- Flight Coordinates View
     Item {
-        id:             _flightCoordinates
-        z:              _mapAndVideo.z + 3
-        width:          layoutRow.width
-        height:         layoutRow.height
-        anchors.left:   parent.left
-        anchors.leftMargin: ScreenTools.defaultFontPixelHeight
-        anchors.bottom: parent.bottom
-        visible:        QGroundControl.settingsManager.appSettings.displayMGRSCoordinates.rawValue
+        id:                     _flightCoordinates
+        z:                      _mapAndVideo.z + 3
+        width:                  layoutRow.width
+        height:                 layoutRow.height
+        anchors.left:           parent.left
+        anchors.leftMargin:     ScreenTools.defaultFontPixelHeight
+        anchors.bottom:         parent.bottom
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
+        visible:                QGroundControl.settingsManager.appSettings.displayMGRSCoordinates.rawValue
 
         property real _fontSize: ScreenTools.defaultFontPointSize * 0.75
 
         Connections {
             target: QGroundControl.qgcPositionManger
             onGcsPositionChanged: {
-                if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
+                if (gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
                     var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
                     gcsPositionLabel.text = QGroundControl.positionToMGRSFormat(gcs)
                 } else {
