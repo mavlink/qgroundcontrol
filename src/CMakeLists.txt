@@ -106,7 +106,7 @@ add_library(qgc
 	TerrainTile.cc
 )
 
-set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
+set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${GIT_VERSION}")
 
 add_subdirectory(ui)
 
