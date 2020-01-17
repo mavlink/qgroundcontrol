@@ -56,9 +56,9 @@ public:
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
 
-	/// Vehicle is about to go away
-	void shutdownVehicle(void);
-	
+    /// Vehicle is about to go away
+    void shutdownVehicle(void);
+
     // Setters for HIL noise variance
     void setXaccVar(float var){
         xacc_var = var;
@@ -137,11 +137,6 @@ protected:
     bool controlPitchManual;    ///< status flag, true if pitch is controlled manually
     bool controlYawManual;      ///< status flag, true if yaw is controlled manually
     bool controlThrustManual;   ///< status flag, true if thrust is controlled manually
-
-    double manualRollAngle;     ///< Roll angle set by human pilot (radians)
-    double manualPitchAngle;    ///< Pitch angle set by human pilot (radians)
-    double manualYawAngle;      ///< Yaw angle set by human pilot (radians)
-    double manualThrust;        ///< Thrust set by human pilot (radians)
 
     /// POSITION
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
