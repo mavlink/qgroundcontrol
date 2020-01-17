@@ -1,0 +1,39 @@
+#!/bin/sh
+
+LANG=C
+export LANG
+LC_COLLATE=C
+export LC_COLLATE
+
+Template=$1;
+srcfile=$2;
+
+if test x"$1" = x ; then
+	echo "$0 Objectname [srcfile]\n";
+	echo "  creates gstobjectname.{c,h} implementing GstObjectname,\n";
+	echo "  subclassing GstVideofilter.\n";
+	exit 1;
+fi
+
+if test x"$2" = x ; then
+	srcfile="gstvideotemplate.c"
+fi
+
+id=`echo '$Id$' | sed \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g'`
+echo $id
+
+TEMPLATE=`echo $Template | tr [:lower:] [:upper:]`
+template=`echo $Template | tr [:upper:] [:lower:]`
+
+# remember to break up the Id: in the line below
+sed \
+	-e 's/gstvideotemplate\.c/SOURCEFILE/g' \
+	-e "s/Videotemplate/$Template/g" \
+	-e "s/videotemplate/$template/g" \
+	-e "s/VIDEOTEMPLATE/$TEMPLATE/g" \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g' \
+	-e 's/SOURCEFILE/gstvideotemplate\.c/g' \
+	-e "s%MAKEFILTERVERSION%$id%g" \
+	$srcfile >gst$template.c.tmp && mv gst$template.c.tmp gst$template.c
+

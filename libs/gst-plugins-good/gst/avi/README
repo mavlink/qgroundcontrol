@@ -1,0 +1,72 @@
+The avi decoder plugins
+-----------------------
+
+The avi decoder consists of a set of gstreamer plugins:
+
+ - demuxer (avidemux)
+ - avi to gstreamer type converter (avitypes)
+ - windows dlls wrappers.
+
+the avidecoder element uses the above plugins to perform the avi
+decoding. It is constructed as a custom bin which initially only has
+the demuxer element in it. The demuxer has a set of padtemplates for
+raw audio and video.
+
+  (------------------------------------)
+  ! avidecoder                         !
+  !                                 (video/raw)...
+  !     (----------)                   !
+  !     ! demuxer (video/x-msvideo, auds)..
+  !     !          !                   !
+  !   -src         !                   !
+  !  /  !         (video/x-msvideo, vids)..
+ - src  !          !                   !
+  !     (----------)                (audio/raw)...
+  !                                    !
+  (------------------------------------)
+
+the demuxer has a set of padtemplates for the raw avi header properties.
+
+The avi decoder will act on the new_pad signal of the demuxer element
+and will attach an avitype plugin to the new pad. Caps negotiation will
+convert the raw avi caps to the gstreamer caps. If the src pad of the
+avitypes plugin are compatible with the avidecoder padtemplate, the 
+avitype pad is ghosted to the avidecoder bin, this is the case where no
+codec is needed (for raw PCM samples, for example).
+
+When the avitypes caps are not compatible with one of the avidecoder 
+templates, a static autoplugger is used the find an element to connect
+the demuxers pad to the decoders padtemplate.
+
+When no element could be found, an windec plugin is attached to the 
+demuxers pad and the avitypes plugin is removed from the decoder.
+
+
+example:
+--------
+
+ An avidecoder that has a video pad (decoded with windows dlls) and an
+ audio pad (raw PCM).
+
+  (----------------------------------------------------------------)
+  ! avidecoder               (--------)    (------)                !
+  !                          !avitypes!    !windec!       /-- (video/raw)
+  !     (----------)     /-sink      src--sink   src -----         !
+  !     !demuxer (video/x-msvideo,    !    !      !                !
+  !     !          ! auds).. (--------)    (------)                !  
+  !   -sink        !         (--------)                            !
+  !  /  !        (video/x-..,!avitypes!                            !
+ -sink  !          ! vids).. !        !                            !
+  !     (----------)     \-sink      src -------------------- (audio/raw)
+  !                          (--------)                            !
+  (----------------------------------------------------------------)
+
+
+
+TODO
+----
+
+automatically generate the padtemplates from all possible avi types
+found in the registry.
+
+

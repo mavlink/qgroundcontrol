@@ -1,0 +1,377 @@
+RTSP source 
+-----------
+
+The RTSP source establishes a connection to an RTSP server and sets up
+the UDP sources and RTP session handlers.
+
+An RTSP session is created as follows:
+
+- Parse RTSP URL:
+
+   ex:
+     rtsp://thread:5454/south-rtsp.mp3
+
+- Open a connection to the server with the url. All further conversation with
+  the server should be done with this connection. Each request/reply has
+  a CSeq number added to the header.
+
+- Send a DESCRIBE request for the url. We currently support a response in
+  SDP.
+
+  ex:
+
+    >> DESCRIBE rtsp://thread:5454/south-rtsp.mp3 RTSP/1.0
+    >> Accept: application/sdp
+    >> CSeq: 0
+    >>
+    << RTSP/1.0 200 OK
+    << Content-Length: 84
+    << Content-Type: application/sdp
+    << CSeq: 0
+    << Date: Wed May 11 13:09:37 2005 GMT
+    <<
+    << v=0
+    << o=- 0 0 IN IP4 192.168.1.1
+    << s=No Title
+    << m=audio 0 RTP/AVP 14
+    << a=control:streamid=0
+
+- Parse the SDP message, for each stream (m=) we create an GstRTPStream. We need
+  to allocate two local UDP ports for receiving the RTP and RTCP data because we
+  need to send the port numbers to the server in the next request.
+
+  In RTSPSrc we first create an element that can handle the udp://0.0.0.0:0 uri. This
+  will create an udp source element with a random port number. We get the port
+  number by getting the "port" property of the element after setting the element to 
+  PAUSED. This element is used for the RTP packets and has to be an even number. If
+  the random port number is not an even number we retry to allocate a new udp source.
+
+  We then create another UDP source element with the next (uneven) port number to 
+  receive the RTCP packet on. After this step we have two udp ports we can use to
+  accept RTP packets.
+
+    +-----------------+
+    | +------------+  |
+    | | udpsrc0    |  |
+    | |  port=5000 |  |
+    | +------------+  |
+    | +------------+  |
+    | | udpsrc1    |  |
+    | |  port=5001 |  |
+    | +------------+  |
+    +-----------------+
+
+- Send a SETUP message to the server with the RTP ports. We get the setup URI from
+  the a= attribute in the SDP message. This can be an absolute URL or a relative
+  url.
+
+  ex:
+
+    >> SETUP rtsp://thread:5454/south-rtsp.mp3/streamid=0 RTSP/1.0
+    >> CSeq: 1
+    >> Transport: RTP/AVP/UDP;unicast;client_port=5000-5001,RTP/AVP/UDP;multicast,RTP/AVP/TCP
+    >>
+    << RTSP/1.0 200 OK
+    << Transport: RTP/AVP/UDP;unicast;client_port=5000-5001;server_port=6000-6001
+    << CSeq: 1
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+    <<
+
+  The client needs to send the local ports to the server along with the supported 
+  transport types. The server selects the final transport which it returns in the
+  Transport header field. The server also includes its ports where RTP and RTCP
+  messages can be sent to.
+
+  In the above example UDP was chosen as a transport. At this point the RTSPSrc element
+  will further configure its elements to process this stream.
+
+  The RTSPSrc will create and connect an RTP session manager element and will
+  connect it to the src pads of the udp element. The data pad from the RTP session 
+  manager is ghostpadded to RTPSrc.
+  The RTCP pad of the rtpdec is routed to a new udpsink that sends data to the RTCP
+  port of the server as returned in the Transport: header field.
+
+    +---------------------------------------------+
+    | +------------+                              |
+    | | udpsrc0    |   +--------+                 |
+    | |  port=5000 ----- rtpdec --------------------
+    | +------------+   |        |                 |
+    | +------------+   |        |  +------------+ |
+    | | udpsrc1    ----- RTCP   ---- udpsink    | |
+    | |  port=5001 |   +--------+  |  port=6001 | |
+    | +------------+               +------------+ |
+    +---------------------------------------------+
+
+  The output type of rtpdec is configured as the media type specified in the SDP
+  message. 
+
+- All the elements are set to PAUSED/PLAYING and the PLAY RTSP message is
+  sent.
+
+    >> PLAY rtsp://thread:5454/south-rtsp.mp3 RTSP/1.0
+    >> CSeq: 2
+    >> Session: 5d5cb94413288ccd
+    >>
+    << RTSP/1.0 200 OK
+    << CSeq: 2
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+    <<
+
+- The udp source elements receive data from that point and the RTP/RTCP messages
+  are processed by the elements.
+
+- In the case of interleaved mode, the SETUP method yields:
+
+    >> SETUP rtsp://thread:5454/south-rtsp.mp3/streamid=0 RTSP/1.0
+    >> CSeq: 1
+    >> Transport: RTP/AVP/UDP;unicast;client_port=5000-5001,RTP/AVP/UDP;multicast,RTP/AVP/TCP
+    >>
+    << RTSP/1.0 200 OK
+    << Transport: RTP/AVP/TCP;interleaved=0-1
+    << CSeq: 1
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+    <<
+
+  This means that RTP/RTCP messages will be sent on channel 0/1 respectively and that
+  the data will be received on the same connection as the RTSP connection.
+
+  At this point, we remove the UDP source elements as we don't need them anymore. We
+  set up the rtpsess session manager element though as follows:
+
+    +---------------------------------------------+
+    | +------------+                              |
+    | | _loop()    |   +--------+                 |
+    | |            ----- rtpses --------------------
+    | |            |   |        |                 |
+    | |            |   |        |  +------------+ |
+    | |            ----- RTCP   ---- udpsink    | |
+    | |            |   +--------+  |  port=6001 | |
+    | +------------+               +------------+ |
+    +---------------------------------------------+
+
+  We start an interal task to start reading from the RTSP connection waiting
+  for data. The received data is then pushed to the rtpdec element.
+
+  When reading from the RTSP connection we receive data packets in the
+  following layout (see also RFC2326)
+
+    $<1 byte channel><2 bytes length, big endian><length bytes of data>
+
+
+RTSP server
+-----------
+
+An RTSP server listen on a port (default 554) for client connections. The client
+typically keeps this channel open during the RTSP session to instruct the server
+to pause/play/stop the stream.
+
+The server exposes a stream consisting of one or more media streams using an
+URL. The media streams are typically audio and video.
+
+  ex:
+     rtsp://thread:5454/alien-rtsp.mpeg
+
+     exposes an audio/video stream. The video is mpeg packetized in RTP and
+     the audio is mp3 in RTP.
+
+The streaming server typically uses a different channel to send the media
+data to clients, typically using RTP over UDP. It is also possible to stream
+the data to the client using the initial RTSP TCP session (the interleaved
+mode). This last mode is useful when the client is behind a firewall but
+does not take advantage of the RTP/UDP features.
+
+In both cases, media data is send to the clients in an unmultiplexed format
+packetized as RTP packets.
+
+The streaming server has to negotiate a connection protocol for each of the
+media streams with the client.
+
+Minimal server requirements:
+
+- The server should copy the CSeq header field in a client request to the
+  response so that the client can match the response to the request.
+
+- The server should keep a session for each client after the client issued
+  a SETUP command. The client should use the same session id for all future
+  request to this server.
+
+- the server must support an OPTIONS request send over the RTSP connection.
+
+    >> OPTIONS * RTSP/1.0
+    >> CSeq: 1
+    >>
+    << RTSP/1.0 200 OK
+    << CSeq: 1
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+    << Public: DESCRIBE, SETUP, TEARDOWN, PLAY
+    <<
+
+   The OPTIONS request should list all supported methods on the server.
+ 
+ - The server should support the DESCRIBE method.
+
+    >> DESCRIBE rtsp://thread:5454/south-rtsp.mp3 RTSP/1.0
+    >> Accept: application/sdp
+    >> CSeq: 2
+    >>
+    << RTSP/1.0 200 OK
+    << Content-Length: 84
+    << Content-Type: application/sdp
+    << CSeq: 2
+    << Date: Wed May 11 13:09:37 2005 GMT
+    <<
+    << v=0
+    << o=- 0 0 IN IP4 192.168.1.1
+    << s=No Title
+    << m=audio 0 RTP/AVP 14
+    << a=control:streamid=0
+
+    The client issues a DESCRIBE command for a specific URL that corresponds
+    to an available stream. The client will also send an Accept header to
+    list its supported formats. 
+
+    The server answers this request with a reply in one of the client supported
+    formats (application/sdp is the most common). The server typically sends a
+    fixed reply to all clients for each configured stream.
+
+ - The server must support the SETUP command to configure the media streams 
+   that were listed in the DESCRIBE command.
+
+    >> SETUP rtsp://thread:5454/south-rtsp.mp3/streamid=0 RTSP/1.0
+    >> CSeq: 3
+    >> Transport: RTP/AVP/UDP;unicast;client_port=5000-5001,RTP/AVP/UDP;multicast,RTP/AVP/TCP
+    >>
+    << RTSP/1.0 200 OK
+    << Transport: RTP/AVP/UDP;unicast;client_port=5000-5001;server_port=6000-6001
+    << CSeq: 3
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+
+    The client will send a SETUP command for each of the streams listed in the 
+    DESCRIBE reply. For sdp will use a URL as listed in the a=control: property.
+
+    The client will list the supported transports in the Transport: header field.
+    Each transport is separated with a comma (,) and listed in order of preference.
+    The server has to select the first supported transport.
+ 
+    In the above example 3 transport are listed:
+
+       RTP/AVP/UDP;unicast;client_port=5000-5001
+
+         The client will accept RTP over UDP on the port pair 5000-5001. Port
+	 5000 will accept the RTP packets, 5001 the RTSP packets send by the
+	 server.
+       
+       RTP/AVP/UDP;multicast
+
+         The client can join a multicast group for the specific media stream.
+	 The port numbers of the multicast group it will connect to have to
+	 be specified by the server in the reply.
+       
+       RTP/AVP/TCP
+
+         the client can accept RTP packets interleaved on the RTSP connection.
+
+    The server selects a supported transport an allocates an RTP port pair to
+    receive RTP and RTSP data from the client. This last step is optional when
+    the server does not accept RTP data.
+
+    The server should allocate a session for the client and should send the
+    sessionId to the client. The client should use this session id for all
+    future requests.
+
+    The server may refuse a client that does not use the same transport method
+    for all media streams.
+
+    The server stores all client port pairs in the server client session along
+    with the transport method.
+
+    ex:
+
+      For an on-demand stream the server could construct a (minimal) RTP GStreamer 
+      pipeline for the client as follows (for an mp3 stream):
+    
+      +---------+    +-----------+    +------------+    +-------------+
+      | filesrc |    | rtpmp3enc |    | rtpsession |    | udpsink     |
+      |         |    |           |    |            |    |   host=XXX  |
+      |         |    |           |    |            |    |   port=5000 |
+      |        src--sink        src--rtpsink   rtpsrc--sink           |
+      +---------+    +-----------+    |            |    +-------------+
+                                      |            |    +-------------+
+                                      |            |    | udpsink     |
+                                      |            |    |   host=XXX  |
+                                      |            |    |   port=5001 |
+                                      |       rtspsrc--sink           |
+                                      +------------+    +-------------+
+
+      The server would set the above pipeline to PAUSE to make sure no data
+      is sent to the client yet.
+
+      optionally udpsrc elements can be configured to receive client RTP and
+      RTSP messages.
+
+    ex:
+
+      For a live stream the server could construct a (minimal) RTP GStreamer 
+      pipeline for the clients as follows (for an mp3 stream):
+    
+      +---------+    +--------+    +-----------+    +------------+    +--------------+
+      | source  |    | mp3enc |    | rtpmp3enc |    | rtpsession |    | multiudpsink |
+      |         |    |        |    |           |    |            |    |   host=...   |
+      |         |    |        |    |           |    |            |    |   port=...   |
+      |        src--sink     src--sink        src--rtpsink   rtpsrc--sink            |
+      +---------+    +--------+    +-----------+    |            |    +--------------+
+                                                    |            |    +--------------+
+                                                    |            |    | multiudpsink |
+                                                    |            |    |   host=...   |
+                                                    |            |    |   port=...   |
+                                                    |       rtspsrc--sink            |
+                                                    +------------+    +--------------+
+
+      Media data is streamed to clients by adding the client host and port numbers
+      to the multiudpsinks.
+
+      optionally udpsrc elements can be configured to receive client RTP and
+      RTSP messages.
+     
+ - The server must support the PLAY command to start playback of the configured
+   media streams.
+
+    >> PLAY rtsp://thread:5454/south-rtsp.mp3 RTSP/1.0
+    >> CSeq: 2
+    >> Session: 5d5cb94413288ccd
+    >>
+    << RTSP/1.0 200 OK
+    << CSeq: 2
+    << Date: Wed May 11 13:21:43 2005 GMT
+    << Session: 5d5cb94413288ccd
+    <<
+
+    Using the Session: header field, the server finds the pipeline of the session
+    to PLAY and sets the pipeline to PLAYING at which point the client receives
+    the media stream data.
+
+    In case of a live stream, the server adds the port numbers to a multiudpsink
+    element.
+
+ - The server must support the TEARDOWN command to stop playback and free the
+   session of a client.
+
+    >> TEARDOWN rtsp://thread:5454/south-rtsp.mp3 RTSP/1.0
+    >> CSeq: 4
+    >> Session: 5d5cb94413288ccd
+    >>
+    << RTSP/1.0 200 OK
+    << CSeq: 4
+    << Date: Wed May 11 13:21:43 2005 GMT
+    <<
+
+    The server destroys the client pipeline in case of an on-demand stream or
+    removes the client ports from the multiudpsinks. This effectively stops
+    streaming to the client.
+
+

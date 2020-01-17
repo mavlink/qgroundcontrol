@@ -1,0 +1,13 @@
+The Goom plugin is based on the Goom visualization code from
+the Goom homepage found at: 
+http://ios.free.fr/?page=projet&quoi=1 
+
+Like the original library so is the Goom plugin available under the LGPL license
+
+This is based on goom2k4 with changes to plugin_info.c and mmx.h to use Orc for CPU
+detection and GStreamer-specific ifdef's for architecture detection.
+
+These files are not in use right now:
+filters_mmx.s
+goomsl*
+surf3d.s

@@ -18,4 +18,3 @@
 
 extern void initializeVideoStreaming    (int &argc, char *argv[], char* filename, char* debuglevel);
 extern void shutdownVideoStreaming      ();
-

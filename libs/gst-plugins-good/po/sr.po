@@ -1,0 +1,471 @@
+# Serbian translation of gst-plugins
+# Copyright © 2014 Free Software Foundation, Inc.
+# This file is distributed under the same license as the gst-plugins-good package.
+# Danilo Segan <dsegan@gmx.net>, 2004.
+# Мирослав Николић <miroslavnikolic@rocketmail.com>, 2011—2017.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good-1.12.0\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2017-05-07 12:21+0200\n"
+"Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
+"Language-Team: Serbian <(nothing)>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Project-Style: gnome\n"
+
+msgid "Jack server not found"
+msgstr "Нисам пронашао сервер утичнице"
+
+msgid "Failed to decode JPEG image"
+msgstr "Нисам успео да декодирам ЈПЕГ слику"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "„%s“ изводи „%s“"
+
+msgid "Could not connect to server"
+msgstr "Не могу да се повежем са сервером"
+
+msgid "No URL set."
+msgstr "Није подешена адреса."
+
+msgid "Could not resolve server name."
+msgstr "Не могу да решим назив сервера."
+
+msgid "Could not establish connection to server."
+msgstr "Не могу да успоставим везу са сервером."
+
+msgid "Secure connection setup failed."
+msgstr "Подешавање безбедне везе није успело."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Дошло је до грешке на мрежи, или је сервер неочекивано затворио везу."
+
+msgid "Server sent bad data."
+msgstr "Сервер је послао лоше податке."
+
+msgid "Server does not support seeking."
+msgstr "Сервер не подржава позиционирање."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Улазног звука нема или је неисправан, АВИ ток ће бити оштећен."
+
+msgid "This file contains no playable streams."
+msgstr "Ова датотека не садржи токове за пуштање."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Ова датотека је неисправна и не може бити пуштена."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+"Не могу да пустим ток зато што је шифрован УДП-ом „Спреман за пуштање“."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Ова датотека је оштећена и не може бити пуштена."
+
+msgid "Invalid atom size."
+msgstr "Неисправна величина атома."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Ова датотека је непотпуна и не може бити пуштена."
+
+msgid "The video in this file might not play correctly."
+msgstr "Видео у овој датотеци можда неће бити пуштен исправно."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Није пронађен ниједан подржани ток. Можда ћете морати да инсталирате "
+"прикључак РТСП проширења Гстримера за токове Стварног медија."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Није пронађен ниједан подржани ток. Можда ћете морати да омогућите више "
+"протокола преноса или можда на неки други начин недостаје прави прикључак "
+"РТСП проширења ГСтримера."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Не могу да покренем звучни уређај ради пуштања. Уређај користи нека друга "
+"апликација."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Не могу да покренем аудио уређај ради пуштања. Немате овлашћење за покретање "
+"уређаја."
+
+msgid "Could not open audio device for playback."
+msgstr "Не могу да покренем звучни уређај ради пуштања."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Не могу да покренем звучни уређај ради пуштања. Ово издање система отвореног "
+"звука није подржано овим елементом."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Пуштање није подржано од стране овог звучног уређаја."
+
+msgid "Audio playback error."
+msgstr "Грешка приликом пуштања звука."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Снимање није подржано од стране овог звучног уређаја."
+
+msgid "Error recording from audio device."
+msgstr "Грешка приликом снимања са звучног уређаја."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Не могу да покренем аудио уређај ради снимања. Немате овлашћење за покретање "
+"уређаја."
+
+msgid "Could not open audio device for recording."
+msgstr "Не могу да покренем звучни уређај ради снимања."
+
+msgid "CoreAudio device not found"
+msgstr "Нисам нашао кључни уређај звука"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Не могу да отворим кључни уређај звука"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Грешка приликом читања %d бајтова са уређаја „%s“."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Нисам успео да нумеришем могући уређај записа снимка „%s“ са којим може да "
+"ради"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Не могу да мапирам помоћне меморије са уређаја „%s“"
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Управљачки програм уређаја „%s“ не подржава УИ начин %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Управљачки програм уређаја „%s“ не подржава ниједан познати УИ начин."
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "Уређај „%s“ је заузет"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Уређај „%s“ не може да снима на %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Уређај „%s“ не може да снима у наведеном запису"
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Уређај „%s“ не подржава не-непрекидне равни"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Уређај „%s“ не подржава видео снимање"
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Уређај „%s“ не подржава видео снимање"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Не могу да добавим параметре на уређају „%s“"
+
+msgid "Video device did not accept new frame rate setting."
+msgstr "Видео уређај не прихвата нове поставке протока кадрова."
+
+msgid "Video device did not provide output format."
+msgstr "Видео уређај не обезбеђује излазни запис."
+
+msgid "Video device returned invalid dimensions."
+msgstr "Видео уређај је вратио неисправне димензије."
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Видео уређај користи неподржани метод преплитања."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "Видео уређај користи неподржани запис сличице."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Нисам успео да подесим унутрашњи смештај међумеморије."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "Видео уређај не предлаже величину међумеморије."
+
+msgid "No downstream pool to import from."
+msgstr "Нема смештаја доњег тока из кога увести."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Нисам успео да добавим подешавања тјунера %d на уређају „%s“."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Грешка добављања могућности за уређај „%s“."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Уређај „%s“ није тјунер."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Нисам успео да добавим радио улаз на уређају „%s“."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Нисам успео да подесим улаз %d на уређају %s."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Нисам успео да изменим стање утишаности за уређај „%s“."
+
+msgid "Failed to allocated required memory."
+msgstr "Нисам успео да доделим затражену меморију."
+
+msgid "Failed to allocate required memory."
+msgstr "Нисам успео да доделим затражену меморију."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Претварач на уређају „%s“ нема подржани улазни запис"
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Претварач на уређају „%s“ нема подржани излазни запис"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
+
+#, fuzzy, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Кодер на уређају „%s“ нема подржани излазни запис"
+
+msgid "Failed to start decoding thread."
+msgstr "Нисам успео да покренем нит декодирања."
+
+msgid "Failed to process frame."
+msgstr "Нисам успео да обрадим кадар."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Кодер на уређају „%s“ нема подржани излазни запис"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Кодер на уређају „%s“ нема подржани улазни запис"
+
+#, fuzzy
+msgid "Failed to start encoding thread."
+msgstr "Нисам успео да покренем нит декодирања."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Грешка приликом добављања могућности за уређај „%s“: Није в4л2 управљачки "
+"програм. Проверите да ли је то в4л1 управљачки програм."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Нисам успео да пропитам својства уноса %d у уређају %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Нисам успео да добавим подешавања тјунера %d на уређају „%s“."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Нисам успео да пропитам норму на уређају „%s“."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Нисам успео да добавим својства контрола на уређају „%s“."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Не могу да распознам уређај „%s“."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "Ово није уређај „%s“."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Не могу да покренем уређај „%s“ ради читања и уписа."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Уређај „%s“ није уређај за снимање."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Уређај „%s“ није излазни уређај."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Уређај „%s“ није М2М уређај."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Не могу да удвостручим уређај „%s“ ради читања и уписа."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Нисам успео да подесим норму за уређај „%s“."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Нисам успео да добавим текућу учестаност тјунера за уређај „%s“."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Нисам успео да подесим текућу учестаност тјунера за уређај „%s“ на %lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Нисам успео да добавим јачину сигнала за уређај „%s“."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Нисам успео да добавим вредност за контролу %d на уређају „%s“."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Нисам успео да подесим вредност %d за контролу %d на уређају „%s“."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Нисам успео да добавим текући улаз на уређају „%s“. Можда је то радио уређај."
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Нисам успео да добавим текући излаз на уређају „%s“. Можда је то радио "
+"уређај."
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Нисам успео да подесим излаз %d на уређају %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Промена резолуције приликом извршавања још увек није подржана."
+
+msgid "Cannot operate without a clock"
+msgstr "Не могу да радим без сата"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr "Ова датотека садржи превише токова. Пуштам само први %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Извор снимања"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Линијски улаз"
+
+#~ msgid "Internal CD"
+#~ msgstr "Унутрашњи ЦД"
+
+#~ msgid "SPDIF In"
+#~ msgstr "СПДИФ улаз"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "АУХ 1 улаз"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "АУХ 2 улаз"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Повратна петља кодека"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Повратна петља СанВТС-а"
+
+#~ msgid "Volume"
+#~ msgstr "Јачина звука"
+
+#~ msgid "Gain"
+#~ msgstr "Појачање"
+
+#~ msgid "Monitor"
+#~ msgstr "Праћење"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Уграђени звучник"
+
+#~ msgid "Headphone"
+#~ msgstr "Слушалице"
+
+#~ msgid "Line Out"
+#~ msgstr "Линијски излаз"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "СПДИФ излаз"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "АУХ 1 излаз"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "АУХ 2 излаз"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Унутрашња грешка тока података."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Унутрaшња грешка протока података."

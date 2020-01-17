@@ -1,0 +1,10 @@
+v=0
+o=- 1188340656180883 1 IN IP4 127.0.0.1
+s=Session streamed by GStreamer
+i=server.sh
+t=0 0
+a=tool:GStreamer
+a=type:broadcast
+m=video 5000 RTP/AVP 96
+c=IN IP4 127.0.0.1
+a=rtpmap:96 H264/90000

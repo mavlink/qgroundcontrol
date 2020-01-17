@@ -1,0 +1,946 @@
+<Project
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns="http://usefulinc.com/ns/doap#"
+  xmlns:foaf="http://xmlns.com/foaf/0.1/"
+  xmlns:admin="http://webns.net/mvcb/">
+
+ <name>GStreamer Good Plug-ins</name>
+ <shortname>gst-plugins-good</shortname>
+ <homepage rdf:resource="http://gstreamer.freedesktop.org/modules/gst-plugins-good.html" />
+ <created>2005-09-06</created>
+ <shortdesc xml:lang="en">
+a set of good-quality plug-ins under our preferred license, LGPL
+</shortdesc>
+ <description xml:lang="en">
+GStreamer Good Plug-ins is a set of plug-ins that we consider to have good
+quality code and correct functionality, under our preferred license (LGPL for
+the plug-in code, LGPL or LGPL-compatible for the supporting library).
+</description>
+ <category></category>
+ <bug-database rdf:resource="http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer&amp;component=gst-plugins-good" />
+ <screenshots></screenshots>
+ <mailing-list rdf:resource="http://lists.freedesktop.org/mailman/listinfo/gstreamer-devel" />
+ <programming-language>C</programming-language>
+ <license rdf:resource="http://usefulinc.com/doap/licenses/lgpl"/>
+ <download-page rdf:resource="http://gstreamer.freedesktop.org/download/" />
+
+ <repository>
+   <GitRepository>
+     <location rdf:resource="git://gitlab.freedesktop.org/gstreamer/gst-plugins-good"/>
+     <browse rdf:resource="http://gitlab.freedesktop.org/gstreamer/gst-plugins-good"/>
+   </GitRepository>
+ </repository>
+
+ <release>
+  <Version>
+   <revision>1.16.0</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2019-04-19</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.16.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.15.90</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2019-04-11</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.15.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.15.2</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2019-02-26</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.15.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.15.1</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2019-01-17</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.15.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.14.0</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2018-03-19</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.14.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.13.91</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2018-03-13</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.13.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.13.90</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2018-03-03</created>
+   <file-release rdf:resource="https://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.13.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.13.1</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2018-02-15</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.13.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.12.4</revision>
+   <branch>1.12</branch>
+   <name></name>
+   <created>2017-12-07</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.12.4.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.12.3</revision>
+   <branch>1.12</branch>
+   <name></name>
+   <created>2017-09-18</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.12.3.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.12.2</revision>
+   <branch>1.12</branch>
+   <name></name>
+   <created>2017-07-14</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.12.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.12.1</revision>
+   <branch>1.12</branch>
+   <name></name>
+   <created>2017-06-20</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.12.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.12.0</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2017-05-04</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.12.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.11.91</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2017-04-27</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.11.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.11.90</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2017-04-07</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.11.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.11.2</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2017-02-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.11.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.11.1</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2017-01-12</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.11.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.10.0</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-11-01</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.10.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.9.90</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-09-30</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.9.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.9.2</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-09-01</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.9.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.9.1</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-06-06</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.9.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.8.0</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-03-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.8.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.7.91</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-03-15</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.7.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.7.90</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-03-01</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.7.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.7.2</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2016-02-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.7.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.7.1</revision>
+   <branch>master</branch>
+   <name></name>
+   <created>2015-12-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.7.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.6.2</revision>
+   <branch>1.6</branch>
+   <name></name>
+   <created>2015-12-14</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.6.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.6.1</revision>
+   <branch>1.6</branch>
+   <name></name>
+   <created>2015-10-30</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.6.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.6.0</revision>
+   <branch>1.6</branch>
+   <name></name>
+   <created>2015-09-25</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.6.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.5.91</revision>
+   <branch>1.5</branch>
+   <name></name>
+   <created>2015-09-18</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.5.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.5.90</revision>
+   <branch>1.5</branch>
+   <name></name>
+   <created>2015-08-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.5.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.5.2</revision>
+   <branch>1.5</branch>
+   <name></name>
+   <created>2015-06-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.5.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.5.1</revision>
+   <branch>1.5</branch>
+   <name></name>
+   <created>2015-06-07</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.5.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.4.0</revision>
+   <branch>1.4</branch>
+   <name></name>
+   <created>2014-07-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.4.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.3.91</revision>
+   <branch>1.3</branch>
+   <name></name>
+   <created>2014-07-11</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.3.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.3.90</revision>
+   <branch>1.3</branch>
+   <name></name>
+   <created>2014-06-28</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.3.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.3.3</revision>
+   <branch>1.3</branch>
+   <name></name>
+   <created>2014-06-22</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.3.3.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.3.2</revision>
+   <branch>1.3</branch>
+   <name></name>
+   <created>2014-05-21</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.3.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.3.1</revision>
+   <branch>1.3</branch>
+   <name></name>
+   <created>2014-05-03</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.3.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.2.0</revision>
+   <branch>1.2</branch>
+   <name></name>
+   <created>2013-09-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.2.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.1.90</revision>
+   <branch>1.1</branch>
+   <name></name>
+   <created>2013-09-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.1.90.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.1.4</revision>
+   <branch>1.1</branch>
+   <name></name>
+   <created>2013-08-28</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.1.4.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.1.3</revision>
+   <branch>1.1</branch>
+   <name></name>
+   <created>2013-07-29</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.1.3.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.1.2</revision>
+   <branch>1.1</branch>
+   <name></name>
+   <created>2013-07-11</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.1.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.1.1</revision>
+   <branch>1.1</branch>
+   <name></name>
+   <created>2013-06-05</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.1.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.0.2</revision>
+   <branch>1.0</branch>
+   <name></name>
+   <created>2012-10-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.0.2.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.0.1</revision>
+   <branch>1.0</branch>
+   <name></name>
+   <created>2012-10-07</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.0.1.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>1.0.0</revision>
+   <branch>1.0</branch>
+   <name></name>
+   <created>2012-09-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-1.0.0.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.99</revision>
+   <branch>0.11</branch>
+   <name>Been Around for a Long Long Year</name>
+   <created>2012-09-17</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.99.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.94</revision>
+   <branch>0.11</branch>
+   <name>Beatiful Tango</name>
+   <created>2012-09-14</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.94.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.93</revision>
+   <branch>0.11</branch>
+   <name>Poetic Pitbull Revolutions</name>
+   <created>2012-08-08</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.93.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.92</revision>
+   <branch>0.11</branch>
+   <name>Money</name>
+   <created>2012-06-07</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.92.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.91</revision>
+   <branch>0.11</branch>
+   <name>I smell the blood of an Englishman</name>
+   <created>2012-05-13</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.91.tar.xz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.90</revision>
+   <branch>0.11</branch>
+   <name>From grief and moan to a gold throne</name>
+   <created>2012-04-12</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.90.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.90.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.2</revision>
+   <branch>0.11</branch>
+   <name>Rite of Devastation</name>
+   <created>2012-03-22</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.2.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.2.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.11.1</revision>
+   <branch>0.11</branch>
+   <name>The Leper Affinity</name>
+   <created>2012-02-16</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.1.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.11.1.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.30</revision>
+   <branch>0.10</branch>
+   <name>Adagio</name>
+   <created>2011-06-15</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.30.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.30.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.29</revision>
+   <branch>0.10</branch>
+   <name>Soft Cheese Enthusiast</name>
+   <created>2011-05-10</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.29.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.29.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.28</revision>
+   <branch>0.10</branch>
+   <name>Inconvenienced by the Solar System</name>
+   <created>2011-03-08</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.28.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.28.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.27</revision>
+   <branch>0.10</branch>
+   <name>Some Kind of Temporal Blend</name>
+   <created>2011-01-21</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.27.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.27.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.26</revision>
+   <branch>0.10</branch>
+   <name>Escapades</name>
+   <created>2010-12-01</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.26.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.26.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.25</revision>
+   <branch>0.10</branch>
+   <name>Woe to You Oh Earth and Sea</name>
+   <created>2010-09-02</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.25.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.25.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.24</revision>
+   <branch>0.10</branch>
+   <name>Taking Liberties</name>
+   <created>2010-07-15</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.24.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.24.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.23</revision>
+   <branch>0.10</branch>
+   <name>Stylish Kids in Riot</name>
+   <created>2010-05-30</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.23.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.23.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.22</revision>
+   <branch>0.10</branch>
+   <name>Square One</name>
+   <created>2010-04-27</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.22.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.22.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.21</revision>
+   <branch>0.10</branch>
+   <name>Lemons</name>
+   <created>2010-03-08</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.21.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.21.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.20</revision>
+   <branch>0.10</branch>
+   <name>Lemonade</name>
+   <created>2010-03-08</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.20.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.20.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.19</revision>
+   <branch>0.10</branch>
+   <name>Closer to the Edit</name>
+   <created>2010-03-06</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.19.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.19.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.18</revision>
+   <branch>0.10</branch>
+   <name>Short Circuit</name>
+   <created>2010-02-10</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.18.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.18.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.17</revision>
+   <branch>0.10</branch>
+   <name>They used to sparkle</name>
+   <created>2009-11-17</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.17.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.17.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.16</revision>
+   <branch>0.10</branch>
+   <name>Secret Handshakes</name>
+   <created>2009-08-28</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.16.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.16.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.15</revision>
+   <branch>0.10</branch>
+   <name>I've been up all night</name>
+   <created>2009-05-20</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.15.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.15.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.14</revision>
+   <branch>0.10</branch>
+   <name>Disaffected Affectation</name>
+   <created>2009-02-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.14.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.14.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.13</revision>
+   <branch>0.10</branch>
+   <name>Blatant Discouragement</name>
+   <created>2009-01-22</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.13.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.13.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.12</revision>
+   <branch>0.10</branch>
+   <name>Taken Under Advisement</name>
+   <created>2009-01-22</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.12.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.12.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.11</revision>
+   <branch>0.10</branch>
+   <name>Secondary Consideration</name>
+   <created>2008-10-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.11.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.11.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.10</revision>
+   <branch>0.10</branch>
+   <name>Barely Moving</name>
+   <created>2008-08-26</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.10.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.10.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.9</revision>
+   <branch>0.10</branch>
+   <name>Steam Train Rolling</name>
+   <created>2008-07-31</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.9.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.9.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.8</revision>
+   <branch>0.10</branch>
+   <name>One For The Money</name>
+   <created>2008-04-24</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.8.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.8.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.7</revision>
+   <branch>0.10</branch>
+   <name>Red Door Black</name>
+   <created>2008-01-20</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.7.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.7.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.6</revision>
+   <branch>0.10</branch>
+   <name>Wobble Board</name>
+   <created>2007-06-19</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.6.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.6.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.5</revision>
+   <branch>0.10</branch>
+   <name>The Path of Thorns</name>
+   <created>2006-12-21</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.5.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.5.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.4</revision>
+   <branch>0.10</branch>
+   <name>Dear Leader</name>
+   <created>2006-08-14</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.4.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.4.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.3</revision>
+   <branch>0.10</branch>
+   <name>Desplazado</name>
+   <created>2006-05-04</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.3.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.3.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.2</revision>
+   <branch>0.10</branch>
+   <name>Papa was a rolling stone</name>
+   <created>2006-02-09</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.2.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.2.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.1</revision>
+   <branch>0.10</branch>
+   <name>Li</name>
+   <created>2006-01-13</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.1.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.1.tar.gz" />
+  </Version>
+ </release>
+
+ <release>
+  <Version>
+   <revision>0.10.0</revision>
+   <branch>0.10</branch>
+   <name>Abondance</name>
+   <created>2005-12-05</created>
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.0.tar.bz2" />
+   <file-release rdf:resource="http://gstreamer.freedesktop.org/src/gst-plugins-good/gst-plugins-good-0.10.0.tar.gz" />
+  </Version>
+ </release>
+
+ <maintainer>
+  <foaf:Person>
+     <foaf:name>Wim Taymans</foaf:name>
+     <foaf:mbox_sha1sum>0d93fde052812d51a05fd86de9bdbf674423daa2</foaf:mbox_sha1sum>
+  </foaf:Person>
+ </maintainer>
+
+</Project>

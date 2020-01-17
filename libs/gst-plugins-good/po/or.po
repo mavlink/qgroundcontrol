@@ -1,0 +1,647 @@
+# Oriya translation of gst-plugins-0.8.3.pot.
+# Copyright (C) 2004, Free Software Foundation, Inc.
+# This file is distributed under the same license as the gst-plugins-0.8.3 package.
+# Gora Mohanty <gora_mohanty@yahoo.co.in>, 2004.
+# $Id: or.po,v 1.30 2008-04-23 23:18:43 thaytan Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-0.8.3\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2004-09-27 13:32+0530\n"
+"Last-Translator: Gora Mohanty <gora_mohanty@yahoo.co.in>\n"
+"Language-Team: Oriya <gora_mohanty@yahoo.co.in>\n"
+"Language: or\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr ""
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr ""
+
+#, fuzzy
+msgid "Could not connect to server"
+msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+msgid "No URL set."
+msgstr ""
+
+#, fuzzy
+msgid "Could not resolve server name."
+msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, fuzzy
+msgid "Could not establish connection to server."
+msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+#, fuzzy
+msgid "Server does not support seeking."
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "ନିବେଶ ଧ୍ବନି ନାହିଁ ବା ଅବୈଧ ଅଛି. ଏ.ଭି.ଆଇ. ଧାରା ଭ୍ରଷ୍ଟ ହୋଇଯିବ."
+
+msgid "This file contains no playable streams."
+msgstr ""
+
+msgid "This file is invalid and cannot be played."
+msgstr ""
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr ""
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr ""
+
+msgid "The video in this file might not play correctly."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+
+#, fuzzy
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy
+msgid "Could not open audio device for playback."
+msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+
+msgid "Playback is not supported by this audio device."
+msgstr ""
+
+msgid "Audio playback error."
+msgstr ""
+
+msgid "Recording is not supported by this audio device."
+msgstr ""
+
+msgid "Error recording from audio device."
+msgstr ""
+
+#, fuzzy
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr "ସି.ଡି. ଯନ୍ତ୍ର ପଢ଼ିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy
+msgid "Could not open audio device for recording."
+msgstr "ସି.ଡି. ଯନ୍ତ୍ର ପଢ଼ିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+#, fuzzy
+msgid "CoreAudio device could not be opened"
+msgstr "ଆପଣଙ୍କର ଓ.ଏସ.ଏସ. ଯନ୍ତ୍ରର ଠିକ ଭାବରେ ଅନୁସନ୍ଧାନ କରିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr ""
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+
+msgid "Video device did not provide output format."
+msgstr ""
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+
+msgid "Video device uses an unsupported pixel format."
+msgstr ""
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+
+msgid "Failed to start decoding thread."
+msgstr ""
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+
+msgid "Failed to start encoding thread."
+msgstr ""
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Cannot identify device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରେ ଲେଖିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "\"%s\" ଯନ୍ତ୍ର ପଢ଼ିବା ଓ ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a output device."
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "\"%s\" ଯନ୍ତ୍ର ଗୋଟିଏ ଅନୁଲିପିକାର ନୁହେଁ."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "\"%s\" ଯନ୍ତ୍ର ପଢ଼ିବା ଓ ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+
+msgid "Cannot operate without a clock"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Record Source"
+#~ msgstr "ପ୍ରଦର୍ଶିକା"
+
+#~ msgid "Microphone"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Line In"
+#~ msgstr "ଲାଇନ-ଇନ"
+
+#~ msgid "Volume"
+#~ msgstr "ପ୍ରବଳତା"
+
+#~ msgid "Monitor"
+#~ msgstr "ପ୍ରଦର୍ଶିକା"
+
+#, fuzzy
+#~ msgid "Built-in Speaker"
+#~ msgstr "ସ୍ବରବର୍ଦ୍ଧକ ୟନ୍ତ୍ର"
+
+#, fuzzy
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#~ msgid "Bass"
+#~ msgstr "ଅନୁଚ୍ଚ ସ୍ବର"
+
+#~ msgid "Treble"
+#~ msgstr "ଉଚ୍ଚ ସ୍ବର"
+
+#~ msgid "Synth"
+#~ msgstr "ସିନ୍ଥେସାଇଜର"
+
+#~ msgid "PCM"
+#~ msgstr "ପି.ସି.ଏମ."
+
+#~ msgid "Speaker"
+#~ msgstr "ସ୍ବରବର୍ଦ୍ଧକ ୟନ୍ତ୍ର"
+
+#~ msgid "Line-in"
+#~ msgstr "ଲାଇନ-ଇନ"
+
+#~ msgid "CD"
+#~ msgstr "ସି.ଡି."
+
+#~ msgid "Mixer"
+#~ msgstr "ମିଶ୍ରଣ ଯନ୍ତ୍ର"
+
+#~ msgid "PCM-2"
+#~ msgstr "ପି.ସି.ଏମ.-୨"
+
+#~ msgid "Record"
+#~ msgstr "ଅନୁଲିପିକରଣ"
+
+#~ msgid "In-gain"
+#~ msgstr "ନିବେଶ-ବୃଦ୍ଧି"
+
+#~ msgid "Out-gain"
+#~ msgstr "ନିର୍ଗମ-ବୃଦ୍ଧି"
+
+#~ msgid "Line-1"
+#~ msgstr "ଲାଇନ-୧"
+
+#~ msgid "Line-2"
+#~ msgstr "ଲାଇନ-୨"
+
+#~ msgid "Line-3"
+#~ msgstr "ଲାଇନ-୩"
+
+#~ msgid "Digital-1"
+#~ msgstr "ସାଂଖ୍ଯିକ-୧"
+
+#~ msgid "Digital-2"
+#~ msgstr "ସାଂଖ୍ଯିକ-୨"
+
+#~ msgid "Digital-3"
+#~ msgstr "ସାଂଖ୍ଯିକ-୩"
+
+#~ msgid "Phone-in"
+#~ msgstr "ଫୋନ-ନିବେଶ"
+
+#~ msgid "Phone-out"
+#~ msgstr "ଫୋନ-ନିର୍ଗମ"
+
+#~ msgid "Video"
+#~ msgstr "ଭିଡିଓ"
+
+#~ msgid "Radio"
+#~ msgstr "ରେଡିଓ"
+
+#, fuzzy
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Rear"
+#~ msgstr "ଅନୁଲିପିକରଣ"
+
+#, fuzzy
+#~ msgid "Side"
+#~ msgstr "ଭିଡିଓ"
+
+#, fuzzy
+#~ msgid "Output Gain"
+#~ msgstr "ନିର୍ଗମ-ବୃଦ୍ଧି"
+
+#, fuzzy
+#~ msgid "Microphone Boost"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Microphone Gain"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Speaker Source"
+#~ msgstr "ସ୍ବରବର୍ଦ୍ଧକ ୟନ୍ତ୍ର"
+
+#, fuzzy
+#~ msgid "Microphone Source"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Microphone 1"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Microphone 2"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Digital Out"
+#~ msgstr "ସାଂଖ୍ଯିକ-୧"
+
+#, fuzzy
+#~ msgid "Digital In"
+#~ msgstr "ସାଂଖ୍ଯିକ-୧"
+
+#, fuzzy
+#~ msgid "Front Panel Microphone"
+#~ msgstr "ମାଇକ୍ରୋଫୋନ୍"
+
+#, fuzzy
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Could not get buffers from device '%s'."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Could not get enough buffers from device '%s'."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ପର୍ଯ୍ଯାପ୍ତ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Could not read from CD."
+#~ msgstr "\"%s\" ଫାଇଲ ଲେଖିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Disc is not an Audio CD."
+#~ msgstr "ଯନ୍ତ୍ର ଖୋଲାଯାଇ ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Could not set parameters on device '%s'"
+#~ msgstr "\"%s\" ଯନ୍ତ୍ରରୁ ଅସ୍ଥାୟୀ ସଞ୍ଚୟ ସ୍ଥାନ ଆଣିହେଲା ନାହିଁ."
+
+#~ msgid "Could not open file \"%s\" for writing."
+#~ msgstr "\"%s\" ଫାଇଲ ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "Error closing file \"%s\"."
+#~ msgstr "\"%s\" ଫାଇଲ ବନ୍ଦ କରିବାରେ ତ୍ରୁଟି."
+
+#~ msgid "Could not open file \"%s\" for reading."
+#~ msgstr "\"%s\" ଫାଇଲ ପଢ଼ିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "No filename specified."
+#~ msgstr "କୌଣସି ଫାଇଲନାମ ଉଲ୍ଲେଖିତ ହୋଇ ନାହିଁ."
+
+#~ msgid "Could not open control device \"%s\" for writing."
+#~ msgstr "\"%s\" ନିୟନ୍ତ୍ରଣ ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "Could not configure audio device \"%s\"."
+#~ msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ର ବିନ୍ଯାସ କରିହେଲା ନାହିଁ."
+
+#~ msgid "Could not set audio device \"%s\" to %d Hz."
+#~ msgstr "\"%s\" ଧ୍ବନି ଯନ୍ତ୍ରକୁ %d ହର୍ଜରେ ବିନ୍ଯାସ କରିହେଲା ନାହିଁ."
+
+#~ msgid "Could not open video device \"%s\" for writing."
+#~ msgstr "\"%s\" ଭିଡିଓ ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "Could not close video device \"%s\"."
+#~ msgstr "\"%s\" ଭିଡିଓ ଯନ୍ତ୍ର ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#~ msgid "OSS device \"%s\" is already in use by another program."
+#~ msgstr "\"%s\" ଓ.ଏସ.ଏସ. ଯନ୍ତ୍ର ପୂର୍ବରୁ ଅନ୍ଯ କାରିକା ଦ୍ବାରା ବ୍ଯବହାର କରାଯାଉଛି."
+
+#~ msgid "Could not access device \"%s\", check its permissions."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ର ବ୍ଯବହାର କରିହେଲା ନାହିଁ, ତାହାର ଅନୁମତି ଦେଖନ୍ତୁ."
+
+#~ msgid "Device \"%s\" does not exist."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ର ଅବସ୍ଥିତ ନାହିଁ."
+
+#~ msgid "Could not open device \"%s\" for writing."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ର ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "Could not open device \"%s\" for reading."
+#~ msgstr "\"%s\" ଯନ୍ତ୍ର ପଢ଼ିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#~ msgid "Could not open vfs file \"%s\" for reading."
+#~ msgstr "ଭି.ଏଫ.ଏସ. ଫାଇଲ \"%s\" ପଢ଼ିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "No filename given."
+#~ msgstr "କୌଣସି ଫାଇଲନାମ ଦିଆଯାଇ ନାହିଁ"
+
+#~ msgid "Could not open vfs file \"%s\" for writing: %s."
+#~ msgstr "ଭି.ଏଫ.ଏସ. ଫାଇଲ \"%s\" ଲେଖିବା ପାଇଁ ଖୋଲିହେଲା ନାହିଁ: %s."
+
+#~ msgid "No filename given"
+#~ msgstr "କୌଣସି ଫାଇଲନାମ ଦିଆଯାଇ ନାହିଁ"
+
+#~ msgid "Could not close vfs file \"%s\"."
+#~ msgstr "ଭି.ଏଫ.ଏସ. ଫାଇଲ \"%s\" ବନ୍ଦ କରିହେଲା ନାହିଁ."
+
+#, fuzzy
+#~ msgid "Your OSS device doesn't support mono or stereo."
+#~ msgstr "ଆପଣଙ୍କର ଓ.ଏସ.ଏସ. ଯନ୍ତ୍ରର ଠିକ ଭାବରେ ଅନୁସନ୍ଧାନ କରିହେଲା ନାହିଁ."
+
+#~ msgid "No device specified."
+#~ msgstr "କୌଣସି ଯନ୍ତ୍ର ଉଲ୍ଲେଖିତ କରାଯାଇ ନାହିଁ."
+
+#~ msgid "Device is open."
+#~ msgstr "ଯନ୍ତ୍ର ଖୋଲାଯାଇଚ୍ଛି."
+
+#~ msgid ""
+#~ "The %s element could not be found. This element is essential for "
+#~ "playback. Please install the right plug-in and verify that it works by "
+#~ "running 'gst-inspect %s'"
+#~ msgstr ""
+#~ "%s ଉପାଦାନ ମିଳିଲା ନାହିଁ. ପୁନଃପ୍ରଦର୍ଶନ ପାଇଁ ଏହି ଉପାଦାନଟି ଆବଶ୍ଯକ. ଦୟା କରି ସଠିକ ପ୍ଲଗ୍ଇନ୍ "
+#~ "ସ୍ଥାପିତ କରନ୍ତୁ, ଓ 'gst-inspect %s' ଚଳାଇ ଯାଞ୍ଚ କରନ୍ତୁ କି ଏହା କାର୍ଯ୍ଯକାରୀ ଅଛି"
+
+#~ msgid ""
+#~ "No usable colorspace element could be found.\n"
+#~ "Please install one and restart."
+#~ msgstr ""
+#~ "କୌଣସି ବ୍ଯବହାରଯୋଗ୍ଯ ରଙ୍ଗକ୍ଷେତ୍ର ଉପାଦାନ ମିଳିଲା ନାହିଁ.\n"
+#~ "ଦୟା କରି ଗୋଟିଏ ଉପାଦାନ ସ୍ଥାପିତ କରି ପୁନଃପ୍ରାରମ୍ଭ କରନ୍ତୁ."

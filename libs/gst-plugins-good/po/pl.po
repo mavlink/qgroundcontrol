@@ -1,0 +1,411 @@
+# Polish translation for gst-plugins-good.
+# This file is distributed under the same license as the gst-plugins-good package.
+# Jakub Bogusz <qboosh@pld-linux.org>, 2007-2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 1.15.1\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2019-01-25 05:36+0100\n"
+"Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
+"Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+
+msgid "Jack server not found"
+msgstr "Nie znaleziono serwera Jack"
+
+msgid "Failed to decode JPEG image"
+msgstr "Nie udało się zdekodować obrazu JPEG"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+"Nie udało się skonfigurować kodera dźwięku LAME mp3. Proszę sprawdzić "
+"parametry kodowania."
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+"Żądana szybkość %d kbit/s dla własności '%s' nie jest dozwolona. Zmieniono "
+"szybkość na %d kbit/s."
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "'%s' autorstwa '%s'"
+
+msgid "Could not connect to server"
+msgstr "Nie udało się połączyć z serwerem"
+
+msgid "No URL set."
+msgstr "Nie ustawiono URL-a."
+
+msgid "Could not resolve server name."
+msgstr "Nie udało się rozwiązać nazwy serwera."
+
+msgid "Could not establish connection to server."
+msgstr "Nie udało się nawiązać połączenia z serwerem."
+
+msgid "Secure connection setup failed."
+msgstr "Ustanowienie bezpiecznego połączenia nie powiodło się."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Wystąpił błąd sieciowy lub serwer nieoczekiwanie zamknął połączenie."
+
+msgid "Server sent bad data."
+msgstr "Serwer przysłał błędne dane."
+
+msgid "Server does not support seeking."
+msgstr "Serwer nie obsługuje przewijania."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+"Nie udało się skonfigurować kodera TwoLAME. Proszę sprawdzić parametry "
+"kodowania."
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Brak lub niepoprawne wejście dźwięku, strumień AVI będzie uszkodzony."
+
+msgid "This file contains no playable streams."
+msgstr "Ten plik nie zawiera strumieni nadających się do odtworzenia."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Ten plik jest błędny i nie może być odtworzony."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+"Nie można odtwarzać strumienia, ponieważ jest zaszyfrowany DRM-em PlayReady."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Ten plik jest uszkodzony i nie może być odtworzony."
+
+msgid "Invalid atom size."
+msgstr "Błędny rozmiar atomu."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Ten plik jest niekompletny i nie może być odtworzony."
+
+msgid "The video in this file might not play correctly."
+msgstr "Obraz w tym pliku może nie być odtwarzany prawidłowo."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Nie znaleziono obsługiwanego strumienia. Być może trzeba zainstalować "
+"wtyczkę rozszerzenia GStreamera RTSP dla strumieni Real media."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Nie znaleziono obsługiwanego strumienia. Być może trzeba zezwolić na więcej "
+"protokołów transportu, albo może brakować właściwej wtyczki rozszerzenia "
+"RTSP GStreamera."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Nie udało się otworzyć urządzenia dźwiękowego do odtwarzania. Urządzenie "
+"jest używane przez inną aplikację."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Nie udało się otworzyć urządzenia dźwiękowego do odtwarzania. Brak uprawnień "
+"do otwarcia urządzenia."
+
+msgid "Could not open audio device for playback."
+msgstr "Nie udało się otworzyć urządzenia dźwiękowego do odtwarzania."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Nie udało się otworzyć urządzenia dźwiękowego do odtwarzania. Ta wersja Open "
+"Sound System nie jest obsługiwana przez ten element."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Odtwarzanie nie jest obsługiwane przez to urządzenie dźwiękowe."
+
+msgid "Audio playback error."
+msgstr "Błąd odtwarzania dźwięku."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Nagrywanie nie jest obsługiwane przez to urządzenie dźwiękowe."
+
+msgid "Error recording from audio device."
+msgstr "Błąd nagrywania z urządzenia dźwiękowego."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Nie udało się otworzyć urządzenia dźwiękowego do nagrywania. Brak uprawnień "
+"do otwarcia urządzenia."
+
+msgid "Could not open audio device for recording."
+msgstr "Nie udało się otworzyć urządzenia dźwiękowego do nagrywania."
+
+msgid "CoreAudio device not found"
+msgstr "Nie znaleziono urządzenia CoreAudio"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Nie udało się otworzyć urządzenia CoreAudio"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Błąd odczytu %d bajtów z urządzenia '%s'."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Nie udało się wyliczyć dostępnych formatów obrazu, z którymi może działać "
+"urządzenie '%s'"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Nie udało się odwzorować buforów z urządzenia '%s'"
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Sterownik urządzenia '%s' nie obsługuje metody we/wy %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr "Sterownik urządzenia '%s' nie obsługuje żadnej znanej metody we/wy."
+
+#, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Urządzenie '%s' nie ma obsługiwanego formatu"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr "Urządzenie '%s' zawiodło w trakcie inicjowania"
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "Urządzenie '%s' jest zajęte"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Urządzenie '%s' nie potrafi przechwytywać obrazu %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Urządzenie '%s' nie potrafi przechwytywać obrazu w podanym formacie"
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "Urządzenie '%s' obsługuje nieciągłe powierzchnie"
+
+#, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Urządzenie '%s' nie obsługuje przeplotu %s"
+
+#, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Urządzenie '%s' nie obsługuje kolorymetrii %s"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Nie udało się uzyskać parametrów urządzenia '%s'"
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+"Urządzenie obrazu nie przyjęło nowego ustawienia częstotliwości klatek."
+
+msgid "Video device did not provide output format."
+msgstr "Urządzenie obrazu nie przekazało formatu wyjściowego."
+
+msgid "Video device returned invalid dimensions."
+msgstr "Urządzenie obrazu zwróciło błędne wymiary."
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Urządzenie obrazu wykorzystuje nie obsługiwany sposób przeplotu."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "Urządzenie obrazu wykorzystuje nie obsługiwany format piksela."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Nie udało się skonfigurować wewnętrznej puli buforów."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "Urządzenie obrazu nie zasugerowało żadnego rozmiaru bufora."
+
+msgid "No downstream pool to import from."
+msgstr "Brak oddolnej puli do zaimportowania."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Nie udało się uzyskać ustawień tunera %d urządzenia '%s'."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Błąd podczas pobierania możliwości uządzenia '%s'."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Urządzenie '%s' nie jest tunerem."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Nie udało się uzyskać wejścia radiowego z urządzenia '%s'. "
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Nie udało się ustawić wejścia %d urządzenia %s."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Nie udało się zmienić stanu wyciszenia dla urządzenia '%s'."
+
+msgid "Failed to allocated required memory."
+msgstr "Nie udało się przydzielić wymaganej pamięci."
+
+msgid "Failed to allocate required memory."
+msgstr "Nie udało się przydzielić wymaganej pamięci."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Konwerter urządzenia %s nie ma obsługiwanego formatu wejściowego"
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Konwerter urządzenia %s nie ma obsługiwanego formatu wyjściowego"
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Dekoder urządzenia %s nie ma obsługiwanego formatu wejściowego"
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Dekoder urządzenia %s nie ma obsługiwanego formatu wyjściowego"
+
+msgid "Failed to start decoding thread."
+msgstr "Nie udało się uruchomić wątku dekodującego."
+
+msgid "Failed to process frame."
+msgstr "Nie udało się przetworzyć ramki."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wyjściowego"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Koder urządzenia %s nie ma obsługiwanego formatu wejściowego"
+
+msgid "Failed to start encoding thread."
+msgstr "Nie udało się uruchomić wątku kodującego."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Błąd pobierania możliwości urządzenia '%s': to nie jest sterownik v4l2. "
+"Proszę sprawdzić czy to sterownik v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Nie udało się odpytać o atrybuty wejścia %d urządzenia %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Nie udało się uzyskać ustawień tunera %d urządzenia '%s'."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Nie udało się odpytać normalizacji urządzenia '%s'."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Nie udało się uzyskać atrybutów sterujących urządzenia '%s'."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Nie można zidentyfikować urządzenia '%s'."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "To nie jest urządzenie '%s'."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Nie udało się otworzyć urządzenia '%s' do odczytu i zapisu."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Urządzenie '%s' nie jest urządzeniem przechwytującym."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Urządzenie '%s' nie jest urządzeniem wyjściowym."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Urządzenie '%s' nie jest urządzeniem M2M."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Nie udało się wykonać dup urządzenia '%s' do odczytu i zapisu."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Nie udało się ustawić normalizacji dla urządzenia '%s'."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr ""
+"Nie udało się uzyskać aktualnej częstotliwości tunera dla urządzenia '%s'."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+"Nie udało się ustawić aktualnej częstotliwości tunera dla urządzenia '%s' na "
+"%lu Hz."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Nie udało się uzyskać siły sygnału dla urządzenia '%s'."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Nie udało się uzyskać wartości sterującej %d urządzenia '%s'."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "Nie udało się ustawić %d jako wartości sterującej %d urządzenia '%s'."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Nie udało się uzyskać aktualnego wejścia urządzenia '%s'. Może to radio"
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Nie udało się uzyskać aktualnego wyjścia urządzenia '%s'. Może to radio"
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Nie udało się ustawić wyjścia %d urządzenia %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr "Zmiana rozdzielczości w czasie działania nie jest jeszcze obsługiwana."
+
+msgid "Cannot operate without a clock"
+msgstr "Nie można pracować bez zegara"

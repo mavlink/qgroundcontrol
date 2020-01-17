@@ -1,0 +1,16 @@
+{
+  guint j;
+  register double squaresum = 0.0;
+
+  /*
+   * process data here  
+   * input sample data enters in *in_data as 8 or 16 bit data
+   * samples for left and right channel are interleaved
+   */
+
+  for (j = 0; j < num_samples; j++) 
+     squaresum += data[j] * data[j];
+
+  return (squaresum / (float) num_samples);
+}
+

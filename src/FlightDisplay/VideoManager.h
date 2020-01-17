@@ -103,6 +103,11 @@ protected slots:
     void _connectionLostChanged     (bool connectionLost);
 
 protected:
+    friend class FinishVideoInitialization;
+#if defined(QGC_GST_STREAMING)
+    GstElement* _makeVideoSink      (const QString& widgetName);
+#endif
+    void _initVideo                 ();
     void _updateSettings            ();
 
 protected:

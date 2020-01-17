@@ -1,0 +1,12 @@
+GStreamer is currently maintained by the consensus of a number
+of people, including, but not limited to:
+
+ Jan Schmidt <thaytan@noraisin.net>
+ Wim Taymans <wim.taymans@gmail.com>
+ David Schleef <ds@schleef.org>
+ Tim-Philipp Müller <tim centricular net>
+ Sebastian Dröge <slomo@coaxion.net>
+
+Maintainer-related issues should be addressed to:
+
+  gstreamer-devel@lists.freedesktop.org

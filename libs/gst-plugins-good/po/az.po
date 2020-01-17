@@ -1,0 +1,618 @@
+# Translation of 'gst-plugins' messages to Azerbaijani.
+# Copyright (C) 2004 Free Software Foundation, Inc.
+# This file is put in the public domain.
+# Mətin Əmirov <metin@karegen.com>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-0.8.0\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2004-03-19 18:29+0200\n"
+"Last-Translator: Metin Amiroff <metin@karegen.com>\n"
+"Language-Team: Azerbaijani <translation-team-az@lists.sourceforge.net>\n"
+"Language: az\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.0.2\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr ""
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr ""
+
+#, fuzzy
+msgid "Could not connect to server"
+msgstr "\"%s\" idarə avadanlığı bağlana bilmədi."
+
+msgid "No URL set."
+msgstr ""
+
+#, fuzzy
+msgid "Could not resolve server name."
+msgstr "\"%s\" idarə avadanlığı bağlana bilmədi."
+
+#, fuzzy
+msgid "Could not establish connection to server."
+msgstr "\"%s\" idarə avadanlığı bağlana bilmədi."
+
+msgid "Secure connection setup failed."
+msgstr ""
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr ""
+
+msgid "Server sent bad data."
+msgstr ""
+
+msgid "Server does not support seeking."
+msgstr ""
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr "Səhv ya da olmayan audio girişi, AVI yayımı pozulacaqdır."
+
+msgid "This file contains no playable streams."
+msgstr ""
+
+msgid "This file is invalid and cannot be played."
+msgstr ""
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+
+msgid "This file is corrupt and cannot be played."
+msgstr ""
+
+msgid "Invalid atom size."
+msgstr ""
+
+msgid "This file is incomplete and cannot be played."
+msgstr ""
+
+msgid "The video in this file might not play correctly."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+
+#, fuzzy
+msgid "Could not open audio device for playback."
+msgstr "\"%s\" audio avadanlığı yazma üçün açıla bilmədi."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+
+msgid "Playback is not supported by this audio device."
+msgstr ""
+
+msgid "Audio playback error."
+msgstr ""
+
+msgid "Recording is not supported by this audio device."
+msgstr ""
+
+msgid "Error recording from audio device."
+msgstr ""
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+
+#, fuzzy
+msgid "Could not open audio device for recording."
+msgstr "CD avadanlığı oxuma üçün açıla bilmədi."
+
+msgid "CoreAudio device not found"
+msgstr ""
+
+msgid "CoreAudio device could not be opened"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr ""
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' has no supported format"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Device '%s' is busy"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+msgid "Video device did not accept new frame rate setting."
+msgstr ""
+
+msgid "Video device did not provide output format."
+msgstr ""
+
+msgid "Video device returned invalid dimensions."
+msgstr ""
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr ""
+
+msgid "Video device uses an unsupported pixel format."
+msgstr ""
+
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+
+msgid "No downstream pool to import from."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "\"%s\" avadanlığından kifayət qədər bufferlər alına bilmədi."
+
+#, fuzzy, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "\"%s\" audio avadanlığı bağlana bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "\"%s\" audio avadanlığı bağlana bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+msgid "Failed to allocated required memory."
+msgstr ""
+
+msgid "Failed to allocate required memory."
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr ""
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr ""
+
+msgid "Failed to start decoding thread."
+msgstr ""
+
+msgid "Failed to process frame."
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr ""
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr ""
+
+msgid "Failed to start encoding thread."
+msgstr ""
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "\"%s\" avadanlığından kifayət qədər bufferlər alına bilmədi."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr ""
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Cannot identify device '%s'."
+msgstr "\"%s\" avadanlığına yazıla bilmədi."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "\"%s\" avadanlığı oxuma və yazma üçün açıla bilmədi."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a output device."
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "\"%s\" avadanlığı capture avadanlığı deyil."
+
+#, fuzzy, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "\"%s\" avadanlığı oxuma və yazma üçün açıla bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "\"%s\" avadanlığından kifayət qədər bufferlər alına bilmədi."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr ""
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "\"%s\" idarə avadanlığı bağlana bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr "\"%s\" idarə avadanlığı bağlana bilmədi."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+
+#, fuzzy, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr "\"%s\" avadanlığından kifayət qədər bufferlər alına bilmədi."
+
+#, fuzzy, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "\"%s\" audio avadanlığı bağlana bilmədi."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+
+msgid "Cannot operate without a clock"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Record Source"
+#~ msgstr "Qeyd"
+
+#~ msgid "Microphone"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Line In"
+#~ msgstr "Xətd-giriş"
+
+#~ msgid "Volume"
+#~ msgstr "Səs"
+
+#~ msgid "Monitor"
+#~ msgstr "Monitor"
+
+#, fuzzy
+#~ msgid "Built-in Speaker"
+#~ msgstr "Spiker"
+
+#, fuzzy
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "\"%s\" avadanlığından kifayət qədər bufferlər alına bilmədi."
+
+#~ msgid "Bass"
+#~ msgstr "Bas"
+
+#~ msgid "Treble"
+#~ msgstr "İncə"
+
+#~ msgid "Synth"
+#~ msgstr "Sint"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Spiker"
+
+#~ msgid "Line-in"
+#~ msgstr "Xətd-giriş"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Mikser"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Qeyd"
+
+#~ msgid "In-gain"
+#~ msgstr "Giriş-gain"
+
+#~ msgid "Out-gain"
+#~ msgstr "Çıxış-gain"
+
+#~ msgid "Line-1"
+#~ msgstr "Xətd-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Xətd-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Xətd-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Dijital-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Dijital-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Dijital-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Telefon-girişi"
+
+#~ msgid "Phone-out"
+#~ msgstr "Telefon-çıxışı"
+
+#~ msgid "Video"
+#~ msgstr "Video"
+
+#~ msgid "Radio"
+#~ msgstr "Radio"
+
+#, fuzzy
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr "\"%s\" audio avadanlığı yazma üçün açıla bilmədi."
+
+#, fuzzy
+#~ msgid "Rear"
+#~ msgstr "Qeyd"
+
+#, fuzzy
+#~ msgid "Side"
+#~ msgstr "Video"
+
+#, fuzzy
+#~ msgid "Video In"
+#~ msgstr "Video"
+
+#, fuzzy
+#~ msgid "Record Gain"
+#~ msgstr "Qeyd"
+
+#, fuzzy
+#~ msgid "Output Gain"
+#~ msgstr "Çıxış-gain"
+
+#, fuzzy
+#~ msgid "Microphone Boost"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Monitor Source"
+#~ msgstr "Monitor"
+
+#, fuzzy
+#~ msgid "Microphone Gain"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Speaker Source"
+#~ msgstr "Spiker"
+
+#, fuzzy
+#~ msgid "Microphone Source"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Microphone 1"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Microphone 2"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Digital Out"
+#~ msgstr "Dijital-1"
+
+#, fuzzy
+#~ msgid "Digital In"
+#~ msgstr "Dijital-1"
+
+#, fuzzy
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Mikrofon"
+
+#, fuzzy
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "\"%s\" avadanlığından bufferlər alına bilmədi."
+
+#~ msgid "Could not open file \"%s\" for writing."
+#~ msgstr "\"%s\" faylı yazma üçün açıla bilmədi."
+
+#~ msgid "Error closing file \"%s\"."
+#~ msgstr "\"%s\" faylı bağlana bilmədi."
+
+#~ msgid "Could not open file \"%s\" for reading."
+#~ msgstr "\"%s\" faylı oxuma üçün açıla bilmədi."
+
+#~ msgid "No filename specified."
+#~ msgstr "Fayl adı verilməyib."
+
+#~ msgid "Could not write to file \"%s\"."
+#~ msgstr "\"%s\" faylına yazıla bilmədi."
+
+#~ msgid "Could not open control device \"%s\" for writing."
+#~ msgstr "\"%s\" idarə avadanlığı yazma üçün açıla bilmədi."
+
+#~ msgid "Could not configure audio device \"%s\"."
+#~ msgstr "\"%s\" audio avadanlığı quraşdırıla bilmədi."
+
+#~ msgid "Could not set audio device \"%s\" to %d Hz."
+#~ msgstr "\"%s\" audio avadanlığı %d Hz-ə keçirilə bilmədi."
+
+#~ msgid "Could not open video device \"%s\" for writing."
+#~ msgstr "\"%s\" video avadanlığı yazma üçün açıla bilmədi."
+
+#~ msgid "Could not close video device \"%s\"."
+#~ msgstr "\"%s\" video avadanlığı bağlana bilmədi."
+
+#~ msgid "OSS device \"%s\" is already in use by another program."
+#~ msgstr "\"%s\" OSS avadanlığı başqa bir proqram tərəfindən istifadədədir."
+
+#~ msgid "Could not access device \"%s\", check its permissions."
+#~ msgstr "\"%s\" avadanlığına yetişə bilmədi, səlahiyyətlərini yoxlayın."
+
+#~ msgid "Device \"%s\" does not exist."
+#~ msgstr "\"%s\" avadanlığı mövcud deyil."
+
+#~ msgid "Could not open device \"%s\" for writing."
+#~ msgstr "\"%s\" avadanlığı yazma üçün açıla bilmədi."
+
+#~ msgid "Could not open device \"%s\" for reading."
+#~ msgstr "\"%s\" avadanlığı oxuma üçün açıla bilmədi."
+
+#~ msgid "Could not open vfs file \"%s\" for reading."
+#~ msgstr "\"%s\" vfs faylı oxuma üçün açıla bilmədi."
+
+#, fuzzy
+#~ msgid "No filename given."
+#~ msgstr "Fayl adı verilməyib."
+
+#, fuzzy
+#~ msgid "Could not open vfs file \"%s\" for writing: %s."
+#~ msgstr "\"%s\" vfs faylı yazma üçün açıla bilmədi."
+
+#, fuzzy
+#~ msgid "No filename given"
+#~ msgstr "Fayl adı verilməyib."
+
+#~ msgid "Could not close vfs file \"%s\"."
+#~ msgstr "\"%s\" vfs faylı bağlana bilmədi."
+
+#~ msgid "No device specified."
+#~ msgstr "Avadanlıq bildirilməyib."
+
+#~ msgid "Device is not open."
+#~ msgstr "Avadanlıq açıq deyil."
+
+#~ msgid "Device is open."
+#~ msgstr "Avadanlıq açıqdır."

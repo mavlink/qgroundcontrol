@@ -1,0 +1,887 @@
+# Translation for gst-plugins-good messages to Russian
+# This file is put in the public domain.
+#
+# Артём Попов <artfwo@gmail.com>, 2009.
+# Pavel Maryanov <acid_jack@ukr.net>, 2009.
+# Yuri Kozlov <yuray@komyakino.ru>, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2019.
+# Pavel Maryanov <acid@jack.kiev.ua>, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: gst-plugins-good 1.15.1\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
+"POT-Creation-Date: 2019-02-26 11:47+0000\n"
+"PO-Revision-Date: 2019-01-25 19:51+0300\n"
+"Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
+"Language-Team: Russian <gnu@d07.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Lokalize 2.0\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+msgid "Jack server not found"
+msgstr "Сервер Jack не найден"
+
+msgid "Failed to decode JPEG image"
+msgstr "Не удалось декодировать JPEG-изображение"
+
+msgid ""
+"Failed to configure LAME mp3 audio encoder. Check your encoding parameters."
+msgstr ""
+"Не удалось настроить аудио-кодировщик mp3 LAME. Проверьте параметры "
+"кодирования."
+
+#, c-format
+msgid ""
+"The requested bitrate %d kbit/s for property '%s' is not allowed. The "
+"bitrate was changed to %d kbit/s."
+msgstr ""
+"Запрошенный битрейт в %d кбит/с для свойства «%s» недопустим. Битрейт был "
+"изменён на %d кбит/с."
+
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "«%s», «%s»"
+
+msgid "Could not connect to server"
+msgstr "Не удалось соединиться с сервером"
+
+msgid "No URL set."
+msgstr "URL не задан."
+
+msgid "Could not resolve server name."
+msgstr "Не удалось определить имя сервера."
+
+msgid "Could not establish connection to server."
+msgstr "Не удалось установить соединение с сервером."
+
+msgid "Secure connection setup failed."
+msgstr "Не удалось настроить защищённое соединение."
+
+msgid ""
+"A network error occurred, or the server closed the connection unexpectedly."
+msgstr "Произошла сетевая ошибка или сервер неожиданно закрыл соединение."
+
+msgid "Server sent bad data."
+msgstr "Сервер прислал некорректные данные."
+
+msgid "Server does not support seeking."
+msgstr "Сервер не поддерживает поиск."
+
+msgid "Failed to configure TwoLAME encoder. Check your encoding parameters."
+msgstr ""
+"Не удалось настроить кодировщик TwoLAME. Проверьте параметры кодирования."
+
+msgid "No or invalid input audio, AVI stream will be corrupt."
+msgstr ""
+"Входящие аудио-данные отсутствуют или недействительны, поток AVI будет "
+"повреждён."
+
+msgid "This file contains no playable streams."
+msgstr "Файл не содержит воспроизводимых потоков."
+
+msgid "This file is invalid and cannot be played."
+msgstr "Файл некорректен и не может быть воспроизведён."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+"Невозможно воспроизвести поток, так как он зашифрован с помощью PlayReady "
+"DRM."
+
+msgid "This file is corrupt and cannot be played."
+msgstr "Файл повреждён и не может быть воспроизведён."
+
+msgid "Invalid atom size."
+msgstr "Неверный атомарный размер."
+
+msgid "This file is incomplete and cannot be played."
+msgstr "Файл не полон и не может быть воспроизведён."
+
+msgid "The video in this file might not play correctly."
+msgstr "Видео из этого файла может быть воспроизведено некорректно."
+
+msgid ""
+"No supported stream was found. You might need to install a GStreamer RTSP "
+"extension plugin for Real media streams."
+msgstr ""
+"Ни один поток не поддерживается. Возможно требуется установка "
+"дополнительного модуля GStreamer RTSP для потоков Real media."
+
+msgid ""
+"No supported stream was found. You might need to allow more transport "
+"protocols or may otherwise be missing the right GStreamer RTSP extension "
+"plugin."
+msgstr ""
+"Ни один поток не поддерживается. Возможно требуется разрешить дополнительные "
+"протоколы передачи или же отсутствует правильный модуль GStreamer RTSP."
+
+msgid ""
+"Could not open audio device for playback. Device is being used by another "
+"application."
+msgstr ""
+"Не удалось открыть аудио-устройство для воспроизведения. Устройство "
+"используется другим приложением."
+
+msgid ""
+"Could not open audio device for playback. You don't have permission to open "
+"the device."
+msgstr ""
+"Не удалось открыть аудио-устройство для воспроизведения. Отсутствуют права "
+"доступа к устройству."
+
+msgid "Could not open audio device for playback."
+msgstr "Не удалось открыть аудио-устройство для воспроизведения."
+
+msgid ""
+"Could not open audio device for playback. This version of the Open Sound "
+"System is not supported by this element."
+msgstr ""
+"Не удалось открыть аудио-устройство для воспроизведения. Данная версия Open "
+"Sound System не поддерживается этим элементом."
+
+msgid "Playback is not supported by this audio device."
+msgstr "Воспроизведение не поддерживается данным аудио-устройством."
+
+msgid "Audio playback error."
+msgstr "Ошибка воспроизведения аудио."
+
+msgid "Recording is not supported by this audio device."
+msgstr "Запись не поддерживается данным аудио-устройством."
+
+msgid "Error recording from audio device."
+msgstr "Ошибка записи с аудио-устройства."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Не удалось открыть аудио-устройство для записи. Отсутствуют права доступа к "
+"устройству."
+
+msgid "Could not open audio device for recording."
+msgstr "Не удалось открыть аудио-устройство для записи."
+
+msgid "CoreAudio device not found"
+msgstr "Устройство CoreAudio не найдено"
+
+msgid "CoreAudio device could not be opened"
+msgstr "Невозможно открыть устройство CoreAudio"
+
+#, c-format
+msgid "Error reading %d bytes from device '%s'."
+msgstr "Ошибка чтения %d байт из устройства «%s»."
+
+#, c-format
+msgid "Failed to enumerate possible video formats device '%s' can work with"
+msgstr ""
+"Не удалось создать список видео-форматов, с которыми может работать "
+"устройство «%s»"
+
+#, c-format
+msgid "Could not map buffers from device '%s'"
+msgstr "Не удалось распределить буферы устройства «%s»"
+
+#, c-format
+msgid "The driver of device '%s' does not support the IO method %d"
+msgstr "Драйвер устройства «%s» не поддерживает метод ввода-вывода %d"
+
+#, c-format
+msgid "The driver of device '%s' does not support any known IO method."
+msgstr ""
+"Драйвер устройства «%s» не поддерживает ни один из известных методов ввода-"
+"вывода."
+
+#, c-format
+msgid "Device '%s' has no supported format"
+msgstr "Устройство «%s» не поддерживает формат"
+
+#, c-format
+msgid "Device '%s' failed during initialization"
+msgstr "Ошибка инициализации устройства «%s»"
+
+#, c-format
+msgid "Device '%s' is busy"
+msgstr "Устройство «%s» занято"
+
+#, c-format
+msgid "Device '%s' cannot capture at %dx%d"
+msgstr "Устройство «%s» не может осуществлять захват в разрешении %dx%d"
+
+#, c-format
+msgid "Device '%s' cannot capture in the specified format"
+msgstr "Устройство «%s» не может осуществлять захват в указанном формате"
+
+#, c-format
+msgid "Device '%s' does support non-contiguous planes"
+msgstr ""
+"Устройство «%s» поддерживает прерывистые матрицы (non-contiguous planes)"
+
+#, c-format
+msgid "Device '%s' does not support %s interlacing"
+msgstr "Устройство «%s» не поддерживает черезстрочность %s"
+
+#, c-format
+msgid "Device '%s' does not support %s colorimetry"
+msgstr "Устройство «%s» не поддерживает колориметрию %s"
+
+#, c-format
+msgid "Could not get parameters on device '%s'"
+msgstr "Не удалось получить параметры устройства «%s»"
+
+msgid "Video device did not accept new frame rate setting."
+msgstr "Видео-устройство не приняло новое значение настройки кадровой частоты."
+
+msgid "Video device did not provide output format."
+msgstr "Видео-устройство не предоставило выходной формат."
+
+msgid "Video device returned invalid dimensions."
+msgstr "Видео-устройство вернуло некорректные размеры."
+
+msgid "Video device uses an unsupported interlacing method."
+msgstr "Видео-устройство использует не поддерживаемый метод черезстрочности."
+
+msgid "Video device uses an unsupported pixel format."
+msgstr "Видео-устройство использует неподдерживаемый пиксельный формат."
+
+msgid "Failed to configure internal buffer pool."
+msgstr "Ошибка при настройке внутреннего буферного пула."
+
+msgid "Video device did not suggest any buffer size."
+msgstr "Видео-устройство не предложило какой-либо размер буфера."
+
+msgid "No downstream pool to import from."
+msgstr "Неоткуда импортировать пул нисходящего потока."
+
+#, c-format
+msgid "Failed to get settings of tuner %d on device '%s'."
+msgstr "Не удалось получить настройки тюнера %d устройства «%s»."
+
+#, c-format
+msgid "Error getting capabilities for device '%s'."
+msgstr "Ошибка при получении списка возможностей устройства «%s»."
+
+#, c-format
+msgid "Device '%s' is not a tuner."
+msgstr "Устройство «%s» не является тюнером."
+
+#, c-format
+msgid "Failed to get radio input on device '%s'. "
+msgstr "Не удалось выбрать радио-вход на устройстве «%s»."
+
+#, c-format
+msgid "Failed to set input %d on device %s."
+msgstr "Не удалось выбрать вход %d для устройства %s."
+
+#, c-format
+msgid "Failed to change mute state for device '%s'."
+msgstr "Не удалось изменить состояние приглушения для устройства «%s»."
+
+msgid "Failed to allocated required memory."
+msgstr "Не удалось выделить достаточно памяти."
+
+msgid "Failed to allocate required memory."
+msgstr "Не удалось выделить достаточно памяти."
+
+#, c-format
+msgid "Converter on device %s has no supported input format"
+msgstr "Преобразователь на устройстве %s не поддерживает входной формат"
+
+#, c-format
+msgid "Converter on device %s has no supported output format"
+msgstr "Преобразователь на устройстве %s не поддерживает выходной формат"
+
+#, c-format
+msgid "Decoder on device %s has no supported input format"
+msgstr "Раскодировщик на устройстве %s не поддерживает входной формат"
+
+#, c-format
+msgid "Decoder on device %s has no supported output format"
+msgstr "Раскодировщик на устройстве %s не поддерживает выходной формат"
+
+msgid "Failed to start decoding thread."
+msgstr "Не удалось запустить нить декодирования."
+
+msgid "Failed to process frame."
+msgstr "Не удалось обработать кадр."
+
+#, c-format
+msgid "Encoder on device %s has no supported output format"
+msgstr "Кодировщик на устройстве %s не поддерживает выходной формат"
+
+#, c-format
+msgid "Encoder on device %s has no supported input format"
+msgstr "Кодировщик на устройстве %s не поддерживает входной формат"
+
+msgid "Failed to start encoding thread."
+msgstr "Не удалось запустить нить кодирования."
+
+#, c-format
+msgid ""
+"Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
+"it is a v4l1 driver."
+msgstr ""
+"Ошибка получения возможностей устройства «%s»: драйвер устройства "
+"несовместим с v4l2. Проверьте, не использует ли устройство драйвер v4l1."
+
+#, c-format
+msgid "Failed to query attributes of input %d in device %s"
+msgstr "Ошибка запроса атрибутов входа %d устройства %s"
+
+#, c-format
+msgid "Failed to get setting of tuner %d on device '%s'."
+msgstr "Ошибка получения установок тюнера %d устройства «%s»."
+
+#, c-format
+msgid "Failed to query norm on device '%s'."
+msgstr "Ошибка запроса стандарта устройства «%s»."
+
+#, c-format
+msgid "Failed getting controls attributes on device '%s'."
+msgstr "Ошибка получения атрибутов управления устройства «%s»."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Не удаётся распознать устройство «%s»."
+
+#, c-format
+msgid "This isn't a device '%s'."
+msgstr "«%s» не является устройством."
+
+#, c-format
+msgid "Could not open device '%s' for reading and writing."
+msgstr "Не удалось открыть устройство «%s» для чтения и записи."
+
+#, c-format
+msgid "Device '%s' is not a capture device."
+msgstr "Устройство «%s» не является устройством захвата."
+
+#, c-format
+msgid "Device '%s' is not a output device."
+msgstr "Устройство «%s» не является устройством вывода."
+
+#, c-format
+msgid "Device '%s' is not a M2M device."
+msgstr "Устройство «%s» не является устройством M2M."
+
+#, c-format
+msgid "Could not dup device '%s' for reading and writing."
+msgstr "Не удалось сделать дубликат устройства «%s» для чтения и записи."
+
+#, c-format
+msgid "Failed to set norm for device '%s'."
+msgstr "Ошибка установки стандарта устройства «%s»."
+
+#, c-format
+msgid "Failed to get current tuner frequency for device '%s'."
+msgstr "Ошибка получения текущей частоты тюнера устройства «%s»."
+
+#, c-format
+msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
+msgstr "Ошибка установки текущей частоты тюнера устройства «%s» в %lu Гц."
+
+#, c-format
+msgid "Failed to get signal strength for device '%s'."
+msgstr "Ошибка получения мощности сигнала для устройства «%s»."
+
+#, c-format
+msgid "Failed to get value for control %d on device '%s'."
+msgstr "Ошибка получения значения управляющего параметра %d устройства «%s»."
+
+#, c-format
+msgid "Failed to set value %d for control %d on device '%s'."
+msgstr ""
+"Ошибка установки значения %d для управляющего параметра %d устройства «%s»."
+
+#, c-format
+msgid "Failed to get current input on device '%s'. May be it is a radio device"
+msgstr ""
+"Не удалось определить активный вход устройства «%s». Возможно, это радио-"
+"устройство"
+
+#, c-format
+msgid ""
+"Failed to get current output on device '%s'. May be it is a radio device"
+msgstr ""
+"Не удалось определить активный выход устройства «%s». Возможно, это радио-"
+"устройство"
+
+#, c-format
+msgid "Failed to set output %d on device %s."
+msgstr "Не удалось выбрать выход %d для устройства %s."
+
+msgid "Changing resolution at runtime is not yet supported."
+msgstr ""
+"Изменение разрешения видео во время выполнения не поддерживается в настоящий "
+"момент."
+
+msgid "Cannot operate without a clock"
+msgstr "Операция невозможна без часов"
+
+#~ msgid "This file contains too many streams. Only playing first %d"
+#~ msgstr ""
+#~ "Файл содержит слишком много потоков. Будет воспроизведёно только первых %d"
+
+#~ msgid "Record Source"
+#~ msgstr "Устройство записи"
+
+#~ msgid "Microphone"
+#~ msgstr "Микрофон"
+
+#~ msgid "Line In"
+#~ msgstr "Линейный вход"
+
+#~ msgid "Internal CD"
+#~ msgstr "Внутренний CD"
+
+#~ msgid "SPDIF In"
+#~ msgstr "Вход SPDIF"
+
+#~ msgid "AUX 1 In"
+#~ msgstr "Вход AUX 1"
+
+#~ msgid "AUX 2 In"
+#~ msgstr "Вход AUX 2"
+
+#~ msgid "Codec Loopback"
+#~ msgstr "Петля Codec"
+
+#~ msgid "SunVTS Loopback"
+#~ msgstr "Петля SunVTS"
+
+#~ msgid "Volume"
+#~ msgstr "Уровень"
+
+#~ msgid "Gain"
+#~ msgstr "Уровень"
+
+#~ msgid "Monitor"
+#~ msgstr "Мониторинг"
+
+#~ msgid "Built-in Speaker"
+#~ msgstr "Внутренний динамик"
+
+#~ msgid "Headphone"
+#~ msgstr "Наушник"
+
+#~ msgid "Line Out"
+#~ msgstr "Линейный выход"
+
+#~ msgid "SPDIF Out"
+#~ msgstr "Выход SPDIF"
+
+#~ msgid "AUX 1 Out"
+#~ msgstr "Выход AUX 1"
+
+#~ msgid "AUX 2 Out"
+#~ msgstr "Выход AUX 2"
+
+#~ msgid "Internal data stream error."
+#~ msgstr "Внутренняя ошибка потока данных."
+
+#~ msgid "Internal data flow error."
+#~ msgstr "Внутренняя ошибка потока данных."
+
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Не удалось установить соединение с сервером звука"
+
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Ошибка при запросе возможностей сервера звука"
+
+#~ msgid "Bass"
+#~ msgstr "Низкие"
+
+#~ msgid "Treble"
+#~ msgstr "Высокие"
+
+#~ msgid "Synth"
+#~ msgstr "Синтезатор"
+
+#~ msgid "PCM"
+#~ msgstr "PCM"
+
+#~ msgid "Speaker"
+#~ msgstr "Внутренний динамик"
+
+#~ msgid "Line-in"
+#~ msgstr "Линейный вход"
+
+#~ msgid "CD"
+#~ msgstr "CD"
+
+#~ msgid "Mixer"
+#~ msgstr "Микшер"
+
+#~ msgid "PCM-2"
+#~ msgstr "PCM-2"
+
+#~ msgid "Record"
+#~ msgstr "Запись"
+
+#~ msgid "In-gain"
+#~ msgstr "Усиление на входе"
+
+#~ msgid "Out-gain"
+#~ msgstr "Усиление на выходе"
+
+#~ msgid "Line-1"
+#~ msgstr "Линейный-1"
+
+#~ msgid "Line-2"
+#~ msgstr "Линейный-2"
+
+#~ msgid "Line-3"
+#~ msgstr "Линейный-3"
+
+#~ msgid "Digital-1"
+#~ msgstr "Цифровой-1"
+
+#~ msgid "Digital-2"
+#~ msgstr "Цифровой-2"
+
+#~ msgid "Digital-3"
+#~ msgstr "Цифровой-3"
+
+#~ msgid "Phone-in"
+#~ msgstr "Тел. вход"
+
+#~ msgid "Phone-out"
+#~ msgstr "Тел. выход"
+
+#~ msgid "Video"
+#~ msgstr "Видео"
+
+#~ msgid "Radio"
+#~ msgstr "Радио"
+
+#~ msgid "Could not open audio device for mixer control handling."
+#~ msgstr ""
+#~ "Не удалось открыть аудио-устройство для обработки параметров микшера."
+
+#~ msgid ""
+#~ "Could not open audio device for mixer control handling. This version of "
+#~ "the Open Sound System is not supported by this element."
+#~ msgstr ""
+#~ "Не удалось открыть аудио-устройство для обработки параметров микшера. "
+#~ "Данная версия Open Sound System не поддерживается этим элементом."
+
+#~ msgid "Master"
+#~ msgstr "Общий"
+
+#~ msgid "Front"
+#~ msgstr "Фронтальные"
+
+#~ msgid "Rear"
+#~ msgstr "Тыловые"
+
+#~ msgid "Headphones"
+#~ msgstr "Наушники"
+
+#~ msgid "Center"
+#~ msgstr "Центр"
+
+#~ msgid "LFE"
+#~ msgstr "Сабвуфер"
+
+#~ msgid "Surround"
+#~ msgstr "Объёмный звук"
+
+#~ msgid "Side"
+#~ msgstr "Боковые"
+
+#~ msgid "AUX Out"
+#~ msgstr "Выход AUX"
+
+#~ msgid "3D Depth"
+#~ msgstr "3D глубина"
+
+#~ msgid "3D Center"
+#~ msgstr "3D центр"
+
+#~ msgid "3D Enhance"
+#~ msgstr "3D улучшение"
+
+#~ msgid "Telephone"
+#~ msgstr "Телефон"
+
+#~ msgid "Video In"
+#~ msgstr "Видео вход"
+
+#~ msgid "AUX In"
+#~ msgstr "Вход AUX"
+
+#~ msgid "Record Gain"
+#~ msgstr "Уровень записи"
+
+#~ msgid "Output Gain"
+#~ msgstr "Выходной уровень"
+
+#~ msgid "Microphone Boost"
+#~ msgstr "Микрофонный усилитель"
+
+#~ msgid "Diagnostic"
+#~ msgstr "Диагностика"
+
+#~ msgid "Bass Boost"
+#~ msgstr "Усиление баса"
+
+#~ msgid "Playback Ports"
+#~ msgstr "Порты воспроизведения"
+
+#~ msgid "Input"
+#~ msgstr "Вход"
+
+#~ msgid "Monitor Source"
+#~ msgstr "Устройство вывода"
+
+#~ msgid "Keyboard Beep"
+#~ msgstr "Озвучка клавиатуры"
+
+#~ msgid "Simulate Stereo"
+#~ msgstr "Имитация стерео"
+
+#~ msgid "Stereo"
+#~ msgstr "Стерео"
+
+#~ msgid "Surround Sound"
+#~ msgstr "Объёмный звук"
+
+#~ msgid "Microphone Gain"
+#~ msgstr "Уровень микрофона"
+
+#~ msgid "Speaker Source"
+#~ msgstr "Устройство динамика"
+
+#~ msgid "Microphone Source"
+#~ msgstr "Устройство микрофона"
+
+#~ msgid "Jack"
+#~ msgstr "Jack"
+
+#~ msgid "Center / LFE"
+#~ msgstr "Центр / Сабвуфер"
+
+#~ msgid "Stereo Mix"
+#~ msgstr "Стерео микширование"
+
+#~ msgid "Mono Mix"
+#~ msgstr "Моно микширование"
+
+#~ msgid "Input Mix"
+#~ msgstr "Микширование входа"
+
+#~ msgid "Microphone 1"
+#~ msgstr "Микрофон 1"
+
+#~ msgid "Microphone 2"
+#~ msgstr "Микрофон 2"
+
+#~ msgid "Digital Out"
+#~ msgstr "Цифровой выход"
+
+#~ msgid "Digital In"
+#~ msgstr "Цифровой вход"
+
+#~ msgid "HDMI"
+#~ msgstr "HDMI"
+
+#~ msgid "Modem"
+#~ msgstr "Модем"
+
+#~ msgid "Handset"
+#~ msgstr "Гарнитура"
+
+#~ msgid "Other"
+#~ msgstr "Другой"
+
+#~ msgid "None"
+#~ msgstr "Ничего"
+
+#~ msgid "On"
+#~ msgstr "Вкл"
+
+#~ msgid "Off"
+#~ msgstr "Выкл"
+
+#~ msgid "Mute"
+#~ msgstr "Заглушить"
+
+#~ msgid "Fast"
+#~ msgstr "Скорость"
+
+#~ msgid "Very Low"
+#~ msgstr "Очень низкое"
+
+#~ msgid "Low"
+#~ msgstr "Низкое"
+
+#~ msgid "Medium"
+#~ msgstr "Среднее"
+
+#~ msgid "High"
+#~ msgstr "Высокое"
+
+#~ msgid "Very High"
+#~ msgstr "Очень высокое"
+
+#~ msgid "Production"
+#~ msgstr "Выдача"
+
+#~ msgid "Front Panel Microphone"
+#~ msgstr "Микрофон на передней панели"
+
+#~ msgid "Front Panel Line In"
+#~ msgstr "Линейный вход на передней панели"
+
+#~ msgid "Front Panel Headphones"
+#~ msgstr "Наушники на передней панели"
+
+#~ msgid "Front Panel Line Out"
+#~ msgstr "Линейный выход на передней панели"
+
+#~ msgid "Green Connector"
+#~ msgstr "Зелёный разъём"
+
+#~ msgid "Pink Connector"
+#~ msgstr "Розовый разъём"
+
+#~ msgid "Blue Connector"
+#~ msgstr "Синий разъём"
+
+#~ msgid "White Connector"
+#~ msgstr "Белый разъём"
+
+#~ msgid "Black Connector"
+#~ msgstr "Чёрный разъём"
+
+#~ msgid "Gray Connector"
+#~ msgstr "Серый разъём"
+
+#~ msgid "Orange Connector"
+#~ msgstr "Оранжевый разъём"
+
+#~ msgid "Red Connector"
+#~ msgstr "Красный разъём"
+
+#~ msgid "Yellow Connector"
+#~ msgstr "Жёлтый разъём"
+
+#~ msgid "Green Front Panel Connector"
+#~ msgstr "Зелёный разъём на передней панели"
+
+#~ msgid "Pink Front Panel Connector"
+#~ msgstr "Розовый разъём на передней панели"
+
+#~ msgid "Blue Front Panel Connector"
+#~ msgstr "Синий разъём на передней панели"
+
+#~ msgid "White Front Panel Connector"
+#~ msgstr "Белый разъём на передней панели"
+
+#~ msgid "Black Front Panel Connector"
+#~ msgstr "Чёрный разъём на передней панели"
+
+#~ msgid "Gray Front Panel Connector"
+#~ msgstr "Серый разъём на передней панели"
+
+#~ msgid "Orange Front Panel Connector"
+#~ msgstr "Оранжевый разъём на передней панели"
+
+#~ msgid "Red Front Panel Connector"
+#~ msgstr "Красный разъём на передней панели"
+
+#~ msgid "Yellow Front Panel Connector"
+#~ msgstr "Жёлтый разъём на передней панели"
+
+#~ msgid "Spread Output"
+#~ msgstr "Развёрнутый вывод"
+
+#~ msgid "Downmix"
+#~ msgstr "Низведение"
+
+#~ msgid "Virtual Mixer Input"
+#~ msgstr "Вход виртуального микшера"
+
+#~ msgid "Virtual Mixer Output"
+#~ msgstr "Выход виртуального микшера"
+
+#~ msgid "Virtual Mixer Channels"
+#~ msgstr "Каналы виртуального микшера"
+
+#~ msgid "%s %d Function"
+#~ msgstr "Функция %s %d"
+
+#~ msgid "%s Function"
+#~ msgstr "Функция %s"
+
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Получен неожиданный размер кадра: %u вместо %u."
+
+#~ msgid "Error reading %d bytes on device '%s'."
+#~ msgstr "Ошибка чтения %d байт из устройства «%s»."
+
+#~ msgid "Could not enqueue buffers in device '%s'."
+#~ msgstr "Не удалось добавить в очередь буферы устройства «%s»"
+
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Ошибка при попытке получения кадров видео с устройства «%s»."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr "Ошибка после %d попыток. Устройство: %s. Системная ошибка: %s"
+
+#~ msgid ""
+#~ "The buffer type is not supported, or the index is out of bounds, or no "
+#~ "buffers have been allocated yet, or the userptr or length are invalid. "
+#~ "device %s"
+#~ msgstr ""
+#~ "Неподдерживаемый тип буфера, либо индекс вне диапазона, либо буферы не "
+#~ "были распределены, либо неверные значения длины или userptr (устройство "
+#~ "%s)"
+
+#~ msgid ""
+#~ "Failed trying to get video frames from device '%s'. Not enough memory."
+#~ msgstr ""
+#~ "Ошибка при попытке получения кадров видео с устройства «%s». Не хватает "
+#~ "памяти."
+
+#~ msgid "insufficient memory to enqueue a user pointer buffer. device %s."
+#~ msgstr ""
+#~ "не хватает памяти для постановки в очередь буфера пользовательского "
+#~ "указателя (устройство %s)"
+
+#~ msgid "No free buffers found in the pool at index %d."
+#~ msgstr "В пуле не найдено свободных буферов для индекса %d."
+
+#~ msgid "Could not get buffers from device '%s'."
+#~ msgstr "Не удалось получить буферы устройства «%s»"
+
+#~ msgid "Could not get enough buffers from device '%s'."
+#~ msgstr "Не удалось получить необходимое количество буферов устройства «%s»"
+
+#~ msgid "Error starting streaming capture from device '%s'."
+#~ msgstr "Ошибка при запуске потокового захвата с устройства «%s»."
+
+#~ msgid "Error stopping streaming capture from device '%s'."
+#~ msgstr "Ошибка при остановке потокового захвата с устройства «%s»."
+
+#~ msgid "Could not read from CD."
+#~ msgstr "Не удалось прочитать CD."
+
+#~ msgid "Disc is not an Audio CD."
+#~ msgstr "Диск не является аудио-CD."
+
+#~ msgid "This file is encrypted and cannot be played."
+#~ msgstr "Файл зашифрован и не может быть воспроизведён."
+
+#~ msgid "Failed getting controls attributes on device '%s.'"
+#~ msgstr "Ошибка получения атрибутов управления устройства «%s»."
+
+#~ msgid "Could not set parameters on device '%s'"
+#~ msgstr "Не удалось установить параметры устройства «%s»"
+
+#~ msgid "Device '%s' cannot capture at %d/%d frames per second"
+#~ msgstr ""
+#~ "Устройство «%s» не может осуществить захват при %d/%d кадрах в секунду"
