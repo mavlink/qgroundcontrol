@@ -4277,7 +4277,21 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="1">Warn only</value>
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
+        <value code="4">Position Hold mode</value>
       </values>
+    </parameter>
+    <parameter default="500" name="NAV_TRAFF_A_RADM" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID RADIUS MANNED</short_desc>
+      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Manned Aviation</long_desc>
+      <min>500</min>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="10" name="NAV_TRAFF_A_RADU" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID RADIUS</short_desc>
+      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Unmanned Aviation</long_desc>
+      <min>10</min>
+      <max>500</max>
+      <unit>m</unit>
     </parameter>
   </group>
   <group name="Mixer Output">
