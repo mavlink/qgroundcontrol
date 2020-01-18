@@ -285,6 +285,14 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
 {
     qCDebug(MultiVehicleManagerLog) << "_setActiveVehiclePhase2 _vehicleBeingSetActive" << _vehicleBeingSetActive;
 
+    //-- Keep track of current vehicle's coordinates
+    if(_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::coordinateChanged, this, &MultiVehicleManager::_coordinateChanged);
+    }
+    if(_vehicleBeingSetActive) {
+        connect(_vehicleBeingSetActive, &Vehicle::coordinateChanged, this, &MultiVehicleManager::_coordinateChanged);
+    }
+
     // Now we signal the new active vehicle
     _activeVehicle = _vehicleBeingSetActive;
     emit activeVehicleChanged(_activeVehicle);
@@ -300,6 +308,12 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
             emit parameterReadyVehicleAvailableChanged(true);
         }
     }
+}
+
+void MultiVehicleManager::_coordinateChanged(QGeoCoordinate coordinate)
+{
+    _lastKnownLocation = coordinate;
+    emit lastKnownLocationChanged();
 }
 
 void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
