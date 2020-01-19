@@ -348,7 +348,7 @@ MicrohardManager::setProductName(QString product)
     } else if (product.contains("DDL1800")) {
         _channelMin = 1;
         _channelMax = 59;
-        _frequencyStart = 1813;
+        _frequencyStart = 1811;
         _bandwidthLabels.clear();
         _bandwidthLabels.append("8 MHz");
         _bandwidthLabels.append("4 MHz");
