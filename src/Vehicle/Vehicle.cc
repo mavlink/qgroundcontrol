@@ -2957,6 +2957,11 @@ void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 void Vehicle::_announceArmedChanged(bool armed)
 {
     _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
+    if(armed) {
+        //-- Keep track of armed coordinates
+        _armedPosition = _coordinate;
+        emit armedPositionChanged();
+    }
 }
 
 void Vehicle::_setFlying(bool flying)

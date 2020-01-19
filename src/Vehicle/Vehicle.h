@@ -538,6 +538,7 @@ public:
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
+    Q_PROPERTY(QGeoCoordinate       armedPosition           READ armedPosition                                          NOTIFY armedPositionChanged)
     Q_PROPERTY(bool                 armed                   READ armed                  WRITE setArmed                  NOTIFY armedChanged)
     Q_PROPERTY(bool                 autoDisarm              READ autoDisarm                                             NOTIFY autoDisarmChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
@@ -792,7 +793,8 @@ public:
 
     // Property accessors
 
-    QGeoCoordinate coordinate(void) { return _coordinate; }
+    QGeoCoordinate coordinate       (void) { return _coordinate; }
+    QGeoCoordinate armedPosition    (void) { return _armedPosition; }
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
@@ -1123,6 +1125,7 @@ signals:
     void activeChanged(bool active);
     void mavlinkMessageReceived(const mavlink_message_t& message);
     void homePositionChanged(const QGeoCoordinate& homePosition);
+    void armedPositionChanged();
     void armedChanged(bool armed);
     void flightModeChanged(const QString& flightMode);
     void hilModeChanged(bool hilMode);
@@ -1367,6 +1370,7 @@ private:
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
+    QGeoCoordinate  _armedPosition;
 
     UASInterface*   _mav;
     int             _currentMessageCount;
