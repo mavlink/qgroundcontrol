@@ -178,7 +178,6 @@ MicrohardManager::updateSettings()
 {
     configure();
     _updateSettings();
-    _reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -315,8 +314,9 @@ MicrohardManager::_rssiUpdatedRem(int rssi)
 void
 MicrohardManager::setProductName(QString product)
 {
-    qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
-
+    if (!product.isEmpty()) {
+        qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
+    }
     _channelMin = 4;
     _channelMax = 78;
     _frequencyStart = 2405;

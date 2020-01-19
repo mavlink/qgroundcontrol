@@ -27,9 +27,16 @@ MicrohardSettings::MicrohardSettings(QString address_, bool configure)
 //-----------------------------------------------------------------------------
 MicrohardSettings::~MicrohardSettings()
 {
-    _statusTimer->stop();
-    _statusTimer->deleteLater();
-    _statusTimer = nullptr;
+    if (_statusTimer) {
+        _statusTimer->stop();
+        _statusTimer->deleteLater();
+        _statusTimer = nullptr;
+    }
+    if (_configureTimer) {
+        _configureTimer->stop();
+        _configureTimer ->deleteLater();
+        _configureTimer = nullptr;
+    }
     _close();
 }
 
@@ -40,40 +47,55 @@ MicrohardSettings::run()
     _loggedIn = false;
     _statusTimer = new QTimer();
     connect(_statusTimer, SIGNAL(timeout()), this, SLOT(_getStatus()));
-    _statusTimer->start(2500);
+    _configureTimer = new QTimer();
+    connect(_configureTimer, SIGNAL(timeout()), this, SLOT(_configureTimeout()));
     _start();
+    _statusTimer->start(2500);
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::_getStatus()
 {
-    if (_loggedIn && _tcpSocket) {
-        _tcpSocket->write("AT+MWSTATUS\n");
+    if (!_tcpSocket || !_loggedIn || _configurationRunning) {
+        return;
     }
+    _tcpSocket->write("AT+MWSTATUS\n");
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::_configureTimeout()
+{
+    qCDebug(MicrohardLog) << "Microhard configuration timeout.";
+    _configureAfterConnect = true;
+    _start();
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::configure(QString key, int power, int channel, int bandwidth, QString networkId)
 {
-    if (!_tcpSocket) {
+    if (!_tcpSocket || !_loggedIn) {
         _configureAfterConnect = true;
         return;
     }
 
-    QString cmd;
     if (power > 0) {
-        cmd += "AT+MWTXPOWER=" + QString::number(power) + "\n";
+        _writeList.append("AT+MWTXPOWER=" + QString::number(power) + "\n");
     }
-    cmd += "AT+MWFREQ=" + QString::number(channel) + "\n";
-    cmd += "AT+MWBAND=" + QString::number(bandwidth) + "\n";
-    cmd += key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
+    _writeList.append("AT+MWFREQ=" + QString::number(channel) + "\n");
+    _writeList.append("AT+MWBAND=" + QString::number(bandwidth) + "\n");
+    _writeList.append(key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n");
     if (!networkId.isEmpty()) {
-        cmd +="AT+MWNETWORKID=" + networkId + "\n";
+        _writeList.append("AT+MWNETWORKID=" + networkId + "\n");
     }
-    cmd += "AT&W\n";
-    _tcpSocket->write(cmd.toStdString().c_str());
+    _writeList.append("AT&W\n");
+
+    _configurationRunning = true;
+    _tcpSocket->write(_writeList.first().toStdString().c_str());
+    _writeList.removeFirst();
+    _configureTimer->start(10000);
 
     qCDebug(MicrohardLog) << "Configure key: " << key << " power: " << power << " channel: "
                           << channel << " bandwidth: " << bandwidth
@@ -87,52 +109,79 @@ MicrohardSettings::_readBytes()
     if (!_tcpSocket) {
         return;
     }
+
     int j;
-    QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
+    bool clear = true;
+    bool runConfig = false;
+    _readData.append(_tcpSocket->readAll());
 
-    // qCDebug(MicrohardLog) << _address << " read bytes: " << bytesIn;
-
-    if (_loggedIn) {
-        int i1 = bytesIn.indexOf("RSSI (dBm)");
-        if (i1 > 0) {
-            int i2 = bytesIn.indexOf(": ", i1);
-            if (i2 > 0) {
-                i2 += 2;
-                int i3 = bytesIn.indexOf(" ", i2);
-                int val = bytesIn.mid(i2, i3 - i2).toInt();
-                if (val < 0 && _rssiVal != val) {
-                    _rssiVal = val;
-                    emit rssiUpdated(_rssiVal);
-                }
-            }
-        }
-    } else if (bytesIn.contains("login:")) {
+    if (_readData.contains("login:")) {
         std::string userName = qgcApp()->toolbox()->microhardManager()->configUserName().toStdString() + "\n";
         _tcpSocket->write(userName.c_str());
-    } else if (bytesIn.contains("Password:")) {
+    } else if (_readData.contains("Password:")) {
         std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
         _tcpSocket->write(pwd.c_str());
-    } else if (bytesIn.contains("Login incorrect")) {
+    } else if (_readData.contains("Login incorrect")) {
         emit connected(tr("Login Error"));
-    } else if (bytesIn.contains("Entering")) {
+    } else if (_readData.contains("Entering")) {
         if (!_configure) {
             _loggedIn = true;
             emit connected(tr("Connected"));
         } else {
             _tcpSocket->write("at+mssysi\n");
         }
-    } else if ((j = bytesIn.indexOf("Product")) > 0) {
-        int i = bytesIn.indexOf(": ", j);
-        if (i > 0) {
-            QString product = bytesIn.mid(i + 2, bytesIn.indexOf("\r", i + 3) - (i + 2));
-            qgcApp()->toolbox()->microhardManager()->setProductName(product);
+    } else if (_readData.indexOf("OK") > 0) {
+        if ((j = _readData.indexOf("Product")) > 0) {
+            int i = _readData.indexOf(": ", j);
+            if (i > 0) {
+                QString product = _readData.mid(i + 2, _readData.indexOf("\r", i + 3) - (i + 2));
+                qgcApp()->toolbox()->microhardManager()->setProductName(product);
+            }
+            if (!_loggedIn && _configure && _configureAfterConnect) {
+                runConfig = true;
+            }
+            _loggedIn = true;
+            emit connected(tr("Connected"));
         }
-        if (!_loggedIn && !qgcApp()->toolbox()->pairingManager()->usePairing() && (_configure || _configureAfterConnect)) {
-            _configureAfterConnect = false;
-            qgcApp()->toolbox()->microhardManager()->configure();
+        if ((j = _readData.indexOf("RSSI (dBm)")) > 0) {
+            int i2 = _readData.indexOf(": ", j);
+            if (i2 > 0) {
+                i2 += 2;
+                int i3 = _readData.indexOf(" ", i2);
+                int val = _readData.mid(i2, i3 - i2).toInt();
+                if (val < 0 && _rssiVal != val) {
+                    _rssiVal = val;
+                    emit rssiUpdated(_rssiVal);
+                }
+            }
+            _readData.clear();
+            clear = false;
         }
-        _loggedIn = true;
-        emit connected(tr("Connected"));
+        if (_readData.contains("Restarting the services")) {
+            _configureTimer->stop();
+            _configurationRunning = false;
+            qCDebug(MicrohardLog) << "Microhard configuration succeeded.";
+        }
+
+        if (!_writeList.empty()) {
+            _tcpSocket->write(_writeList.first().toStdString().c_str());
+            _writeList.removeFirst();
+        }
+    } else {
+        clear = false;
+    }
+
+    if (clear) {
+//        auto list = _readData.replace("\r", "").split('\n');
+//        for (auto i = list.begin(); i != list.end(); i++)
+//            qCDebug(MicrohardLog) << "MH: " << *i;
+
+        _readData.clear();
+    }
+
+    if (runConfig) {
+        _configureAfterConnect = false;
+        qgcApp()->toolbox()->microhardManager()->configure();
     }
 }
 
@@ -160,6 +209,12 @@ MicrohardSettings::_close()
         _tcpSocket->deleteLater();
         _tcpSocket = nullptr;
     }
+    if (_configureTimer) {
+        _configureTimer->stop();
+    }
+    _loggedIn = false;
+    _configurationRunning = false;
+    _writeList.clear();
 }
 
 //-----------------------------------------------------------------------------
