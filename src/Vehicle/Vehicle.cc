@@ -4147,7 +4147,7 @@ void Vehicle::_writeCsvLine()
     QTextStream stream(&_csvLogFile);
 
     // Write timestamp to csv file
-    allFactValues << QDateTime::currentDateTime().toString();
+    allFactValues << QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz"));
     // Write Vehicle's own facts
     for (const QString& factName : factNames()) {
         allFactValues << getFact(factName)->cookedValueString();
