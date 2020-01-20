@@ -104,6 +104,7 @@ public:
     void        switchToPairingEncryptionKey    (QString pairingKey);
     void        switchToConnectionEncryptionKey (QString encryptionKey);
     void        setProductName                  (QString product);
+    int         adjustChannelToBandwitdh        (int channel, int bandwidth);
 
 signals:
     void linkChanged();
@@ -170,8 +171,10 @@ private:
     QString            _connectingNetworkId;
     QStringList        _channelLabels;
     QStringList        _bandwidthLabels;
-    int                _frequencyStart = 2407;
+    int                _frequencyStart = 2405;
     int                _channelMin = 1;
     int                _channelMax = 81;
+    QList<int>         _bandwidthChannelMin;
+    QList<int>         _bandwidthChannelMax;
     void               _updateSettings();
 };

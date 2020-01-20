@@ -67,7 +67,7 @@ Item {
                 }
 
                 QGCButton {
-                    text:       "Start Mision"
+                    text:       "Start Mission"
                     onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionMVStartMission)
                 }
             }
