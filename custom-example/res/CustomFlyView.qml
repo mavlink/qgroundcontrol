@@ -102,9 +102,9 @@ Item {
         target: QGroundControl.qgcPositionManger
         onGcsPositionChanged: {
             if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
-                var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
-                var veh = activeVehicle.coordinate;
-                _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
+                _gcsPosition = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
+                var veh = QGroundControl.multiVehicleManager.lastKnownLocation;
+                _distance = QGroundControl.metersToAppSettingsDistanceUnits(_gcsPosition.distanceTo(veh));
                 //-- Ignore absurd values
                 if(_distance > 99999)
                     _distance = 0;
@@ -282,7 +282,7 @@ Item {
             }
             QGCLabel {
                 id:                     latLabelValue
-                text:                   activeVehicle ? activeVehicle.gps.lat.value.toFixed(activeVehicle.gps.lat.decimalPlaces) : "-"
+                text:                   activeVehicle ? activeVehicle.gps.lat.value.toFixed(activeVehicle.gps.lat.decimalPlaces) : (QGroundControl.multiVehicleManager.lastKnownLocation.isValid ? QGroundControl.multiVehicleManager.lastKnownLocation.latitude : "-")
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -301,7 +301,7 @@ Item {
             }
             QGCLabel {
                 id:                     lonLabelValue
-                text:                   activeVehicle ? activeVehicle.gps.lon.value.toFixed(activeVehicle.gps.lon.decimalPlaces) : "-"
+                text:                   activeVehicle ? activeVehicle.gps.lon.value.toFixed(activeVehicle.gps.lon.decimalPlaces) : (QGroundControl.multiVehicleManager.lastKnownLocation.isValid ? QGroundControl.multiVehicleManager.lastKnownLocation.longitude : "-")
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -543,8 +543,8 @@ Item {
         id:                     attitudeIndicator
         anchors.bottom:         vehicleIndicator.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * -0.5
-        anchors.right:  parent.right
-        anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
@@ -634,7 +634,7 @@ Item {
                 }
                 QGCLabel {
                     id:                      vehiclePositionLabel
-                    text:                    (activeVehicle && activeVehicle.coordinate) ? QGroundControl.positionToMGRSFormat(activeVehicle.coordinate) : ""
+                    text:                    QGroundControl.multiVehicleManager.lastKnownLocation.isValid ? QGroundControl.positionToMGRSFormat(QGroundControl.multiVehicleManager.lastKnownLocation) : ""
                     color:                   qgcPal.text
                     font.pointSize:          _flightCoordinates._fontSize
                 }

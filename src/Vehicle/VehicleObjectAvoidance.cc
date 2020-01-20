@@ -12,6 +12,7 @@
 #include "ParameterManager.h"
 #include <cmath>
 
+static const char* kColPrevOldNameParam = "MPC_COL_PREV_D";
 static const char* kColPrevParam = "CP_DIST";
 
 //-----------------------------------------------------------------------------
@@ -70,6 +71,8 @@ VehicleObjectAvoidance::enabled()
     uint8_t id = static_cast<uint8_t>(_vehicle->id());
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         return _vehicle->parameterManager()->getParameter(id, kColPrevParam)->rawValue().toInt() >= 0;
+    } else if(_vehicle->parameterManager()->parameterExists(id, kColPrevOldNameParam)){
+        return _vehicle->parameterManager()->getParameter(id, kColPrevOldNameParam)->rawValue().toInt() >= 0;
     }
     return false;
 }
@@ -82,6 +85,9 @@ VehicleObjectAvoidance::start(int minDistance)
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(minDistance);
         emit objectAvoidanceChanged();
+    } else if(_vehicle->parameterManager()->parameterExists(id, kColPrevOldNameParam)){
+        _vehicle->parameterManager()->getParameter(id, kColPrevOldNameParam)->setRawValue(minDistance);
+        emit objectAvoidanceChanged();
     }
 }
 
@@ -92,6 +98,9 @@ VehicleObjectAvoidance::stop()
     uint8_t id = static_cast<uint8_t>(_vehicle->id());
     if(_vehicle->parameterManager()->parameterExists(id, kColPrevParam)) {
         _vehicle->parameterManager()->getParameter(id, kColPrevParam)->setRawValue(-1);
+        emit objectAvoidanceChanged();
+    } else if(_vehicle->parameterManager()->parameterExists(id, kColPrevOldNameParam)){
+        _vehicle->parameterManager()->getParameter(id, kColPrevOldNameParam)->setRawValue(-1);
         emit objectAvoidanceChanged();
     }
 }

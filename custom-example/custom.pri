@@ -1,26 +1,42 @@
 message("Adding Custom Plugin")
 
 #-- Version control
-#   Major and minor versions are defined here (manually)
+#   Take version form the last SRR tag
+CUSTOM_QGC_VERSION=$${GIT_VERSION}
+CUSTOM_PLATFORM_VERSION=0.0.0.0
+CUSTOM_QGC_GIT_PATCH=0
 
-CUSTOM_QGC_VER_MAJOR = 1
-CUSTOM_QGC_VER_MINOR = 5
-CUSTOM_QGC_VER_FIRST_BUILD = 281
+exists ($$PWD/../.git) {
+    CUSTOM_GIT_DESCRIBE = $$system(git --git-dir $$PWD/../.git --work-tree $$PWD/.. describe --always --tags --match="srr-v[0-9]*.*[0-9].*[0-9]")
 
-# Build number is automatic
-# Uses the current branch. This way it works on any branch including build-server's PR branches
-CUSTOM_QGC_VER_BUILD = $$system(git --git-dir $$PWD/../.git rev-list $$GIT_BRANCH --first-parent --count)
-win32 {
-    CUSTOM_QGC_VER_BUILD = $$system("set /a $$CUSTOM_QGC_VER_BUILD - $$CUSTOM_QGC_VER_FIRST_BUILD")
-} else {
-    CUSTOM_QGC_VER_BUILD = $$system("echo $(($$CUSTOM_QGC_VER_BUILD - $$CUSTOM_QGC_VER_FIRST_BUILD))")
+    # determine if we're on a custom tag: srr-vX.Y.Z otherwise git will add the number of
+    # commits on top and the commit hash
+    contains(CUSTOM_GIT_DESCRIBE, "^srr-v[0-9]+.[0-9]+.[0-9]+(?:-[0-9]+-g[0-9a-f]{5,40})?$") {
+        # If HEAD not at tag include patches on top as well
+        contains(CUSTOM_GIT_DESCRIBE, "^srr-v[0-9]+.[0-9]+.[0-9]+-[0-9]+-g[0-9a-f]{5,40}$") {
+            CUSTOM_QGC_VERSION= $$section(CUSTOM_GIT_DESCRIBE, -, 1, 2)
+            CUSTOM_QGC_GIT_PATCH= $$section(CUSTOM_GIT_DESCRIBE, -, 2, 2)
+        } else {
+            CUSTOM_QGC_VERSION= $$section(CUSTOM_GIT_DESCRIBE, -, 1, 1)
+        }
+        CUSTOM_QGC_VERSION= $$replace(CUSTOM_QGC_VERSION, "v", "")
+        CUSTOM_QGC_VERSION_MAJOR= $$section(CUSTOM_QGC_VERSION, ., 0, 0)
+        CUSTOM_QGC_VERSION_MINOR= $$section(CUSTOM_QGC_VERSION, ., 1, 1)
+        CUSTOM_QGC_VERSION_PATCH= $$section(CUSTOM_QGC_VERSION, ., 2, 2)
+
+        CUSTOM_PLATFORM_VERSION = $${CUSTOM_QGC_VERSION_MAJOR}.$${CUSTOM_QGC_VERSION_MINOR}.$${CUSTOM_QGC_VERSION_PATCH}.$${CUSTOM_QGC_GIT_PATCH}
+    }
+
+    MacBuild {
+        MAC_VERSION = $$section(CUSTOM_PLATFORM_VERSION, ".", 0, 2)
+        MAC_BUILD = $${CUSTOM_QGC_GIT_PATCH}
+    }
+
+    # Used by external scripts to extract custom build version
+    QMAKE_SUBSTITUTES += $$PWD/deploy/custom_build_version.txt.in
 }
-CUSTOM_QGC_VERSION = $${CUSTOM_QGC_VER_MAJOR}.$${CUSTOM_QGC_VER_MINOR}.$${CUSTOM_QGC_VER_BUILD}
-
-QMAKE_SUBSTITUTES += $$PWD/deploy/custom_build_version.txt.in
 
 DEFINES += CUSTOM_QGC_VERSION=\"\\\"v$$CUSTOM_QGC_VERSION\\\"\"
-DEFINES += CUSTOM_GIT_VERSION=\"\\\"$$CUSTOM_GIT_VERSION\\\"\"
 
 message(Custom QGC Version: $${CUSTOM_QGC_VERSION})
 

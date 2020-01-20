@@ -4470,6 +4470,32 @@ default 1.5 turns per second</short_desc>
     </parameter>
   </group>
   <group name="Multicopter Position Control">
+    <parameter default="0.4" name="CP_DELAY" type="FLOAT">
+      <short_desc>Average delay of the range sensor message plus the tracking delay of the position controller in seconds</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>seconds</unit>
+    </parameter>
+    <parameter default="-1.0" name="CP_DIST" type="FLOAT">
+      <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
+      <long_desc>Only used in Position mode. Collision avoidance is disabled by setting this parameter to a negative value</long_desc>
+      <min>-1</min>
+      <max>15</max>
+      <unit>meters</unit>
+    </parameter>
+    <parameter default="0" name="CP_GO_NO_DATA" type="FLOAT">
+      <short_desc>Boolean to allow moving into directions where there is no sensor data (outside FOV)</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <boolean />
+    </parameter>
+    <parameter default="30." name="CP_GUIDE_ANG" type="FLOAT">
+      <short_desc>Angle left/right from the commanded setpoint by which the collision prevention algorithm can choose to change the setpoint direction</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <min>0</min>
+      <max>90</max>
+      <unit>[deg]</unit>
+    </parameter>
     <parameter default="3.0" name="MPC_ACC_DOWN_MAX" type="FLOAT">
       <short_desc>Maximum vertical acceleration in velocity controlled modes down</short_desc>
       <min>2.0</min>

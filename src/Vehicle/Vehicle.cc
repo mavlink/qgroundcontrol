@@ -303,6 +303,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
+    _lastBatteryAnnouncement.start();
 }
 
 // Disconnected Vehicle for offline editing
@@ -1555,12 +1556,16 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     }
     _battery1FactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
+    //-- Low battery warning
     if (sysStatus.battery_remaining > 0) {
-        if (sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
-                sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent) {
+        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
+        if (sysStatus.battery_remaining < warnThreshold &&
+                sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent &&
+                _lastBatteryAnnouncement.elapsed() > (sysStatus.battery_remaining < warnThreshold * 0.5 ? 15000 : 30000)) {
             _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+            _lastBatteryAnnouncement.start();
+            _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
         }
-        _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
     }
 
     if (_onboardControlSensorsPresent != sysStatus.onboard_control_sensors_present) {
@@ -1661,12 +1666,13 @@ void Vehicle::_updateArmed(bool armed)
     if (_armed != armed) {
         _armed = armed;
         emit armedChanged(_armed);
-
         // We are transitioning to the armed state, begin tracking trajectory points for the map
         if (_armed) {
             _trajectoryPoints->start();
             _flightTimerStart();
             _clearCameraTriggerPoints();
+            // Reset battery warning
+            _lastAnnouncedLowBatteryPercent = 100;
         } else {
             _trajectoryPoints->stop();
             _flightTimerStop();
