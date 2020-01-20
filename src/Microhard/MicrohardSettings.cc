@@ -47,6 +47,7 @@ MicrohardSettings::configure(QString key, int power, int channel, int bandwidth,
         _configureAfterConnect = true;
         return;
     }
+
     QString cmd;
     if (power > 0) {
         cmd += "AT+MWTXPOWER=" + QString::number(power) + "\n";

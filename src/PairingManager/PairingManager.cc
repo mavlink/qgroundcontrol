@@ -697,6 +697,8 @@ PairingManager::unpairDevice(const QString& name)
         QJsonObject jsonObj;
         jsonObj["NM"] = name;
         jsonDoc.setObject(jsonObj);
+        // get the vehicle you're unpairing from Public Key to encrypt the unpair request
+        _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
         emit startUpload(name, unpairURL, jsonDoc, true);
     }
     _updatePairedDeviceNameList();
@@ -741,11 +743,15 @@ PairingManager::_setConnectingChannel(const QString& name, int channel, int powe
     QJsonDocument jsonDoc;
     QJsonObject jsonObj;
     jsonObj["NM"] = name;
-    jsonObj["CC"] = channel;
-    jsonObj["NID"] = _getDeviceConnectNid(channel);
+    int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
+    int cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(channel, bandwidth);
+    jsonObj["CC"] = cc;
+    jsonObj["BW"] = bandwidth;
+    jsonObj["NID"] = _getDeviceConnectNid(cc);
     jsonObj["PW"] = power;
-    jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
     jsonDoc.setObject(jsonObj);
+    // get the vehicle you're changing the connect channel Public Key to encrypt the channel request
+    _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
     setPairingStatus(ConfiguringModem, tr("Configuring modem"));
     emit startUpload(name, channelURL, jsonDoc, true);
 }
@@ -1017,10 +1023,11 @@ PairingManager::_createMicrohardPairingJson(const QVariantMap& remotePairingMap)
     jsonObj.insert("IP", localIP);
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
-    int cc = _toolbox->microhardManager()->connectingChannel();
+    int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
+    int cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(_toolbox->microhardManager()->connectingChannel(), bandwidth);
     jsonObj.insert("CC", cc);
     jsonObj.insert("NID", _getDeviceConnectNid(cc));
-    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
+    jsonObj.insert("BW", bandwidth);
     return QJsonDocument(jsonObj);
 }
 
@@ -1053,6 +1060,10 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
     } else {
         cc = _toolbox->microhardManager()->connectingChannel();
     }
+
+    int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
+    cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(cc, bandwidth);
+
     jsonObj.insert("CC", cc);
     if (remotePairingMap.contains("NID")) {
         jsonObj.insert("NID", remotePairingMap["NID"].toString());
@@ -1061,7 +1072,7 @@ PairingManager::_createMicrohardConnectJson(const QVariantMap& remotePairingMap)
     }
 
     jsonObj.insert("PW", _toolbox->microhardManager()->connectingPower());
-    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
+    jsonObj.insert("BW", bandwidth);
 
     return QJsonDocument(jsonObj);
 }
@@ -1220,11 +1231,12 @@ PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& 
     jsonObj.insert("AIP", remoteIPAddr);
     jsonObj.insert("CU", _toolbox->microhardManager()->configUserName());
     jsonObj.insert("CP", _toolbox->microhardManager()->configPassword());
-    int cc = _toolbox->microhardManager()->connectingChannel();
+    int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
+    int cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(_toolbox->microhardManager()->connectingChannel(), bandwidth);
     jsonObj.insert("CC", cc);
     jsonObj.insert("NID", _getDeviceConnectNid(cc));
     jsonObj.insert("PW", _toolbox->microhardManager()->pairingPower());
-    jsonObj.insert("BW", _toolbox->microhardManager()->connectingBandwidth());
+    jsonObj.insert("BW", bandwidth);
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
 
@@ -1307,13 +1319,16 @@ PairingManager::disconnectDevice(const QString& name)
                 QJsonDocument jsonDoc;
                 QJsonObject jsonObj;
                 jsonObj["NM"] = name;
-                int cc = map["CC"].toInt();
+                int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
+                int cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(map["CC"].toInt(), bandwidth);
                 jsonObj["CC"] = cc;
                 jsonObj["NID"] = _getDeviceConnectNid(cc);
                 jsonObj["PW"] = _toolbox->microhardManager()->pairingPower();
                 jsonObj["BW"] = _toolbox->microhardManager()->connectingBandwidth();
                 jsonDoc.setObject(jsonObj);
                 uploading = true;
+                // get the vehicle you're disconnecting from Public Key to encrypt the disconnect request
+                _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
                 emit startUpload(name, disconnectURL, jsonDoc, true);
             }
             break;
