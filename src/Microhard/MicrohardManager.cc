@@ -31,6 +31,7 @@ static const char *kPAIR_CH             = "PairingChannel";
 static const char *kCONN_CH             = "ConnectingChannel";
 static const char *kCONN_BW             = "ConnectingBandwidth";
 static const char *kCONN_PW             = "ConnectingPower";
+static const char *kMODEM_NAME          = "ModemName";
 
 //-----------------------------------------------------------------------------
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -65,9 +66,8 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
     _connectingChannel   = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
     _connectingBandwidth = settings.value(kCONN_BW,        DEFAULT_CONNECTING_BANDWIDTH).toInt();
     _connectingPower     = settings.value(kCONN_PW,        DEFAULT_CONNECTING_POWER).toInt();
+    setProductName(settings.value(kMODEM_NAME, QString("pDDL1800")).toString());
     settings.endGroup();
-
-    setProductName("");
 
     //-- Start it all
     _reset();
@@ -172,6 +172,7 @@ MicrohardManager::_updateSettings()
     settings.setValue(kCONN_CH, QString::number(_connectingChannel));
     settings.setValue(kCONN_BW, QString::number(_connectingBandwidth));
     settings.setValue(kCONN_PW, QString::number(_connectingPower));
+    settings.setValue(kMODEM_NAME, _modemName);
     settings.endGroup();
 }
 
@@ -318,7 +319,7 @@ void
 MicrohardManager::setProductName(QString product)
 {
     if (!product.isEmpty()) {
-        qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
+        qCDebug(MicrohardLog) << "Microhard modem: " << product;
     }
     _channelMin = 4;
     _channelMax = 78;
@@ -387,6 +388,11 @@ MicrohardManager::setProductName(QString product)
         _connectingChannel = _channelMin;
     } else if (_connectingChannel > _channelMax) {
         _connectingChannel = _channelMax;
+    }
+
+    if (_modemName != product) {
+        _modemName = product;
+        updateSettings();
     }
 
     emit channelLabelsChanged();

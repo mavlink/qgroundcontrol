@@ -179,5 +179,6 @@ private:
     int                _channelMax = 81;
     QList<int>         _bandwidthChannelMin;
     QList<int>         _bandwidthChannelMax;
+    QString            _modemName = "pDDL1800";
     void               _updateSettings();
 };
