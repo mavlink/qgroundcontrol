@@ -628,12 +628,12 @@ Item {
             ]
 
             model: [
-                /*{
+                {
                     name:               "Plan",
                     iconSource:         "/qmlimages/Plan.svg",
                     buttonVisible:      true,
                     buttonEnabled:      true,
-                },*/
+                },
                 {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
@@ -679,10 +679,9 @@ Item {
 
             onClicked: {
                 guidedActionsController.closeAll()
-                /*if(index === 0) {
-                    mainWindow.showPlanView()
-                } else*/
                 if(index === 0) {
+                    mainWindow.showPlanView()
+                } else if(index === 1) {
                     checklistDropPanel.open()
                 } else {
                     var action = model[index].action
