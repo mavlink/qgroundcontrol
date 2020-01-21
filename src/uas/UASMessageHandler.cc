@@ -201,7 +201,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     int count = _messages.count();
     emit textMessageCountChanged(count);
 
-    if (_showErrorsInToolbar && message->severityIsError()) {
+    if ((_showErrorsInToolbar && message->severityIsError()) || text.contains(QStringLiteral("battery level!"))) {
         _app->showMessage(message->getText());
     }
 }
