@@ -390,6 +390,10 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
 
 VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
+    // In case of VTOL insert a take off waypoint as the first waypoint
+    if(_visualItems->count() == 1 && _controllerVehicle->vtol()) {
+        return insertTakeoffItem(coordinate, visualItemIndex, makeCurrentItem);
+    }
     return _insertSimpleMissionItemWorker(coordinate, MAV_CMD_NAV_WAYPOINT, visualItemIndex, makeCurrentItem);
 }
 

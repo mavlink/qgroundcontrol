@@ -66,7 +66,7 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Move 'T' Takeoff to the climbout location.")
+                text:               qsTr("Move '%1' Takeoff to the climbout location.").arg(missionItem.commandName.charAt(0))
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
