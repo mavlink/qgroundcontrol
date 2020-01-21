@@ -52,6 +52,7 @@ private:
     QTimer* _configureTimer = nullptr;
     QByteArray _readData;
     QList<QString> _writeList;
+    QString _encryptionType = "1";
 
     void _start();
     void _close();

@@ -86,7 +86,7 @@ MicrohardSettings::configure(QString key, int power, int channel, int bandwidth,
     }
     _writeList.append("AT+MWFREQ=" + QString::number(channel) + "\n");
     _writeList.append("AT+MWBAND=" + QString::number(bandwidth) + "\n");
-    _writeList.append(key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n");
+    _writeList.append(key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=" + _encryptionType + "," + key + "\n");
     if (!networkId.isEmpty()) {
         _writeList.append("AT+MWNETWORKID=" + networkId + "\n");
     }
@@ -118,7 +118,7 @@ MicrohardSettings::_readBytes()
     if (_readData.contains("login:")) {
         std::string userName = qgcApp()->toolbox()->microhardManager()->configUserName().toStdString() + "\n";
         _tcpSocket->write(userName.c_str());
-    } else if (_readData.contains("Password:")) {
+    } else if (_readData.contains("Password:") && !_readData.contains("Encryption")) {
         std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
         _tcpSocket->write(pwd.c_str());
     } else if (_readData.contains("Login incorrect")) {
@@ -130,12 +130,25 @@ MicrohardSettings::_readBytes()
         } else {
             _tcpSocket->write("at+mssysi\n");
         }
-    } else if (_readData.indexOf("OK") > 0) {
+    } else if (_readData.contains("OK")) {
         if ((j = _readData.indexOf("Product")) > 0) {
             int i = _readData.indexOf(": ", j);
             if (i > 0) {
                 QString product = _readData.mid(i + 2, _readData.indexOf("\r", i + 3) - (i + 2));
                 qgcApp()->toolbox()->microhardManager()->setProductName(product);
+            }
+            _tcpSocket->write("at+mwvencrypt\n");
+        }
+        // +MWVENCRYPT: Virtual Interface:
+        //Encryption Type: 1 - AES-128
+        if ((j = _readData.indexOf("Encryption Type:")) > 0) {
+            int i = _readData.indexOf(": ", j);
+            if (i > 0) {
+                _encryptionType = _readData.mid(i + 2, _readData.indexOf(" - ", i + 3) - (i + 2));
+                if (_encryptionType == "0") {
+                    _encryptionType = "1";
+                }
+                qCDebug(MicrohardLog) << "Encryption type: " << _encryptionType;
             }
             if (!_loggedIn && _configure && _configureAfterConnect) {
                 runConfig = true;
