@@ -345,13 +345,6 @@ VideoManager::_makeVideoSink(gpointer widget)
 
         g_object_set(qmlglsink, "widget", widget, NULL);
 
-// FIXME: AV: temporally disable any sort of QoS due to unknow (yet) timing issues
-#if defined(__android__) || defined(__ios__)
-        //g_object_set(qmlglsink, "max-lateness", -1, NULL);
-        g_object_set(qmlglsink, "qos", FALSE, NULL);
-        g_object_set(qmlglsink, "sync", FALSE, NULL);
-#endif
-
         if ((bin = gst_bin_new("videosink")) == nullptr) {
             qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_bin_new('videosink')";
             break;
