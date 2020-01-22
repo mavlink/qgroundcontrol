@@ -32,12 +32,6 @@ class VideoReceiver : public QObject
 {
     Q_OBJECT
 public:
-    enum VideoEncoding {
-        H264_SW = 1,
-        H264_HW = 2,
-        H265_SW = 3,
-        H265_HW = 4
-    };
 
 #if defined(QGC_GST_STREAMING)
     Q_PROPERTY(bool             recording           READ    recording           NOTIFY recordingChanged)
@@ -63,7 +57,6 @@ public:
 
     virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
 
-    void                  setVideoDecoder   (VideoEncoding encoding);
 #if defined(QGC_GST_STREAMING)
     void                  setVideoSink      (GstElement* videoSink);
 #endif
@@ -91,6 +84,7 @@ public slots:
 protected slots:
     virtual void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
+    GstElement*  _makeSource                (const QString& uri);
     virtual void _restart_timeout           ();
     virtual void _tcp_timeout               ();
     virtual void _connected                 ();

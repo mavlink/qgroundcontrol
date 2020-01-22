@@ -29,10 +29,8 @@ public:
     CustomCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
 
     Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        videoEncoding   READ    videoEncoding       NOTIFY parametersReady)
 
     Fact*       irPalette           ();
-    Fact*       videoEncoding       ();
 
     bool        takePhoto           () override;
     bool        stopTakePhoto       () override;

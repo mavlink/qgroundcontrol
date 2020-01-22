@@ -24,16 +24,6 @@ CustomVideoManager::_updateSettings()
 {
     if(!_videoSettings || !_videoReceiver)
         return;
-    //-- Check encoding
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        auto* pCamera = qobject_cast<CustomCameraControl*>(_activeVehicle->dynamicCameras()->currentCameraInstance());
-        if(pCamera) {
-            Fact *fact = pCamera->videoEncoding();
-            if (fact) {
-                _videoReceiver->setVideoDecoder(static_cast<VideoReceiver::VideoEncoding>(fact->rawValue().toInt()));
-            }
-        }
-    }
     VideoManager::_updateSettings();
 }
 

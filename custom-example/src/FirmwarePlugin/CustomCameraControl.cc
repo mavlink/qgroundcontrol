@@ -19,7 +19,6 @@ QGC_LOGGING_CATEGORY(CustomCameraVerboseLog, "CustomCameraVerboseLog")
 
 static const char* kCAM_IRPALETTE            = "CAM_IRPALETTE";
 static const char* kCAM_NEXTVISION_IRPALETTE = "IR_SENS_POL";
-static const char* kCAM_ENC                  = "CAM_ENC";
 
 //-----------------------------------------------------------------------------
 CustomCameraControl::CustomCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -115,13 +114,6 @@ CustomCameraControl::irPalette()
         }
     }
     return nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-CustomCameraControl::videoEncoding()
-{
-    return _paramComplete ? getFact(kCAM_ENC) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
