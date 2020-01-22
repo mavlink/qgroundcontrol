@@ -1881,6 +1881,13 @@ Sets the number of standard deviations used by the innovation consistency test</
         <value code="3">Vision</value>
       </values>
     </parameter>
+    <parameter category="Developer" default="0" name="EKF2_IMU_ID" type="INT32">
+      <short_desc>Device id of IMU</short_desc>
+      <long_desc>Set to 0 to use system selected (sensor_combined) IMU, otherwise set to the device id of the desired IMU (vehicle_imu).</long_desc>
+      <values>
+        <value code="0">System Primary</value>
+      </values>
+    </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_X" type="FLOAT">
       <short_desc>X position of IMU in body frame</short_desc>
       <unit>m</unit>
@@ -8618,7 +8625,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="IMU_GYRO_RATEMAX" type="INT32">
       <short_desc>Gyro control data maximum publication rate</short_desc>
-      <long_desc>This is the maximum rate the gyro control data (sensor_gyro_control) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
+      <long_desc>This is the maximum rate the gyro control data (sensor_gyro) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
       <min>0</min>
       <max>2000</max>
       <unit>Hz</unit>
