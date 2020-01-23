@@ -23,7 +23,10 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
     // Fewer points means higher performance of map display.
 
     if (_lastPoint.isValid()) {
-        if (_lastPoint.distanceTo(coordinate) > _distanceTolerance) {
+        double distance = _lastPoint.distanceTo(coordinate);
+        if (distance > _distanceTolerance) {
+            //-- Update flight distance
+            _vehicle->updateFlightDistance(distance);
             // Vehicle has moved far enough from previous point for an update
             double newAzimuth = _lastPoint.azimuthTo(coordinate);
             if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance) {

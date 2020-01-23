@@ -805,6 +805,8 @@ public:
         JoystickModeMax
     } JoystickMode_t;
 
+    void updateFlightDistance(double distance);
+
     int joystickMode(void);
     void setJoystickMode(int mode);
 
