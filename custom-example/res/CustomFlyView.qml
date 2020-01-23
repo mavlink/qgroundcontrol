@@ -727,8 +727,8 @@ Item {
                         }
                     }
 
-                    yaw += yaw_stick * (gimbalRateMode ? stick.speedMultiplier : 1)
-                    pitch += pitch_stick * (gimbalRateMode ? stick.speedMultiplier : 1)
+                    yaw += yaw_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
+                    pitch += pitch_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
                     yaw = clamp(yaw, -180, 180)
                     pitch = clamp(pitch, -90, 90)
                     if(Math.abs(yaw - gimbalControl._lastYaw) > 0.001 || Math.abs(pitch - gimbalControl._lastPitch) > 0.001) {
