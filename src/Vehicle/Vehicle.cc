@@ -4244,6 +4244,11 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
     _objectAvoidance->update(&o);
 }
 
+void Vehicle::updateFlightDisance(double distance)
+{
+    _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
