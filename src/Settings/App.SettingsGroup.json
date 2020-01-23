@@ -146,8 +146,7 @@
     "units":                "pt",
     "min":                  6,
     "max":                  48,
-    "defaultValue":         0,
-    "qgcRebootRequired":    true
+    "defaultValue":         0
 },
 {
     "name":             "indoorPalette",

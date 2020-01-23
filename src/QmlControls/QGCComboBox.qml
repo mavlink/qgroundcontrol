@@ -21,6 +21,8 @@ T.ComboBox {
     id:             control
     padding:        ScreenTools.comboBoxPadding
     spacing:        ScreenTools.defaultFontPixelWidth
+    font.pointSize: ScreenTools.defaultFontPointSize
+    font.family:    ScreenTools.normalFontFamily
     implicitWidth:  Math.max(background ? background.implicitWidth : 0,
                              contentItem.implicitWidth + leftPadding + rightPadding + padding)
     implicitHeight: Math.max(background ? background.implicitHeight : 0,
@@ -37,13 +39,13 @@ T.ComboBox {
     property real   _popupWidth:       sizeToContents ? _largestTextWidth + leftPadding + rightPadding : control.width
 
     TextMetrics {
-        id: textMetrics
+        id:         textMetrics
+        font:       control.font
     }
 
     onModelChanged: {
         if (sizeToContents) {
             _largestTextWidth = 0
-            textMetrics.font = control.font
             for (var i = 0; i < model.length; i++){
                 textMetrics.text = model[i]
                 _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
@@ -59,8 +61,9 @@ T.ComboBox {
         property string _text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
 
         TextMetrics {
-            id:    popupItemMetrics
-            text:  _text
+            id:             popupItemMetrics
+            font:           control.font
+            text:           _text
         }
 
         contentItem: Text {
