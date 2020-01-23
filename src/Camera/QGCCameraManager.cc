@@ -43,7 +43,9 @@ void
 QGCCameraManager::setCurrentCamera(int sel)
 {
     if(sel != _currentCamera && sel >= 0 && sel < _cameras.count()) {
+        currentCameraInstance()->stopStream();
         _currentCamera = sel;
+        currentCameraInstance()->resumeStream();
         emit currentCameraChanged();
         emit streamChanged();
     }

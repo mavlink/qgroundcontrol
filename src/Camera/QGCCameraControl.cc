@@ -547,6 +547,43 @@ QGCCameraControl::setThermalMode(ThermalViewMode mode)
     QSettings settings;
     settings.setValue(kThermalMode, static_cast<uint32_t>(mode));
     _thermalMode = mode;
+
+    // Stop streamming if not displayed
+//    bool startNormal = true;
+//    bool startThermal = false;
+//    QGCVideoStreamInfo* normalStream = currentStreamInstance();
+//    QGCVideoStreamInfo* thermalStream = thermalStreamInstance();
+//    switch (_thermalMode) {
+//        case THERMAL_OFF:
+//        startNormal = true;
+//        startThermal = false;
+//        break;
+//    case THERMAL_FULL:
+//        startNormal = false;
+//        startThermal = true;
+//        break;
+//    case THERMAL_BLEND:
+//    case THERMAL_PIP:
+//        startNormal = true;
+//        startThermal = true;
+//        break;
+//    }
+
+//    if(normalStream) {
+//        _vehicle->sendMavCommand(
+//            _compID,                                // Target component
+//            startNormal ? MAV_CMD_VIDEO_START_STREAMING : MAV_CMD_VIDEO_STOP_STREAMING,          // Command id
+//            false,                                  // ShowError
+//            normalStream->streamID());                     // Stream ID
+//    }
+//    if(thermalStream) {
+//        _vehicle->sendMavCommand(
+//            _compID,                                // Target component
+//            startThermal ? MAV_CMD_VIDEO_START_STREAMING : MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+//            false,                                  // ShowError
+//            thermalStream->streamID());                     // Stream ID
+//    }
+
     emit thermalModeChanged();
 }
 
