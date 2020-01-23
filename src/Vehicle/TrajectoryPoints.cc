@@ -26,7 +26,7 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
         double distance = _lastPoint.distanceTo(coordinate);
         if (distance > _distanceTolerance) {
             //-- Update flight distance
-            _vehicle->updateFlightDisance(distance);
+            _vehicle->updateFlightDistance(distance);
             // Vehicle has moved far enough from previous point for an update
             double newAzimuth = _lastPoint.azimuthTo(coordinate);
             if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance) {
