@@ -50,6 +50,8 @@
         <file alias="void.png">res/Images/void.png</file>
         <file alias="PairingDelete.svg">res/Images/PairingDelete.svg</file>
         <file alias="male-solid.svg">res/Images/male-solid.svg</file>
+        <file alias="eye-solid.svg">res/Images/eye-solid.svg</file>
+        <file alias="eye-slash-solid.svg">res/Images/eye-slash-solid.svg</file>
     </qresource>
     <qresource prefix="Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>
