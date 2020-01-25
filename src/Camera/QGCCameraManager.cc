@@ -230,6 +230,10 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
             _cameraLabels << pCamera->modelName();
             emit camerasChanged();
             emit cameraLabelsChanged();
+            // Notify first camera to resume streaming
+            // TODO: Fix initial camera and send consistent start streaming messages. QGCCameraManager currently asumes that cameras are always streaming when connected.
+            if(_cameras.count() == 1)
+                pCamera->resumeStream();
         }
     }
 }
