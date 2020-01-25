@@ -53,6 +53,7 @@ Item {
     property bool   _recordingLocalVideo:   _videoReceiver && _videoReceiver.recording
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
+    property bool   _multipleCameras:       _dynamicCameras.cameras.count > 0
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
@@ -91,6 +92,59 @@ Item {
         id:             mainColumn
         spacing:        _spacers
         anchors.centerIn: parent
+
+        //---------------------------------------------------------------------
+        //-- Quick Camera Modes
+        Item {
+            width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+            height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
+            visible:        _multipleCameras
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            ButtonGroup {
+                id:         camsButtonGroup
+                exclusive:  true
+                buttons:    camsButtonsRow.children
+            }
+            Row {
+                id:                     camsButtonsRow
+                spacing:                ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.centerIn:       parent
+                //-- Standard
+                CustomQuickButton {
+                    id:                 firstCamButton
+                    width:              buttonSize
+                    height:             buttonSize
+                    iconSource:         "/custom/img/thermal-standard.svg"
+                    checked:            _camera && _curCameraIndex == 0
+                    onClicked:  {
+                        if(_dynamicCameras && !checked)
+                            _dynamicCameras.currentCamera = 0
+                    }
+                    QGCLabel {
+                        anchors.centerIn: parent
+                        text: "1"
+                    }
+                }
+                //-- Standard
+                CustomQuickButton {
+                    id:                 secondCamButton
+                    width:              buttonSize
+                    height:             buttonSize
+                    iconSource:         "/custom/img/thermal-standard.svg"
+                    checked:            _camera && _curCameraIndex == 1
+                    onClicked:  {
+                        if(_dynamicCameras && !checked)
+                            _dynamicCameras.currentCamera = 1
+                    }
+                    QGCLabel {
+                        anchors.centerIn: parent
+                        text: "2"
+                    }
+                }
+            }
+        }
+
         //---------------------------------------------------------------------
         //-- Quick Thermal Modes
         Item {
