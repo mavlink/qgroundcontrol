@@ -513,9 +513,10 @@ VideoReceiver::stop()
         _shutdownPipeline();
     } else if (_pipeline != nullptr && !_stopping) {
         qCDebug(VideoReceiverLog) << "Stopping _pipeline";
+        GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
+        gst_bus_disable_sync_message_emission(bus);
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
-        GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
         GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
         gst_object_unref(bus);
         if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
