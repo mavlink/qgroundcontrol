@@ -53,7 +53,7 @@ Item {
     property bool   _recordingLocalVideo:   _videoReceiver && _videoReceiver.recording
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
-    property bool   _multipleCameras:       _dynamicCameras.cameras.count > 0
+    property bool   _multipleCameras:       _dynamicCameras.cameras.count > 1
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
@@ -118,7 +118,7 @@ Item {
                     iconSource:         "/custom/img/thermal-standard.svg"
                     checked:            _camera && _curCameraIndex == 0
                     onClicked:  {
-                        if(_dynamicCameras && !checked)
+                        if(_dynamicCameras)
                             _dynamicCameras.currentCamera = 0
                     }
                     QGCLabel {
@@ -134,7 +134,7 @@ Item {
                     iconSource:         "/custom/img/thermal-standard.svg"
                     checked:            _camera && _curCameraIndex == 1
                     onClicked:  {
-                        if(_dynamicCameras && !checked)
+                        if(_dynamicCameras)
                             _dynamicCameras.currentCamera = 1
                     }
                     QGCLabel {
