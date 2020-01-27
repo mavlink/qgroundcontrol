@@ -873,6 +873,13 @@ Set to 2 to use heading from motion capture</short_desc>
       <max>201607</max>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter category="Developer" default="0" name="CBRK_VTOLARMING" type="INT32">
+      <short_desc>Circuit breaker for arming in fixed-wing mode check</short_desc>
+      <long_desc>Setting this parameter to 159753 will enable arming in fixed-wing mode for VTOLs. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <min>0</min>
+      <max>159753</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Commander">
     <parameter default="256010" name="COM_ARM_AUTH" type="INT32">
