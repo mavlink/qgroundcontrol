@@ -2,6 +2,23 @@
   <version>1</version>
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
+  <airframe_group image="Autogyro" name="Autogyro">
+    <airframe id="17002" maintainer="ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;" name="ThunderFly Auto-G2">
+      <class>Autogyro</class>
+      <maintainer>ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;</maintainer>
+      <type>Autogyro</type>
+      <url>https://github.com/ThunderFly-aerospace/Auto-G2/</url>
+      <output name="MAIN1">rotor_head_L</output>
+      <output name="MAIN2">rotor_head_R</output>
+      <output name="MAIN3">elevator</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">rudder (second, optional)</output>
+      <output name="MAIN6">throttle</output>
+      <output name="MAIN7">wheel</output>
+      <output name="AUX1">feed-through of RC AUX1 channel for prerotator (optional)</output>
+      <output name="AUX2">feed-through of RC AUX2 channel for release device (optional)</output>
+    </airframe>
+  </airframe_group>
   <airframe_group image="HelicopterCoaxial" name="Coaxial Helicopter">
     <airframe id="15001" maintainer="Emmanuel Roussel" name="Esky (Big) Lama v4">
       <class>Copter</class>
