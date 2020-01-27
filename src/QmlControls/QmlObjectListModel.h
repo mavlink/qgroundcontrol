@@ -19,6 +19,7 @@ class QmlObjectListModel : public QAbstractListModel
     
 public:
     QmlObjectListModel(QObject* parent = nullptr);
+    QmlObjectListModel(bool sort, QObject* parent = nullptr);
     ~QmlObjectListModel() override;
     
     Q_PROPERTY(int count READ count NOTIFY countChanged)
@@ -82,6 +83,7 @@ private:
     bool _dirty;
     bool _skipDirtyFirstItem;
     bool _externalBeginResetModel;
+    bool _sort = false;
         
     static const int ObjectRole;
     static const int TextRole;

@@ -21,6 +21,7 @@ QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_)
 //-----------------------------------------------------------------------------
 QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     : _vehicle(vehicle)
+    , _cameras(true)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
@@ -226,8 +227,11 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
         QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
         if(pCamera) {
             QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
+            // Used to sort the cameras data model to keep the consistency inbetween runs
+            pCamera->setObjectName(QString::number(message.compid));
+            // TODO: quick workaround fix it properly
             _cameras.append(pCamera);
-            _cameraLabels << pCamera->modelName();
+            _cameraLabels.insert(_cameras.indexOf(pCamera), pCamera->modelName());
             emit camerasChanged();
             emit cameraLabelsChanged();
             // Notify first camera to resume streaming

@@ -28,6 +28,13 @@ QmlObjectListModel::QmlObjectListModel(QObject* parent)
 
 }
 
+QmlObjectListModel::QmlObjectListModel(bool sort, QObject* parent)
+    : QmlObjectListModel(parent)
+{
+    _sort = sort;
+}
+
+
 QmlObjectListModel::~QmlObjectListModel()
 {
     
@@ -184,7 +191,16 @@ void QmlObjectListModel::insert(int i, QObject* object)
         }
     }
     _objectList.insert(i, object);
-    insertRows(i, 1);
+    // Optionally sort the data model
+    if(_sort) {
+        qSort(_objectList.begin(), _objectList.end(), [](const QObject* o1, const QObject* o2){
+            return o1->objectName() < o2->objectName();
+        });
+        insertRows(_objectList.indexOf(object), 1);
+    }
+    else {
+        insertRows(i, 1);
+    }
     setDirty(true);
 }
 
