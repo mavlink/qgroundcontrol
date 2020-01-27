@@ -632,7 +632,7 @@ Item {
             mainColor:      qgcPal.window
             contentColor:   qgcPal.text
             fontPointSize:  ScreenTools.defaultFontPointSize * 1.75
-            zoomLevelVisible: false
+            zoomLevelVisible: true
             zoomLevel:      _hasZoom ? _camera.zoomLevel : NaN
             anchors.horizontalCenter: parent.horizontalCenter
             onlyContinousZoom: true
