@@ -892,7 +892,7 @@ Item {
                         Layout.fillWidth:   true
                         onActivated:        {
                             progressPopup.open()
-                            QGroundControl.pairingManager.setConnectingChannel(currentIndex + QGroundControl.microhardManager.channelMin, QGroundControl.microhardManager.connectingPower)
+                            QGroundControl.pairingManager.setModemParameters(currentIndex + QGroundControl.microhardManager.channelMin, QGroundControl.microhardManager.connectingPower, QGroundControl.microhardManager.connectingBandwidth)
                         }
                     }
                 }
