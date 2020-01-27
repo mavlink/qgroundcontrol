@@ -99,12 +99,12 @@ Item {
         //-- Video Fit
         QGCLabel {
             text:               qsTr("Video Screen Fit")
-            visible:            !_camera || !_camera.autoStream
+            visible:            QGroundControl.videoManager.isGStreamer
             font.pointSize:     ScreenTools.smallFontPointSize
         }
         FactComboBox {
             fact:               QGroundControl.settingsManager.videoSettings.videoFit
-            visible:            !_camera || !_camera.autoStream
+            visible:            QGroundControl.videoManager.isGStreamer
             indexModel:         false
             Layout.alignment:   Qt.AlignHCenter
         }
@@ -112,7 +112,7 @@ Item {
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
-           visible:         (!_camera || !_camera.autoStream) && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
+           visible:         QGroundControl.videoManager.isGStreamer
         }
         // Button to start/stop video recording
         Item {
@@ -120,7 +120,7 @@ Item {
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
             Layout.alignment:   Qt.AlignHCenter
-            visible:            (!_camera || !_camera.autoStream) && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
+            visible:            QGroundControl.videoManager.isGStreamer
             Rectangle {
                 id:                 recordBtnBackground
                 anchors.top:        parent.top
