@@ -317,29 +317,9 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
       <output name="AUX4">feed-through of RC FLAPS channel</output>
     </airframe>
-    <airframe id="4002" maintainer="Leon Mueller &lt;thedevleon&gt;" name="Generic Quadrotor x with mount (e.g. gimbal)">
-      <class>Copter</class>
-      <maintainer>Leon Mueller &lt;thedevleon&gt;</maintainer>
-      <type>Quadrotor x</type>
-      <output name="MAIN1">motor 1</output>
-      <output name="MAIN2">motor 2</output>
-      <output name="MAIN3">motor 3</output>
-      <output name="MAIN4">motor 4</output>
-      <output name="MAIN5">feed-through of RC AUX1 channel</output>
-      <output name="MAIN6">feed-through of RC AUX2 channel</output>
-      <output name="AUX1">Mount pitch</output>
-      <output name="AUX2">Mount roll</output>
-      <output name="AUX3">Mount yaw</output>
-      <output name="AUX4">Mount retract</output>
-    </airframe>
     <airframe id="4003" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;" name="Lumenier QAV-R (raceblade) 5&quot; arms">
       <class>Copter</class>
       <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe id="4004" maintainer="Leon Mueller &lt;thedevleon&gt;" name="H4 680mm with Z1 Tiny2 Gimbal">
-      <class>Copter</class>
-      <maintainer>Leon Mueller &lt;thedevleon&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe id="4009" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Lumenier QAV250">
@@ -355,11 +335,6 @@
     <airframe id="4011" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI Flame Wheel F450">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe id="4012" maintainer="Pavel Kirienko &lt;pavel.kirienko@gmail.com&gt;" name="F450-sized quadrotor with CAN">
-      <class>Copter</class>
-      <maintainer>Pavel Kirienko &lt;pavel.kirienko@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe id="4014" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="S500 Generic">
