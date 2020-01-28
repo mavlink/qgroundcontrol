@@ -25,7 +25,7 @@ Canvas {
     property real   gimbalYaw
     property real   vehicleYaw
     property bool   showGimbalYaw:          false
-    property bool   showSequenceNumbers:    false
+    property bool   showSequenceNumbers:    true
 
     property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
