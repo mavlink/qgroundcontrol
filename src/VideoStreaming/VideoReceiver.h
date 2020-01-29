@@ -103,7 +103,6 @@ protected:
         GstElement*     queue;
         GstElement*     mux;
         GstElement*     filesink;
-        GstElement*     parse;
         gboolean        removing;
     } Sink;
 
@@ -153,7 +152,5 @@ protected:
     bool            _videoRunning;
     bool            _showFullScreen;
     VideoSettings*  _videoSettings;
-    const char*     _depayName;
-    const char*     _parserName;
 };
 
