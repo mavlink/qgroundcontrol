@@ -513,6 +513,7 @@ Rectangle {
                             id:         windCombo
                             width:      _valueWidth
                             enabled:    !_disableDataPersistence
+                            textRole:   "text"
                             model: ListModel {
                                 id: windItems
                                 ListElement { text: "Please Select"; value: -1 }
@@ -550,6 +551,7 @@ Rectangle {
                             id:         ratingCombo
                             width:      _valueWidth
                             enabled:    !_disableDataPersistence
+                            textRole:   "text"
                             model: ListModel {
                                 id: ratingItems
                                 ListElement { text: "Please Select";            value: "notset"}

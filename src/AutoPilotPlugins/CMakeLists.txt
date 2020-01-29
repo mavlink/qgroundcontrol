@@ -11,6 +11,8 @@ add_library(AutoPilotPlugins
 	APM/APMCompassCal.cc
 	APM/APMFlightModesComponent.cc
 	APM/APMFlightModesComponentController.cc
+	APM/APMFollowComponent.cc
+	APM/APMFollowComponentController.cc
 	APM/APMHeliComponent.cc
 	APM/APMLightsComponent.cc
 	APM/APMMotorComponent.cc

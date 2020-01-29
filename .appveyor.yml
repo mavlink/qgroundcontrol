@@ -1,51 +1,60 @@
 version: '{branch}-{build}'
 
+image: Visual Studio 2017
+
 build:
   verbosity: minimal
 
 environment:
   matrix:
-#  - BUILD: 'Debug'
-#    CONFIG: debug
-#    SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_debug
   - BUILD: 'Release'
     CONFIG: installer
     SHADOW_BUILD_DIR: C:\projects\qgroundcontrol\build_windows_install
+    QT_JOM_DIR: C:\Qt-QGC-5.12.6\Tools\QtCreator\bin
+    QT_QMAKE_DIR: C:\Qt-QGC-5.12.6\5.12.6\msvc2017_64\bin
 
 install:
   - git submodule update --init --recursive
-  - call "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-  - set PATH=C:\Qt\Tools\QtCreator\bin;C:\Qt\5.11\msvc2015\bin;%PATH%
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
-      Write-Host "Installing GStreamer..." -ForegroundColor Cyan
-      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86-1.14.4.msi"
+      Write-Host "Installing Qt..." -ForegroundColor Cyan
+      $qt7zPath = "$($env:USERPROFILE)\Qt-QGC-5.12.6.7z"
       Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-x86-1.14.4.msi', $msiPath)
+      (New-Object Net.WebClient).DownloadFile('https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/Qt-QGC-5.12.6.7z', $qt7zPath)
+      Write-Host "Unzipping..."
+      cmd /c start /wait 7z x $qt7zPath -oC:\
+      Write-Host "Installed" -ForegroundColor Green
+  - ps: |
+      Write-Host "Installing GStreamer..." -ForegroundColor Cyan
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86_64-1.14.4.msi"
+      Write-Host "Downloading..."
+      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-x86_64-1.14.4.msi', $msiPath)
       Write-Host "Installing..."
       cmd /c start /wait msiexec /package $msiPath /passive ADDLOCAL=ALL
       Write-Host "Installed" -ForegroundColor Green
   - ps: |
       Write-Host "Installing GStreamer dev..." -ForegroundColor Cyan
-      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-devel-x86-1.14.4.msi"
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-devel-x86_64-1.14.4.msi"
       Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-x86-1.14.4.msi', $msiPath)
+      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-x86_64-1.14.4.msi', $msiPath)
       Write-Host "Installing..."
       cmd /c start /wait msiexec /package $msiPath /passive ADDLOCAL=ALL
       Write-Host "Installed" -ForegroundColor Green
 
 build_script:
-  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && C:\Qt\5.11\msvc2015\bin\qmake -r CONFIG-=debug_and_release CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
-  - cd %SHADOW_BUILD_DIR% && jom
+  - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && %QT_QMAKE_DIR%\qmake -r CONFIG+=%CONFIG% CONFIG+=WarningsAsErrorsOn %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
+  - cd %SHADOW_BUILD_DIR% && %QT_JOM_DIR%\jom
   - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\release\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
 # Generate the source server information to embed in the PDB
-  - '"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv'
+# Temporarily disabled while we try to figure out where this is located on appveyor image
+#  - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv'
 # write the source server info
-  - '"C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\srcsrv\pdbstr.exe" -w -i:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv -p:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb -s:srcsrv'
+#  - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\pdbstr.exe" -w -i:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb.srcsrv -p:%SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb -s:srcsrv'
 # build the symbol / PE store
-  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb /t qgroundcontrol'
-  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\8.1\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.exe /t qgroundcontrol'
-  - ps: 'cd $env:appveyor_build_folder; .\deploy\lowercaseify_symbolstore.ps1'
+#  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb /t qgroundcontrol'
+#  - 'cd %APPVEYOR_BUILD_FOLDER% && "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\symstore.exe" add /compress /s symbols /f %SHADOW_BUILD_DIR%\release\qgroundcontrol.exe /t qgroundcontrol'
+#  - ps: 'cd $env:appveyor_build_folder; .\deploy\lowercaseify_symbolstore.ps1'
 
 test_script:
   - if "%CONFIG%" EQU "debug" ( %SHADOW_BUILD_DIR%\debug\qgroundcontrol --unittest )

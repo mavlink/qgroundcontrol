@@ -30,4 +30,5 @@ public:
     DEFINE_SETTINGFACT(gimbalExpFactor)
     DEFINE_SETTINGFACT(gimbalKPFactor)
     DEFINE_SETTINGFACT(gimbalSuperExpoFactor)
+    DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
 };

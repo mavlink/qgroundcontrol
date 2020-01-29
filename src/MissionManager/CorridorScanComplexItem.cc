@@ -51,6 +51,8 @@ CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView,
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
 
+    connect(&_corridorPolyline,     &QGCMapPolyline::isValidChanged,this, &CorridorScanComplexItem::readyForSaveStateChanged);
+
     if (!kmlFile.isEmpty()) {
         _corridorPolyline.loadKMLFile(kmlFile);
         _corridorPolyline.setDirty(false);
@@ -142,9 +144,8 @@ bool CorridorScanComplexItem::specifiesCoordinate(void) const
 
 int CorridorScanComplexItem::_transectCount(void) const
 {
-    double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
-    return fullWidth > 0.0 ? qCeil(fullWidth / transectSpacing) : 1;
+    return fullWidth > 0.0 ? qCeil(fullWidth / _transectSpacing()) : 1;
 }
 
 void CorridorScanComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
@@ -341,7 +342,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
     _transects.clear();
     _transectsPathHeightInfo.clear();
 
-    double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    double transectSpacing = _transectSpacing();
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
     double halfWidth = fullWidth / 2.0;
     int transectCount = _transectCount();
@@ -490,12 +491,25 @@ void CorridorScanComplexItem::_recalcCameraShots(void)
     emit cameraShotsChanged();
 }
 
-bool CorridorScanComplexItem::readyForSave(void) const
+CorridorScanComplexItem::ReadyForSaveState CorridorScanComplexItem::readyForSaveState(void) const
 {
-    return TransectStyleComplexItem::readyForSave();
+    return TransectStyleComplexItem::readyForSaveState();
 }
 
 double CorridorScanComplexItem::timeBetweenShots(void)
 {
     return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _cruiseSpeed;
+}
+
+double CorridorScanComplexItem::_transectSpacing(void) const
+{
+    double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    if (transectSpacing < 0.5) {
+        // We can't let spacing get too small otherwise we will end up with too many transects.
+        // So we limit to 0.5 meter spacing as min and set to huge value which will cause a single
+        // transect to be added.
+        transectSpacing = 100000;
+    }
+
+    return transectSpacing;
 }

@@ -7,17 +7,7 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of main class
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
-#ifndef QGCAPPLICATION_H
-#define QGCAPPLICATION_H
+#pragma once
 
 #include <QApplication>
 #include <QTimer>
@@ -53,20 +43,13 @@ class QGCFileDownload;
  *
  * Needs QApplication base to support QtCharts module. This way
  * we avoid application crashing on 5.12 when using the module.
- * We don't have QtWidgets on mobile, avoid using it.
  *
  * Note: `lastWindowClosed` will be sent by MessageBox popups and other
  * dialogs, that are spawned in QML, when they are closed
 **/
-class QGCApplication :
-      #if defined(__mobile__)
-        public QGuiApplication
-      #else
-        public QApplication
-      #endif
+class QGCApplication : public QApplication
 {
     Q_OBJECT
-
 public:
     QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
@@ -185,10 +168,10 @@ private:
     void        _exitWithError          (QString errorMessage);
 
 
-    bool                _runningUnitTests;                                  ///< true: running unit tests, false: normal app
-    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
-    QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
-    QStringList         _missingParams;                                     ///< List of missing facts to be displayed
+    bool                        _runningUnitTests;                                  ///< true: running unit tests, false: normal app
+    static const int            _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
+    QTimer                      _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
+    QList<QPair<int,QString>>   _missingParams;                                     ///< List of missing parameter component id:name
 
     QQmlApplicationEngine* _qmlAppEngine        = nullptr;
     bool                _logOutput              = false;                    ///< true: Log Qt debug output to file
@@ -218,5 +201,3 @@ private:
 
 /// @brief Returns the QGCApplication object singleton.
 QGCApplication* qgcApp(void);
-
-#endif

@@ -35,7 +35,7 @@ Map {
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
     property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
-    property int    gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
+    property real   gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
     property bool   userPanned:                     false   ///< true: the user has manually panned the map
     property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
@@ -95,7 +95,8 @@ Map {
 
     function updateActiveMapType() {
         var settings =  QGroundControl.settingsManager.flightMapSettings
-        var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
+        var fullMapName = settings.mapProvider.value + " " + settings.mapType.value
+
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
             if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]

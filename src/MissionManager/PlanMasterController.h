@@ -17,6 +17,7 @@
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PlanMasterControllerLog)
 
@@ -28,22 +29,21 @@ class PlanMasterController : public QObject
 public:
     PlanMasterController(QObject* parent = nullptr);
     ~PlanMasterController();
-    
-    Q_PROPERTY(MissionController*       missionController       READ missionController      CONSTANT)
-    Q_PROPERTY(GeoFenceController*      geoFenceController      READ geoFenceController     CONSTANT)
-    Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController   CONSTANT)
 
-    Q_PROPERTY(Vehicle*     controllerVehicle   MEMBER _controllerVehicle               CONSTANT)
-    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
-    Q_PROPERTY(bool         containsItems       READ containsItems                      NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
-    Q_PROPERTY(bool         syncInProgress      READ syncInProgress                     NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool         dirty               READ dirty              WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
-    Q_PROPERTY(QString      fileExtension       READ fileExtension                      CONSTANT)                       ///< File extension for missions
-    Q_PROPERTY(QString      kmlFileExtension    READ kmlFileExtension                   CONSTANT)
-    Q_PROPERTY(QString      currentPlanFile     READ currentPlanFile                    NOTIFY currentPlanFileChanged)
-    ///< kml file extension for missions
-    Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
-    Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
+    Q_PROPERTY(MissionController*       missionController       READ missionController                      CONSTANT)
+    Q_PROPERTY(GeoFenceController*      geoFenceController      READ geoFenceController                     CONSTANT)
+    Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController                   CONSTANT)
+    Q_PROPERTY(Vehicle*                 controllerVehicle       MEMBER _controllerVehicle                   CONSTANT)
+    Q_PROPERTY(bool                     offline                 READ offline                                NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
+    Q_PROPERTY(bool                     containsItems           READ containsItems                          NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
+    Q_PROPERTY(bool                     dirty                   READ dirty                  WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
+    Q_PROPERTY(QString                  fileExtension           READ fileExtension                          CONSTANT)                       ///< File extension for missions
+    Q_PROPERTY(QString                  kmlFileExtension        READ kmlFileExtension                       CONSTANT)
+    Q_PROPERTY(QString                  currentPlanFile         READ currentPlanFile                        NOTIFY currentPlanFileChanged)
+    Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
+    Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
+    Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(bool flyView);
@@ -52,9 +52,10 @@ public:
     ///     @param deleteWhenSendCmplete The PlanMasterController object should be deleted after the first send is completed.
     Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle, bool deleteWhenSendCompleted = false);
 
-    /// Determines if the plan has all data needed to be saved or sent to the vehicle. Currently the only case where this
-    /// would return false is when it is still waiting on terrain data to determine correct altitudes.
-    Q_INVOKABLE bool readyForSaveSend(void) const { return _missionController.readyForSaveSend(); }
+    /// Determines if the plan has all information needed to be saved or sent to the vehicle.
+    /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
+    /// a nightmare of circular header dependency problems.
+    Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
 
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
@@ -103,17 +104,19 @@ signals:
     void dirtyChanged           (bool dirty);
     void offlineChanged  		(bool offlineEditing);
     void currentPlanFileChanged ();
+    void planCreatorsChanged    (QmlObjectListModel* planCreators);
 
 private slots:
-    void _activeVehicleChanged(Vehicle* activeVehicle);
-    void _loadMissionComplete(void);
-    void _loadGeoFenceComplete(void);
-    void _loadRallyPointsComplete(void);
-    void _sendMissionComplete(void);
-    void _sendGeoFenceComplete(void);
-    void _sendRallyPointsComplete(void);
+    void _activeVehicleChanged      (Vehicle* activeVehicle);
+    void _loadMissionComplete       (void);
+    void _loadGeoFenceComplete      (void);
+    void _loadRallyPointsComplete   (void);
+    void _sendMissionComplete       (void);
+    void _sendGeoFenceComplete      (void);
+    void _sendRallyPointsComplete   (void);
+    void _updatePlanCreatorsList    (void);
 #if defined(QGC_AIRMAP_ENABLED)
-    void _startFlightPlanning(void);
+    void _startFlightPlanning       (void);
 #endif
 
 private:
@@ -133,5 +136,6 @@ private:
     bool                    _sendRallyPoints;
     QString                 _currentPlanFile;
     bool                    _deleteWhenSendCompleted;
+    QmlObjectListModel*     _planCreators;
 
 };

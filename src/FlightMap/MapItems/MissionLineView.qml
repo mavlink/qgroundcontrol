@@ -17,13 +17,11 @@ import QGroundControl.Palette   1.0
 
 /// The MissionLineView control is used to add lines between mission items
 MapItemView {
-    property bool homePositionValid: true   ///< true: show home position, false: don't show home position
-
+    property bool showSpecialVisual: false
     delegate: MapPolyline {
         line.width: 3
-        line.color: "#be781c"                           // Hack, can't get palette to work in here
+        line.color: object && showSpecialVisual && object.specialVisual ? "green" : "#be781c"                           // Hack, can't get palette to work in here
         z:          QGroundControl.zOrderWaypointLines
-
-        path: object ? [ object.coordinate1, object.coordinate2 ] : [ ]
+        path:       object && object.coordinate1.isValid && object.coordinate2.isValid ? [ object.coordinate1, object.coordinate2 ] : []
     }
 }

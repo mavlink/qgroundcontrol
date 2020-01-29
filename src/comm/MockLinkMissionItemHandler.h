@@ -85,7 +85,7 @@ private slots:
 private:
     void _handleMissionRequestList(const mavlink_message_t& msg);
     void _handleMissionRequest(const mavlink_message_t& msg);
-    void _handleMissionItem(const mavlink_message_t& msg);
+    void _handleMissionItem(const mavlink_message_t& msg, bool missionItemInt);
     void _handleMissionCount(const mavlink_message_t& msg);
     void _handleMissionClearAll(const mavlink_message_t& msg);
     void _requestNextMissionItem(int sequenceNumber);
@@ -97,8 +97,16 @@ private:
     
     int _writeSequenceCount;    ///< Numbers of items about to be written
     int _writeSequenceIndex;    ///< Current index being reqested
+
+    typedef struct {
+        bool isIntItem;
+        union {
+            mavlink_mission_item_t      missionItem;
+            mavlink_mission_item_int_t  missionItemInt;
+        };
+    } MissionItemBoth_t;
     
-    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionItemList_t;
+    typedef QMap<uint16_t, MissionItemBoth_t> MissionItemList_t;
 
     MAV_MISSION_TYPE    _requestType;
     MissionItemList_t   _missionItems;

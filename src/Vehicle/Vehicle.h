@@ -34,7 +34,6 @@ class ParameterManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
-class ADSBVehicle;
 class QGCCameraManager;
 class Joystick;
 class VehicleObjectAvoidance;
@@ -77,11 +76,6 @@ public:
     Fact* rotationPitch90   (void) { return &_rotationPitch90Fact; }
     Fact* rotationPitch270  (void) { return &_rotationPitch270Fact; }
 
-    bool idSet(void) { return _idSet; }
-    void setIdSet(bool idSet) { _idSet = idSet; }
-    uint8_t id(void) { return _id; }
-    void setId(uint8_t id) { _id = id; }
-
     static const char* _rotationNoneFactName;
     static const char* _rotationYaw45FactName;
     static const char* _rotationYaw90FactName;
@@ -104,9 +98,6 @@ private:
     Fact _rotationYaw315Fact;
     Fact _rotationPitch90Fact;
     Fact _rotationPitch270Fact;
-
-    bool    _idSet; // true: _id is set to seen sensor id
-    uint8_t _id;    // The id for the sensor being tracked. Current support for only a single sensor.
 };
 
 class VehicleSetpointFactGroup : public FactGroup
@@ -548,11 +539,12 @@ public:
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
+    Q_PROPERTY(QGeoCoordinate       armedPosition           READ armedPosition                                          NOTIFY armedPositionChanged)
     Q_PROPERTY(bool                 armed                   READ armed                  WRITE setArmed                  NOTIFY armedChanged)
     Q_PROPERTY(bool                 autoDisarm              READ autoDisarm                                             NOTIFY autoDisarmChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
     Q_PROPERTY(QStringList          flightModes             READ flightModes                                            NOTIFY flightModesChanged)
-    Q_PROPERTY(QStringList          joystickFlightModes     READ joystickFlightModes                                    NOTIFY flightModesChanged)
+    Q_PROPERTY(QStringList          extraJoystickFlightModes READ extraJoystickFlightModes                              NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(TrajectoryPoints*    trajectoryPoints        MEMBER _trajectoryPoints                                    CONSTANT)
@@ -627,7 +619,6 @@ public:
     Q_PROPERTY(int                  telemetryLNoise         READ telemetryLNoise                                        NOTIFY telemetryLNoiseChanged)
     Q_PROPERTY(int                  telemetryRNoise         READ telemetryRNoise                                        NOTIFY telemetryRNoiseChanged)
     Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                                      NOTIFY toolBarIndicatorsChanged)
-    Q_PROPERTY(QmlObjectListModel*  adsbVehicles            READ adsbVehicles                                           CONSTANT)
     Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
     Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
@@ -803,7 +794,8 @@ public:
 
     // Property accessors
 
-    QGeoCoordinate coordinate(void) { return _coordinate; }
+    QGeoCoordinate coordinate       (void) { return _coordinate; }
+    QGeoCoordinate armedPosition    (void) { return _armedPosition; }
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
@@ -813,6 +805,8 @@ public:
         JoystickModeVelocity,
         JoystickModeMax
     } JoystickMode_t;
+
+    void updateFlightDistance(double distance);
 
     int joystickMode(void);
     void setJoystickMode(int mode);
@@ -864,11 +858,11 @@ public:
     bool armed      () { return _armed; }
     void setArmed   (bool armed);
 
-    bool flightModeSetAvailable(void);
-    QStringList flightModes(void);
-    QStringList joystickFlightModes(void);
-    QString flightMode(void) const;
-    void setFlightMode(const QString& flightMode);
+    bool flightModeSetAvailable             (void);
+    QStringList flightModes                 (void);
+    QStringList extraJoystickFlightModes    (void);
+    QString flightMode                      (void) const;
+    void setFlightMode                      (const QString& flightMode);
 
     QString priorityLinkName(void) const;
     QVariantList links(void) const;
@@ -896,7 +890,6 @@ public:
     void setPrearmError(const QString& prearmError);
 
     QmlObjectListModel* cameraTriggerPoints (void) { return &_cameraTriggerPoints; }
-    QmlObjectListModel* adsbVehicles        (void) { return &_adsbVehicles; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -1136,6 +1129,7 @@ signals:
     void activeChanged(bool active);
     void mavlinkMessageReceived(const mavlink_message_t& message);
     void homePositionChanged(const QGeoCoordinate& homePosition);
+    void armedPositionChanged();
     void armedChanged(bool armed);
     void flightModeChanged(const QString& flightMode);
     void hilModeChanged(bool hilMode);
@@ -1276,7 +1270,6 @@ private slots:
     void _mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
-    void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
     void _protocolVersionTimeOut(void);
     void _updateFlightTime      (void);
@@ -1382,6 +1375,7 @@ private:
 
     QGeoCoordinate  _coordinate;
     QGeoCoordinate  _homePosition;
+    QGeoCoordinate  _armedPosition;
 
     UASInterface*   _mav;
     int             _currentMessageCount;
@@ -1487,10 +1481,7 @@ private:
     QTimer                          _flightTimeUpdater;
     TrajectoryPoints*               _trajectoryPoints;
     QmlObjectListModel              _cameraTriggerPoints;
-    QmlObjectListModel              _adsbVehicles;
-    QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
-    QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
-    QTimer                          _adsbTimer;
+    //QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;
