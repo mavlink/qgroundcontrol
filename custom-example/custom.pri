@@ -111,6 +111,8 @@ INCLUDEPATH += \
 
 HEADERS+= \
     $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGrid.h \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGridMGRS.h
 
 SOURCES += \
     $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGrid.cc \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGridMGRS.cc

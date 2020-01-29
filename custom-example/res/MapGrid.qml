@@ -30,7 +30,7 @@ Item {
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
     property var mapGridObject
     property var polylineComponents: []
-    property var polylines: []
+    property var values: []
 
     onMapControlChanged: {
         if (mapControl) {
@@ -53,7 +53,7 @@ Item {
         onTriggered:        geometryChanged()
     }
 
-    onPolylinesChanged: {
+    onValuesChanged: {
         if (mapControl && centerViewport) {
             addVisuals()
         }
@@ -73,10 +73,17 @@ Item {
 
     function addVisuals() {
         removeVisuals()
-        for (var i = 0; i < polylines.length; i++) {
+
+        // Put other elements on top of the grid
+        for (var n = 0; n < mapControl.mapItems.length; n++) {
+             mapControl.mapItems[n].z++;
+        }
+
+        var len = values.length;
+        for (var i = 0; i < len; i++) {
             var pc = polylineComponent.createObject(mapControl)
             if (pc) {
-                var pl = polylines[i]
+                var pl = values[i]
                 pc.line.width = pl.width
                 pc.line.color = pl.color
                 for (var j = 0; j < pl.points.length; j++) {

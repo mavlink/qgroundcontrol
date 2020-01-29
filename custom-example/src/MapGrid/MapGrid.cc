@@ -8,8 +8,6 @@
  ****************************************************************************/
 
 #include "MapGrid.h"
-#include <QJsonObject>
-#include <QJsonArray>
 #include <QLoggingCategory>
 
 //-----------------------------------------------------------------------------
@@ -18,63 +16,41 @@ MapGrid::MapGrid(QObject* mapGridQML)
 {
     _mapGridQML = mapGridQML;
     _mapGridQML->setProperty("mapGridObject", QVariant::fromValue(this));
+    _mapGridMGRS = new MapGridMGRS();
+    _mapGridThread = new QThread(this);
+    _mapGridThread->setObjectName("MapGrid");
+    _mapGridMGRS->moveToThread(_mapGridThread);
+    connect(_mapGridThread, &QThread::finished, _mapGridMGRS, &QObject::deleteLater, Qt::QueuedConnection);
+    connect(this, &MapGrid::geometryChangedSignal, _mapGridMGRS, &MapGridMGRS::geometryChanged, Qt::QueuedConnection);
+    connect(_mapGridMGRS, &MapGridMGRS::updateValues, this, &MapGrid::updateValues, Qt::QueuedConnection);
+    _mapGridThread->start();
+}
+
+//-----------------------------------------------------------------------------
+void
+MapGrid::updateValues(QVariant values)
+{
+    _calculationRunning = false;
+    _mapGridQML->setProperty("values", values);
+    if (_calculationPending) {
+        _calculationPending = false;
+        geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingBottomRight);
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
 MapGrid::geometryChanged(double zoomLevel, QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
 {
-    if (!topLeft.isValid() || !bottomRight.isValid()) {
-        return;
+    if (!_calculationRunning) {
+        _calculationRunning = true;
+        emit geometryChangedSignal(zoomLevel, topLeft, bottomRight);
+    } else {
+        _calculationPending = true;
+        _pendingZoomLevel = zoomLevel;
+        _pendingTopLeft = topLeft;
+        _pendingBottomRight = bottomRight;
     }
-    qCritical() << "Zoom: " << zoomLevel << "Viewport: " << topLeft << " ; " << bottomRight;
-
-
-    QJsonObject p1;
-    p1.insert(QStringLiteral("lat"), (topLeft.latitude() + bottomRight.latitude()) / 2);
-    p1.insert(QStringLiteral("lng"), topLeft.longitude());
-    QJsonObject p2;
-    p2.insert(QStringLiteral("lat"), (topLeft.latitude() + bottomRight.latitude()) / 2);
-    p2.insert(QStringLiteral("lng"), bottomRight.longitude());
-    QJsonArray line1pts;
-    line1pts.push_back(p1);
-    line1pts.push_back(p2);
-
-    QJsonObject line1a;
-    line1a.insert(QStringLiteral("points"), line1pts);
-    line1a.insert(QStringLiteral("color"), "#55ffffff");
-    line1a.insert(QStringLiteral("width"), 3);
-    QJsonObject line1b;
-    line1b.insert(QStringLiteral("points"), line1pts);
-    line1b.insert(QStringLiteral("color"), "#77000000");
-    line1b.insert(QStringLiteral("width"), 1);
-
-    QJsonObject p3;
-    p3.insert(QStringLiteral("lat"), topLeft.latitude());
-    p3.insert(QStringLiteral("lng"), (topLeft.longitude() + bottomRight.longitude()) / 2);
-    QJsonObject p4;
-    p4.insert(QStringLiteral("lat"), bottomRight.latitude());
-    p4.insert(QStringLiteral("lng"), (topLeft.longitude() + bottomRight.longitude()) / 2);
-    QJsonArray line2pts;
-    line2pts.push_back(p3);
-    line2pts.push_back(p4);
-
-    QJsonObject line2a;
-    line2a.insert(QStringLiteral("points"), line2pts);
-    line2a.insert(QStringLiteral("color"), "#55ffffff");
-    line2a.insert(QStringLiteral("width"), 3);
-    QJsonObject line2b;
-    line2b.insert(QStringLiteral("points"), line2pts);
-    line2b.insert(QStringLiteral("color"), "#77000000");
-    line2b.insert(QStringLiteral("width"), 1);
-
-    QJsonArray lines;
-    lines.push_back(line1a);
-    lines.push_back(line1b);
-    lines.push_back(line2a);
-    lines.push_back(line2b);
-
-    _mapGridQML->setProperty("polylines", QVariant(lines));
 }
 
 //-----------------------------------------------------------------------------
