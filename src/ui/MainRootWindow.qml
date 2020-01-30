@@ -207,7 +207,7 @@ ApplicationWindow {
             dlgLoader.source = "QGCViewDialogContainer.qml"
         }
         onClosed: {
-            console.log("View switch ok")
+            //console.log("View switch ok")
             mainWindow.popPreventViewSwitch()
             dlgLoader.source = ""
         }
