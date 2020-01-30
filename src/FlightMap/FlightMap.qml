@@ -78,7 +78,10 @@ Map {
     onGcsPositionChanged: {
         if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
             firstGCSPositionReceived = true
-            center = gcsPosition
+            //-- Only center on gsc if we have no vehicle (and we are supposed to do so)
+            var activeVehicleCoordinate = activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
+            if(QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue || !activeVehicleCoordinate.isValid)
+                center = gcsPosition
         }
     }
 
