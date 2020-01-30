@@ -30,6 +30,8 @@ FlightMap {
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
+    zoomLevel:                  QGroundControl.flightMapZoom
+    center:                     QGroundControl.flightMapPosition
 
     property alias  scaleState: mapScale.state
 
@@ -52,6 +54,7 @@ FlightMap {
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       mainIsMap ? false : true
+    property bool   _pipping:                   false
 
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
@@ -63,11 +66,41 @@ FlightMap {
         }
     }
 
+    function pipIn() {
+        if(QGroundControl.flightMapZoom > 3) {
+            _pipping = true;
+            zoomLevel = QGroundControl.flightMapZoom - 3
+            _pipping = false;
+        }
+    }
+
+    function pipOut() {
+        _pipping = true;
+        zoomLevel = QGroundControl.flightMapZoom
+        _pipping = false;
+    }
+
+    function adjustMapSize() {
+        if(mainIsMap)
+            pipOut()
+        else
+            pipIn()
+    }
+
     // Track last known map position and zoom from Fly view in settings
 
+    onVisibleChanged: {
+        if(visible) {
+            adjustMapSize()
+            center    = QGroundControl.flightMapPosition
+        }
+    }
+
     onZoomLevelChanged: {
-        QGroundControl.flightMapZoom = zoomLevel
-        updateAirspace(false)
+        if(!_pipping) {
+            QGroundControl.flightMapZoom = zoomLevel
+            updateAirspace(false)
+        }
     }
     onCenterChanged: {
         QGroundControl.flightMapPosition = center

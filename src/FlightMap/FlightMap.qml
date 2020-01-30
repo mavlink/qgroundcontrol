@@ -25,8 +25,6 @@ import QGroundControl.QGCPositionManager    1.0
 Map {
     id: _map
 
-    zoomLevel:                  QGroundControl.flightMapZoom
-    center:                     QGroundControl.flightMapPosition
     //-- Qt 5.9 has rotation gesture enabled by default. Here we limit the possible gestures.
     gesture.acceptedGestures:   MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
     gesture.flickDeceleration:  3000
@@ -81,7 +79,6 @@ Map {
         if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
             firstGCSPositionReceived = true
             center = gcsPosition
-            zoomLevel = QGroundControl.flightMapInitialZoom
         }
     }
 
