@@ -49,7 +49,6 @@ Item {
     property var    _rallyPointController:          _planController.rallyPointController
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
-    property real   _savedZoomLevel:                0
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
@@ -75,25 +74,10 @@ Item {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
-            //-- Save/Restore Map Zoom Level
-            if(_savedZoomLevel != 0) {
-                if(mainWindow.flightDisplayMap) {
-                    mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel
-                }
-            } else {
-                if(mainWindow.flightDisplayMap) {
-                    _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                }
-            }
         } else {
             //-- Adjust Margins
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
-            //-- Set Map Zoom Level
-            if(mainWindow.flightDisplayMap) {
-                _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
-            }
         }
     }
 
@@ -335,6 +319,7 @@ Item {
                 scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
                 Component.onCompleted: {
                     mainWindow.flightDisplayMap = _fMap
+                    _fMap.adjustMapSize()
                 }
             }
         }
@@ -367,11 +352,11 @@ Item {
                     name:   "pipMode"
                     PropertyChanges {
                         target:             _flightVideo
-                        anchors.margins:    _toolsMargin
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
@@ -381,8 +366,8 @@ Item {
                         anchors.margins:    0
                     }
                     PropertyChanges {
-                        target:     _flightVideoPipControl
-                        inPopup:    false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
@@ -390,25 +375,25 @@ Item {
                     StateChangeScript {
                         script: {
                             // Stop video, restart it again with Timer
-                            // Avoiding crashs if ParentChange is not yet done
+                            // Avoiding crashes if ParentChange is not yet done
                             QGroundControl.videoManager.stopVideo()
                             videoPopUpTimer.running = true
                         }
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: true
+                        target:             _flightVideoPipControl
+                        inPopup:            true
                     }
                 },
                 State {
                     name: "popup-finished"
                     ParentChange {
-                        target: _flightVideo
-                        parent: videoItem
-                        x:      0
-                        y:      0
-                        width:  videoItem.width
-                        height: videoItem.height
+                        target:             _flightVideo
+                        parent:             videoItem
+                        x:                  0
+                        y:                  0
+                        width:              videoItem.width
+                        height:             videoItem.height
                     }
                 },
                 State {
@@ -420,12 +405,12 @@ Item {
                         }
                     }
                     ParentChange {
-                        target: _flightVideo
-                        parent: _mapAndVideo
+                        target:             _flightVideo
+                        parent:             _mapAndVideo
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:             false
                     }
                 }
             ]
@@ -459,6 +444,7 @@ Item {
             onActivated: {
                 mainIsMap = !mainIsMap
                 setStates()
+                _fMap.adjustMapSize()
             }
             onHideIt: {
                 setPipVisibility(!state)
