@@ -1720,17 +1720,17 @@ Sets the number of standard deviations used by the innovation consistency test</
       <long_desc>If set to true the observation noise is set from the parameters directly, if set to false the measurement noise is taken from the vision message and the parameter are used as a lower bound.</long_desc>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_X" type="FLOAT">
-      <short_desc>X position of VI sensor focal point in body frame</short_desc>
+      <short_desc>X position of VI sensor focal point in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_Y" type="FLOAT">
-      <short_desc>Y position of VI sensor focal point in body frame</short_desc>
+      <short_desc>Y position of VI sensor focal point in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_Z" type="FLOAT">
-      <short_desc>Z position of VI sensor focal point in body frame</short_desc>
+      <short_desc>Z position of VI sensor focal point in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -1799,17 +1799,17 @@ Sets the number of standard deviations used by the innovation consistency test</
       </bitmask>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_X" type="FLOAT">
-      <short_desc>X position of GPS antenna in body frame</short_desc>
+      <short_desc>X position of GPS antenna in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_Y" type="FLOAT">
-      <short_desc>Y position of GPS antenna in body frame</short_desc>
+      <short_desc>Y position of GPS antenna in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_Z" type="FLOAT">
-      <short_desc>Z position of GPS antenna in body frame</short_desc>
+      <short_desc>Z position of GPS antenna in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -1896,17 +1896,17 @@ Sets the number of standard deviations used by the innovation consistency test</
       </values>
     </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_X" type="FLOAT">
-      <short_desc>X position of IMU in body frame</short_desc>
+      <short_desc>X position of IMU in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_Y" type="FLOAT">
-      <short_desc>Y position of IMU in body frame</short_desc>
+      <short_desc>Y position of IMU in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_Z" type="FLOAT">
-      <short_desc>Z position of IMU in body frame</short_desc>
+      <short_desc>Z position of IMU in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -2094,17 +2094,17 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_X" type="FLOAT">
-      <short_desc>X position of optical flow focal point in body frame</short_desc>
+      <short_desc>X position of optical flow focal point in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_Y" type="FLOAT">
-      <short_desc>Y position of optical flow focal point in body frame</short_desc>
+      <short_desc>Y position of optical flow focal point in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_Z" type="FLOAT">
-      <short_desc>Z position of optical flow focal point in body frame</short_desc>
+      <short_desc>Z position of optical flow focal point in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -2264,17 +2264,17 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_X" type="FLOAT">
-      <short_desc>X position of range finder origin in body frame</short_desc>
+      <short_desc>X position of range finder origin in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_Y" type="FLOAT">
-      <short_desc>Y position of range finder origin in body frame</short_desc>
+      <short_desc>Y position of range finder origin in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_Z" type="FLOAT">
-      <short_desc>Z position of range finder origin in body frame</short_desc>
+      <short_desc>Z position of range finder origin in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
