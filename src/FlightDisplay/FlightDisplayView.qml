@@ -367,11 +367,11 @@ Item {
                     name:   "pipMode"
                     PropertyChanges {
                         target:             _flightVideo
-                        anchors.margins:    _toolsMargin
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
@@ -381,8 +381,8 @@ Item {
                         anchors.margins:    0
                     }
                     PropertyChanges {
-                        target:     _flightVideoPipControl
-                        inPopup:    false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
@@ -396,19 +396,19 @@ Item {
                         }
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: true
+                        target:             _flightVideoPipControl
+                        inPopup:            true
                     }
                 },
                 State {
                     name: "popup-finished"
                     ParentChange {
-                        target: _flightVideo
-                        parent: videoItem
-                        x:      0
-                        y:      0
-                        width:  videoItem.width
-                        height: videoItem.height
+                        target:             _flightVideo
+                        parent:             videoItem
+                        x:                  0
+                        y:                  0
+                        width:              videoItem.width
+                        height:             videoItem.height
                     }
                 },
                 State {
@@ -420,12 +420,12 @@ Item {
                         }
                     }
                     ParentChange {
-                        target: _flightVideo
-                        parent: _mapAndVideo
+                        target:             _flightVideo
+                        parent:             _mapAndVideo
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:             false
                     }
                 }
             ]
