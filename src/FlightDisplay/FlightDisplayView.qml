@@ -50,7 +50,6 @@ Item {
     property var    _rallyPointController:          _planController.rallyPointController
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
-    property real   _savedZoomLevel:                0
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
@@ -77,25 +76,10 @@ Item {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
-            //-- Save/Restore Map Zoom Level
-            if(_savedZoomLevel != 0) {
-                if(mainWindow.flightDisplayMap) {
-                    mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel
-                }
-            } else {
-                if(mainWindow.flightDisplayMap) {
-                    _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                }
-            }
         } else {
             //-- Adjust Margins
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
-            //-- Set Map Zoom Level
-            if(mainWindow.flightDisplayMap) {
-                _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
-            }
         }
     }
 
@@ -370,6 +354,7 @@ Item {
                 scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
                 Component.onCompleted: {
                     mainWindow.flightDisplayMap = _fMap
+                    _fMap.adjustMapSize()
                 }
             }
         }
@@ -494,6 +479,7 @@ Item {
             onActivated: {
                 mainIsMap = !mainIsMap
                 setStates()
+                _fMap.adjustMapSize()
             }
             onHideIt: {
                 setPipVisibility(!state)

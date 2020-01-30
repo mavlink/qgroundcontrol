@@ -105,8 +105,12 @@ Item {
     }
 
     onVisibleChanged: {
-        if (visible && !_planMasterController.containsItems) {
-            toolStrip.simulateClick(toolStrip.fileButtonIndex)
+        if(visible) {
+            editorMap.zoomLevel = QGroundControl.flightMapZoom
+            editorMap.center    = QGroundControl.flightMapPosition
+            if (!_planMasterController.containsItems) {
+                toolStrip.simulateClick(toolStrip.fileButtonIndex)
+            }
         }
     }
 
@@ -367,28 +371,28 @@ Item {
             allowVehicleLocationCenter: true
             planView:                   true
 
+            zoomLevel:                  QGroundControl.flightMapZoom
+            center:                     QGroundControl.flightMapPosition
+
             // This is the center rectangle of the map which is not obscured by tools
             property rect centerViewport:   Qt.rect(_leftToolWidth + _margin, _toolsMargin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), mapScale.y - _margin - _toolsMargin)
 
             property real _leftToolWidth:       toolStrip.x + toolStrip.width
             property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
 
-            readonly property real animationDuration: 500
-
             // Initial map position duplicates Fly view position
             Component.onCompleted: editorMap.center = QGroundControl.flightMapPosition
 
-            Behavior on zoomLevel {
-                NumberAnimation {
-                    duration:       editorMap.animationDuration
-                    easing.type:    Easing.InOutQuad
-                }
-            }
-
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
-            onZoomLevelChanged: updateAirspace(false)
-            onCenterChanged:    updateAirspace(false)
+            onZoomLevelChanged: {
+                QGroundControl.flightMapZoom = zoomLevel
+                updateAirspace(false)
+            }
+            onCenterChanged: {
+                QGroundControl.flightMapPosition = center
+                updateAirspace(false)
+            }
 
             MouseArea {
                 anchors.fill: parent
