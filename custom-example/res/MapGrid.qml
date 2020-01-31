@@ -63,15 +63,21 @@ Item {
         if (centerViewport) {
             var rect = Qt.rect(centerViewport.x, centerViewport.y, centerViewport.width, centerViewport.height)
             var topLeftCoord = mapControl.toCoordinate(Qt.point(rect.x, rect.y), false /* clipToViewPort */)
+            var topRightCoord = mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y), false /* clipToViewPort */)
+            var bottomLeftCoord = mapControl.toCoordinate(Qt.point(rect.x, rect.y + rect.height), false /* clipToViewPort */)
             var bottomRightCoord = mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height), false /* clipToViewPort */)
             if (mapGridObject) {
-                mapGridObject.geometryChanged(mapControl.zoomLevel, topLeftCoord, bottomRightCoord)
+                mapGridObject.geometryChanged(mapControl.zoomLevel, topLeftCoord, topRightCoord, bottomLeftCoord, bottomRightCoord)
             }
             addVisuals()
         }
     }
 
     function addVisuals() {
+        if (!values || !values.hasOwnProperty("lines")) {
+            return;
+        }
+
         removeVisuals()
 
         // Put other elements on top of the grid
@@ -79,11 +85,11 @@ Item {
              mapControl.mapItems[n].z++;
         }
 
-        var len = values.length;
-        for (var i = 0; i < len; i++) {
+//        console.info("MapGrid.qml - adding lines: " + values.lines.length)
+        for (var i = 0; i < values.lines.length; i++) {
             var pc = polylineComponent.createObject(mapControl)
             if (pc) {
-                var pl = values[i]
+                var pl = values.lines[i]
                 pc.line.width = pl.width
                 pc.line.color = pl.color
                 for (var j = 0; j < pl.points.length; j++) {

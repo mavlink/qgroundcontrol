@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #include "MapGrid.h"
-#include <QLoggingCategory>
 
 //-----------------------------------------------------------------------------
 MapGrid::MapGrid(QObject* mapGridQML)
@@ -28,27 +27,29 @@ MapGrid::MapGrid(QObject* mapGridQML)
 
 //-----------------------------------------------------------------------------
 void
-MapGrid::updateValues(QVariant values)
+MapGrid::updateValues(const QVariant& values)
 {
     _calculationRunning = false;
     _mapGridQML->setProperty("values", values);
     if (_calculationPending) {
         _calculationPending = false;
-        geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingBottomRight);
+        geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingTopRight, _pendingBottomLeft, _pendingBottomRight);
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-MapGrid::geometryChanged(double zoomLevel, QGeoCoordinate topLeft, QGeoCoordinate bottomRight)
+MapGrid::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight)
 {
     if (!_calculationRunning) {
         _calculationRunning = true;
-        emit geometryChangedSignal(zoomLevel, topLeft, bottomRight);
+        emit geometryChangedSignal(zoomLevel, topLeft, topRight, bottomLeft, bottomRight);
     } else {
         _calculationPending = true;
         _pendingZoomLevel = zoomLevel;
         _pendingTopLeft = topLeft;
+        _pendingTopRight = topRight;
+        _pendingBottomLeft = bottomLeft;
         _pendingBottomRight = bottomRight;
     }
 }
