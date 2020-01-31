@@ -263,11 +263,15 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
     QString mgrsPos = convertGeoToMGRS(pos);
     QString label = zoneLabel(mgrsPos);
 
+    if (_zoneMap.count() > 1000) {
+        // Clear cache to reduce memory footprint
+        _zoneMap.clear();
+    }
+
     std::shared_ptr<MGRSZone> tile = _zoneMap.value(label);
     if (!tile) {
         tile = std::shared_ptr<MGRSZone>(new MGRSZone(label));
         _zoneMap.insert(label, tile);
-        qCritical() << "Map size: " << _zoneMap.count();
     }
 
     if (tile->valid && !tile->visited && pos.latitude() < 84 && pos.latitude() > -80 &&
