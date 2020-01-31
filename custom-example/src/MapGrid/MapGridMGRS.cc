@@ -101,44 +101,32 @@ MapGridMGRS::lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& 
 }
 
 //-----------------------------------------------------------------------------
-bool
-MapGridMGRS::_zoomLevelCrossed(double newZoomLevel, double prevZoomLevel)
-{
-    return (newZoomLevel > maxZoneZoomLevel && prevZoomLevel < maxZoneZoomLevel) ||
-           (newZoomLevel < maxZoneZoomLevel && prevZoomLevel > maxZoneZoomLevel) ||
-            newZoomLevel > leve3ZoomLevel;
-}
-
-//-----------------------------------------------------------------------------
 void
 MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
                              const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
                              int viewportWidth, int viewportHeight)
 {
-    if (!topLeft.isValid() || !bottomRight.isValid()) {
+    if (topLeft.isValid() && bottomRight.isValid()) {
+        _zoomLevel = zoomLevel;
+        qCritical() << "Zoom: " << zoomLevel << "Viewport: " << viewportWidth << " ; " << viewportHeight;
+
+        qreal dist = topLeft.distanceTo(bottomRight) / 2;
+        qreal azim = topLeft.azimuthTo(bottomRight);
+        _currentMGRSRect.setTopLeft(topLeft.atDistanceAndAzimuth(dist, azim + 180));
+        _currentMGRSRect.setBottomRight(bottomRight.atDistanceAndAzimuth(dist, azim));
+        dist = bottomLeft.distanceTo(topRight) / 2;
+        azim = bottomLeft.azimuthTo(topRight);
+        _currentMGRSRect.setBottomLeft(bottomLeft.atDistanceAndAzimuth(dist, azim + 180));
+        _currentMGRSRect.setTopRight(topRight.atDistanceAndAzimuth(dist, azim));
+
+        double centerLat = (topLeft.latitude() + bottomLeft.latitude()) / 2;
+        QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
+        QGeoCoordinate centerRight = QGeoCoordinate(centerLat, topRight.longitude());
+        _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
+    } else if (_zoomLevel < 3) {
         emit updateValues(QVariant());
         return;
     }
-    if (_currentMGRSRect.contains(topLeft) && _currentMGRSRect.contains(bottomRight) && !_zoomLevelCrossed(zoomLevel, _zoomLevel)) {
-        emit updateValues(QVariant());
-        return;
-    }
-    _zoomLevel = zoomLevel;
-    qCritical() << "Zoom: " << zoomLevel << "Viewport: " << viewportWidth << " ; " << viewportHeight;
-
-    qreal dist = topLeft.distanceTo(bottomRight) / 2;
-    qreal azim = topLeft.azimuthTo(bottomRight);
-    _currentMGRSRect.setTopLeft(topLeft.atDistanceAndAzimuth(dist, azim + 180));
-    _currentMGRSRect.setBottomRight(bottomRight.atDistanceAndAzimuth(dist, azim));
-    dist = bottomLeft.distanceTo(topRight) / 2;
-    azim = bottomLeft.azimuthTo(topRight);
-    _currentMGRSRect.setBottomLeft(bottomLeft.atDistanceAndAzimuth(dist, azim + 180));
-    _currentMGRSRect.setTopRight(topRight.atDistanceAndAzimuth(dist, azim));
-
-    double centerLat = (topLeft.latitude() + bottomLeft.latitude()) / 2;
-    QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
-    QGeoCoordinate centerRight = QGeoCoordinate(centerLat, topRight.longitude());
-    _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
 
     _clear();
     _addLevel1Lines();
@@ -170,17 +158,19 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
 void
 MapGridMGRS::_addLevel1Lines()
 {
-    if (_level1lines.empty()) {
+    if (_level1Hlines.empty()) {
         for (int lat = -80; lat <= 84; lat += (lat < 70) ? 8 : 12) {
             QGeoPath path1;
             path1.addCoordinate(QGeoCoordinate(lat, 0));
             path1.addCoordinate(QGeoCoordinate(lat, 180));
-            _level1lines.push_back(path1);
+            _level1Hlines.push_back(path1);
             QGeoPath path2;
-            path2.addCoordinate(QGeoCoordinate(lat, 0));
             path2.addCoordinate(QGeoCoordinate(lat, -180));
-            _level1lines.push_back(path2);
+            path2.addCoordinate(QGeoCoordinate(lat, 0));
+            _level1Hlines.push_back(path2);
         }
+    }
+    if (_level1Vlines.empty()) {
         for (int lng = -180; lng <= 180; lng += 6) {
             QGeoPath path;
             if (lng == 6) {
@@ -190,11 +180,11 @@ MapGridMGRS::_addLevel1Lines()
                 QGeoPath path2;
                 path2.addCoordinate(QGeoCoordinate(56, lng - 3));
                 path2.addCoordinate(QGeoCoordinate(64, lng - 3));
-                _level1lines.push_back(path2);
+                _level1Vlines.push_back(path2);
                 QGeoPath path3;
                 path3.addCoordinate(QGeoCoordinate(64, lng));
                 path3.addCoordinate(QGeoCoordinate(72, lng));
-                _level1lines.push_back(path3);
+                _level1Vlines.push_back(path3);
             } else if (lng >= 12 && lng <= 36 ) {
                 // Svalbard anomaly
                 path.addCoordinate(QGeoCoordinate(-80, lng));
@@ -203,20 +193,27 @@ MapGridMGRS::_addLevel1Lines()
                 path.addCoordinate(QGeoCoordinate(-80, lng));
                 path.addCoordinate(QGeoCoordinate(84, lng));
             }
-            _level1lines.push_back(path);
+            _level1Vlines.push_back(path);
         }
         for (int lng = 9; lng <= 33; lng += 12) {
             // Svalbard anomaly
             QGeoPath path;
             path.addCoordinate(QGeoCoordinate(72, lng));
             path.addCoordinate(QGeoCoordinate(84, lng));
-            _level1lines.push_back(path);
+            _level1Vlines.push_back(path);
         }
     }
 
-    for (int i = 0; i < _level1lines.count(); i++) {
-        if (_zoomLevel < 4 || lineIntersectsRect(_level1lines[i].coordinateAt(0), _level1lines[i].coordinateAt(1), _currentMGRSRect)) {
-            _level1Paths.push_back(_level1lines[i]);
+    for (int i = 0; i < _level1Hlines.count(); i++) {
+        double lat = _level1Hlines[i].coordinateAt(0).latitude();
+        if (_zoomLevel < 6 || (lat > _currentMGRSRect.bottomLeft().latitude() && lat < _currentMGRSRect.topLeft().latitude())) {
+            _level1Paths.push_back(_level1Hlines[i]);
+        }
+    }
+    for (int i = 0; i < _level1Vlines.count(); i++) {
+        double lng = _level1Vlines[i].coordinateAt(0).longitude();
+        if (_zoomLevel < 6 || (lng > _currentMGRSRect.bottomLeft().longitude() && lng < _currentMGRSRect.bottomRight().longitude())) {
+            _level1Paths.push_back(_level1Vlines[i]);
         }
     }
 }

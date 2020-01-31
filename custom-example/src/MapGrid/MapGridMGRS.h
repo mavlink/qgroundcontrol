@@ -106,10 +106,11 @@ private:
     const QString level3LabelBackgroundColor = "#44FFFFFF";
 
     QGeoRectangle _currentMGRSRect;
-    double _zoomLevel;
+    double _zoomLevel = 0;
     double _minDistanceBetweenLines = 0;
     QMap<QString, std::shared_ptr<MGRSZone>> _zoneMap;
-    QList<QGeoPath> _level1lines;
+    QList<QGeoPath> _level1Hlines;
+    QList<QGeoPath> _level1Vlines;
     QList<MGRSLabel> _level1labels;
     QList<QGeoPath> _level1Paths;
     QList<QGeoPath> _level2Paths;
@@ -117,8 +118,6 @@ private:
     QList<MGRSLabel> _mgrsLabels;
 
     void _clear();
-
-    bool _zoomLevelCrossed(double newZoomLevel, double prevZoomLevel);
 
     void _addLevel1Lines();
 
