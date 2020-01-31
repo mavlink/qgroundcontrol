@@ -42,8 +42,13 @@ MGRSZone::MGRSZone(QString _label)
     }
     upperRight = upperRight.atDistanceAndAzimuth(sqrt(2), 45);
 
-    rightOverlap = (MapGridMGRS::level1Label(convertGeoToMGRS(bottomRight)) != MapGridMGRS::level1Label(label));
+    QString l1l = MapGridMGRS::level1Label(label);
+    // 31V zones do not overlap on right
+    rightOverlap = (l1l != "31V" && MapGridMGRS::level1Label(convertGeoToMGRS(bottomRight)) != l1l);
 
+    if (!convertMGRSToGeo(label + "5555555555", labelPos)) {
+        valid = false;
+    }
 
     rightSearchPos = searchPos;
     QString searchLabel;
@@ -285,8 +290,7 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
 
         _level2Paths.push_back(path);
 
-        //QGeoCoordinate labelPos((bottomLeft.latitude() + upperLeft.latitude()) / 2, (bottomLeft.longitude() + right.longitude()) / 2);
-        //_mgrsLabels.push_back(MGRSLabel(tile->_label, labelPos, level1LabelForegroundColor, level1LabelBackgroundColor));
+        _mgrsLabels.push_back(MGRSLabel(tile->label, tile->labelPos, level1LabelForegroundColor, level1LabelBackgroundColor));
     }
 }
 

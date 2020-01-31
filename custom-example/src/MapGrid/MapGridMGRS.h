@@ -47,6 +47,7 @@ public:
     QGeoCoordinate upperLeft;
     QGeoCoordinate bottomRight;
     QGeoCoordinate upperRight;
+    QGeoCoordinate labelPos;
     QGeoCoordinate searchPos;
     QGeoCoordinate rightSearchPos;
     QGeoCoordinate leftSearchPos;
