@@ -231,47 +231,55 @@ void
 QGCCameraManager::_cameraTimeout()
 {
     //-- Iterate cameras
-    foreach(QString sCompID, _cameraInfoRequest.keys()) {
-        if(_cameraInfoRequest[sCompID]) {
-            CameraStruct* pInfo = _cameraInfoRequest[sCompID];
-            //-- Have we received a camera info message?
-            if(pInfo->infoReceived) {
-                //-- Has the camera stopped talking to us?
-                if(pInfo->lastHeartbeat.elapsed() > 5000) {
-                    //-- Camera is gone. Remove it.
-                    bool autoStream = false;
-                    QGCCameraControl* pCamera = _findCamera(pInfo->compID);
-                    if(pCamera) {
-                        qWarning() << "Camera" << pCamera->modelName() << "stopped transmitting. Removing from list.";
-                        int idx = _cameraLabels.indexOf(pCamera->modelName());
-                        if(idx >= 0) {
-                            _cameraLabels.removeAt(idx);
-                        }
-                        idx = _cameras.indexOf(pCamera);
-                        if(idx >= 0) {
-                            _cameras.removeAt(idx);
-                        }
-                        autoStream = pCamera->autoStream();
-                        pCamera->deleteLater();
-                        delete pInfo;
-                    }
-                    _cameraInfoRequest.remove(sCompID);
-                    emit cameraLabelsChanged();
-                    //-- If we have another camera, switch current camera.
-                    if(_cameras.count()) {
-                        setCurrentCamera(0);
-                    } else {
-                        //-- We're out of cameras
-                        emit camerasChanged();
-                        if(autoStream) {
-                            emit streamChanged();
-                        }
-                    }
-                    //-- Exit loop.
-                    return;
-                }
+    auto iterator = _cameraInfoRequest.begin();
+    while (iterator != _cameraInfoRequest.end()) {
+        if (!iterator.value()) {
+            ++iterator;
+            continue;
+        }
+
+        CameraStruct* pInfo = iterator.value();
+        //-- Have we received a camera info message?
+        if (!pInfo->infoReceived) {
+            ++iterator;
+            continue;
+        }
+        //-- Has the camera stopped talking to us?
+        if (pInfo->lastHeartbeat.elapsed() <= 5000) {
+            ++iterator;
+            continue;
+        }
+        //-- Camera is gone. Remove it.
+        bool autoStream = false;
+        QGCCameraControl* pCamera = _findCamera(pInfo->compID);
+        if (pCamera) {
+            qWarning() << "Camera" << pCamera->modelName() << "stopped transmitting. Removing from list.";
+            int idx = _cameraLabels.indexOf(pCamera->modelName());
+            if (idx >= 0) {
+                _cameraLabels.removeAt(idx);
+            }
+            idx = _cameras.indexOf(pCamera);
+            if (idx >= 0) {
+                _cameras.removeAt(idx);
+            }
+            autoStream = pCamera->autoStream();
+            pCamera->deleteLater();
+            delete pInfo;
+        }
+        _cameraInfoRequest.erase(iterator);
+        emit cameraLabelsChanged();
+        //-- If we have another camera, switch current camera.
+        if (_cameras.count()) {
+            setCurrentCamera(0);
+        } else {
+            //-- We're out of cameras
+            emit camerasChanged();
+            if (autoStream) {
+                emit streamChanged();
             }
         }
+        //-- Exit loop.
+        return;
     }
 }
 

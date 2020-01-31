@@ -137,14 +137,14 @@ void ParameterManager::_updateProgressBar(void)
     int waitingReadParamNameCount = 0;
     int waitingWriteParamCount = 0;
 
-    for (int compId: _waitingReadParamIndexMap.keys()) {
-        waitingReadParamIndexCount += _waitingReadParamIndexMap[compId].count();
+    for (const auto &item: _waitingReadParamIndexMap) {
+        waitingReadParamIndexCount += item.count();
     }
-    for(int compId: _waitingReadParamNameMap.keys()) {
-        waitingReadParamNameCount += _waitingReadParamNameMap[compId].count();
+    for (const auto &item: _waitingReadParamNameMap) {
+        waitingReadParamNameCount += item.count();
     }
-    for(int compId: _waitingWriteParamNameMap.keys()) {
-        waitingWriteParamCount += _waitingWriteParamNameMap[compId].count();
+    for (const auto &item: _waitingWriteParamNameMap) {
+        waitingWriteParamCount += item.count();
     }
 
     if (waitingReadParamIndexCount == 0) {
@@ -320,22 +320,22 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     int waitingReadParamNameCount = 0;
     int waitingWriteParamNameCount = 0;
 
-    for(int waitingComponentId: _waitingReadParamIndexMap.keys()) {
-        waitingReadParamIndexCount += _waitingReadParamIndexMap[waitingComponentId].count();
+    for (const auto &item: _waitingReadParamIndexMap) {
+        waitingReadParamIndexCount += item.count();
     }
     if (waitingReadParamIndexCount) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingReadParamIndexCount:" << waitingReadParamIndexCount;
     }
 
-    for(int waitingComponentId: _waitingReadParamNameMap.keys()) {
-        waitingReadParamNameCount += _waitingReadParamNameMap[waitingComponentId].count();
+    for (const auto &item: _waitingReadParamNameMap) {
+        waitingReadParamNameCount += item.count();
     }
     if (waitingReadParamNameCount) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingReadParamNameCount:" << waitingReadParamNameCount;
     }
 
-    for(int waitingComponentId: _waitingWriteParamNameMap.keys()) {
-        waitingWriteParamNameCount += _waitingWriteParamNameMap[waitingComponentId].count();
+    for (const auto &item: _waitingWriteParamNameMap) {
+        waitingWriteParamNameCount += item.count();
     }
     if (waitingWriteParamNameCount) {
         qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "waitingWriteParamNameCount:" << waitingWriteParamNameCount;
@@ -356,7 +356,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
             qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
         }
     }
-\
+
     _updateProgressBar();
 
     // Get parameter set version
@@ -505,14 +505,17 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     }
 
     // Reset index wait lists
-    for (int cid: _paramCountMap.keys()) {
+    auto iterator = _paramCountMap.begin();
+    while (iterator != _paramCountMap.end()) {
         // Add/Update all indices to the wait list, parameter index is 0-based
-        if(componentId != MAV_COMP_ID_ALL && componentId != cid)
+        if (componentId != MAV_COMP_ID_ALL && componentId != iterator.key()) {
             continue;
-        for (int waitingIndex = 0; waitingIndex < _paramCountMap[cid]; waitingIndex++) {
-            // This will add a new waiting index if needed and set the retry count for that index to 0
-            _waitingReadParamIndexMap[cid][waitingIndex] = 0;
         }
+        for (int waitingIndex = 0; waitingIndex < iterator.value(); waitingIndex++) {
+            // This will add a new waiting index if needed and set the retry count for that index to 0
+            _waitingReadParamIndexMap[iterator.key()][waitingIndex] = 0;
+        }
+        ++iterator;
     }
 
     _dataMutex.unlock();
@@ -578,10 +581,13 @@ void ParameterManager::refreshParametersPrefix(int componentId, const QString& n
     componentId = _actualComponentId(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParametersPrefix - name:" << namePrefix << ")";
 
-    for(const QString &paramName: _mapParameterName2Variant[componentId].keys()) {
-        if (paramName.startsWith(namePrefix)) {
-            refreshParameter(componentId, paramName);
+    const auto &variantMap = _mapParameterName2Variant[componentId];
+    auto iterator = variantMap.cbegin();
+    while (iterator != variantMap.cend()) {
+        if (iterator.key().startsWith(namePrefix)) {
+            refreshParameter(componentId, iterator.key());
         }
+        ++iterator;
     }
 }
 
@@ -612,13 +618,7 @@ Fact* ParameterManager::getParameter(int componentId, const QString& paramName)
 
 QStringList ParameterManager::parameterNames(int componentId)
 {
-    QStringList names;
-
-    for(const QString &paramName: _mapParameterName2Variant[_actualComponentId(componentId)].keys()) {
-        names << paramName;
-    }
-
-    return names;
+    return _mapParameterName2Variant[_actualComponentId(componentId)].keys();
 }
 
 void ParameterManager::_setupComponentCategoryMap(int componentId)
@@ -636,13 +636,17 @@ void ParameterManager::_setupComponentCategoryMap(int componentId)
     componentCategoryMap.clear();
 
     // Fill parameters into the group determined by param name
-    for (const QString &paramName: _mapParameterName2Variant[componentId].keys()) {
-        int i = paramName.indexOf("_");
+    const auto &variantMap = _mapParameterName2Variant[componentId];
+    auto iterator = variantMap.cbegin();
+    while (iterator != variantMap.cend()) {
+        const auto &key = iterator.key();
+        int i = key.indexOf("_");
         if (i > 0) {
-            componentCategoryMap[category][paramName.left(i)] += paramName;
+            componentCategoryMap[category][key.left(i)] += key;
         } else {
-            componentCategoryMap[category][tr("Misc")] += paramName;
+            componentCategoryMap[category][tr("Misc")] += key;
         }
+        ++iterator;
     }
 
     // Memorize category for component ID
@@ -658,9 +662,12 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
     // Must be able to handle being called multiple times
     defaultComponentCategoryMap.clear();
 
-    for (const QString &paramName: _mapParameterName2Variant[_vehicle->defaultComponentId()].keys()) {
-        Fact* fact = _mapParameterName2Variant[_vehicle->defaultComponentId()][paramName].value<Fact*>();
-        defaultComponentCategoryMap[fact->category()][fact->group()] += paramName;
+    const auto &variantMap = _mapParameterName2Variant[_vehicle->defaultComponentId()];
+    auto iterator = variantMap.cbegin();
+    while (iterator != variantMap.cend()) {
+        Fact* fact = iterator.value().value<Fact*>();
+        defaultComponentCategoryMap[fact->category()][fact->group()] += iterator.key();
+        ++iterator;
     }
 }
 
@@ -702,15 +709,20 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
         qCDebug(ParameterManagerLog) << "Refilling index based batch queue due to received parameter";
     }
 
-    for(int componentId: _waitingReadParamIndexMap.keys()) {
-        if (_waitingReadParamIndexMap[componentId].count()) {
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "_waitingReadParamIndexMap count" << _waitingReadParamIndexMap[componentId].count();
-            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "_waitingReadParamIndexMap" << _waitingReadParamIndexMap[componentId];
+    auto iterator = _waitingReadParamIndexMap.begin();
+    while (iterator != _waitingReadParamIndexMap.end()) {
+        const auto &key = iterator.key();
+        auto &value = iterator.value();
+        if (!iterator.value().isEmpty()) {
+            qCDebug(ParameterManagerLog) << _logVehiclePrefix(key) << "_waitingReadParamIndexMap count" << value.count();
+            qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(key) << "_waitingReadParamIndexMap" << value;
         }
 
-        for(int paramIndex: _waitingReadParamIndexMap[componentId].keys()) {
-            if (_indexBatchQueue.contains(paramIndex)) {
+        auto valueIterator = value.begin();
+        while (valueIterator != value.end()) {
+            if (_indexBatchQueue.contains(valueIterator.key())) {
                 // Don't add more than once
+                ++valueIterator;
                 continue;
             }
 
@@ -718,19 +730,22 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
                 break;
             }
 
-            _waitingReadParamIndexMap[componentId][paramIndex]++;   // Bump retry count
-            if (_disableAllRetries || _waitingReadParamIndexMap[componentId][paramIndex] > _maxInitialLoadRetrySingleParam) {
+            valueIterator.value()++;   // Bump retry count
+            if (_disableAllRetries || valueIterator.value() > _maxInitialLoadRetrySingleParam) {
                 // Give up on this index
-                _failedReadParamIndexMap[componentId] << paramIndex;
-                qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Giving up on (paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
-                _waitingReadParamIndexMap[componentId].remove(paramIndex);
+                _failedReadParamIndexMap[key] << valueIterator.value();
+                qCDebug(ParameterManagerLog) << _logVehiclePrefix(key) << "Giving up on (paramIndex:" << valueIterator.key() << "retryCount:" << valueIterator.value() << ")";
+                valueIterator = value.erase(valueIterator);
             } else {
                 // Retry again
-                _indexBatchQueue.append(paramIndex);
-                _readParameterRaw(componentId, "", paramIndex);
-                qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
+                _indexBatchQueue.append(valueIterator.key());
+                _readParameterRaw(key, "", valueIterator.key());
+                qCDebug(ParameterManagerLog) << _logVehiclePrefix(key) << "Read re-request for (paramIndex:" << valueIterator.key() << "retryCount:" << valueIterator.value() << ")";
+                ++valueIterator;
             }
         }
+
+        ++iterator;
     }
 
     return _indexBatchQueue.count() != 0;
@@ -767,46 +782,58 @@ void ParameterManager::_waitingParamTimeout(void)
     _checkInitialLoadComplete();
 
     if (!paramsRequested) {
-        for(int componentId: _waitingWriteParamNameMap.keys()) {
-            for(const QString &paramName: _waitingWriteParamNameMap[componentId].keys()) {
+        auto iterator = _waitingWriteParamNameMap.begin();
+        while (iterator != _waitingWriteParamNameMap.end()) {
+            auto &value = iterator.value();
+            auto valueIterator = value.begin();
+            while (valueIterator != value.end()) {
                 paramsRequested = true;
-                _waitingWriteParamNameMap[componentId][paramName]++;   // Bump retry count
-                if (_waitingWriteParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
-                    _writeParameterRaw(componentId, paramName, getParameter(componentId, paramName)->rawValue());
-                    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Write resend for (paramName:" << paramName << "retryCount:" << _waitingWriteParamNameMap[componentId][paramName] << ")";
+                valueIterator.value()++;   // Bump retry count
+                if (valueIterator.value() <= _maxReadWriteRetry) {
+                    _writeParameterRaw(iterator.key(), valueIterator.key(), getParameter(iterator.key(), valueIterator.key())->rawValue());
+                    qCDebug(ParameterManagerLog) << _logVehiclePrefix(iterator.key()) << "Write resend for (paramName:" << valueIterator.key() << "retryCount:" << valueIterator.value() << ")";
                     if (++batchCount > maxBatchSize) {
                         goto Out;
+                    } else {
+                        ++valueIterator;
                     }
                 } else {
                     // Exceeded max retry count, notify user
-                    _waitingWriteParamNameMap[componentId].remove(paramName);
-                    QString errorMsg = tr("Parameter write failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(componentId).arg(paramName);
+                    QString errorMsg = tr("Parameter write failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(iterator.key()).arg(valueIterator.value());
+                    valueIterator = value.erase(valueIterator);
                     qCDebug(ParameterManagerLog) << errorMsg;
                     qgcApp()->showMessage(errorMsg);
                 }
             }
+            ++iterator;
         }
     }
 
     if (!paramsRequested) {
-        for(int componentId: _waitingReadParamNameMap.keys()) {
-            for(const QString &paramName: _waitingReadParamNameMap[componentId].keys()) {
+        auto iterator = _waitingReadParamNameMap.begin();
+        while (iterator != _waitingReadParamNameMap.end()) {
+            auto &value = iterator.value();
+            auto valueIterator = value.begin();
+            while (valueIterator != value.end()) {
                 paramsRequested = true;
-                _waitingReadParamNameMap[componentId][paramName]++;   // Bump retry count
-                if (_waitingReadParamNameMap[componentId][paramName] <= _maxReadWriteRetry) {
-                    _readParameterRaw(componentId, paramName, -1);
-                    qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramName:" << paramName << "retryCount:" << _waitingReadParamNameMap[componentId][paramName] << ")";
+                valueIterator.value()++;   // Bump retry count
+                if (valueIterator.value() <= _maxReadWriteRetry) {
+                    _readParameterRaw(iterator.key(), valueIterator.key(), -1);
+                    qCDebug(ParameterManagerLog) << _logVehiclePrefix(iterator.key()) << "Read re-request for (paramName:" << valueIterator.value() << "retryCount:" << valueIterator.value() << ")";
                     if (++batchCount > maxBatchSize) {
                         goto Out;
+                    } else {
+                        ++valueIterator;
                     }
                 } else {
-                    // Exceeded max retry count, notify user
-                    _waitingReadParamNameMap[componentId].remove(paramName);
-                    QString errorMsg = tr("Parameter read failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(componentId).arg(paramName);
-                    qCDebug(ParameterManagerLog) << errorMsg;
-                    qgcApp()->showMessage(errorMsg);
+                  // Exceeded max retry count, notify user
+                  QString errorMsg = tr("Parameter read failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(iterator.key()).arg(valueIterator.key());
+                  valueIterator = value.erase(valueIterator);
+                  qCDebug(ParameterManagerLog) << errorMsg;
+                  qgcApp()->showMessage(errorMsg);
                 }
             }
+            ++iterator;
         }
     }
 
@@ -897,9 +924,12 @@ void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
 {
     CacheMapName2ParamTypeVal cacheMap;
 
-    for(const QString& paramName: _mapParameterName2Variant[componentId].keys()) {
-        const Fact *fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
-        cacheMap[paramName] = ParamTypeVal(fact->type(), fact->rawValue());
+    const auto &parameterNameMap = _mapParameterName2Variant[componentId];
+    auto iterator = parameterNameMap.cbegin();
+    while (iterator != parameterNameMap.cend()) {
+        const Fact *fact = iterator.value().value<Fact*>();
+        cacheMap[iterator.key()] = ParamTypeVal(fact->type(), fact->rawValue());
+        ++iterator;
     }
 
     QFile cacheFile(parameterCacheFile(vehicleId, componentId));
@@ -948,9 +978,11 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
     /* compute the crc of the local cache to check against the remote */
 
     FirmwarePlugin* firmwarePlugin = _vehicle->firmwarePlugin();
-    for (const QString& name: cacheMap.keys()) {
+    auto iterator = cacheMap.cbegin();
+    while (iterator != cacheMap.cend()) {
         bool volatileValue = false;
 
+        const auto &name = iterator.key();
         FactMetaData* metaData = firmwarePlugin->getMetaDataForFact(_parameterMetaData, name, _vehicle->vehicleType());
         if (metaData) {
             volatileValue = metaData->volatileValue();
@@ -960,12 +992,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
             // Does not take part in CRC
             qCDebug(ParameterManagerLog) << "Volatile parameter" << name;
         } else {
-            const ParamTypeVal& paramTypeVal = cacheMap[name];
+            const ParamTypeVal& paramTypeVal = iterator.value();
             const void *vdat = paramTypeVal.second.constData();
             const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
             crc32_value = QGC::crc32((const uint8_t *)qPrintable(name), name.length(),  crc32_value);
             crc32_value = QGC::crc32((const uint8_t *)vdat, FactMetaData::typeToSize(fact_type), crc32_value);
         }
+        ++iterator;
     }
 
     /* if the two param set hashes match, just load from the disk */
@@ -974,11 +1007,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
 
         int count = cacheMap.count();
         int index = 0;
-        for (const QString& name: cacheMap.keys()) {
-            const ParamTypeVal& paramTypeVal = cacheMap[name];
+        auto iterator = cacheMap.cbegin();
+        while (iterator != cacheMap.cend()) {
+            const ParamTypeVal& paramTypeVal = iterator.value();
             const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
             const int mavType = _factTypeToMavType(fact_type);
-            _parameterUpdate(vehicleId, componentId, name, count, index++, mavType, paramTypeVal.second);
+            _parameterUpdate(vehicleId, componentId, iterator.key(), count, index++, mavType, paramTypeVal.second);
+            ++iterator;
         }
 
         // Return the hash value to notify we don't want any more updates
@@ -1026,8 +1061,10 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         if (ParameterManagerDebugCacheFailureLog().isDebugEnabled()) {
             _debugCacheCRC[componentId] = true;
             _debugCacheMap[componentId] = cacheMap;
-            for (const QString& name: cacheMap.keys()) {
-                _debugCacheParamSeen[componentId][name] = false;
+            auto iterator = cacheMap.cbegin();
+            while (iterator != cacheMap.cend()) {
+                _debugCacheParamSeen[componentId][iterator.key()] = false;
+                ++iterator;
             }
             qgcApp()->showMessage(tr("Parameter cache CRC match failed"));
         }
@@ -1107,15 +1144,20 @@ void ParameterManager::writeParametersToStream(QTextStream& stream)
     stream << "#\n";
     stream << "# Vehicle-Id Component-Id Name Value Type\n";
 
-    for (int componentId: _mapParameterName2Variant.keys()) {
-        for (const QString &paramName: _mapParameterName2Variant[componentId].keys()) {
-            Fact* fact = _mapParameterName2Variant[componentId][paramName].value<Fact*>();
+    auto iterator = _mapParameterName2Variant.cbegin();
+    while (iterator != _mapParameterName2Variant.cend()) {
+        const auto &value = iterator.value();
+        auto valueIterator = value.cbegin();
+        while (valueIterator != value.cend()) {
+            Fact* fact = valueIterator.value().value<Fact*>();
             if (fact) {
-                stream << _vehicle->id() << "\t" << componentId << "\t" << paramName << "\t" << fact->rawValueStringFullPrecision() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
+                stream << _vehicle->id() << "\t" << iterator.key() << "\t" << valueIterator.key() << "\t" << fact->rawValueStringFullPrecision() << "\t" << QString("%1").arg(_factTypeToMavType(fact->type())) << "\n";
             } else {
                 qWarning() << "Internal error: missing fact";
             }
+            ++valueIterator;
         }
+        ++iterator;
     }
 
     stream.flush();
@@ -1232,9 +1274,9 @@ void ParameterManager::_addMetaDataToDefaultComponent(void)
     _metaDataAddedToFacts = true;
 
     // Loop over all parameters in default component adding meta data
-    QVariantMap& factMap = _mapParameterName2Variant[_vehicle->defaultComponentId()];
-    for (const QString& key: factMap.keys()) {
-        _vehicle->firmwarePlugin()->addMetaDataToFact(_parameterMetaData, factMap[key].value<Fact*>(), _vehicle->vehicleType());
+    const QVariantMap& factMap = _mapParameterName2Variant[_vehicle->defaultComponentId()];
+    for (const auto& value: factMap) {
+        _vehicle->firmwarePlugin()->addMetaDataToFact(_parameterMetaData, value.value<Fact*>(), _vehicle->vehicleType());
     }
 }
 
@@ -1245,8 +1287,8 @@ void ParameterManager::_checkInitialLoadComplete(void)
         return;
     }
 
-    for (int componentId: _waitingReadParamIndexMap.keys()) {
-        if (_waitingReadParamIndexMap[componentId].count()) {
+    for (const auto &value: _waitingReadParamIndexMap) {
+        if (!value.isEmpty()) {
             // We are still waiting on some parameters, not done yet
             return;
         }
@@ -1261,14 +1303,20 @@ void ParameterManager::_checkInitialLoadComplete(void)
     _initialLoadComplete = true;
 
     // Parameter cache crc failure debugging
-    for (int componentId: _debugCacheParamSeen.keys()) {
-        if (!_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
-            for (const QString& paramName: _debugCacheParamSeen[componentId].keys()) {
-                if (!_debugCacheParamSeen[componentId][paramName]) {
-                    qDebug() << "Parameter in cache but not on vehicle componentId:Name" << componentId << paramName;
+    auto debugCacheIterator = _debugCacheParamSeen.cbegin();
+    while (debugCacheIterator != _debugCacheParamSeen.cend()) {
+        const auto &key = debugCacheIterator.key();
+        if (!_logReplay && _debugCacheCRC.contains(key) && _debugCacheCRC[key]) {
+            const auto &value = debugCacheIterator.value();
+            auto valueIterator = value.cbegin();
+            while (valueIterator != value.cend()) {
+                if (!valueIterator.value()) {
+                    qDebug() << "Parameter in cache but not on vehicle componentId:Name" << key << valueIterator.key();
                 }
+                ++valueIterator;
             }
         }
+        ++debugCacheIterator;
     }
     _debugCacheCRC.clear();
 
@@ -1277,15 +1325,17 @@ void ParameterManager::_checkInitialLoadComplete(void)
     // Check for index based load failures
     QString indexList;
     bool initialLoadFailures = false;
-    for (int componentId: _failedReadParamIndexMap.keys()) {
-        for (int paramIndex: _failedReadParamIndexMap[componentId]) {
+    auto iterator = _failedReadParamIndexMap.cbegin();
+    while (iterator != _failedReadParamIndexMap.cend()) {
+        for (int paramIndex: iterator.value()) {
             if (initialLoadFailures) {
                 indexList += ", ";
             }
-            indexList += QString("%1:%2").arg(componentId).arg(paramIndex);
+            indexList += QString("%1:%2").arg(iterator.key()).arg(paramIndex);
             initialLoadFailures = true;
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Gave up on initial load after max retries (paramIndex:" << paramIndex << ")";
+            qCDebug(ParameterManagerLog) << _logVehiclePrefix(iterator.key()) << "Gave up on initial load after max retries (paramIndex:" << paramIndex << ")";
         }
+        ++iterator;
     }
 
     _missingParameters = false;
@@ -1743,10 +1793,12 @@ QList<int> ParameterManager::componentIds(void)
 
 bool ParameterManager::pendingWrites(void)
 {
-    for (int compId: _waitingWriteParamNameMap.keys()) {
-        if (_waitingWriteParamNameMap[compId].count()) {
+    auto iterator = _waitingWriteParamNameMap.cbegin();
+    while (iterator != _waitingWriteParamNameMap.cend()) {
+        if (!iterator.value().isEmpty()) {
             return true;
         }
+        ++iterator;
     }
 
     return false;

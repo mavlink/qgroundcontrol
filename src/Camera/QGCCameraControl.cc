@@ -835,7 +835,7 @@ QGCCameraControl::_loadCameraDefinitionFile(QByteArray& bytes)
         qCDebug(CameraControlLog) << "Saving camera definition file" << _cacheFile;
         QFile file(_cacheFile);
         if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile).arg(file.errorString());
+            qWarning() << QString("Could not save cache file %1. Error: %2").arg(_cacheFile, file.errorString());
         } else {
             file.write(originalData);
         }
@@ -1132,7 +1132,7 @@ QGCCameraControl::_handleLocalization(QByteArray& bytes)
         QDomNode locale = locales.item(i);
         QString name;
         read_attribute(locale, kName, name);
-        if(name.toLower().startsWith(localeName)) {
+        if(name.startsWith(localeName, Qt::CaseInsensitive)) {
             return _replaceLocaleStrings(locale, bytes);
         }
     }
@@ -1171,12 +1171,14 @@ void
 QGCCameraControl::_requestAllParameters()
 {
     //-- Reset receive list
-    for(const QString& paramName: _paramIO.keys()) {
-        if(_paramIO[paramName]) {
-            _paramIO[paramName]->setParamRequest();
+    auto iterator = _paramIO.constBegin();
+    while (iterator != _paramIO.constEnd()) {
+        if (iterator.value()) {
+            iterator.value()->setParamRequest();
         } else {
-            qCritical() << "QGCParamIO is NULL" << paramName;
+            qCritical() << "QGCParamIO is NULL" << iterator.key();
         }
+        ++iterator;
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_message_t msg;
@@ -1346,8 +1348,8 @@ QGCCameraControl::_processCondition(const QString condition)
 void
 QGCCameraControl::_updateRanges(Fact* pFact)
 {
-    QMap<Fact*, QGCCameraOptionRange*> rangesSet;
-    QMap<Fact*, QString> rangesReset;
+    QHash<Fact*, QGCCameraOptionRange*> rangesSet;
+    QHash<Fact*, QString> rangesReset;
     QStringList changedList;
     QStringList resetList;
     QStringList updates;
@@ -1386,26 +1388,34 @@ QGCCameraControl::_updateRanges(Fact* pFact)
         }
     }
     //-- Update limited range set
-    for (Fact* f: rangesSet.keys()) {
-        f->setEnumInfo(rangesSet[f]->optNames, rangesSet[f]->optVariants);
-        if(!updates.contains(f->name())) {
-            _paramIO[f->name()]->optNames = rangesSet[f]->optNames;
-            _paramIO[f->name()]->optVariants = rangesSet[f]->optVariants;
-            emit f->enumsChanged();
-            qCDebug(CameraControlVerboseLog) << "Limited set of options for:" << f->name() << rangesSet[f]->optNames;;
-            updates << f->name();
+    auto setIterator = rangesSet.constBegin();
+    while (setIterator != rangesSet.constEnd()) {
+        const auto &key = setIterator.key();
+        const auto &value = setIterator.value();
+        key->setEnumInfo(value->optNames, value->optVariants);
+        if(!updates.contains(key->name())) {
+            _paramIO[key->name()]->optNames = value->optNames;
+            _paramIO[key->name()]->optVariants = value->optVariants;
+            emit key->enumsChanged();
+            qCDebug(CameraControlVerboseLog) << "Limited set of options for:" << key->name() << value->optNames;
+            updates << key->name();
         }
+        ++setIterator;
     }
     //-- Restore full range set
-    for (Fact* f: rangesReset.keys()) {
-        f->setEnumInfo(_originalOptNames[rangesReset[f]], _originalOptValues[rangesReset[f]]);
-        if(!updates.contains(f->name())) {
-            _paramIO[f->name()]->optNames = _originalOptNames[rangesReset[f]];
-            _paramIO[f->name()]->optVariants = _originalOptValues[rangesReset[f]];
-            emit f->enumsChanged();
-            qCDebug(CameraControlVerboseLog) << "Restore full set of options for:" << f->name() << _originalOptNames[f->name()];
-            updates << f->name();
+    auto resetIterator = rangesReset.constBegin();
+    while (resetIterator != rangesReset.constEnd()) {
+        const auto &key = resetIterator.key();
+        const auto &value = resetIterator.value();
+        key->setEnumInfo(_originalOptNames[value], _originalOptValues[value]);
+        if(!updates.contains(key->name())) {
+            _paramIO[key->name()]->optNames = _originalOptNames[value];
+            _paramIO[key->name()]->optVariants = _originalOptValues[value];
+            emit key->enumsChanged();
+            qCDebug(CameraControlVerboseLog) << "Restore full set of options for:" << key->name() << _originalOptNames[key->name()];
+            updates << key->name();
         }
+        ++resetIterator;
     }
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
@@ -2029,10 +2039,12 @@ QGCCameraControl::_dataReady(QByteArray data)
 void
 QGCCameraControl::_paramDone()
 {
-    for(const QString& param: _paramIO.keys()) {
-        if(!_paramIO[param]->paramDone()) {
+    auto iterator = _paramIO.constBegin();
+    while (iterator != _paramIO.constEnd()) {
+        if (!iterator.value()->paramDone()) {
             return;
         }
+        ++iterator;
     }
     //-- All parameters loaded (or timed out)
     _paramComplete = true;

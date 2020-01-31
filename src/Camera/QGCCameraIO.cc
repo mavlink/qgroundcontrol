@@ -268,7 +268,7 @@ QGCCameraParamIO::handleParamValue(const mavlink_param_ext_value_t& value)
         _done = true;
         _control->_paramDone();
     }
-    qCDebug(CameraIOLog) << QString("handleParamValue() %1 %2").arg(_fact->name()).arg(_fact->rawValueString());
+    qCDebug(CameraIOLog) << QString("handleParamValue() %1 %2").arg(_fact->name(), _fact->rawValueString());
 }
 
 //-----------------------------------------------------------------------------
