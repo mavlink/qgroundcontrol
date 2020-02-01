@@ -7,13 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Subclass of QComboBox. Mainly used for unit test so you can simulate a user selection
-///             with correct signalling.
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QGCComboBox.h"
 
 QGCComboBox::QGCComboBox(QWidget* parent) :

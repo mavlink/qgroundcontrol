@@ -1,7 +1,22 @@
-#ifndef LOGCOMPRESSOR_H
-#define LOGCOMPRESSOR_H
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
+#pragma once
 
 #include <QThread>
+
+/**
+ * @file
+ *   @brief Declaration of class LogCompressor.
+ *          This class reads in a file containing messages and translates it into a tab-delimited CSV file.
+ *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ */
 
 class LogCompressor : public QThread
 {
@@ -37,5 +52,3 @@ private:
     void _signalCriticalError(const QString& msg);
     
 };
-
-#endif // LOGCOMPRESSOR_H

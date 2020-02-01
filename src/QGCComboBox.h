@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef QGCComboBox_H
-#define QGCComboBox_H
+#pragma once
 
 #include <QComboBox>
 
@@ -28,6 +26,3 @@ public:
 	/// @brief Sets the current index on the combo. Signals activated, as well as currentIndexChanged.
 	void simulateUserSetCurrentIndex(int index);
 };
-
-
-#endif

@@ -35,7 +35,7 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
  *
  * MAVLink is a generic communication protocol for micro air vehicles.
  * for more information, please see the official website.
- * @ref http://pixhawk.ethz.ch/software/mavlink/
+ * @ref https://mavlink.io
  **/
 class MAVLinkProtocol : public QGCTool
 {

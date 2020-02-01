@@ -19,6 +19,7 @@
 
 class QGCApplication;
 
+/// Text to Speech Interface
 class AudioOutput : public QGCTool
 {
     Q_OBJECT
@@ -29,6 +30,7 @@ public:
     static QString  fixTextMessageForAudio  (const QString& string);
 
 public slots:
+    /// Convert string to speech output and say it
     void            say                     (const QString& text);
 
 private slots:

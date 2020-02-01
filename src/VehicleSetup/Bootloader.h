@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 
-/// Bootloader Utility routines. Works with PX4 bootloader and 3DR Radio bootloader.
+/// Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
 class Bootloader : public QObject
 {
     Q_OBJECT

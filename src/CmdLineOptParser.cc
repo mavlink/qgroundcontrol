@@ -9,9 +9,8 @@
 
 
 /// @file
-///     @brief Command line option parser
-///
-///     @author Don Gagne <don@thegagnes.com>
+/// @brief Command line option parser implementation
+/// @author Don Gagne <don@thegagnes.com>
 
 #include "CmdLineOptParser.h"
 

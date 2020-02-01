@@ -10,9 +10,9 @@
 
 /**
  * @file
- *   @brief Implementation of class LogCompressor. This class reads in a file containing messages and translates it into a tab-delimited CSV file.
+ *   @brief Implementation of class LogCompressor.
+ *          This class reads in a file containing messages and translates it into a tab-delimited CSV file.
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
  */
 
 #include "LogCompressor.h"
