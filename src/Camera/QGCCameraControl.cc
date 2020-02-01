@@ -1,7 +1,7 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 

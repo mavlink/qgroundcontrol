@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Streaming Initialization
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include <QtQml>

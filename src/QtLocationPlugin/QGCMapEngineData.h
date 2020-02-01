@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Cache Data
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 

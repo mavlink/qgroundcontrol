@@ -10,7 +10,7 @@
 
 /**
  *  @file
- *  @author Gus Grubba <mavlink@grubba.com>
+ *  @author Gus Grubba <gus@auterion.com>
  */
 
 #ifndef QGC_MAP_URL_ENGINE_H

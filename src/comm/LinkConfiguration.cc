@@ -11,7 +11,7 @@
 /*!
     @file
        @brief Link specific configuration base class
-       @author Gus Grubba <mavlink@grubba.com>
+       @author Gus Grubba <gus@auterion.com>
 */
 
 #include "LinkConfiguration.h"

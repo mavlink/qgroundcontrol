@@ -25,7 +25,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Default Implementation
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class QGCCorePlugin_p
 {

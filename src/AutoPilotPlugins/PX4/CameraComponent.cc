@@ -11,7 +11,7 @@
 /// @file
 ///     @brief  The Camera VehicleComponent is used to setup the camera modes and hardware
 ///             configuration to use it.
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #include "CameraComponent.h"
 #include "PX4AutoPilotPlugin.h"

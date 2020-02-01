@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Item
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include <QtCore/QPointer>

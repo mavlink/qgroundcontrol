@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #if !defined(__mobile__)
 //-- TODO: #include "QGCQFileDialog.h"

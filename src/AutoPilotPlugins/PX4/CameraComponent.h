@@ -16,7 +16,7 @@
 /// @file
 ///     @brief  The Camera VehicleComponent is used to setup the camera modes and hardware
 ///             configuration to use it.
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class CameraComponent : public VehicleComponent
 {

@@ -16,7 +16,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class CustomInstrumentWidget;
 class QGCOptions : public QObject

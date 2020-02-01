@@ -11,7 +11,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl. Settings element.
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 QGCSettings::QGCSettings(QString title, QUrl url, QUrl icon)
     : _title(title)

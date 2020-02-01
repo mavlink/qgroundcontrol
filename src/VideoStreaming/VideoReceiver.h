@@ -10,7 +10,7 @@
 /**
  * @file
  *   @brief QGC Video Receiver
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #pragma once

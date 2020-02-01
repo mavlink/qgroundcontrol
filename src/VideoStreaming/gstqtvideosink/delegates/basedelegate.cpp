@@ -18,7 +18,7 @@
 /**
  * @file
  *   @brief Extracted from QtGstreamer to avoid overly complex dependency
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include "basedelegate.h"
