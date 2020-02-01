@@ -12,7 +12,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 QGCOptions::QGCOptions(QObject* parent)
     : QObject(parent)

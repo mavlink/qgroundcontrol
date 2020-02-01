@@ -11,7 +11,7 @@
 /*!
  * @file
  *   @brief Message Handler
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include "QGCApplication.h"

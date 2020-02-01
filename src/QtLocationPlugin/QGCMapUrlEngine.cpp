@@ -9,7 +9,7 @@
 
 /**
  *  @file
- *  @author Gus Grubba <mavlink@grubba.com>
+ *  @author Gus Grubba <gus@auterion.com>
  *  Original work: The OpenPilot Team, http://www.openpilot.org Copyright (C)
  * 2012.
  */

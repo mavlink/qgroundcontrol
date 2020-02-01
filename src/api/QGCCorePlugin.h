@@ -19,7 +19,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class QGCApplication;
 class QGCOptions;

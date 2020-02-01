@@ -14,7 +14,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl. Settings element.
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class QGCSettings : public QObject
 {

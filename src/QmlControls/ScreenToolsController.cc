@@ -9,7 +9,7 @@
 
 
 /// @file
-/// @author Gus Grubba <mavlink@grubba.com>
+/// @author Gus Grubba <gus@auterion.com>
 
 #include "ScreenToolsController.h"
 #include <QFontDatabase>

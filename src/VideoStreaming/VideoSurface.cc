@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Surface
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #if defined(QGC_GST_STREAMING)

@@ -10,7 +10,7 @@
 
 /// @file
 ///     @brief  ESP8266 WiFi Config Qml Controller
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #include "ESP8266ComponentController.h"
 #include "QGCApplication.h"

@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Attitude Widget
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 import QtQuick 2.3

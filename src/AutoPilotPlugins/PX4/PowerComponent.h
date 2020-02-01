@@ -15,7 +15,7 @@
 
 /// @file
 ///     @brief Battery, propeller and magnetometer settings
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class PowerComponent : public VehicleComponent
 {

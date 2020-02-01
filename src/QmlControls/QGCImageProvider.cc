@@ -12,7 +12,7 @@
 * @file
 *   @brief Image Provider
 *
-*   @author Gus Grubba <mavlink@grubba.com>
+*   @author Gus Grubba <gus@auterion.com>
 *
 */
 

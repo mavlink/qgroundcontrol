@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Surface (Private Interface)
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #pragma once

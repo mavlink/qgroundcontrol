@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief Definition of Bluetooth connection for unmanned vehicles
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 

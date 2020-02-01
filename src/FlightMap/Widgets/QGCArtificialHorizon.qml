@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Artificial Horizon
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 import QtQuick 2.3
