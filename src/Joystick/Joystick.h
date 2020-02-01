@@ -189,11 +189,12 @@ signals:
     void circleCorrectionChanged    (bool circleCorrection);
 
     /// Signal containing new joystick information
-    ///     @param roll         Range is -1:1, negative meaning roll left, positive meaning roll right
-    ///     @param pitch        Range i -1:1, negative meaning pitch down, positive meaning pitch up
-    ///     @param yaw          Range is -1:1, negative meaning yaw left, positive meaning yaw right
-    ///     @param throttle     Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
-    ///     @param mode     See Vehicle::JoystickMode_t enum
+    ///     @param roll:            Range is -1:1, negative meaning roll left, positive meaning roll right
+    ///     @param pitch:           Range i -1:1, negative meaning pitch down, positive meaning pitch up
+    ///     @param yaw:             Range is -1:1, negative meaning yaw left, positive meaning yaw right
+    ///     @param throttle:        Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
+    ///     @param buttons:         Button bitmap
+    ///     @param joystickMmode:   Current joystick mode
     void manualControl              (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
     void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
