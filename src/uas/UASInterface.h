@@ -20,7 +20,6 @@
 #include <QPointer>
 
 #include "LinkInterface.h"
-#include "ProtocolInterface.h"
 
 #ifndef __mobile__
 class FileManager;

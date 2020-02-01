@@ -21,7 +21,6 @@
 #include "LinkInterface.h"
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
-#include "ProtocolInterface.h"
 #include "MAVLinkProtocol.h"
 #if !defined(__mobile__)
 #include "LogReplayLink.h"
