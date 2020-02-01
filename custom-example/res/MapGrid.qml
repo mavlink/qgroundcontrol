@@ -29,7 +29,7 @@ Item {
     property var centerViewport: (mapControl) ? mapControl.centerViewport : null
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
     property var mapGridObject
-    property var polylineComponents: []
+    property var mapComponents: []
     property var values: []
 
     onMapControlChanged: {
@@ -82,7 +82,9 @@ Item {
 
         // Put other elements on top of the grid
         for (var n = 0; n < mapControl.mapItems.length; n++) {
-             mapControl.mapItems[n].z++;
+            if (mapControl.mapItems[n].z < QGroundControl.zOrderMapItems) {
+                mapControl.mapItems[n].z = QGroundControl.zOrderMapItems - 10;
+            }
         }
 
 //        console.info("MapGrid.qml - adding lines: " + values.lines.length)
@@ -96,22 +98,71 @@ Item {
                     pc.addCoordinate(QtPositioning.coordinate(pl.points[j].lat, pl.points[j].lng))
                 }
                 mapControl.addMapItem(pc)
-                polylineComponents.push(pc)
+                mapComponents.push(pc)
+            }
+        }
+
+        if (!values.hasOwnProperty("labels")) {
+            return;
+        }
+
+        for (i = 0; i < values.labels.length; i++) {
+            var lc = labelComponent.createObject(mapControl)
+            if (lc) {
+                var l = values.labels[i]
+                lc.labelText = l.text
+                lc.coordinate = QtPositioning.coordinate(l.lat, l.lng)
+                lc.backgroundColor = l.backgroundColor
+                lc.foregroundColor = l.foregroundColor
+
+                mapControl.addMapItem(lc)
+                mapComponents.push(lc)
             }
         }
     }
 
     function removeVisuals() {
-        for (var i = 0; i < polylineComponents.length; i++) {
-            polylineComponents[i].destroy()
+        for (var i = 0; i < mapComponents.length; i++) {
+            mapComponents[i].destroy()
         }
-        polylineComponents = []
+        mapComponents = []
     }
 
     Component {
         id: polylineComponent
         MapPolyline {
             visible: _root.visible
+        }
+    }
+
+    Component {
+        id: labelComponent
+        MapQuickItem {
+            anchorPoint.x: labelControl.width / 2
+            anchorPoint.y: labelControl.height / 2
+            z: 1
+            visible: _root.visible
+
+            property string labelText
+            property color backgroundColor
+            property color foregroundColor
+
+            sourceItem: Canvas {
+                Rectangle {
+                    id:                     labelControl
+                    anchors.leftMargin:     -4
+                    anchors.rightMargin:    -4
+                    anchors.fill:           labelControlLabel
+                    color:                  backgroundColor
+                }
+
+                QGCLabel {
+                    id:                     labelControlLabel
+                    color:                  foregroundColor
+                    text:                   labelText
+                    visible:                labelControl.visible
+                }
+            }
         }
     }
 }

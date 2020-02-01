@@ -46,7 +46,7 @@ MGRSZone::MGRSZone(QString _label)
     // 31V zones do not overlap on right
     rightOverlap = (l1l != "31V" && MapGridMGRS::level1Label(convertGeoToMGRS(bottomRight)) != l1l);
 
-    if (!convertMGRSToGeo(label + "5555555555", labelPos)) {
+    if (!convertMGRSToGeo(label + "5000050000", labelPos)) {
         valid = false;
     }
 
@@ -132,9 +132,6 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
     _addLevel1Lines();
     _addLevel1Labels();
 
-    QJsonArray labels;
-    _addLabels(labels);
-
     QJsonArray lines;
     _addLines(lines, _level1Paths, level1LineBackgroundColor, level1LineBackgroundWidth);
     _addLines(lines, _level1Paths, level1LineForegroundColor, level1LineForgroundWidth);
@@ -146,6 +143,9 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
         _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth);
         _addLines(lines, _level3Paths, level3LineForegroundColor, level3LineForgroundWidth);
     }
+
+    QJsonArray labels;
+    _addLabels(labels);
 
     QJsonObject values;
     values.insert(QStringLiteral("lines"), lines);
@@ -225,17 +225,33 @@ MapGridMGRS::_addLevel1Labels()
     if (_level1labels.empty()) {
         for (int lng = -180; lng <= 180; lng += 6) {
             for (int lat = -80; lat <= 84; lat += (lat < 70) ? 8 : 12) {
-                QGeoCoordinate pos(lat + 4, lng + 3);
-                QString text = level1Label(convertGeoToMGRS(pos));
-                MGRSLabel label(text, pos, level1LabelForegroundColor, level1LabelBackgroundColor);
-                _level1labels.push_back(label);
+                if ((lat == 72 && (lng == 6 || lng == 18 || lng == 30))) {
+                    continue;
+                }
+                QString text = level1Label(convertGeoToMGRS(QGeoCoordinate(lat, lng)));
+                double llat = lat + 4;
+                double llng = lng + 3;
+                if (text == "31V") {
+                    llng = lng + 1.75;
+                } else if (text == "31X") {
+                    llng = lng + 4.5;
+                } else if (text == "32V") {
+                    llng = lng + 2;
+                } else if (text == "37X") {
+                    llng = lng + 1.5;
+                }
+
+                QGeoCoordinate pos(llat, llng);
+                _level1labels.push_back(MGRSLabel(text, pos, level1LabelForegroundColor, level1LabelBackgroundColor));
             }
         }
     }
 
-    for (int i = 0; i < _level1labels.count(); i++) {
-        if (_zoomLevel > 3 && _currentMGRSRect.contains(_level1labels[i]._pos)) {
-            _mgrsLabels.push_back(_level1labels[i]);
+    if (_zoomLevel > 3 && _zoomLevel <= maxZoneZoomLevel) {
+        for (int i = 0; i < _level1labels.count(); i++) {
+            if (_currentMGRSRect.contains(_level1labels[i]._pos)) {
+                _mgrsLabels.push_back(_level1labels[i]);
+            }
         }
     }
 }
@@ -293,7 +309,9 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
 
         _level2Paths.push_back(path);
 
-        _mgrsLabels.push_back(MGRSLabel(tile->label, tile->labelPos, level1LabelForegroundColor, level1LabelBackgroundColor));
+        if (_zoomLevel > maxZoneZoomLevel && _currentMGRSRect.contains(tile->labelPos)) {
+            _mgrsLabels.push_back(MGRSLabel(tile->label, tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
+        }
 
         _createLevel3Paths(tile);
     }

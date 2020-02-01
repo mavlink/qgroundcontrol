@@ -88,15 +88,15 @@ private:
     const int level1LineForgroundWidth = 3;
     const QString level1LineBackgroundColor = "#55660000";
     const int level1LineBackgroundWidth = 5;
-    const QString level1LabelForegroundColor = "#AAFF0000";
-    const QString level1LabelBackgroundColor = "#44FFFFFF";
+    const QString level1LabelForegroundColor = "#CCFF9999";
+    const QString level1LabelBackgroundColor = "#88660000";
 
     const QString level2LineForegroundColor = "#AAb3FFb3";
     const int level2LineForgroundWidth = 2;
     const QString level2LineBackgroundColor = "#55006600";
     const int level2LineBackgroundWidth = 4;
-    const QString level2LabelForegroundColor = "#AA00FF00";
-    const QString level2LabelBackgroundColor = "#44FFFFFF";
+    const QString level2LabelForegroundColor = "#CCb3FFb3";
+    const QString level2LabelBackgroundColor = "#88006600";
 
     const QString level3LineForegroundColor = "#77FFFFFF";
     const int level3LineForgroundWidth = 1;
