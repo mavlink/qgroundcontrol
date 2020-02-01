@@ -21,7 +21,6 @@
 
 #include "SerialLink.h"
 #include "QGC.h"
-#include "MG.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "QGCSerialPortInfo.h"

@@ -587,7 +587,6 @@ HEADERS += \
     src/JsonHelper.h \
     src/KMLFileHelper.h \
     src/LogCompressor.h \
-    src/MG.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
