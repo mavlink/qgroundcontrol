@@ -211,14 +211,32 @@ QQmlApplicationEngine*
 CustomPlugin::createRootWindow(QObject *parent)
 {
     QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+
     pEngine->addImportPath("qrc:/");
     pEngine->addImportPath("qrc:/qml");
     pEngine->addImportPath("qrc:/Custom/Widgets");
     pEngine->addImportPath("qrc:/Custom/Camera");
     pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+
+    connect(pEngine, &QQmlApplicationEngine::objectCreated, this, &CustomPlugin::_objectCreated);
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
+    if (_mainWindow) {
+        QQmlComponent component(pEngine, QUrl(QStringLiteral("qrc:/custom/MapGrid.qml")));
+        QObject *mapGridQML = component.create();
+        mapGridQML->setProperty("mapControl", _mainWindow->property("flightDisplayMap"));
+        _mapGrid = new MapGrid(mapGridQML);
+    }
+    disconnect(pEngine, &QQmlApplicationEngine::objectCreated, this, &CustomPlugin::_objectCreated);
+
     return pEngine;
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomPlugin::_objectCreated(QObject *object, const QUrl &)
+{
+    _mainWindow = object;
 }
 
 //-----------------------------------------------------------------------------

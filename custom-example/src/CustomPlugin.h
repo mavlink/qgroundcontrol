@@ -16,6 +16,7 @@
 #include "QGCLoggingCategory.h"
 #include "VideoReceiver.h"
 #include "SettingsManager.h"
+#include "MapGrid.h"
 
 #include <QTranslator>
 
@@ -99,6 +100,7 @@ public:
 
 private slots:
     void                    _advancedChanged                (bool advanced);
+    void                    _objectCreated                  (QObject *object, const QUrl &url);
 
 private:
     void
@@ -108,6 +110,8 @@ private:
         const char* iconFile = nullptr);
 
 private:
-    CustomOptions*      _pOptions = nullptr;
-    QVariantList        _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    CustomOptions*       _pOptions = nullptr;
+    QVariantList         _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    QObject*             _mainWindow = nullptr;
+    MapGrid*             _mapGrid = nullptr;
 };
