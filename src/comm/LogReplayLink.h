@@ -47,6 +47,7 @@ private:
     QString             _logFilename;
 };
 
+/// Pseudo link that reads a telemetry log and feeds it into the application.
 class LogReplayLink : public LinkInterface
 {
     Q_OBJECT

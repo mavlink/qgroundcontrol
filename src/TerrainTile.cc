@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 #include "TerrainTile.h"
 #include "JsonHelper.h"
 #include "QGCMapEngine.h"
@@ -7,7 +16,7 @@
 #include <QJsonArray>
 #include <QDataStream>
 
-QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog")
+QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog");
 
 const char*  TerrainTile::_jsonStatusKey        = "status";
 const char*  TerrainTile::_jsonDataKey          = "data";
@@ -42,7 +51,6 @@ TerrainTile::~TerrainTile()
         _data = nullptr;
     }
 }
-
 
 TerrainTile::TerrainTile(QByteArray byteArray)
     : _minElevation(-1.0)

@@ -25,9 +25,8 @@
 class LinkManager;
 
 /**
-* The link interface defines the interface for all links used to communicate
-* with the groundstation application.
-*
+* @brief The link interface defines the interface for all links used to communicate
+* with the ground station application.
 **/
 class LinkInterface : public QThread
 {

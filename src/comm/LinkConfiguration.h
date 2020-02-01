@@ -14,7 +14,6 @@
 class LinkInterface;
 
 /// Interface holding link specific settings.
-
 class LinkConfiguration : public QObject
 {
     Q_OBJECT

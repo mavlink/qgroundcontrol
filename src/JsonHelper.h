@@ -14,8 +14,13 @@
 #include <QVariantList>
 #include <QGeoCoordinate>
 
+/// @file
+/// @author Don Gagne <don@thegagnes.com>
+
 class QmlObjectListModel;
 
+/// @brief Json manipulation helper class.
+/// Primarily used for parsing and processing Fact metadata.
 class JsonHelper
 {
 public:

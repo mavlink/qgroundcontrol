@@ -44,7 +44,7 @@ class UDPConfiguration;
 class AutoConnectSettings;
 class LogReplayLink;
 
-/// Manage communication links
+/// @brief Manage communication links
 ///
 /// The Link Manager organizes the physical Links. It can manage arbitrary
 /// links and takes care of connecting them as well assigning the correct
@@ -54,7 +54,7 @@ class LinkManager : public QGCTool
 {
     Q_OBJECT
 
-    /// Unit Test has access to private constructor/destructor
+    // Unit Test has access to private constructor/destructor
     friend class LinkManagerTest;
 
 public:
@@ -68,7 +68,7 @@ public:
     Q_PROPERTY(QStringList          serialPortStrings   READ serialPortStrings                                                  NOTIFY commPortStringsChanged)
     Q_PROPERTY(QStringList          serialPorts         READ serialPorts                                                        NOTIFY commPortsChanged)
 
-    // Create/Edit Link Configuration
+    /// Create/Edit Link Configuration
     Q_INVOKABLE LinkConfiguration*  createConfiguration         (int type, const QString& name);
     Q_INVOKABLE LinkConfiguration*  startConfigurationEditing   (LinkConfiguration* config);
     Q_INVOKABLE void                cancelConfigurationEditing  (LinkConfiguration* config) { delete config; }

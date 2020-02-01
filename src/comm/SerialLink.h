@@ -43,6 +43,7 @@ Q_DECLARE_METATYPE(QSerialPort::SerialPortError)
 
 Q_DECLARE_LOGGING_CATEGORY(SerialLinkLog)
 
+/// SerialLink configuration
 class SerialConfiguration : public LinkConfiguration
 {
     Q_OBJECT
