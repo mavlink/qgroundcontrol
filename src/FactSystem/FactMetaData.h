@@ -150,10 +150,10 @@ public:
     void setBuiltInTranslator(void);
 
     /// Converts the specified raw value, validating against meta data
-    ///     @param rawValue Value to convert, can be string
-    ///     @param convertOnly true: convert to correct type only, do not validate against meta data
-    ///     @param typeValue Converted value, correctly typed
-    ///     @param errorString Error string if convert fails, values are cooked values since user visible
+    ///     @param rawValue: Value to convert, can be string
+    ///     @param convertOnly: true: convert to correct type only, do not validate against meta data
+    ///     @param typeValue: Converted value, correctly typed
+    ///     @param errorString: Error string if convert fails, values are cooked values since user visible
     /// @returns false: Convert failed, errorString set
     bool convertAndValidateRaw(const QVariant& rawValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
@@ -161,8 +161,8 @@ public:
     bool convertAndValidateCooked(const QVariant& cookedValue, bool convertOnly, QVariant& typedValue, QString& errorString);
 
     /// Converts the specified cooked value and clamps it (max/min)
-    ///     @param cookedValue Value to convert, can be string
-    ///     @param typeValue Converted value, correctly typed and clamped
+    ///     @param cookedValue: Value to convert, can be string
+    ///     @param typeValue: Converted value, correctly typed and clamped
     /// @returns false: Convertion failed
     bool clampValue(const QVariant& cookedValue, QVariant& typedValue);
 

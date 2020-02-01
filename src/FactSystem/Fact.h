@@ -78,8 +78,9 @@ public:
     Q_PROPERTY(bool         writeOnly               READ writeOnly                                          CONSTANT)
     Q_PROPERTY(bool         volatileValue           READ volatileValue                                      CONSTANT)
 
-    /// Convert and validate value
-    ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
+    /// @brief Convert and validate value
+    /// @param cookedValue: Value to convert and validate
+    /// @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& cookedValue, bool convertOnly);
     /// Convert and clamp value
     Q_INVOKABLE QVariant clamp(const QString& cookedValue);
