@@ -21,13 +21,17 @@ class MapGrid : public QObject
 public:
     explicit MapGrid(QObject* mapGridQML);
 
-    Q_INVOKABLE void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight);
+    Q_INVOKABLE void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
+                                     const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
+                                     int viewportWidth, int viewportHeight);
 
 public slots:
     void updateValues(const QVariant& values);
 
 signals:
-    void geometryChangedSignal(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight);
+    void geometryChangedSignal(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
+                               const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
+                               int viewportWidth, int viewportHeight);
 
 private:
     QObject* _mapGridQML = nullptr;
@@ -40,4 +44,6 @@ private:
     QGeoCoordinate _pendingTopRight;
     QGeoCoordinate _pendingBottomLeft;
     QGeoCoordinate _pendingBottomRight;
+    int _pendingViewportWidth;
+    int _pendingViewportHeight;
 };

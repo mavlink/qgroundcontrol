@@ -67,7 +67,7 @@ Item {
             var bottomLeftCoord = mapControl.toCoordinate(Qt.point(rect.x, rect.y + rect.height), false /* clipToViewPort */)
             var bottomRightCoord = mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height), false /* clipToViewPort */)
             if (mapGridObject) {
-                mapGridObject.geometryChanged(mapControl.zoomLevel, topLeftCoord, topRightCoord, bottomLeftCoord, bottomRightCoord)
+                mapGridObject.geometryChanged(mapControl.zoomLevel, topLeftCoord, topRightCoord, bottomLeftCoord, bottomRightCoord, centerViewport.width, centerViewport.height)
             }
             addVisuals()
         }

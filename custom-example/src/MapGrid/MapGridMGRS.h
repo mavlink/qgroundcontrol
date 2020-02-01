@@ -14,9 +14,9 @@
 #include <QGeoPath>
 #include <QGeoRectangle>
 #include <QVariant>
-
 #include <memory>
 
+//=============================================================================
 class MGRSLabel
 {
 public:
@@ -34,6 +34,7 @@ public:
     QString _backgroundColor;
 };
 
+//=============================================================================
 class MGRSZone
 {
 public:
@@ -55,11 +56,12 @@ public:
     QGeoCoordinate bottomSearchPos;
 };
 
+//=============================================================================
 class MapGridMGRS : public QObject
 {
     Q_OBJECT
 public:
-    explicit MapGridMGRS();
+    explicit MapGridMGRS() {};
 
     static bool lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2);
 
@@ -70,13 +72,17 @@ public:
     static QString zoneLabel(QString mgrs) { return mgrs.left(5); }
 
 public slots:
-    void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight);
+    void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
+                         const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
+                         int viewportWidth, int viewportHeight);
 
 signals:
     void updateValues(const QVariant& values);
 
 private:
     const double maxZoneZoomLevel = 7.5;
+    const double leve3ZoomLevel = 10;
+    const int maxNumberOfLinesOnScreen = 10;
 
     const QString level1LineForegroundColor = "#AAFF9999";
     const int level1LineForgroundWidth = 3;
@@ -101,6 +107,7 @@ private:
 
     QGeoRectangle _currentMGRSRect;
     double _zoomLevel;
+    double _minDistanceBetweenLines = 0;
     QMap<QString, std::shared_ptr<MGRSZone>> _zoneMap;
     QList<QGeoPath> _level1lines;
     QList<MGRSLabel> _level1labels;
@@ -119,7 +126,11 @@ private:
 
     void _findZoneBoundaries(const QGeoCoordinate& start);
 
+    void _createLevel3Paths(std::shared_ptr<MGRSZone> &tile);
+
     void _addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QString& color, int width);
 
     void _addLabels(QJsonArray& labels);
 };
+
+//=============================================================================

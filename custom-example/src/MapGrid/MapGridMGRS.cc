@@ -14,7 +14,7 @@
 #include <QLoggingCategory>
 #include <math.h>
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 MGRSZone::MGRSZone(QString _label)
 {
     label = _label;
@@ -67,13 +67,7 @@ MGRSZone::MGRSZone(QString _label)
     bottomSearchPos = searchPos.atDistanceAndAzimuth(100000, 180);
 }
 
-//-----------------------------------------------------------------------------
-MapGridMGRS::MapGridMGRS()
-    : QObject()
-{
-}
-
-//-----------------------------------------------------------------------------
+//=============================================================================
 bool
 MapGridMGRS::lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2)
 {
@@ -110,12 +104,16 @@ MapGridMGRS::lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& 
 bool
 MapGridMGRS::_zoomLevelCrossed(double newZoomLevel, double prevZoomLevel)
 {
-    return (newZoomLevel > maxZoneZoomLevel && prevZoomLevel < maxZoneZoomLevel) || (newZoomLevel < maxZoneZoomLevel && prevZoomLevel > maxZoneZoomLevel);
+    return (newZoomLevel > maxZoneZoomLevel && prevZoomLevel < maxZoneZoomLevel) ||
+           (newZoomLevel < maxZoneZoomLevel && prevZoomLevel > maxZoneZoomLevel) ||
+            newZoomLevel > leve3ZoomLevel;
 }
 
 //-----------------------------------------------------------------------------
 void
-MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight, const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight)
+MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
+                             const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
+                             int viewportWidth, int viewportHeight)
 {
     if (!topLeft.isValid() || !bottomRight.isValid()) {
         emit updateValues(QVariant());
@@ -126,7 +124,7 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
         return;
     }
     _zoomLevel = zoomLevel;
-    qCritical() << "Zoom: " << zoomLevel << "Viewport: " << topLeft << " ; " << bottomRight;
+    qCritical() << "Zoom: " << zoomLevel << "Viewport: " << viewportWidth << " ; " << viewportHeight;
 
     qreal dist = topLeft.distanceTo(bottomRight) / 2;
     qreal azim = topLeft.azimuthTo(bottomRight);
@@ -136,6 +134,11 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
     azim = bottomLeft.azimuthTo(topRight);
     _currentMGRSRect.setBottomLeft(bottomLeft.atDistanceAndAzimuth(dist, azim + 180));
     _currentMGRSRect.setTopRight(topRight.atDistanceAndAzimuth(dist, azim));
+
+    double centerLat = (topLeft.latitude() + bottomLeft.latitude()) / 2;
+    QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
+    QGeoCoordinate centerRight = QGeoCoordinate(centerLat, topRight.longitude());
+    _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
 
     _clear();
     _addLevel1Lines();
@@ -152,11 +155,9 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
         _findZoneBoundaries(QGeoCoordinate((topLeft.latitude() + bottomRight.latitude()) / 2, (topLeft.longitude() + bottomRight.longitude()) / 2));
         _addLines(lines, _level2Paths, level2LineBackgroundColor, level2LineBackgroundWidth);
         _addLines(lines, _level2Paths, level2LineForegroundColor, level2LineForgroundWidth);
-//        _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth);
-//        _addLines(lines, _level3Paths, level3LineForegroundColor, level3LineForgroundWidth);
+        _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth);
+        _addLines(lines, _level3Paths, level3LineForegroundColor, level3LineForgroundWidth);
     }
-
-//    qCritical() << "Sending lines: " << _level1Paths.count() << ", "  << _level2Paths.count();
 
     QJsonObject values;
     values.insert(QStringLiteral("lines"), lines);
@@ -266,6 +267,7 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
     if (!tile) {
         tile = std::shared_ptr<MGRSZone>(new MGRSZone(label));
         _zoneMap.insert(label, tile);
+        qCritical() << "Map size: " << _zoneMap.count();
     }
 
     if (tile->valid && !tile->visited && pos.latitude() < 84 && pos.latitude() > -80 &&
@@ -291,6 +293,86 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
         _level2Paths.push_back(path);
 
         _mgrsLabels.push_back(MGRSLabel(tile->label, tile->labelPos, level1LabelForegroundColor, level1LabelBackgroundColor));
+
+        _createLevel3Paths(tile);
+    }
+}
+//-----------------------------------------------------------------------------
+void
+MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
+{
+    QGeoCoordinate c1;
+    QGeoCoordinate c2;
+    int distanceBetweenLines = 0;
+    const int factors[] = { 500, 1000, 5000, 10000, 50000 };
+
+    for (int i = 0; i <= 4; i ++) {
+        if (!convertMGRSToGeo(tile->label + QString("%1").arg(factors[i], 5, 10, QChar('0')) + "00000", c1)) {
+            return;
+        }
+        if (tile->bottomLeft.distanceTo(c1) > _minDistanceBetweenLines) {
+            distanceBetweenLines = factors[i];
+            break;
+        }
+    }
+    if (distanceBetweenLines <= 0) {
+        return;
+    }
+
+    for (int i = distanceBetweenLines; i < 100000; i += distanceBetweenLines) {
+        // Horizontal lines
+        QString coord = QString("%1").arg(i, 5, 10, QChar('0'));
+        if (!convertMGRSToGeo(tile->label + "00000" + coord, c1)) {
+            return;
+        }
+        bool added = false;
+        QGeoPath path;
+        path.addCoordinate(c1);
+        for (int j = distanceBetweenLines; j <= 100000; j += distanceBetweenLines) {
+            if (j == 100000)
+                j--;
+            QString coordE = QString("%1").arg(j, 5, 10, QChar('0'));
+            if (!convertMGRSToGeo(tile->label + coordE + coord, c2)) {
+                break;
+            }
+            if (lineIntersectsRect(c1, c2, _currentMGRSRect)) {
+                path.addCoordinate(c2);
+                added = true;
+            } else if (added) {
+                break;
+            }
+            c1 = c2;
+        }
+        if (added) {
+            _level3Paths.push_back(path);
+        }
+
+        // Vertical lines
+        if (!convertMGRSToGeo(tile->label + coord + "00000", c1)) {
+            return;
+        }
+
+        added = false;
+        path.clearPath();
+        path.addCoordinate(c1);
+        for (int j = distanceBetweenLines; j <= 100000; j += distanceBetweenLines) {
+            if (j == 100000)
+                j--;
+            QString coordN = QString("%1").arg(j, 5, 10, QChar('0'));
+            if (!convertMGRSToGeo(tile->label + coord + coordN, c2)) {
+                break;
+            }
+            if (lineIntersectsRect(c1, c2, _currentMGRSRect)) {
+                path.addCoordinate(c2);
+                added = true;
+            } else if (added) {
+                break;
+            }
+            c1 = c2;
+        }
+        if (added) {
+            _level3Paths.push_back(path);
+        }
     }
 }
 
