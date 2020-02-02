@@ -124,6 +124,14 @@ Item {
     }
 
     Connections {
+        target:           mainWindow.planMasterControllerPlan.missionController
+        onHotEditChanged: {
+            if(!target.hotEdit)
+                guidedActionsController.allowShowEdit = false;
+        }
+    }
+
+    Connections {
         target:                 mainWindow
         onArmVehicle:           guidedController.confirmAction(guidedController.actionArm)
         onDisarmVehicle: {
@@ -610,7 +618,13 @@ Item {
                     text:       _guidedController.landAbortMessage,
                     action:     _guidedController.actionLandAbort,
                     visible:    _guidedController.showLandAbort
-                }
+                },
+                {
+                    title:      _guidedController.editMissionTitle,
+                    text:       _guidedController.editMissionMessage,
+                    action:     _guidedController.actionEditMission,
+                    visible:    _guidedController.showEditMission
+                 }
             ]
 
             model: [
@@ -660,7 +674,15 @@ Item {
                     buttonVisible:      !_guidedController.showPause,
                     buttonEnabled:      _anyActionAvailable,
                     action:             -1
+                },
+                {
+                    name:               qsTr("Edit"),
+                    iconSource:         "/qmlimages/CogWheel.svg",
+                    buttonVisible:      _guidedController.showEditMission,
+                    buttonEnabled:      true,
+                    action:             _guidedController.actionEditMission
                 }
+
             ]
 
             onClicked: {

@@ -53,6 +53,7 @@ Item {
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
+    property real   _controllerProgressPct:             _planMasterController.missionController.progressPct
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -113,6 +114,21 @@ Item {
             }
         }
     }
+
+    // TODO: Move it to mission controller and make the switch official
+    on_ControllerProgressPctChanged: {
+        if ((Math.abs(_controllerProgressPct - 1) < 0.000001) && _missionController.hotEdit) {
+            if(_missionController.hotEditMissionIndex < _missionController.visualItems.count) {
+                // Home possition is part of the mission!?
+                activeVehicle.setCurrentMissionSequence(Math.max(_missionController.visualItems.get(_missionController.hotEditMissionIndex).sequenceNumber, 1));
+                _missionController.hotEdit = false;
+                _missionController.hotEditConflict = false;
+                _missionController.hotEditMissionIndex = 1;
+            }
+            mainWindow.showFlyView();
+        }
+    }
+
 
     Connections {
         target: _appSettings ? _appSettings.defaultMissionItemAltitude : null

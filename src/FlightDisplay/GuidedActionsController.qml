@@ -52,6 +52,7 @@ Item {
     readonly property string gotoTitle:                     qsTr("Go To Location")
     readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
     readonly property string roiTitle:                      qsTr("ROI")
+    readonly property string editMissionTitle:              qsTr("Edit Mission")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
@@ -72,6 +73,8 @@ Item {
     readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
     readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest.")
+    readonly property string editMissionMessage:                qsTr("Edit mission then continue.")
+
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -95,6 +98,7 @@ Item {
     readonly property int actionVtolTransitionToFwdFlight:  20
     readonly property int actionVtolTransitionToMRFlight:   21
     readonly property int actionROI:                        22
+    readonly property int actionEditMission:                23
 
     property bool showEmergenyStop:     _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
     property bool showArm:              _guidedActionsEnabled && !_vehicleArmed
@@ -103,13 +107,15 @@ Item {
     property bool showTakeoff:          _guidedActionsEnabled && activeVehicle.takeoffVehicleSupported && !_vehicleFlying
     property bool showLand:             _guidedActionsEnabled && activeVehicle.guidedModeSupported && _vehicleArmed && !activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying
-    property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
+    property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            _guidedActionsEnabled && !_hideOrbit && _vehicleFlying && activeVehicle.orbitModeSupported && !_missionActive
     property bool showROI:              _guidedActionsEnabled && !_hideROI && _vehicleFlying && activeVehicle.roiModeSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
+    property bool showEditMission:      _guidedActionsEnabled && activeVehicle && _vehicleArmed && !showPause && _missionAvailable && _currentMissionIndex >= 0 && _currentMissionIndex <= _missionItemCount && allowShowEdit
+    property bool allowShowEdit:        false
 
     // Note: The '_missionItemCount - 2' is a hack to not trigger resume mission when a mission ends with an RTL item
     property bool showResumeMission:    activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < _missionItemCount - 2)
@@ -137,6 +143,7 @@ Item {
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
+    property bool   _:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
 
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
     property bool __guidedModeSupported:    activeVehicle ? activeVehicle.guidedModeSupported : false
@@ -196,6 +203,12 @@ Item {
     onShowRTLChanged: {
         if (_corePlugin.guidedActionsControllerLogging()) {
             console.log("showRTL", showRTL)
+        }
+        _outputState()
+    }
+    onShowEditMissionChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showEditMission", showEditMission)
         }
         _outputState()
     }
@@ -352,6 +365,10 @@ Item {
             confirmDialog.message = roiMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showROI })
             break;
+        case actionEditMission:
+            // Not a vehicle action, we don't need a confirmation
+            executeAction(actionEditMission, actionData, 0, false);
+            return;
         default:
             console.warn("Unknown actionCode", actionCode)
             return
@@ -414,6 +431,7 @@ Item {
         case actionPause:
             activeVehicle.pauseVehicle()
             activeVehicle.guidedModeChangeAltitude(actionAltitudeChange)
+            allowShowEdit = true;
             break
         case actionMVPause:
             rgVehicle = QGroundControl.multiVehicleManager.vehicles
@@ -429,6 +447,13 @@ Item {
             break
         case actionROI:
             activeVehicle.guidedModeROI(actionData)
+            break
+        case actionEditMission:
+            // TODO: move it to MissionController to contain the logic, eventually contain it even more
+            mainWindow.planMasterControllerPlan.saveToFile(QGroundControl.settingsManager.appSettings.missionSavePath + "/hot_edit.plan");
+            mainWindow.planMasterControllerPlan.missionController.hotEdit = true;
+            mainWindow.planMasterControllerPlan.missionController.hotEditMissionIndex = _currentMissionIndex
+            mainWindow.showPlanView();
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

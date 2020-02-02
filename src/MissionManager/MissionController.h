@@ -100,6 +100,9 @@ public:
     Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
     Q_PROPERTY(bool                 isROIBeginCurrentItem           MEMBER _isROIBeginCurrentItem       NOTIFY isROIBeginCurrentItemChanged)
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
+    Q_PROPERTY(bool                 hotEdit                         MEMBER _hotEdit                     NOTIFY hotEditChanged)
+    Q_PROPERTY(bool                 hotEditConflict                 MEMBER _hotEditConflict             NOTIFY hotEditConflictChanged)
+    Q_PROPERTY(int                  hotEditMissionIndex             MEMBER _hotEditMissionIndex         NOTIFY hotEditMissionIndexChanged)
 
     Q_INVOKABLE void removeMissionItem(int viIndex);
 
@@ -188,7 +191,7 @@ public:
     void removeAllFromVehicle       (void) final;
     bool syncInProgress             (void) const final;
     bool dirty                      (void) const final;
-    void setDirty                   (bool dirty) final;
+    Q_INVOKABLE void setDirty       (bool dirty) final;
     bool containsItems              (void) const final;
     void managerVehicleChanged      (Vehicle* managerVehicle) final;
     bool showPlanFromManagerVehicle (void) final;
@@ -270,6 +273,9 @@ signals:
     void isROIBeginCurrentItemChanged       (void);
     void flyThroughCommandsAllowedChanged   (void);
     void previousCoordinateChanged          (void);
+    void hotEditChanged                     (bool);
+    void hotEditConflictChanged             (bool);
+    void hotEditMissionIndexChanged         (int);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
@@ -327,6 +333,7 @@ private:
     bool _isROIBeginItem(SimpleMissionItem* simpleItem);
     bool _isROICancelItem(SimpleMissionItem* simpleItem);
     CoordinateVector* _createCoordinateVectorWorker(VisualItemPair& pair);
+    void _insertNewItem(int visualItemIndex, VisualMissionItem* newItem);
 
 private:
     MissionManager*         _missionManager;
@@ -357,6 +364,9 @@ private:
     bool                    _isROIActive =                  false;
     bool                    _flyThroughCommandsAllowed =    true;
     bool                    _isROIBeginCurrentItem =        false;
+    bool                    _hotEdit =                      false;
+    bool                    _hotEditConflict =              false;
+    int                     _hotEditMissionIndex =          0;
 
     static const char*  _settingsGroup;
 

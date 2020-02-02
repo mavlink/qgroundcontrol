@@ -371,11 +371,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
-    if (visualItemIndex == -1) {
-        _visualItems->append(newItem);
-    } else {
-        _visualItems->insert(visualItemIndex, newItem);
-    }
+    _insertNewItem(visualItemIndex, newItem);
 
     // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
     _recalcAllWithCoordinate(coordinate);
@@ -410,11 +406,7 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
-    if (visualItemIndex == -1) {
-        _visualItems->append(newItem);
-    } else {
-        _visualItems->insert(visualItemIndex, newItem);
-    }
+    _insertNewItem(visualItemIndex, newItem);
 
     _recalcAll();
 
@@ -505,7 +497,7 @@ VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QStri
 
 void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem)
 {
-    int sequenceNumber = _nextSequenceNumber();
+    int sequenceNumber = visualItemIndex == -1 ? _nextSequenceNumber() : visualItemIndex;
     bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
             qobject_cast<CorridorScanComplexItem*>(complexItem) ||
             qobject_cast<StructureScanComplexItem*>(complexItem);
@@ -539,12 +531,7 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     complexItem->setSequenceNumber(sequenceNumber);
     complexItem->setWizardMode(true);
     _initVisualItem(complexItem);
-
-    if (visualItemIndex == -1) {
-        _visualItems->append(complexItem);
-    } else {
-        _visualItems->insert(visualItemIndex, complexItem);
-    }
+    _insertNewItem(visualItemIndex, complexItem);
 
     //-- Keep track of bounding box changes in complex items
     if(!complexItem->isSimpleItem()) {
@@ -599,6 +586,19 @@ void MissionController::removeMissionItem(int viIndex)
 
     _recalcAll();
     setDirty(true);
+
+    // TODO: Move it to a function of its own
+    if(_hotEdit) {
+        if(viIndex < _hotEditMissionIndex) {
+            --_hotEditMissionIndex;
+            emit hotEditMissionIndexChanged(_hotEditMissionIndex);
+        }
+        else if(viIndex == _hotEditMissionIndex) {
+            // Cancel the hot editing. We don't know what user intended to do.
+            _hotEditConflict = true;
+            emit hotEditConflictChanged(_hotEditConflict);
+        }
+    }
 }
 
 void MissionController::removeAll(void)
@@ -2502,4 +2502,19 @@ void MissionController::_complexBoundingBoxChanged()
 bool MissionController::isEmpty(void) const
 {
     return _visualItems->count() <= 1;
+}
+
+void MissionController::_insertNewItem(int visualItemIndex, VisualMissionItem* newItem) {
+    if (visualItemIndex == -1) {
+        _visualItems->append(newItem);
+    }
+    else {
+        _visualItems->insert(visualItemIndex, newItem);
+        // If hoteditign update Next Mission Waypoint index
+        if(_hotEdit && visualItemIndex <= _hotEditMissionIndex) {
+            // Increment the Visual Item index to keep it on the current waypoint
+            ++_hotEditMissionIndex;
+            emit hotEditMissionIndexChanged(_hotEditMissionIndex);
+        }
+    }
 }

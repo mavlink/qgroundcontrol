@@ -59,6 +59,8 @@ Item {
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       "N/A" : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
+    property bool   _hotEditing:                _controllerValid ? _planMasterController.missionController.hotEdit : false
+    property bool   _hotEditValid:              _controllerValid && !_planMasterController.missionController.hotEditConflict
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
@@ -111,7 +113,7 @@ Item {
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
         anchors.left:           parent.left
-        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+        anchors.right:          actionLayer.visible ? actionLayer.left : parent.right
         columnSpacing:          0
         columns:                3
 
@@ -238,25 +240,58 @@ Item {
         }
     }
 
-    QGCButton {
-        id:                     uploadButton
+    Row {
+        id: actionLayer
+
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-        enabled:                !_controllerSyncInProgress
-        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
-        primary:                _controllerDirty
-        onClicked:              _planMasterController.upload()
+        spacing: _margins
 
-        PropertyAnimation on opacity {
-            easing.type:    Easing.OutQuart
-            from:           0.5
-            to:             1
-            loops:          Animation.Infinite
-            running:        _controllerDirty && !_controllerSyncInProgress
-            alwaysRunToEnd: true
-            duration:       2000
+        visible: undoButton.visible || uploadButton.visible
+
+        // TODO: connect it to logic
+        QGCButton {
+            id:                     undoButton
+            text:                   qsTr("Cancel Changes")
+            enabled:                uploadButton.enabled
+            visible:                _controllerDirty && _hotEditing
+            onClicked:              {
+                _planMasterController.loadFromFile(QGroundControl.settingsManager.appSettings.missionSavePath + "/hot_edit.plan");
+                _planMasterController.dirty = false;
+                if(_controllerValid) {
+                    _planMasterController.missionController.hotEditConflict = false;
+                    console.log("Restore conflict: " + _hotEditValid + "; still hot editing? _hotEditing: " + _hotEditing)
+                }
+            }
+        }
+
+        QGCButton {
+            id:                     uploadButton
+            text:                   {
+                if(_controllerDirty) {
+                    if(_hotEditing && _hotEditValid)
+                        return qsTr("Continue Mission");
+                    else
+                        return qsTr("Upload Required");
+                } else {
+                    return qsTr("Upload")
+                }
+            }
+            enabled:                !_controllerSyncInProgress
+            visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
+            primary:                _controllerDirty
+            onClicked:              _planMasterController.upload()
+
+            PropertyAnimation on opacity {
+                easing.type:    Easing.OutQuart
+                from:           0.5
+                to:             1
+                loops:          Animation.Infinite
+                running:        _controllerDirty && !_controllerSyncInProgress && !_hotEditing
+                alwaysRunToEnd: true
+                duration:       2000
+            }
         }
     }
 
