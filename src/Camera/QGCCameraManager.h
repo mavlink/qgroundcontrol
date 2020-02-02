@@ -5,6 +5,10 @@
  *
  */
 
+/// @file
+/// @brief  MAVLink Camera API. Camera Manager.
+/// @author Gus Grubba <gus@auterion.com>
+
 #pragma once
 
 #include "QGCApplication.h"
@@ -20,6 +24,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 class Joystick;
 
 //-----------------------------------------------------------------------------
+/// Camera Manager
 class QGCCameraManager : public QObject
 {
     Q_OBJECT

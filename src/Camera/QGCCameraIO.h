@@ -5,6 +5,10 @@
  *
  */
 
+/// @file
+/// @brief  MAVLink Camera API. Camera parameter handler.
+/// @author Gus Grubba <gus@auterion.com>
+
 #pragma once
 
 #include "QGCApplication.h"
@@ -34,6 +38,7 @@ typedef struct {
 }) param_ext_union_t;
 
 //-----------------------------------------------------------------------------
+/// Camera parameter handler.
 class QGCCameraParamIO : public QObject
 {
 public:

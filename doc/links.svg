@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="60.25 139 567.25007 358.75" width="567.25007" height="358.75">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="55.69 134.44 579.25007 370.75" width="579.25007" height="370.75">
   <defs>
+    <filter id="Shadow" filterUnits="userSpaceOnUse" x="55.69" y="134.44">
+      <feGaussianBlur in="SourceAlpha" result="blur" stdDeviation="2.616"/>
+      <feOffset in="blur" result="offset" dx="1.44" dy="1.44"/>
+      <feFlood flood-color="black" flood-opacity=".5" result="flood"/>
+      <feComposite in="flood" in2="offset" operator="in" result="color"/>
+      <feMerge>
+        <feMergeNode in="color"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
     <linearGradient x1="0" x2="1" id="Gradient" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#eee"/>
       <stop offset="1" stop-color="#afafaf"/>
@@ -35,48 +45,48 @@
     <linearGradient id="Obj_Gradient_7" xl:href="#Gradient_3" gradientTransform="translate(471.00007 389.25) rotate(90) scale(40)"/>
   </defs>
   <metadata> Produced by OmniGraffle 7.12.1 
-    <dc:date>2020-02-01 16:33:59 +0000</dc:date>
+    <dc:date>2020-02-01 16:48:51 +0000</dc:date>
   </metadata>
   <g id="Canvas_1" fill-opacity="1" fill="none" stroke="none" stroke-opacity="1" stroke-dasharray="none">
     <title>Canvas 1</title>
     <g id="Canvas_1: Layer 1">
       <title>Layer 1</title>
-      <g id="Graphic_2">
+      <g id="Graphic_2" filter="url(#Shadow)">
         <path d="M 166.5 139.5 L 328.5 139.5 C 333.47056 139.5 337.5 143.52944 337.5 148.5 L 337.5 220.5 C 337.5 225.47056 333.47056 229.5 328.5 229.5 L 166.5 229.5 C 161.52944 229.5 157.5 225.47056 157.5 220.5 L 157.5 148.5 C 157.5 143.52944 161.52944 139.5 166.5 139.5 Z" fill="url(#Obj_Gradient)"/>
         <path d="M 166.5 139.5 L 328.5 139.5 C 333.47056 139.5 337.5 143.52944 337.5 148.5 L 337.5 220.5 C 337.5 225.47056 333.47056 229.5 328.5 229.5 L 166.5 229.5 C 161.52944 229.5 157.5 225.47056 157.5 220.5 L 157.5 148.5 C 157.5 143.52944 161.52944 139.5 166.5 139.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(162.5 177.5)" fill="black">
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="45.393555" y="11">LinkManager</tspan>
         </text>
       </g>
-      <g id="Graphic_6">
+      <g id="Graphic_6" filter="url(#Shadow)">
         <path d="M 69.75 274.5 L 231.75 274.5 C 236.72056 274.5 240.75 278.52944 240.75 283.5 L 240.75 355.5 C 240.75 360.47056 236.72056 364.5 231.75 364.5 L 69.75 364.5 C 64.77944 364.5 60.75 360.47056 60.75 355.5 L 60.75 283.5 C 60.75 278.52944 64.77944 274.5 69.75 274.5 Z" fill="url(#Obj_Gradient_2)"/>
         <path d="M 69.75 274.5 L 231.75 274.5 C 236.72056 274.5 240.75 278.52944 240.75 283.5 L 240.75 355.5 C 240.75 360.47056 236.72056 364.5 231.75 364.5 L 69.75 364.5 C 64.77944 364.5 60.75 360.47056 60.75 355.5 L 60.75 283.5 C 60.75 278.52944 64.77944 274.5 69.75 274.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(65.75 312.5)" fill="black">
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="23.79004" y="11">LinkConfiguration</tspan>
         </text>
       </g>
-      <g id="Graphic_9">
+      <g id="Graphic_9" filter="url(#Shadow)">
         <path d="M 261 274.5 L 423 274.5 C 427.97056 274.5 432 278.52944 432 283.5 L 432 355.5 C 432 360.47056 427.97056 364.5 423 364.5 L 261 364.5 C 256.02944 364.5 252 360.47056 252 355.5 L 252 283.5 C 252 278.52944 256.02944 274.5 261 274.5 Z" fill="url(#Obj_Gradient_3)"/>
         <path d="M 261 274.5 L 423 274.5 C 427.97056 274.5 432 278.52944 432 283.5 L 432 355.5 C 432 360.47056 427.97056 364.5 423 364.5 L 261 364.5 C 256.02944 364.5 252 360.47056 252 355.5 L 252 283.5 C 252 278.52944 256.02944 274.5 261 274.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(257 312.5)" fill="black">
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="38.192383" y="11">LinkInterface</tspan>
         </text>
       </g>
-      <g id="Graphic_11">
+      <g id="Graphic_11" filter="url(#Shadow)">
         <path d="M 261 396 L 423 396 C 427.97056 396 432 400.02944 432 405 L 432 477 C 432 481.97056 427.97056 486 423 486 L 261 486 C 256.02944 486 252 481.97056 252 477 L 252 405 C 252 400.02944 256.02944 396 261 396 Z" fill="url(#Obj_Gradient_4)"/>
         <path d="M 261 396 L 423 396 C 427.97056 396 432 400.02944 432 405 L 432 477 C 432 481.97056 427.97056 486 423 486 L 261 486 C 256.02944 486 252 481.97056 252 477 L 252 405 C 252 400.02944 256.02944 396 261 396 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(257 434)" fill="black">
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="59.7959" y="11">UDPLink</tspan>
         </text>
       </g>
-      <g id="Graphic_13">
+      <g id="Graphic_13" filter="url(#Shadow)">
         <path d="M 69.75 396 L 231.75 396 C 236.72056 396 240.75 400.02944 240.75 405 L 240.75 477 C 240.75 481.97056 236.72056 486 231.75 486 L 69.75 486 C 64.77944 486 60.75 481.97056 60.75 477 L 60.75 405 C 60.75 400.02944 64.77944 396 69.75 396 Z" fill="url(#Obj_Gradient_5)"/>
         <path d="M 69.75 396 L 231.75 396 C 236.72056 396 240.75 400.02944 240.75 405 L 240.75 477 C 240.75 481.97056 236.72056 486 231.75 486 L 69.75 486 C 64.77944 486 60.75 481.97056 60.75 477 L 60.75 405 C 60.75 400.02944 64.77944 396 69.75 396 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(65.75 434)" fill="black">
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="27.390625" y="11">UDPConfiguration</tspan>
         </text>
       </g>
-      <g id="Graphic_14">
+      <g id="Graphic_14" filter="url(#Shadow)">
         <path d="M 516.00007 384.75 L 618.0001 384.75 C 622.9706 384.75 627.0001 388.77944 627.0001 393.75 L 627.0001 425.25 C 627.0001 430.22056 622.9706 434.25 618.0001 434.25 L 516.00007 434.25 C 511.0295 434.25 507.00007 430.22056 507.00007 425.25 L 507.00007 393.75 C 507.00007 388.77944 511.0295 384.75 516.00007 384.75 Z" fill="#c0ffc0"/>
         <path d="M 516.00007 384.75 L 618.0001 384.75 C 622.9706 384.75 627.0001 388.77944 627.0001 393.75 L 627.0001 425.25 C 627.0001 430.22056 622.9706 434.25 618.0001 434.25 L 516.00007 434.25 C 511.0295 434.25 507.00007 430.22056 507.00007 425.25 L 507.00007 393.75 C 507.00007 388.77944 511.0295 384.75 516.00007 384.75 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(512.00007 395.332)" fill="black">
@@ -84,7 +94,7 @@
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="8.192383" y="25.336">bytesReceived</tspan>
         </text>
       </g>
-      <g id="Graphic_15">
+      <g id="Graphic_15" filter="url(#Shadow)">
         <path d="M 516.00007 447.75 L 618.0001 447.75 C 622.9706 447.75 627.0001 451.77944 627.0001 456.75 L 627.0001 488.25 C 627.0001 493.22056 622.9706 497.25 618.0001 497.25 L 516.00007 497.25 C 511.0295 497.25 507.00007 493.22056 507.00007 488.25 L 507.00007 456.75 C 507.00007 451.77944 511.0295 447.75 516.00007 447.75 Z" fill="#ffc0c0"/>
         <path d="M 516.00007 447.75 L 618.0001 447.75 C 622.9706 447.75 627.0001 451.77944 627.0001 456.75 L 627.0001 488.25 C 627.0001 493.22056 622.9706 497.25 618.0001 497.25 L 516.00007 497.25 C 511.0295 497.25 507.00007 493.22056 507.00007 488.25 L 507.00007 456.75 C 507.00007 451.77944 511.0295 447.75 516.00007 447.75 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
         <text transform="translate(512.00007 458.332)" fill="black">
@@ -92,11 +102,11 @@
           <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="4.591797" y="25.336">writeBytesSafe</tspan>
         </text>
       </g>
-      <g id="Graphic_16">
+      <g id="Graphic_16" filter="url(#Shadow)">
         <path d="M 498.75013 460.44024 L 498.75013 480.44024 L 463.25 480.44024 L 463.25 490.44024 L 443.25 470.44024 L 463.25 450.44024 L 463.25 460.44024 Z" fill="url(#Obj_Gradient_6)"/>
         <path d="M 498.75013 460.44024 L 498.75013 480.44024 L 463.25 480.44024 L 463.25 490.44024 L 443.25 470.44024 L 463.25 450.44024 L 463.25 460.44024 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
-      <g id="Graphic_17">
+      <g id="Graphic_17" filter="url(#Shadow)">
         <path d="M 443.25 419.25 L 443.25 399.25 L 478.7501 399.25 L 478.7501 389.25 L 498.75013 409.25 L 478.7501 429.25 L 478.7501 419.25 Z" fill="url(#Obj_Gradient_7)"/>
         <path d="M 443.25 419.25 L 443.25 399.25 L 478.7501 399.25 L 478.7501 389.25 L 498.75013 409.25 L 478.7501 429.25 L 478.7501 419.25 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
@@ -107,13 +117,13 @@
         <path d="M 247.5 229.5 L 247.5 252 L 342 252 L 342 274.5" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_45">
-        <line x1="150.75" y1="364.5" x2="150.75" y2="396" stroke="#7f8080" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="150.75" y1="364.5" x2="150.75" y2="396" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_46">
-        <line x1="342" y1="364.5" x2="342" y2="396" stroke="#7f8080" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="342" y1="364.5" x2="342" y2="396" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Line_47">
-        <line x1="240.75" y1="441" x2="252" y2="441" stroke="#7f8080" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <line x1="240.75" y1="441" x2="252" y2="441" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
     </g>
   </g>

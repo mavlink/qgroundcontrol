@@ -7,9 +7,10 @@
  *
  ****************************************************************************/
 
+/// @file
+/// @brief  Joystick Manager
 
-#ifndef JoystickManager_H
-#define JoystickManager_H
+#pragma once
 
 #include "QGCLoggingCategory.h"
 #include "Joystick.h"
@@ -20,6 +21,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
+/// Joystick Manager
 class JoystickManager : public QGCTool
 {
     Q_OBJECT
@@ -28,18 +30,20 @@ public:
     JoystickManager(QGCApplication* app, QGCToolbox* toolbox);
     ~JoystickManager();
 
-    /// List of available joysticks
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
     Q_PROPERTY(QStringList  joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
     
-    /// Active joystick
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
     
+    /// List of available joysticks
     QVariantList joysticks();
+    /// List of available joystick names
     QStringList joystickNames(void);
     
+    /// Get active joystick
     Joystick* activeJoystick(void);
+    /// Set active joystick
     void setActiveJoystick(Joystick* joystick);
     
     QString activeJoystickName(void);
@@ -76,5 +80,3 @@ private:
     int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;
 };
-
-#endif
