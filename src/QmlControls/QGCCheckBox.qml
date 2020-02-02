@@ -39,8 +39,8 @@ CheckBox {
             implicitHeight: implicitWidth
             Rectangle {
                 anchors.fill:   parent
-                color:          "white"
-                border.color:   qgcPal.windowShadeDark
+                color:          control.enabled ? "white" : "gray"
+                border.color:   qgcPal.text
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
                 QGCColoredImage {

@@ -2,10 +2,20 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 3.6
+## 4.0
 
-### 3.6.0 - Daily Build
+### 4.0.0 - Daily Build
 
+* Added ROI option during manual flight.
+* Windows: Move builds to 64 bit, Qt 5.12.5
+* Plan: ROI button will switch to Cancel ROI at appropriate times
+* Plan: When ROI is selected the flight path lines which are affected by the ROI will change color
+* ADSB: Added support for connecting to SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump1090 --net' for example.
+* Toolbar: Scrollable left/right on small screens like phones
+* Plan View: New create plan UI for initial plan creation
+* New Corridor editing tools ui. Includes ability to trace polyline by clicking.
+* New Polygon editing tools ui. Includes ability to trace polygon by clicking.
+* ArduCopter/Rover: Follow Me setup page
 * More performant flight path display algorithm. Mobile builds no longer show limited path length.
 * ArduCopter/Rover: Add support for Follow Me
 * ArduPilot: Add Motor Test vehicle setup page
@@ -42,20 +52,26 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.4 - Not yet released
+### 3.5.6 - Not yet released
+
+### 3.5.5 - Stable
+* Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
+* Disable Pause when fixed wing is on landing approach.
+
+### 3.5.4
 * Update windows drivers
 * Add support for FMUK66 flashing/connection
 * Guard against null geometry coming from gstreamer which can cause crashes
 * Add .apj file selection support to custom firmware flash
 
-### 3.5.3 - Stable
+### 3.5.3
 * Change minimum RTK Survey-In limit to 0.01 meters
 * Change Windows driver detection logic
 * Fix crash when clicking on GeoFence polygon vertex
 * PX4: Fix missing ```MC_YAW_FF``` parameter in PID Tuning
 * ArduPilot: Fix parameter file save generating bad characters from git hash
 
-### 3.5.2 - Stable
+### 3.5.2
 * Fix Ubuntu AppImage startup failure
 
 ### 3.5.1

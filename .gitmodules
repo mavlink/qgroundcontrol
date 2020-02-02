@@ -6,6 +6,4 @@
 	url = https://github.com/mavlink/c_library_v2.git
 [submodule "libs/OpenSSL/android_openssl"]
 	path = libs/OpenSSL/android_openssl
-	#url = https://github.com/KDAB/android_openssl.git
-	# TODO: remove after final solution is in place
-	url = https://github.com/stefandunca/android_openssl.git
+	url = https://github.com/Auterion/android_openssl

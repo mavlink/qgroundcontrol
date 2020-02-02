@@ -4,7 +4,7 @@ endif()
 
 if(NOT QT_VERSION)
 	# try Qt 5.12.0 if none specified, last LTS.
-	set(QT_VERSION "5.12.0")
+	set(QT_VERSION "5.12.5")
 endif()
 
 if(DEFINED ENV{QT_MKSPEC})

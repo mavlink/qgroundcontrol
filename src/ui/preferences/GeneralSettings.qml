@@ -39,10 +39,10 @@ Rectangle {
     property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
     property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 28
+    property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 30
     property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 10
-    property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
-    property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
+    property string _mapProvider:               QGroundControl.settingsManager.flightMapSettings.mapProvider.value
+    property string _mapType:                   QGroundControl.settingsManager.flightMapSettings.mapType.value
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
@@ -163,42 +163,99 @@ Rectangle {
                                 QGCLabel {
                                     text:       qsTr("Map Provider")
                                     width:      _labelWidth
-                                    visible:    _mapProvider.visible
                                 }
-                                FactComboBox {
+                                
+                                QGCComboBox {
+                                    id:             mapCombo
+                                    model:          QGroundControl.mapEngineManager.mapProviderList
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   _mapProvider
-                                    indexModel:             false
-                                    visible:                _mapProvider.visible
+                                    onActivated: {
+                                        _mapProvider = textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapProvider.value=textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapType.value=QGroundControl.mapEngineManager.mapTypeList(textAt(index))[0]
+                                    }
+                                    Component.onCompleted: {
+                                        var index = mapCombo.find(_mapProvider)
+                                        if(index < 0) index = 0
+                                        mapCombo.currentIndex = index
+                                    }
                                 }
-
                                 QGCLabel {
                                     text:       qsTr("Map Type")
-                                    visible:    _mapType && _mapType.visible
+                                    width:      _labelWidth
                                 }
-                                FactComboBox {
-                                    id:                     mapTypes
+                                QGCComboBox {
+                                    id:             mapTypeCombo
+                                    model:          QGroundControl.mapEngineManager.mapTypeList(_mapProvider)
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   _mapType
-                                    indexModel:             false
-                                    visible:                _mapType && _mapType.visible
-                                    Connections {
-                                        target: QGroundControl.settingsManager.flightMapSettings
-                                        onMapTypeChanged: {
-                                            mapTypes.model = _mapType.enumStrings
-                                        }
+                                    onActivated: {
+                                        _mapType = textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapType.value=textAt(index)
+                                    }
+                                    Component.onCompleted: {
+                                        var index = mapTypeCombo.find(_mapType)
+                                        if(index < 0) index = 0
+                                        mapTypeCombo.currentIndex = index
                                     }
                                 }
 
                                 QGCLabel {
-                                    text:       qsTr("Stream GCS Position")
-                                    visible:    _followTarget.visible
+                                    text:                   qsTr("Stream GCS Position")
+                                    visible:                _followTarget.visible
                                 }
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   _followTarget
                                     indexModel:             false
                                     visible:                _followTarget.visible
+                                }
+                                QGCLabel {
+                                    text:                           qsTr("UI Scaling")
+                                    visible:                        _appFontPointSize.visible
+                                    Layout.alignment:               Qt.AlignVCenter
+                                }
+                                Item {
+                                    width:                          _comboFieldWidth
+                                    height:                         baseFontEdit.height * 1.5
+                                    visible:                        _appFontPointSize.visible
+                                    Layout.alignment:               Qt.AlignVCenter
+                                    Row {
+                                        spacing:                    ScreenTools.defaultFontPixelWidth
+                                        anchors.verticalCenter:     parent.verticalCenter
+                                        QGCButton {
+                                            width:                  height
+                                            height:                 baseFontEdit.height * 1.5
+                                            text:                   "-"
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            onClicked: {
+                                                if (_appFontPointSize.value > _appFontPointSize.min) {
+                                                    _appFontPointSize.value = _appFontPointSize.value - 1
+                                                }
+                                            }
+                                        }
+                                        QGCLabel {
+                                            id:                     baseFontEdit
+                                            width:                  ScreenTools.defaultFontPixelWidth * 6
+                                            text:                   (QGroundControl.settingsManager.appSettings.appFontPointSize.value / ScreenTools.platformFontPointSize * 100).toFixed(0) + "%"
+                                            horizontalAlignment:    Text.AlignHCenter
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+
+                                        }
+
+                                        QGCButton {
+                                            width:                  height
+                                            height:                 baseFontEdit.height * 1.5
+                                            text:                   "+"
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            onClicked: {
+                                                if (_appFontPointSize.value < _appFontPointSize.max) {
+                                                    _appFontPointSize.value = _appFontPointSize.value + 1
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -209,47 +266,13 @@ Rectangle {
                             anchors.left:       parent.left
                             anchors.right:      parent.right
                             anchors.top:        comboGridItem.bottom
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                             height:             miscCol.height
 
                             ColumnLayout {
                                 id:                         miscCol
                                 anchors.horizontalCenter:   parent.horizontalCenter
                                 spacing:                    _margins
-
-                                RowLayout {
-                                    Layout.fillWidth:   false
-                                    Layout.alignment:   Qt.AlignHCenter
-                                    visible:             _appFontPointSize.visible
-
-                                    QGCLabel {
-                                        text:   qsTr("Font Size:")
-                                    }
-                                    QGCButton {
-                                        Layout.preferredWidth:  height
-                                        Layout.preferredHeight: baseFontEdit.height
-                                        text:                   "-"
-                                        onClicked: {
-                                            if (_appFontPointSize.value > _appFontPointSize.min) {
-                                                _appFontPointSize.value = _appFontPointSize.value - 1
-                                            }
-                                        }
-                                    }
-                                    FactTextField {
-                                        id:                     baseFontEdit
-                                        Layout.preferredWidth:  _valueFieldWidth
-                                        fact:                   QGroundControl.settingsManager.appSettings.appFontPointSize
-                                    }
-                                    QGCButton {
-                                        Layout.preferredWidth:  height
-                                        Layout.preferredHeight: baseFontEdit.height
-                                        text:                   "+"
-                                        onClicked: {
-                                            if (_appFontPointSize.value < _appFontPointSize.max) {
-                                                _appFontPointSize.value = _appFontPointSize.value + 1
-                                            }
-                                        }
-                                    }
-                                }
 
                                 FactCheckBox {
                                     text:       qsTr("Use Vehicle Pairing")
@@ -469,6 +492,14 @@ Rectangle {
                                 visible:    _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Keep Map Centered On Vehicle")
+                                fact:       _keepMapCenteredOnVehicle
+                                visible:    _keepMapCenteredOnVehicle.visible
+
+                                property Fact _keepMapCenteredOnVehicle: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle
                             }
 
                             FactCheckBox {
@@ -859,6 +890,59 @@ Rectangle {
                                     rtkGrid.rtkSettings.fixedBasePositionAltitude.rawValue =    QGroundControl.gpsRtk.currentAltitude.rawValue
                                     rtkGrid.rtkSettings.fixedBasePositionAccuracy.rawValue =    QGroundControl.gpsRtk.currentAccuracy.rawValue
                                 }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+
+                    QGCLabel {
+                        id:         adsbSectionLabel
+                        text:       qsTr("ADSB Server")
+                        visible:    QGroundControl.settingsManager.adsbVehicleManagerSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: adsbGrid.height + (_margins * 2)
+                        Layout.preferredWidth:  adsbGrid.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                adsbSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        GridLayout {
+                            id:                         adsbGrid
+                            anchors.topMargin:          _margins
+                            anchors.top:                parent.top
+                            Layout.fillWidth:           true
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            columns:                    2
+
+                            property var  adsbSettings:    QGroundControl.settingsManager.adsbVehicleManagerSettings
+
+                            FactCheckBox {
+                                text:                   adsbGrid.adsbSettings.adsbServerConnectEnabled.shortDescription
+                                fact:                   adsbGrid.adsbSettings.adsbServerConnectEnabled
+                                visible:                adsbGrid.adsbSettings.adsbServerConnectEnabled.visible
+                                Layout.columnSpan:      2
+                            }
+
+                            QGCLabel {
+                                text:               adsbGrid.adsbSettings.adsbServerHostAddress.shortDescription
+                                visible:            adsbGrid.adsbSettings.adsbServerHostAddress.visible
+                            }
+                            FactTextField {
+                                fact:                   adsbGrid.adsbSettings.adsbServerHostAddress
+                                visible:                adsbGrid.adsbSettings.adsbServerHostAddress.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+
+                            QGCLabel {
+                                text:               adsbGrid.adsbSettings.adsbServerPort.shortDescription
+                                visible:            adsbGrid.adsbSettings.adsbServerPort.visible
+                            }
+                            FactTextField {
+                                fact:                   adsbGrid.adsbSettings.adsbServerPort
+                                visible:                adsbGrid.adsbSettings.adsbServerPort.visible
+                                Layout.preferredWidth:  _valueFieldWidth
                             }
                         }
                     }

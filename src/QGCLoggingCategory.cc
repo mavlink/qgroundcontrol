@@ -24,6 +24,7 @@ QGC_LOGGING_CATEGORY(ParameterManagerLog,           "ParameterManagerLog")
 QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
 QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
+QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog,         "ADSBVehicleManagerLog")
 
 QGCLoggingCategoryRegister* _instance = nullptr;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";

@@ -13,7 +13,6 @@
 #include "SHPFileHelper.h"
 
 #include <QFile>
-#include <QVariant>
 
 const char* ShapeFileHelper::_errorPrefix = QT_TR_NOOP("Shape file load failed. %1");
 

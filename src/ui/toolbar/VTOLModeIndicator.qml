@@ -19,20 +19,29 @@ import QGroundControl.Palette               1.0
 
 //-------------------------------------------------------------------------
 //-- VTOL Mode Indicator
-QGCLabel {
-    anchors.top:        parent.top
-    anchors.bottom:     parent.bottom
-    verticalAlignment:  Text.AlignVCenter
-    text:               _fwdFlight ? qsTr("VTOL: Fixed Wing") : qsTr("VTOL: Multi-Rotor")
-    font.pointSize:     ScreenTools.mediumFontPointSize
-    color:              qgcPal.buttonText
-    visible:            activeVehicle ? activeVehicle.vtol && activeVehicle.px4Firmware : false
-    width:              visible ? implicitWidth : 0
+QGCComboBox {
+    anchors.verticalCenter: parent.verticalCenter
+    alternateText:          _fwdFlight ? qsTr("VTOL: FW") : qsTr("VTOL: MR")
+    model:                  [ qsTr("VTOL: Multi-Rotor"), qsTr("VTOL: Fixed Wing")  ]
+    font.pointSize:         ScreenTools.mediumFontPointSize
+    currentIndex:           -1
+    sizeToContents:         true
 
-    property bool _fwdFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
+    property bool showIndicator: _activeVehicle.vtol && _activeVehicle.px4Firmware
 
-    QGCMouseArea {
-        fillItem: parent
-        onClicked: activeVehicle.vtolInFwdFlight ? toolBar.vtolTransitionToMRFlight() : toolBar.vtolTransitionToFwdFlight()
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _fwdFlight:     _activeVehicle.vtolInFwdFlight
+
+    onActivated: {
+        if (index == 0) {
+            if (_fwdFlight) {
+                mainWindow.vtolTransitionToMRFlight()
+            }
+        } else {
+            if (!_fwdFlight) {
+                mainWindow.vtolTransitionToFwdFlight()
+            }
+        }
+        currentIndex = -1
     }
 }

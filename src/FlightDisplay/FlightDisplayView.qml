@@ -55,6 +55,7 @@ Item {
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
     property alias  _altitudeSlider:                altitudeSlider
+    property real   _toolsMargin:                   ScreenTools.defaultFontPixelWidth * 0.75
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -169,33 +170,31 @@ Item {
         videoPopUpTimer.running = true
     }
 
-    // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
-
-    property bool vehicleArmed:                 activeVehicle ? activeVehicle.armed : true // true here prevents pop up from showing during shutdown
-    property bool vehicleWasArmed:              false
-    property bool vehicleInMissionFlightMode:   activeVehicle ? (activeVehicle.flightMode === activeVehicle.missionFlightMode) : false
-    property bool promptForMissionRemove:       false
+    // The following code is used to track vehicle states for showing the mission complete dialog
+    property bool vehicleArmed:                     activeVehicle ? activeVehicle.armed : true // true here prevents pop up from showing during shutdown
+    property bool vehicleWasArmed:                  false
+    property bool vehicleInMissionFlightMode:       activeVehicle ? (activeVehicle.flightMode === activeVehicle.missionFlightMode) : false
+    property bool vehicleWasInMissionFlightMode:    false
+    property bool showMissionCompleteDialog:        vehicleWasArmed && vehicleWasInMissionFlightMode &&
+                                                        (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems ||
+                                                        (activeVehicle ? activeVehicle.cameraTriggerPoints.count !== 0 : false))
 
     onVehicleArmedChanged: {
         if (vehicleArmed) {
-            if (!promptForMissionRemove) {
-                promptForMissionRemove = vehicleInMissionFlightMode
-                vehicleWasArmed = true
-            }
+            vehicleWasArmed = true
+            vehicleWasInMissionFlightMode = vehicleInMissionFlightMode
         } else {
-            if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
-                // ArduPilot has a strange bug which prevents mission clear from working at certain times, so we can't show this dialog
-                if (!activeVehicle.apmFirmware) {
-                    mainWindow.showComponentDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
-                }
+            if (showMissionCompleteDialog) {
+                mainWindow.showComponentDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
             }
-            promptForMissionRemove = false
+            vehicleWasArmed = false
+            vehicleWasInMissionFlightMode = false
         }
     }
 
     onVehicleInMissionFlightModeChanged: {
-        if (!promptForMissionRemove && vehicleArmed) {
-            promptForMissionRemove = true
+        if (vehicleInMissionFlightMode && vehicleArmed) {
+            vehicleWasInMissionFlightMode = true
         }
     }
 
@@ -218,46 +217,47 @@ Item {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.right:      parent.right
+                    spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        Layout.fillWidth:       true
+                        text:                   qsTr("%1 Images Taken").arg(activeVehicle.cameraTriggerPoints.count)
+                        horizontalAlignment:    Text.AlignHCenter
+                        visible:                activeVehicle.cameraTriggerPoints.count !== 0
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        text:               qsTr("Remove plan from vehicle")
+                        visible:            !activeVehicle.connectionLost// && !activeVehicle.apmFirmware  // ArduPilot has a bug somewhere with mission clear
+                        onClicked: {
+                            _planController.removeAllFromVehicle()
+                            hideDialog()
+                        }
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               qsTr("Leave plan on vehicle")
+                        onClicked:          hideDialog()
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        color:              qgcPal.text
+                        height:             1
+                    }
 
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !activeVehicle.connectionLost || !_guidedController.showResumeMission
-
-                        QGCLabel {
-                            Layout.fillWidth:       true
-                            text:                   qsTr("%1 Images Taken").arg(activeVehicle.cameraTriggerPoints.count)
-                            horizontalAlignment:    Text.AlignHCenter
-                            visible:                activeVehicle.cameraTriggerPoints.count !== 0
-                        }
-
-                        QGCButton {
-                            Layout.fillWidth:   true
-                            text:               qsTr("Remove plan from vehicle")
-                            onClicked: {
-                                _planController.removeAllFromVehicle()
-                                hideDialog()
-                            }
-                        }
-
-                        QGCButton {
-                            Layout.fillWidth:   true
-                            Layout.alignment:   Qt.AlignHCenter
-                            text:               qsTr("Leave plan on vehicle")
-                            onClicked:          hideDialog()
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth:   true
-                            color:              qgcPal.text
-                            height:             1
-                        }
+                        visible:            !activeVehicle.connectionLost && _guidedController.showResumeMission
 
                         QGCButton {
                             Layout.fillWidth:   true
                             Layout.alignment:   Qt.AlignHCenter
                             text:               qsTr("Resume Mission From Waypoint %1").arg(_guidedController._resumeMissionIndex)
-                            visible:            _guidedController.showResumeMission
 
                             onClicked: {
                                 guidedController.executeAction(_guidedController.actionResumeMission, null, null)
@@ -269,29 +269,15 @@ Item {
                             Layout.fillWidth:   true
                             wrapMode:           Text.WordWrap
                             text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
-                            visible:            _guidedController.showResumeMission
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            wrapMode:           Text.WordWrap
-                            color:              qgcPal.warningText
-                            text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle when communication is lost.")
-                            visible:            _guidedController.showResumeMission
                         }
                     }
 
-                    ColumnLayout {
+                    QGCLabel {
                         Layout.fillWidth:   true
-                        spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            activeVehicle.connectionLost && _guidedController.showResumeMission
-
-                        QGCLabel {
-                            Layout.fillWidth:   true
-                            wrapMode:           Text.WordWrap
-                            color:              qgcPal.warningText
-                            text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
-                        }
+                        wrapMode:           Text.WordWrap
+                        color:              qgcPal.warningText
+                        text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
+                        visible:            _guidedController.showResumeMission
                     }
                 }
             }
@@ -407,7 +393,7 @@ Item {
                     // Do anchors again after popup
                     anchors.left =       _mapAndVideo.left
                     anchors.bottom =     _mapAndVideo.bottom
-                    anchors.margins =    ScreenTools.defaultFontPixelHeight
+                    anchors.margins =    _toolsMargin
                 }
             }
 
@@ -415,8 +401,8 @@ Item {
                 State {
                     name:   "pipMode"
                     PropertyChanges {
-                        target: _flightVideo
-                        anchors.margins: ScreenTools.defaultFontPixelHeight
+                        target:             _flightVideo
+                        anchors.margins:    _toolsMargin
                     }
                     PropertyChanges {
                         target: _flightVideoPipControl
@@ -426,12 +412,12 @@ Item {
                 State {
                     name:   "fullMode"
                     PropertyChanges {
-                        target: _flightVideo
+                        target:             _flightVideo
                         anchors.margins:    0
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:     _flightVideoPipControl
+                        inPopup:    false
                     }
                 },
                 State {
@@ -454,9 +440,9 @@ Item {
                     ParentChange {
                         target: _flightVideo
                         parent: videoItem
-                        x: 0
-                        y: 0
-                        width: videoItem.width
+                        x:      0
+                        y:      0
+                        width:  videoItem.width
                         height: videoItem.height
                     }
                 },
@@ -523,8 +509,8 @@ Item {
 
         Row {
             id:                     singleMultiSelector
-            anchors.topMargin:      ScreenTools.toolbarHeight + _margins
-            anchors.rightMargin:    _margins
+            anchors.topMargin:      ScreenTools.toolbarHeight + _toolsMargin
+            anchors.rightMargin:    _toolsMargin
             anchors.right:          parent.right
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
@@ -546,7 +532,7 @@ Item {
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
             z:                  _mapAndVideo.z + 4
-            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0) - (ScreenTools.defaultFontPixelHeight * 0.5)
+            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _toolsMargin : 0) - _toolsMargin
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
@@ -569,7 +555,7 @@ Item {
         }
 
         MultiVehicleList {
-            anchors.margins:            _margins
+            anchors.margins:            _toolsMargin
             anchors.top:                singleMultiSelector.bottom
             anchors.right:              parent.right
             anchors.bottom:             parent.bottom
@@ -604,14 +590,14 @@ Item {
             visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
 
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
+            anchors.leftMargin: isInstrumentRight() ? _toolsMargin : undefined
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+            anchors.topMargin:  _toolsMargin
             anchors.top:        parent.top
             z:                  _mapAndVideo.z + 4
-            maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
+            maxHeight:          parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -626,12 +612,6 @@ Item {
                     text:       _guidedController.continueMissionMessage,
                     action:     _guidedController.actionContinueMission,
                     visible:    _guidedController.showContinueMission
-                },
-                {
-                    title:      _guidedController.resumeMissionTitle,
-                    text:       _guidedController.resumeMissionMessage,
-                    action:     _guidedController.actionResumeMission,
-                    visible:    _guidedController.showResumeMission
                 },
                 {
                     title:      _guidedController.changeAltTitle,

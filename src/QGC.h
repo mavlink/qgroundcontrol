@@ -37,6 +37,11 @@ float limitAngleToPMPIf(double angle);
 /** @brief Returns the angle limited to -pi - pi */
 double limitAngleToPMPId(double angle);
 
+/** @brief Records boot time (called from main) */
+void initTimer();
+/** @brief Get the ground time since boot in milliseconds */
+quint64 bootTimeMilliseconds();
+
 const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
 class SLEEP : public QThread

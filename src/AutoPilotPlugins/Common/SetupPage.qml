@@ -51,14 +51,13 @@ Item {
 
     QGCFlickable {
         anchors.fill:   parent
-        contentWidth:   pageLoader.x + pageLoader.item.width
-        contentHeight:  pageLoader.y + pageLoader.item.height
+        contentWidth:   Math.max(availableWidth, pageLoader.x + pageLoader.item.width)
+        contentHeight:  Math.max(availableHeight, pageLoader.y + pageLoader.item.height)
         clip:           true
 
         RowLayout {
             id:                 headingRow
-            anchors.left:       parent.left
-            anchors.right:      parent.right
+            width:              availableWidth
             spacing:            _margins
             layoutDirection:    Qt.RightToLeft
 
@@ -68,22 +67,22 @@ Item {
                 visible:    showAdvanced
             }
 
-            Column {
+            ColumnLayout {
                 spacing:            _margins
                 Layout.fillWidth:   true
 
                 QGCLabel {
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                    visible:        !ScreenTools.isShortScreen
+                    Layout.fillWidth:   true
+                    font.pointSize:     ScreenTools.largeFontPointSize
+                    text:               !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
+                    visible:            !ScreenTools.isShortScreen
                 }
 
                 QGCLabel {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    wrapMode:       Text.WordWrap
-                    text:           pageDescription
-                    visible:        pageDescription !== "" && !ScreenTools.isShortScreen
+                    Layout.fillWidth:   true
+                    wrapMode:           Text.WordWrap
+                    text:               pageDescription
+                    visible:            pageDescription !== "" && !ScreenTools.isShortScreen
                 }
             }
         }
@@ -96,7 +95,7 @@ Item {
         // to be disabled
         Rectangle {
             visible:            !setupView.enabled
-            anchors.fill:       pageLoader
+            anchors.fill:       parent
             color:              "black"
             opacity:            0.5
         }
