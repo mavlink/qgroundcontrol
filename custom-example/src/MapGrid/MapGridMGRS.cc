@@ -30,41 +30,102 @@ MGRSZone::MGRSZone(QString _label)
     if (!convertMGRSToGeo(label + "0000099999", upperLeft)) {
         valid = false;
     }
-    upperLeft = upperLeft.atDistanceAndAzimuth(1, 0);
 
     if (!convertMGRSToGeo(label + "9999900000", bottomRight)) {
         valid = false;
     }
-    bottomRight = bottomRight.atDistanceAndAzimuth(1, 90);
 
     if (!convertMGRSToGeo(label + "9999999999", upperRight)) {
         valid = false;
     }
-    upperRight = upperRight.atDistanceAndAzimuth(sqrt(2), 45);
 
-    QString l1l = MapGridMGRS::level1Label(label);
-    // 31V zones do not overlap on right
-    rightOverlap = (l1l != "31V" && MapGridMGRS::level1Label(convertGeoToMGRS(bottomRight)) != l1l);
+    QString l2l = MapGridMGRS::level2Label(label);
 
-    if (!convertMGRSToGeo(label + "5000050000", labelPos)) {
-        valid = false;
+    // Upper Right overlap
+    if (MapGridMGRS::level2Label(convertGeoToMGRS(upperRight)) != l2l) {
+        _fixEdge(l2l, 100000, -1, "%1 99999", upperRight);
+    }
+    // Upper Left overlap
+    if (label.contains("BC")) {
+        qCritical() << "Label " << label;
     }
 
-    rightSearchPos = searchPos;
+    if (MapGridMGRS::level2Label(convertGeoToMGRS(upperLeft)) != l2l) {
+        leftOverlap = true;
+        _fixEdge(l2l, 0, 1, "%1 99999", upperLeft);
+    }
+
+    // Bottom Right overlap
+    if (MapGridMGRS::level2Label(convertGeoToMGRS(bottomRight)) != l2l) {
+        rightOverlap = true;
+        _fixEdge(l2l, 100000, -1, "%1 00000", bottomRight);
+    }
+
+    if (label.contains("BC")) {
+        qCritical() << "Label " << label;
+    }
+
+    // Bottom Left overlap
+    if (MapGridMGRS::level2Label(convertGeoToMGRS(bottomLeft)) != l2l) {
+        leftOverlap = true;
+        _fixEdge(l2l, 0, 1, "%1 00000", bottomLeft);
+    }
+
+    if (!convertMGRSToGeo(label + "5000050000", labelPos)) {
+        rightOverlap = true;
+        valid = false;
+    }
+    labelPos.setLongitude((upperLeft.longitude() + upperRight.longitude() + bottomLeft.longitude() + bottomRight.longitude()) / 4);
+
     QString searchLabel;
+    rightSearchPos = searchPos;
     do {
         rightSearchPos = rightSearchPos.atDistanceAndAzimuth(20000, 90);
-        searchLabel = MapGridMGRS::zoneLabel(convertGeoToMGRS(rightSearchPos));
-    } while (searchLabel == label);
+        searchLabel = MapGridMGRS::level2Label(convertGeoToMGRS(rightSearchPos));
+    } while (searchLabel == l2l);
 
     leftSearchPos = searchPos;
     do {
         leftSearchPos = leftSearchPos.atDistanceAndAzimuth(20000, 270);
-        searchLabel = MapGridMGRS::zoneLabel(convertGeoToMGRS(leftSearchPos));
-    } while (searchLabel == label);
+        searchLabel = MapGridMGRS::level2Label(convertGeoToMGRS(leftSearchPos));
+    } while (searchLabel == l2l);
 
-    topSearchPos = searchPos.atDistanceAndAzimuth(100000, 0);
-    bottomSearchPos = searchPos.atDistanceAndAzimuth(100000, 180);
+    topSearchPos = searchPos;
+    do {
+        topSearchPos = topSearchPos.atDistanceAndAzimuth(20000, 0);
+        QString mgrs = convertGeoToMGRS(topSearchPos);
+        searchLabel = MapGridMGRS::level2Label(mgrs);
+        if (searchLabel == l2l && MapGridMGRS::level1Label(label) != MapGridMGRS::level1Label(mgrs)) {
+            valid = false;
+        }
+    } while (searchLabel == l2l);
+
+    bottomSearchPos = searchPos;
+    do {
+        bottomSearchPos = bottomSearchPos.atDistanceAndAzimuth(20000, 180);
+        searchLabel = MapGridMGRS::level2Label(convertGeoToMGRS(bottomSearchPos));
+    } while (searchLabel == l2l);
+}
+
+//-----------------------------------------------------------------------------
+void
+MGRSZone::_fixEdge(QString l2l, int start, int dir, QString format, QGeoCoordinate& edgeToFix)
+{
+    QString mgrsC;
+    QGeoCoordinate c;
+    int coord = start;
+
+    for (double step = 10000; step >= 1; step /= 10) {
+        do {
+            coord += step * dir;
+            mgrsC = label + " " + QString(format).arg(coord, 5, 10, QChar('0'));
+            if (!convertMGRSToGeo(mgrsC, c)) {
+                break;
+            }
+        } while (MapGridMGRS::level2Label(convertGeoToMGRS(c)) != l2l);
+        coord -= step * dir;
+    }
+    convertMGRSToGeo(mgrsC, edgeToFix);
 }
 
 //=============================================================================
@@ -106,23 +167,26 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
                              const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
                              int viewportWidth, int viewportHeight)
 {
-    if (topLeft.isValid() && bottomRight.isValid()) {
+    if (topLeft.isValid() && topRight.isValid() && bottomLeft.isValid() && bottomRight.isValid()) {
         _zoomLevel = zoomLevel;
         qCritical() << "Zoom: " << zoomLevel << "Viewport: " << viewportWidth << " ; " << viewportHeight;
 
+        QGeoRectangle newRect;
         qreal dist = topLeft.distanceTo(bottomRight) / 2;
-        qreal azim = topLeft.azimuthTo(bottomRight);
-        _currentMGRSRect.setTopLeft(topLeft.atDistanceAndAzimuth(dist, azim + 180));
-        _currentMGRSRect.setBottomRight(bottomRight.atDistanceAndAzimuth(dist, azim));
+        qreal azim = topLeft.azimuthTo(bottomRight);  
+        newRect.setTopLeft(topLeft.atDistanceAndAzimuth(dist, azim + 180));
+        newRect.setBottomRight(bottomRight.atDistanceAndAzimuth(dist, azim));
         dist = bottomLeft.distanceTo(topRight) / 2;
         azim = bottomLeft.azimuthTo(topRight);
-        _currentMGRSRect.setBottomLeft(bottomLeft.atDistanceAndAzimuth(dist, azim + 180));
-        _currentMGRSRect.setTopRight(topRight.atDistanceAndAzimuth(dist, azim));
-
-        double centerLat = (topLeft.latitude() + bottomLeft.latitude()) / 2;
-        QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
-        QGeoCoordinate centerRight = QGeoCoordinate(centerLat, topRight.longitude());
-        _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
+        newRect.setBottomLeft(bottomLeft.atDistanceAndAzimuth(dist, azim + 180));
+        newRect.setTopRight(topRight.atDistanceAndAzimuth(dist, azim));
+        if (newRect.isValid()) {
+            _currentMGRSRect = newRect;
+            double centerLat = (topLeft.latitude() + bottomLeft.latitude()) / 2;
+            QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
+            QGeoCoordinate centerRight = QGeoCoordinate(centerLat, topRight.longitude());
+            _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
+        }
     } else if (_zoomLevel < 3) {
         emit updateValues(QVariant());
         return;
@@ -299,18 +363,16 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
         _findZoneBoundaries(tile->leftSearchPos);
 
         QGeoPath path;
-        path.addCoordinate(tile->upperLeft);
+        if (!tile->leftOverlap) {
+            path.addCoordinate(tile->upperLeft);
+        }
         path.addCoordinate(tile->bottomLeft);
         path.addCoordinate(tile->bottomRight);
-
-        if (tile->rightOverlap) {
-            path.addCoordinate(tile->upperRight);
-        }
 
         _level2Paths.push_back(path);
 
         if (_zoomLevel > maxZoneZoomLevel && _currentMGRSRect.contains(tile->labelPos)) {
-            _mgrsLabels.push_back(MGRSLabel(tile->label, tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
+            _mgrsLabels.push_back(MGRSLabel(MapGridMGRS::level2Label(tile->label), tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
         }
 
         _createLevel3Paths(tile);
@@ -325,11 +387,22 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
     int distanceBetweenLines = 0;
     const int factors[] = { 500, 1000, 5000, 10000, 50000 };
 
+    QGeoCoordinate bl;
+    if (!convertMGRSToGeo(tile->label + "0000000000", bl)) {
+        return;
+    }
+
+    QGeoRectangle tileRect(tile->upperLeft, tile->bottomRight);
+    tileRect.setTopRight(tile->upperRight);
+    tileRect.setBottomLeft(tile->bottomLeft);
+
+    bool overlapped = tile->leftOverlap || tile->rightOverlap;
+
     for (int i = 0; i <= 4; i ++) {
         if (!convertMGRSToGeo(tile->label + QString("%1").arg(factors[i], 5, 10, QChar('0')) + "00000", c1)) {
             return;
         }
-        if (tile->bottomLeft.distanceTo(c1) > _minDistanceBetweenLines) {
+        if (bl.distanceTo(c1) > _minDistanceBetweenLines) {
             distanceBetweenLines = factors[i];
             break;
         }
@@ -344,9 +417,12 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
         if (!convertMGRSToGeo(tile->label + "00000" + coord, c1)) {
             return;
         }
-        bool added = false;
+        int added = 0;
         QGeoPath path;
-        path.addCoordinate(c1);
+        if (!overlapped || tileRect.contains(c1)) {
+            path.addCoordinate(c1);
+            added++;
+        }
         for (int j = distanceBetweenLines; j <= 100000; j += distanceBetweenLines) {
             if (j == 100000)
                 j--;
@@ -354,15 +430,15 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coordE + coord, c2)) {
                 break;
             }
-            if (lineIntersectsRect(c1, c2, _currentMGRSRect)) {
+            if (lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
-                added = true;
-            } else if (added) {
+                added++;
+            } else if (added > 2) {
                 break;
             }
             c1 = c2;
         }
-        if (added) {
+        if (added > 1) {
             _level3Paths.push_back(path);
         }
 
@@ -371,9 +447,12 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             return;
         }
 
-        added = false;
+        added = 0;
         path.clearPath();
-        path.addCoordinate(c1);
+        if (!overlapped || tileRect.contains(c1)) {
+            path.addCoordinate(c1);
+            added++;
+        }
         for (int j = distanceBetweenLines; j <= 100000; j += distanceBetweenLines) {
             if (j == 100000)
                 j--;
@@ -381,15 +460,15 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coord + coordN, c2)) {
                 break;
             }
-            if (lineIntersectsRect(c1, c2, _currentMGRSRect)) {
+            if (lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
-                added = true;
-            } else if (added) {
+                added++;
+            } else if (added > 2) {
                 break;
             }
             c1 = c2;
         }
-        if (added) {
+        if (added > 1) {
             _level3Paths.push_back(path);
         }
     }

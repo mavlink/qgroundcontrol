@@ -42,6 +42,7 @@ public:
 
     bool visited = false;
     bool valid = true;
+    bool leftOverlap = false;
     bool rightOverlap = false;
     QString label;
     QGeoCoordinate bottomLeft;
@@ -54,6 +55,9 @@ public:
     QGeoCoordinate leftSearchPos;
     QGeoCoordinate topSearchPos;
     QGeoCoordinate bottomSearchPos;
+
+private:
+    void _fixEdge(QString l1l, int start, int dir, QString format, QGeoCoordinate& edgeToFix);
 };
 
 //=============================================================================
@@ -68,6 +72,8 @@ public:
     static bool lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r);
 
     static QString level1Label(QString mgrs) { return mgrs.left(3); }
+
+    static QString level2Label(QString mgrs) { return mgrs.mid(3, 2); }
 
     static QString zoneLabel(QString mgrs) { return mgrs.left(5); }
 
