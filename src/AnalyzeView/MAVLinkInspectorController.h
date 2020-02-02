@@ -1,11 +1,15 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+
+/// @file
+/// @brief MAVLink message inspector and charting controller
+/// @author Gus Grubba <gus@auterion.com>
 
 #pragma once
 
@@ -28,6 +32,7 @@ class MAVLinkChartController;
 class MAVLinkInspectorController;
 
 //-----------------------------------------------------------------------------
+/// MAVLink message field
 class QGCMAVLinkMessageField : public QObject {
     Q_OBJECT
 public:
@@ -81,6 +86,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// MAVLink message
 class QGCMAVLinkMessage : public QObject {
     Q_OBJECT
 public:
@@ -130,6 +136,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// Vehicle MAVLink message belongs to
 class QGCMAVLinkVehicle : public QObject {
     Q_OBJECT
 public:
@@ -172,6 +179,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// MAVLink message charting controller
 class MAVLinkChartController : public QObject {
     Q_OBJECT
 public:
@@ -232,6 +240,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// MAVLink message inspector controller (provides the logic for UI display)
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT
