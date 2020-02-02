@@ -411,7 +411,9 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
         return;
     }
 
+    int cnt1 = 0;
     for (int i = distanceBetweenLines; i < 100000; i += distanceBetweenLines) {
+        cnt1++;
         // Horizontal lines
         QString coord = QString("%1").arg(i, 5, 10, QChar('0'));
         if (!convertMGRSToGeo(tile->label + "00000" + coord, c1)) {
@@ -453,7 +455,9 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             path.addCoordinate(c1);
             added++;
         }
+        int cnt2 = 0;
         for (int j = distanceBetweenLines; j <= 100000; j += distanceBetweenLines) {
+            cnt2++;
             if (j == 100000)
                 j--;
             QString coordN = QString("%1").arg(j, 5, 10, QChar('0'));
@@ -463,6 +467,11 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
                 added++;
+                if (added > 1 && cnt1 % 2 == 1 && cnt2 % 2 == 1 &&_zoomLevel > maxZoneZoomLevel &&
+                    !(coord == "50000" && coordN == "50000") && _currentMGRSRect.contains(c2)) {
+                    QString text = level2Label(tile->label) + " " + coord.left(2) + " " + coordN.left(2);
+                    _mgrsLabels.push_back(MGRSLabel(text, c2, level3LabelForegroundColor, level3LabelBackgroundColor));
+                }
             } else if (added > 2) {
                 break;
             }

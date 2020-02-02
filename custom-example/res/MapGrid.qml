@@ -154,6 +154,8 @@ Item {
                     anchors.rightMargin:    -4
                     anchors.fill:           labelControlLabel
                     color:                  backgroundColor
+                    border.width:           1
+                    border.color:           foregroundColor
                 }
 
                 QGCLabel {

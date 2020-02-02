@@ -108,8 +108,8 @@ private:
     const int level3LineForgroundWidth = 1;
     const QString level3LineBackgroundColor = "#44000000";
     const int level3LineBackgroundWidth = 3;
-    const QString level3LabelForegroundColor = "#AAFF0000";
-    const QString level3LabelBackgroundColor = "#44FFFFFF";
+    const QString level3LabelForegroundColor = "#CCFFFFFF";
+    const QString level3LabelBackgroundColor = "#88000000";
 
     QGeoRectangle _currentMGRSRect;
     double _zoomLevel = 0;
