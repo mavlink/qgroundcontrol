@@ -8676,6 +8676,27 @@ is less than 50% of this value</short_desc>
       <decimal>10</decimal>
       <increment>.000000001</increment>
     </parameter>
+    <parameter default="80" name="PCF8583_ADDR" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) i2c address</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="80">0x50</value>
+        <value code="81">0x51</value>
+      </values>
+    </parameter>
+    <parameter default="1000000" name="PCF8583_POOL" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) pool interval</short_desc>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="500000" name="PCF8583_RESET" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) counter reset value</short_desc>
+      <long_desc>Internal device counter is reset to 0 when overun this value, counter is able to store upto 6 digits reset of counter takes some time - measurement with reset has worse accurancy</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- reset avter every measurement</value>
+      </values>
+    </parameter>
     <parameter default="1013.25" name="SENS_BARO_QNH" type="FLOAT">
       <short_desc>QNH for barometer</short_desc>
       <min>500</min>
@@ -10843,6 +10864,12 @@ MPC_Z_VEL_MAX_DN at zero throttle, and 0.5 * MPC_LAND_SPEED at full throttle</sh
         <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
         <value code="1">User assisted descent speed</value>
       </values>
+    </parameter>
+    <parameter default="2" name="PCF8583_MAGNET" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) magnet count</short_desc>
+      <long_desc>Nmumber of signals per rotation of rotor</long_desc>
+      <min>1</min>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
