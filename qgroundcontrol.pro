@@ -587,7 +587,6 @@ HEADERS += \
     src/JsonHelper.h \
     src/KMLFileHelper.h \
     src/LogCompressor.h \
-    src/MG.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -691,7 +690,6 @@ HEADERS += \
     src/comm/LinkManager.h \
     src/comm/LogReplayLink.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \

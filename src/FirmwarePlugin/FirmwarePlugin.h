@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -126,7 +126,7 @@ public:
     virtual QString gotoFlightMode(void) const;
 
     /// Returns the flight mode which the vehicle will be for follow me
-    virtual QString followFlightMode(void) const { return QString(); };
+    virtual QString followFlightMode(void) const { return QString(); }
 
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
@@ -145,7 +145,7 @@ public:
     virtual void guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel);
 
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
-    virtual double minimumTakeoffAltitude(Vehicle* vehicle) { Q_UNUSED(vehicle); return 10; }
+    virtual double minimumTakeoffAltitude(Vehicle* /*vehicle*/) { return 10; }
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
@@ -217,21 +217,21 @@ public:
     virtual void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
     /// Returns the internal resource parameter meta date file.
-    virtual QString internalParameterMetaDataFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+    virtual QString internalParameterMetaDataFile(Vehicle* /*vehicle*/) { return QString(); }
 
     /// Loads the specified parameter meta data file.
     /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
     ///         call deleteParameterMetaData when no longer needed.
-    virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return nullptr; }
+    virtual QObject* loadParameterMetaData(const QString& /*metaDataFile*/) { return nullptr; }
 
     /// Returns the FactMetaData associated with the parameter name
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     ///     @param name Parameter name
-    virtual FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(name); Q_UNUSED(vehicleType); return nullptr; }
+    virtual FactMetaData* getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return nullptr; }
 
     /// Adds the parameter meta data to the Fact
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    virtual void addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(fact); Q_UNUSED(vehicleType); return; }
+    virtual void addMetaDataToFact(QObject* /*parameterMetaData*/, Fact* /*fact*/, MAV_TYPE /*vehicleType*/) { return; }
 
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(void);
@@ -247,19 +247,19 @@ public:
     virtual int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const;
 
     /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
-    virtual bool multiRotorCoaxialMotors(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+    virtual bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) { return false; }
 
     /// @return true: X confiuration, false: Plus configuration
-    virtual bool multiRotorXConfig(Vehicle* vehicle) { Q_UNUSED(vehicle); return false; }
+    virtual bool multiRotorXConfig(Vehicle* /*vehicle*/) { return false; }
 
     /// Return the resource file which contains the set of params loaded for offline editing.
-    virtual QString offlineEditingParamFile(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+    virtual QString offlineEditingParamFile(Vehicle* /*vehicle*/) { return QString(); }
 
     /// Return the resource file which contains the brand image for the vehicle for Indoor theme.
-    virtual QString brandImageIndoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+    virtual QString brandImageIndoor(const Vehicle* /*vehicle*/) const { return QString(); }
 
     /// Return the resource file which contains the brand image for the vehicle for Outdoor theme.
-    virtual QString brandImageOutdoor(const Vehicle* vehicle) const { Q_UNUSED(vehicle) return QString(); }
+    virtual QString brandImageOutdoor(const Vehicle* /*vehicle*/) const { return QString(); }
 
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
     virtual QString vehicleImageOpaque(const Vehicle* vehicle) const;
@@ -324,7 +324,7 @@ public:
     /// Allows the Firmware plugin to override the facts meta data.
     ///     @param vehicleType - Type of current vehicle
     ///     @param metaData - MetaData for fact
-    virtual void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) {Q_UNUSED(vehicleType); Q_UNUSED(metaData);}
+    virtual void adjustMetaData(MAV_TYPE /*vehicleType*/, FactMetaData* /*metaData*/) {}
 
     /// Sends the appropriate mavlink message for follow me support
     virtual void sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
@@ -345,7 +345,7 @@ protected:
     bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
 
     // returns url with latest firmware release information.
-    virtual QString _getLatestVersionFileUrl(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+    virtual QString _getLatestVersionFileUrl(Vehicle* /*vehicle*/) { return QString(); }
 
     // Callback to process file with latest release information
     virtual void _versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle);

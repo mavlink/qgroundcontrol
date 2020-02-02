@@ -1,9 +1,13 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
+
+/// @file
+/// @brief  MAVLink Camera API
+/// @author Gus Grubba <gus@auterion.com>
 
 #pragma once
 
@@ -18,6 +22,8 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 //-----------------------------------------------------------------------------
+/// Video Stream Info
+/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
 class QGCVideoStreamInfo : public QObject
 {
     Q_OBJECT
@@ -50,6 +56,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// Camera option exclusions
 class QGCCameraOptionExclusion : public QObject
 {
 public:
@@ -60,6 +67,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// Camera option ranges
 class QGCCameraOptionRange : public QObject
 {
 public:
@@ -74,6 +82,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// MAVLink Camera API controller
 class QGCCameraControl : public FactGroup
 {
     Q_OBJECT
@@ -257,7 +266,7 @@ public:
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
 
-    //-- Stream names to show the user (for selection)
+    /// Stream names to show the user (for selection)
     virtual QStringList streamLabels        () { return _streamLabels; }
 
     virtual ThermalViewMode thermalMode     () { return _thermalMode; }
@@ -281,11 +290,11 @@ public:
     virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
     virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
 
-    //-- Notify controller a parameter has changed
+    /// Notify controller a parameter has changed
     virtual void        factChanged         (Fact* pFact);
-    //-- Allow controller to modify or invalidate incoming parameter
+    /// Allow controller to modify or invalidate incoming parameter
     virtual bool        incomingParameter   (Fact* pFact, QVariant& newValue);
-    //-- Allow controller to modify or invalidate parameter change
+    /// Allow controller to modify or invalidate parameter change
     virtual bool        validateParameter   (Fact* pFact, QVariant& newValue);
 
     // Known Parameters
