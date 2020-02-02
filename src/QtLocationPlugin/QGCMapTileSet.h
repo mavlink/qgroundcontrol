@@ -103,7 +103,7 @@ public:
     int         maxZoom                 () { return _maxZoom; }
     QDateTime   creationDate            () { return _creationDate; }
     quint64     id                      () { return _id; }
-    UrlFactory::MapType type            () { return _type; }
+    QString type            () { return _type; }
     bool        complete                () { return _defaultSet || (_totalTileCount <= _savedTileCount); }
     bool        defaultSet              () { return _defaultSet; }
     quint64     setID                   () { return _id; }
@@ -130,7 +130,7 @@ public:
     void        setMaxZoom              (int zoom)                  { _maxZoom = zoom; }
     void        setCreationDate         (QDateTime date)            { _creationDate = date; }
     void        setId                   (quint64 id)                { _id = id; }
-    void        setType                 (UrlFactory::MapType type)  { _type = type; }
+    void        setType                 (QString type)  { _type = type; }
     void        setDefaultSet           (bool def)                  { _defaultSet = def; }
     void        setDeleting             (bool del)                  { _deleting = del; emit deletingChanged(); }
     void        setDownloading          (bool down)                 { _downloading = down; }
@@ -178,7 +178,7 @@ private:
     bool        _downloading;
     QDateTime   _creationDate;
     quint64     _id;
-    UrlFactory::MapType _type;
+    QString _type;
     QNetworkAccessManager*  _networkManager;
     QHash<QString, QNetworkReply*> _replies;
     quint32     _errorCount;

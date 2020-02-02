@@ -44,3 +44,11 @@ void CoordinateVector::setCoordinate2(const QGeoCoordinate &coordinate)
         emit coordinate2Changed(_coordinate2);
     }
 }
+
+void CoordinateVector::setSpecialVisual(bool specialVisual)
+{
+    if (_specialVisual != specialVisual) {
+        _specialVisual = specialVisual;
+        emit specialVisualChanged(specialVisual);
+    }
+}

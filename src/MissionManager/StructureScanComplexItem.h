@@ -70,11 +70,10 @@ public:
     QString         mapVisualQML        (void) const final { return QStringLiteral("StructureScanMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final;
+    bool            specifiesCoordinate     (void) const final { return true; }
     bool            specifiesAltitudeOnly   (void) const final { return false; }
     QString         commandDescription      (void) const final { return tr("Structure Scan"); }
     QString         commandName             (void) const final { return tr("Structure Scan"); }
@@ -89,6 +88,7 @@ public:
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     void            applyNewAltitude        (double newAltitude) final;
     double          additionalTimeDelay     (void) const final { return 0; }
+    ReadyForSaveState readyForSaveState     (void) const final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
@@ -129,7 +129,6 @@ private slots:
     void _recalcScanDistance        (void);
 
 private:
-    void _setExitCoordinate(const QGeoCoordinate& coordinate);
     void _setCameraShots(int cameraShots);
     double _triggerDistance(void) const;
 

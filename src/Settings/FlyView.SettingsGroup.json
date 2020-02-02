@@ -38,6 +38,12 @@
     "defaultValue":     false
 },
 {
+    "name":             "keepMapCenteredOnVehicle",
+    "shortDescription": "Keep map centered on vehicle",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "maxGoToLocationDistance",
     "shortDescription": "Maximum distance allowed for Go To Location.",
     "type":             "double",

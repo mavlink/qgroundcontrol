@@ -47,7 +47,7 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     , _deleting(false)
     , _downloading(false)
     , _id(0)
-    , _type(UrlFactory::Invalid)
+    , _type("Invalid")
     , _networkManager(nullptr)
     , _errorCount(0)
     , _noMoreTiles(false)
@@ -201,7 +201,15 @@ void QGCCachedTileSet::_doneWithDownload()
         _totalTileCount = _savedTileCount;
         _totalTileSize  = _savedTileSize;
         //-- Too expensive to compute the real size now. Estimate it for the time being.
-        quint32 avg = _savedTileSize / _savedTileCount;
+        quint32 avg;
+        if(_savedTileSize != 0){
+            avg = _savedTileSize / _savedTileCount;
+        }
+        else{
+            qWarning() << "QGCMapEngineManager::_doneWithDownload _savedTileSize=0 !";
+            avg = 0;
+        }
+
         _uniqueTileSize = _uniqueTileCount * avg;
     }
     emit totalTileCountChanged();
@@ -279,8 +287,8 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
-            if (type == UrlFactory::MapType::AirmapElevation) {
+            QString type = getQGCMapEngine()->hashToType(hash);
+            if (type == "Airmap Elevation" ) {
                 image = TerrainTile::serialize(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);

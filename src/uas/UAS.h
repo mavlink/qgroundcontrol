@@ -52,8 +52,6 @@ public:
 
     /** @brief Get the unique system id */
     int getUASID() const;
-    /** @brief Get the components */
-    QMap<int, QString> getComponents();
 
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
@@ -118,10 +116,9 @@ public:
     friend class FileManager;
 #endif
 
-protected: //COMMENTS FOR TEST UNIT
+protected:
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
-    QMap<int, QString> components;///< IDs and names of all detected onboard components
 
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance

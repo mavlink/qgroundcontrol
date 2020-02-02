@@ -153,7 +153,7 @@ bool SerialLink::_connect(void)
 bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& errorString)
 {
     if (_port) {
-        qCDebug(SerialLinkLog) << "SerialLink:" << QString::number((long)this, 16) << "closing port";
+        qCDebug(SerialLinkLog) << "SerialLink:" << QString::number((qulonglong)this, 16) << "closing port";
         _port->close();
 
         // Wait 50 ms while continuing to run the event queue

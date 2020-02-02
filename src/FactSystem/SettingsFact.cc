@@ -35,16 +35,18 @@ SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObjec
     _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData);
 
-    QVariant rawDefaultValue = metaData->rawDefaultValue();
-    if (_visible) {
-        QVariant typedValue;
-        QString errorString;
-        metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
-        _rawValue = typedValue;
-    } else {
-        // Setting is not visible, force to default value always
-        settings.setValue(_name, rawDefaultValue);
-        _rawValue = rawDefaultValue;
+    if (metaData->defaultValueAvailable()) {
+        QVariant rawDefaultValue = metaData->rawDefaultValue();
+        if (_visible) {
+            QVariant typedValue;
+            QString errorString;
+            metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
+            _rawValue = typedValue;
+        } else {
+            // Setting is not visible, force to default value always
+            settings.setValue(_name, rawDefaultValue);
+            _rawValue = rawDefaultValue;
+        }
     }
 
     connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);
