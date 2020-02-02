@@ -103,7 +103,7 @@ Item {
         onGcsPositionChanged: {
             if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
                 var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
-                var veh = activeVehicle.coordinate;
+                var veh = QGroundControl.multiVehicleManager.lastKnownLocation;
                 _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
                 //-- Ignore absurd values
                 if(_distance > 99999)
