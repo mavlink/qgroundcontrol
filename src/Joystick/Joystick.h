@@ -7,9 +7,10 @@
  *
  ****************************************************************************/
 
+/// @file
+/// @brief  Joystick Controller
 
-#ifndef Joystick_H
-#define Joystick_H
+#pragma once
 
 #include <QObject>
 #include <QThread>
@@ -21,7 +22,7 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
-//-- Action assigned to button
+/// Action assigned to button
 class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
@@ -31,7 +32,7 @@ public:
     bool    repeat = false;
 };
 
-//-- Assignable Button Action
+/// Assignable Button Action
 class AssignableButtonAction : public QObject {
     Q_OBJECT
 public:
@@ -45,6 +46,7 @@ private:
     bool    _repeat = false;
 };
 
+/// Joystick Controller
 class Joystick : public QThread
 {
     Q_OBJECT
@@ -168,10 +170,14 @@ public:
     /// Set the current calibration mode
     void  setCalibrationMode (bool calibrating);
 
+    /// Get joystick message rate (in Hz)
     float axisFrequency     () { return _axisFrequency; }
+    /// Set joystick message rate (in Hz)
     void  setAxisFrequency  (float val);
 
+    /// Get joystick button repeat rate (in Hz)
     float buttonFrequency   () { return _buttonFrequency; }
+    /// Set joystick button repeat rate (in Hz)
     void  setButtonFrequency(float val);
 
 signals:
@@ -349,5 +355,3 @@ private:
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
 };
-
-#endif

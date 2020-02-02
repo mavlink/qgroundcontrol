@@ -10,5 +10,5 @@ signal for the first time, it creates a vehicle instance, recording the vehicle 
 The Vehicle class holds all the functionality to handle vehicles. It receives all messages sent from the vehicle and manage all messages and commands to that vehicle.
 
 <div align="center">
-<img src="../vehicleMgmt.svg">
+<img src="../vehicleMgmt.svg" style="width:80%; height=auto;">
 </div>

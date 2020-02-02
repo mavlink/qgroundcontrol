@@ -18,8 +18,8 @@
 #include <QVariantList>
 
 /// @file
-///     @brief Core Plugin Interface for QGroundControl
-///     @author Gus Grubba <gus@auterion.com>
+/// @brief Core Plugin Interface for QGroundControl
+/// @author Gus Grubba <gus@auterion.com>
 
 class QGCApplication;
 class QGCOptions;
@@ -98,7 +98,7 @@ public:
     virtual QString showAdvancedUIMessage() const;
 
     /// @return An instance of an alternate position source (or NULL if not available)
-    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return nullptr; }
+    virtual QGeoPositionInfoSource* createPositionSource(QObject* /*parent*/) { return nullptr; }
 
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
@@ -118,23 +118,23 @@ public:
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
     virtual bool mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message);
 
-    /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel
-    /// should derive from QmlComponentInfo and set the url property.
+    /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive from QmlComponentInfo and set the url property.
     virtual QmlObjectListModel* customMapItems();
 
-    /// Allows custom builds to add custom items to the plan file. Either before the document is
-    /// created or after.
-    virtual void    preSaveToJson           (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
-    virtual void    postSaveToJson          (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    /// Allows custom builds to add custom items to the plan file before the document is created.
+    virtual void    preSaveToJson           (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    /// Allows custom builds to add custom items to the plan file after the document is created.
+    virtual void    postSaveToJson          (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
 
-    /// Same for the specific "mission" portion
-    virtual void    preSaveToMissionJson    (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
-    virtual void    postSaveToMissionJson   (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
+    /// Allows custom builds to add custom items to the mission section of the plan file before the item is created.
+    virtual void    preSaveToMissionJson    (PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) {}
+    /// Allows custom builds to add custom items to the mission section of the plan file after the item is created.
+    virtual void    postSaveToMissionJson   (PlanMasterController* /*pController*/, QJsonObject& /*missionJson*/) {}
 
-    /// Allows custom builds to load custom items from the plan file. Either before the document is
-    /// parsed or after.
-    virtual void    preLoadFromJson     (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
-    virtual void    postLoadFromJson    (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    /// Allows custom builds to load custom items from the plan file before the document is parsed.
+    virtual void    preLoadFromJson     (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
+    /// Allows custom builds to load custom items from the plan file after the document is parsed.
+    virtual void    postLoadFromJson    (PlanMasterController* /*pController*/, QJsonObject& /*json*/) {}
 
     /// Returns the url to download the stable version check file. Return QString() to indicate no version check should be performed.
     /// Default QGC mainline implemenentation returns QGC Stable file location. Default QGC custom build code returns QString().
@@ -149,9 +149,9 @@ public:
     virtual QString stableDownloadLocation() const { return QString("qgroundcontrol.com"); }
 
     /// Returns the complex mission items to display in the Plan UI
-    ///     @param complexMissionItemNames Default set of complex items
+    /// @param complexMissionItemNames Default set of complex items
     /// @return Complex items to be made available to user
-    virtual QStringList complexMissionItemNames(Vehicle* vehicle, const QStringList& complexMissionItemNames) { Q_UNUSED(vehicle); return complexMissionItemNames; }
+    virtual QStringList complexMissionItemNames(Vehicle* /*vehicle*/, const QStringList& complexMissionItemNames) { return complexMissionItemNames; }
 
     bool showTouchAreas() const { return _showTouchAreas; }
     bool showAdvancedUI() const { return _showAdvancedUI; }

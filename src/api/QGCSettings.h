@@ -13,8 +13,8 @@
 #include <QUrl>
 
 /// @file
-///     @brief Core Plugin Interface for QGroundControl. Settings element.
-///     @author Gus Grubba <gus@auterion.com>
+/// @brief Core Plugin Interface for QGroundControl. Settings element.
+/// @author Gus Grubba <gus@auterion.com>
 
 class QGCSettings : public QObject
 {

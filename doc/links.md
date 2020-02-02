@@ -12,5 +12,5 @@ LinkInterface::bytesReceived signal and when data needs to be sent back to a veh
 LinkInterface::writeBytesSafe method.
 
 <div align="center">
-<img src="../links.svg">
+<img src="../links.svg" style="width:80%; height=auto;">
 </div>
