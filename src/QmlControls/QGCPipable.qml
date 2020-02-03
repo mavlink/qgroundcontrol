@@ -189,10 +189,9 @@ Item {
             }
         }
     }
-
     Rectangle {
         id:                     buttonScreenShoot
-        anchors.left:           buttonStop.right
+        anchors.left:           openPIP.right
         anchors.bottom:         parent.bottom
         height:                 ScreenTools.defaultFontPixelHeight * 2
         width:                  ScreenTools.defaultFontPixelHeight * 2
@@ -213,6 +212,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
+                print("Clicked!")
                 takeSnapshot();
             }
         }

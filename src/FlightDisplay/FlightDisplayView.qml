@@ -478,6 +478,9 @@ Item {
             onNewWidth: {
                 _pipSize = newWidth
             }
+            onTakeSnapshot: {
+                QGroundControl.videoManager.videoReceiver.takeSnapshot();
+            }
         }
 
         Row {
