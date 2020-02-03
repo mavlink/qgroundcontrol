@@ -3909,6 +3909,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
+    <parameter default="1" name="MAV_0_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 0</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="1200" name="MAV_0_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 0</short_desc>
       <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
@@ -3953,6 +3958,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
+    <parameter default="1" name="MAV_1_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 1</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="0" name="MAV_1_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 1</short_desc>
       <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
@@ -3996,6 +4006,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
       </values>
+    </parameter>
+    <parameter default="1" name="MAV_2_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 2</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
     </parameter>
     <parameter default="0" name="MAV_2_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 2</short_desc>
@@ -4043,9 +4058,9 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="2">Always use version 2</value>
       </values>
     </parameter>
-    <parameter default="0" name="MAV_RADIO_ID" type="INT32">
-      <short_desc>MAVLink Radio ID</short_desc>
-      <long_desc>When non-zero the MAVLink app will attempt to configure the radio to this ID and re-set the parameter to 0. If the value is negative it will reset the complete radio config to factory defaults.</long_desc>
+    <parameter default="0" name="MAV_SIK_RADIO_ID" type="INT32">
+      <short_desc>MAVLink SiK Radio ID</short_desc>
+      <long_desc>When non-zero the MAVLink app will attempt to configure the SiK radio to this ID and re-set the parameter to 0. If the value is negative it will reset the complete radio config to factory defaults. Only applies if this mavlink instance is going through a SiK radio</long_desc>
       <min>-1</min>
       <max>240</max>
     </parameter>
