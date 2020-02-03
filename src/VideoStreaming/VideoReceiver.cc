@@ -972,7 +972,7 @@ VideoReceiver::_videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user
 void
 VideoReceiver::_noteVideoSinkFrame()
 {
-    _lastFrameTime = time(nullptr);
+    _lastFrameTime = QDateTime::currentSecsSinceEpoch();
 }
 #endif
 
@@ -1046,7 +1046,7 @@ VideoReceiver::_updateTimer()
             timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
         }
 
-        const time_t now = time(nullptr);
+        const qint64 now = QDateTime::currentSecsSinceEpoch();
 
         if(now - _lastFrameTime > timeout) {
             stop();
