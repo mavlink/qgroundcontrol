@@ -132,7 +132,7 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         gst_ios_init();
     #else
         //-- Generic initialization
-        if (logpath) {
+        if (qgetenv("GST_DEBUG").isEmpty() && logpath) {
             QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
             qDebug() << "GStreamer debug output:" << gstDebugFile;
             if (debuglevel) {
