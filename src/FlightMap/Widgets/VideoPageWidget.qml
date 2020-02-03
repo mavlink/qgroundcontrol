@@ -108,6 +108,15 @@ Item {
             indexModel:         false
             Layout.alignment:   Qt.AlignHCenter
         }
+        QGCLabel {
+            text: qsTr("File Name");
+            visible: QGroundControl.videoManager.isGStreamer
+        }
+        TextField {
+            id: videoFileName
+            visible: QGroundControl.videoManager.isGStreamer
+            width: 100
+        }
         //-- Video Recording
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
@@ -155,7 +164,7 @@ Item {
                         // reset blinking animation
                         recordBtnBackground.opacity = 1
                     } else {
-                        _videoReceiver.startRecording()
+                        _videoReceiver.startRecording(videoFileName.text)
                     }
                 }
             }
