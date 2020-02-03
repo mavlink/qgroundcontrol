@@ -500,6 +500,10 @@ GstVideoReceiver::takeScreenshot(const QString& imageFile)
         return;
     }
 
+    if (!_videoSink) {
+        return;
+    }
+
     qDebug() << "Trying to take a snapshot";
     GstSample *videobuffer = nullptr;
     GstCaps *caps;
