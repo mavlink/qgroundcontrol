@@ -62,6 +62,8 @@ Item {
     property string _messageTitle:          ""
     property string _messageText:           ""
 
+    property var    mapCenter:              QGroundControl.flightMapPosition
+
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
         var hours   = Math.floor(sec_num / 3600);
@@ -246,6 +248,10 @@ Item {
         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth  * 16
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
+    }
+
+    onMapCenterChanged: {
+        mapCenterLabel.text = QGroundControl.positionToMGRSFormat(mapCenter)
     }
 
     //-------------------------------------------------------------------------
@@ -610,7 +616,6 @@ Item {
             anchors.fill:     parent
             color:            qgcPal.window
             radius:           ScreenTools.defaultFontPixelWidth * 0.5
-            visible:          vehiclePositionLabel.text !== "" || gcsPositionLabel.text !== ""
 
             Row {
                 id: layoutRow
@@ -624,7 +629,19 @@ Item {
                     font.pointSize:          _flightCoordinates._fontSize
                 }
                 QGCColoredImage {
-                     id:                     _icon1
+                     height:                 vehiclePositionLabel.contentHeight * 0.75
+                     width:                  height
+                     color:                  qgcPal.text
+                     source:                 "/custom/img/map-center.svg"
+                     anchors.verticalCenter: parent.verticalCenter
+                     visible:                mapCenterLabel.text !== ""
+                }
+                QGCLabel {
+                    id:                      mapCenterLabel
+                    color:                   qgcPal.text
+                    font.pointSize:          _flightCoordinates._fontSize
+                }
+                QGCColoredImage {
                      height:                 vehiclePositionLabel.contentHeight * 0.75
                      width:                  height
                      color:                  qgcPal.text
@@ -639,7 +656,6 @@ Item {
                     font.pointSize:          _flightCoordinates._fontSize
                 }
                 QGCColoredImage {
-                     id:                     _icon2
                      height:                 vehiclePositionLabel.contentHeight * 0.75
                      width:                  height
                      color:                  qgcPal.text

@@ -53,6 +53,7 @@
         <file alias="male-solid.svg">res/Images/male-solid.svg</file>
         <file alias="eye-solid.svg">res/Images/eye-solid.svg</file>
         <file alias="eye-slash-solid.svg">res/Images/eye-slash-solid.svg</file>
+        <file alias="map-center.svg">res/Images/centercode-brands.svg</file>
     </qresource>
     <qresource prefix="Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>
