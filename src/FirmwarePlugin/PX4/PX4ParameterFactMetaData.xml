@@ -812,7 +812,7 @@ Set to 2 to use heading from motion capture</short_desc>
   <group name="Circuit Breaker">
     <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
-      <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. The sensor driver will not be started and it cannot be calibrated. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>162128</max>
       <reboot_required>true</reboot_required>
