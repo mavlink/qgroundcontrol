@@ -46,9 +46,9 @@ public:
     bool rightOverlap = false;
     QString label;
     QGeoCoordinate bottomLeft;
-    QGeoCoordinate upperLeft;
+    QGeoCoordinate topLeft;
     QGeoCoordinate bottomRight;
-    QGeoCoordinate upperRight;
+    QGeoCoordinate topRight;
     QGeoCoordinate labelPos;
     QGeoCoordinate searchPos;
     QGeoCoordinate rightSearchPos;
@@ -78,9 +78,7 @@ public:
     static QString zoneLabel(QString mgrs) { return mgrs.left(5); }
 
 public slots:
-    void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
-                         const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
-                         int viewportWidth, int viewportHeight);
+    void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight);
 
 signals:
     void updateValues(const QVariant& values);

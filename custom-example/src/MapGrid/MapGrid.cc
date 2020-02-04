@@ -33,28 +33,22 @@ MapGrid::updateValues(const QVariant& values)
     _mapGridQML->setProperty("values", values);
     if (_calculationPending) {
         _calculationPending = false;
-        geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingTopRight, _pendingBottomLeft, _pendingBottomRight, _pendingViewportWidth, _pendingViewportHeight);
+        geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingBottomRight);
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-MapGrid::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& topRight,
-                         const QGeoCoordinate& bottomLeft, const QGeoCoordinate& bottomRight,
-                         int viewportWidth, int viewportHeight)
+MapGrid::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight)
 {
     if (!_calculationRunning) {
         _calculationRunning = true;
-        emit geometryChangedSignal(zoomLevel, topLeft, topRight, bottomLeft, bottomRight, viewportWidth, viewportHeight);
+        emit geometryChangedSignal(zoomLevel, topLeft, bottomRight);
     } else {
         _calculationPending = true;
         _pendingZoomLevel = zoomLevel;
         _pendingTopLeft = topLeft;
-        _pendingTopRight = topRight;
-        _pendingBottomLeft = bottomLeft;
         _pendingBottomRight = bottomRight;
-        _pendingViewportWidth = viewportWidth;
-        _pendingViewportHeight = viewportHeight;
     }
 }
 
