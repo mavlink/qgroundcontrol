@@ -71,15 +71,17 @@ Item {
     }
 
     // Progress bar
-
-    on_ControllerProgressPctChanged: {
-        if (_controllerProgressPct === 1) {
-            missionStats.visible = false
-            uploadCompleteText.visible = true
-            progressBar.visible = false
-            resetProgressTimer.start()
-        } else if (_controllerProgressPct > 0) {
-            progressBar.visible = true
+    Connections {
+        target: _controllerValid ? _planMasterController.missionController : undefined
+        onProgressPctChanged: {
+            if (_controllerProgressPct === 1) {
+                missionStats.visible = false
+                uploadCompleteText.visible = true
+                progressBar.visible = false
+                resetProgressTimer.start()
+            } else if (_controllerProgressPct > 0) {
+                progressBar.visible = true
+            }
         }
     }
 
