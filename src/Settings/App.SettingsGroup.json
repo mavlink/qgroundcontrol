@@ -139,6 +139,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "enforceChecklist",
+    "shortDescription": "Preflight checklist must pass before arming",
+    "longDescription":  "If this option is enabled the preflight checklist must pass before arming.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":                 "appFontPointSize",
     "shortDescription":     "Application font size",
     "longDescription":      "The point size for the default font used.",
