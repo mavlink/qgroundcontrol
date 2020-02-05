@@ -64,24 +64,23 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _pipeline(nullptr)
     , _pipelineStopRec(nullptr)
     , _videoSink(nullptr)
+    , _lastFrameId(G_MAXUINT64)
+    , _lastFrameTime(0)
     , _restart_time_ms(1389)
     , _socket(nullptr)
     , _serverPresent(false)
     , _tcpTestInterval_ms(5000)
     , _udpReconnect_us(5000000)
 #endif
-    , _videoSurface(nullptr)
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
     , _hwDecoderName(nullptr)
     , _swDecoderName("avdec_h264")
 {
-    _videoSurface = new VideoSurface;
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _setVideoSink(_videoSurface->videoSink());
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
     _tcp_timer.setSingleShot(true);
@@ -98,32 +97,9 @@ VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
     stop();
-    if(_socket) {
-        delete _socket;
-        _socket = nullptr;
-    }
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-    }
+    setVideoSink(nullptr);
 #endif
-    if(_videoSurface)
-        delete _videoSurface;
 }
-
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_setVideoSink(GstElement* sink)
-{
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-        _videoSink = nullptr;
-    }
-    if (sink) {
-        _videoSink = sink;
-        gst_object_ref_sink(_videoSink);
-    }
-}
-#endif
 
 //-----------------------------------------------------------------------------
 void
@@ -286,6 +262,9 @@ VideoReceiver::start()
         _tcp_timer.start(100);
         return;
     }
+
+    _lastFrameId = G_MAXUINT64;
+    _lastFrameTime = 0;
 
     bool running    = false;
     bool pipelineUp = false;
@@ -458,9 +437,19 @@ VideoReceiver::start()
 
         // If we failed before adding items to the pipeline, then clean up
         if (!pipelineUp) {
+            if (queue1 != nullptr) {
+                gst_object_unref(queue1);
+                queue1 = nullptr;
+            }
+
             if (decoder != nullptr) {
                 gst_object_unref(decoder);
                 decoder = nullptr;
+            }
+
+            if (queue != nullptr) {
+                gst_object_unref(queue);
+                queue = nullptr;
             }
 
             if (parser != nullptr) {
@@ -480,13 +469,9 @@ VideoReceiver::start()
 
             if (_tee != nullptr) {
                 gst_object_unref(_tee);
-                dataSource = nullptr;
+                _tee = nullptr;
             }
 
-            if (queue != nullptr) {
-                gst_object_unref(queue);
-                dataSource = nullptr;
-            }
         }
 
         _running = false;
@@ -552,7 +537,6 @@ VideoReceiver::_shutdownPipeline() {
         bus = nullptr;
     }
     gst_element_set_state(_pipeline, GST_STATE_NULL);
-    gst_bin_remove(GST_BIN(_pipeline), _videoSink);
     gst_object_unref(_pipeline);
     _pipeline = nullptr;
     delete _sink;
@@ -711,6 +695,38 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _hwDecoderName = nullptr;
     }
 }
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::setVideoSink(GstElement* videoSink)
+{
+    if(_pipeline != nullptr) {
+        qCDebug(VideoReceiverLog) << "Video receiver pipeline is active, video sink change is not possible";
+        return;
+    }
+
+    if (_videoSink != nullptr) {
+        gst_object_unref(_videoSink);
+        _videoSink = nullptr;
+    }
+
+    if (videoSink != nullptr) {
+        _videoSink = videoSink;
+        gst_object_ref(_videoSink);
+
+        GstPad* pad = gst_element_get_static_pad(_videoSink, "sink");
+
+        if (pad != nullptr) {
+            gst_pad_add_probe(pad, (GstPadProbeType)(GST_PAD_PROBE_TYPE_BUFFER), _videoSinkProbe, this, nullptr);
+            gst_object_unref(pad);
+            pad = nullptr;
+        } else {
+            qCDebug(VideoReceiverLog) << "Unable to find sink pad of video sink";
+        }
+    }
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
@@ -926,6 +942,30 @@ VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
 GstPadProbeReturn
+VideoReceiver::_videoSinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+{
+    Q_UNUSED(pad);
+    if(info != nullptr && user_data != nullptr) {
+        VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
+        pThis->_noteVideoSinkFrame();
+    }
+
+    return GST_PAD_PROBE_OK;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+void
+VideoReceiver::_noteVideoSinkFrame()
+{
+    _lastFrameTime = QDateTime::currentSecsSinceEpoch();
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+GstPadProbeReturn
 VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
     Q_UNUSED(pad);
@@ -971,41 +1011,39 @@ void
 VideoReceiver::_updateTimer()
 {
 #if defined(QGC_GST_STREAMING)
-    if(_videoSurface) {
-        if(_stopping || _starting) {
-            return;
+    if(_stopping || _starting) {
+        return;
+    }
+
+    if(_streaming) {
+        if(!_videoRunning) {
+            _videoRunning = true;
+            emit videoRunningChanged();
         }
-        if(_streaming) {
-            if(!_videoRunning) {
-                _videoSurface->setLastFrame(0);
-                _videoRunning = true;
-                emit videoRunningChanged();
-            }
-        } else {
-            if(_videoRunning) {
-                _videoRunning = false;
-                emit videoRunningChanged();
-            }
-        }
+    } else {
         if(_videoRunning) {
-            uint32_t timeout = 1;
-            if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
-                timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
-            }
-            time_t elapsed = 0;
-            time_t lastFrame = _videoSurface->lastFrame();
-            if(lastFrame != 0) {
-                elapsed = time(nullptr) - _videoSurface->lastFrame();
-            }
-            if(elapsed > static_cast<time_t>(timeout) && _videoSurface) {
-                stop();
-                // We want to start it back again with _updateTimer
-                _stop = false;
-            }
-        } else {
-            if(!_stop && _running && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
-                start();
-            }
+            _videoRunning = false;
+            emit videoRunningChanged();
+        }
+    }
+
+    if(_videoRunning) {
+        uint32_t timeout = 1;
+        if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
+            timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
+        }
+
+        const qint64 now = QDateTime::currentSecsSinceEpoch();
+
+        if(now - _lastFrameTime > timeout) {
+            stop();
+            // We want to start it back again with _updateTimer
+            _stop = false;
+        }
+    } else {
+		// FIXME: AV: if pipeline is _running but not _streaming for some time then we need to restart
+        if(!_stop && !_running && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
+            start();
         }
     }
 #endif

@@ -25,16 +25,14 @@
 #if defined(__ios__)
 #include "gst_ios_init.h"
 #endif
+#else
+#include "GLVideoItemStub.h"
 #endif
 
 #include "VideoStreaming.h"
-#include "VideoItem.h"
-#include "VideoSurface.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
-    // Our own plugin
-    GST_PLUGIN_STATIC_DECLARE(QGC_VIDEOSINK_PLUGIN);
     // The static plugins we use
 #if defined(__mobile__)
     GST_PLUGIN_STATIC_DECLARE(coreelements);
@@ -47,10 +45,12 @@
     GST_PLUGIN_STATIC_DECLARE(rtpmanager);
     GST_PLUGIN_STATIC_DECLARE(isomp4);
     GST_PLUGIN_STATIC_DECLARE(matroska);
+    GST_PLUGIN_STATIC_DECLARE(opengl);
 #endif
 #if defined(__android__)
     GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #endif
+    GST_PLUGIN_STATIC_DECLARE(qmlgl);
     G_END_DECLS
 #endif
 
@@ -148,8 +148,6 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             g_error_free(error);
         }
     #endif
-        // Our own plugin
-        GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
         // The static plugins we use
     #if defined(__android__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
@@ -164,12 +162,33 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         GST_PLUGIN_STATIC_REGISTER(matroska);
         GST_PLUGIN_STATIC_REGISTER(androidmedia);
     #endif
-#else
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-    Q_UNUSED(logpath);
-    Q_UNUSED(debuglevel);
+
+#if defined(__mobile__)
+        GST_PLUGIN_STATIC_REGISTER(opengl);
 #endif
-    qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QStringLiteral("VideoSurface from QML is not supported"));
+
+    /* the plugin must be loaded before loading the qml file to register the
+     * GstGLVideoItem qml item
+     * FIXME Add a QQmlExtensionPlugin into qmlglsink to register GstGLVideoItem
+     * with the QML engine, then remove this */
+    GstElement *sink = gst_element_factory_make("qmlglsink", nullptr);
+
+    if (sink == nullptr) {
+        GST_PLUGIN_STATIC_REGISTER(qmlgl);
+        sink = gst_element_factory_make("qmlglsink", nullptr);
+    }
+
+    if (sink != nullptr) {
+        gst_object_unref(sink);
+        sink = nullptr;
+    } else {
+        qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
+    }
+#else
+    qmlRegisterType<GLVideoItemStub> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
+    Q_UNUSED(argc)
+    Q_UNUSED(argv)
+    Q_UNUSED(logpath)
+    Q_UNUSED(debuglevel)
+#endif
 }
