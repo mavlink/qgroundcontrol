@@ -60,10 +60,8 @@ getQGCMapEngine()
 void
 destroyMapEngine()
 {
-    if(kMapEngine) {
-        delete kMapEngine;
-        kMapEngine = nullptr;
-    }
+    delete kMapEngine;
+    kMapEngine = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -105,8 +103,8 @@ QGCMapEngine::~QGCMapEngine()
 {
     _worker.quit();
     _worker.wait();
-    if(_urlFactory)
-        delete _urlFactory;
+    delete _urlFactory;
+    _urlFactory = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -373,8 +371,8 @@ int
 QGCMapEngine::concurrentDownloads(QString type)
 {
     Q_UNUSED(type);
-    // TODO : We may want different values depending on 
-    // the provider here, let it like this as all provider are set to 12 
+    // TODO : We may want different values depending on
+    // the provider here, let it like this as all provider are set to 12
     // at the moment
     return 12;
 }
@@ -408,4 +406,3 @@ QGCMapEngine::_internetStatus(bool active)
 }
 
 // Resolution math: https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
-
