@@ -189,9 +189,8 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
 //-----------------------------------------------------------------------------
 QGCCameraControl::~QGCCameraControl()
 {
-    if(_netManager) {
-        delete _netManager;
-    }
+    delete _netManager;
+    _netManager = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -217,10 +216,9 @@ QGCCameraControl::_initWhenReady()
     QTimer::singleShot(2500, this, &QGCCameraControl::_requestStorageInfo);
     _captureStatusTimer.start(2750);
     emit infoChanged();
-    if(_netManager) {
-        delete _netManager;
-        _netManager = nullptr;
-    }
+
+    delete _netManager;
+    _netManager = nullptr;
 }
 
 //-----------------------------------------------------------------------------
