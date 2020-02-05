@@ -37,6 +37,9 @@ public:
 };
 
 //=============================================================================
+// Represents MGRS zones defined by first 5 characters of MGRS coordinate
+// For example: 32UQU is composed of level 1 zone 32U and level 2 zone QU
+
 class MGRSZone
 {
 public:
@@ -59,6 +62,9 @@ public:
     QGeoCoordinate bottomSearchPos;
 
 private:
+    // Some level 2 zones overlap. Instead of drawing overlapping rectangles we crop the edges to
+    // level1 zone lines. This method finds the edge of the level1 zone specified with l1l and returns
+    // cropped edge. start, dir and format specify the beginning and direction of search
     void _fixEdge(QString l1l, int start, int dir, QString format, QGeoCoordinate& edgeToFix);
 };
 
@@ -68,16 +74,6 @@ class MapGridMGRS : public QObject
     Q_OBJECT
 public:
     explicit MapGridMGRS() {};
-
-    static bool lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2);
-
-    static bool lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r);
-
-    static QString level1Label(QString mgrs) { return mgrs.left(3); }
-
-    static QString level2Label(QString mgrs) { return mgrs.mid(3, 2); }
-
-    static QString zoneLabel(QString mgrs) { return mgrs.left(5); }
 
 public slots:
     void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight);
@@ -124,6 +120,10 @@ private:
     QList<QGeoPath> _level2Paths;
     QList<QGeoPath> _level3Paths;
     QList<MGRSLabel> _mgrsLabels;
+
+    bool _lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2);
+
+    bool _lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r);
 
     void _clear();
 

@@ -11,8 +11,18 @@
 #include "QGCGeo.h"
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QLoggingCategory>
 #include <math.h>
+
+#include <QLoggingCategory>
+#include <QFile>
+#include <QTextStream>
+#include <QJsonDocument>
+
+static QString level1Label(QString mgrs) { return mgrs.left(3); }
+
+static QString level2Label(QString mgrs) { return mgrs.mid(3, 2); }
+
+static QString zoneLabel(QString mgrs) { return mgrs.left(5); }
 
 //=============================================================================
 MGRSZone::MGRSZone(QString _label)
@@ -39,27 +49,27 @@ MGRSZone::MGRSZone(QString _label)
         valid = false;
     }
 
-    QString l2l = MapGridMGRS::level2Label(label);
+    QString l2l = level2Label(label);
 
     // top Right overlap
-    if (MapGridMGRS::level2Label(convertGeoToMGRS(topRight)) != l2l) {
+    if (level2Label(convertGeoToMGRS(topRight)) != l2l) {
         _fixEdge(l2l, 100000, -1, "%1 99999", topRight);
     }
 
     // top Left overlap
-    if (MapGridMGRS::level2Label(convertGeoToMGRS(topLeft)) != l2l) {
+    if (level2Label(convertGeoToMGRS(topLeft)) != l2l) {
         leftOverlap = true;
         _fixEdge(l2l, 0, 1, "%1 99999", topLeft);
     }
 
     // Bottom Right overlap
-    if (MapGridMGRS::level2Label(convertGeoToMGRS(bottomRight)) != l2l) {
+    if (level2Label(convertGeoToMGRS(bottomRight)) != l2l) {
         rightOverlap = true;
         _fixEdge(l2l, 100000, -1, "%1 00000", bottomRight);
     }
 
     // Bottom Left overlap
-    if (MapGridMGRS::level2Label(convertGeoToMGRS(bottomLeft)) != l2l) {
+    if (level2Label(convertGeoToMGRS(bottomLeft)) != l2l) {
         leftOverlap = true;
         _fixEdge(l2l, 0, 1, "%1 00000", bottomLeft);
     }
@@ -108,7 +118,7 @@ MGRSZone::_fixEdge(QString l2l, int start, int dir, QString format, QGeoCoordina
             if (!convertMGRSToGeo(mgrsC, c)) {
                 break;
             }
-        } while (MapGridMGRS::level2Label(convertGeoToMGRS(c)) != l2l);
+        } while (level2Label(convertGeoToMGRS(c)) != l2l);
         coord -= step * dir;
     }
     convertMGRSToGeo(mgrsC, edgeToFix);
@@ -116,7 +126,7 @@ MGRSZone::_fixEdge(QString l2l, int start, int dir, QString format, QGeoCoordina
 
 //=============================================================================
 bool
-MapGridMGRS::lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2)
+MapGridMGRS::_lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2)
 {
     double q = (l1p1.latitude() - l2p1.latitude()) * (l2p2.longitude() - l2p1.longitude()) - (l1p1.longitude() - l2p1.longitude()) * (l2p2.latitude() - l2p1.latitude());
     double d = (l1p2.longitude() - l1p1.longitude()) * (l2p2.latitude() - l2p1.latitude()) - (l1p2.latitude() - l1p1.latitude()) * (l2p2.longitude() - l2p1.longitude());
@@ -137,13 +147,13 @@ MapGridMGRS::lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate
 
 //-----------------------------------------------------------------------------
 bool
-MapGridMGRS::lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r)
+MapGridMGRS::_lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r)
 {
     return
-        lineIntersectsLine(p1, p2, r.topRight(), r.topLeft()) ||
-        lineIntersectsLine(p1, p2, r.topLeft(), r.bottomLeft()) ||
-        lineIntersectsLine(p1, p2, r.bottomLeft(), r.bottomRight()) ||
-        lineIntersectsLine(p1, p2, r.bottomRight(), r.topRight()) ||
+        _lineIntersectsLine(p1, p2, r.topRight(), r.topLeft()) ||
+        _lineIntersectsLine(p1, p2, r.topLeft(), r.bottomLeft()) ||
+        _lineIntersectsLine(p1, p2, r.bottomLeft(), r.bottomRight()) ||
+        _lineIntersectsLine(p1, p2, r.bottomRight(), r.topRight()) ||
         (r.contains(p1) && r.contains(p2));
 }
 
@@ -153,7 +163,6 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
 {
     if (topLeft.isValid() && bottomRight.isValid()) {
         _zoomLevel = zoomLevel;
-        //qCritical() << "Zoom: " << zoomLevel << "TL: " << topLeft << " ; " << bottomRight;
 
         double latDiff = (topLeft.latitude() - bottomRight.latitude()) / 3;
         double topLat = topLeft.latitude() + latDiff;
@@ -368,7 +377,7 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
         _level2Paths.push_back(path);
 
         if (_zoomLevel > maxZoneZoomLevel && _currentMGRSRect.contains(tile->labelPos)) {
-            _mgrsLabels.push_back(MGRSLabel(MapGridMGRS::level2Label(tile->label), tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
+            _mgrsLabels.push_back(MGRSLabel(level2Label(tile->label), tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
         }
 
         _createLevel3Paths(tile);
@@ -428,7 +437,7 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coordE + coord, c2)) {
                 break;
             }
-            if (lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
+            if (_lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
                 added++;
             } else if (added > 2) {
@@ -460,7 +469,7 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coord + coordN, c2)) {
                 break;
             }
-            if (lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
+            if (_lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
                 added++;
                 if (added > 1 && cnt1 % 2 == 1 && cnt2 % 2 == 1 &&_zoomLevel > maxZoneZoomLevel &&
@@ -491,6 +500,9 @@ MapGridMGRS::_addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QS
             p.insert(QStringLiteral("lat"), c.latitude());
             p.insert(QStringLiteral("lng"), c.longitude());
             pathPts.push_back(p);
+        }
+        if (pathPts.count() == 0) {
+            continue;
         }
         QJsonObject line;
         line.insert(QStringLiteral("points"), pathPts);
