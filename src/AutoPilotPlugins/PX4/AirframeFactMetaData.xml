@@ -727,6 +727,18 @@
       <output name="MAIN1">Speed of right wheels</output>
     </airframe>
   </airframe_group>
+  <airframe_group image="AirframeUnknown" name="Underwater Robot">
+    <airframe id="60000" maintainer="" name="Generic Underwater Robot">
+      <class>Underwater Robot</class>
+      <maintainer />
+      <type>Underwater Robot</type>
+    </airframe>
+    <airframe id="60001" maintainer="Daniel Duecker &lt;daniel.duecker@tuhh.de&gt;" name="HippoCampus UUV (Unmanned Underwater Vehicle)">
+      <class>Underwater Robot</class>
+      <maintainer>Daniel Duecker &lt;daniel.duecker@tuhh.de&gt;</maintainer>
+      <type>Underwater Robot</type>
+    </airframe>
+  </airframe_group>
   <airframe_group image="VTOLPlane" name="Standard VTOL">
     <airframe id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;" name="HIL Standard VTOL QuadPlane">
       <class>VTOL</class>
