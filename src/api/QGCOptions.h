@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget                READ instrumentWidget               CONSTANT)
     Q_PROPERTY(QUrl                     flyViewOverlay                  READ flyViewOverlay                 CONSTANT)
+    Q_PROPERTY(QUrl                     mapOverlay                      READ mapOverlay                     CONSTANT)
     Q_PROPERTY(QUrl                     preFlightChecklistUrl           READ preFlightChecklistUrl          CONSTANT)
 
     Q_PROPERTY(QUrl                     mainToolbarUrl                  READ mainToolbarUrl                 CONSTANT)
@@ -90,6 +91,9 @@ public:
 
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
+
+    /// Allows access to an optional map overlay
+    virtual QUrl    mapOverlay                      () const { return QUrl(); }
 
     /// Provides an optional preflight checklist
     virtual QUrl    preFlightChecklistUrl           () const { return QUrl(); }

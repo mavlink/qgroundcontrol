@@ -25,16 +25,14 @@ Item {
     readonly property string _mainIsMapKey: "MainFlyWindowIsMap"
     property bool videoOnSecondScreen: Qt.application.screens.length > 1 && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.value
     property bool mainIsMap: QGroundControl.videoManager.hasVideo && !videoOnSecondScreen ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property var mapControl
+    property var mapControl: null
     property var centerViewport: (mapControl) ? mapControl.centerViewport : null
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
-    property var mapGridObject
     property var mapComponents: []
-    property var values: []
+    property var values: mapGrid.values
 
-    onMapControlChanged: {
-        if (mapControl) {
-        }
+    MapGrid {
+        id: mapGrid
     }
 
     Connections {
@@ -53,42 +51,35 @@ Item {
         onTriggered:        geometryChanged()
     }
 
+    onMapControlChanged: {
+        geometryChanged()
+    }
+
     onValuesChanged: {
-        if (mapControl && centerViewport) {
-            addVisuals()
-        }
+        addVisuals()
     }
 
     function geometryChanged() {
-        if (centerViewport) {
+        if (mapControl && centerViewport) {
             var rect = Qt.rect(centerViewport.x, centerViewport.y, centerViewport.width, centerViewport.height)
             var topLeftCoord = mapControl.toCoordinate(Qt.point(rect.x, rect.y), false /* clipToViewPort */)
             var bottomRightCoord = mapControl.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height), false /* clipToViewPort */)
-            if (mapGridObject) {
-                mapGridObject.geometryChanged(mapControl.zoomLevel, topLeftCoord, bottomRightCoord)
-            }
-            addVisuals()
+            mapGrid.geometryChanged(mapControl.zoomLevel, topLeftCoord, bottomRightCoord)
         }
     }
 
     function addVisuals() {
-        if (!values || !values.hasOwnProperty("lines")) {
+        if (!mapControl || !centerViewport || !values || !values.hasOwnProperty("lines")) {
             return;
         }
 
         removeVisuals()
 
-        // Put other elements on top of the grid
-        for (var n = 0; n < mapControl.mapItems.length; n++) {
-            if (mapControl.mapItems[n].z < QGroundControl.zOrderMapItems) {
-                mapControl.mapItems[n].z = QGroundControl.zOrderMapItems - 10;
-            }
-        }
-
 //        console.info("MapGrid.qml - adding lines: " + values.lines.length)
         for (var i = 0; i < values.lines.length; i++) {
             var pc = polylineComponent.createObject(mapControl)
             if (pc) {
+                pc.visible = true
                 var pl = values.lines[i]
                 pc.line.width = pl.width
                 pc.line.color = pl.color
@@ -107,6 +98,7 @@ Item {
         for (i = 0; i < values.labels.length; i++) {
             var lc = labelComponent.createObject(mapControl)
             if (lc) {
+                lc.visible = true
                 var l = values.labels[i]
                 lc.labelText = l.text
                 lc.coordinate = QtPositioning.coordinate(l.lat, l.lng)
@@ -130,6 +122,7 @@ Item {
         id: polylineComponent
         MapPolyline {
             visible: _root.visible
+            z: 0
         }
     }
 
@@ -166,3 +159,4 @@ Item {
         }
     }
 }
+

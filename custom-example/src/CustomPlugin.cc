@@ -25,6 +25,7 @@
 #include "AppMessages.h"
 #include "QmlComponentInfo.h"
 #include "QGCPalette.h"
+#include "MapGrid.h"
 
 QGC_LOGGING_CATEGORY(CustomLog, "CustomLog")
 
@@ -100,6 +101,7 @@ CustomPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<CustomQuickInterface>("CustomQuickInterface", 1, 0, "CustomQuickInterface", customQuickInterfaceSingletonFactory);
+    qmlRegisterType<MapGrid>("QGroundControl", 1, 0, "MapGrid");
     //-- Disable automatic logging
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
@@ -218,25 +220,9 @@ CustomPlugin::createRootWindow(QObject *parent)
     pEngine->addImportPath("qrc:/Custom/Camera");
     pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-
-    connect(pEngine, &QQmlApplicationEngine::objectCreated, this, &CustomPlugin::_objectCreated);
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
-    if (_mainWindow) {
-        QQmlComponent component(pEngine, QUrl(QStringLiteral("qrc:/custom/MapGrid.qml")));
-        QObject *mapGridQML = component.create();
-        mapGridQML->setProperty("mapControl", _mainWindow->property("flightDisplayMap"));
-        _mapGrid = new MapGrid(mapGridQML);
-    }
-    disconnect(pEngine, &QQmlApplicationEngine::objectCreated, this, &CustomPlugin::_objectCreated);
 
     return pEngine;
-}
-
-//-----------------------------------------------------------------------------
-void
-CustomPlugin::_objectCreated(QObject *object, const QUrl &)
-{
-    _mainWindow = object;
 }
 
 //-----------------------------------------------------------------------------

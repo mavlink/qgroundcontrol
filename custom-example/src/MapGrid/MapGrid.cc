@@ -10,11 +10,9 @@
 #include "MapGrid.h"
 
 //-----------------------------------------------------------------------------
-MapGrid::MapGrid(QObject* mapGridQML)
+MapGrid::MapGrid()
     : QObject()
 {
-    _mapGridQML = mapGridQML;
-    _mapGridQML->setProperty("mapGridObject", QVariant::fromValue(this));
     _mapGridMGRS = new MapGridMGRS();
     _mapGridThread = new QThread(this);
     _mapGridThread->setObjectName("MapGrid");
@@ -27,10 +25,11 @@ MapGrid::MapGrid(QObject* mapGridQML)
 
 //-----------------------------------------------------------------------------
 void
-MapGrid::updateValues(const QVariant& values)
+MapGrid::updateValues(const QVariant& newValues)
 {
     _calculationRunning = false;
-    _mapGridQML->setProperty("values", values);
+    _values = newValues;
+    emit valuesChanged();
     if (_calculationPending) {
         _calculationPending = false;
         geometryChanged(_pendingZoomLevel, _pendingTopLeft, _pendingBottomRight);

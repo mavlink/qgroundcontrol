@@ -55,6 +55,7 @@ Item {
     property alias  _guidedController:              guidedActionsController
     property alias  _altitudeSlider:                altitudeSlider
     property real   _toolsMargin:                   ScreenTools.defaultFontPixelWidth * 0.75
+    property bool   planViewVisible:                mainWindow.planViewVisible
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -153,6 +154,9 @@ Item {
         if(QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length) {
             checkList.source = QGroundControl.corePlugin.options.preFlightChecklistUrl
         }
+        if(QGroundControl.corePlugin.options.mapOverlay.toString().length) {
+            mapOverlay.source = QGroundControl.corePlugin.options.mapOverlay
+        }
         QGroundControl.videoManager.stopVideo()
         if(videoOnSecondScreen) {
             enableVideoOnSecondScreen()
@@ -160,6 +164,14 @@ Item {
             disableVideoOnSecondScreen()
         }
         videoPopUpTimer.running = true
+    }
+
+    onPlanViewVisibleChanged: {
+        if (planViewVisible) {
+            mapOverlay.item.mapControl = mainWindow.editorMap;
+        } else {
+            mapOverlay.item.mapControl = mainWindow.flightDisplayMap
+        }
     }
 
     // The following code is used to track vehicle states for showing the mission complete dialog
@@ -362,6 +374,7 @@ Item {
                 scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
                 Component.onCompleted: {
                     mainWindow.flightDisplayMap = _fMap
+                    mapOverlay.item.mapControl = _fMap;
                     _fMap.adjustMapSize()
                 }
             }
@@ -546,6 +559,10 @@ Item {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
+        }
+
+        Loader {
+            id:                 mapOverlay
         }
 
         MultiVehicleList {

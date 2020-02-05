@@ -16,7 +16,6 @@
 #include "QGCLoggingCategory.h"
 #include "VideoReceiver.h"
 #include "SettingsManager.h"
-#include "MapGrid.h"
 
 #include <QTranslator>
 
@@ -47,6 +46,7 @@ public:
     double      toolbarHeightMultiplier         () final { return 1.25; }
 #endif
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomFlyView.qml"); }
+    QUrl        mapOverlay                      () const final { return QUrl::fromUserInput("qrc:/custom/MapGrid.qml"); }
     QUrl        preFlightChecklistUrl           () const final { return QUrl::fromUserInput("qrc:/custom/PreFlightCheckList.qml"); }
     //-- We have our own toolbar
     QUrl        mainToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomMainToolBar.qml"); }
@@ -100,7 +100,6 @@ public:
 
 private slots:
     void                    _advancedChanged                (bool advanced);
-    void                    _objectCreated                  (QObject *object, const QUrl &url);
 
 private:
     void
@@ -112,6 +111,4 @@ private:
 private:
     CustomOptions*       _pOptions = nullptr;
     QVariantList         _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
-    QObject*             _mainWindow = nullptr;
-    MapGrid*             _mapGrid = nullptr;
 };

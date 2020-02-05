@@ -397,7 +397,10 @@ Item {
             property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
 
             // Initial map position duplicates Fly view position
-            Component.onCompleted: editorMap.center = QGroundControl.flightMapPosition
+            Component.onCompleted: {
+                editorMap.center = QGroundControl.flightMapPosition
+                mainWindow.editorMap = editorMap
+            }
 
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 

@@ -144,7 +144,7 @@ bool convertMGRSToGeo(QString mgrs, QGeoCoordinate& coord)
     double lat, lon;
 
     try {
-        GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
+        GeographicLib::MGRS::Reverse(mgrs.replace(" ", "").toStdString(), zone, northp, x, y, prec);
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
     } catch(...) {
         return false;

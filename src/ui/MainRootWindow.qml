@@ -64,6 +64,8 @@ ApplicationWindow {
     property var                planMasterControllerPlan:   null
     property var                planMasterControllerView:   null
     property var                flightDisplayMap:           null
+    property var                editorMap:                  null
+    property var                planViewVisible:            planViewLoader.visible
 
     readonly property string    navButtonWidth:             ScreenTools.defaultFontPixelWidth * 24
     readonly property real      defaultTextHeight:          ScreenTools.defaultFontPixelHeight

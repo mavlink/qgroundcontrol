@@ -19,18 +19,23 @@ class MapGrid : public QObject
 {
     Q_OBJECT
 public:
-    explicit MapGrid(QObject* mapGridQML);
+    MapGrid();
+
+    QVariant getValues() { return _values; }
+
+    Q_PROPERTY(QVariant values READ getValues NOTIFY valuesChanged);
 
     Q_INVOKABLE void geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight);
 
 public slots:
-    void updateValues(const QVariant& values);
+    void updateValues(const QVariant& newValues);
 
 signals:
     void geometryChangedSignal(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight);
+    void valuesChanged();
 
 private:
-    QObject* _mapGridQML = nullptr;
+    QVariant _values;
     MapGridMGRS* _mapGridMGRS = nullptr;
     QThread* _mapGridThread = nullptr;
     bool _calculationRunning = false;
