@@ -13,6 +13,8 @@
 #include <QGeoCoordinate>
 #include <QGeoPath>
 #include <QGeoRectangle>
+#include <QMap>
+#include <QQueue>
 #include <QVariant>
 #include <memory>
 
@@ -87,6 +89,7 @@ private:
     const double maxZoneZoomLevel = 7.5;
     const double leve3ZoomLevel = 10;
     const int maxNumberOfLinesOnScreen = 10;
+    const int maxZoneMapCacheSize = 300;
 
     const QString level1LineForegroundColor = "#AAFF9999";
     const int level1LineForgroundWidth = 3;
@@ -113,6 +116,7 @@ private:
     double _zoomLevel = 0;
     double _minDistanceBetweenLines = 0;
     QMap<QString, std::shared_ptr<MGRSZone>> _zoneMap;
+    QQueue<QString> _zoneMapQueue;
     QList<QGeoPath> _level1Hlines;
     QList<QGeoPath> _level1Vlines;
     QList<MGRSLabel> _level1labels;
