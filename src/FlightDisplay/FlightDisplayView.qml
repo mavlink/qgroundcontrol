@@ -49,6 +49,8 @@ Item {
     property var    _rallyPointController:          _planController.rallyPointController
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+    property bool   _enforceChecklist:              _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
+    property bool   _canArm:                        activeVehicle ? (_useChecklist ? (_enforceChecklist ? activeVehicle.checkListState === Vehicle.CheckListPassed : true) : true) : false
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
@@ -595,7 +597,7 @@ Item {
                     name:               _guidedController.takeoffTitle,
                     iconSource:         "/res/takeoff.svg",
                     buttonVisible:      _guidedController.showTakeoff || !_guidedController.showLand,
-                    buttonEnabled:      _guidedController.showTakeoff,
+                    buttonEnabled:      _guidedController.showTakeoff && _canArm,
                     action:             _guidedController.actionTakeoff
                 },
                 {
@@ -623,7 +625,7 @@ Item {
                     name:               qsTr("Action"),
                     iconSource:         "/res/action.svg",
                     buttonVisible:      !_guidedController.showPause,
-                    buttonEnabled:      _anyActionAvailable,
+                    buttonEnabled:      _anyActionAvailable && _canArm,
                     action:             -1
                 }
             ]
@@ -657,7 +659,7 @@ Item {
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
-                if (showStartMission) {
+                if (showStartMission && _canArm) {
                     confirmAction(actionStartMission)
                 }
             }

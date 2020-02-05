@@ -475,11 +475,21 @@ Rectangle {
                             spacing:                    _margins
 
                             FactCheckBox {
-                                text:       qsTr("Use Preflight Checklist")
-                                fact:       _useChecklist
-                                visible:    _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+                                id:             useCheckList
+                                text:           qsTr("Use Preflight Checklist")
+                                fact:           _useChecklist
+                                visible:        _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
+                            }
+
+                            FactCheckBox {
+                                text:           qsTr("Enforce Preflight Checklist")
+                                fact:           _enforceChecklist
+                                enabled:        QGroundControl.settingsManager.appSettings.useChecklist.value
+                                visible:        useCheckList.visible && _enforceChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+
+                                property Fact _enforceChecklist: QGroundControl.settingsManager.appSettings.enforceChecklist
                             }
 
                             FactCheckBox {
