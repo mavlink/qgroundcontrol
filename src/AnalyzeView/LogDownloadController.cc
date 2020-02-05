@@ -527,10 +527,9 @@ void LogDownloadController::downloadToDirectory(const QString& dir)
     //-- Stop listing just in case
     _receivedAllEntries();
     //-- Reset downloads, again just in case
-    if(_downloadData) {
-        delete _downloadData;
-        _downloadData = 0;
-    }
+    delete _downloadData;
+    _downloadData = nullptr;
+
     _downloadPath = dir;
     if(!_downloadPath.isEmpty()) {
         if(!_downloadPath.endsWith(QDir::separator()))
@@ -573,10 +572,9 @@ LogDownloadController::_getNextSelected()
 bool
 LogDownloadController::_prepareLogDownload()
 {
-    if(_downloadData) {
-        delete _downloadData;
-        _downloadData = nullptr;
-    }
+    delete _downloadData;
+    _downloadData = nullptr;
+
     QGCLogEntry* entry = _getNextSelected();
     if(!entry) {
         return false;
