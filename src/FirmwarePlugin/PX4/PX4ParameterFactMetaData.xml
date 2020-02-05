@@ -10605,6 +10605,45 @@ is less than 50% of this value</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
+  <group name="UUV Attitude Control">
+    <parameter default="0.0" name="UUV_DIRCT_PITCH" type="FLOAT">
+      <short_desc>Direct pitch input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_ROLL" type="FLOAT">
+      <short_desc>Direct roll input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_THRUST" type="FLOAT">
+      <short_desc>Direct thrust input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_YAW" type="FLOAT">
+      <short_desc>Direct yaw input</short_desc>
+    </parameter>
+    <parameter default="0" name="UUV_INPUT_MODE" type="INT32">
+      <short_desc>Select Input Mode</short_desc>
+      <values>
+        <value code="0">use Attitude Setpoints</value>
+        <value code="1">Direct Feedthrough</value>
+      </values>
+    </parameter>
+    <parameter default="2.0" name="UUV_PITCH_D" type="FLOAT">
+      <short_desc>Pitch differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_PITCH_P" type="FLOAT">
+      <short_desc>Pitch proportional gain</short_desc>
+    </parameter>
+    <parameter default="1.5" name="UUV_ROLL_D" type="FLOAT">
+      <short_desc>Roll differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_ROLL_P" type="FLOAT">
+      <short_desc>Roll proportional gain</short_desc>
+    </parameter>
+    <parameter default="2.0" name="UUV_YAW_D" type="FLOAT">
+      <short_desc>Yaw differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_YAW_P" type="FLOAT">
+      <short_desc>Yawh proportional gain</short_desc>
+    </parameter>
+  </group>
   <group name="VTOL Attitude Control">
     <parameter default="8.0" name="VT_ARSP_BLEND" type="FLOAT">
       <short_desc>Transition blending airspeed</short_desc>
