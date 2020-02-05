@@ -140,10 +140,9 @@ void
 VideoReceiver::_tcp_timeout()
 {
     //-- If socket is live, we got no connection nor a socket error
-    if(_socket) {
-        delete _socket;
-        _socket = nullptr;
-    }
+    delete _socket;
+    _socket = nullptr;
+
     if(_videoSettings->streamEnabled()->rawValue().toBool()) {
         //-- RTSP will try to connect to the server. If it cannot connect,
         //   it will simply give up and never try again. Instead, we keep
