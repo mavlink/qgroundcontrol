@@ -20,11 +20,8 @@ import QGroundControl.FlightMap     1.0
 
 Item {
     id: _root
-    visible: mainIsMap && QGroundControl.settingsManager.appSettings.displayMGRSCoordinates.rawValue
 
-    readonly property string _mainIsMapKey: "MainFlyWindowIsMap"
-    property bool videoOnSecondScreen: Qt.application.screens.length > 1 && QGroundControl.settingsManager.videoSettings.showVideoOnSecondScreen.value
-    property bool mainIsMap: QGroundControl.videoManager.hasVideo && !videoOnSecondScreen ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool enabled: QGroundControl.settingsManager.appSettings.displayMGRSCoordinates.rawValue
     property var mapControl: null
     property var centerViewport: (mapControl) ? mapControl.centerViewport : null
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
@@ -51,6 +48,10 @@ Item {
         onTriggered:        geometryChanged()
     }
 
+    onEnabledChanged: {
+        geometryChanged()
+    }
+
     onMapControlChanged: {
         geometryChanged()
     }
@@ -60,6 +61,11 @@ Item {
     }
 
     function geometryChanged() {
+        if (!mainIsMap || !enabled) {
+            removeVisuals()
+            return
+        }
+
         if (mapControl && centerViewport) {
             var rect = Qt.rect(centerViewport.x, centerViewport.y, centerViewport.width, centerViewport.height)
             var topLeftCoord = mapControl.toCoordinate(Qt.point(rect.x, rect.y), false /* clipToViewPort */)
