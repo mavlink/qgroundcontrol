@@ -283,14 +283,6 @@ public:
 
     static const char* _settingsGroup;
 
-    static const double _voltageUnavailable;
-    static const int    _percentRemainingUnavailable;
-    static const int    _mahConsumedUnavailable;
-    static const int    _currentUnavailable;
-    static const double _temperatureUnavailable;
-    static const int    _cellCountUnavailable;
-    static const double _instantPowerUnavailable;
-
 private:
     Fact            _voltageFact;
     Fact            _percentRemainingFact;
