@@ -39,12 +39,10 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-    if(_videoReceiver) {
-        delete _videoReceiver;
-    }
-    if(_thermalVideoReceiver) {
-        delete _thermalVideoReceiver;
-    }
+    delete _videoReceiver;
+    _videoReceiver = nullptr;
+    delete _thermalVideoReceiver;
+    _thermalVideoReceiver = nullptr;
 }
 
 //-----------------------------------------------------------------------------

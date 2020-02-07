@@ -243,8 +243,8 @@ public:
 
     ~QGCSaveTileTask()
     {
-        if(_tile)
-            delete _tile;
+        delete _tile;
+        _tile = nullptr;
     }
 
     QGCCacheTile*   tile() { return _tile; }
