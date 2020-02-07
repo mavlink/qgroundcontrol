@@ -90,8 +90,8 @@ public:
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
 
-    /// Provides an optional preflight checklist
-    virtual QUrl    preFlightChecklistUrl           () const { return QUrl(); }
+    /// Provides an optional, custom preflight checklist
+    virtual QUrl    preFlightChecklistUrl           () const { return QUrl::fromUserInput("qrc:/qml/PreFlightCheckList.qml"); }
 
     /// Allows replacing the Main toolbar
     virtual QUrl    mainToolbarUrl                  () const;
