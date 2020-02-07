@@ -3399,6 +3399,32 @@ but also ignore less noise</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Hover Thrust Estimator">
+    <parameter default="3.0" name="HTE_ACC_GATE" type="FLOAT">
+      <short_desc>Gate size for acceleration fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="0.1" name="HTE_HT_ERR_INIT" type="FLOAT">
+      <short_desc>1-sigma initial hover thrust uncertainty</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>normalized_thrust</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.0005" name="HTE_HT_NOISE" type="FLOAT">
+      <short_desc>Hover thrust process noise</short_desc>
+      <long_desc>Reduce to make the hover thrust estimate more stable, increase if the real hover thrust is expected to change quickly over time.</long_desc>
+      <min>0.0001</min>
+      <max>1.0</max>
+      <unit>normalized_thrust/s</unit>
+      <decimal>4</decimal>
+    </parameter>
+  </group>
   <group name="Iridium SBD">
     <parameter default="0" name="ISBD_CONFIG" type="INT32">
       <short_desc>Serial Configuration for Iridium (with MAVLink)</short_desc>
