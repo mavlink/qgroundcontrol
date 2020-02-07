@@ -61,9 +61,8 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
 //-----------------------------------------------------------------------------
 QGCCachedTileSet::~QGCCachedTileSet()
 {
-    if(_networkManager) {
-        delete _networkManager;
-    }
+    delete _networkManager;
+    _networkManager = nullptr;
 }
 
 //-----------------------------------------------------------------------------
