@@ -19,6 +19,14 @@
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
     </qresource>
+    <qresource prefix="/checklists">
+        <file alias="DefaultChecklist.qml">src/FlightDisplay/DefaultChecklist.qml</file>
+        <file alias="MultiRotorChecklist.qml">src/FlightDisplay/MultiRotorChecklist.qml</file>
+        <file alias="FixedWingChecklist.qml">src/FlightDisplay/FixedWingChecklist.qml</file>
+        <file alias="VTOLChecklist.qml">src/FlightDisplay/VTOLChecklist.qml</file>
+        <file alias="RoverChecklist.qml">src/FlightDisplay/RoverChecklist.qml</file>
+        <file alias="SubChecklist.qml">src/FlightDisplay/SubChecklist.qml</file>
+    </qresource>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/HeightIndicator.qml">src/QmlControls/HeightIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCDynamicObjectManager.qml">src/QmlControls/QGCDynamicObjectManager.qml</file>
@@ -65,6 +73,7 @@
         <file alias="PlanToolBar.qml">src/PlanView/PlanToolBar.qml</file>
         <file alias="PlanToolBarIndicators.qml">src/PlanView/PlanToolBarIndicators.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
+        <file alias="PreFlightCheckList.qml">src/FlightDisplay/PreFlightCheckList.qml</file>
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
         <file alias="QGCInstrumentWidget.qml">src/FlightMap/Widgets/QGCInstrumentWidget.qml</file>
         <file alias="QGCInstrumentWidgetAlternate.qml">src/FlightMap/Widgets/QGCInstrumentWidgetAlternate.qml</file>
