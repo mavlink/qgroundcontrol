@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -39,12 +39,10 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-    if(_videoReceiver) {
         delete _videoReceiver;
-    }
-    if(_thermalVideoReceiver) {
+    _videoReceiver = nullptr;
         delete _thermalVideoReceiver;
-    }
+    _thermalVideoReceiver = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -62,7 +60,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
-   connect(_videoSettings->enableHardwareAcceleration(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
@@ -89,28 +86,18 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::startVideo(VideoReceiver *receiver)
+VideoManager::startVideo()
 {
-    _videoStarted = true;
-    if(_videoReceiver && (!receiver || receiver == _videoReceiver)) {
-        _videoReceiver->start();
-    }
-    if(_thermalVideoReceiver && (!receiver || receiver == _thermalVideoReceiver)) {
-        _thermalVideoReceiver->start();
-    }
+    if(_videoReceiver) _videoReceiver->start();
+    if(_thermalVideoReceiver) _thermalVideoReceiver->start();
 }
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::stopVideo(VideoReceiver *receiver)
+VideoManager::stopVideo()
 {
-    if(_videoReceiver && (!receiver || receiver == _videoReceiver)) {
-        _videoReceiver->stop();
-    }
-    if(_thermalVideoReceiver && (!receiver || receiver == _thermalVideoReceiver)) {
-        _thermalVideoReceiver->stop();
-    }
-    _videoStarted = false;
+    if(_videoReceiver) _videoReceiver->stop();
+    if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
 }
 
 //-----------------------------------------------------------------------------
@@ -472,24 +459,12 @@ VideoManager::_updateSettings()
 void
 VideoManager::restartVideo()
 {
-    restartVideoReceiver(nullptr);
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::restartVideoReceiver(VideoReceiver *receiver)
-{
-    if (!_videoStarted) {
-        return;
-    }
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoManagerLog) << "Restart video streaming";
-    stopVideo(receiver);
+    stopVideo();
     _updateSettings();
-    startVideo(receiver);
+    startVideo();
     emit aspectRatioChanged();
-#else
-    Q_UNUSED(receiver)
 #endif
 }
 

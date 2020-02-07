@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -63,7 +63,6 @@ public:
     virtual bool        autoStreamConfigured();
     virtual bool        hasThermal          ();
     virtual void        restartVideo        ();
-    virtual void        restartVideoReceiver(VideoReceiver *receiver);
 
     virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
@@ -80,8 +79,8 @@ public:
     // Override from QGCTool
     virtual void        setToolbox          (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo     (VideoReceiver *receiver = nullptr);
-    Q_INVOKABLE void stopVideo      (VideoReceiver *receiver = nullptr);
+    Q_INVOKABLE void startVideo     ();
+    Q_INVOKABLE void stopVideo      ();
 
 signals:
     void hasVideoChanged            ();
@@ -120,7 +119,6 @@ protected:
     QString         _videoSourceID;
     bool            _fullScreen             = false;
     Vehicle*        _activeVehicle          = nullptr;
-    bool            _videoStarted           = false;
 };
 
 #endif

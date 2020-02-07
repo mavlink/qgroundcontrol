@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Receiver
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include "VideoReceiver.h"
@@ -130,7 +130,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 void
 VideoReceiver::_restart_timeout()
 {
-    qgcApp()->toolbox()->videoManager()->restartVideoReceiver(this);
+    qgcApp()->toolbox()->videoManager()->restartVideo();
 }
 #endif
 
@@ -140,10 +140,9 @@ void
 VideoReceiver::_tcp_timeout()
 {
     //-- If socket is live, we got no connection nor a socket error
-    if(_socket) {
         delete _socket;
         _socket = nullptr;
-    }
+
     if(_videoSettings->streamEnabled()->rawValue().toBool()) {
         //-- RTSP will try to connect to the server. If it cannot connect,
         //   it will simply give up and never try again. Instead, we keep
@@ -223,10 +222,6 @@ VideoReceiver::start()
     }
 
 #if defined(QGC_GST_STREAMING)
-    if (_videoSurface) {
-        _videoSurface->setLastFrame(0);
-    }
-
     _stop = false;
 
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
@@ -359,17 +354,12 @@ VideoReceiver::start()
             break;
         }
 
-        bool useSoftwareDecoding = true;
-        if (qgcApp()->toolbox()->settingsManager()->videoSettings()->enableHardwareAcceleration()->rawValue().toBool()) {
-            if (_hwDecoderName && (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) != nullptr) {
-                useSoftwareDecoding = false;
-            } else {
-                qWarning() << "VideoReceiver::start() hardware decoding not available. Decoder: " << ((_hwDecoderName) ? _hwDecoderName : "");
-            }
-        }
-        if (useSoftwareDecoding && (decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Decoder: " << _swDecoderName;
+        if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
+            qWarning() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
+            if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
             break;
+        }
         }
 
         if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
@@ -564,14 +554,10 @@ VideoReceiver::_shutdownPipeline() {
 void
 VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
-
-    if (_videoSurface && _videoSurface->lastFrame() == 0) {
-        // We didn't receive any frame yet, so we restart after some time
+    // If there was an error we switch to software decoding only
+    _tryWithHardwareDecoding = false;
         stop();
         _restart_timer.start(_restart_time_ms);
-    } else {
-        _restart_timeout();
-    }
 }
 #endif
 
@@ -693,8 +679,6 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _parserName = "h265parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgooglehevcdecoder";
-#else
-        _hwDecoderName = "vaapih265dec";
 #endif
         _swDecoderName = "avdec_h265";
     } else {
@@ -702,10 +686,12 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _parserName = "h264parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgoogleh264decoder";
-#else
-        _hwDecoderName = "vaapih264dec";
 #endif
         _swDecoderName = "avdec_h264";
+    }
+
+    if (!_tryWithHardwareDecoding) {
+        _hwDecoderName = nullptr;
     }
 }
 

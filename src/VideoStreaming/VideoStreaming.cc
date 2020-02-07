@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief QGC Video Streaming Initialization
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include <QtQml>
@@ -191,20 +191,4 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     Q_UNUSED(logpath)
     Q_UNUSED(debuglevel)
 #endif
-}
-
-void shutdownVideoStreaming()
-{
-    /* From: http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-Gst.html#gst-deinit
-     *
-     * "It is normally not needed to call this function in a normal application as the resources will automatically
-     * be freed when the program terminates. This function is therefore mostly used by testsuites and other memory
-     * profiling tools."
-     *
-     * It's causing a hang on exit. It hangs while deleting some thread.
-     *
-#if defined(QGC_GST_STREAMING)
-     gst_deinit();
-#endif
-    */
 }
