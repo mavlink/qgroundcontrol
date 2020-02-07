@@ -9,21 +9,21 @@
 {
     "name":             "percentRemaining",
     "shortDescription": "Percent",
-    "type":             "int32",
+    "type":             "double",
     "decimalPlaces":    0,
     "units":            "%"
 },
 {
     "name":             "mahConsumed",
     "shortDescription": "Consumed",
-    "type":             "int32",
-     "decimalPlaces":    0,
-     "units":            "mAh"
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "mAh"
 },
 {
     "name":             "current",
     "shortDescription": "Current",
-    "type":             "float",
+    "type":             "double",
     "decimalPlaces":    2,
     "units":            "A"
 },
@@ -37,27 +37,29 @@
 {
     "name":             "cellCount",
     "shortDescription": "Cell Count",
-    "type":             "int32",
+    "type":             "double",
+    "decimalPlaces":    0,
     "decimalPlaces":    0
 },
 {
     "name":             "instantPower",
     "shortDescription": "Watts",
-    "type":             "float",
+    "type":             "double",
     "decimalPlaces":    2,
     "units":            "W"
 },
 {
     "name":             "timeRemaining",
     "shortDescription": "Time Remaining",
-    "type":             "int32",
+    "type":             "double",
+    "decimalPlaces":    0,
     "units":            "s"
 },
 {
     "name":             "chargeState",
     "shortDescription": "Charge State",
     "type":             "uint8",
-    "enumStrings":      "Low Battery State Not Provided,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy",
+    "enumStrings":      "N/A,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy",
     "enumValues":       "0,1,2,3,4,5,6",
     "decimalPlaces":    0
 }
