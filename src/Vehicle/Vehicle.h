@@ -1348,6 +1348,7 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
+    void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
