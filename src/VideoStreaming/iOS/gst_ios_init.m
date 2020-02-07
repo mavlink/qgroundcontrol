@@ -3,6 +3,18 @@
 
 #include "gst_ios_init.h"
 
+G_BEGIN_DECLS
+
+#define GST_G_IO_MODULE_DECLARE(name) \
+    extern void G_PASTE(g_io_module_, G_PASTE(name, _load_static)) (void)
+
+#define GST_G_IO_MODULE_LOAD(name) \
+    G_PASTE(g_io_module_, G_PASTE(name, _load_static)) ()
+
+G_END_DECLS
+
+#define GST_IOS_GIO_MODULE_GNUTLS
+
 #if defined(GST_IOS_GIO_MODULE_GNUTLS)
   #include <gio/gio.h>
   GST_G_IO_MODULE_DECLARE(gnutls);
@@ -45,6 +57,11 @@ void gst_ios_post_init(void)
   GstRegistry *reg;
   /* Lower the ranks of filesrc and giosrc so iosavassetsrc is
    * tried first in gst_element_make_from_uri() for file:// */
+
+#if defined(GST_IOS_GIO_MODULE_GNUTLS)
+    GST_G_IO_MODULE_LOAD(gnutls);
+#endif
+
   reg = gst_registry_get();
   plugin = gst_registry_lookup_feature(reg, "filesrc");
   if (plugin)
