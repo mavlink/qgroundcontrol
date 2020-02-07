@@ -236,7 +236,7 @@ _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
     if (isRtpPad) {
         GstElement* buffer;
 
-        if ((buffer = gst_element_factory_make("rtpjitterbuffer", "buffer")) != nullptr) {
+        if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) != nullptr) {
             gst_bin_add(GST_BIN(GST_ELEMENT_PARENT(element)), buffer);
 
             gst_element_sync_state_with_parent(buffer);
@@ -375,7 +375,7 @@ VideoReceiver::_makeSource(const QString& uri)
 
         if (probeRes & 1) {
             if (probeRes & 2) {
-                if ((buffer = gst_element_factory_make("rtpjitterbuffer", "buffer")) == nullptr) {
+                if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
                     qCritical() << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make('rtpjitterbuffer')";
                     break;
                 }
