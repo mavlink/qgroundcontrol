@@ -191,19 +191,19 @@ Item {
     }
     Rectangle {
         id:                     buttonScreenShoot
-        anchors.left:           openPIP.right
-        anchors.bottom:         parent.bottom
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
         height:                 ScreenTools.defaultFontPixelHeight * 2
         width:                  ScreenTools.defaultFontPixelHeight * 2
         radius:                 ScreenTools.defaultFontPixelHeight / 3
-        visible:                true
+        visible:                !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
         color:                  isDark ? Qt.rgba(0,0,0,0.75) : Qt.rgba(0,0,0,0.5)
         focus: visible
         Image {
             width:              parent.width  * 0.75
             height:             parent.height * 0.75
             sourceSize.height:  height
-            source:             "/res/buttonRight.svg"
+            source:             "/qmlimages/camera_photo.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.verticalCenter:     parent.verticalCenter
