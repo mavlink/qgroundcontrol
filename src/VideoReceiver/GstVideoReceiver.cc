@@ -530,12 +530,28 @@ GstVideoReceiver::takeScreenshot(const QString& imageFile)
         return;
     }
 
+    const gchar *format = gst_structure_get_string(s, "format");
+    if (!format) {
+         qCDebug(VideoReceiverLog) << "Could not get the format of the video.";
+    }
+
     GstBuffer *snapbuffer = gst_sample_get_buffer(videobuffer);
+    if (GST_BUFFER_FLAG_IS_SET(snapbuffer, GST_BUFFER_FLAG_CORRUPTED)) {
+         qCDebug(VideoReceiverLog) << "Buffer is corrupted, ignoring snapshot request.";
+        return;
+    }
+
     gst_buffer_map (snapbuffer, &map, GST_MAP_READ);
 
     uchar* bufferData = reinterpret_cast<uchar*>(map.data);
-    QImage::Format imageFormat = QImage::Format_RGB32;
-    // QImage::InvertMode invertMode = QImage::InvertRgb;
+    QImage::Format imageFormat{};
+    if (g_str_equal(format, "RGBA")) {
+        imageFormat = QImage::Format_RGBA8888;
+    }
+    else {
+         qCDebug(VideoReceiverLog) << "Could not save the video data.";
+        return;
+    }
 
     QImage image(bufferData, width, height, imageFormat);
 

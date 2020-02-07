@@ -212,7 +212,6 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-                print("Clicked!")
                 takeSnapshot();
             }
         }
