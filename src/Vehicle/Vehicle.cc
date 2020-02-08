@@ -1613,22 +1613,18 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         return;
     }
 
-    int cellCount = 0;
     double voltage = qQNaN();
     for (int i=0; i<10; i++) {
         double cellVoltage = bat_status.voltages[i] == UINT16_MAX ? qQNaN() : static_cast<double>(bat_status.voltages[i]) / 1000.0;
         if (qIsNaN(cellVoltage)) {
             break;
         }
-        cellCount++;
         if (i == 0) {
             voltage = cellVoltage;
         } else {
             voltage += cellVoltage;
         }
     }
-    pBatteryFactGroup->cellCount()->setRawValue(cellCount == 0 ? qQNaN() : cellCount);
-
 
     pBatteryFactGroup->temperature()->setRawValue(bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
     pBatteryFactGroup->mahConsumed()->setRawValue(bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
@@ -4265,7 +4261,6 @@ const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "per
 const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
 const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
 const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
-const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
 const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
 const char* VehicleBatteryFactGroup::_timeRemainingFactName =               "timeRemaining";
 const char* VehicleBatteryFactGroup::_chargeStateFactName =                 "chargeState";
@@ -4279,7 +4274,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeDouble)
     , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeDouble)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
-    , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeDouble)
     , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeDouble)
     , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeDouble)
     , _chargeStateFact              (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
@@ -4289,7 +4283,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _addFact(&_mahConsumedFact,             _mahConsumedFactName);
     _addFact(&_currentFact,                 _currentFactName);
     _addFact(&_temperatureFact,             _temperatureFactName);
-    _addFact(&_cellCountFact,               _cellCountFactName);
     _addFact(&_instantPowerFact,            _instantPowerFactName);
     _addFact(&_timeRemainingFact,           _timeRemainingFactName);
     _addFact(&_chargeStateFact,             _chargeStateFactName);
@@ -4300,7 +4293,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _mahConsumedFact.setRawValue        (qQNaN());
     _currentFact.setRawValue            (qQNaN());
     _temperatureFact.setRawValue        (qQNaN());
-    _cellCountFact.setRawValue          (qQNaN());
     _instantPowerFact.setRawValue       (qQNaN());
     _timeRemainingFact.setRawValue      (qQNaN());
     _chargeStateFact.setRawValue        (MAV_BATTERY_CHARGE_STATE_UNDEFINED);
