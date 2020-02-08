@@ -256,7 +256,6 @@ public:
     Q_PROPERTY(Fact* mahConsumed        READ mahConsumed        CONSTANT)
     Q_PROPERTY(Fact* current            READ current            CONSTANT)
     Q_PROPERTY(Fact* temperature        READ temperature        CONSTANT)
-    Q_PROPERTY(Fact* cellCount          READ cellCount          CONSTANT)
     Q_PROPERTY(Fact* instantPower       READ instantPower       CONSTANT)
     Q_PROPERTY(Fact* timeRemaining      READ timeRemaining      CONSTANT)
     Q_PROPERTY(Fact* chargeState        READ chargeState        CONSTANT)
@@ -266,7 +265,6 @@ public:
     Fact* mahConsumed               () { return &_mahConsumedFact; }
     Fact* current                   () { return &_currentFact; }
     Fact* temperature               () { return &_temperatureFact; }
-    Fact* cellCount                 () { return &_cellCountFact; }
     Fact* instantPower              () { return &_instantPowerFact; }
     Fact* timeRemaining             () { return &_timeRemainingFact; }
     Fact* chargeState               () { return &_chargeStateFact; }
@@ -276,20 +274,11 @@ public:
     static const char* _mahConsumedFactName;
     static const char* _currentFactName;
     static const char* _temperatureFactName;
-    static const char* _cellCountFactName;
     static const char* _instantPowerFactName;
     static const char* _timeRemainingFactName;
     static const char* _chargeStateFactName;
 
     static const char* _settingsGroup;
-
-    static const double _voltageUnavailable;
-    static const int    _percentRemainingUnavailable;
-    static const int    _mahConsumedUnavailable;
-    static const int    _currentUnavailable;
-    static const double _temperatureUnavailable;
-    static const int    _cellCountUnavailable;
-    static const double _instantPowerUnavailable;
 
 private:
     Fact            _voltageFact;
@@ -297,7 +286,6 @@ private:
     Fact            _mahConsumedFact;
     Fact            _currentFact;
     Fact            _temperatureFact;
-    Fact            _cellCountFact;
     Fact            _instantPowerFact;
     Fact            _timeRemainingFact;
     Fact            _chargeStateFact;
@@ -1356,6 +1344,7 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
+    void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;

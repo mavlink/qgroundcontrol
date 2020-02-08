@@ -1531,37 +1531,39 @@ bool Vehicle::_apmArmingNotRequired()
             _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
+void Vehicle::_batteryStatusWorker(int batteryId, double voltage, double current, double batteryRemainingPct)
+{
+    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
+    if (batteryId == 0) {
+        pBatteryFactGroup = &_battery1FactGroup;
+    } else if (batteryId == 1) {
+        pBatteryFactGroup = &_battery2FactGroup;
+    } else {
+        return;
+    }
+
+    pBatteryFactGroup->voltage()->setRawValue(voltage);
+    pBatteryFactGroup->current()->setRawValue(current);
+    pBatteryFactGroup->instantPower()->setRawValue(voltage * current);
+    pBatteryFactGroup->percentRemaining()->setRawValue(batteryRemainingPct);
+
+    //-- Low battery warning
+    if (batteryId == 0 && !qIsNaN(batteryRemainingPct)) {
+        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
+        if (batteryRemainingPct < warnThreshold &&
+                batteryRemainingPct < _lastAnnouncedLowBatteryPercent &&
+                _lastBatteryAnnouncement.elapsed() > (batteryRemainingPct < warnThreshold * 0.5 ? 15000 : 30000)) {
+            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(static_cast<int>(batteryRemainingPct)));
+            _lastBatteryAnnouncement.start();
+            _lastAnnouncedLowBatteryPercent = static_cast<int>(batteryRemainingPct);
+        }
+    }
+}
+
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
 {
     mavlink_sys_status_t sysStatus;
     mavlink_msg_sys_status_decode(&message, &sysStatus);
-
-    if (sysStatus.current_battery == -1) {
-        _battery1FactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
-    } else {
-        // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
-        _battery1FactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
-    }
-    if (sysStatus.voltage_battery == UINT16_MAX) {
-        _battery1FactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
-    } else {
-        _battery1FactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
-            // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
-        _battery1FactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
-    }
-    _battery1FactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
-
-    //-- Low battery warning
-    if (sysStatus.battery_remaining > 0) {
-        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
-        if (sysStatus.battery_remaining < warnThreshold &&
-                sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent &&
-                _lastBatteryAnnouncement.elapsed() > (sysStatus.battery_remaining < warnThreshold * 0.5 ? 15000 : 30000)) {
-            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
-            _lastBatteryAnnouncement.start();
-            _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
-        }
-    }
 
     if (_onboardControlSensorsPresent != sysStatus.onboard_control_sensors_present) {
         _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
@@ -1589,6 +1591,12 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         emit unhealthySensorsChanged();
         emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
+
+    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
+    _batteryStatusWorker(0 /* batteryId */,
+                         sysStatus.voltage_battery == UINT16_MAX ? qQNaN() : static_cast<double>(sysStatus.voltage_battery) / 1000.0,
+                         sysStatus.current_battery == -1 ? qQNaN() : static_cast<double>(sysStatus.current_battery) / 100.0,
+                         sysStatus.battery_remaining == -1 ? qQNaN() : sysStatus.battery_remaining);
 }
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
@@ -1596,44 +1604,40 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     mavlink_battery_status_t bat_status;
     mavlink_msg_battery_status_decode(&message, &bat_status);
 
-    VehicleBatteryFactGroup& batteryFactGroup = bat_status.id == 0 ? _battery1FactGroup : _battery2FactGroup;
-
-    if (bat_status.temperature == INT16_MAX) {
-        batteryFactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
+    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
+    if (bat_status.id == 0) {
+        pBatteryFactGroup = &_battery1FactGroup;
+    } else if (bat_status.id == 1) {
+        pBatteryFactGroup = &_battery2FactGroup;
     } else {
-        batteryFactGroup.temperature()->setRawValue(static_cast<double>(bat_status.temperature)/100.0);
-    }
-    if (bat_status.current_consumed == -1) {
-        batteryFactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
-    } else {
-        batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
+        return;
     }
 
-    int cellCount = 0;
+    double voltage = qQNaN();
     for (int i=0; i<10; i++) {
-        if (bat_status.voltages[i] != UINT16_MAX) {
-            cellCount++;
+        double cellVoltage = bat_status.voltages[i] == UINT16_MAX ? qQNaN() : static_cast<double>(bat_status.voltages[i]) / 1000.0;
+        if (qIsNaN(cellVoltage)) {
+            break;
+        }
+        if (i == 0) {
+            voltage = cellVoltage;
+        } else {
+            voltage += cellVoltage;
         }
     }
-    if (cellCount == 0) {
-        cellCount = -1;
-    }
 
-    batteryFactGroup.cellCount()->setRawValue(cellCount);
+    pBatteryFactGroup->temperature()->setRawValue(bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
+    pBatteryFactGroup->mahConsumed()->setRawValue(bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
+    pBatteryFactGroup->chargeState()->setRawValue(bat_status.charge_state);
+    pBatteryFactGroup->timeRemaining()->setRawValue(bat_status.time_remaining == 0 ? qQNaN() : bat_status.time_remaining);
 
-    //-- Time remaining in seconds (0 means not supported)
-    batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
-    //-- Battery charge state (0 means not supported)
-    if(bat_status.charge_state <= MAV_BATTERY_CHARGE_STATE_UNHEALTHY) {
-        batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
-    } else {
-        batteryFactGroup.chargeState()->setRawValue(0);
+    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
+    if (bat_status.id != 0) {
+        _batteryStatusWorker(bat_status.id,
+                             voltage,
+                             bat_status.current_battery == -1 ? qQNaN() : (double)bat_status.current_battery / 100.0,
+                             bat_status.battery_remaining == -1 ? qQNaN() : bat_status.battery_remaining);
     }
-    //-- TODO: Somewhere, actions would be taken based on this chargeState:
-    //   MAV_BATTERY_CHARGE_STATE_CRITICAL:     Battery state is critical, return / abort immediately
-    //   MAV_BATTERY_CHARGE_STATE_EMERGENCY:    Battery state is too low for ordinary abortion, fastest possible emergency stop preventing damage
-    //   MAV_BATTERY_CHARGE_STATE_FAILED:       Battery failed, damage unavoidable
-    //   MAV_BATTERY_CHARGE_STATE_UNHEALTHY:    Battery is diagnosed to be broken or an error occurred, usage is discouraged / prohibited
 }
 
 void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
@@ -4257,31 +4261,21 @@ const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "per
 const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
 const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
 const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
-const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
 const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
 const char* VehicleBatteryFactGroup::_timeRemainingFactName =               "timeRemaining";
 const char* VehicleBatteryFactGroup::_chargeStateFactName =                 "chargeState";
 
 const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
 
-const double VehicleBatteryFactGroup::_voltageUnavailable =           -1.0;
-const int    VehicleBatteryFactGroup::_percentRemainingUnavailable =  -1;
-const int    VehicleBatteryFactGroup::_mahConsumedUnavailable =       -1;
-const int    VehicleBatteryFactGroup::_currentUnavailable =           -1;
-const double VehicleBatteryFactGroup::_temperatureUnavailable =       -1.0;
-const int    VehicleBatteryFactGroup::_cellCountUnavailable =         -1.0;
-const double VehicleBatteryFactGroup::_instantPowerUnavailable =      -1.0;
-
 VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
     , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
-    , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeInt32)
-    , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeInt32)
-    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeFloat)
+    , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeDouble)
+    , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeDouble)
+    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeDouble)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
-    , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
-    , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeFloat)
-    , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeInt32)
+    , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeDouble)
+    , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeDouble)
     , _chargeStateFact              (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
 {
     _addFact(&_voltageFact,                 _voltageFactName);
@@ -4289,19 +4283,19 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _addFact(&_mahConsumedFact,             _mahConsumedFactName);
     _addFact(&_currentFact,                 _currentFactName);
     _addFact(&_temperatureFact,             _temperatureFactName);
-    _addFact(&_cellCountFact,               _cellCountFactName);
     _addFact(&_instantPowerFact,            _instantPowerFactName);
     _addFact(&_timeRemainingFact,           _timeRemainingFactName);
     _addFact(&_chargeStateFact,             _chargeStateFactName);
 
     // Start out as not available
-    _voltageFact.setRawValue            (_voltageUnavailable);
-    _percentRemainingFact.setRawValue   (_percentRemainingUnavailable);
-    _mahConsumedFact.setRawValue        (_mahConsumedUnavailable);
-    _currentFact.setRawValue            (_currentUnavailable);
-    _temperatureFact.setRawValue        (_temperatureUnavailable);
-    _cellCountFact.setRawValue          (_cellCountUnavailable);
-    _instantPowerFact.setRawValue       (_instantPowerUnavailable);
+    _voltageFact.setRawValue            (qQNaN());
+    _percentRemainingFact.setRawValue   (qQNaN());
+    _mahConsumedFact.setRawValue        (qQNaN());
+    _currentFact.setRawValue            (qQNaN());
+    _temperatureFact.setRawValue        (qQNaN());
+    _instantPowerFact.setRawValue       (qQNaN());
+    _timeRemainingFact.setRawValue      (qQNaN());
+    _chargeStateFact.setRawValue        (MAV_BATTERY_CHARGE_STATE_UNDEFINED);
 }
 
 const char* VehicleWindFactGroup::_directionFactName =      "direction";
