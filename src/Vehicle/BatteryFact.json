@@ -35,13 +35,6 @@
     "units":            "C"
 },
 {
-    "name":             "cellCount",
-    "shortDescription": "Cell Count",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "decimalPlaces":    0
-},
-{
     "name":             "instantPower",
     "shortDescription": "Watts",
     "type":             "double",
