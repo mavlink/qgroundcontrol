@@ -34,23 +34,39 @@ T.ComboBox {
     property bool   sizeToContents: false
     property string alternateText:  ""
 
-    property var    _qgcPal:           QGCPalette { colorGroupEnabled: enabled }
-    property real   _largestTextWidth: 0
-    property real   _popupWidth:       sizeToContents ? _largestTextWidth + leftPadding + rightPadding : control.width
+    property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
+    property real   _largestTextWidth:  0
+    property real   _popupWidth:        sizeToContents ? _largestTextWidth + itemDelegateMetrics.leftPadding + itemDelegateMetrics.rightPadding : control.width
+    property bool   _onCompleted:       false
 
     TextMetrics {
-        id:         textMetrics
-        font:       control.font
+        id:                 textMetrics
+        font.family:        control.font.family
+        font.pointSize:     control.font.pointSize
     }
 
-    onModelChanged: {
-        if (sizeToContents) {
+    ItemDelegate {
+        id:             itemDelegateMetrics
+        visible:        false
+        font.family:    control.font.family
+        font.pointSize: control.font.pointSize
+    }
+
+    function _adjustSizeToContents() {
+        if (_onCompleted && sizeToContents) {
             _largestTextWidth = 0
             for (var i = 0; i < model.length; i++){
                 textMetrics.text = model[i]
                 _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
             }
         }
+    }
+
+    onModelChanged: _adjustSizeToContents()
+
+    Component.onCompleted: {
+        _onCompleted = true
+        _adjustSizeToContents()
     }
 
     // The items in the popup
