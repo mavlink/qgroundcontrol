@@ -104,6 +104,11 @@ if (GST_FOUND)
 
     include(qmlglsink.cmake)
 endif()
+
+add_definitions(
+    -DQGC_ENABLE_MAVLINK_INSPECTOR
+)
+
 #=============================================================================
 # Qt5
 #
