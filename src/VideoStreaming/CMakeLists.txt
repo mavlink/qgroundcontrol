@@ -5,13 +5,19 @@ if (GST_FOUND)
 endif()
 
 add_library(VideoStreaming
-	VideoReceiver.cc
-	VideoStreaming.cc
-	SubtitleWriter.cc
-  GLVideoItemStub.cc
+    GLVideoItemStub.cc
+    GLVideoItemStub.h
+    SubtitleWriter.cc
+    SubtitleWriter.h
+    VideoReceiver.cc
+    VideoReceiver.h
+    VideoStreaming.cc
+    VideoStreaming.h
 )
 
 target_link_libraries(VideoStreaming
+        PRIVATE
+                gst_plugins_good
 	PUBLIC
 		qgc
 		Qt5::Multimedia
