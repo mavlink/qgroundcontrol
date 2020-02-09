@@ -9,4 +9,4 @@
 	url = https://github.com/Auterion/android_openssl
 [submodule "libs/gst-plugins-good"]
 	path = libs/gst-plugins-good
-	url = https://gitlab.freedesktop.org/andrew.voznytsa/gst-plugins-good.git
+	url = https://github.com/mavlink/gst-plugins-good.git
