@@ -98,7 +98,7 @@ doInstall:
   ; QGC stores its own driver version key to prevent installation if already up to date
   ; This prevents running the driver install a second time which will start up in repair mode which is confusing
   !define QGCDRIVERVERSIONKEY "SOFTWARE\QGroundControlUAVDrivers"
-  !define QGCCURRENTDRIVERVERSION 1
+  !define QGCCURRENTDRIVERVERSION 2
 
   ; If the drivers are already installed the key "HKCU/SOFTWARE\MichaelOborne\driver\installed" will be present and set to 1
   SetRegView 64
@@ -109,7 +109,7 @@ doInstall:
 driversInstalled:
   DetailPrint "UAV Drivers already installed. Checking version..."
   ; Check if the installed drivers are out of date. 
-  ; Latest version is tagged as 1. Missing key also indicates out of date driver install.
+  ; Missing key also indicates out of date driver install.
   ReadRegDWORD $0 HKCU "${QGCDRIVERVERSIONKEY}" "version"
   IntCmp $0 ${QGCCURRENTDRIVERVERSION} done driversOutOfDate done
 
@@ -126,7 +126,7 @@ installDrivers:
   DetailPrint "Installing UAV Drivers..."
   ExecWait '"msiexec" /i "driver.msi"'
   ; Set current driver version value
-  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" 1
+  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" ${QGCCURRENTDRIVERVERSION}
   goto done
 
 done:
