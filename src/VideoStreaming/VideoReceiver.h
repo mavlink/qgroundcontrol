@@ -85,6 +85,7 @@ protected slots:
     virtual void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
     GstElement*  _makeSource                (const QString& uri);
+    GstElement*  _makeFileSink              (const QString& videoFile, unsigned format);
     virtual void _restart_timeout           ();
     virtual void _tcp_timeout               ();
     virtual void _connected                 ();
@@ -101,7 +102,6 @@ protected:
     {
         GstPad*         teepad;
         GstElement*     queue;
-        GstElement*     mux;
         GstElement*     filesink;
         gboolean        removing;
     } Sink;
@@ -122,13 +122,12 @@ protected:
     static GstPadProbeReturn    _videoSinkProbe         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn    _keyframeWatch          (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
-    virtual void                _detachRecordingBranch  (GstPadProbeInfo* info);
+    virtual void                _unlinkRecordingBranch  (GstPadProbeInfo* info);
     virtual void                _shutdownRecordingBranch();
     virtual void                _shutdownPipeline       ();
     virtual void                _cleanupOldVideos       ();
 
     GstElement*     _pipeline;
-    GstElement*     _pipelineStopRec;
     GstElement*     _videoSink;
     guint64         _lastFrameId;
     qint64          _lastFrameTime;
