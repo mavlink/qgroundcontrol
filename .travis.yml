@@ -30,7 +30,7 @@ git:
 
 .template_linux: &template_linux
   os: linux
-  dist: xenial
+  dist: bionic
   services: docker
   sudo: required
   install:
