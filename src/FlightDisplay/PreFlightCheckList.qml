@@ -19,9 +19,11 @@ import QGroundControl.Vehicle       1.0
 
 Rectangle {
     width:      mainColumn.width  + ScreenTools.defaultFontPixelWidth * 3
-    height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
+    height:     Math.min(availableHeight - (_verticalMargin * 2), mainColumn.height + ScreenTools.defaultFontPixelHeight)
     color:      qgcPal.windowShade
     radius:     3
+
+    property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 2
 
     Loader {
         id:     modelContainer
@@ -94,56 +96,67 @@ Rectangle {
         onTriggered: _handleGroupPassedChanged(index, true /* passed */)
     }
 
-    Column {
-        id:                     mainColumn
-        width:                  40  * ScreenTools.defaultFontPixelWidth
-        spacing:                0.8 * ScreenTools.defaultFontPixelWidth
-        anchors.left:           parent.left
-        anchors.top:            parent.top
-        anchors.topMargin:      0.6 * ScreenTools.defaultFontPixelWidth
-        anchors.leftMargin:     1.5 * ScreenTools.defaultFontPixelWidth
+    QGCFlickable {
+        id:                     flickable
+        anchors.topMargin:      _verticalMargin
+        anchors.bottomMargin:   _verticalMargin
+        anchors.leftMargin:     _horizontalMargin
+        anchors.rightMargin:    _horizontalMargin
+        anchors.fill:           parent
+        flickableDirection:     Flickable.VerticalFlick
+        contentWidth:           mainColumn.width
+        contentHeight:          mainColumn.height
 
-        function groupPassedChanged(index, passed) {
-            if (passed) {
-                delayedGroupPassed.index = index
-                delayedGroupPassed.restart()
-            } else {
-                _handleGroupPassedChanged(index, passed)
-            }
-        }
+        property real _horizontalMargin:    1.5 * ScreenTools.defaultFontPixelWidth
+        property real _verticalMargin:      0.6 * ScreenTools.defaultFontPixelWidth
 
-        // Header/title of checklist
-        Item {
-            width:      parent.width
-            height:     1.75 * ScreenTools.defaultFontPixelHeight
+        Column {
+            id:         mainColumn
+            width:      40  * ScreenTools.defaultFontPixelWidth
+            spacing:    0.8 * ScreenTools.defaultFontPixelWidth
 
-            QGCLabel {
-                text:                   qsTr("Pre-Flight Checklist %1").arg(_passed ? qsTr("(passed)") : "")
-                anchors.left:           parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                font.pointSize:         ScreenTools.mediumFontPointSize
-            }
-            QGCButton {
-                width:                  1.2 * ScreenTools.defaultFontPixelHeight
-                height:                 1.2 * ScreenTools.defaultFontPixelHeight
-                anchors.right:          parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
-
-                onClicked:              checkListRepeater.model.reset()
-
-                QGCColoredImage {
-                    source:         "/qmlimages/MapSyncBlack.svg"
-                    color:          qgcPal.buttonText
-                    anchors.fill:   parent
+            function groupPassedChanged(index, passed) {
+                if (passed) {
+                    delayedGroupPassed.index = index
+                    delayedGroupPassed.restart()
+                } else {
+                    _handleGroupPassedChanged(index, passed)
                 }
             }
-        }
 
-        // All check list items
-        Repeater {
-            id:     checkListRepeater
-            model:  modelContainer.item.model
+            // Header/title of checklist
+            Item {
+                width:      parent.width
+                height:     1.75 * ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    text:                   qsTr("Pre-Flight Checklist %1").arg(_passed ? qsTr("(passed)") : "")
+                    anchors.left:           parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.pointSize:         ScreenTools.mediumFontPointSize
+                }
+                QGCButton {
+                    width:                  1.2 * ScreenTools.defaultFontPixelHeight
+                    height:                 1.2 * ScreenTools.defaultFontPixelHeight
+                    anchors.right:          parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
+
+                    onClicked:              checkListRepeater.model.reset()
+
+                    QGCColoredImage {
+                        source:         "/qmlimages/MapSyncBlack.svg"
+                        color:          qgcPal.buttonText
+                        anchors.fill:   parent
+                    }
+                }
+            }
+
+            // All check list items
+            Repeater {
+                id:     checkListRepeater
+                model:  modelContainer.item.model
+            }
         }
     }
 }
