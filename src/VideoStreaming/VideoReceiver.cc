@@ -550,7 +550,8 @@ VideoReceiver::start()
     _starting = true;
 
     //-- For RTSP and TCP, check to see if server is there first
-    if(!_serverPresent && useTcpConnection) {
+    // FIXME: AV: temporally disable TCP probe to test RF link
+    if(0 && !_serverPresent && useTcpConnection) {
         _tcp_timer.start(100);
         return;
     }
