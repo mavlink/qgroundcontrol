@@ -174,16 +174,26 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
             bottomLat = -80;
         }
         double lngDiff = (bottomRight.longitude() - topLeft.longitude()) / 3;
-        double leftLng = topLeft.longitude() - lngDiff;
+        double leftLng;
+        double rightLng;
+        if (lngDiff < 0) {
+            lngDiff *= -1;
+            leftLng = bottomRight.longitude() - lngDiff;
+            rightLng = topLeft.longitude() + lngDiff;
+        } else {
+            leftLng = topLeft.longitude() - lngDiff;
+            rightLng = bottomRight.longitude() + lngDiff;
+        }
         if (leftLng < -180) {
             leftLng = -180;
         }
-        double rightLng = bottomRight.longitude() + lngDiff;
         if (rightLng > 180) {
             rightLng = 180;
         }
-        _currentMGRSRect.setTopLeft(QGeoCoordinate(topLat, leftLng));
-        _currentMGRSRect.setBottomRight(QGeoCoordinate(bottomLat, rightLng));
+        _currentViewportRect.setTopLeft(QGeoCoordinate(topLat, leftLng));
+        _currentViewportRect.setTopRight(QGeoCoordinate(topLat, rightLng));
+        _currentViewportRect.setBottomLeft(QGeoCoordinate(bottomLat, leftLng));
+        _currentViewportRect.setBottomRight(QGeoCoordinate(bottomLat, rightLng));
 
         double centerLat = (topLeft.latitude() + bottomRight.latitude()) / 2;
         QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
@@ -208,6 +218,9 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
         _addLines(lines, _level2Paths, level2LineForegroundColor, level2LineForgroundWidth);
         _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth);
         _addLines(lines, _level3Paths, level3LineForegroundColor, level3LineForgroundWidth);
+        while (_zoneMapQueue.count() > maxZoneMapCacheSize) {
+            _zoneMap.remove(_zoneMapQueue.dequeue());
+        }
     }
 
     QJsonArray labels;
@@ -224,23 +237,16 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
 void
 MapGridMGRS::_addLevel1Lines()
 {
-    if (_level1Hlines.empty()) {
+    if (_level1lines.empty()) {
         for (int lat = -80; lat <= 84; lat += (lat < 70) ? 8 : 12) {
-            QGeoPath path1;
-            path1.addCoordinate(QGeoCoordinate(lat, 0));
-            path1.addCoordinate(QGeoCoordinate(lat, 179));
-            _level1Hlines.push_back(path1);
-            QGeoPath path2;
-            path2.addCoordinate(QGeoCoordinate(lat, -160));
-            path2.addCoordinate(QGeoCoordinate(lat, 0));
-            _level1Hlines.push_back(path2);
-            QGeoPath path3;
-            path2.addCoordinate(QGeoCoordinate(lat, -180));
-            path2.addCoordinate(QGeoCoordinate(lat, -160));
-            _level1Hlines.push_back(path3);
+            int step = 60;
+            for (int lng = -180; lng < 180; lng += step) {
+                QGeoPath path;
+                path.addCoordinate(QGeoCoordinate(lat, lng));
+                path.addCoordinate(QGeoCoordinate(lat, lng + step));
+                _level1lines.push_back(path);
+            }
         }
-    }
-    if (_level1Vlines.empty()) {
         for (int lng = -180; lng <= 180; lng += 6) {
             QGeoPath path;
             if (lng == 6) {
@@ -250,11 +256,11 @@ MapGridMGRS::_addLevel1Lines()
                 QGeoPath path2;
                 path2.addCoordinate(QGeoCoordinate(56, lng - 3));
                 path2.addCoordinate(QGeoCoordinate(64, lng - 3));
-                _level1Vlines.push_back(path2);
+                _level1lines.push_back(path2);
                 QGeoPath path3;
                 path3.addCoordinate(QGeoCoordinate(64, lng));
                 path3.addCoordinate(QGeoCoordinate(72, lng));
-                _level1Vlines.push_back(path3);
+                _level1lines.push_back(path3);
             } else if (lng >= 12 && lng <= 36 ) {
                 // Svalbard anomaly
                 path.addCoordinate(QGeoCoordinate(-80, lng));
@@ -263,27 +269,22 @@ MapGridMGRS::_addLevel1Lines()
                 path.addCoordinate(QGeoCoordinate(-80, lng));
                 path.addCoordinate(QGeoCoordinate(84, lng));
             }
-            _level1Vlines.push_back(path);
+            _level1lines.push_back(path);
         }
         for (int lng = 9; lng <= 33; lng += 12) {
             // Svalbard anomaly
             QGeoPath path;
             path.addCoordinate(QGeoCoordinate(72, lng));
             path.addCoordinate(QGeoCoordinate(84, lng));
-            _level1Vlines.push_back(path);
+            _level1lines.push_back(path);
         }
     }
 
-    for (int i = 0; i < _level1Hlines.count(); i++) {
-        double lat = _level1Hlines[i].coordinateAt(0).latitude();
-        if (_zoomLevel < 6 || (lat > _currentMGRSRect.bottomLeft().latitude() && lat < _currentMGRSRect.topLeft().latitude())) {
-            _level1Paths.push_back(_level1Hlines[i]);
-        }
-    }
-    for (int i = 0; i < _level1Vlines.count(); i++) {
-        double lng = _level1Vlines[i].coordinateAt(0).longitude();
-        if (_zoomLevel < 6 || (lng > _currentMGRSRect.bottomLeft().longitude() && lng < _currentMGRSRect.bottomRight().longitude())) {
-            _level1Paths.push_back(_level1Vlines[i]);
+    if (_zoomLevel > 3) {
+        for (int i = 0; i < _level1lines.count(); i++) {
+            if (_zoomLevel < 6 || _lineIntersectsRect(_level1lines[i].coordinateAt(0), _level1lines[i].coordinateAt(1), _currentViewportRect)) {
+                _level1Paths.push_back(_level1lines[i]);
+            }
         }
     }
 }
@@ -319,7 +320,7 @@ MapGridMGRS::_addLevel1Labels()
 
     if (_zoomLevel > 4 && _zoomLevel <= maxZoneZoomLevel) {
         for (int i = 0; i < _level1labels.count(); i++) {
-            if (_currentMGRSRect.contains(_level1labels[i]._pos)) {
+            if (_zoomLevel < 6 || _currentViewportRect.contains(_level1labels[i]._pos)) {
                 _mgrsLabels.push_back(_level1labels[i]);
             }
         }
@@ -351,15 +352,12 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
         tile = std::shared_ptr<MGRSZone>(new MGRSZone(label));
         _zoneMap.insert(label, tile);
         _zoneMapQueue.enqueue(label);
-        if (_zoneMapQueue.count() > maxZoneMapCacheSize) {
-            _zoneMap.remove(_zoneMapQueue.dequeue());
-        }
     }
 
     if (tile->valid && !tile->visited && pos.latitude() < 84 && pos.latitude() > -80 &&
-        (_currentMGRSRect.contains(tile->bottomLeft) || _currentMGRSRect.contains(tile->bottomRight) ||
-         _currentMGRSRect.contains(tile->topLeft) || _currentMGRSRect.contains(tile->topRight) ||
-         _currentMGRSRect.contains(pos))) {
+        (_currentViewportRect.contains(tile->bottomLeft) || _currentViewportRect.contains(tile->bottomRight) ||
+         _currentViewportRect.contains(tile->topLeft) || _currentViewportRect.contains(tile->topRight) ||
+         _currentViewportRect.contains(pos))) {
         tile->visited = true;
 
         _findZoneBoundaries(tile->topSearchPos);
@@ -376,7 +374,7 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
 
         _level2Paths.push_back(path);
 
-        if (_zoomLevel > maxZoneZoomLevel && _currentMGRSRect.contains(tile->labelPos)) {
+        if (_zoomLevel > maxZoneZoomLevel && _currentViewportRect.contains(tile->labelPos)) {
             _mgrsLabels.push_back(MGRSLabel(level2Label(tile->label), tile->labelPos, level2LabelForegroundColor, level2LabelBackgroundColor));
         }
 
@@ -437,7 +435,7 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coordE + coord, c2)) {
                 break;
             }
-            if (_lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
+            if (_lineIntersectsRect(c1, c2, _currentViewportRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
                 added++;
             } else if (added > 2) {
@@ -469,11 +467,11 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
             if (!convertMGRSToGeo(tile->label + coord + coordN, c2)) {
                 break;
             }
-            if (_lineIntersectsRect(c1, c2, _currentMGRSRect) && (!overlapped || tileRect.contains(c2))) {
+            if (_lineIntersectsRect(c1, c2, _currentViewportRect) && (!overlapped || tileRect.contains(c2))) {
                 path.addCoordinate(c2);
                 added++;
                 if (added > 1 && cnt1 % 2 == 1 && cnt2 % 2 == 1 &&_zoomLevel > maxZoneZoomLevel &&
-                    !(coord == "50000" && coordN == "50000") && _currentMGRSRect.contains(c2)) {
+                    !(coord == "50000" && coordN == "50000") && _currentViewportRect.contains(c2)) {
                     QString text = level2Label(tile->label) + " " + coord.left(2) + " " + coordN.left(2);
                     _mgrsLabels.push_back(MGRSLabel(text, c2, level3LabelForegroundColor, level3LabelBackgroundColor));
                 }

@@ -82,10 +82,10 @@ signals:
     void updateValues(const QVariant& values);
 
 private:
-    const double maxZoneZoomLevel = 7.5;
+    const double maxZoneZoomLevel = 6.8;
     const double leve3ZoomLevel = 10;
     const int maxNumberOfLinesOnScreen = 10;
-    const int maxZoneMapCacheSize = 300;
+    const int maxZoneMapCacheSize = 2000;
 
     const QString level1LineForegroundColor = "#AAFF9999";
     const int level1LineForgroundWidth = 3;
@@ -108,13 +108,12 @@ private:
     const QString level3LabelForegroundColor = "#CCFFFFFF";
     const QString level3LabelBackgroundColor = "#88000000";
 
-    QGeoRectangle _currentMGRSRect;
+    QGeoRectangle _currentViewportRect;
     double _zoomLevel = 0;
     double _minDistanceBetweenLines = 0;
     QMap<QString, std::shared_ptr<MGRSZone>> _zoneMap;
     QQueue<QString> _zoneMapQueue;
-    QList<QGeoPath> _level1Hlines;
-    QList<QGeoPath> _level1Vlines;
+    QList<QGeoPath> _level1lines;
     QList<MGRSLabel> _level1labels;
     QList<QGeoPath> _level1Paths;
     QList<QGeoPath> _level2Paths;
