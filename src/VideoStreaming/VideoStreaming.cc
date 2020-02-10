@@ -19,10 +19,23 @@
 
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
-#ifdef __android__
-//#define ANDDROID_GST_DEBUG
-#endif
-#if defined(__ios__)
+#if defined(__android__)
+#include <android/log.h>
+
+static void gst_android_log(GstDebugCategory * category,
+                            GstDebugLevel      level,
+                            const gchar      * file,
+                            const gchar      * function,
+                            gint               line,
+                            GObject          * object,
+                            GstDebugMessage  * message,
+                            gpointer           data)
+{
+    if (level <= gst_debug_category_get_threshold (category)) {
+        __android_log_print(ANDROID_LOG_ERROR, "GST", "%s, %s: %s", file, function, gst_debug_message_get(message));
+    }
+}
+#elif defined(__ios__)
 #include "gst_ios_init.h"
 #endif
 #else
@@ -34,8 +47,9 @@
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
     // The static plugins we use
-#if defined(__mobile__)
+#if defined(__android__) || defined(__ios__)
     GST_PLUGIN_STATIC_DECLARE(coreelements);
+    GST_PLUGIN_STATIC_DECLARE(playback);
     GST_PLUGIN_STATIC_DECLARE(libav);
     GST_PLUGIN_STATIC_DECLARE(rtp);
     GST_PLUGIN_STATIC_DECLARE(rtsp);
@@ -46,9 +60,11 @@
     GST_PLUGIN_STATIC_DECLARE(isomp4);
     GST_PLUGIN_STATIC_DECLARE(matroska);
     GST_PLUGIN_STATIC_DECLARE(opengl);
-#endif
 #if defined(__android__)
     GST_PLUGIN_STATIC_DECLARE(androidmedia);
+#elif defined(__ios__)
+    GST_PLUGIN_STATIC_DECLARE(applemedia);
+#endif
 #endif
     GST_PLUGIN_STATIC_DECLARE(qmlgl);
     G_END_DECLS
@@ -62,49 +78,6 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
     qputenv(key.toStdString().c_str(), QByteArray(value.toStdString().c_str()));
 }
 #endif
-#endif
-
-#ifdef ANDDROID_GST_DEBUG
-// Redirects stdio and stderr to logcat
-#include <unistd.h>
-#include <pthread.h>
-#include <android/log.h>
-
-static int pfd[2];
-static pthread_t thr;
-static const char *tag = "myapp";
-
-static void *thread_func(void*)
-{
-    ssize_t rdsz;
-    char buf[128];
-    while((rdsz = read(pfd[0], buf, sizeof buf - 1)) > 0) {
-        if(buf[rdsz - 1] == '\n') --rdsz;
-        buf[rdsz] = 0;  /* add null-terminator */
-        __android_log_write(ANDROID_LOG_DEBUG, tag, buf);
-    }
-    return 0;
-}
-
-int start_logger(const char *app_name)
-{
-    tag = app_name;
-
-    /* make stdout line-buffered and stderr unbuffered */
-    setvbuf(stdout, 0, _IOLBF, 0);
-    setvbuf(stderr, 0, _IONBF, 0);
-
-    /* create the pipe and redirect stdout and stderr */
-    pipe(pfd);
-    dup2(pfd[1], 1);
-    dup2(pfd[1], 2);
-
-    /* spawn the logging thread */
-    if(pthread_create(&thr, 0, thread_func, 0) == -1)
-        return -1;
-    pthread_detach(thr);
-    return 0;
-}
 #endif
 
 void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debuglevel)
@@ -126,45 +99,56 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
 
-    // Initialize GStreamer
-    #if defined(__ios__)
-        //-- iOS specific initialization
-        gst_ios_init();
-    #else
-        //-- Generic initialization
-        if (qgetenv("GST_DEBUG").isEmpty() && logpath) {
-            QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
-            qDebug() << "GStreamer debug output:" << gstDebugFile;
-            if (debuglevel) {
-                qputenv("GST_DEBUG", debuglevel);
-            }
-            qputenv("GST_DEBUG_NO_COLOR", "1");
-            qputenv("GST_DEBUG_FILE", gstDebugFile.toUtf8());
-            qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
+    //-- Generic initialization
+    if (qgetenv("GST_DEBUG").isEmpty() && logpath) {
+        QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
+        qDebug() << "GStreamer debug output:" << gstDebugFile;
+        if (debuglevel) {
+            qputenv("GST_DEBUG", debuglevel);
         }
-        GError* error = nullptr;
-        if (!gst_init_check(&argc, &argv, &error)) {
-            qCritical() << "gst_init_check() failed: " << error->message;
-            g_error_free(error);
-        }
-    #endif
-        // The static plugins we use
-    #if defined(__android__)
-        GST_PLUGIN_STATIC_REGISTER(coreelements);
-        GST_PLUGIN_STATIC_REGISTER(libav);
-        GST_PLUGIN_STATIC_REGISTER(rtp);
-        GST_PLUGIN_STATIC_REGISTER(rtsp);
-        GST_PLUGIN_STATIC_REGISTER(udp);
-        GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-        GST_PLUGIN_STATIC_REGISTER(x264);
-        GST_PLUGIN_STATIC_REGISTER(rtpmanager);
-        GST_PLUGIN_STATIC_REGISTER(isomp4);
-        GST_PLUGIN_STATIC_REGISTER(matroska);
-        GST_PLUGIN_STATIC_REGISTER(androidmedia);
-    #endif
+        qputenv("GST_DEBUG_NO_COLOR", "1");
+        qputenv("GST_DEBUG_FILE", gstDebugFile.toUtf8());
+        qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
+    }
 
-#if defined(__mobile__)
-        GST_PLUGIN_STATIC_REGISTER(opengl);
+    // Initialize GStreamer
+#if defined(__android__)
+    gst_debug_add_log_function(gst_android_log, nullptr, nullptr);
+#elif defined(__ios__)
+    //-- iOS specific initialization
+    gst_ios_pre_init();
+#endif
+
+    GError* error = nullptr;
+    if (!gst_init_check(&argc, &argv, &error)) {
+        qCritical() << "gst_init_check() failed: " << error->message;
+        g_error_free(error);
+    }
+
+    // The static plugins we use
+#if defined(__android__) || defined(__ios__)
+    GST_PLUGIN_STATIC_REGISTER(coreelements);
+    GST_PLUGIN_STATIC_REGISTER(playback);
+    GST_PLUGIN_STATIC_REGISTER(libav);
+    GST_PLUGIN_STATIC_REGISTER(rtp);
+    GST_PLUGIN_STATIC_REGISTER(rtsp);
+    GST_PLUGIN_STATIC_REGISTER(udp);
+    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
+    GST_PLUGIN_STATIC_REGISTER(x264);
+    GST_PLUGIN_STATIC_REGISTER(rtpmanager);
+    GST_PLUGIN_STATIC_REGISTER(isomp4);
+    GST_PLUGIN_STATIC_REGISTER(matroska);
+    GST_PLUGIN_STATIC_REGISTER(opengl);
+
+#if defined(__android__)
+    GST_PLUGIN_STATIC_REGISTER(androidmedia);
+#elif defined(__ios__)
+    GST_PLUGIN_STATIC_REGISTER(applemedia);
+#endif
+#endif
+
+#if defined(__ios__)
+    gst_ios_post_init();
 #endif
 
     /* the plugin must be loaded before loading the qml file to register the
@@ -185,7 +169,7 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
 #else
-    qmlRegisterType<GLVideoItemStub> ("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
+    qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)
     Q_UNUSED(argv)
     Q_UNUSED(logpath)
