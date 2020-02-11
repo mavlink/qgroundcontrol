@@ -566,7 +566,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
             2.0,                // minimum trigger interval
             this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
-        
+
         metaData = new CameraMetaData(
             tr("Sony DSC-RX0"),
             13.2,               // sensorWidth
@@ -860,7 +860,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
         QString currentVersionNumber = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                 .arg(vehicle->firmwareMinorVersion())
                 .arg(vehicle->firmwarePatchVersion());
-        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+        // qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
 }
 
