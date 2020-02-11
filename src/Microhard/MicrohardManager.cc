@@ -329,6 +329,8 @@ MicrohardManager::setProductName(QString product)
     _bandwidthLabels.append("8 MHz");
     _bandwidthLabels.append("4 MHz");
 
+    _pairingBandwidth = DEFAULT_PAIRING_BANDWIDTH;
+
     if (product.contains("DDL2350")) {
         _channelMin = 1;
         _channelMax = 81;

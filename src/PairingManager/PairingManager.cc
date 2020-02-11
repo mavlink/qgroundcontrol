@@ -810,7 +810,7 @@ PairingManager::_setModemParameters(const QString& name, int channel, int power,
     setPairingStatus(ConfiguringModem, tr("Configuring modem"));
     emit startUpload(name, modemParametersURL, jsonDoc, true);
 
-    QTimer::singleShot(1000, [this, map, name, jsonDoc, cc, power, bandwidth]()
+    QTimer::singleShot(5000, [this, map, name, jsonDoc, cc, power, bandwidth]()
     {
         _requestedParameters(cc, power, bandwidth);
         QString statusURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/status";
