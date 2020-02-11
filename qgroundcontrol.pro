@@ -1392,6 +1392,13 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     include(src/VideoStreaming/VideoStreaming.pri)
 }
 
+!VideoEnabled {
+    HEADERS += \
+       src/VideoStreaming/GLVideoItemStub.h
+    SOURCES += \
+        src/VideoStreaming/GLVideoItemStub.cc
+}
+
 #-------------------------------------------------------------------------------------
 # Android
 
