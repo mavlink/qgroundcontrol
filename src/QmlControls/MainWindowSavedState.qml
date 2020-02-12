@@ -18,7 +18,7 @@ import QGroundControl.ScreenTools   1.0
 Item {
     property Window window
 
-    property bool _enabled: !ScreenTools.isMobile && s.width && s.height && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
+    property bool _enabled: !ScreenTools.isMobile && QGroundControl.corePlugin.options.enableSaveMainWindowPosition
 
     Settings {
         id:         s
@@ -32,7 +32,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if (_enabled) {
+        if (_enabled && s.width && s.height) {
             window.x = s.x;
             window.y = s.y;
             window.width = s.width;
