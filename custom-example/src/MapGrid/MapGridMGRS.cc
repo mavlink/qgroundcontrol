@@ -472,7 +472,7 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
                 added++;
                 if (added > 1 && cnt1 % 2 == 1 && cnt2 % 2 == 1 &&_zoomLevel > maxZoneZoomLevel &&
                     !(coord == "50000" && coordN == "50000") && _currentViewportRect.contains(c2)) {
-                    QString text = level2Label(tile->label) + " " + coord.left(2) + " " + coordN.left(2);
+                    QString text = coord.left(2) + " " + coordN.left(2);
                     _mgrsLabels.push_back(MGRSLabel(text, c2, level3LabelForegroundColor, level3LabelBackgroundColor));
                 }
             } else if (added > 2) {
