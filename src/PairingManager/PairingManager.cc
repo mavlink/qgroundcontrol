@@ -1159,7 +1159,7 @@ PairingManager::pairingLinkTypeStrings()
     static QStringList list;
     int i = 0;
     if (!list.size()) {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
         list += tr("NFC");
         _nfcIndex = i++;
 #endif
@@ -1379,7 +1379,7 @@ PairingManager::connectingChannel()
 void
 PairingManager::stopPairing()
 {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     pairingNFC.stop();
 #endif
     emit stopUpload();
@@ -1439,7 +1439,7 @@ PairingManager::_getDeviceConnectNid(int channel)
 }
 
 //-----------------------------------------------------------------------------
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
 void
 PairingManager::startNFCScan()
 {

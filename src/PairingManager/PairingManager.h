@@ -22,9 +22,6 @@
 #include "Fact.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
-#if defined QGC_ENABLE_NFC
-#include "PairingNFC.h"
-#endif
 #if defined QGC_ENABLE_QTNFC
 #include "QtNFC.h"
 #endif
@@ -99,7 +96,7 @@ public:
     Q_INVOKABLE QString extractName             (const QString& name);
     Q_INVOKABLE QString extractChannel          (const QString& name);
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
@@ -218,7 +215,7 @@ private:
     bool                    _getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip);
     QString                 _getDeviceConnectNid        (int channel);
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
 #endif
 };
