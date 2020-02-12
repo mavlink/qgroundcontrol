@@ -41,7 +41,7 @@ elseif(APPLE)
 elseif(IOS)
 	target_compile_definitions(gst_plugins_good PUBLIC HAVE_QT_MAC)
 elseif(WIN32)
-	target_compile_definitions(gst_plugins_good PUBLIC HAVE_QT_WIN32)
+	target_compile_definitions(gst_plugins_good PUBLIC HAVE_QT_WIN32 HAVE_QT_QPA_HEADER)
 
 	# TODO: use FindOpenGL?
 	target_link_libraries(gst_plugins_good PUBLIC opengl32.lib user32.lib)

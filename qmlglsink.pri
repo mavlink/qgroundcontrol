@@ -8,7 +8,7 @@ LinuxBuild {
 } else:iOSBuild {
     DEFINES += HAVE_QT_IOS
 } else:WindowsBuild {
-    DEFINES += HAVE_QT_WIN32
+    DEFINES += HAVE_QT_WIN32 HAVE_QT_QPA_HEADER
     LIBS += opengl32.lib user32.lib
 } else:AndroidBuild {
     DEFINES += HAVE_QT_ANDROID
