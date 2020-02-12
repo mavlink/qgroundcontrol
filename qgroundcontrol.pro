@@ -187,18 +187,6 @@ contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
-# NFC
-contains (DEFINES, QGC_DISABLE_NFC) {
-    message("Skipping support for NFC (manual override from command line)")
-    DEFINES -= QGC_ENABLE_NFC
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_NFC) {
-    message("Skipping support for NFC (manual override from user_config.pri)")
-    DEFINES -= QGC_ENABLE_NFC
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_NFC) {
-    message("Including support for NFC (manual override from user_config.pri)")
-    DEFINES += QGC_ENABLE_NFC
-}
-
 # QTNFC
 contains (DEFINES, QGC_DISABLE_QTNFC) {
     message("Skipping support for QTNFC (manual override from command line)")
@@ -318,14 +306,11 @@ DEFINES+=QGC_DISABLE_PAIRING
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
-    DEFINES -= QGC_ENABLE_NFC
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
-    DEFINES -= QGC_ENABLE_NFC
 } else:AndroidBuild:contains(QT_ARCH, arm64) {
     # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
     message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
-    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
@@ -737,37 +722,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-contains (DEFINES, QGC_ENABLE_PAIRING) {
-    contains(DEFINES, QGC_ENABLE_NFC) {
-        HEADERS += \
-            src/PairingManager/PairingNFC.h \
-            src/PairingManager/NfcLibrary/inc/Nfc.h \
-            src/PairingManager/NfcLibrary/inc/Nfc_settings.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/P2P_NDEF.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T1T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T2T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T3T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T4T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/T4T_NDEF_emu.h \
-            src/PairingManager/NfcLibrary/NxpNci/inc/NxpNci.h \
-            src/PairingManager/NfcTask/inc/ndef_helper.h \
-            src/PairingManager/TML/inc/framework_Allocator.h \
-            src/PairingManager/TML/inc/framework_Interface.h \
-            src/PairingManager/TML/inc/framework_Map.h \
-            src/PairingManager/TML/inc/framework_Timer.h \
-            src/PairingManager/TML/inc/lpcusbsio.h \
-            src/PairingManager/TML/inc/tml.h \
-            src/PairingManager/TML/inc/tool.h \
-            src/PairingManager/TML/inc/framework_Container.h \
-            src/PairingManager/TML/inc/framework_linux.h \
-            src/PairingManager/TML/inc/framework_Parcel.h \
-            src/PairingManager/TML/inc/hidapi.h \
-            src/PairingManager/TML/inc/lpcusbsio_i2c.h \
-            src/PairingManager/TML/inc/tml_hid.h
-    }
-}
-
 !NoSerialBuild {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
@@ -963,36 +917,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     contains(DEFINES, QGC_ENABLE_QTNFC) {
         SOURCES += \
         src/PairingManager/QtNFC.cc
-    }
-}
-
-contains (DEFINES, QGC_ENABLE_PAIRING) {
-    contains(DEFINES, QGC_ENABLE_NFC) {
-        SOURCES += \
-        src/PairingManager/PairingNFC.cc \
-        src/PairingManager/NfcLibrary/NxpNci/src/NxpNci.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T4T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/P2P_NDEF.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T3T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T1T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T2T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/T4T_NDEF_emu.c \
-        src/PairingManager/TML/src/framework_Map.c \
-        src/PairingManager/TML/src/framework_log.c \
-        src/PairingManager/TML/src/framework_Parcel.c \
-        src/PairingManager/TML/src/framework_sem.c \
-        src/PairingManager/TML/src/framework_mutex.c \
-        src/PairingManager/TML/src/hid.c \
-        src/PairingManager/TML/src/framework_Allocator.c \
-        src/PairingManager/TML/src/tml_hid.c \
-        src/PairingManager/TML/src/framework_Container.c \
-        src/PairingManager/TML/src/framework_thread.c \
-        src/PairingManager/TML/src/framework_Timer.c \
-        src/PairingManager/TML/src/lpcusbsio.c \
-        src/PairingManager/TML/src/tml.c \
-        src/PairingManager/NfcTask/src/ndef_helper.c
-        LIBS += -lrt -ludev
     }
 }
 

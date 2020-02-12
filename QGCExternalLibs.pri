@@ -147,12 +147,10 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
             # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
-            DEFINES -= QGC_ENABLE_NFC
             DEFINES -= QGC_ENABLE_PAIRING
         }
     } else:WindowsBuild {
         #- Pairing is not supported on Windows
-        DEFINES -= QGC_ENABLE_NFC
         DEFINES -= QGC_ENABLE_PAIRING
     } else {
         LIBS += -lcrypto -lz

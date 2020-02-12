@@ -457,7 +457,7 @@ PairingManager::pairingLinkTypeStrings()
     static QStringList list;
     int i = 0;
     if (!list.size()) {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
         list += tr("NFC");
         _nfcIndex = i++;
 #endif
@@ -501,14 +501,14 @@ PairingManager::startMicrohardPairing()
 void
 PairingManager::stopPairing()
 {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     pairingNFC.stop();
 #endif
     _stopUpload();
     setPairingStatus(PairingIdle, "");
 }
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
 //-----------------------------------------------------------------------------
 void
 PairingManager::startNFCScan()
