@@ -59,6 +59,8 @@ public:
     bool        enableMultiVehicleList          () const final { return false; }
     //-- We handle our own map scale
     bool        enableMapScale                  () const final { return false; }
+    //-- Don't save window position and size
+    bool        enableSaveMainWindowPosition    () const final { return false; }
     // TODO: Can't access QGCPalette without some workarounds, change this upstream
     QColor      toolbarBackgroundLight          () const final;
     QColor      toolbarBackgroundDark           () const final;
