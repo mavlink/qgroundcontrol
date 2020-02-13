@@ -117,7 +117,7 @@ Item {
 
     // TODO: Move it to mission controller and make the switch official
     on_ControllerProgressPctChanged: {
-        if ((Math.abs(_controllerProgressPct - 1) < 0.000001) && _missionController.hotEdit) {
+        if ((Math.abs(_controllerProgressPct - 1) < 0.000001) && _missionController.hotEdit && !_missionController.hotEditConflict) {
             if(_missionController.hotEditMissionIndex < _missionController.visualItems.count) {
                 // Home possition is part of the mission!?
                 activeVehicle.setCurrentMissionSequence(Math.max(_missionController.visualItems.get(_missionController.hotEditMissionIndex).sequenceNumber, 1));

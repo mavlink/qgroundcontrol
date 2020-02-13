@@ -59,7 +59,7 @@ Item {
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       "N/A" : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
-    property bool   _hotEditing:                _controllerValid ? _planMasterController.missionController.hotEdit : false
+    property bool   _hotEditing:                _controllerValid && _planMasterController.missionController.hotEdit
     property bool   _hotEditValid:              _controllerValid && !_planMasterController.missionController.hotEditConflict
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
@@ -248,8 +248,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: _margins
 
-        visible: undoButton.visible || uploadButton.visible
-
         // TODO: connect it to logic
         QGCButton {
             id:                     undoButton
@@ -261,7 +259,6 @@ Item {
                 _planMasterController.dirty = false;
                 if(_controllerValid) {
                     _planMasterController.missionController.hotEditConflict = false;
-                    console.log("Restore conflict: " + _hotEditValid + "; still hot editing? _hotEditing: " + _hotEditing)
                 }
             }
         }
@@ -274,14 +271,17 @@ Item {
                         return qsTr("Continue Mission");
                     else
                         return qsTr("Upload Required");
-                } else {
-                    return qsTr("Upload")
                 }
+                return qsTr("Upload")
             }
             enabled:                !_controllerSyncInProgress
             visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
             primary:                _controllerDirty
-            onClicked:              _planMasterController.upload()
+            onClicked:              {
+                _planMasterController.missionController.hotEditConflict = !_planMasterController.dirty
+                _planMasterController.upload()
+            }
+
 
             PropertyAnimation on opacity {
                 easing.type:    Easing.OutQuart
