@@ -32,6 +32,7 @@ QGCButton {
     property bool   telemetryFailure:               false   ///< true: telemetry check failing, false: telemetry check passing
     property bool   allowTelemetryFailureOverride:  false   ///< true: user can click past telemetry failure
     property bool   passed:                         _manualState === _statePassed && _telemetryState === _statePassed
+    property bool   failed:                         _manualState === _stateFailed || _telemetryState === _stateFailed
 
     property int _manualState:          manualText === "" ? _statePassed : _statePending
     property int _telemetryState:       _statePassed

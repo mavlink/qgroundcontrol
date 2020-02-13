@@ -10,6 +10,7 @@ FocusScope {
     id:     _root
     height: column.height
 
+    property alias          color:          label.color
     property alias          text:           label.text
     property bool           checked:        true
     property bool           showSpacer:     true
