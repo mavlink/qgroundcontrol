@@ -42,14 +42,18 @@ Rectangle {
                 group = checkListRepeater.itemAt(index + 1)
                 group.enabled = true
                 group._checked = true
-            } else if ((index + 1) == checkListRepeater.count) {
-                // If the last group is passed, we mark the entire checklist as passed.
-                _passed = true
-                checklistDropPanel.close()
             }
-        } else {
-            _passed = false
         }
+
+        // Walk the list and check if any group is failing
+        var allPassed = true
+        for (var i=0; i < checkListRepeater.count; i++) {
+            if (!checkListRepeater.itemAt(i).passed) {
+                allPassed = false
+                break
+            }
+        }
+        _passed = allPassed;
     }
 
     //-- Pick a checklist model that matches the current airframe type (if any)
