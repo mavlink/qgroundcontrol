@@ -84,7 +84,7 @@ signals:
     void updateValues(const QVariant& values);
 
 private:
-    const double maxZoneZoomLevel = 6.8;
+    const double maxZoneZoomLevel = 7;
     const double leve3ZoomLevel = 10;
     const int maxNumberOfLinesOnScreen = 10;
     const int maxZoneMapCacheSize = 2000;

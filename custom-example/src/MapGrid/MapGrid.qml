@@ -26,7 +26,12 @@ Item {
     property var centerViewport: (mapControl) ? mapControl.centerViewport : null
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
     property var mapComponents: []
+    property var componentsToAdd: []
     property var values: mapGrid.values
+    property double startTime: 0
+    property int maxTimePerStepMs: 50
+    property bool timeMeasured: false
+    property int maxNumberOfComponentsPerStep: 100
 
     MapGrid {
         id: mapGrid
@@ -42,10 +47,18 @@ Item {
 
     Timer {
         id:                 geometryTimer
-        interval:           100
+        interval:           500
         running:            false
         repeat:             false
         onTriggered:        geometryChanged()
+    }
+
+    Timer {
+        id:                 addComponentsTimer
+        interval:           maxTimePerStepMs
+        running:            false
+        repeat:             false
+        onTriggered:        addComponents()
     }
 
     onEnabledChanged: {
@@ -79,6 +92,10 @@ Item {
             return;
         }
 
+        if (!timeMeasured) {
+            startTime = new Date().getTime()
+        }
+
         removeVisuals()
 
 //        console.info("MapGrid.qml - adding lines: " + values.lines.length)
@@ -92,8 +109,8 @@ Item {
                 for (var j = 0; j < pl.points.length; j++) {
                     pc.addCoordinate(QtPositioning.coordinate(pl.points[j].lat, pl.points[j].lng))
                 }
-                mapControl.addMapItem(pc)
-                mapComponents.push(pc)
+
+                componentsToAdd.push(pc)
             }
         }
 
@@ -101,6 +118,7 @@ Item {
             return;
         }
 
+//        console.info("MapGrid.qml - adding labels: " + values.labels.length)
         for (i = 0; i < values.labels.length; i++) {
             var lc = labelComponent.createObject(mapControl)
             if (lc) {
@@ -111,10 +129,11 @@ Item {
                 lc.backgroundColor = l.backgroundColor
                 lc.foregroundColor = l.foregroundColor
 
-                mapControl.addMapItem(lc)
-                mapComponents.push(lc)
+                componentsToAdd.push(lc)
             }
         }
+
+        addComponents()
     }
 
     function removeVisuals() {
@@ -122,6 +141,26 @@ Item {
             mapComponents[i].destroy()
         }
         mapComponents = []
+    }
+
+    function addComponents() {
+        for (var count = 0; count < maxNumberOfComponentsPerStep && componentsToAdd.length > 0; count++) {
+            var c = componentsToAdd.pop()
+            mapControl.addMapItem(c)
+            mapComponents.push(c)
+        }
+
+        if (componentsToAdd.length > 0) {
+            if (!timeMeasured) {
+                var dt = new Date().getTime() - startTime
+                maxNumberOfComponentsPerStep = maxNumberOfComponentsPerStep / dt * maxTimePerStepMs;
+//                console.info("Max number of components: " + maxNumberOfComponentsPerStep)
+                timeMeasured = true;
+            }
+
+            addComponentsTimer.restart()
+        }
+
     }
 
     Component {
