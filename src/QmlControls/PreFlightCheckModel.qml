@@ -12,12 +12,17 @@ import QtQml.Models 2.1
 
 ObjectModel {
     id: _root
+    property bool enforceOrder: true
 
     function reset() {
         for (var i=0; i<_root.count; i++) {
             var group = _root.get(i)
             group.reset()
-            group.enabled = i === 0
+            if (enforceOrder) {
+                group.enabled = i === 0
+            } else {
+                group.enabled = true
+            }
             group._checked = i === 0
         }
     }
