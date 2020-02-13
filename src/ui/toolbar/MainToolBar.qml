@@ -37,44 +37,6 @@ Item {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
-    //-------------------------------------------------------------------------
-    // Easter egg mechanism
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            _clickCount++
-            eggTimer.restart()
-            if (_clickCount == 5) {
-                if(!QGroundControl.corePlugin.showAdvancedUI) {
-                    advancedModeConfirmation.open()
-                } else {
-                    QGroundControl.corePlugin.showAdvancedUI = false
-                }
-            } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-            }
-        }
-
-        property int _clickCount: 0
-
-        Timer {
-            id:             eggTimer
-            interval:       1000
-            repeat:         false
-            onTriggered:    parent._clickCount = 0
-        }
-
-        MessageDialog {
-            id:                 advancedModeConfirmation
-            title:              qsTr("Advanced Mode")
-            text:               QGroundControl.corePlugin.showAdvancedUIMessage
-            standardButtons:    StandardButton.Yes | StandardButton.No
-            onYes: {
-                QGroundControl.corePlugin.showAdvancedUI = true
-                advancedModeConfirmation.close()
-            }
-        }
-    }
 
     //-- Setup can be invoked from c++ side
     Connections {
@@ -172,6 +134,39 @@ Item {
                         buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showFlyView()
+
+                        // Easter Egg mechanism
+                        _clickCount++
+                        eggTimer.restart()
+                        if (_clickCount == 5) {
+                            if(!QGroundControl.corePlugin.showAdvancedUI) {
+                                advancedModeConfirmation.open()
+                            } else {
+                                QGroundControl.corePlugin.showAdvancedUI = false
+                            }
+                        } else if (_clickCount == 7) {
+                            QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                        }
+                    }
+
+                    property int _clickCount: 0
+
+                    Timer {
+                        id:             eggTimer
+                        interval:       1000
+                        repeat:         false
+                        onTriggered:    parent._clickCount = 0
+                    }
+
+                    MessageDialog {
+                        id:                 advancedModeConfirmation
+                        title:              qsTr("Advanced Mode")
+                        text:               QGroundControl.corePlugin.showAdvancedUIMessage
+                        standardButtons:    StandardButton.Yes | StandardButton.No
+                        onYes: {
+                            QGroundControl.corePlugin.showAdvancedUI = true
+                            advancedModeConfirmation.close()
+                        }
                     }
                 }
 
