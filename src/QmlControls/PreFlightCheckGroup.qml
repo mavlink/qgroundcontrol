@@ -16,7 +16,12 @@ import QGroundControl.ScreenTools   1.0
 /// A PreFlightCheckGroup manages a set of PreFlightCheckButtons as a single entity.
 Column  {
     property string name
+    property string passedTextColor: "black"
+    property string failedTextColor: "black"
+    property string pendingTextColor: "black"
+
     property bool   passed: false
+    property bool   failed: false
 
     spacing: ScreenTools.defaultFontPixelHeight / 2
 
@@ -47,6 +52,7 @@ Column  {
         anchors.left:   parent.left
         anchors.right:  parent.right
         text:           name + (passed ? qsTr(" (passed)") : "")
+        color:          failed ? failedTextColor : (passed ? passedTextColor : pendingTextColor)
     }
 
     Column {
@@ -58,9 +64,11 @@ Column  {
             for (var i=0; i<children.length; i++) {
                 if (!children[i].passed) {
                     passed = false
+                    failed = children[i].failed
                     return
                 }
             }
+            failed = false
             passed = true
         }
     }
