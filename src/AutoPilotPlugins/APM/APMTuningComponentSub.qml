@@ -159,7 +159,7 @@ SetupPage {
                     anchors.right:      parent.right
                     anchors.top:        parent.top
 
-                    sourceComponent: activeVehicle.versionCompare(3, 6, 0) <= 0 ? velColumnUpTo36 :velColumnUpTo36
+                    sourceComponent: activeVehicle.versionCompare(3, 6, 0) <= 0 ? velColumnUpTo36 :velColumn40
                 }
             } // Rectangle - VEL parameters
 
