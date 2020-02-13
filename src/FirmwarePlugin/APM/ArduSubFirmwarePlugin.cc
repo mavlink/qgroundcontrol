@@ -42,6 +42,7 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
         {CIRCLE, "Circle"},
         {SURFACE, "Surface"},
         {POSHOLD, "Position Hold"},
+        {MOTORDETECTION, "Motor Detection"},
     });
 }
 
@@ -58,6 +59,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         APMSubMode(APMSubMode::CIRCLE ,true),
         APMSubMode(APMSubMode::SURFACE ,false),
         APMSubMode(APMSubMode::POSHOLD ,true),
+        APMSubMode(APMSubMode::MOTORDETECTION, false),
     });
 
     if (!_remapParamNameIntialized) {
