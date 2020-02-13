@@ -70,11 +70,6 @@ void VideoSettings::_setDefaults()
     } else {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
     }
-#if defined(__android__)
-    _nameToMetaDataMap[enableHardwareAccelerationName]->setRawDefaultValue(true);
-#else
-    _nameToMetaDataMap[enableHardwareAccelerationName]->setRawDefaultValue(false);
-#endif
 }
 
 DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
@@ -87,7 +82,6 @@ DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
-DECLARE_SETTINGSFACT(VideoSettings, enableHardwareAcceleration)
 DECLARE_SETTINGSFACT(VideoSettings, showVideoOnSecondScreen)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)

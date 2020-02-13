@@ -1022,16 +1022,6 @@ Rectangle {
                             }
 
                             QGCLabel {
-                                text:                   qsTr("Enable Hardware Acceleration")
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration.visible
-                            }
-                            FactCheckBox {
-                                text:                   ""
-                                fact:                   QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration
-                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.enableHardwareAcceleration.visible
-                            }
-
-                            QGCLabel {
                                 text:                   qsTr("Disable When Disarmed")
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }
