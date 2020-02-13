@@ -104,6 +104,16 @@ MGRSZone::MGRSZone(QString _label)
 }
 
 //-----------------------------------------------------------------------------
+QGeoRectangle
+MGRSZone::rect()
+{
+    QGeoRectangle r(topLeft, bottomRight);
+    r.setTopRight(topRight);
+    r.setBottomLeft(bottomLeft);
+    return r;
+}
+
+//-----------------------------------------------------------------------------
 void
 MGRSZone::_fixEdge(QString l2l, int start, int dir, QString format, QGeoCoordinate& edgeToFix)
 {
@@ -157,11 +167,32 @@ MapGridMGRS::_lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate&
         (r.contains(p1) && r.contains(p2));
 }
 
+
+//-----------------------------------------------------------------------------
+bool
+MapGridMGRS::_rectOverlapsRect(const QGeoRectangle& r1, const QGeoRectangle& r2)
+{
+    double aLeft = std::min(r1.topLeft().longitude(), r1.bottomLeft().longitude());
+    double aRight = std::max(r1.topRight().longitude(), r1.bottomRight().longitude());
+    double aTop = std::max(r1.topLeft().latitude(), r1.topRight().latitude());
+    double aBottom = std::min(r1.bottomLeft().latitude(), r1.bottomRight().latitude());
+
+    double bLeft = std::min(r2.topLeft().longitude(), r2.bottomLeft().longitude());
+    double bRight = std::max(r2.topRight().longitude(), r2.bottomRight().longitude());
+    double bTop = std::max(r2.topLeft().latitude(), r2.topRight().latitude());
+    double bBottom = std::min(r2.bottomLeft().latitude(), r2.bottomRight().latitude());
+
+
+    return aLeft < bRight && aRight > bLeft && aTop > bBottom && aBottom < bTop;
+}
+
 //-----------------------------------------------------------------------------
 void
 MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight)
 {
-    if (topLeft.isValid() && bottomRight.isValid()) {
+    if (topLeft.isValid() && bottomRight.isValid() &&
+        (_zoomLevel != zoomLevel || !_currentViewportRect.contains(topLeft) || !_currentViewportRect.contains(bottomRight))) {
+
         _zoomLevel = zoomLevel;
 
         double latDiff = (topLeft.latitude() - bottomRight.latitude()) / 3;
@@ -355,9 +386,7 @@ MapGridMGRS::_findZoneBoundaries(const QGeoCoordinate& pos)
     }
 
     if (tile->valid && !tile->visited && pos.latitude() < 84 && pos.latitude() > -80 &&
-        (_currentViewportRect.contains(tile->bottomLeft) || _currentViewportRect.contains(tile->bottomRight) ||
-         _currentViewportRect.contains(tile->topLeft) || _currentViewportRect.contains(tile->topRight) ||
-         _currentViewportRect.contains(pos))) {
+        (_currentViewportRect.contains(pos) || _rectOverlapsRect(tile->rect(), _currentViewportRect))) {
         tile->visited = true;
 
         _findZoneBoundaries(tile->topSearchPos);

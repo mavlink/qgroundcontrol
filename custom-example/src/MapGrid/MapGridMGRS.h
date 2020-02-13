@@ -61,6 +61,8 @@ public:
     QGeoCoordinate topSearchPos;
     QGeoCoordinate bottomSearchPos;
 
+    QGeoRectangle rect();
+
 private:
     // Some level 2 zones overlap. Instead of drawing overlapping rectangles we crop the edges to
     // level1 zone lines. This method finds the edge of the level1 zone specified with l1l and returns
@@ -123,6 +125,8 @@ private:
     bool _lineIntersectsLine(const QGeoCoordinate& l1p1, const QGeoCoordinate& l1p2, const QGeoCoordinate& l2p1, const QGeoCoordinate& l2p2);
 
     bool _lineIntersectsRect(const QGeoCoordinate& p1, const QGeoCoordinate& p2, const QGeoRectangle& r);
+
+    bool _rectOverlapsRect(const QGeoRectangle& r1, const QGeoRectangle& r2);
 
     void _clear();
 
