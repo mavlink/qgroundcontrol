@@ -71,7 +71,6 @@ private:
     QString             _currentGroup;
     QmlObjectListModel* _parameters;
     ParameterManager*   _parameterMgr;
-    QString             _componentCategoryPrefix;
     bool                _showModifiedOnly;
 };
 

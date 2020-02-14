@@ -26,7 +26,7 @@ Where xxx.xxx.xxx.xxx is the IP address where QGC is running.
 
 To test using a test source on localhost, you can run this command:
 ```
-gst-launch-1.0 videotestsrc pattern=ball ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
+gst-launch-1.0 videotestsrc pattern=ball ! video/x-raw,width=640,height=480 ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
 ```
 Or this one:
 ```
@@ -35,7 +35,7 @@ gst-launch-1.0 videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! 
 
 On the receiving end, if you want to test it from the command line, you can use something like:
 ```
-gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
+gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
 ```
 
 ### Additional Protocols

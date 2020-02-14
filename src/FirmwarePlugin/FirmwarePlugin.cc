@@ -271,18 +271,15 @@ void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordina
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeRel)
+void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double)
 {
     // Not supported by generic vehicle
-    Q_UNUSED(vehicle);
-    Q_UNUSED(altitudeRel);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::startMission(Vehicle* vehicle)
+void FirmwarePlugin::startMission(Vehicle*)
 {
     // Not supported by generic vehicle
-    Q_UNUSED(vehicle);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
@@ -293,56 +290,50 @@ const FirmwarePlugin::remapParamNameMajorVersionMap_t& FirmwarePlugin::paramName
     return remap;
 }
 
-int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
+int FirmwarePlugin::remapParamNameHigestMinorVersionNumber(int) const
 {
-    Q_UNUSED(majorVersionNumber);
     return 0;
 }
 
-QString FirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageOpaque(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/vehicleArrowOpaque.svg");
 }
 
-QString FirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageOutline(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/vehicleArrowOutline.svg");
 }
 
-QString FirmwarePlugin::vehicleImageCompass(const Vehicle* vehicle) const
+QString FirmwarePlugin::vehicleImageCompass(const Vehicle*) const
 {
-    Q_UNUSED(vehicle);
     return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
 }
 
-const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle*)
 {
-    Q_UNUSED(vehicle);
     //-- Default list of indicators for all vehicles.
     if(_toolBarIndicatorList.size() == 0) {
         _toolBarIndicatorList = QVariantList({
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VTOLModeIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MultiVehicleSelector.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
         });
     }
     return _toolBarIndicatorList;
 }
 
-const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
+const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
 {
-    Q_UNUSED(vehicle);
-
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
@@ -575,7 +566,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
             2.0,                // minimum trigger interval
             this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
-        
+
         metaData = new CameraMetaData(
             tr("Sony DSC-RX0"),
             13.2,               // sensorWidth
@@ -869,7 +860,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
         QString currentVersionNumber = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                 .arg(vehicle->firmwareMinorVersion())
                 .arg(vehicle->firmwarePatchVersion());
-        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+        // qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
 }
 

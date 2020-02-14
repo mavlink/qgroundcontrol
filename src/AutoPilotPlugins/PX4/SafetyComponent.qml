@@ -410,7 +410,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    text:               qsTr("Return Home Settings")
+                    text:               qsTr("Return To Launch Settings")
                 }
 
                 Rectangle {
@@ -449,7 +449,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   qsTr("Return home, then:")
+                                text:                   qsTr("Return to launch, then:")
                                 Layout.columnSpan:      2
                             }
                             Row {

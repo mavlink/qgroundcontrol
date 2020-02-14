@@ -1,0 +1,30 @@
+[
+{
+    "name":             "angle",
+    "shortDescription": "Angle from ground station to vehicle",
+    "type":             "double",
+    "min":              0,
+    "max":              360,
+    "decimalPlaces":    1,
+    "units":            "deg",
+    "defaultValue":     45
+},
+{
+    "name":             "distance",
+    "shortDescription": "Horizontal distance from ground station to vehicle",
+    "type":             "double",
+    "min":              0,
+    "decimalPlaces":    1,
+    "units":            "m",
+    "defaultValue":     5
+},
+{
+    "name":             "height",
+    "shortDescription": "Vertical distance from ground station to vehicle",
+    "type":             "double",
+    "min":              0,
+    "decimalPlaces":    1,
+    "units":            "m",
+    "defaultValue":     5
+}
+]

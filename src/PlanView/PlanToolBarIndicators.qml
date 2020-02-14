@@ -38,8 +38,7 @@ Item {
     property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
     property real   _distance:                  _statusValid && _currentMissionItem ? _currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid && _currentMissionItem ? _currentMissionItem.altDifference : NaN
-    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : NaN
-    property real   _gradientPercent:           isNaN(_gradient) ? NaN : _gradient * 100
+    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? (Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) * (180.0/Math.PI)) : NaN
     property real   _azimuth:                   _statusValid && _currentMissionItem ? _currentMissionItem.azimuth : NaN
     property real   _heading:                   _statusValid && _currentMissionItem ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
@@ -53,13 +52,15 @@ Item {
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
-    property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradientPercent.toFixed(0) + " %"
+    property string _gradientText:              isNaN(_gradient) ?              "-.-" : _gradient.toFixed(0) + " %"
     property string _azimuthText:               isNaN(_azimuth) ?               "-.-" : Math.round(_azimuth) % 360
     property string _headingText:               isNaN(_azimuth) ?               "-.-" : Math.round(_heading) % 360
     property string _missionDistanceText:       isNaN(_missionDistance) ?       "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionDistance).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _missionMaxTelemetryText:   isNaN(_missionMaxTelemetry) ?   "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_missionMaxTelemetry).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _batteryChangePointText:    _batteryChangePoint < 0 ?       "N/A" : _batteryChangePoint
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
+    property bool   _hotEditing:                _controllerValid && _planMasterController.missionController.hotEdit
+    property bool   _hotEditValid:              _controllerValid && !_planMasterController.missionController.hotEditConflict
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
@@ -72,15 +73,17 @@ Item {
     }
 
     // Progress bar
-
-    on_ControllerProgressPctChanged: {
-        if (_controllerProgressPct === 1) {
-            missionStats.visible = false
-            uploadCompleteText.visible = true
-            progressBar.visible = false
-            resetProgressTimer.start()
-        } else if (_controllerProgressPct > 0) {
-            progressBar.visible = true
+    Connections {
+        target: _controllerValid ? _planMasterController.missionController : undefined
+        onProgressPctChanged: {
+            if (_controllerProgressPct === 1) {
+                missionStats.visible = false
+                uploadCompleteText.visible = true
+                progressBar.visible = false
+                resetProgressTimer.start()
+            } else if (_controllerProgressPct > 0) {
+                progressBar.visible = true
+            }
         }
     }
 
@@ -110,7 +113,7 @@ Item {
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
         anchors.left:           parent.left
-        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
+        anchors.right:          actionLayer.visible ? actionLayer.left : parent.right
         columnSpacing:          0
         columns:                3
 
@@ -237,25 +240,58 @@ Item {
         }
     }
 
-    QGCButton {
-        id:                     uploadButton
+    Row {
+        id: actionLayer
+
         anchors.rightMargin:    _margins
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
-        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-        enabled:                !_controllerSyncInProgress
-        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
-        primary:                _controllerDirty
-        onClicked:              _planMasterController.upload()
+        spacing: _margins
 
-        PropertyAnimation on opacity {
-            easing.type:    Easing.OutQuart
-            from:           0.5
-            to:             1
-            loops:          Animation.Infinite
-            running:        _controllerDirty && !_controllerSyncInProgress
-            alwaysRunToEnd: true
-            duration:       2000
+        // TODO: connect it to logic
+        QGCButton {
+            id:                     undoButton
+            text:                   qsTr("Cancel Changes")
+            enabled:                uploadButton.enabled
+            visible:                _controllerDirty && _hotEditing
+            onClicked:              {
+                _planMasterController.loadFromFile(QGroundControl.settingsManager.appSettings.missionSavePath + "/hot_edit.plan");
+                _planMasterController.dirty = false;
+                if(_controllerValid) {
+                    _planMasterController.missionController.hotEditConflict = false;
+                }
+            }
+        }
+
+        QGCButton {
+            id:                     uploadButton
+            text:                   {
+                if(_controllerDirty) {
+                    if(_hotEditing && _hotEditValid)
+                        return qsTr("Continue Mission");
+                    else
+                        return qsTr("Upload Required");
+                }
+                return qsTr("Upload")
+            }
+            enabled:                !_controllerSyncInProgress
+            visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
+            primary:                _controllerDirty
+            onClicked:              {
+                _planMasterController.missionController.hotEditConflict = !_planMasterController.dirty
+                _planMasterController.upload()
+            }
+
+
+            PropertyAnimation on opacity {
+                easing.type:    Easing.OutQuart
+                from:           0.5
+                to:             1
+                loops:          Animation.Infinite
+                running:        _controllerDirty && !_controllerSyncInProgress && !_hotEditing
+                alwaysRunToEnd: true
+                duration:       2000
+            }
         }
     }
 

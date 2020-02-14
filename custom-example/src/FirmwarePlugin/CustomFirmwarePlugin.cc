@@ -68,7 +68,7 @@ CustomFirmwarePlugin::toolBarIndicators(const Vehicle*)
 
 //-----------------------------------------------------------------------------
 QStringList
-CustomFirmwarePlugin::joystickFlightModes(Vehicle* vehicle)
+CustomFirmwarePlugin::extraJoystickFlightModes(Vehicle* vehicle)
 {
     QStringList flightModes;
     foreach (const FlightModeInfo_t& info, _flightModeInfoList) {

@@ -75,54 +75,67 @@ Item {
             //-- Fit Width
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
         }
-        //-- Main Video
-        QGCVideoBackground {
-            id:             videoContent
-            height:         parent.getHeight()
-            width:          parent.getWidth()
-            anchors.centerIn: parent
-            receiver:       _videoReceiver
-            display:        _videoReceiver && _videoReceiver.videoSurface
-            visible:        _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
-            Connections {
-                target:         _videoReceiver
-                onImageFileChanged: {
-                    videoContent.grabToImage(function(result) {
-                        if (!result.saveToFile(_videoReceiver.imageFile)) {
-                            console.error('Error capturing video frame');
-                        }
-                    });
+        Component {
+            id: videoBackgroundComponent
+            QGCVideoBackground {
+                id:             videoContent
+                objectName:     "videoContent"
+                receiver:       _videoReceiver
+
+                Connections {
+                    target:         _videoReceiver
+                    onImageFileChanged: {
+                        videoContent.grabToImage(function(result) {
+                            if (!result.saveToFile(_videoReceiver.imageFile)) {
+                                console.error('Error capturing video frame');
+                            }
+                        });
+                    }
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    height: parent.height
+                    width:  1
+                    x:      parent.width * 0.33
+                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    height: parent.height
+                    width:  1
+                    x:      parent.width * 0.66
+                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    width:  parent.width
+                    height: 1
+                    y:      parent.height * 0.33
+                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
+                }
+                Rectangle {
+                    color:  Qt.rgba(1,1,1,0.5)
+                    width:  parent.width
+                    height: 1
+                    y:      parent.height * 0.66
+                    visible: _showGrid && !QGroundControl.videoManager.fullScreen
                 }
             }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.33
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                height: parent.height
-                width:  1
-                x:      parent.width * 0.66
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.33
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
-            Rectangle {
-                color:  Qt.rgba(1,1,1,0.5)
-                width:  parent.width
-                height: 1
-                y:      parent.height * 0.66
-                visible: _showGrid && !QGroundControl.videoManager.fullScreen
-            }
         }
+        Loader {
+            // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
+            // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
+            // code from running. Setting QGCVideoBackground.receiver = null does not work to prevent any
+            // video OpenGL from being generated. Hence the Loader to completely remove it.
+            height:             parent.getHeight()
+            width:              parent.getWidth()
+            anchors.centerIn:   parent
+            visible:            _videoReceiver && _videoReceiver.videoRunning
+            sourceComponent:    videoBackgroundComponent
+
+            property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
+        }
+
         //-- Thermal Image
         Item {
             id:                 thermalItem
@@ -156,9 +169,9 @@ Item {
             }
             QGCVideoBackground {
                 id:             thermalVideo
+                objectName:     "thermalVideo"
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
-                display:        QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
                 opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }

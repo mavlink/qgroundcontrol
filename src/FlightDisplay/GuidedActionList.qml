@@ -21,9 +21,8 @@ Rectangle {
     id:         _root
     width:      actionColumn.width  + (_margins * 4)
     height:     actionColumn.height + (_margins * 4)
-    radius:     _margins / 2
+    radius:     ScreenTools.defaultFontPixelHeight / 2
     color:      qgcPal.window
-    opacity:    0.9
     z:          guidedController.z
     visible:    false
 
@@ -61,7 +60,7 @@ Rectangle {
             Layout.minimumWidth:    _width
             Layout.maximumWidth:    _width
 
-            property real _width: Math.min((_actionWidth * 2) + _actionHorizSpacing, actionRow.width)
+            property real _width: Math.min((_actionWidth + _actionHorizSpacing) * 3, actionRow.width)
 
             RowLayout {
                 id:         actionRow
@@ -83,14 +82,13 @@ Rectangle {
                             Layout.minimumWidth:    _actionWidth
                             Layout.maximumWidth:    _actionWidth
                             Layout.fillHeight:      true
-
-                            property real _width: ScreenTools.defaultFontPixelWidth * 25
                         }
 
                         QGCButton {
                             id:                 actionButton
+                            backRadius:         height/2
                             text:               modelData.title
-                            Layout.alignment:   Qt.AlignCenter
+                            Layout.alignment:   Qt.AlignHCenter | Qt.AlignBottom
 
                             onClicked: {
                                 _root.visible = false

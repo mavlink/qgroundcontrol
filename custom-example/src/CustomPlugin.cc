@@ -25,6 +25,7 @@
 #include "AppMessages.h"
 #include "QmlComponentInfo.h"
 #include "QGCPalette.h"
+#include "MapGrid.h"
 
 QGC_LOGGING_CATEGORY(CustomLog, "CustomLog")
 
@@ -100,6 +101,7 @@ CustomPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<CustomQuickInterface>("CustomQuickInterface", 1, 0, "CustomQuickInterface", customQuickInterfaceSingletonFactory);
+    qmlRegisterType<MapGrid>("QGroundControl", 1, 0, "MapGrid");
     //-- Disable automatic logging
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
@@ -211,6 +213,7 @@ QQmlApplicationEngine*
 CustomPlugin::createRootWindow(QObject *parent)
 {
     QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+
     pEngine->addImportPath("qrc:/");
     pEngine->addImportPath("qrc:/qml");
     pEngine->addImportPath("qrc:/Custom/Widgets");
@@ -218,6 +221,7 @@ CustomPlugin::createRootWindow(QObject *parent)
     pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
+
     return pEngine;
 }
 

@@ -63,7 +63,9 @@ Item {
         if (visible) {
             visible = false
             _dropDownComponent = undefined
-            toolStrip.lastClickedButton.checked = false
+            if (toolStrip.lastClickedButton) {
+                toolStrip.lastClickedButton.checked = false
+            }
         }
     }
 

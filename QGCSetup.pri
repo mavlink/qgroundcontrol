@@ -48,7 +48,7 @@ MacBuild {
 
 MacBuild {
     # Copy non-standard frameworks into app package
-    QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
+    QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
     # SDL2 Framework
     QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
     # AirMap
@@ -66,20 +66,10 @@ WindowsBuild {
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
-    BASEQTDIR = $$(QTDIR)
-    contains(QT_ARCH, i386) {
-        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x86/include
-        COPY_FILE_LIST = \
-            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x86\\bin\\libcrypto-1_1.dll \
-            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x86\\bin\\libssl-1_1.dll
-    } else {
-        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x64/include
-        COPY_FILE_LIST = \
-            $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
-            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x64\\bin\\libcrypto-1_1-x64.dll \
-            $$BASEQTDIR\\..\\..\\Tools\\OpenSSL\\Win_x64\\bin\\libssl-1_1-x64.dll
-    }
+    COPY_FILE_LIST = \
+        $$BASEDIR\\libs\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+        $$BASEDIR\\deploy\\libcrypto-1_1-x64.dll \
+        $$BASEDIR_WIN\\deploy\\libssl-1_1-x64.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
@@ -88,12 +78,10 @@ WindowsBuild {
     ReleaseBuild {
         # Copy Visual Studio DLLs
         # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-        win32-msvc2015 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
-        } else {
-            error("Visual studio version not supported, installation cannot be completed.")
-        }
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_1.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_2.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
     }
 
     DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
@@ -131,7 +119,8 @@ LinuxBuild {
         libQt5Xml.so.5 \
         libicui18n.so* \
         libQt5TextToSpeech.so.5 \
-        libQt5VirtualKeyboard.so.5
+        libQt5VirtualKeyboard.so.5 \
+        libQt5X11Extras.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
         # Some Qt distributions link with *.so.56

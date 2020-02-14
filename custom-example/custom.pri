@@ -103,3 +103,16 @@ SOURCES += \
     $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/FirmwarePlugin/CustomFirmwarePlugin.cc \
     $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc \
 
+#-------------------------------------------------------------------------------------
+# Map Grid
+
+INCLUDEPATH += \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid
+
+HEADERS+= \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGrid.h \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGridMGRS.h
+
+SOURCES += \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGrid.cc \
+    $$QGCROOT/$$QGC_CUSTOM_BUILD_FOLDER/src/MapGrid/MapGridMGRS.cc

@@ -22,9 +22,6 @@
 #include "Fact.h"
 #include "UDPLink.h"
 #include "Vehicle.h"
-#if defined QGC_ENABLE_NFC
-#include "PairingNFC.h"
-#endif
 #if defined QGC_ENABLE_QTNFC
 #include "QtNFC.h"
 #endif
@@ -95,11 +92,11 @@ public:
     Q_INVOKABLE void    unpairDevice            (const QString& name);
     Q_INVOKABLE void    stopConnectingDevice    (const QString& name);
     Q_INVOKABLE bool    isDeviceConnecting      (const QString& name);
-    Q_INVOKABLE void    setConnectingChannel    (int channel, int power);
+    Q_INVOKABLE void    setModemParameters      (int channel, int power, int bandwidth);
     Q_INVOKABLE QString extractName             (const QString& name);
     Q_INVOKABLE QString extractChannel          (const QString& name);
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     Q_INVOKABLE void    startNFCScan            ();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
@@ -178,6 +175,7 @@ private:
     QMap<QString, QNetworkReply*> _connectRequests;
     QString                       _lastDeviceNameToConnect = "";
     QString                       _nidPrefix = "SRR_";
+    std::function<void(void)>     _disconnect_callback;
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
@@ -190,7 +188,8 @@ private:
     void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& ip, const QString& devicePublicKey, const int channel);
     void                    _connectionCompleted        (const QString& name, const int channel);
     void                    _disconnectCompleted        (const QString& name);
-    void                    _channelCompleted           (const QString& name, int channel);
+    void                    _requestedParameters        (int channel, int power, int bandwidth);
+    void                    _modemParametersCompleted   (const QString& name, const QString& nid, int channel, int power, int bandwidth);
     QDir                    _pairingCacheDir            ();
     QDir                    _pairingCacheTempDir        ();
     QString                 _pairingCacheFile           (const QString& uavName);
@@ -208,7 +207,7 @@ private:
     void                    _autoConnect                ();
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
-    void                    _setConnectingChannel       (const QString& name, int channel, int power);
+    void                    _setModemParameters         (const QString& name, int channel, int power, int bandwidth);
     QString                 _removeRSAkey               (const QString& s);
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);
@@ -216,7 +215,7 @@ private:
     bool                    _getFreeDeviceAndMicrohardIP(QString& ip, QString& mhip);
     QString                 _getDeviceConnectNid        (int channel);
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
 #endif
 };

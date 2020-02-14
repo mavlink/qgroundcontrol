@@ -430,7 +430,7 @@ SetupPage {
                                     FactTextField {
                                         id:                 tuneMinField
                                         validator:          DoubleValidator {bottom: 0; top: 32767;}
-                                        fact:               controller.getParameterFact(-1, "TUNE_LOW")
+                                        fact:               controller.getParameterFact(-1, "r.TUNE_MAX")
                                     }
 
                                     QGCLabel {
@@ -442,7 +442,7 @@ SetupPage {
                                     FactTextField {
                                         id:                 tuneMaxField
                                         validator:          DoubleValidator {bottom: 0; top: 32767;}
-                                        fact:               controller.getParameterFact(-1, "TUNE_HIGH")
+                                        fact:               controller.getParameterFact(-1, "r.TUNE_MIN")
                                     }
                                 }
                             } // Column - Channel 6 Tuning option

@@ -16,8 +16,13 @@ import QGroundControl.ScreenTools   1.0
 
 Button {
     id:                 control
-    height:             ScreenTools.defaultFontPixelHeight * 2
     autoExclusive:      true
+    leftPadding:        ScreenTools.defaultFontPixelWidth
+    rightPadding:       leftPadding
+
+    property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 3
+    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 6
+    property real _nameWidth:   nameLabel.contentWidth
 
     background: Rectangle {
         anchors.fill:   parent
@@ -28,20 +33,31 @@ Button {
     property int    compID:     0
 
     contentItem: RowLayout {
+        id:         rowLayout
+        spacing:    ScreenTools.defaultFontPixelWidth
+
         QGCLabel {
-            text:   control.compID
-            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 3
+            text:                   control.compID
+            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            verticalAlignment:      Text.AlignVCenter
+            Layout.minimumHeight:   ScreenTools.isMobile ? (ScreenTools.defaultFontPixelHeight * 2) : (ScreenTools.defaultFontPixelHeight * 1.5)
+            Layout.minimumWidth:    _compIDWidth
         }
         QGCLabel {
-            text:   control.text
-            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 28
+            id:                     nameLabel
+            text:                   control.text
+            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            Layout.fillWidth:       true
+            Layout.alignment:       Qt.AlignVCenter
         }
         QGCLabel {
-            color:  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            text:   messageHz.toFixed(1) + 'Hz'
-            Layout.alignment: Qt.AlignRight
+            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            text:                   messageHz.toFixed(1) + 'Hz'
+            horizontalAlignment:    Text.AlignRight
+            Layout.minimumWidth:    _hzWidth
+            Layout.alignment:       Qt.AlignVCenter
         }
     }
+
+    Component.onCompleted: maxButtonWidth = Math.max(maxButtonWidth, _compIDWidth + _hzWidth + _nameWidth + (rowLayout.spacing * 2) + (control.leftPadding * 2))
 }

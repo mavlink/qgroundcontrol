@@ -62,6 +62,8 @@ Item {
     property string _messageTitle:          ""
     property string _messageText:           ""
 
+    property var    mapCenter:              QGroundControl.flightMapPosition
+
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
         var hours   = Math.floor(sec_num / 3600);
@@ -102,9 +104,9 @@ Item {
         target: QGroundControl.qgcPositionManger
         onGcsPositionChanged: {
             if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
-                _gcsPosition = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
+                var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
                 var veh = QGroundControl.multiVehicleManager.lastKnownLocation;
-                _distance = QGroundControl.metersToAppSettingsDistanceUnits(_gcsPosition.distanceTo(veh));
+                _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
                 //-- Ignore absurd values
                 if(_distance > 99999)
                     _distance = 0;
@@ -246,6 +248,10 @@ Item {
         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth  * 16
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
+    }
+
+    onMapCenterChanged: {
+        mapCenterLabel.text = QGroundControl.positionToMGRSFormat(mapCenter)
     }
 
     //-------------------------------------------------------------------------
@@ -610,7 +616,6 @@ Item {
             anchors.fill:     parent
             color:            qgcPal.window
             radius:           ScreenTools.defaultFontPixelWidth * 0.5
-            visible:          vehiclePositionLabel.text !== "" || gcsPositionLabel.text !== ""
 
             Row {
                 id: layoutRow
@@ -624,7 +629,19 @@ Item {
                     font.pointSize:          _flightCoordinates._fontSize
                 }
                 QGCColoredImage {
-                     id:                     _icon1
+                     height:                 vehiclePositionLabel.contentHeight * 0.75
+                     width:                  height
+                     color:                  qgcPal.text
+                     source:                 "/custom/img/map-center.svg"
+                     anchors.verticalCenter: parent.verticalCenter
+                     visible:                mapCenterLabel.text !== ""
+                }
+                QGCLabel {
+                    id:                      mapCenterLabel
+                    color:                   qgcPal.text
+                    font.pointSize:          _flightCoordinates._fontSize
+                }
+                QGCColoredImage {
                      height:                 vehiclePositionLabel.contentHeight * 0.75
                      width:                  height
                      color:                  qgcPal.text
@@ -639,7 +656,6 @@ Item {
                     font.pointSize:          _flightCoordinates._fontSize
                 }
                 QGCColoredImage {
-                     id:                     _icon2
                      height:                 vehiclePositionLabel.contentHeight * 0.75
                      width:                  height
                      color:                  qgcPal.text
@@ -672,8 +688,8 @@ Item {
         // Initialized with latest values. The binding is broken at first control loop pass
         property real _currentPitch:    _hasGimbal ? activeVehicle.gimbalPitch : 0
         property real _currentYaw:      _hasGimbal ? activeVehicle.gimbalYaw : 0
-        property real _lastPitch:       NaN
-        property real _lastYaw:         NaN
+        property real _lastPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
+        property real _lastYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
         property real time_last_seconds:0
         property real speedMultiplier:  2.5
 
@@ -727,12 +743,13 @@ Item {
                         }
                     }
 
-                    yaw += yaw_stick * (gimbalRateMode ? 1 : gimbalControl.speedMultiplier)
-                    pitch += pitch_stick * (gimbalRateMode ? 1 : gimbalControl.speedMultiplier)
+                    yaw += yaw_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
+                    pitch += pitch_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
                     yaw = clamp(yaw, -180, 180)
                     pitch = clamp(pitch, -90, 90)
-                    if(yaw !== gimbalControl._lastPitch || pitch !== gimbalControl._lastPitch) {
-                        activeVehicle.gimbalControlValue(pitch, yaw);
+                    if(Math.abs(yaw - gimbalControl._lastYaw) > 0.001 || Math.abs(pitch - gimbalControl._lastPitch) > 0.001) {
+                        activeVehicle.gimbalControlValue(pitch, yaw)
+                        // Break the initial bindings
                         gimbalControl._lastPitch = pitch;
                         gimbalControl._lastYaw = yaw;
                         if(gimbalRateMode) {

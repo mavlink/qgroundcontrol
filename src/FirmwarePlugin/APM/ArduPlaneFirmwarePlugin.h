@@ -33,8 +33,8 @@ public:
         AUTO          = 10,
         RTL           = 11,
         LOITER        = 12,
-        RESERVED_13   = 13, // RESERVED FOR FUTURE USE
-        RESERVED_14   = 14, // RESERVED FOR FUTURE USE
+        TAKEOFF       = 13,
+        AVOID_ADSB    = 14,
         GUIDED        = 15,
         INITIALIZING  = 16,
         QSTABILIZE    = 17,
@@ -42,6 +42,8 @@ public:
         QLOITER       = 19,
         QLAND         = 20,
         QRTL          = 21,
+        QAUTOTUNE     = 22,
+        QACRO         = 23,
     };
 
     APMPlaneMode(uint32_t mode, bool settable);
