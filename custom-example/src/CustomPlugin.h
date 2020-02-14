@@ -46,6 +46,7 @@ public:
     double      toolbarHeightMultiplier         () final { return 1.25; }
 #endif
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomFlyView.qml"); }
+    QUrl        mapOverlay                      () const final { return QUrl::fromUserInput("qrc:/custom/MapGrid.qml"); }
     QUrl        preFlightChecklistUrl           () const final { return QUrl::fromUserInput("qrc:/custom/PreFlightCheckList.qml"); }
     //-- We have our own toolbar
     QUrl        mainToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomMainToolBar.qml"); }
@@ -59,6 +60,8 @@ public:
     bool        enableMultiVehicleList          () const final { return false; }
     //-- We handle our own map scale
     bool        enableMapScale                  () const final { return false; }
+    //-- Don't save window position and size
+    bool        enableSaveMainWindowPosition    () const final { return false; }
     // TODO: Can't access QGCPalette without some workarounds, change this upstream
     QColor      toolbarBackgroundLight          () const final;
     QColor      toolbarBackgroundDark           () const final;
@@ -106,6 +109,6 @@ private:
         const char* iconFile = nullptr);
 
 private:
-    CustomOptions*      _pOptions = nullptr;
-    QVariantList        _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    CustomOptions*       _pOptions = nullptr;
+    QVariantList         _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
 };

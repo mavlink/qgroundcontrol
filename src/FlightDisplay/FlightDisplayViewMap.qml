@@ -30,6 +30,8 @@ FlightMap {
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
+    zoomLevel:                  QGroundControl.flightMapZoom
+    center:                     QGroundControl.flightMapPosition
 
     property alias  scaleState: mapScale.state
 
@@ -47,9 +49,12 @@ FlightMap {
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
+    property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
+    property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       mainIsMap ? false : true
+    property bool   _pipping:                   false
 
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
@@ -61,11 +66,41 @@ FlightMap {
         }
     }
 
+    function pipIn() {
+        if(QGroundControl.flightMapZoom > 3) {
+            _pipping = true;
+            zoomLevel = QGroundControl.flightMapZoom - 3
+            _pipping = false;
+        }
+    }
+
+    function pipOut() {
+        _pipping = true;
+        zoomLevel = QGroundControl.flightMapZoom
+        _pipping = false;
+    }
+
+    function adjustMapSize() {
+        if(mainIsMap)
+            pipOut()
+        else
+            pipIn()
+    }
+
     // Track last known map position and zoom from Fly view in settings
 
+    onVisibleChanged: {
+        if(visible) {
+            adjustMapSize()
+            center    = QGroundControl.flightMapPosition
+        }
+    }
+
     onZoomLevelChanged: {
-        QGroundControl.flightMapZoom = zoomLevel
-        updateAirspace(false)
+        if(!_pipping) {
+            QGroundControl.flightMapZoom = zoomLevel
+            updateAirspace(false)
+        }
     }
     onCenterChanged: {
         QGroundControl.flightMapPosition = center
@@ -128,7 +163,7 @@ FlightMap {
 
     function updateMapToVehiclePosition() {
         // We let FlightMap handle first vehicle position
-        if (firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
+        if (!_keepMapCenteredOnVehicle && firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             if (_keepVehicleCentered) {
                 flightMap.center = _activeVehicleCoordinate
             } else {
@@ -136,6 +171,12 @@ FlightMap {
                     animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
                 }
             }
+        }
+    }
+
+    on_ActiveVehicleCoordinateChanged: {
+        if (_keepMapCenteredOnVehicle && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
+            flightMap.center = _activeVehicleCoordinate
         }
     }
 
@@ -213,8 +254,7 @@ FlightMap {
 
     // Add ADSB vehicles to the map
     MapItemView {
-        model: activeVehicle ? activeVehicle.adsbVehicles : []
-        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+        model: QGroundControl.adsbVehicleManager.adsbVehicles
         delegate: VehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
@@ -512,12 +552,11 @@ FlightMap {
     MapScale {
         id:                     mapScale
         anchors.right:          parent.right
-        anchors.margins:        ScreenTools.defaultFontPixelHeight * (0.33)
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * (0.33) + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.33)
+        anchors.margins:        _toolsMargin
+        anchors.topMargin:      _toolsMargin + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
         mapControl:             flightMap
         buttonsOnLeft:          false
-        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale
+        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale && mainIsMap
         state:                  "bottomMode"
         states: [
             State {

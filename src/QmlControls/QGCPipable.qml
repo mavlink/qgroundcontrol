@@ -28,6 +28,7 @@ Item {
 
     property bool inPopup: false
     property bool enablePopup: true
+    property real closePipHeight: height - closePIP.y
 
     signal  activated()
     signal  hideIt(bool state)

@@ -2,7 +2,7 @@
 # [REQUIRED] Add support for <inttypes.h> to Windows.
 #
 WindowsBuild {
-    INCLUDEPATH += libs/lib/msinttypes
+    INCLUDEPATH += libs/msinttypes
 }
 
 #
@@ -106,10 +106,9 @@ SOURCES += \
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/lib/Frameworks/SDL2.framework/Headers
-
+        $$BASEDIR/libs/Frameworks/SDL2.framework/Headers
     LIBS += \
-        -F$$BASEDIR/libs/lib/Frameworks \
+        -F$$BASEDIR/libs/Frameworks \
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
@@ -117,42 +116,36 @@ MacBuild {
     INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/binary/include
     LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/binary/lib
 } else:WindowsBuild {
-    INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
-    BASEQTDIR = $$(QTDIR)
-    INCLUDEPATH += $$BASEQTDIR/include/QtZlib
-    contains(QT_ARCH, i386) {
-        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x86/include
-        LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/Win_x86/lib
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
-    } else {
-        INCLUDEPATH += $$BASEQTDIR/../../Tools/OpenSSL/Win_x64/include
-        LIBS += -L$$BASEQTDIR/../../Tools/OpenSSL/Win_x64/lib
-        LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
-    }
-    LIBS += \
-        -lSDL2
+    INCLUDEPATH += $$BASEDIR/libs/sdl2/msvc/include
+    INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
+    LIBS += -L$$BASEDIR/libs/sdl2/msvc/lib/x64
+    LIBS += -lSDL2
 }
 
-# Include Android OpenSSL 1.1.x libs in order to make Qt OpenSSL support work with Qt 5.12.x and above
+# Include Android OpenSSL libs
 AndroidBuild {
     include($$BASEDIR/libs/OpenSSL/android_openssl/openssl.pri)
+    message("ANDROID_EXTRA_LIBS")
+    message($$ANDROID_TARGET_ARCH)
+    message($$ANDROID_EXTRA_LIBS)
 }
 
 # Pairing
 contains(DEFINES, QGC_ENABLE_PAIRING) {
     MacBuild {
         #- Pairing is generally not supported on macOS. This is here solely for development.
-        OPENSSL_DIR = /usr/local/Cellar/openssl/$$system(ls /usr/local/Cellar/openssl | tail -1)
-        exists($$OPENSSL_DIR/include) {
-            INCLUDEPATH += $$OPENSSL_DIR/include
-            LIBS += -L$$OPENSSL_DIR/lib
+        exists(/usr/local/Cellar/openssl/1.0.2t/include) {
+            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
+            LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
             LIBS += -lcrypto -lz
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
             # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
-            DEFINES -= QGC_ENABLE_NFC
             DEFINES -= QGC_ENABLE_PAIRING
         }
+    } else:WindowsBuild {
+        #- Pairing is not supported on Windows
+        DEFINES -= QGC_ENABLE_PAIRING
     } else {
         LIBS += -lcrypto -lz
         AndroidBuild {
@@ -178,7 +171,6 @@ contains (DEFINES, DISABLE_ZEROCONF) {
 } else {
     message("Skipping support for Zeroconf (unsupported platform)")
 }
-
 
 #
 # [OPTIONAL] AirMap Support

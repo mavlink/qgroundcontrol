@@ -43,8 +43,10 @@ Column  {
     }
 
     SectionHeader {
-        id:     header
-        text:   name + (passed ? qsTr(" (passed)") : "")
+        id:             header
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        text:           name + (passed ? qsTr(" (passed)") : "")
     }
 
     Column {

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,9 +26,92 @@ class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
     AssignedButtonAction(QObject* parent, const QString name);
-    QString action;
+    QString action = "No Action";
+    QString secondary_action = "No Action";
     QTime   buttonTime;
-    bool    repeat = false;
+    bool    repeat = false; //TODO: move this to SecondaryAction_t enum
+    uint8_t buttonCombo = 0;
+
+    typedef enum {
+        SECONDARY_BUTTON_PRESS_NONE,
+        SECONDARY_BUTTON_PRESS_DOUBLE,
+        SECONDARY_BUTTON_PRESS_LONG,
+        SECONDARY_BUTTON_PRESS_COMBO,
+        SECONDARY_BUTTON_PRESS_REPEAT // TODO: replace the repeat bool when changing the UI
+    } SecondaryAction_t;
+
+    SecondaryAction_t secondaryActionType = SECONDARY_BUTTON_PRESS_NONE;
+
+    typedef enum {
+        BUTTON_IDLE_STATE, //BUTTON_UP_STATE
+        BUTTON_DOWN_STATE,
+        BUTTON_DOWNREPEAT_STATE,
+        BUTTON_DOWNUP_STATE,
+        BUTTON_DONE_STATE
+    } ButtonStateMachine_t;
+
+    ButtonStateMachine_t buttonCurrentState = BUTTON_IDLE_STATE;
+};
+
+
+class JoystickCustomAction : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(int button1                READ  button1               WRITE  setButton1               NOTIFY button1Changed)
+    Q_PROPERTY(int button2                READ  button2               WRITE  setButton2               NOTIFY button2Changed)
+    Q_PROPERTY(QString action             READ  action                WRITE  setAction                NOTIFY actionChanged)
+    Q_PROPERTY(int secondaryActionType    READ  secondaryActionType   WRITE  setSecondaryActionType   NOTIFY secondaryActionTypeChanged)
+    Q_PROPERTY(QStringList buttonOptions  READ  buttonOptions         WRITE  setButtonOptions         NOTIFY buttonOptionsChanged)
+    Q_PROPERTY(int selectedButtonIndex1   READ  selectedButtonIndex1  WRITE  setSelectedButtonIndex1  NOTIFY selectedButtonIndex1Changed)
+    Q_PROPERTY(int selectedButtonIndex2   READ  selectedButtonIndex2  WRITE  setSelectedButtonIndex2  NOTIFY selectedButtonIndex2Changed)
+
+public:
+    JoystickCustomAction(QObject *parent = nullptr, int buttonCount = 0, QStringList buttonOptions = {"Undefined"});
+
+    int button1();
+    int button2();
+    QString action();
+
+    int secondaryActionType();
+    QStringList buttonOptions();
+    int selectedButtonIndex1();
+    int selectedButtonIndex2();
+
+    void setButton1(const int &buttonNumber);
+    void setButton2(const int &buttonNumber);
+    void setAction(const QString &action);
+    void setSecondaryActionType(int secondaryActionType);
+    void setButtonOptions(QStringList options);
+    void setSelectedButtonIndex1(int button);
+    void setSelectedButtonIndex2(int button);
+
+    void addButtonToOptionsList(int button);
+    void removeButtonFromOptionsList(int button);
+    void updateCustomActionIndex();
+    void setCurrentButton1(QString button);
+    void setCurrentButton2(QString button);
+
+signals:
+    void button1Changed();
+    void button2Changed();
+    void actionChanged();
+    void secondaryActionTypeChanged();
+    void buttonOptionsChanged();
+    void selectedButtonIndex1Changed();
+    void selectedButtonIndex2Changed();
+
+private:
+    int _button1 = 0;
+    int _button2 = 0;
+    QString _action = "No Action";
+    int _secondaryActionType = 0;
+    QStringList _buttonOptions;
+    int _selectedButtonIndex1 = 0;
+    int _selectedButtonIndex2 = 0;
+
+    int _buttonCount;
+    QString _currentButton1 = "Unassigned";
+    QString _currentButton2 = "Unassigned";
 };
 
 //-- Assignable Button Action
@@ -90,7 +173,9 @@ public:
     Q_PROPERTY(bool     requiresCalibration     READ requiresCalibration    CONSTANT)
 
     //-- Actions assigned to buttons
-    Q_PROPERTY(QStringList buttonActions        READ buttonActions          NOTIFY buttonActionsChanged)
+    Q_PROPERTY(QStringList buttonActions                   READ buttonActions                   NOTIFY buttonActionsChanged)
+    Q_PROPERTY(QStringList buttonSecondaryActions          READ buttonSecondaryActions          NOTIFY buttonActionsChanged)
+    Q_PROPERTY(QStringList buttonSecondaryActionTypeList   READ buttonSecondaryActionTypeList   NOTIFY buttonSecondaryActionTypeListChanged)
 
     //-- Actions that can be assigned to buttons
     Q_PROPERTY(QmlObjectListModel* assignableActions    READ assignableActions          NOTIFY      assignableActionsChanged)
@@ -105,21 +190,28 @@ public:
     Q_PROPERTY(float    exponential             READ exponential            WRITE setExponential        NOTIFY exponentialChanged)
     Q_PROPERTY(bool     accumulator             READ accumulator            WRITE setAccumulator        NOTIFY accumulatorChanged)
     Q_PROPERTY(bool     circleCorrection        READ circleCorrection       WRITE setCircleCorrection   NOTIFY circleCorrectionChanged)
-
-    Q_INVOKABLE void    setButtonRepeat     (int button, bool repeat);
-    Q_INVOKABLE bool    getButtonRepeat     (int button);
-    Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
-    Q_INVOKABLE QString getButtonAction     (int button);
+    Q_PROPERTY(QList<QObject*> customActions    READ customActions                                      NOTIFY customActionsChanged)
 
     Q_INVOKABLE AssignableButtonAction* getAssignableAction(const QString& action);
+    Q_INVOKABLE void    setButtonRepeat     (int button, bool repeat);
+    Q_INVOKABLE bool    getButtonRepeat     (int button);
+    Q_INVOKABLE void    setButtonAction     (int button, const QString& action, bool primaryAction);
+    Q_INVOKABLE void    createAvailableButtonsList  ();
+    Q_INVOKABLE void    createCustomActionsTable    ();
+    Q_INVOKABLE void    newCustomAction             ();
+    Q_INVOKABLE void    updateCustomActions         (int customIndex, const QString& button1, const QString& button2, const QString& action, int secondaryActionType);
+    Q_INVOKABLE void    removeCustomAction          (int comboIndex);
+
 
     // Property accessors
-
     QString     name                () { return _name; }
     int         totalButtonCount    () { return _totalButtonCount; }
     int         axisCount           () { return _axisCount; }
     bool        gimbalEnabled       () { return _gimbalEnabled; }
     QStringList buttonActions       ();
+    QStringList buttonSecondaryActions       ();
+    QStringList buttonNumberingList       ();
+    QStringList buttonSecondaryActionTypeList();
 
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
     QStringList assignableActionTitles      () { return _availableActionTitles; }
@@ -136,6 +228,8 @@ public:
 
     void setFunctionAxis(AxisFunction_t function, int axis);
     int getFunctionAxis(AxisFunction_t function);
+
+    QList<QObject*> customActions ();
 
 
 /*
@@ -176,12 +270,22 @@ public:
     float buttonFrequency   () { return _buttonFrequency; }
     void  setButtonFrequency(float val);
 
+    void addButtonGlobalCustomActionsList(int button);
+    void removeButtonGlobalCustomActionsList(int button);
+    void addButtonLocalCustomActionsLists(int button, int customIndex);
+    void removeButtonLocalCustomActionsLists(int button, int customIndex);
+    QString getButtonAction     (int button, bool primary);
+    void    setButtonDouble     (int button, bool doublePress);
+    void    setButtonLong       (int button, bool longPress);
+
 signals:
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged        (int index, int value);
     void rawButtonPressedChanged    (int index, int pressed);
     void calibratedChanged          (bool calibrated);
     void buttonActionsChanged       ();
+    void buttonNumberingChanged();
+    void buttonSecondaryActionTypeListChanged();
     void assignableActionsChanged   ();
     void throttleModeChanged        (int mode);
     void negativeThrustChanged      (bool allowNegative);
@@ -189,6 +293,9 @@ signals:
     void accumulatorChanged         (bool accumulator);
     void enabledChanged             (bool enabled);
     void circleCorrectionChanged    (bool circleCorrection);
+    void customActionsChanged        ();
+    void buttonRepeatChanged(int buttonIndex, bool set);
+    void buttonCustomActionChanged(int customActionIndex, bool set);
 
     /// Signal containing new joystick information
     ///     @param roll         Range is -1:1, negative meaning roll left, positive meaning roll right
@@ -263,6 +370,10 @@ private:
     int _mapFunctionMode(int mode, int function);
     void _remapAxes(int currentMode, int newMode, int (&newMapping)[maxFunction]);
 
+    void setButtonCombo(int button, int comboButton, const QString& action, bool comboPress);
+    void removeButtonComboTable(int button, bool comboAction);
+    void updateCustomActionsIndexes(int customIndex, const QString& button1, const QString& button2);
+
     // Override from QThread
     virtual void run();
 
@@ -270,8 +381,7 @@ protected:
 
     enum {
         BUTTON_UP,
-        BUTTON_DOWN,
-        BUTTON_REPEAT
+        BUTTON_DOWN
     };
 
     uint8_t*_rgButtonValues         = nullptr;
@@ -310,6 +420,9 @@ protected:
     QStringList                     _availableActionTitles;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
 
+    QList<QObject*>  _customActions;
+    QList<bool>  _comboEnabled;
+    QStringList _buttonOptions;
 
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
@@ -317,7 +430,10 @@ private:
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionNameKey;
+    static const char* _buttonSecondaryActionNameKey;
     static const char* _buttonActionRepeatKey;
+    static const char* _buttonSecondaryActionTypeKey;
+    static const char* _buttonComboKey;
     static const char* _throttleModeSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;

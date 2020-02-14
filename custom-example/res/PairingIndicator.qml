@@ -36,6 +36,7 @@ Item {
     property real _contentSpacing:      ScreenTools.defaultFontPixelHeight * 0.5
     property real _rectWidth:           _contentWidth
     property real _rectHeight:          _contentWidth * 0.75
+    property bool _passwordVisible:     false
 
     property string kPairingManager:    qsTr("Pairing Manager")
 
@@ -174,6 +175,7 @@ Item {
                         Layout.row:         0
                         Layout.column:      0
                         Layout.fillWidth:   true
+                        Layout.minimumWidth: _contentWidth * 0.4
                     }
                     QGCTextField {
                         id:                 networkId
@@ -189,14 +191,35 @@ Item {
                         Layout.column:      0
                         Layout.fillWidth:   true
                     }
-                    QGCTextField {
-                        id:                 encryptionKey
-                        text:               QGroundControl.pairingManager.pairingKey
+                    GridLayout {
+                        columns:            2
+                        columnSpacing:      ScreenTools.defaultFontPointSize
+                        rowSpacing:         ScreenTools.defaultFontPointSize * 0.25
+                        width:              _contentWidth
                         Layout.row:         1
                         Layout.column:      1
-                        Layout.fillWidth:   true
-                        validator:          RegExpValidator { regExp: /^[0-9a-zA-Z_-!]{8,64}$/ }
-                        echoMode:           TextInput.Password
+                        QGCTextField {
+                            id:                 encryptionKey
+                            text:               QGroundControl.pairingManager.pairingKey
+                            Layout.fillWidth:   true
+                            validator:          RegExpValidator { regExp: /^[0-9a-zA-Z_-!]{8,64}$/ }
+                            echoMode:           _passwordVisible ? TextInput.Normal : TextInput.Password
+                        }
+                        QGCColoredImage {
+                            height:             ScreenTools.defaultFontPixelHeight
+                            width:              height
+                            source:             _passwordVisible ? "/custom/img/eye-solid.svg" : "/custom/img/eye-slash-solid.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            color:              qgcPal.text
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    _passwordVisible = !_passwordVisible
+                                }
+                            }
+                        }
                     }
                     QGCLabel {
                         text:               qsTr("Pairing channel:")
@@ -567,16 +590,6 @@ Item {
                     }
                 }
                 QGCButton {
-                    text:                   qsTr("Pair Another")
-                    width:                  _contentWidth
-                    visible:                QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.Connected) : false
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    onClicked: {
-                        progressPopup.close()
-                        mhPopup.open()
-                    }
-                }
-                QGCButton {
                     text:                   qsTr("Try Again")
                     width:                  _contentWidth
                     visible:                QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingStatus === PairingManager.PairingError: false
@@ -902,7 +915,7 @@ Item {
                         Layout.fillWidth:   true
                         onActivated:        {
                             progressPopup.open()
-                            QGroundControl.pairingManager.setConnectingChannel(currentIndex + QGroundControl.microhardManager.channelMin, QGroundControl.microhardManager.connectingPower)
+                            QGroundControl.pairingManager.setModemParameters(currentIndex + QGroundControl.microhardManager.channelMin, QGroundControl.microhardManager.connectingPower, QGroundControl.microhardManager.connectingBandwidth)
                         }
                     }
                 }
@@ -919,10 +932,12 @@ Item {
                     text:               qsTr("Pair Another")
                     width:              _contentWidth
                     Layout.fillWidth:   true
+                    visible:            _noConnectedDevices
                     onClicked: {
                         connectionPopup.close()
                         mhPopup.open()
                     }
+                    property bool _noConnectedDevices: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList.length <= 0 : false
                 }
                 Item { width: 1; height: 1; }
             }

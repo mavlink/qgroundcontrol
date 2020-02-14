@@ -15,6 +15,7 @@
  *
  */
 
+#include "QGC.h"
 #include <QtGlobal>
 #include <QApplication>
 #include <QIcon>
@@ -138,7 +139,7 @@ static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 void setNativeMethods(void)
 {
     JNINativeMethod javaMethods[] {
-        {"nativeInit", "(Landroid/content/Context;)V", reinterpret_cast<void *>(gst_android_init)}
+        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
     };
 
     QAndroidJniEnvironment jniEnv;
@@ -176,12 +177,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
-    setNativeMethods();
 
-    QAndroidJniObject resultL = QAndroidJniObject::callStaticObjectMethod(
-        kJniClassName,
-        "jniOnLoad",
-        "();");
+    setNativeMethods();
 
 #if defined(QGC_GST_STREAMING)
     // Tell the androidmedia plugin about the Java VM
@@ -191,7 +188,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
  #if !defined(NO_SERIAL_LINK)
     QSerialPort::setNativeMethods();
  #endif
+
     JoystickAndroid::setNativeMethods();
+
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager::setNativeMethods();
 #endif
@@ -245,6 +244,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
+
+    //-- Record boot time
+    QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices

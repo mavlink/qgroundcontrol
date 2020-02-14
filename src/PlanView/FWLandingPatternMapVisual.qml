@@ -179,6 +179,8 @@ Item {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
 
+            readonly property int   _decimalPlaces:             8
+
             onClicked: {
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
@@ -198,11 +200,25 @@ Item {
             itemIndicator:  _loiterPointObject
             itemCoordinate: _missionItem.loiterCoordinate
 
-            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+            property bool _preventReentrancy: false
+
+            onItemCoordinateChanged: {
+                if (!_preventReentrancy) {
+                    if (Drag.active && _missionItem.loiterDragAngleOnly) {
+                        _preventReentrancy = true
+                        var angle = _missionItem.landingCoordinate.azimuthTo(itemCoordinate)
+                        var distance = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
+                        _missionItem.loiterCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(distance, angle)
+                        _preventReentrancy = false
+                    } else {
+                        _missionItem.loiterCoordinate = itemCoordinate
+                    }
+                }
+            }
         }
     }
 
-    // Control which is used to drag the loiter point
+    // Control which is used to drag the landing point
     Component {
         id: landDragAreaComponent
 
@@ -240,7 +256,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Loiter"
+                label:      qsTr("Loiter")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
@@ -441,8 +457,9 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
-                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters).toFixed(1) + " " +
-                            QGroundControl.appSettingsDistanceUnitsString
+                map:        _root.map
+                heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters)) +
+                            QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
 
             function recalc() {
@@ -472,8 +489,9 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
-                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters).toFixed(1) + " " +
-                            QGroundControl.appSettingsDistanceUnitsString
+                map:        _root.map
+                heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters)) +
+                            QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
 
             function recalc() {
@@ -506,7 +524,8 @@ Item {
             coordinate:     _missionItem.loiterTangentCoordinate
 
             sourceItem: HeightIndicator {
-                heightText: _missionItem.loiterAltitude.value.toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
+                map:        _root.map
+                heightText: _missionItem.loiterAltitude.value.toFixed(1) + QGroundControl.appSettingsDistanceUnitsString
             }
         }
     }

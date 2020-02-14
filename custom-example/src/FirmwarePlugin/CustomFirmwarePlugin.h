@@ -28,7 +28,7 @@ public:
     QGCCameraManager*   createCameraManager                 (Vehicle *vehicle) override;
     QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr) override;
     const QVariantList& toolBarIndicators                   (const Vehicle* vehicle) override;
-    QStringList         joystickFlightModes                 (Vehicle* vehicle) override;
+    QStringList         extraJoystickFlightModes            (Vehicle* vehicle) override;
 private:
     QVariantList _toolBarIndicatorList;
 };

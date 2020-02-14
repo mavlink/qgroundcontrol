@@ -34,6 +34,7 @@ private slots:
     void _stateChanged(QAbstractSocket::SocketState socketState);
     void _socketError(QAbstractSocket::SocketError socketError);
     void _getStatus();
+    void _configureTimeout();
 
 signals:
     void connected(QString status);
@@ -41,12 +42,17 @@ signals:
 
 private:
     bool _loggedIn;
+    bool _configurationRunning = false;
     int _rssiVal;
     QString _address;
     bool _configure;
     bool _configureAfterConnect = false;
     QTcpSocket* _tcpSocket = nullptr;
     QTimer* _statusTimer = nullptr;
+    QTimer* _configureTimer = nullptr;
+    QByteArray _readData;
+    QList<QString> _writeList;
+    QString _encryptionType = "1";
 
     void _start();
     void _close();

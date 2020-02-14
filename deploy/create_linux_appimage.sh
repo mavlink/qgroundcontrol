@@ -64,6 +64,7 @@ find ../ -name *.deb -exec dpkg -x {} . \;
 find ../ -name *.rpm -exec sh -c 'rpm2cpio {} | cpio -idmv' \;
 
 cp -L /usr/lib64/libSDL2* ${APPDIR}/usr/lib/x86_64-linux-gnu/
+cp -vP $(echo "$(ldconfig -p | grep libcrypto.so.1.0.0 | tr ' ' '\n' | grep /)") ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
 # copy QGroundControl release into appimage
 rsync -av --exclude=*.cpp --exclude=*.h --exclude=*.o --exclude="CMake*" --exclude="*.cmake" ${QGC_RELEASE_DIR}/* ${APPDIR}/
@@ -89,9 +90,9 @@ echo ${QGC_CUSTOM_APP_NAME} Version: ${VERSION}
 
 # Go out of AppImage
 cd ${TMPDIR}
-wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
-chmod a+x ./AppImageAssistant
+wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage" # (64-bit)
+chmod a+x appimagetool-x86_64.AppImage
 
-./AppImageAssistant ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
+./appimagetool-x86_64.AppImage ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
 
 cp ${TMPDIR}/$APP".AppImage" ${OUTPUT_DIR}/$APP".AppImage"

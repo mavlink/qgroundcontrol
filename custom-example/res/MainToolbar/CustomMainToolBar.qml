@@ -12,6 +12,7 @@
 import QtQuick          2.11
 import QtQuick.Controls 2.4
 import QtQuick.Layouts  1.11
+import QtQuick.Window   2.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -280,7 +281,31 @@ Item {
             spacing:                        0
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
-                width:                      parent.width
+                Layout.fillWidth:           true
+                height:                     1
+                color:                      menuSeparatorColor
+            }
+            CustomToolBarButton {
+                id:                         exitButton
+                text:                       qsTr("Exit")
+                icon.source:                "/res/land.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    drawer.close()
+                    mainWindow.close()
+                }
+                visible: mainWindow.visibility === Window.FullScreen
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                Layout.fillWidth:           true
+                height:                     1
+                color:                      menuSeparatorColor
+                visible: exitButton.visible
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                Layout.fillWidth:           true
                 height:                     1
                 color:                      menuSeparatorColor
             }

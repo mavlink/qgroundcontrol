@@ -612,6 +612,7 @@ Item {
             radius:         ScreenTools.defaultFontPixelWidth
         }
         Item {
+            id:                 cameraSettingsControl
             anchors.fill:       parent
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             function showEditFact(fact) {
@@ -790,7 +791,7 @@ Item {
                                         height:     parent._isEdit ? _editFieldHeight : 0
                                         text:       parent.parent._fact.valueString
                                         onClicked: {
-                                            showEditFact(parent.parent._fact)
+                                            cameraSettingsControl.showEditFact(parent.parent._fact)
                                         }
                                     }
                                     QGCSlider {
@@ -800,11 +801,10 @@ Item {
                                         minimumValue:   parent.parent._fact.min
                                         stepSize:       parent.parent._fact.increment
                                         visible:        parent._isSlider
+                                        displayValue:   true
+                                        value:          parent.parent._fact.value
                                         updateValueWhileDragging:   false
                                         anchors.verticalCenter:     parent.verticalCenter
-                                        Component.onCompleted: {
-                                            value = parent.parent._fact.value
-                                        }
                                         onValueChanged: {
                                             parent.parent._fact.value = value
                                         }
@@ -1056,8 +1056,8 @@ Item {
                             text: qsTr("Close")
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                factEditor.completeEditing()
-                                hideEditFact()
+                                factEditor.editingFinished()
+                                cameraSettingsControl.hideEditFact()
                             }
                         }
                     }

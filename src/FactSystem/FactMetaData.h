@@ -166,8 +166,8 @@ public:
     /// @returns false: Convertion failed
     bool clampValue(const QVariant& cookedValue, QVariant& typedValue);
 
-    static const int defaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
-    static const int unknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
+    static const int kDefaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
+    static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static size_t typeToSize(ValueType_t type);

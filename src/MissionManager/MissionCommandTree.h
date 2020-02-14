@@ -62,7 +62,8 @@ public:
 
     const MissionCommandUIInfo* getUIInfo(Vehicle* vehicle, MAV_CMD command);
 
-   Q_INVOKABLE QVariantList getCommandsForCategory(Vehicle* vehicle, const QString& category);
+    /// @param showFlyThroughCommands - true: al commands shows, false: filter out commands which the vehicle flies through (specifiedCoordinate=true, standaloneCoordinate=false)
+    Q_INVOKABLE QVariantList getCommandsForCategory(Vehicle* vehicle, const QString& category, bool showFlyThroughCommands);
 
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);

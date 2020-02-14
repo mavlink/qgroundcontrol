@@ -19,15 +19,25 @@ TrajectoryPoints::TrajectoryPoints(Vehicle* vehicle, QObject* parent)
 
 void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
 {
+    // The goal of this algorithm is to limit the number of trajectory points whic represent the vehicle path.
+    // Fewer points means higher performance of map display.
+
     if (_lastPoint.isValid()) {
-        if (_lastPoint.distanceTo(coordinate) > _distanceTolerance) {
+        double distance = _lastPoint.distanceTo(coordinate);
+        if (distance > _distanceTolerance) {
+            //-- Update flight distance
+            _vehicle->updateFlightDistance(distance);
+            // Vehicle has moved far enough from previous point for an update
             double newAzimuth = _lastPoint.azimuthTo(coordinate);
             if (qIsNaN(_lastAzimuth) || qAbs(newAzimuth - _lastAzimuth) > _azimuthTolerance || _points.count() == 0) {
+                // The new position IS NOT colinear with the last segment. Append the new position to the list.
                 _lastAzimuth = _lastPoint.azimuthTo(coordinate);
                 _lastPoint = coordinate;
                 _points.append(QVariant::fromValue(coordinate));
                 emit pointAdded(coordinate);
             } else {
+                // The new position IS colinear with the last segment. Don't add a new point, just update
+                // the last point to be the new position.
                 _lastPoint = coordinate;
                 _points[_points.count() - 1] = QVariant::fromValue(coordinate);
                 emit updateLastPoint(coordinate);
@@ -35,6 +45,7 @@ void TrajectoryPoints::_vehicleCoordinateChanged(QGeoCoordinate coordinate)
         }
     } else {
         _lastAzimuth = qQNaN();
+        // Add the very first trajectory point to the list
         _lastPoint = coordinate;
         _points.append(QVariant::fromValue(coordinate));
         emit pointAdded(coordinate);
@@ -56,5 +67,7 @@ void TrajectoryPoints::stop(void)
 void TrajectoryPoints::clear(void)
 {
     _points.clear();
+    _lastPoint = QGeoCoordinate();
+    _lastAzimuth = qQNaN();
     emit pointsCleared();
 }

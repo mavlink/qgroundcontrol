@@ -13,6 +13,7 @@
         <file alias="CustomROIIndicator.qml">res/MainToolbar/CustomROIIndicator.qml</file>
         <file alias="PairingIndicator.qml">res/PairingIndicator.qml</file>
         <file alias="PreFlightCheckList.qml">res/PreFlightCheckList.qml</file>
+        <file alias="MapGrid.qml">src/MapGrid/MapGrid.qml</file>
     </qresource>
     <qresource prefix="/QtQuick/VirtualKeyboard/content/styles/custom">
         <file alias="style.qml">res/VKStyles/CustomStyle/style.qml</file>
@@ -50,6 +51,9 @@
         <file alias="void.png">res/Images/void.png</file>
         <file alias="PairingDelete.svg">res/Images/PairingDelete.svg</file>
         <file alias="male-solid.svg">res/Images/male-solid.svg</file>
+        <file alias="eye-solid.svg">res/Images/eye-solid.svg</file>
+        <file alias="eye-slash-solid.svg">res/Images/eye-slash-solid.svg</file>
+        <file alias="map-center.svg">res/Images/centercode-brands.svg</file>
     </qresource>
     <qresource prefix="Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>

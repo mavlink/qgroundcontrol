@@ -358,6 +358,9 @@ PairingManager::_disconnectCompleted(const QString& name)
     _devices[name] = jsonDoc;
     _writeJson(jsonDoc, name);
     setPairingStatus(Disconnected, tr("Disconnected %1").arg(name));
+    if (_disconnect_callback) {
+        _disconnect_callback();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -424,7 +427,7 @@ PairingManager::_uploadFinished()
                 if (url.contains("/connect")) {
                     _connectRequests.remove(name);
                     setPairingStatus(Error, tr("Connection rejected"));
-                } else if (url.contains("/channel")) {
+                } else if (url.contains("/modemparameters")) {
                     setPairingStatus(Error, tr("Modem configuration command rejected"));
                 } else if (url.contains("/disconnect")) {
                     setPairingStatus(Error, tr("Disconnect rejected"));
@@ -464,12 +467,17 @@ PairingManager::_uploadFinished()
                 setPairingStatus(Error, tr("Disconnect rejected"));
                 qCDebug(PairingManagerLog) << "Disconnect rejected.";
             }
-        } else if (map["CMD"] == "channel") {
+        } else if (map["CMD"] == "modemparameters") {
+            if (map["RES"] == "rejected") {
+                setPairingStatus(Error, tr("Set modem parameters rejected"));
+                qCDebug(PairingManagerLog) << "Set modem parameters rejected.";
+            }
+        } else if (map["CMD"] == "status") {
             if (map["RES"] == "accepted") {
-                _channelCompleted(map["NM"].toString(), map["CC"].toInt());
+                _modemParametersCompleted(map["NM"].toString(), map["NID"].toString(), map["CC"].toInt(), map["PW"].toInt(), map["BW"].toInt());
             } else if (map["RES"] == "rejected") {
-                setPairingStatus(Error, tr("Set channel rejected"));
-                qCDebug(PairingManagerLog) << "Set channel rejected.";
+                setPairingStatus(Error, tr("Set modem parameters rejected"));
+                qCDebug(PairingManagerLog) << "Set modem parameters rejected.";
             }
         } else if (map["CMD"] == "unpair") {
             if (map["RES"] == "accepted") {
@@ -498,11 +506,10 @@ PairingManager::_uploadFinished()
             setPairingStatus(Success, tr("Unpaired %1").arg(name));
             _updatePairedDeviceNameList();
         }
-    } else if (url.contains("/channel")) {
-        qCDebug(PairingManagerLog) << "Modem configuration error: " + reply->errorString();
-        if (!reply->errorString().contains("canceled")) {
-            setPairingStatus(Error, tr("Modem configuration command error."));
-        }
+    } else if (url.contains("/modemparameters")) {
+    } else if (url.contains("/status")) {
+        // After modem parameters request we request status to check if parameters were changed correctly on both sides
+        // On timeout the system will automatically try to reconnect with previous modem settings
     } else {
         qCDebug(PairingManagerLog) << "Request " << url << " error: " + reply->errorString();
         if (url.contains("/connect") && !reply->errorString().contains("canceled")) {
@@ -522,20 +529,30 @@ PairingManager::_uploadFinished()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_channelCompleted(const QString& name, int channel)
+PairingManager::_requestedParameters(int channel, int power, int bandwidth)
+{
+    _toolbox->microhardManager()->setConnectChannel(channel);
+    _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
+    _toolbox->microhardManager()->setConnectPower(power);
+    _toolbox->microhardManager()->setConnectBandwidth(bandwidth);
+    _toolbox->microhardManager()->updateSettings();
+    emit _toolbox->pairingManager()->connectingChannelChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_modemParametersCompleted(const QString& name, const QString& nid, int channel, int power, int bandwidth)
 {
     QJsonDocument jsonDoc = _devices[name];
     QJsonObject jsonObj = jsonDoc.object();
     jsonObj.insert("CC", channel);
-    jsonObj.insert("NID", _getDeviceConnectNid(channel));
+    jsonObj.insert("NID", nid);
+    jsonObj.insert("PW", power);
+    jsonObj.insert("BW", bandwidth);
     jsonDoc.setObject(jsonObj);
     _writeJson(jsonDoc, name);
     _devices[name] = jsonDoc;
     emit deviceListChanged();
-    _toolbox->microhardManager()->setConnectChannel(channel);
-    _toolbox->microhardManager()->setConnectNetworkId(_getDeviceConnectNid(channel));
-    _toolbox->microhardManager()->updateSettings();
-    emit _toolbox->pairingManager()->connectingChannelChanged();
     setPairingStatus(Success, tr("Modem configured"));
 }
 
@@ -547,23 +564,6 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
     QString name = (!confirm && deviceName.isEmpty()) ? _lastDeviceNameToConnect : deviceName;
     if (name.isEmpty()) {
         return;
-    }
-
-    setPairingStatus(Connecting, tr("Connecting to %1").arg(name));
-
-    if (confirm && !_devicesToConnect.contains(name)) {
-        QJsonObject jsonObj = _devices[name].object();
-        if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
-            _lastDeviceNameToConnect = name;
-            _confirmHighPowerMode = true;
-            emit confirmHighPowerModeChanged();
-            return;
-        }
-    }
-    _lastDeviceNameToConnect = "";
-    if (_confirmHighPowerMode) {
-        _confirmHighPowerMode = false;
-        emit confirmHighPowerModeChanged();
     }
 
     // If multiple vehicles share same IP or do not share same channel then disconnect
@@ -583,6 +583,23 @@ PairingManager::connectToDevice(const QString& deviceName, bool confirm)
 //        if (ip == _getDeviceIP(n) || channel != _getDeviceChannel(n)) {
             stopConnectingDevice(n);
 //        }
+    }
+
+    setPairingStatus(Connecting, tr("Connecting to %1").arg(name));
+
+    if (confirm && !_devicesToConnect.contains(name)) {
+        QJsonObject jsonObj = _devices[name].object();
+        if (jsonObj["PW"].toInt() <= _toolbox->microhardManager()->pairingPower()) {
+            _lastDeviceNameToConnect = name;
+            _confirmHighPowerMode = true;
+            emit confirmHighPowerModeChanged();
+            return;
+        }
+    }
+    _lastDeviceNameToConnect = "";
+    if (_confirmHighPowerMode) {
+        _confirmHighPowerMode = false;
+        emit confirmHighPowerModeChanged();
     }
 
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
@@ -758,7 +775,7 @@ PairingManager::_resetMicrohardModem()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::setConnectingChannel(int channel, int power)
+PairingManager::setModemParameters(int channel, int power, int bandwidth)
 {
     if (_connectedDevices.empty()) {
         _toolbox->microhardManager()->setConnectChannel(channel);
@@ -769,30 +786,36 @@ PairingManager::setConnectingChannel(int channel, int power)
 
     for (QString name : _connectedDevices.keys())
     {
-        _setConnectingChannel(name, channel, power);
+        _setModemParameters(name, channel, power, bandwidth);
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_setConnectingChannel(const QString& name, int channel, int power)
+PairingManager::_setModemParameters(const QString& name, int channel, int power, int bandwidth)
 {
     QVariantMap map = _getPairingMap(name);
-    QString channelURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/channel";
+    QString modemParametersURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/modemparameters";
     QJsonDocument jsonDoc;
     QJsonObject jsonObj;
     jsonObj["NM"] = name;
-    int bandwidth = _toolbox->microhardManager()->connectingBandwidth();
     int cc = _toolbox->microhardManager()->adjustChannelToBandwitdh(channel, bandwidth);
     jsonObj["CC"] = cc;
     jsonObj["BW"] = bandwidth;
     jsonObj["NID"] = _getDeviceConnectNid(cc);
     jsonObj["PW"] = power;
     jsonDoc.setObject(jsonObj);
-    // get the vehicle you're changing the connect channel Public Key to encrypt the channel request
+    // get the vehicle (for which you're changing modem parameters) Public Key to encrypt the channel request
     _device_rsa.generate_public(map["PublicKey"].toString().toStdString());
     setPairingStatus(ConfiguringModem, tr("Configuring modem"));
-    emit startUpload(name, channelURL, jsonDoc, true);
+    emit startUpload(name, modemParametersURL, jsonDoc, true);
+
+    QTimer::singleShot(5000, [this, map, name, jsonDoc, cc, power, bandwidth]()
+    {
+        _requestedParameters(cc, power, bandwidth);
+        QString statusURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/status";
+        emit _startUpload(name, statusURL, jsonDoc, false);
+    });
 }
 
 //-----------------------------------------------------------------------------
@@ -1136,7 +1159,7 @@ PairingManager::pairingLinkTypeStrings()
     static QStringList list;
     int i = 0;
     if (!list.size()) {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
         list += tr("NFC");
         _nfcIndex = i++;
 #endif
@@ -1259,6 +1282,14 @@ void
 PairingManager::startMicrohardPairing(const QString& pairingKey, const QString& networkId, int pairingChannel, int connectingChannel)
 {
     stopPairing();
+
+    for (QString n : _connectedDevices.keys()) {
+        _disconnect_callback = std::move([this, pairingKey, networkId, pairingChannel, connectingChannel] { startMicrohardPairing(pairingKey, networkId, pairingChannel, connectingChannel); });
+        disconnectDevice(n);
+        return;
+    }
+    _disconnect_callback = {};
+
     setPairingStatus(PairingActive, tr("Pairing..."));
 
     _aes.init(pairingKey.toStdString());
@@ -1348,7 +1379,7 @@ PairingManager::connectingChannel()
 void
 PairingManager::stopPairing()
 {
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     pairingNFC.stop();
 #endif
     emit stopUpload();
@@ -1408,7 +1439,7 @@ PairingManager::_getDeviceConnectNid(int channel)
 }
 
 //-----------------------------------------------------------------------------
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
 void
 PairingManager::startNFCScan()
 {

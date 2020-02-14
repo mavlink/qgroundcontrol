@@ -146,37 +146,6 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, const Missi
     setDirty(false);
 }
 
-SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent)
-    : VisualMissionItem         (other, flyView, parent)
-    , _missionItem              (other._vehicle)
-    , _rawEdit                  (false)
-    , _dirty                    (false)
-    , _ignoreDirtyChangeSignals (false)
-    , _speedSection             (nullptr)
-    , _cameraSection            (nullptr)
-    , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
-    , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)
-    , _altitudeMode             (other._altitudeMode)
-    , _altitudeFact             (0,         "Altitude",             FactMetaData::valueTypeDouble)
-    , _amslAltAboveTerrainFact  (qQNaN(),   "Alt above terrain",    FactMetaData::valueTypeDouble)
-    , _param1MetaData           (FactMetaData::valueTypeDouble)
-    , _param2MetaData           (FactMetaData::valueTypeDouble)
-    , _param3MetaData           (FactMetaData::valueTypeDouble)
-    , _param4MetaData           (FactMetaData::valueTypeDouble)
-    , _syncingHeadingDegreesAndParam4           (false)
-{
-    _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
-
-    _altitudeFact.setRawValue(other._altitudeFact.rawValue());
-    _amslAltAboveTerrainFact.setRawValue(other._amslAltAboveTerrainFact.rawValue());
-
-    _setupMetaData();
-    _connectSignals();
-    _updateOptionalSections();
-    _rebuildFacts();
-    setDirty(false);
-}
-
 void SimpleMissionItem::_connectSignals(void)
 {
     // Connect to change signals to track dirty state
@@ -200,12 +169,15 @@ void SimpleMissionItem::_connectSignals(void)
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirty);
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 
+    connect(this, &SimpleMissionItem::wizardModeChanged,             this, &SimpleMissionItem::readyForSaveStateChanged);
+
     // These are coordinate parameters, they must emit coordinateChanged signal
     connect(&_missionItem._param5Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
     connect(&_missionItem._param6Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
     connect(&_missionItem._param7Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
 
     connect(&_missionItem._param1Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
+    connect(&_missionItem._param4Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_possibleVehicleYawChanged);
 
     // The following changes may also change friendlyEditAllowed
     connect(&_missionItem._autoContinueFact,    &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
@@ -325,6 +297,7 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
         }
         _updateOptionalSections();
     }
+
     return success;
 }
 
@@ -415,7 +388,7 @@ QString SimpleMissionItem::commandName(void) const
 QString SimpleMissionItem::abbreviation() const
 {
     if (homePosition())
-        return tr("H");
+        return tr("L");
 
     switch(command()) {
     case MAV_CMD_NAV_TAKEOFF:
@@ -427,6 +400,7 @@ QString SimpleMissionItem::abbreviation() const
     case MAV_CMD_NAV_VTOL_LAND:
         return tr("VTOL Land");
     case MAV_CMD_DO_SET_ROI:
+    case MAV_CMD_DO_SET_ROI_LOCATION:
         return tr("ROI");
     default:
         return QString();
@@ -710,25 +684,28 @@ void SimpleMissionItem::_terrainAltChanged(void)
     }
 
     if (qIsNaN(terrainAltitude())) {
-        qDebug() << "1";
         // Set NaNs to signal we are waiting on terrain data
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
     } else {
         double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
         double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
-        qDebug() << "2" << newAboveTerrain << oldAboveTerrain;
         if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
-            qDebug() << "3";
             _missionItem._param7Fact.setRawValue(newAboveTerrain);
             _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
         }
     }
+    emit readyForSaveStateChanged();
 }
 
-bool SimpleMissionItem::readyForSave(void) const
+SimpleMissionItem::ReadyForSaveState SimpleMissionItem::readyForSaveState(void) const
 {
-    return !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    if (_wizardMode) {
+        return NotReadyForSaveData;
+    }
+
+    bool terrainReady =  !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    return terrainReady ? ReadyForSave : NotReadyForSaveTerrain;
 }
 
 void SimpleMissionItem::_setDefaultsForCommand(void)
@@ -856,6 +833,18 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
 double SimpleMissionItem::specifiedGimbalPitch(void)
 {
     return _cameraSection->available() ? _cameraSection->specifiedGimbalPitch() : missionItem().specifiedGimbalPitch();
+}
+
+double SimpleMissionItem::specifiedVehicleYaw(void)
+{
+    return command() == MAV_CMD_NAV_WAYPOINT ? missionItem().param4() : qQNaN();
+}
+
+void SimpleMissionItem::_possibleVehicleYawChanged(void)
+{
+    if (command() == MAV_CMD_NAV_WAYPOINT) {
+        emit specifiedVehicleYawChanged();
+    }
 }
 
 bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)

@@ -155,6 +155,8 @@ public:
     Q_PROPERTY(quint32      storageFree         READ storageFree        NOTIFY storageFreeChanged)
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
+    Q_PROPERTY(int          batteryRemaining    READ batteryRemaining       NOTIFY batteryRemainingChanged)
+    Q_PROPERTY(QString      batteryRemainingStr READ batteryRemainingStr    NOTIFY batteryRemainingChanged)
     Q_PROPERTY(bool         paramComplete       READ paramComplete      NOTIFY parametersReady)
 
     Q_PROPERTY(qreal        zoomLevel           READ zoomLevel          WRITE  setZoomLevel         NOTIFY zoomLevelChanged)
@@ -232,6 +234,8 @@ public:
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
+    virtual int         batteryRemaining    () { return _batteryRemaining; }
+    virtual QString     batteryRemainingStr ();
     virtual bool        paramComplete       () { return _paramComplete; }
     virtual qreal       zoomLevel           () { return _zoomLevel; }
     virtual qreal       focusLevel          () { return _focusLevel; }
@@ -273,6 +277,7 @@ public:
     virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+    virtual void        handleBatteryStatus (const mavlink_battery_status_t& bs);
     virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
     virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
 
@@ -303,6 +308,7 @@ signals:
     void    activeSettingsChanged           ();
     void    storageFreeChanged              ();
     void    storageTotalChanged             ();
+    void    batteryRemainingChanged         ();
     void    dataReady                       (QByteArray data);
     void    parametersReady                 ();
     void    zoomLevelChanged                ();
@@ -373,6 +379,7 @@ protected:
     qreal                               _focusLevel         = 0.0;
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
+    int                                 _batteryRemaining   = -1;
     QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;

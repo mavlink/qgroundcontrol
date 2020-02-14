@@ -26,6 +26,7 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(GeotaggingLog)
 Q_DECLARE_LOGGING_CATEGORY(RTKGPSLog)
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a

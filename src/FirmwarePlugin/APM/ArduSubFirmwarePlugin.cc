@@ -118,6 +118,17 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         remapV3_6["BATT_LOW_MAH"] = QStringLiteral("FS_BATT_MAH");
         remapV3_6["BATT_LOW_VOLT"] = QStringLiteral("FS_BATT_VOLTAGE");
         remapV3_6["BATT_FS_LOW_ACT"] = QStringLiteral("FS_BATT_ENABLE");
+        remapV3_6["PSC_POSXY_P"] = QStringLiteral("POS_XY_P");
+        remapV3_6["PSC_POSZ_P"] = QStringLiteral("POS_Z_P");
+        remapV3_6["PSC_VELXY_P"] = QStringLiteral("VEL_XY_P");
+        remapV3_6["PSC_VELXY_I"] = QStringLiteral("VEL_XY_I");
+        remapV3_6["PSC_VELXY_IMAX"] = QStringLiteral("VEL_XY_IMAX");
+        remapV3_6["PSC_VELZ_P"] = QStringLiteral("VEL_Z_P");
+        remapV3_6["PSC_ACCZ_I"] = QStringLiteral("ACCEL_Z_I");
+        remapV3_6["PSC_ACCZ_D"] = QStringLiteral("ACCEL_Z_D");
+        remapV3_6["PSC_ACCZ_P"] = QStringLiteral("ACCEL_Z_P");
+        remapV3_6["PSC_ACCZ_IMAX"] = QStringLiteral("ACCEL_Z_IMAX");
+        remapV3_6["PSC_ACCZ_FILT"] = QStringLiteral("ACCEL_Z_FILT");
 
         _remapParamNameIntialized = true;
     }
