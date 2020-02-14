@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(bool                     showMavlinkLogOptions           READ showMavlinkLogOptions          CONSTANT)
     Q_PROPERTY(bool                     enableMultiVehicleList          READ enableMultiVehicleList         CONSTANT)
     Q_PROPERTY(bool                     enableMapScale                  READ enableMapScale                 CONSTANT)
+    Q_PROPERTY(bool                     enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -127,6 +128,8 @@ public:
     virtual bool    showMavlinkLogOptions           () const { return true; }
     virtual bool    enableMultiVehicleList          () const { return true; }
     virtual bool    enableMapScale                  () const { return true; }
+    /// Desktop builds save the main application size and position on close (and restore it on open)
+    virtual bool    enableSaveMainWindowPosition    () const { return true; }
 
 #if defined(__mobile__)
     virtual bool    useMobileFileDialog             () const { return true;}
