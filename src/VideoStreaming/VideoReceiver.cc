@@ -1195,20 +1195,7 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
             VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
 
             // set media file '0' offset to current timeline position - we don't want to touch other elements in the graph, except these which are downstream!
-
-            gint64 position;
-
-            if (gst_element_query_position(pThis->_pipeline, GST_FORMAT_TIME, &position) != TRUE) {
-                qCDebug(VideoReceiverLog) << "Unable to get timeline position, let's hope that downstream elements will survive";
-
-                if (buf->pts != GST_CLOCK_TIME_NONE) {
-                    position = buf->pts;
-                } else {
-                    position = gst_pad_get_offset(pad);
-                }
-            }
-
-            gst_pad_set_offset(pad, position);
+            gst_pad_set_offset(pad, -buf->pts);
 
             // Add the filesink once we have a valid I-frame
             gst_bin_add(GST_BIN(pThis->_pipeline), pThis->_sink->filesink);
