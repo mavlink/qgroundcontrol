@@ -44,7 +44,16 @@ Rectangle {
                 group._checked = true
             }
         }
-        _passed = passed
+
+        // Walk the list and check if any group is failing
+        var allPassed = true
+        for (var i=0; i < checkListRepeater.count; i++) {
+            if (!checkListRepeater.itemAt(i).passed) {
+                allPassed = false
+                break
+            }
+        }
+        _passed = allPassed;
     }
 
     //-- Pick a checklist model that matches the current airframe type (if any)
