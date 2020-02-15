@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,6 +19,7 @@
 
 class QGCApplication;
 
+/// Text to Speech Interface
 class AudioOutput : public QGCTool
 {
     Q_OBJECT
@@ -29,6 +30,7 @@ public:
     static QString  fixTextMessageForAudio  (const QString& string);
 
 public slots:
+    /// Convert string to speech output and say it
     void            say                     (const QString& text);
 
 private slots:

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -325,6 +325,14 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_durandal-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_durandal-v1_default.px4"},
     };
+
+    //////////////////////////////////// ModalAI FC v1 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgModalFCV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/modalai_fc-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/modalai_fc-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/modalai_fc-v1_default.px4"},
+    };
+
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
@@ -424,6 +432,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgFMUK66V3Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgModalFCV1FirmwareArray)/sizeof(rgModalFCV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgModalFCV1FirmwareArray[i];
+        _rgModalFCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
@@ -503,6 +517,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardIDFMUK66V3:
         _rgFirmwareDynamic = _rgFMUK66V3Firmware;
+        break;
+    case Bootloader::boardIDModalFCV1:
+        _rgFirmwareDynamic = _rgModalFCV1Firmware;
         break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;

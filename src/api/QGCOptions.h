@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,8 +15,8 @@
 #include <QColor>
 
 /// @file
-///     @brief Core Plugin Interface for QGroundControl - Application Options
-///     @author Gus Grubba <mavlink@grubba.com>
+/// @brief Core Plugin Interface for QGroundControl - Application Options
+/// @author Gus Grubba <gus@auterion.com>
 
 class CustomInstrumentWidget;
 class QGCOptions : public QObject
@@ -49,6 +49,7 @@ public:
     Q_PROPERTY(QString                  firmwareUpgradeSingleURL        READ firmwareUpgradeSingleURL       CONSTANT)
     Q_PROPERTY(bool                     guidedBarShowEmergencyStop      READ guidedBarShowEmergencyStop     NOTIFY guidedBarShowEmergencyStopChanged)
     Q_PROPERTY(bool                     guidedBarShowOrbit              READ guidedBarShowOrbit             NOTIFY guidedBarShowOrbitChanged)
+    Q_PROPERTY(bool                     guidedBarShowROI                READ guidedBarShowROI               NOTIFY guidedBarShowROIChanged)
     Q_PROPERTY(bool                     missionWaypointsOnly            READ missionWaypointsOnly           NOTIFY missionWaypointsOnlyChanged)
     Q_PROPERTY(bool                     multiVehicleEnabled             READ multiVehicleEnabled            NOTIFY multiVehicleEnabledChanged)
     Q_PROPERTY(bool                     showOfflineMapExport            READ showOfflineMapExport           NOTIFY showOfflineMapExportChanged)
@@ -65,6 +66,7 @@ public:
     Q_PROPERTY(bool                     showMavlinkLogOptions           READ showMavlinkLogOptions          CONSTANT)
     Q_PROPERTY(bool                     enableMultiVehicleList          READ enableMultiVehicleList         CONSTANT)
     Q_PROPERTY(bool                     enableMapScale                  READ enableMapScale                 CONSTANT)
+    Q_PROPERTY(bool                     enableSaveMainWindowPosition    READ enableSaveMainWindowPosition   CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -89,13 +91,16 @@ public:
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
 
-    /// Provides an optional preflight checklist
-    virtual QUrl    preFlightChecklistUrl           () const { return QUrl(); }
+    /// Provides an optional, custom preflight checklist
+    virtual QUrl    preFlightChecklistUrl           () const { return QUrl::fromUserInput("qrc:/qml/PreFlightCheckList.qml"); }
 
-    /// Allows replacing the toolbar
+    /// Allows replacing the Main toolbar
     virtual QUrl    mainToolbarUrl                  () const;
+    /// Allows replacing the Plan View toolbar
     virtual QUrl    planToolbarUrl                  () const;
+    /// Allows replacing the toolbar Light Theme color
     virtual QColor  toolbarBackgroundLight          () const;
+    /// Allows replacing the toolbar Dark Theme color
     virtual QColor  toolbarBackgroundDark           () const;
     /// Allows replacing the Plan View toolbar container
     virtual QUrl    planToolbarIndicatorsUrl        () const;
@@ -110,6 +115,7 @@ public:
     virtual bool    showFirmwareUpgrade             () const { return true; }
     virtual bool    guidedBarShowEmergencyStop      () const { return true; }
     virtual bool    guidedBarShowOrbit              () const { return true; }
+    virtual bool    guidedBarShowROI                () const { return true; }
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
     virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
     virtual bool    guidedActionsRequireRCRSSI      () const { return false; }  ///< true: Guided actions will be disabled is there is no RC RSSI
@@ -122,6 +128,8 @@ public:
     virtual bool    showMavlinkLogOptions           () const { return true; }
     virtual bool    enableMultiVehicleList          () const { return true; }
     virtual bool    enableMapScale                  () const { return true; }
+    /// Desktop builds save the main application size and position on close (and restore it on open)
+    virtual bool    enableSaveMainWindowPosition    () const { return true; }
 
 #if defined(__mobile__)
     virtual bool    useMobileFileDialog             () const { return true;}
@@ -147,6 +155,7 @@ signals:
     void showFirmwareUpgradeChanged             (bool show);
     void guidedBarShowEmergencyStopChanged      (bool show);
     void guidedBarShowOrbitChanged              (bool show);
+    void guidedBarShowROIChanged                (bool show);
     void missionWaypointsOnlyChanged            (bool missionWaypointsOnly);
     void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
     void showOfflineMapExportChanged            ();

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -410,7 +410,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    text:               qsTr("Return Home Settings")
+                    text:               qsTr("Return To Launch Settings")
                 }
 
                 Rectangle {
@@ -449,7 +449,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   qsTr("Return home, then:")
+                                text:                   qsTr("Return to launch, then:")
                                 Layout.columnSpan:      2
                             }
                             Row {

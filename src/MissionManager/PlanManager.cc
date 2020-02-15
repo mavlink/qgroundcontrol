@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -494,14 +494,25 @@ void PlanManager::_clearMissionItems(void)
 
 void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool missionItemInt)
 {
-    mavlink_mission_request_t missionRequest;
-    
-    mavlink_msg_mission_request_decode(&message, &missionRequest);
+    MAV_MISSION_TYPE    missionRequestMissionType;
+    uint16_t            missionRequestSeq;
 
-    if (missionRequest.mission_type != _planType) {
+    if (missionItemInt) {
+        mavlink_mission_request_int_t missionRequest;
+        mavlink_msg_mission_request_int_decode(&message, &missionRequest);
+        missionRequestMissionType = static_cast<MAV_MISSION_TYPE>(missionRequest.mission_type);
+        missionRequestSeq = missionRequest.seq;
+    } else {
+        mavlink_mission_request_t missionRequest;
+        mavlink_msg_mission_request_decode(&message, &missionRequest);
+        missionRequestMissionType = static_cast<MAV_MISSION_TYPE>(missionRequest.mission_type);
+        missionRequestSeq = missionRequest.seq;
+    }
+
+    if (missionRequestMissionType != _planType) {
         // if there was a previous transaction with a different mission_type, it can happen that we receive
         // a stale message here, for example when the MAV ran into a timeout and sent a message twice
-        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionRequest.mission_type;
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 Incorrect mission_type received expected:actual").arg(_planTypeString()) << _planType << missionRequestMissionType;
         return;
     }
     
@@ -509,38 +520,38 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
         return;
     }
 
-    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber").arg(_planTypeString()) << missionRequest.seq;
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber").arg(_planTypeString()) << missionRequestSeq;
 
-    if (missionRequest.seq > _writeMissionItems.count() - 1) {
-        _sendError(RequestRangeError, tr("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_writeMissionItems.count()).arg(missionRequest.seq));
+    if (missionRequestSeq > _writeMissionItems.count() - 1) {
+        _sendError(RequestRangeError, tr("Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.").arg(_writeMissionItems.count()).arg(missionRequestSeq));
         _finishTransaction(false);
         return;
     }
 
-    emit progressPct((double)missionRequest.seq / (double)_writeMissionItems.count());
+    emit progressPct((double)missionRequestSeq / (double)_writeMissionItems.count());
 
-    _lastMissionRequest = missionRequest.seq;
-    if (!_itemIndicesToWrite.contains(missionRequest.seq)) {
-        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << missionRequest.seq;
+    _lastMissionRequest = missionRequestSeq;
+    if (!_itemIndicesToWrite.contains(missionRequestSeq)) {
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequence number requested which has already been sent, sending again:").arg(_planTypeString()) << missionRequestSeq;
     } else {
-        _itemIndicesToWrite.removeOne(missionRequest.seq);
+        _itemIndicesToWrite.removeOne(missionRequestSeq);
     }
     
-    MissionItem* item = _writeMissionItems[missionRequest.seq];
-    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequest.seq << item->command();
+    MissionItem* item = _writeMissionItems[missionRequestSeq];
+    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
     mavlink_message_t   messageOut;
-    if (missionItemInt) {
+    if (missionItemInt || _vehicle->apmFirmware() /* ArduPilot always expects to get MISSION_ITEM_INT no matter what */) {
         mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                _dedicatedLink->mavlinkChannel(),
                                                &messageOut,
                                                _vehicle->id(),
                                                MAV_COMP_ID_AUTOPILOT1,
-                                               missionRequest.seq,
+                                               missionRequestSeq,
                                                item->frame(),
                                                item->command(),
-                                               missionRequest.seq == 0,
+                                               missionRequestSeq == 0,
                                                item->autoContinue(),
                                                item->param1(),
                                                item->param2(),
@@ -557,10 +568,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                            &messageOut,
                                            _vehicle->id(),
                                            MAV_COMP_ID_AUTOPILOT1,
-                                           missionRequest.seq,
+                                           missionRequestSeq,
                                            item->frame(),
                                            item->command(),
-                                           missionRequest.seq == 0,
+                                           missionRequestSeq == 0,
                                            item->autoContinue(),
                                            item->param1(),
                                            item->param2(),

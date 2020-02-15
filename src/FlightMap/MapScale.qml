@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,13 +29,10 @@ Item {
 
     signal terrainButtonClicked
 
-    property variant _scaleLengthsMeters: [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
-    property variant _scaleLengthsFeet: [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
-
-    property bool _zoomButtonsVisible:      zoomButtonsVisible && !ScreenTools.isMobile
-    property bool _terrainButtonVisible:    terrainButtonVisible && !ScreenTools.isMobile
-
-    property var _color: mapControl.isSatelliteMap ? "white" : "black"
+    property var    _scaleLengthsMeters:    [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+    property var    _scaleLengthsFeet:      [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
+    property bool   _zoomButtonsVisible:    zoomButtonsVisible && !ScreenTools.isMobile
+    property var    _color:                 mapControl.isSatelliteMap ? "white" : "black"
 
     function formatDistanceMeters(meters) {
         var dist = Math.round(meters)
@@ -160,8 +157,10 @@ Item {
     Rectangle {
         id:                 leftEnd
         anchors.top:        scaleText.bottom
-        anchors.leftMargin: buttonsOnLeft && _zoomButtonsVisible ? ScreenTools.defaultFontPixelWidth / 2 : 0
-        anchors.left:       buttonsOnLeft && _zoomButtonsVisible ? zoomDownButton.right : parent.left
+        anchors.leftMargin: buttonsOnLeft && (_zoomButtonsVisible || terrainButtonVisible) ? ScreenTools.defaultFontPixelWidth / 2 : 0
+        anchors.left:       buttonsOnLeft ?
+                                (_zoomButtonsVisible ? zoomDownButton.right : (terrainButtonVisible ? terrainButton.right : parent.left)) :
+                                parent.left
         width:              2
         height:             ScreenTools.defaultFontPixelHeight
         color:              _color
@@ -194,7 +193,7 @@ Item {
         text:               qsTr("T")
         width:              height
         opacity:            0.75
-        visible:            _terrainButtonVisible
+        visible:            terrainButtonVisible
         onClicked:          terrainButtonClicked()
     }
 

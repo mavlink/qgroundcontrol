@@ -6,9 +6,8 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Text {
-    QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family:    ScreenTools.normalFontFamily
-    color:          __qgcPal.text
+    color:          qgcPal.text
     antialiasing:   true
 }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,7 +25,7 @@
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Default Implementation
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 class QGCCorePlugin_p
 {
@@ -99,6 +99,7 @@ public:
 
     QGCOptions*         defaultOptions          = nullptr;
     QVariantList        settingsList;
+    QVariantList        analyzeList;
     QVariantList        instrumentPageWidgetList;
 
     QmlObjectListModel _emptyCustomMapItems;
@@ -289,6 +290,21 @@ QVariantList& QGCCorePlugin::instrumentPages()
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
     }
     return _p->instrumentPageWidgetList;
+}
+
+QVariantList& QGCCorePlugin::analyzePages()
+{
+    if (!_p->analyzeList.count()) {
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),     QUrl::fromUserInput("qrc:/qml/LogDownloadPage.qml"),      QUrl::fromUserInput("qrc:/qmlimages/LogDownloadIcon"))));
+#if !defined(__mobile__)
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),    QUrl::fromUserInput("qrc:/qml/GeoTagPage.qml"),           QUrl::fromUserInput("qrc:/qmlimages/GeoTagIcon"))));
+#endif
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),  QUrl::fromUserInput("qrc:/qml/MavlinkConsolePage.qml"),   QUrl::fromUserInput("qrc:/qmlimages/MavlinkConsoleIcon"))));
+#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),QUrl::fromUserInput("qrc:/qml/MAVLinkInspectorPage.qml"), QUrl::fromUserInput("qrc:/qmlimages/MAVLinkInspector"))));
+#endif
+    }
+    return _p->analyzeList;
 }
 
 int QGCCorePlugin::defaultSettings()

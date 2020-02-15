@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -88,7 +88,7 @@ const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
 FactMetaData::FactMetaData(QObject* parent)
     : QObject               (parent)
     , _type                 (valueTypeInt32)
-    , _decimalPlaces        (unknownDecimalPlaces)
+    , _decimalPlaces        (kUnknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
@@ -112,7 +112,7 @@ FactMetaData::FactMetaData(QObject* parent)
 FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     : QObject               (parent)
     , _type                 (type)
-    , _decimalPlaces        (unknownDecimalPlaces)
+    , _decimalPlaces        (kUnknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
@@ -142,7 +142,7 @@ FactMetaData::FactMetaData(const FactMetaData& other, QObject* parent)
 FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent)
     : QObject               (parent)
     , _type                 (type)
-    , _decimalPlaces        (unknownDecimalPlaces)
+    , _decimalPlaces        (kUnknownDecimalPlaces)
     , _rawDefaultValue      (0)
     , _defaultValueAvailable(false)
     , _rawMax               (_maxForType())
@@ -1023,8 +1023,8 @@ double FactMetaData::cookedIncrement(void) const
 
 int FactMetaData::decimalPlaces(void) const
 {
-    int actualDecimalPlaces = defaultDecimalPlaces;
-    int incrementDecimalPlaces = unknownDecimalPlaces;
+    int actualDecimalPlaces = kDefaultDecimalPlaces;
+    int incrementDecimalPlaces = kUnknownDecimalPlaces;
 
     // First determine decimal places from increment
     double increment = _rawTranslator(this->rawIncrement()).toDouble();
@@ -1041,20 +1041,21 @@ int FactMetaData::decimalPlaces(void) const
         }
     }
 
-    // Correct decimal places is the larger of the two, increment or meta data value
-    if (incrementDecimalPlaces != unknownDecimalPlaces && _decimalPlaces == unknownDecimalPlaces) {
-        actualDecimalPlaces = incrementDecimalPlaces;
+    if (_decimalPlaces == kUnknownDecimalPlaces) {
+        if (incrementDecimalPlaces != kUnknownDecimalPlaces) {
+            actualDecimalPlaces = incrementDecimalPlaces;
+        } else {
+            // Adjust decimal places for cooked translation
+            int settingsDecimalPlaces = _decimalPlaces == kUnknownDecimalPlaces ? kDefaultDecimalPlaces : _decimalPlaces;
+            double ctest = _rawTranslator(1.0).toDouble();
+
+            settingsDecimalPlaces += -log10(ctest);
+
+            settingsDecimalPlaces = qMin(25, settingsDecimalPlaces);
+            settingsDecimalPlaces = qMax(0, settingsDecimalPlaces);
+        }
     } else {
-        // Adjust decimal places for cooked translation
-        int settingsDecimalPlaces = _decimalPlaces == unknownDecimalPlaces ? defaultDecimalPlaces : _decimalPlaces;
-        double ctest = _rawTranslator(1.0).toDouble();
-
-        settingsDecimalPlaces += -log10(ctest);
-
-        settingsDecimalPlaces = qMin(25, settingsDecimalPlaces);
-        settingsDecimalPlaces = qMax(0, settingsDecimalPlaces);
-
-        actualDecimalPlaces = qMax(settingsDecimalPlaces, incrementDecimalPlaces);
+        actualDecimalPlaces = _decimalPlaces;
     }
 
     return actualDecimalPlaces;

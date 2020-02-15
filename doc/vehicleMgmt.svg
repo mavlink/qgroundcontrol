@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-2.81 667.69 720.2501 425" width="720.2501" height="425">
+  <defs>
+    <filter id="Shadow" filterUnits="userSpaceOnUse" x="-2.81" y="667.69">
+      <feGaussianBlur in="SourceAlpha" result="blur" stdDeviation="2.616"/>
+      <feOffset in="blur" result="offset" dx="1.44" dy="1.44"/>
+      <feFlood flood-color="black" flood-opacity=".5" result="flood"/>
+      <feComposite in="flood" in2="offset" operator="in" result="color"/>
+      <feMerge>
+        <feMergeNode in="color"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient x1="0" x2="1" id="Gradient" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eee"/>
+      <stop offset="1" stop-color="#afafaf"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient" xl:href="#Gradient" gradientTransform="translate(358.50003 672.75) rotate(90) scale(90)"/>
+    <font-face font-family="Courier" font-size="12" units-per-em="1000" underline-position="-178.22266" underline-thickness="57.61719" slope="0" x-height="456.54297" cap-height="586.91406" ascent="753.90625" descent="-246.09375" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Courier"/>
+      </font-face-src>
+    </font-face>
+    <font-face font-family="Helvetica Neue" font-size="12" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <linearGradient x1="0" x2="1" id="Gradient_2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9691"/>
+      <stop offset=".45238096" stop-color="#eb7e79"/>
+      <stop offset="1" stop-color="#d56560"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient_2" xl:href="#Gradient_2" gradientTransform="translate(225.75007 731.25) rotate(-90) scale(27)"/>
+    <linearGradient x1="0" x2="1" id="Gradient_3" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#54ba6b"/>
+      <stop offset=".45238096" stop-color="#6dd98a"/>
+      <stop offset="1" stop-color="#84f8a8"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient_3" xl:href="#Gradient_3" gradientTransform="translate(489.00007 678.375) rotate(90) scale(27)"/>
+    <linearGradient id="Obj_Gradient_4" xl:href="#Gradient" gradientTransform="translate(358.50003 831.375) rotate(90) scale(90)"/>
+    <linearGradient id="Obj_Gradient_5" xl:href="#Gradient_3" gradientTransform="translate(489.00007 730.125) rotate(90) scale(27)"/>
+    <linearGradient id="Obj_Gradient_6" xl:href="#Gradient_2" gradientTransform="translate(221.99993 862.875) rotate(90) scale(27)"/>
+    <linearGradient id="Obj_Gradient_7" xl:href="#Gradient" gradientTransform="translate(358.50003 994.75) rotate(90) scale(90)"/>
+    <linearGradient id="Obj_Gradient_8" xl:href="#Gradient_2" gradientTransform="translate(221.99993 1026.25) rotate(90) scale(27)"/>
+    <linearGradient id="Obj_Gradient_9" xl:href="#Gradient_3" gradientTransform="translate(489.00007 1026.25) rotate(90) scale(27)"/>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="Diamond_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L -4 3 L 0 0 L -4 -3 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.12.1 
+    <dc:date>2020-02-02 20:02:31 +0000</dc:date>
+  </metadata>
+  <g id="Canvas_1" fill-opacity="1" fill="none" stroke="none" stroke-opacity="1" stroke-dasharray="none">
+    <title>Canvas 1</title>
+    <g id="Canvas_1: Layer 1">
+      <title>Layer 1</title>
+      <g id="Graphic_20" filter="url(#Shadow)">
+        <path d="M 277.50003 672.75 L 439.50003 672.75 C 444.4706 672.75 448.50003 676.7794 448.50003 681.75 L 448.50003 753.75 C 448.50003 758.7206 444.4706 762.75 439.50003 762.75 L 277.50003 762.75 C 272.52947 762.75 268.50003 758.7206 268.50003 753.75 L 268.50003 681.75 C 268.50003 676.7794 272.52947 672.75 277.50003 672.75 Z" fill="url(#Obj_Gradient)"/>
+        <path d="M 277.50003 672.75 L 439.50003 672.75 C 444.4706 672.75 448.50003 676.7794 448.50003 681.75 L 448.50003 753.75 C 448.50003 758.7206 444.4706 762.75 439.50003 762.75 L 277.50003 762.75 C 272.52947 762.75 268.50003 758.7206 268.50003 753.75 L 268.50003 681.75 C 268.50003 676.7794 272.52947 672.75 277.50003 672.75 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(273.50003 710.75)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="30.99121" y="11">MAVLinkProtocol</tspan>
+        </text>
+      </g>
+      <g id="Graphic_22" filter="url(#Shadow)">
+        <path d="M 11.25 697.5 L 173.25 697.5 C 178.22056 697.5 182.25 701.5294 182.25 706.5 L 182.25 726.75 C 182.25 731.7206 178.22056 735.75 173.25 735.75 L 11.25 735.75 C 6.279437 735.75 2.25 731.7206 2.25 726.75 L 2.25 706.5 C 2.25 701.5294 6.279437 697.5 11.25 697.5 Z" fill="#ffc0c0"/>
+        <path d="M 11.25 697.5 L 173.25 697.5 C 178.22056 697.5 182.25 701.5294 182.25 706.5 L 182.25 726.75 C 182.25 731.7206 178.22056 735.75 173.25 735.75 L 11.25 735.75 C 6.279437 735.75 2.25 731.7206 2.25 726.75 L 2.25 706.5 C 2.25 701.5294 6.279437 697.5 11.25 697.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(7.25 702.457)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="74.446" y="11">Slot</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="38.192383" y="25.336">bytesReceived</tspan>
+        </text>
+      </g>
+      <g id="Graphic_21" filter="url(#Shadow)">
+        <path d="M 198 711 L 198 724.5 L 233.50013 724.5 L 233.50013 731.25 L 253.50013 717.75 L 233.50013 704.25 L 233.50013 711 Z" fill="url(#Obj_Gradient_2)"/>
+        <path d="M 198 711 L 198 724.5 L 233.50013 724.5 L 233.50013 731.25 L 253.50013 717.75 L 233.50013 704.25 L 233.50013 711 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_24" filter="url(#Shadow)">
+        <path d="M 537.75 672.75 L 699.75 672.75 C 704.7206 672.75 708.75 676.7794 708.75 681.75 L 708.75 702 C 708.75 706.9706 704.7206 711 699.75 711 L 537.75 711 C 532.77944 711 528.75 706.9706 528.75 702 L 528.75 681.75 C 528.75 676.7794 532.77944 672.75 537.75 672.75 Z" fill="#c0ffc0"/>
+        <path d="M 537.75 672.75 L 699.75 672.75 C 704.7206 672.75 708.75 676.7794 708.75 681.75 L 708.75 702 C 708.75 706.9706 704.7206 711 699.75 711 L 537.75 711 C 532.77944 711 528.75 706.9706 528.75 702 L 528.75 681.75 C 528.75 676.7794 532.77944 672.75 537.75 672.75 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(533.75 677.707)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="68.446" y="11">Signal</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="12.988281" y="25.336">vehicleHeartbeatInfo</tspan>
+        </text>
+      </g>
+      <g id="Graphic_23" filter="url(#Shadow)">
+        <path d="M 461.25 698.625 L 461.25 685.125 L 496.7501 685.125 L 496.7501 678.375 L 516.7501 691.875 L 496.7501 705.375 L 496.7501 698.625 Z" fill="url(#Obj_Gradient_3)"/>
+        <path d="M 461.25 698.625 L 461.25 685.125 L 496.7501 685.125 L 496.7501 678.375 L 516.7501 691.875 L 496.7501 705.375 L 496.7501 698.625 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_28" filter="url(#Shadow)">
+        <path d="M 277.50003 831.375 L 439.50003 831.375 C 444.4706 831.375 448.50003 835.4044 448.50003 840.375 L 448.50003 912.375 C 448.50003 917.3456 444.4706 921.375 439.50003 921.375 L 277.50003 921.375 C 272.52947 921.375 268.50003 917.3456 268.50003 912.375 L 268.50003 840.375 C 268.50003 835.4044 272.52947 831.375 277.50003 831.375 Z" fill="url(#Obj_Gradient_4)"/>
+        <path d="M 277.50003 831.375 L 439.50003 831.375 C 444.4706 831.375 448.50003 835.4044 448.50003 840.375 L 448.50003 912.375 C 448.50003 917.3456 444.4706 921.375 439.50003 921.375 L 277.50003 921.375 C 272.52947 921.375 268.50003 917.3456 268.50003 912.375 L 268.50003 840.375 C 268.50003 835.4044 272.52947 831.375 277.50003 831.375 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(273.50003 869.375)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="16.588867" y="11">MultiVehicleManager</tspan>
+        </text>
+      </g>
+      <g id="Graphic_30" filter="url(#Shadow)">
+        <path d="M 537.75 724.5 L 699.75 724.5 C 704.7206 724.5 708.75 728.5294 708.75 733.5 L 708.75 753.75 C 708.75 758.7206 704.7206 762.75 699.75 762.75 L 537.75 762.75 C 532.77944 762.75 528.75 758.7206 528.75 753.75 L 528.75 733.5 C 528.75 728.5294 532.77944 724.5 537.75 724.5 Z" fill="#c0ffc0"/>
+        <path d="M 537.75 724.5 L 699.75 724.5 C 704.7206 724.5 708.75 728.5294 708.75 733.5 L 708.75 753.75 C 708.75 758.7206 704.7206 762.75 699.75 762.75 L 537.75 762.75 C 532.77944 762.75 528.75 758.7206 528.75 753.75 L 528.75 733.5 C 528.75 728.5294 532.77944 724.5 537.75 724.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(533.75 729.457)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="68.446" y="11">Signal</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="30.99121" y="25.336">messageReceived</tspan>
+        </text>
+      </g>
+      <g id="Graphic_29" filter="url(#Shadow)">
+        <path d="M 461.25 750.375 L 461.25 736.875 L 496.7501 736.875 L 496.7501 730.125 L 516.7501 743.625 L 496.7501 757.125 L 496.7501 750.375 Z" fill="url(#Obj_Gradient_5)"/>
+        <path d="M 461.25 750.375 L 461.25 736.875 L 496.7501 736.875 L 496.7501 730.125 L 516.7501 743.625 L 496.7501 757.125 L 496.7501 750.375 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_32" filter="url(#Shadow)">
+        <path d="M 11.25 857.25 L 173.25 857.25 C 178.22056 857.25 182.25 861.2794 182.25 866.25 L 182.25 886.5 C 182.25 891.4706 178.22056 895.5 173.25 895.5 L 11.25 895.5 C 6.279437 895.5 2.25 891.4706 2.25 886.5 L 2.25 866.25 C 2.25 861.2794 6.279437 857.25 11.25 857.25 Z" fill="#ffc0c0"/>
+        <path d="M 11.25 857.25 L 173.25 857.25 C 178.22056 857.25 182.25 861.2794 182.25 866.25 L 182.25 886.5 C 182.25 891.4706 178.22056 895.5 173.25 895.5 L 11.25 895.5 C 6.279437 895.5 2.25 891.4706 2.25 886.5 L 2.25 866.25 C 2.25 861.2794 6.279437 857.25 11.25 857.25 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(7.25 862.207)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="74.446" y="11">Slot</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="12.988281" y="25.336">vehicleHeartbeatInfo</tspan>
+        </text>
+      </g>
+      <g id="Graphic_31" filter="url(#Shadow)">
+        <path d="M 194.24987 883.125 L 194.24987 869.625 L 229.75 869.625 L 229.75 862.875 L 249.75 876.375 L 229.75 889.875 L 229.75 883.125 Z" fill="url(#Obj_Gradient_6)"/>
+        <path d="M 194.24987 883.125 L 194.24987 869.625 L 229.75 869.625 L 229.75 862.875 L 249.75 876.375 L 229.75 889.875 L 229.75 883.125 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_34" filter="url(#Shadow)">
+        <path d="M 277.50003 994.75 L 439.50003 994.75 C 444.4706 994.75 448.50003 998.7794 448.50003 1003.75 L 448.50003 1075.75 C 448.50003 1080.7206 444.4706 1084.75 439.50003 1084.75 L 277.50003 1084.75 C 272.52947 1084.75 268.50003 1080.7206 268.50003 1075.75 L 268.50003 1003.75 C 268.50003 998.7794 272.52947 994.75 277.50003 994.75 Z" fill="url(#Obj_Gradient_7)"/>
+        <path d="M 277.50003 994.75 L 439.50003 994.75 C 444.4706 994.75 448.50003 998.7794 448.50003 1003.75 L 448.50003 1075.75 C 448.50003 1080.7206 444.4706 1084.75 439.50003 1084.75 L 277.50003 1084.75 C 272.52947 1084.75 268.50003 1080.7206 268.50003 1075.75 L 268.50003 1003.75 C 268.50003 998.7794 272.52947 994.75 277.50003 994.75 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(273.50003 1032.75)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="59.7959" y="11">Vehicle</tspan>
+        </text>
+      </g>
+      <g id="Graphic_36" filter="url(#Shadow)">
+        <path d="M 11.25 1020.625 L 173.25 1020.625 C 178.22056 1020.625 182.25 1024.6544 182.25 1029.625 L 182.25 1049.875 C 182.25 1054.8456 178.22056 1058.875 173.25 1058.875 L 11.25 1058.875 C 6.279437 1058.875 2.25 1054.8456 2.25 1049.875 L 2.25 1029.625 C 2.25 1024.6544 6.279437 1020.625 11.25 1020.625 Z" fill="#ffc0c0"/>
+        <path d="M 11.25 1020.625 L 173.25 1020.625 C 178.22056 1020.625 182.25 1024.6544 182.25 1029.625 L 182.25 1049.875 C 182.25 1054.8456 178.22056 1058.875 173.25 1058.875 L 11.25 1058.875 C 6.279437 1058.875 2.25 1054.8456 2.25 1049.875 L 2.25 1029.625 C 2.25 1024.6544 6.279437 1020.625 11.25 1020.625 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(7.25 1025.582)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="74.446" y="11">Slot</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="30.99121" y="25.336">messageReceived</tspan>
+        </text>
+      </g>
+      <g id="Graphic_35" filter="url(#Shadow)">
+        <path d="M 194.24987 1046.5 L 194.24987 1033 L 229.75 1033 L 229.75 1026.25 L 249.75 1039.75 L 229.75 1053.25 L 229.75 1046.5 Z" fill="url(#Obj_Gradient_8)"/>
+        <path d="M 194.24987 1046.5 L 194.24987 1033 L 229.75 1033 L 229.75 1026.25 L 249.75 1039.75 L 229.75 1053.25 L 229.75 1046.5 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Graphic_38" filter="url(#Shadow)">
+        <path d="M 538.5001 1020.625 L 700.5001 1020.625 C 705.47064 1020.625 709.5001 1024.6544 709.5001 1029.625 L 709.5001 1049.875 C 709.5001 1054.8456 705.47064 1058.875 700.5001 1058.875 L 538.5001 1058.875 C 533.5295 1058.875 529.5001 1054.8456 529.5001 1049.875 L 529.5001 1029.625 C 529.5001 1024.6544 533.5295 1020.625 538.5001 1020.625 Z" fill="#c0ffc0"/>
+        <path d="M 538.5001 1020.625 L 700.5001 1020.625 C 705.47064 1020.625 709.5001 1024.6544 709.5001 1029.625 L 709.5001 1049.875 C 709.5001 1054.8456 705.47064 1058.875 700.5001 1058.875 L 538.5001 1058.875 C 533.5295 1058.875 529.5001 1054.8456 529.5001 1049.875 L 529.5001 1029.625 C 529.5001 1024.6544 533.5295 1020.625 538.5001 1020.625 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(534.5001 1025.582)" fill="black">
+          <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="74.782" y="11">Call</tspan>
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="34.591797" y="25.336">writeBytesSafe</tspan>
+        </text>
+      </g>
+      <g id="Graphic_39" filter="url(#Shadow)">
+        <path d="M 461.25 1046.5 L 461.25 1033 L 496.7501 1033 L 496.7501 1026.25 L 516.7501 1039.75 L 496.7501 1053.25 L 496.7501 1046.5 Z" fill="url(#Obj_Gradient_9)"/>
+        <path d="M 461.25 1046.5 L 461.25 1033 L 496.7501 1033 L 496.7501 1026.25 L 516.7501 1039.75 L 496.7501 1053.25 L 496.7501 1046.5 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_48">
+        <line x1="358.50003" y1="930.625" x2="358.50003" y2="994.75" marker-start="url(#Diamond_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+</svg>

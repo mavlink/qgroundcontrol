@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,6 +26,7 @@
 #include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
+#include <QQuickWindow>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -68,10 +69,11 @@
 #include "CoordinateVector.h"
 #include "PlanMasterController.h"
 #include "VideoManager.h"
-#include "VideoSurface.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
+#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
 #include "MAVLinkInspectorController.h"
+#endif
 #include "ValuesWidgetController.h"
 #include "AppMessages.h"
 #include "SimulatedPosition.h"
@@ -92,7 +94,6 @@
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
-#include "MAVLinkInspectorController.h"
 #include "GeoTagController.h"
 #include "LogReplayLink.h"
 #include "VehicleObjectAvoidance.h"
@@ -127,6 +128,22 @@
 
 #include "QGCMapEngine.h"
 
+class FinishVideoInitialization : public QRunnable
+{
+public:
+  FinishVideoInitialization(VideoManager* manager)
+      : _manager(manager)
+  {}
+
+  void run () {
+      _manager->_initVideo();
+  }
+
+private:
+  VideoManager* _manager;
+};
+
+
 QGCApplication* QGCApplication::_app = nullptr;
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
@@ -158,7 +175,7 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-    : QGuiApplication       (argc, argv)
+    : QApplication          (argc, argv)
     , _runningUnitTests     (unitTesting)
 {
     _app = this;
@@ -454,7 +471,6 @@ void QGCApplication::_shutdown()
     // Close out all Qml before we delete toolbox. This way we don't get all sorts of null reference complaints from Qml.
     delete _qmlAppEngine;
 
-    shutdownVideoStreaming();
     delete _toolbox;
 }
 
@@ -498,6 +514,9 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<CameraCalc>          (kQGroundControl,                       1, 0, "CameraCalc",                 kRefOnly);
     qmlRegisterUncreatableType<LogReplayLink>       (kQGroundControl,                       1, 0, "LogReplayLink",              kRefOnly);
     qmlRegisterType<LogReplayLinkController>        (kQGroundControl,                       1, 0, "LogReplayLinkController");
+#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
+    qmlRegisterUncreatableType<MAVLinkChartController> (kQGroundControl,                    1, 0, "MAVLinkChart",               kRefOnly);
+#endif
 #if defined(QGC_ENABLE_PAIRING)
     qmlRegisterUncreatableType<PairingManager>      (kQGroundControl,                       1, 0, "PairingManager",             kRefOnly);
 #endif
@@ -524,7 +543,6 @@ void QGCApplication::_initCommon()
     qmlRegisterType<RCChannelMonitorController>     (kQGCControllers,                       1, 0, "RCChannelMonitorController");
     qmlRegisterType<JoystickConfigController>       (kQGCControllers,                       1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>          (kQGCControllers,                       1, 0, "LogDownloadController");
-    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
     qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
 
@@ -535,8 +553,9 @@ void QGCApplication::_initCommon()
 #endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
+#if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
     qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
-
+#endif
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
@@ -555,10 +574,14 @@ bool QGCApplication::_initForNormalAppBoot()
 
     QSettings settings;
 
-    // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
-
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
+
+    QQuickWindow* rootWindow = (QQuickWindow*)qgcApp()->mainRootWindow();
+
+    if (rootWindow) {
+        rootWindow->scheduleRenderJob (new FinishVideoInitialization (toolbox()->videoManager()),
+                QQuickWindow::BeforeSynchronizingStage);
+    }
 
     // Safe to show popup error messages now that main window is created
     UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
@@ -616,21 +639,18 @@ QGCApplication* qgcApp(void)
     return QGCApplication::_app;
 }
 
-void QGCApplication::informationMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::informationMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title);
     showMessage(msg);
 }
 
-void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::warningMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title)
     showMessage(msg);
 }
 
-void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
+void QGCApplication::criticalMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    Q_UNUSED(title)
     showMessage(msg);
 }
 
@@ -669,12 +689,11 @@ void QGCApplication::checkTelemetrySavePathOnMainThread()
     _checkTelemetrySavePath(false /* useMessageBox */);
 }
 
-bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
+bool QGCApplication::_checkTelemetrySavePath(bool /*useMessageBox*/)
 {
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        Q_UNUSED(useMessageBox);
         showMessage(error);
         return false;
     }
@@ -748,7 +767,7 @@ void QGCApplication::showMessage(const QString& message)
 
 QQuickItem* QGCApplication::mainRootWindow()
 {
-    if(_mainRootWindow) {
+    if(!_mainRootWindow) {
         _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
     }
     return _mainRootWindow;
@@ -792,10 +811,8 @@ void QGCApplication::_checkForNewVersion()
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString localFile)
+void QGCApplication::_currentVersionDownloadFinished(QString /*remoteFile*/, QString localFile)
 {
-    Q_UNUSED(remoteFile);
-
 #ifdef __mobile__
     Q_UNUSED(localFile);
 #else
@@ -821,9 +838,8 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadError(QString errorMsg)
+void QGCApplication::_currentVersionDownloadError(QString /*errorMsg*/)
 {
-    Q_UNUSED(errorMsg);
     _currentVersionDownload->deleteLater();
 }
 

@@ -187,18 +187,6 @@ contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
-# NFC
-contains (DEFINES, QGC_DISABLE_NFC) {
-    message("Skipping support for NFC (manual override from command line)")
-    DEFINES -= QGC_ENABLE_NFC
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_NFC) {
-    message("Skipping support for NFC (manual override from user_config.pri)")
-    DEFINES -= QGC_ENABLE_NFC
-} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_NFC) {
-    message("Including support for NFC (manual override from user_config.pri)")
-    DEFINES += QGC_ENABLE_NFC
-}
-
 # QTNFC
 contains (DEFINES, QGC_DISABLE_QTNFC) {
     message("Skipping support for QTNFC (manual override from command line)")
@@ -277,7 +265,6 @@ AndroidBuild || iOSBuild {
     QT += \
         printsupport \
         serialport \
-        charts \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
@@ -319,14 +306,11 @@ DEFINES+=QGC_DISABLE_PAIRING
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
-    DEFINES -= QGC_ENABLE_NFC
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
-    DEFINES -= QGC_ENABLE_NFC
 } else:AndroidBuild:contains(QT_ARCH, arm64) {
     # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
     message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
-    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
@@ -573,7 +557,6 @@ HEADERS += \
     src/AnalyzeView/LogDownloadController.h \
     src/AnalyzeView/PX4LogParser.h \
     src/AnalyzeView/ULogParser.h \
-    src/AnalyzeView/MAVLinkInspectorController.h \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
     src/Camera/QGCCameraControl.h \
@@ -589,7 +572,6 @@ HEADERS += \
     src/JsonHelper.h \
     src/KMLFileHelper.h \
     src/LogCompressor.h \
-    src/MG.h \
     src/MissionManager/CameraCalc.h \
     src/MissionManager/CameraSection.h \
     src/MissionManager/CameraSpec.h \
@@ -693,7 +675,6 @@ HEADERS += \
     src/comm/LinkManager.h \
     src/comm/LogReplayLink.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
     src/comm/TCPLink.h \
     src/comm/UDPLink.h \
@@ -741,37 +722,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-contains (DEFINES, QGC_ENABLE_PAIRING) {
-    contains(DEFINES, QGC_ENABLE_NFC) {
-        HEADERS += \
-            src/PairingManager/PairingNFC.h \
-            src/PairingManager/NfcLibrary/inc/Nfc.h \
-            src/PairingManager/NfcLibrary/inc/Nfc_settings.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/P2P_NDEF.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T1T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T2T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T3T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T4T.h \
-            src/PairingManager/NfcLibrary/NdefLibrary/inc/T4T_NDEF_emu.h \
-            src/PairingManager/NfcLibrary/NxpNci/inc/NxpNci.h \
-            src/PairingManager/NfcTask/inc/ndef_helper.h \
-            src/PairingManager/TML/inc/framework_Allocator.h \
-            src/PairingManager/TML/inc/framework_Interface.h \
-            src/PairingManager/TML/inc/framework_Map.h \
-            src/PairingManager/TML/inc/framework_Timer.h \
-            src/PairingManager/TML/inc/lpcusbsio.h \
-            src/PairingManager/TML/inc/tml.h \
-            src/PairingManager/TML/inc/tool.h \
-            src/PairingManager/TML/inc/framework_Container.h \
-            src/PairingManager/TML/inc/framework_linux.h \
-            src/PairingManager/TML/inc/framework_Parcel.h \
-            src/PairingManager/TML/inc/hidapi.h \
-            src/PairingManager/TML/inc/lpcusbsio_i2c.h \
-            src/PairingManager/TML/inc/tml_hid.h
-    }
-}
-
 !NoSerialBuild {
 HEADERS += \
     src/comm/QGCSerialPortInfo.h \
@@ -815,7 +765,6 @@ SOURCES += \
     src/AnalyzeView/LogDownloadController.cc \
     src/AnalyzeView/PX4LogParser.cc \
     src/AnalyzeView/ULogParser.cc \
-    src/AnalyzeView/MAVLinkInspectorController.cc \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
     src/Camera/QGCCameraControl.cc \
@@ -971,36 +920,6 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
     }
 }
 
-contains (DEFINES, QGC_ENABLE_PAIRING) {
-    contains(DEFINES, QGC_ENABLE_NFC) {
-        SOURCES += \
-        src/PairingManager/PairingNFC.cc \
-        src/PairingManager/NfcLibrary/NxpNci/src/NxpNci.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T4T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/P2P_NDEF.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T3T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T1T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T2T.c \
-        src/PairingManager/NfcLibrary/NdefLibrary/src/T4T_NDEF_emu.c \
-        src/PairingManager/TML/src/framework_Map.c \
-        src/PairingManager/TML/src/framework_log.c \
-        src/PairingManager/TML/src/framework_Parcel.c \
-        src/PairingManager/TML/src/framework_sem.c \
-        src/PairingManager/TML/src/framework_mutex.c \
-        src/PairingManager/TML/src/hid.c \
-        src/PairingManager/TML/src/framework_Allocator.c \
-        src/PairingManager/TML/src/tml_hid.c \
-        src/PairingManager/TML/src/framework_Container.c \
-        src/PairingManager/TML/src/framework_thread.c \
-        src/PairingManager/TML/src/framework_Timer.c \
-        src/PairingManager/TML/src/lpcusbsio.c \
-        src/PairingManager/TML/src/tml.c \
-        src/PairingManager/NfcTask/src/ndef_helper.c
-        LIBS += -lrt -ludev
-    }
-}
-
 !MobileBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
@@ -1108,6 +1027,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSafetyComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponent.h \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.h \
+        src/AutoPilotPlugins/APM/APMSubMotorComponentController.h \
         src/AutoPilotPlugins/APM/APMTuningComponent.h \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.h \
         src/FirmwarePlugin/APM/APMParameterMetaData.h \
@@ -1135,6 +1055,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMSafetyComponent.cc \
         src/AutoPilotPlugins/APM/APMSensorsComponent.cc \
         src/AutoPilotPlugins/APM/APMSensorsComponentController.cc \
+        src/AutoPilotPlugins/APM/APMSubMotorComponentController.cc \
         src/AutoPilotPlugins/APM/APMTuningComponent.cc \
         src/FirmwarePlugin/APM/APMFirmwarePlugin.cc \
         src/FirmwarePlugin/APM/APMParameterMetaData.cc \
@@ -1229,6 +1150,17 @@ SOURCES += \
     src/FactSystem/FactValueSliderListModel.cc \
     src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
+
+#-------------------------------------------------------------------------------------
+# MAVLink Inspector
+contains (DEFINES, QGC_ENABLE_MAVLINK_INSPECTOR) {
+    HEADERS += \
+        src/AnalyzeView/MAVLinkInspectorController.h
+    SOURCES += \
+        src/AnalyzeView/MAVLinkInspectorController.cc
+    QT += \
+        charts
+}
 
 #-------------------------------------------------------------------------------------
 # Taisync
@@ -1368,18 +1300,13 @@ INCLUDEPATH += \
     src/VideoStreaming
 
 HEADERS += \
-    src/VideoStreaming/VideoItem.h \
     src/VideoStreaming/VideoReceiver.h \
     src/VideoStreaming/VideoStreaming.h \
-    src/VideoStreaming/VideoSurface.h \
-    src/VideoStreaming/VideoSurface_p.h \
     src/VideoStreaming/SubtitleWriter.h \
 
 SOURCES += \
-    src/VideoStreaming/VideoItem.cc \
     src/VideoStreaming/VideoReceiver.cc \
     src/VideoStreaming/VideoStreaming.cc \
-    src/VideoStreaming/VideoSurface.cc \
     src/VideoStreaming/SubtitleWriter.cc \
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
@@ -1389,6 +1316,13 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
+}
+
+!VideoEnabled {
+    HEADERS += \
+       src/VideoStreaming/GLVideoItemStub.h
+    SOURCES += \
+        src/VideoStreaming/GLVideoItemStub.cc
 }
 
 #-------------------------------------------------------------------------------------

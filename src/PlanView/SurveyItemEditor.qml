@@ -28,6 +28,9 @@ Rectangle {
     property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
+    property bool   _polygonDone:               false
+    property string _doneAdjusting:             qsTr("Done Adjusting")
+    property bool   _presetsAvailable:          missionItem.presetNames.length !== 0
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -62,19 +65,109 @@ Rectangle {
             spacing:        _margin
             visible:        !missionItem.surveyAreaPolygon.isValid || missionItem.wizardMode
 
-            QGCLabel {
+            ColumnLayout {
                 Layout.fillWidth:   true
-                wrapMode:           Text.WordWrap
-                text:               qsTr("Use the Polygon Tools to create the polygon which outlines your survey area.")
+                spacing:             _margin
+                visible:            !_polygonDone
+
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    wrapMode:               Text.WordWrap
+                    horizontalAlignment:    Text.AlignHCenter
+                    text:                   qsTr("Use the Polygon Tools to create the polygon which outlines your survey area.")
+                }
+
+                QGCButton {
+                    text:               qsTr("Done With Polygon")
+                    Layout.fillWidth:   true
+                    enabled:            missionItem.surveyAreaPolygon.isValid
+                    onClicked: {
+                        if (!_presetsAvailable) {
+                            missionItem.wizardMode = false
+                            editorRoot.selectNextNotReadyItem()
+                        }
+                        _polygonDone = true
+                    }
+                }
             }
 
-            QGCButton {
-                text:               qsTr("Done With Polygon")
+            ColumnLayout {
                 Layout.fillWidth:   true
-                enabled:            missionItem.surveyAreaPolygon.isValid
-                onClicked: {
-                    missionItem.wizardMode = false
-                    editorRoot.selectNextNotReadyItem()
+                spacing:            _margin
+                visible:            _polygonDone
+
+                QGCLabel {
+                    Layout.fillWidth:       true
+                    wrapMode:               Text.WordWrap
+                    horizontalAlignment:    Text.AlignHCenter
+                    text:                   qsTr("Apply a Preset or click %1 for manual setup.").arg(_doneAdjusting)
+                }
+
+                QGCComboBox {
+                    id:                 wizardPresetCombo
+                    Layout.fillWidth:   true
+                    model:              missionItem.presetNames
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Apply Preset")
+                    enabled:            missionItem.presetNames.length != 0
+                    onClicked:          missionItem.loadPreset(wizardPresetCombo.textAt(wizardPresetCombo.currentIndex))
+                }
+
+                SectionHeader {
+                    id:                 wizardPresectsTransectsHeader
+                    Layout.fillWidth:   true
+                    text:               qsTr("Transects")
+                }
+
+                GridLayout {
+                    Layout.fillWidth:   true
+                    columnSpacing:      _margin
+                    rowSpacing:         _margin
+                    columns:            2
+                    visible:            wizardPresectsTransectsHeader.checked
+
+                    QGCLabel { text: qsTr("Angle") }
+                    FactTextField {
+                        fact:                   missionItem.gridAngle
+                        Layout.fillWidth:       true
+                        onUpdated:              wizardPresetsAngleSlider.value = missionItem.gridAngle.value
+                    }
+
+                    QGCSlider {
+                        id:                     wizardPresetsAngleSlider
+                        minimumValue:           0
+                        maximumValue:           359
+                        stepSize:               1
+                        tickmarksEnabled:       false
+                        Layout.fillWidth:       true
+                        Layout.columnSpan:      2
+                        Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                        onValueChanged:         missionItem.gridAngle.value = value
+                        Component.onCompleted:  value = missionItem.gridAngle.value
+                        updateValueWhileDragging: true
+                    }
+
+                    QGCButton {
+                        Layout.columnSpan:  2
+                        Layout.fillWidth:   true
+                        text:               qsTr("Rotate Entry Point")
+                        onClicked:          missionItem.rotateEntryPoint();
+                    }
+                }
+
+                Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
+
+                QGCButton {
+                    text:               _doneAdjusting
+                    Layout.fillWidth:   true
+                    enabled:            missionItem.surveyAreaPolygon.isValid
+                    onClicked: {
+                        missionItem.wizardMode = false
+                        editorRoot.selectNextNotReadyItem()
+                    }
                 }
             }
         }

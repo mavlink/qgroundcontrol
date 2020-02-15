@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,7 @@ import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Controllers   1.0
 
 SetupPage {
     id:             motorPage
@@ -27,8 +28,9 @@ SetupPage {
 
     property int neutralValue: 50;
     property int _lastIndex: 0;
+    property bool canDoManualTest: controller.vehicle.flightMode !== 'Motor Detection' && controller.vehicle.armed && motorPage.visible
 
-    FactPanelController {
+    APMSubMotorComponentController {
         id:             controller
     }
 
@@ -47,7 +49,7 @@ SetupPage {
 
             Row {
                 id:         motorSliders
-                enabled:    controller.vehicle.armed
+                enabled:    canDoManualTest
                 spacing:    ScreenTools.defaultFontPixelWidth * 4
 
                 Column {
@@ -199,22 +201,84 @@ SetupPage {
                 QGCLabel {
                     anchors.verticalCenter: safetySwitch.verticalCenter
                     color:  qgcPal.warningText
-                    text:   qsTr("Slide this switch to arm the vehicle and enable the motor test (CAUTION!)")
+                    text:   coolDownTimer.running
+                                ? qsTr("A 10 second coooldown is required before testing again, please stand by...")
+                                : qsTr("Slide this switch to arm the vehicle and enable the motor test (CAUTION!)")
                 }
             } // Row
+
+            QGCLabel {
+                visible:             controller.vehicle.versionCompare(4, 0, 0) >= 0
+                width:               parent.width
+                anchors.left:        parent.left
+                anchors.right:       parent.right
+                font.pointSize:      ScreenTools.largeFontPointSize
+                text:                qsTr("Automatic Motor Direction Detection")
+            }
+
+            QGCLabel {
+                visible:        controller.vehicle.versionCompare(4, 0, 0) >= 0
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                wrapMode:       Text.WordWrap
+                text:           qsTr("This will attempt to automatically detect the direction (normal/reversed) of your thrusters.\n"
+                                   + "Please place your vehicle in water, click the button, and wait. Note that the thrusters still need "
+                                   + "to be connected to the correct outputs (thrusters 2 and 3 can't be swapped, for example).")
+            }
+
             Row {
-                QGCLabel {
-                    id: cooldownLabel
-                    visible: coolDownTimer.running
-                    color:  qgcPal.warningText
-                    text:   qsTr("A 10 second coooldown is required before testing again, please stand by...")
+                visible:    controller.vehicle.versionCompare(4, 0, 0) >= 0
+                spacing:    ScreenTools.defaultFontPixelWidth
+
+                Column {
+                    spacing:    ScreenTools.defaultFontPixelWidth * 2
+
+                    QGCButton {
+                        id: startAutoDetection
+                        text: "Auto-Detect Directions"
+                        enabled: controller.vehicle.flightMode !== 'Motor Detection'
+
+                        onClicked: function() {
+                            controller.vehicle.flightMode = "Motor Detection"
+                            controller.vehicle.armed = true
+                        }
+                    }
+                }
+                Column {
+                    spacing:    ScreenTools.defaultFontPixelWidth * 2
+
+                    Flickable {
+                        id: flickable
+                        width: 500
+                        height: Math.min(contentHeight, 200)
+                        contentWidth: width
+                        contentHeight: textArea.implicitHeight
+                        clip: true
+
+                        TextArea {
+                            id: textArea
+                            anchors.fill: parent
+                            color:  qgcPal.text
+                            text: controller.motorDetectionMessages
+                            wrapMode: Text.WordWrap
+                            background: Rectangle {
+                                color: qgcPal.window
+                            }
+                            onTextChanged: function() {
+                                flickable.flick(0, -300)
+                            }
+                        }
+                        ScrollBar.vertical: ScrollBar {}
+                    }
                 }
             }
+
             // Repeats the command signal and updates the checkbox every 50 ms
             Timer {
                 id: timer
                 interval:       50
                 repeat:         true
+                running:        canDoManualTest
 
                 onTriggered: {
                     if (controller.vehicle.armed) {

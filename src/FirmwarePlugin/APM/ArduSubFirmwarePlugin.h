@@ -94,7 +94,8 @@ public:
         POSHOLD           = 16,  // Hold position
         RESERVED_17       = 17,
         RESERVED_18       = 18,
-        MANUAL            = 19
+        MANUAL            = 19,
+        MOTORDETECTION    = 20,
     };
 
     APMSubMode(uint32_t mode, bool settable);

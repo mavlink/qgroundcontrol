@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,8 +17,6 @@
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
 #endif
-
-#include <VideoItem.h>
 
 #include "ScreenToolsController.h"
 #include "VideoManager.h"
@@ -41,12 +39,10 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-    if(_videoReceiver) {
-        delete _videoReceiver;
-    }
-    if(_thermalVideoReceiver) {
-        delete _thermalVideoReceiver;
-    }
+    delete _videoReceiver;
+    _videoReceiver = nullptr;
+    delete _thermalVideoReceiver;
+    _thermalVideoReceiver = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -57,7 +53,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
    qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
-   qmlRegisterUncreatableType<VideoSurface> ("QGroundControl",              1, 0, "VideoSurface", "Reference only");
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -283,6 +278,161 @@ VideoManager::setfullScreen(bool f)
     }
     _fullScreen = f;
     emit fullScreenChanged();
+}
+
+//-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+gboolean
+VideoManager::_videoSinkQuery(GstPad* pad, GstObject* parent, GstQuery* query)
+{
+    GstElement* element;
+
+    switch (GST_QUERY_TYPE(query)) {
+    case GST_QUERY_CAPS:
+        element = gst_bin_get_by_name(GST_BIN(parent), "glupload");
+        break;
+    case GST_QUERY_CONTEXT:
+        element = gst_bin_get_by_name(GST_BIN(parent), "qmlglsink");
+        break;
+    default:
+        return gst_pad_query_default (pad, parent, query);
+    }
+
+    if (element == nullptr) {
+        qWarning() << "VideoManager::_videoSinkQuery(): No element found";
+        return FALSE;
+    }
+
+    GstPad* sinkpad = gst_element_get_static_pad(element, "sink");
+
+    if (sinkpad == nullptr) {
+        qWarning() << "VideoManager::_videoSinkQuery(): No sink pad found";
+        return FALSE;
+    }
+
+    const gboolean ret = gst_pad_query(sinkpad, query);
+
+    gst_object_unref(sinkpad);
+    sinkpad = nullptr;
+
+    return ret;
+}
+
+GstElement*
+VideoManager::_makeVideoSink(gpointer widget)
+{
+    GstElement* glupload        = nullptr;
+    GstElement* glcolorconvert  = nullptr;
+    GstElement* qmlglsink       = nullptr;
+    GstElement* bin             = nullptr;
+    GstElement* sink            = nullptr;
+
+    do {
+        if ((glupload = gst_element_factory_make("glupload", "glupload")) == nullptr) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_factory_make('glupload')";
+            break;
+        }
+
+        if ((glcolorconvert = gst_element_factory_make("glcolorconvert", "glcolorconvert")) == nullptr) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_factory_make('glcolorconvert')";
+            break;
+        }
+
+        if ((qmlglsink = gst_element_factory_make("qmlglsink", "qmlglsink")) == nullptr) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_factory_make('qmlglsink')";
+            break;
+        }
+
+        g_object_set(qmlglsink, "widget", widget, NULL);
+
+        if ((bin = gst_bin_new("videosink")) == nullptr) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_bin_new('videosink')";
+            break;
+        }
+
+        GstPad* pad;
+
+        if ((pad = gst_element_get_static_pad(glupload, "sink")) == nullptr) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_get_static_pad(glupload, 'sink')";
+            break;
+        }
+
+        gst_bin_add_many(GST_BIN(bin), glupload, glcolorconvert, qmlglsink, nullptr);
+
+        gboolean ret = gst_element_link_many(glupload, glcolorconvert, qmlglsink, nullptr);
+
+        qmlglsink = glcolorconvert = glupload = nullptr;
+
+        if (!ret) {
+            qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_link_many()";
+            break;
+        }
+
+        GstPad* ghostpad = gst_ghost_pad_new("sink", pad);
+
+        gst_pad_set_query_function(ghostpad, _videoSinkQuery);
+
+        gst_element_add_pad(bin, ghostpad);
+
+        gst_object_unref(pad);
+        pad = nullptr;
+
+        sink = bin;
+        bin = nullptr;
+    } while(0);
+
+    if (bin != nullptr) {
+        gst_object_unref(bin);
+        bin = nullptr;
+    }
+
+    if (qmlglsink != nullptr) {
+        gst_object_unref(qmlglsink);
+        qmlglsink = nullptr;
+    }
+
+    if (glcolorconvert != nullptr) {
+        gst_object_unref(glcolorconvert);
+        glcolorconvert = nullptr;
+    }
+
+    if (glupload != nullptr) {
+        gst_object_unref(glupload);
+        glupload = nullptr;
+    }
+
+    return sink;
+}
+#endif
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_initVideo()
+{
+#if defined(QGC_GST_STREAMING)
+    QQuickItem* root = qgcApp()->mainRootWindow();
+
+    if (root == nullptr) {
+        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. No root window";
+        return;
+    }
+
+    QQuickItem* widget = root->findChild<QQuickItem*>("videoContent");
+
+    if (widget != nullptr) {
+        _videoReceiver->setVideoSink(_makeVideoSink(widget));
+    } else {
+        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. 'videoContent' widget not found";
+    }
+
+    widget = root->findChild<QQuickItem*>("thermalVideo");
+
+    if (widget != nullptr) {
+        _thermalVideoReceiver->setVideoSink(_makeVideoSink(widget));
+    } else {
+        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. 'thermalVideo' widget not found";
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------

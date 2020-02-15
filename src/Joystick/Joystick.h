@@ -1,15 +1,16 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
+/// @file
+/// @brief  Joystick Controller
 
-#ifndef Joystick_H
-#define Joystick_H
+#pragma once
 
 #include <QObject>
 #include <QThread>
@@ -21,7 +22,7 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
-//-- Action assigned to button
+/// Action assigned to button
 class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
@@ -31,7 +32,7 @@ public:
     bool    repeat = false;
 };
 
-//-- Assignable Button Action
+/// Assignable Button Action
 class AssignableButtonAction : public QObject {
     Q_OBJECT
 public:
@@ -45,6 +46,7 @@ private:
     bool    _repeat = false;
 };
 
+/// Joystick Controller
 class Joystick : public QThread
 {
     Q_OBJECT
@@ -168,10 +170,14 @@ public:
     /// Set the current calibration mode
     void  setCalibrationMode (bool calibrating);
 
+    /// Get joystick message rate (in Hz)
     float axisFrequency     () { return _axisFrequency; }
+    /// Set joystick message rate (in Hz)
     void  setAxisFrequency  (float val);
 
+    /// Get joystick button repeat rate (in Hz)
     float buttonFrequency   () { return _buttonFrequency; }
+    /// Set joystick button repeat rate (in Hz)
     void  setButtonFrequency(float val);
 
 signals:
@@ -189,11 +195,12 @@ signals:
     void circleCorrectionChanged    (bool circleCorrection);
 
     /// Signal containing new joystick information
-    ///     @param roll         Range is -1:1, negative meaning roll left, positive meaning roll right
-    ///     @param pitch        Range i -1:1, negative meaning pitch down, positive meaning pitch up
-    ///     @param yaw          Range is -1:1, negative meaning yaw left, positive meaning yaw right
-    ///     @param throttle     Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
-    ///     @param mode     See Vehicle::JoystickMode_t enum
+    ///     @param roll:            Range is -1:1, negative meaning roll left, positive meaning roll right
+    ///     @param pitch:           Range i -1:1, negative meaning pitch down, positive meaning pitch up
+    ///     @param yaw:             Range is -1:1, negative meaning yaw left, positive meaning yaw right
+    ///     @param throttle:        Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
+    ///     @param buttons:         Button bitmap
+    ///     @param joystickMmode:   Current joystick mode
     void manualControl              (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
     void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
@@ -348,5 +355,3 @@ private:
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
 };
-
-#endif

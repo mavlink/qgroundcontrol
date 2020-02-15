@@ -4,5 +4,17 @@
     "shortDescription": "Display the presets tab at start",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "aboveTerrainWarning",
+    "shortDescription": "Don't warn user about 'Above Terrain' usage",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "showMissionItemStatus",
+    "shortDescription": "Show/Hide the mission item status display",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

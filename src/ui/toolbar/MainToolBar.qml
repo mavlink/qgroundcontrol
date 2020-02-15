@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -37,44 +37,6 @@ Item {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
-    //-------------------------------------------------------------------------
-    // Easter egg mechanism
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            _clickCount++
-            eggTimer.restart()
-            if (_clickCount == 5) {
-                if(!QGroundControl.corePlugin.showAdvancedUI) {
-                    advancedModeConfirmation.open()
-                } else {
-                    QGroundControl.corePlugin.showAdvancedUI = false
-                }
-            } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-            }
-        }
-
-        property int _clickCount: 0
-
-        Timer {
-            id:             eggTimer
-            interval:       1000
-            repeat:         false
-            onTriggered:    parent._clickCount = 0
-        }
-
-        MessageDialog {
-            id:                 advancedModeConfirmation
-            title:              qsTr("Advanced Mode")
-            text:               QGroundControl.corePlugin.showAdvancedUIMessage
-            standardButtons:    StandardButton.Yes | StandardButton.No
-            onYes: {
-                QGroundControl.corePlugin.showAdvancedUI = true
-                advancedModeConfirmation.close()
-            }
-        }
-    }
 
     //-- Setup can be invoked from c++ side
     Connections {
@@ -98,16 +60,24 @@ Item {
             anchors.bottom:         parent.bottom
             spacing:                ScreenTools.defaultFontPixelWidth / 2
 
-            ButtonGroup {
-                buttons:            viewRow.children
-            }
+            // Important Note: Toolbar buttons must manage their checked state manually in order to support
+            // view switch prevention. There doesn't seem to be a way to make this work if they are in a
+            // ButtonGroup.
 
             //---------------------------------------------
             // Toolbar Row
             RowLayout {
-                id:                 viewRow
+                id:                 buttonRow
                 Layout.fillHeight:  true
                 spacing:            0
+
+                function clearAllChecks() {
+                    for (var i=0; i<buttonRow.children.length; i++) {
+                        if (buttonRow.children[i].toString().startsWith("QGCToolBarButton")) {
+                            buttonRow.children[i].checked = false
+                        }
+                    }
+                }
 
                 QGCToolBarButton {
                     id:                 settingsButton
@@ -116,6 +86,10 @@ Item {
                     logo:               true
                     visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                     onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showSettingsView()
                     }
@@ -126,6 +100,10 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/Gears.svg"
                     onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showSetupView()
                     }
@@ -136,6 +114,10 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/Plan.svg"
                     onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showPlanView()
                     }
@@ -146,8 +128,45 @@ Item {
                     Layout.fillHeight:  true
                     icon.source:        "/qmlimages/PaperPlane.svg"
                     onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showFlyView()
+
+                        // Easter Egg mechanism
+                        _clickCount++
+                        eggTimer.restart()
+                        if (_clickCount == 5) {
+                            if(!QGroundControl.corePlugin.showAdvancedUI) {
+                                advancedModeConfirmation.open()
+                            } else {
+                                QGroundControl.corePlugin.showAdvancedUI = false
+                            }
+                        } else if (_clickCount == 7) {
+                            QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                        }
+                    }
+
+                    property int _clickCount: 0
+
+                    Timer {
+                        id:             eggTimer
+                        interval:       1000
+                        repeat:         false
+                        onTriggered:    parent._clickCount = 0
+                    }
+
+                    MessageDialog {
+                        id:                 advancedModeConfirmation
+                        title:              qsTr("Advanced Mode")
+                        text:               QGroundControl.corePlugin.showAdvancedUIMessage
+                        standardButtons:    StandardButton.Yes | StandardButton.No
+                        onYes: {
+                            QGroundControl.corePlugin.showAdvancedUI = true
+                            advancedModeConfirmation.close()
+                        }
                     }
                 }
 
@@ -157,6 +176,10 @@ Item {
                     icon.source:        "/qmlimages/Analyze.svg"
                     visible:            QGroundControl.corePlugin.showAdvancedUI
                     onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
                         checked = true
                         mainWindow.showAnalyzeView()
                     }

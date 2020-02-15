@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -688,9 +688,8 @@ MAVLinkLogManager::_sendLog(const QString& logFile)
     }
     QFile* file = new QFile(logFile);
     if(!file || !file->open(QIODevice::ReadOnly)) {
-        if(file) {
-            delete file;
-        }
+        delete file;
+        file = nullptr;
         qCWarning(MAVLinkLogManagerLog) << "Could not open log file:" << logFile;
         return false;
     }
@@ -929,10 +928,7 @@ MAVLinkLogManager::_discardLog()
 bool
 MAVLinkLogManager::_createNewLog()
 {
-    if(_logProcessor) {
-        delete _logProcessor;
-        _logProcessor = nullptr;
-    }
+    delete _logProcessor;
     _logProcessor = new MAVLinkLogProcessor;
     if(_logProcessor->create(this, _logPath, static_cast<uint8_t>(_vehicle->id()))) {
         _insertNewLog(_logProcessor->record());

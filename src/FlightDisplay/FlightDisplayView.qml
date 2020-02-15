@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -49,11 +49,13 @@ Item {
     property var    _rallyPointController:          _planController.rallyPointController
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
-    property real   _savedZoomLevel:                0
+    property bool   _enforceChecklist:              _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
+    property bool   _canArm:                        activeVehicle ? (_useChecklist ? (_enforceChecklist ? activeVehicle.checkListState === Vehicle.CheckListPassed : true) : true) : false
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
     property alias  _altitudeSlider:                altitudeSlider
+    property real   _toolsMargin:                   ScreenTools.defaultFontPixelWidth * 0.75
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -74,25 +76,10 @@ Item {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
-            //-- Save/Restore Map Zoom Level
-            if(_savedZoomLevel != 0) {
-                if(mainWindow.flightDisplayMap) {
-                    mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel
-                }
-            } else {
-                if(mainWindow.flightDisplayMap) {
-                    _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                }
-            }
         } else {
             //-- Adjust Margins
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
-            //-- Set Map Zoom Level
-            if(mainWindow.flightDisplayMap) {
-                _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-                mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
-            }
         }
     }
 
@@ -334,6 +321,7 @@ Item {
                 scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
                 Component.onCompleted: {
                     mainWindow.flightDisplayMap = _fMap
+                    _fMap.adjustMapSize()
                 }
             }
         }
@@ -357,7 +345,7 @@ Item {
                     // Do anchors again after popup
                     anchors.left =       _mapAndVideo.left
                     anchors.bottom =     _mapAndVideo.bottom
-                    anchors.margins =    ScreenTools.defaultFontPixelHeight
+                    anchors.margins =    _toolsMargin
                 }
             }
 
@@ -365,23 +353,23 @@ Item {
                 State {
                     name:   "pipMode"
                     PropertyChanges {
-                        target: _flightVideo
-                        anchors.margins: ScreenTools.defaultFontPixelHeight
+                        target:             _flightVideo
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
                     name:   "fullMode"
                     PropertyChanges {
-                        target: _flightVideo
+                        target:             _flightVideo
                         anchors.margins:    0
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:            false
                     }
                 },
                 State {
@@ -389,25 +377,25 @@ Item {
                     StateChangeScript {
                         script: {
                             // Stop video, restart it again with Timer
-                            // Avoiding crashs if ParentChange is not yet done
+                            // Avoiding crashes if ParentChange is not yet done
                             QGroundControl.videoManager.stopVideo()
                             videoPopUpTimer.running = true
                         }
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: true
+                        target:             _flightVideoPipControl
+                        inPopup:            true
                     }
                 },
                 State {
                     name: "popup-finished"
                     ParentChange {
-                        target: _flightVideo
-                        parent: videoItem
-                        x: 0
-                        y: 0
-                        width: videoItem.width
-                        height: videoItem.height
+                        target:             _flightVideo
+                        parent:             videoItem
+                        x:                  0
+                        y:                  0
+                        width:              videoItem.width
+                        height:             videoItem.height
                     }
                 },
                 State {
@@ -419,12 +407,12 @@ Item {
                         }
                     }
                     ParentChange {
-                        target: _flightVideo
-                        parent: _mapAndVideo
+                        target:             _flightVideo
+                        parent:             _mapAndVideo
                     }
                     PropertyChanges {
-                        target: _flightVideoPipControl
-                        inPopup: false
+                        target:             _flightVideoPipControl
+                        inPopup:             false
                     }
                 }
             ]
@@ -439,7 +427,7 @@ Item {
                 id:             cameraLoader
                 anchors.fill:   parent
                 visible:        !QGroundControl.videoManager.isGStreamer
-                source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml"
+                source:         visible ? (QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/FlightDisplayViewUVC.qml" : "qrc:/qml/FlightDisplayViewDummy.qml") : ""
             }
         }
 
@@ -458,6 +446,7 @@ Item {
             onActivated: {
                 mainIsMap = !mainIsMap
                 setStates()
+                _fMap.adjustMapSize()
             }
             onHideIt: {
                 setPipVisibility(!state)
@@ -473,8 +462,8 @@ Item {
 
         Row {
             id:                     singleMultiSelector
-            anchors.topMargin:      ScreenTools.toolbarHeight + _margins
-            anchors.rightMargin:    _margins
+            anchors.topMargin:      ScreenTools.toolbarHeight + _toolsMargin
+            anchors.rightMargin:    _toolsMargin
             anchors.right:          parent.right
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
@@ -496,7 +485,7 @@ Item {
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
             z:                  _mapAndVideo.z + 4
-            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0) - (ScreenTools.defaultFontPixelHeight * 0.5)
+            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _toolsMargin : 0) - _toolsMargin
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
@@ -519,7 +508,7 @@ Item {
         }
 
         MultiVehicleList {
-            anchors.margins:            _margins
+            anchors.margins:            _toolsMargin
             anchors.top:                singleMultiSelector.bottom
             anchors.right:              parent.right
             anchors.bottom:             parent.bottom
@@ -554,14 +543,14 @@ Item {
             visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
 
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
+            anchors.leftMargin: isInstrumentRight() ? _toolsMargin : undefined
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.topMargin:  _toolsMargin
             anchors.top:        parent.top
             z:                  _mapAndVideo.z + 4
-            maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
+            maxHeight:          parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -592,12 +581,12 @@ Item {
             ]
 
             model: [
-                {
+                /*{
                     name:               "Plan",
                     iconSource:         "/qmlimages/Plan.svg",
                     buttonVisible:      true,
                     buttonEnabled:      true,
-                },
+                },*/
                 {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
@@ -608,7 +597,7 @@ Item {
                     name:               _guidedController.takeoffTitle,
                     iconSource:         "/res/takeoff.svg",
                     buttonVisible:      _guidedController.showTakeoff || !_guidedController.showLand,
-                    buttonEnabled:      _guidedController.showTakeoff,
+                    buttonEnabled:      _guidedController.showTakeoff && _canArm,
                     action:             _guidedController.actionTakeoff
                 },
                 {
@@ -636,16 +625,17 @@ Item {
                     name:               qsTr("Action"),
                     iconSource:         "/res/action.svg",
                     buttonVisible:      !_guidedController.showPause,
-                    buttonEnabled:      _anyActionAvailable,
+                    buttonEnabled:      _anyActionAvailable && _canArm,
                     action:             -1
                 }
             ]
 
             onClicked: {
                 guidedActionsController.closeAll()
-                if(index === 0) {
+                /*if(index === 0) {
                     mainWindow.showPlanView()
-                } else if(index === 1) {
+                } else*/
+                if(index === 0) {
                     checklistDropPanel.open()
                 } else {
                     var action = model[index].action
@@ -669,7 +659,7 @@ Item {
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
-                if (showStartMission) {
+                if (showStartMission && _canArm) {
                     confirmAction(actionStartMission)
                 }
             }

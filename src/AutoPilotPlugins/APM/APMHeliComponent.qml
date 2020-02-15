@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -65,10 +65,10 @@ SetupPage {
             property Fact _hRscGovTcgain:   controller.getParameterFact(-1, "H_RSC_GOV_TCGAIN")
             property Fact _hRscGovRange:    controller.getParameterFact(-1, "H_RSC_GOV_RANGE")
 
-            property Fact _imStabCol1:      controller.getParameterFact(-1, "IM_STAB_COL_1")
-            property Fact _imStabCol2:      controller.getParameterFact(-1, "IM_STAB_COL_2")
-            property Fact _imStabCol3:      controller.getParameterFact(-1, "IM_STAB_COL_3")
-            property Fact _imStabCol4:      controller.getParameterFact(-1, "IM_STAB_COL_4")
+            property Fact _imStbCol1:      controller.getParameterFact(-1, "IM_STB_COL_1")
+            property Fact _imStbCol2:      controller.getParameterFact(-1, "IM_STB_COL_2")
+            property Fact _imStbCol3:      controller.getParameterFact(-1, "IM_STB_COL_3")
+            property Fact _imStbCol4:      controller.getParameterFact(-1, "IM_STB_COL_4")
             property Fact _hTailType:       controller.getParameterFact(-1, "H_TAIL_TYPE")
             property Fact _hTailSpeed:      controller.getParameterFact(-1, "H_TAIL_SPEED")
             property Fact _hGyrGain:        controller.getParameterFact(-1, "H_GYR_GAIN")
@@ -400,17 +400,17 @@ SetupPage {
                     QGCLabel { text: qsTr("* Stabilize Collective Curve *") }
                     QGCLabel { text: qsTr("") }
 
-                    QGCLabel { text: _imStabCol1.shortDescription }
-                    FactTextField { fact: _imStabCol1 }
+                    QGCLabel { text: _imStbCol1.shortDescription }
+                    FactTextField { fact: _imStbCol1 }
 
-                    QGCLabel { text: _imStabCol2.shortDescription }
-                    FactTextField { fact: _imStabCol2 }
+                    QGCLabel { text: _imStbCol2.shortDescription }
+                    FactTextField { fact: _imStbCol2 }
 
-                    QGCLabel { text: _imStabCol3.shortDescription }
-                    FactTextField { fact: _imStabCol3 }
+                    QGCLabel { text: _imStbCol3.shortDescription }
+                    FactTextField { fact: _imStbCol3 }
 
-                    QGCLabel { text: _imStabCol4.shortDescription }
-                    FactTextField { fact: _imStabCol4 }
+                    QGCLabel { text: _imStbCol4.shortDescription }
+                    FactTextField { fact: _imStbCol4 }
 
                     QGCLabel { text: qsTr("* Tail & Gyros *") }
                     QGCLabel { text: qsTr("") }

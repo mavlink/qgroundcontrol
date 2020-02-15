@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -200,12 +200,13 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_IMAGE_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                                   // Reserved (Set to 0)
-                                   0,                                   // Interval (none)
-                                   1,                                   // Take 1 photo
-                                   qQNaN(), qQNaN(), qQNaN(), qQNaN(),  // reserved
-                                   true,                                // autoContinue
-                                   false,                               // isCurrentItem
+                                   0,                           // Reserved (Set to 0)
+                                   0,                           // Interval (none)
+                                   1,                           // Take 1 photo
+                                   0,                           // No sequence number specified
+                                   qQNaN(), qQNaN(), qQNaN(),   // reserved
+                                   true,                        // autoContinue
+                                   false,                       // isCurrentItem
                                    missionItemParent);
             break;
         }

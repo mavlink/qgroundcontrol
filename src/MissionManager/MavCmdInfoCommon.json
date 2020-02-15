@@ -138,8 +138,8 @@
         {
             "id":           20,
             "rawName":      "MAV_CMD_NAV_RETURN_TO_LAUNCH",
-            "friendlyName": "Return Home",
-            "description":  "Send the vehicle back to the home position.",
+            "friendlyName": "Return To Launch",
+            "description":  "Send the vehicle back to the launch position.",
             "friendlyEdit": true,
             "category":     "Basic"
         },
@@ -286,7 +286,7 @@
         {
             "id":                   84,
             "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
-            "friendlyName":         "VTOL takeoff and transition",
+            "friendlyName":         "VTOL takeoff",
             "description":          "Takeoff in VTOL mode, transition to forward flight and fly to the specified location.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
@@ -501,8 +501,8 @@
         {
             "id":                   179,
             "rawName":              "MAV_CMD_DO_SET_HOME",
-            "friendlyName":         "Set home location",
-            "description":          "Changes the home location either to the current location or a specified location.",
+            "friendlyName":         "Set launch location",
+            "description":          "Changes the launch location either to the current location or a specified location.",
             "specifiesCoordinate":  true,
             "standaloneCoordinate": true,
             "friendlyEdit":         true,
@@ -983,7 +983,7 @@
         { "id": 252, "rawName": "MAV_CMD_OVERRIDE_GOTO", "friendlyName": "Override goto" },
         { "id": 300, "rawName": "MAV_CMD_MISSION_START", "friendlyName": "Mission start" },
         { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "Arm/Disarm" },
-        { "id": 410, "rawName": "MAV_CMD_GET_HOME_POSITION", "friendlyName": "Get home position" },
+        { "id": 410, "rawName": "MAV_CMD_GET_HOME_POSITION", "friendlyName": "Get launch position" },
         { "id": 500, "rawName": "MAV_CMD_START_RX_PAIR", "friendlyName": "Bind Spektrum receiver" },
         { "id": 510, "rawName": "MAV_CMD_GET_MESSAGE_INTERVAL", "friendlyName": "Get message interval" },
         { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },

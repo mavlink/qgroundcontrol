@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -168,7 +168,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
 
     // Validate returned items
     
-    size_t cMissionItemsExpected;
+    int cMissionItemsExpected;
     
     if (shouldFail) {
         cMissionItemsExpected = 0;
@@ -182,14 +182,14 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
     
     QCOMPARE(_missionManager->missionItems().count(), (int)cMissionItemsExpected);
 
-    size_t firstActualItem = 0;
+    int firstActualItem = 0;
     if (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         // First item is home position, don't validate it
         firstActualItem++;
     }
 
     int testCaseIndex = 0;
-    for (size_t actualItemIndex=firstActualItem; actualItemIndex<cMissionItemsExpected; actualItemIndex++) {
+    for (int actualItemIndex=firstActualItem; actualItemIndex<cMissionItemsExpected; actualItemIndex++) {
         const TestCase_t* testCase = &_rgTestCases[testCaseIndex];
 
         int expectedSequenceNumber = testCase->expectedItem.sequenceNumber;
