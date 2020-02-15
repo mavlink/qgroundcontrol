@@ -20,9 +20,6 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
-#if defined QGC_ENABLE_NFC
-#include "PairingNFC.h"
-#endif
 #if defined QGC_ENABLE_QTNFC
 #include "QtNFC.h"
 #endif
@@ -79,7 +76,7 @@ public:
     Q_INVOKABLE void connectToPairedDevice      (QString name);
     Q_INVOKABLE void removePairedDevice         (QString name);
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined defined QGC_ENABLE_QTNFC
     Q_INVOKABLE void startNFCScan();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
@@ -150,7 +147,7 @@ private:
     QString                 _pairingCacheFile           (QString uavName);
     void                    _updatePairedDeviceNameList ();
 
-#if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
+#if defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
 #endif
 };

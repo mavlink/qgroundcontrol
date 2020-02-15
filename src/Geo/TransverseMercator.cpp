@@ -31,7 +31,7 @@
  * If the preprocessor variable GEOGRAPHICLIB_TRANSVERSEMERCATOR_ORDER is set
  * to an integer between 4 and 8, then this specifies the order of the series
  * used for the forward and reverse transformations.  The default value is 6.
- * (The series accurate to 12th order is given in \ref tmseries.)
+ * (The series accurate to 12th order is given in tmseries.)
  **********************************************************************/
 
 #include <iostream>

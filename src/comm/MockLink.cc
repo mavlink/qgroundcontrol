@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -780,7 +780,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
     mavlink_param_request_read_t request;
     mavlink_msg_param_request_read_decode(&msg, &request);
 
-    const QString paramName(QString::fromLocal8Bit(request.param_id, strnlen(request.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)));
+    const QString paramName(QString::fromLocal8Bit(request.param_id, static_cast<int>(strnlen(request.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN))));
     int componentId = request.target_component;
 
     // special case for magic _HASH_CHECK value

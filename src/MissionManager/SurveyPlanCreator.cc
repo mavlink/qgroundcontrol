@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,5 +25,5 @@ void SurveyPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
     VisualMissionItem* takeoffItem = _missionController->insertTakeoffItem(mapCenterCoord, -1);
     _missionController->insertComplexMissionItem(MissionController::patternSurveyName, mapCenterCoord, -1);
     _missionController->insertLandItem(mapCenterCoord, -1);
-    _missionController->setCurrentPlanViewIndex(takeoffItem->sequenceNumber(), true);
+    _missionController->setCurrentPlanViewSeqNum(takeoffItem->sequenceNumber(), true);
 }

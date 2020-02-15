@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,8 +29,8 @@ SetupPage {
             width: availableWidth
 
             Component.onCompleted: {
-                // Advanced tuning is hacked out due to Qt crash with Qml Charts and a QGuiApplication
-                //showAdvanced = !ScreenTools.isMobile
+                // We use QtCharts only on Desktop platforms
+                showAdvanced = !ScreenTools.isMobile
             }
 
             FactPanelController {

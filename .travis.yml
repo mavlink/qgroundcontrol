@@ -16,12 +16,12 @@ matrix:
     include:
         - name: "Linux Installer"
           os: linux
-          dist: xenial
+          dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
         - name: "Linux Debug"
           os: linux
-          dist: xenial
+          dist: bionic
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
@@ -37,7 +37,7 @@ matrix:
           sudo: false
         - name: "OSX Installer"
           os: osx
-          osx_image: xcode9.2
+          osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
 # iOS build needs updating Qt to > 5.10
@@ -82,15 +82,15 @@ before_install:
 
   # Linux needs sdl2 but not android
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        sudo apt-get install -y libsdl2-dev;
+        sudo apt-get install -y libsdl2-dev libxkbcommon-x11-0;
     fi
 
 install:
   # linux dependencies: qt
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.3-gcc_64-min.tar.bz2 &&
-        tar jxf Qt5.11.3-gcc_64-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.11-gcc_64/5.11.3/gcc_64/bin:$PATH
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-gcc_64-min.tar.bz2 &&
+        tar jxf Qt5.12.6-gcc_64-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-gcc_64/5.12.6/gcc_64/bin:$PATH
         ;
     fi
 
@@ -107,23 +107,23 @@ install:
     fi
 
   - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "64" ]]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
-        tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-android_arm64_v8a-min.tar.bz2 &&
+        tar jxf Qt5.12.6-android_arm64_v8a-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.6/android_arm64_v8a/bin:$PATH
         ;
     fi
 
   - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "32" ]]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_armv7-min.tar.bz2 &&
-        tar jxf Qt5.12.4-android_armv7-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-android_armv7-min.tar.bz2 &&
+        tar jxf Qt5.12.6-android_armv7-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-android_armv7/5.12.6/android_armv7/bin:$PATH
         ;
     fi
 
   # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
   - if [ "${SPEC}" = "macx-clang" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-clang_64-min.tar.bz2 &&
-        tar jxf Qt5.11.0-clang_64-min.tar.bz2 -C /tmp
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.6-clang_64-min.tar.bz2 &&
+        tar jxf Qt5.12.6-clang_64-min.tar.bz2 -C /tmp
         ;
     fi
 
@@ -134,7 +134,7 @@ install:
     fi
 
   - if [ "${SPEC}" = "macx-clang" ]; then
-        export QT_DIR=Qt5.11-clang_64/5.11.0/clang_64 &&
+        export QT_DIR=Qt5.12-clang_64/5.12.6/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
         export QML2_IMPORT_PATH=/tmp/$QT_DIR/qml &&
         export PATH=/tmp/$QT_DIR/bin:$PATH
@@ -199,20 +199,21 @@ after_success:
   - cd ${TRAVIS_BUILD_DIR}
 
   # master development builds to beta track
-  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontroldaily
+  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
-        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontroldaily;
+        GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta;
     else
         GOOGLE_PLAY_PKG=none;
     fi
-  - if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
-        pip install --user --upgrade oauth2client &&
-        pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
-        openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
-    fi
+  # Store upload disabled to try to workaround 64/32 bit upload problem manually
+  #- if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+  #      pip install --user --upgrade oauth2client &&
+  #      pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
+  #      openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
+  #      ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
+  #  fi
 
 before_deploy:
   # create linux appimage

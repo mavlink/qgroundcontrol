@@ -1,11 +1,11 @@
-# -------------------------------------------------
-# QGroundControl - Micro Air Vehicle Groundstation
-# Please see our website at <http://qgroundcontrol.org>
-# Maintainer:
-# Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2019 QGroundControl Developers
-# License terms set in COPYING.md
-# -------------------------------------------------
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
 
 #
 # This file contains configuration settings which are common to both the QGC Application and
@@ -16,14 +16,15 @@
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
+CONFIG -= debug_and_release
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
-        DEFINES += QGC_ENABLE_NFC RW_SUPPORT
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         linux-clang {
             message("Linux clang")
@@ -51,9 +52,11 @@ linux {
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
             DEFINES += __androidArm32__
+            DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
             message("Android Arm 32 bit build")
         } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
             DEFINES += __androidArm64__
+            DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
             message("Android Arm 64 bit build")
         } else:equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
@@ -66,14 +69,16 @@ linux {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
-    win32-msvc2015 {
+    contains(QMAKE_TARGET.arch, x86_64) {
         message("Windows build")
         CONFIG += WindowsBuild
+        CONFIG += WarningsAsErrorsOn
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
     } else {
-        error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
+        error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
 } else : macx {
     macx-clang | macx-llvm {
@@ -83,6 +88,7 @@ linux {
         CONFIG  -= x86
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {
@@ -211,14 +217,6 @@ LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-#
-# By default warnings as errors are turned off. Even so, in order for a pull request
-# to be accepted you must compile cleanly with warnings as errors turned on the default
-# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details.
-# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your
-# own builds.
-#
-
 MacBuild | LinuxBuild {
     QMAKE_CXXFLAGS_WARN_ON += -Wall
     WarningsAsErrorsOn {
@@ -235,20 +233,17 @@ MacBuild | LinuxBuild {
 }
 
 WindowsBuild {
-    win32-msvc2015 {
-        QMAKE_CFLAGS -= -Zc:strictStrings
-        QMAKE_CXXFLAGS -= -Zc:strictStrings
-    }
+    QMAKE_CFLAGS -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-
+    QMAKE_CXXFLAGS -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
     QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
     QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
-        /wd4005 \   # silence warnings about macro redefinition
-        /wd4290     # ignore exception specifications
-
+        /wd4996 \   # silence warnings about deprecated strcpy and whatnot, these come from the shapefile code with is external
+        /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
+        /wd4290 \   # ignore exception specifications
+        /wd4267     # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
@@ -268,10 +263,9 @@ ReleaseBuild {
     }
 
     WindowsBuild {
-        *msvc* { # visual studio spec filter
-            # Run compilation using VS compiler using multiple threads
-            QMAKE_CXXFLAGS += -MP
-        }
+        # Run compilation using VS compiler using multiple threads
+        QMAKE_CXXFLAGS += -MP
+
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
         QMAKE_CXXFLAGS_RELEASE += /Gy /Zo

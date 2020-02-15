@@ -1,11 +1,11 @@
-# -------------------------------------------------
-# QGroundControl - Micro Air Vehicle Groundstation
-# Please see our website at <http://qgroundcontrol.org>
-# Maintainer:
-# Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2011 QGroundControl Developers
-# License terms set in COPYING.md
-# -------------------------------------------------
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
 
 QMAKE_POST_LINK += echo "Copying files"
 
@@ -48,7 +48,7 @@ MacBuild {
 
 MacBuild {
     # Copy non-standard frameworks into app package
-    QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/lib/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
+    QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
     # SDL2 Framework
     QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
     # AirMap
@@ -67,9 +67,9 @@ WindowsBuild {
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\deploy\\libeay32.dll \
-        $$BASEDIR_WIN\\deploy\\ssleay32.dll
+        $$BASEDIR\\libs\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+        $$BASEDIR\\deploy\\libcrypto-1_1-x64.dll \
+        $$BASEDIR_WIN\\deploy\\libssl-1_1-x64.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
@@ -78,12 +78,10 @@ WindowsBuild {
     ReleaseBuild {
         # Copy Visual Studio DLLs
         # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-        win32-msvc2015 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
-        } else {
-            error("Visual studio version not supported, installation cannot be completed.")
-        }
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_1.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_2.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
     }
 
     DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
@@ -117,6 +115,7 @@ LinuxBuild {
         libQt5Svg.so.5 \
         libQt5Test.so.5 \
         libQt5Widgets.so.5 \
+        libQt5X11Extras.so.5 \
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
         libicui18n.so* \

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,9 +24,10 @@ public:
 
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
-    Q_PROPERTY(double       complexDistance     READ complexDistance                            NOTIFY complexDistanceChanged)
-    Q_PROPERTY(bool         presetsSupported    READ presetsSupported                           CONSTANT)
-    Q_PROPERTY(QStringList  presetNames         READ presetNames                                NOTIFY presetNamesChanged)
+    Q_PROPERTY(double       complexDistance     READ complexDistance    NOTIFY complexDistanceChanged)
+    Q_PROPERTY(bool         presetsSupported    READ presetsSupported   CONSTANT)
+    Q_PROPERTY(QStringList  presetNames         READ presetNames        NOTIFY presetNamesChanged)
+    Q_PROPERTY(bool         isIncomplete        READ isIncomplete       NOTIFY isIncompleteChanged)
 
     /// @return The distance covered the complex mission item in meters.
     /// Signals complexDistanceChanged
@@ -64,7 +65,8 @@ public:
     ///     Empty string signals no support for presets.
     virtual QString presetsSettingsGroup(void) { return QString(); }
 
-    bool presetsSupported(void) { return !presetsSettingsGroup().isEmpty(); }
+    bool presetsSupported   (void) { return !presetsSettingsGroup().isEmpty(); }
+    bool isIncomplete       (void) const { return _isIncomplete; }
 
     /// This mission item attribute specifies the type of the complex item.
     static const char* jsonComplexItemTypeKey;
@@ -74,11 +76,13 @@ signals:
     void boundingCubeChanged        (void);
     void greatestDistanceToChanged  (void);
     void presetNamesChanged         (void);
+    void isIncompleteChanged        (void);
 
 protected:
     void        _savePresetJson (const QString& name, QJsonObject& presetObject);
     QJsonObject _loadPresetJson (const QString& name);
 
+    bool _isIncomplete = true;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

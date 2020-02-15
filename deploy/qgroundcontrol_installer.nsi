@@ -40,7 +40,7 @@
 Name "${APPNAME}"
 Var StartMenuFolder
 
-InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
 
 SetCompressor /SOLID /FINAL lzma
 
@@ -59,18 +59,28 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_LANGUAGE "English"
 
 Section
+  DetailPrint "Checking for 32 bit uninstaller"  
+  SetRegView 32
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
-  StrCmp $R0 "" doinstall
+  StrCmp $R0 "" check64BitUninstall doUninstall
 
+check64BitUninstall:
+  DetailPrint "Checking for 64 bit  uninstaller"  
+  SetRegView 64
+  ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
+  StrCmp $R0 "" doInstall
+
+doUninstall:
   DetailPrint "Uninstalling previous version..."  
-  ExecWait "$R0 /S _?=$INSTDIR -LEAVE_DATA=1"
-  IntCmp $0 0 doinstall
+  ExecWait "$R0 /S -LEAVE_DATA=1"
+  IntCmp $0 0 doInstall
 
   MessageBox MB_OK|MB_ICONEXCLAMATION \
         "Could not remove a previously installed ${APPNAME} version.$\n$\nPlease remove it before continuing."
   Abort
 
-doinstall:
+doInstall:
+  SetRegView 64
   SetOutPath $INSTDIR
   File /r /x ${EXENAME}.pdb /x ${EXENAME}.lib /x ${EXENAME}.exp ${DESTDIR}\*.*
 
@@ -81,7 +91,6 @@ doinstall:
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
-  SetRegView 64
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5 
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
@@ -89,7 +98,7 @@ doinstall:
   ; QGC stores its own driver version key to prevent installation if already up to date
   ; This prevents running the driver install a second time which will start up in repair mode which is confusing
   !define QGCDRIVERVERSIONKEY "SOFTWARE\QGroundControlUAVDrivers"
-  !define QGCCURRENTDRIVERVERSION 1
+  !define QGCCURRENTDRIVERVERSION 2
 
   ; If the drivers are already installed the key "HKCU/SOFTWARE\MichaelOborne\driver\installed" will be present and set to 1
   SetRegView 64
@@ -99,9 +108,8 @@ doinstall:
 
 driversInstalled:
   DetailPrint "UAV Drivers already installed. Checking version..."
-
   ; Check if the installed drivers are out of date. 
-  ; Latest version is tagged as 1. Missing key also indicates out of date driver install.
+  ; Missing key also indicates out of date driver install.
   ReadRegDWORD $0 HKCU "${QGCDRIVERVERSIONKEY}" "version"
   IntCmp $0 ${QGCCURRENTDRIVERVERSION} done driversOutOfDate done
 
@@ -118,7 +126,7 @@ installDrivers:
   DetailPrint "Installing UAV Drivers..."
   ExecWait '"msiexec" /i "driver.msi"'
   ; Set current driver version value
-  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" 1
+  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" ${QGCCURRENTDRIVERVERSION}
   goto done
 
 done:
@@ -126,6 +134,7 @@ done:
 SectionEnd 
 
 Section "Uninstall"
+  SetRegView 64
   ${GetParameters} $R0
   ${GetOptions} $R0 "-LEAVE_DATA=" $R1
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
@@ -142,6 +151,7 @@ Section "Uninstall"
 SectionEnd
 
 Section "create Start Menu Shortcuts"
+  SetRegView 64
   SetShellVarContext all
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME}.lnk" "$INSTDIR\${EXENAME}.exe" "" "$INSTDIR\${EXENAME}.exe" 0

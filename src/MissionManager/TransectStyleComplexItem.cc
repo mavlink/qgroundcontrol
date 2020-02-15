@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -230,6 +230,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         }
         _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
         _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
+        _isIncomplete = false;
 
         // Load generated mission items
         _loadedMissionItemsParent = new QObject(this);
@@ -407,6 +408,11 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
     emit coordinateChanged(_coordinate);
     emit exitCoordinateChanged(_exitCoordinate);
+
+    if (_isIncomplete) {
+        _isIncomplete = false;
+        emit isIncompleteChanged();
+    }
 
     _recalcComplexDistance();
     _recalcCameraShots();

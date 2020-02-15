@@ -31,6 +31,7 @@ Item {
     //-- The point and pixel font size values are computed at runtime
 
     property real defaultFontPointSize:     10
+    property real platformFontPointSize:    10
 
     /// You can use this property to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
@@ -105,8 +106,7 @@ Item {
     Connections {
         target: QGroundControl.settingsManager.appSettings.appFontPointSize
         onValueChanged: {
-            if(ScreenToolsController.isDebug)
-                _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
+            _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
         }
     }
 
@@ -158,40 +158,36 @@ Item {
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
+            //-- First, compute platform, default size
+            if(ScreenToolsController.isMobile) {
+                //-- Check iOS really tiny screens (iPhone 4s/5/5s)
+                if(ScreenToolsController.isiOS) {
+                    if(ScreenToolsController.isiOS && Screen.width < 570) {
+                        // For iPhone 4s size we don't fit with additional tweaks to fit screen,
+                        // we will just drop point size to make things fit. Correct size not yet determined.
+                        platformFontPointSize = 12;  // This will be lowered in a future pull
+                    } else {
+                        platformFontPointSize = 14;
+                    }
+                } else if((Screen.width / realPixelDensity) < 120) {
+                    platformFontPointSize = 11;
+                // Other Android
+                } else {
+                    platformFontPointSize = 14;
+                }
+            } else {
+                platformFontPointSize = _defaultFont.font.pointSize;
+            }
+            //-- See if we are using a custom size
             var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
             var baseSize = _appFontPointSizeFact.value
-            //-- If this is the first time (not saved in settings)
+            //-- Sanity check
             if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
-                //-- Init base size base on the platform
-                if(ScreenToolsController.isMobile) {
-                    //-- Check iOS really tiny screens (iPhone 4s/5/5s)
-                    if(ScreenToolsController.isiOS) {
-                        if(ScreenToolsController.isiOS && Screen.width < 570) {
-                            // For iPhone 4s size we don't fit with additional tweaks to fit screen,
-                            // we will just drop point size to make things fit. Correct size not yet determined.
-                            baseSize = 12;  // This will be lowered in a future pull
-                        } else {
-                            baseSize = 14;
-                        }
-                    } else if((Screen.width / realPixelDensity) < 120) {
-                        baseSize = 11;
-                    // Other Android
-                    } else {
-                        baseSize = 14;
-                    }
-                } else {
-                    baseSize = _defaultFont.font.pointSize;
-                }
-                _appFontPointSizeFact._setIgnoreQGCRebootRequired(true)
+                baseSize = platformFontPointSize;
                 _appFontPointSizeFact.value = baseSize
-                _appFontPointSizeFact._setIgnoreQGCRebootRequired(false)
-                //-- Release build doesn't get signal
-                if(!ScreenToolsController.isDebug)
-                    _screenTools._setBasePointSize(baseSize);
-            } else {
-                //-- Set size saved in settings
-                _screenTools._setBasePointSize(baseSize);
             }
+            //-- Set size saved in settings
+            _screenTools._setBasePointSize(baseSize);
         }
     }
 }

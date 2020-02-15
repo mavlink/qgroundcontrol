@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -113,7 +113,8 @@ void CameraSectionTest::init(void)
                                                             0,                              // Reserved (Set to 0)
                                                             0,                              // Interval (none)
                                                             1,                              // Take 1 photo
-                                                            NAN, NAN, NAN, NAN,             // param 4-7 reserved
+                                                            0,                              // Sequence id not used
+                                                            NAN, NAN, NAN,                  // param 5-7 reserved
                                                             true,                           // autoContinue
                                                             false),                         // isCurrentItem
                                                 this);
@@ -975,7 +976,7 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
     Mission Param #1	Reserved (Set to 0)
     Mission Param #2	Duration between two consecutive pictures (in seconds)
     Mission Param #3	Number of images to capture total - 0 for unlimited capture
-    Mission Param #4	Reserved
+    Mission Param #4	0 Unused sequence id
     */
 
     SimpleMissionItem* newValidTakePhotoItem = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);

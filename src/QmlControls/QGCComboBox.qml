@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -21,6 +21,8 @@ T.ComboBox {
     id:             control
     padding:        ScreenTools.comboBoxPadding
     spacing:        ScreenTools.defaultFontPixelWidth
+    font.pointSize: ScreenTools.defaultFontPointSize
+    font.family:    ScreenTools.normalFontFamily
     implicitWidth:  Math.max(background ? background.implicitWidth : 0,
                              contentItem.implicitWidth + leftPadding + rightPadding + padding)
     implicitHeight: Math.max(background ? background.implicitHeight : 0,
@@ -32,23 +34,39 @@ T.ComboBox {
     property bool   sizeToContents: false
     property string alternateText:  ""
 
-    property var    _qgcPal:           QGCPalette { colorGroupEnabled: enabled }
-    property real   _largestTextWidth: 0
-    property real   _popupWidth:       sizeToContents ? _largestTextWidth + leftPadding + rightPadding : control.width
+    property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
+    property real   _largestTextWidth:  0
+    property real   _popupWidth:        sizeToContents ? _largestTextWidth + itemDelegateMetrics.leftPadding + itemDelegateMetrics.rightPadding : control.width
+    property bool   _onCompleted:       false
 
     TextMetrics {
-        id: textMetrics
+        id:                 textMetrics
+        font.family:        control.font.family
+        font.pointSize:     control.font.pointSize
     }
 
-    onModelChanged: {
-        if (sizeToContents) {
+    ItemDelegate {
+        id:             itemDelegateMetrics
+        visible:        false
+        font.family:    control.font.family
+        font.pointSize: control.font.pointSize
+    }
+
+    function _adjustSizeToContents() {
+        if (_onCompleted && sizeToContents) {
             _largestTextWidth = 0
-            textMetrics.font = control.font
             for (var i = 0; i < model.length; i++){
                 textMetrics.text = model[i]
                 _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
             }
         }
+    }
+
+    onModelChanged: _adjustSizeToContents()
+
+    Component.onCompleted: {
+        _onCompleted = true
+        _adjustSizeToContents()
     }
 
     // The items in the popup
@@ -59,8 +77,9 @@ T.ComboBox {
         property string _text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
 
         TextMetrics {
-            id:    popupItemMetrics
-            text:  _text
+            id:             popupItemMetrics
+            font:           control.font
+            text:           _text
         }
 
         contentItem: Text {

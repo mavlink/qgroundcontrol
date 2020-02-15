@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,8 @@ import QtQuick                      2.11
 import QtQuick.Controls             2.4
 import QtQuick.Layouts              1.11
 import QtQuick.Dialogs              1.3
+import QtQuick.Window               2.2
+import QtCharts                     2.3
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -18,169 +20,258 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-Item {
-    anchors.fill:           parent
-    anchors.margins:        ScreenTools.defaultFontPixelWidth
+AnalyzePage {
+    headerComponent:    headerComponent
+    pageComponent:      pageComponent
 
     property var    curVehicle:         controller ? controller.activeVehicle : null
-    property int    curMessageIndex:    0
-    property var    curMessage:         curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
+    property var    curMessage:         curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curVehicle.selected) : null
     property int    curCompID:          0
-    property bool   selectionValid:     false
     property real   maxButtonWidth:     0
 
     MAVLinkInspectorController {
         id: controller
     }
 
-    DeadMouseArea {
-        anchors.fill: parent
-    }
-
-    //-- Header
-    RowLayout {
-        id:                 header
-        anchors.top:        parent.top
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        QGCLabel {
-            text:           qsTr("Inspect real time MAVLink messages.")
-        }
+    Component {
+        id:  headerComponent
+        //-- Header
         RowLayout {
-            Layout.alignment:   Qt.AlignRight
-            visible:            curVehicle ? curVehicle.compIDsStr.length > 2 : false
+            id:                 header
+            anchors.left:       parent.left
+            anchors.right:      parent.right
             QGCLabel {
-                text:           qsTr("Component ID:")
+                text:           qsTr("Inspect real time MAVLink messages.")
             }
-            QGCComboBox {
-                id:             cidCombo
-                model:          curVehicle ? curVehicle.compIDsStr : []
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                currentIndex:   0
-                onActivated: {
-                    if(curVehicle && curVehicle.compIDsStr.length > 1) {
-                        selectionValid = false
-                        if(index < 1)
-                            curCompID = 0
-                        else
-                            curCompID = curVehicle.compIDs[index - 1]
+            RowLayout {
+                Layout.alignment:   Qt.AlignRight
+                visible:            curVehicle ? curVehicle.compIDsStr.length > 2 : false
+                QGCLabel {
+                    text:           qsTr("Component ID:")
+                }
+                QGCComboBox {
+                    id:             cidCombo
+                    model:          curVehicle ? curVehicle.compIDsStr : []
+                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                    currentIndex:   0
+                    onActivated: {
+                        if(curVehicle && curVehicle.compIDsStr.length > 1) {
+                            if(index < 1)
+                                curCompID = 0
+                            else
+                                curCompID = curVehicle.compIDs[index - 1]
+                        }
                     }
                 }
             }
         }
     }
 
-    //-- Messages (Buttons)
-    QGCFlickable {
-        id:                 buttonGrid
-        anchors.top:        header.bottom
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
-        width:              maxButtonWidth
-        contentWidth:       width
-        contentHeight:      buttonCol.height
-        ColumnLayout {
-            id:             buttonCol
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        ScreenTools.defaultFontPixelHeight * 0.25
-            Repeater {
-                model:      curVehicle ? curVehicle.messages : []
-                delegate:   MAVLinkMessageButton {
-                    text:       object.name
-                    compID:     object.cid
-                    checked:    curMessageIndex === index
-                    messageHz:  object.messageHz
-                    visible:    curCompID === 0 || curCompID === compID
-                    onClicked: {
-                        selectionValid  = true
-                        curMessageIndex = index
-                    }
-                    Layout.fillWidth: true
-                }
-            }
-        }
-    }
-    //-- Message Data
-    QGCFlickable {
-        id:                 messageGrid
-        visible:            curMessage !== null && selectionValid
-        anchors.top:        buttonGrid.top
-        anchors.bottom:     parent.bottom
-        anchors.left:       buttonGrid.right
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-        anchors.right:      parent.right
-        contentWidth:       messageCol.width
-        contentHeight:      messageCol.height
-        ColumnLayout {
-            id:                 messageCol
-            spacing:            ScreenTools.defaultFontPixelHeight * 0.25
-            GridLayout {
-                columns:        2
-                columnSpacing:  ScreenTools.defaultFontPixelWidth
-                rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
-                QGCLabel {
-                    text:       qsTr("Message:")
-                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
-                }
-                QGCLabel {
-                    color:      qgcPal.buttonHighlight
-                    text:       curMessage ? curMessage.name + ' (' + curMessage.id + ') ' + curMessage.messageHz.toFixed(1) + 'Hz' : ""
-                }
-                QGCLabel {
-                    text:       qsTr("Component:")
-                }
-                QGCLabel {
-                    text:       curMessage ? curMessage.cid : ""
-                }
-                QGCLabel {
-                    text:       qsTr("Count:")
-                }
-                QGCLabel {
-                    text:       curMessage ? curMessage.count : ""
-                }
-            }
-            Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
-            QGCLabel {
-                text:       qsTr("Message Fields:")
-            }
-            Rectangle {
-                Layout.fillWidth: true
-                height:     1
-                color:      qgcPal.text
-            }
-            Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
-            GridLayout {
-                columns:        3
-                columnSpacing:  ScreenTools.defaultFontPixelWidth
-                rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
-                Repeater {
-                    model:      curMessage ? curMessage.fields : []
-                    delegate:   QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      0
-                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
-                        text:               object.name
+    Component {
+        id:                         pageComponent
+        Row {
+            width:                  availableWidth
+            height:                 availableHeight
+            spacing:                ScreenTools.defaultFontPixelWidth
+            //-- Messages (Buttons)
+            QGCFlickable {
+                id:                 buttonGrid
+                flickableDirection: Flickable.VerticalFlick
+                width:              maxButtonWidth
+                height:             parent.height
+                contentWidth:       width
+                contentHeight:      buttonCol.height
+                ColumnLayout {
+                    id:             buttonCol
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    spacing:        ScreenTools.defaultFontPixelHeight * 0.25
+                    Repeater {
+                        model:      curVehicle ? curVehicle.messages : []
+                        delegate:   MAVLinkMessageButton {
+                            text:       object.name + (object.fieldSelected ?  " *" : "")
+                            compID:     object.cid
+                            checked:    curVehicle ? (curVehicle.selected === index) : false
+                            messageHz:  object.messageHz
+                            visible:    curCompID === 0 || curCompID === compID
+                            onClicked: {
+                                curVehicle.selected = index
+                            }
+                            Layout.fillWidth: true
+                        }
                     }
                 }
-                Repeater {
-                    model:      curMessage ? curMessage.fields : []
-                    delegate:   QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      1
-                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 30
-                        Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 30
-                        wrapMode:           Text.WordWrap
-                        text:               object.value
+            }
+            //-- Message Data
+            QGCFlickable {
+                id:                 messageGrid
+                visible:            curMessage !== null && (curCompID === 0 || curCompID === curMessage.cid)
+                flickableDirection: Flickable.VerticalFlick
+                width:              parent.width - buttonGrid.width - ScreenTools.defaultFontPixelWidth
+                height:             parent.height
+                contentWidth:       width
+                contentHeight:      messageCol.height
+                Column {
+                    id:                 messageCol
+                    width:              parent.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 0.25
+                    GridLayout {
+                        columns:        2
+                        columnSpacing:  ScreenTools.defaultFontPixelWidth
+                        rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+                        QGCLabel {
+                            text:       qsTr("Message:")
+                            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
+                        }
+                        QGCLabel {
+                            color:      qgcPal.buttonHighlight
+                            text:       curMessage ? curMessage.name + ' (' + curMessage.id + ') ' + curMessage.messageHz.toFixed(1) + 'Hz' : ""
+                        }
+                        QGCLabel {
+                            text:       qsTr("Component:")
+                        }
+                        QGCLabel {
+                            text:       curMessage ? curMessage.cid : ""
+                        }
+                        QGCLabel {
+                            text:       qsTr("Count:")
+                        }
+                        QGCLabel {
+                            text:       curMessage ? curMessage.count : ""
+                        }
                     }
-                }
-                Repeater {
-                    model:      curMessage ? curMessage.fields : []
-                    delegate:   QGCLabel {
-                        Layout.row:         index
-                        Layout.column:      2
-                        text:               object.type
+                    Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
+                    //---------------------------------------------------------
+                    GridLayout {
+                        id:                 msgInfoGrid
+                        columns:            5
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth  * 0.25
+                        rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
+                        width:              parent.width
+                        QGCLabel {
+                            text:       qsTr("Name")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Value")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Type")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Plot 1")
+                        }
+                        QGCLabel {
+                            text:       qsTr("Plot 2")
+                        }
+
+                        //---------------------------------------------------------
+                        Rectangle {
+                            Layout.columnSpan:  5
+                            Layout.fillWidth:   true
+                            height:             1
+                            color:              qgcPal.text
+                        }
+                        //---------------------------------------------------------
+
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCLabel {
+                                Layout.row:         index + 2
+                                Layout.column:      0
+                                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
+                                text:               object.name
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCLabel {
+                                Layout.row:         index + 2
+                                Layout.column:      1
+                                Layout.minimumWidth: msgInfoGrid.width * 0.25
+                                Layout.maximumWidth: msgInfoGrid.width * 0.25
+                                text:               object.value
+                                elide:              Text.ElideRight
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCLabel {
+                                Layout.row:         index + 2
+                                Layout.column:      2
+                                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
+                                text:               object.type
+                                elide:              Text.ElideRight
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      3
+                                Layout.alignment:   Qt.AlignHCenter
+                                enabled: {
+                                    if(checked)
+                                        return true
+                                    if(!object.selectable)
+                                        return false
+                                    if(object.series !== null)
+                                        return false
+                                    if(chart1.chartController !== null) {
+                                        if(chart1.chartController.chartFields.length >= chart1.seriesColors.length)
+                                            return false
+                                    }
+                                    return true;
+                                }
+                                checked:            object.series !== null && object.chartIndex === 0
+                                onClicked: {
+                                    if(checked) {
+                                        chart1.addDimension(object)
+                                    } else {
+                                        chart1.delDimension(object)
+                                    }
+                                }
+                            }
+                        }
+                        Repeater {
+                            model:      curMessage ? curMessage.fields : []
+                            delegate:   QGCCheckBox {
+                                Layout.row:         index + 2
+                                Layout.column:      4
+                                Layout.alignment:   Qt.AlignHCenter
+                                enabled: {
+                                    if(checked)
+                                        return true
+                                    if(!object.selectable)
+                                        return false
+                                    if(object.series !== null)
+                                        return false
+                                    if(chart2.chartController !== null) {
+                                        if(chart2.chartController.chartFields.length >= chart2.seriesColors.length)
+                                            return false
+                                    }
+                                    return true;
+                                }
+                                checked:            object.series !== null && object.chartIndex === 1
+                                onClicked: {
+                                    if(checked) {
+                                        chart2.addDimension(object)
+                                    } else {
+                                        chart2.delDimension(object)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
+                    MAVLinkChart {
+                        id:         chart1
+                        height:     ScreenTools.defaultFontPixelHeight * 20
+                        width:      parent.width
+                    }
+                    MAVLinkChart {
+                        id:         chart2
+                        height:     ScreenTools.defaultFontPixelHeight * 20
+                        width:      parent.width
                     }
                 }
             }

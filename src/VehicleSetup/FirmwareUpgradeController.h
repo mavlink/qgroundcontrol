@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -220,6 +220,7 @@ private:
     QHash<FirmwareIdentifier, QString> _rgKakuteF7Firmware;
     QHash<FirmwareIdentifier, QString> _rgDurandalV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgFMUK66V3Firmware;
+    QHash<FirmwareIdentifier, QString> _rgModalFCV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 

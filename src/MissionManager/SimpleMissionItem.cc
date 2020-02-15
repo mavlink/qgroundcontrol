@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -177,6 +177,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param7Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
 
     connect(&_missionItem._param1Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
+    connect(&_missionItem._param4Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_possibleVehicleYawChanged);
 
     // The following changes may also change friendlyEditAllowed
     connect(&_missionItem._autoContinueFact,    &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
@@ -387,7 +388,7 @@ QString SimpleMissionItem::commandName(void) const
 QString SimpleMissionItem::abbreviation() const
 {
     if (homePosition())
-        return tr("H");
+        return tr("L");
 
     switch(command()) {
     case MAV_CMD_NAV_TAKEOFF:
@@ -832,6 +833,18 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
 double SimpleMissionItem::specifiedGimbalPitch(void)
 {
     return _cameraSection->available() ? _cameraSection->specifiedGimbalPitch() : missionItem().specifiedGimbalPitch();
+}
+
+double SimpleMissionItem::specifiedVehicleYaw(void)
+{
+    return command() == MAV_CMD_NAV_WAYPOINT ? missionItem().param4() : qQNaN();
+}
+
+void SimpleMissionItem::_possibleVehicleYawChanged(void)
+{
+    if (command() == MAV_CMD_NAV_WAYPOINT) {
+        emit specifiedVehicleYawChanged();
+    }
 }
 
 bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -285,7 +285,7 @@ void QmlObjectListModel::clearAndDeleteContents()
     endResetModel();
 }
 
-void QmlObjectListModel::beginReset(void)
+void QmlObjectListModel::beginReset()
 {
     if (_externalBeginResetModel) {
         qWarning() << "QmlObjectListModel::beginReset already set";
@@ -294,7 +294,7 @@ void QmlObjectListModel::beginReset(void)
     beginResetModel();
 }
 
-void QmlObjectListModel::endReset(void)
+void QmlObjectListModel::endReset()
 {
     if (!_externalBeginResetModel) {
         qWarning() << "QmlObjectListModel::endReset begin not set";

@@ -1,0 +1,37 @@
+#! /bin/bash
+
+# This hack is a wrapper to GraphViz dot that removes any nodes that
+# are contained in the following list.
+
+LABELS_TO_FILTER="QObject Item"
+
+ARGS=$@
+
+for ARG in ${ARGS}
+do
+  if [ -e ${ARG} ]
+  then
+    FILENAME=$(basename "${ARG}")
+    EXT="${FILENAME##*.}"
+
+    if [ ${EXT} == "dot" ]
+    then
+      DOT_FILE=${ARG}
+
+      for LABEL_TO_FILTER in ${LABELS_TO_FILTER}
+      do
+        NODE_NAME=$(grep "label=\"${LABEL_TO_FILTER}\"" ${DOT_FILE} | awk '{print $1}')
+
+        if [[ ! -z "${NODE_NAME}" ]]
+        then
+          echo "${NODE_NAME} is labelled ${LABEL_TO_FILTER}, filtering..."
+          sed -i -e "/${NODE_NAME}/d" ${DOT_FILE}
+        fi
+      done
+
+      break
+    fi
+  fi
+done
+
+/usr/local/bin/dot ${ARGS}

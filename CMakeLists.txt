@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 
 project(QGroundControl LANGUAGES C CXX)
 
@@ -9,6 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+include(FeatureSummary)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	add_compile_options(-Wall -Wextra -Wno-address-of-packed-member)
@@ -24,6 +26,8 @@ endif()
 # Add folder where are supportive functions
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
+# Configure Qt5 to get necessary variables
+include(Qt5QGCConfiguration)
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt version: ${QT_VERSION}")
 message(STATUS "Qt spec: ${QT_MKSPEC}")
@@ -32,25 +36,14 @@ set(COMPANY "Mavlink")
 set(COPYRIGHT "Copyright (c) 2018 QGroundControl. All rights reserved.")
 set(IDENTIFIER "io.mavlink.qgroundcontrol")
 
-execute_process(
-	COMMAND git submodule update --init
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	)
-
-execute_process(
-	COMMAND git describe --always --tags
-	OUTPUT_VARIABLE git_tag
-	OUTPUT_STRIP_TRAILING_WHITESPACE
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	)
-
 add_definitions(
 	-DQGC_APPLICATION_NAME="QGroundControl"
 	-DQGC_ORG_NAME="QGroundControl.org"
 	-DQGC_ORG_DOMAIN="org.qgroundcontrol"
 	)
 
-message(STATUS "QGroundControl version: ${git_tag}")
+include(Git)
+message(STATUS "QGroundControl version: ${GIT_VERSION}")
 
 #=============================================================================
 # ccache
@@ -61,6 +54,31 @@ if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+#=============================================================================
+# Compile QML
+#
+option(COMPILE_QML "Pre-compile QML files using the Qt Quick compiler." FALSE)
+add_feature_info(COMPILE_QML COMPILE_QML "Pre-compile QML files using the Qt Quick compiler.")
+if(COMPILE_QML)
+    find_package(Qt5QuickCompiler)
+
+    set_package_properties(Qt5QuickCompiler PROPERTIES
+        DESCRIPTION "Pre-compile QML files using the Qt Quick compiler."
+        TYPE OPTIONAL
+    )
+endif()
+
+#=============================================================================
+# Debug QML
+#
+option(DEBUG_QML "Build QGroundControl with QML debugging/profiling support." FALSE)
+add_feature_info(DEBUG_QML DEBUG_QML "Build QGroundControl with QML debugging/profiling support.")
+if(DEBUG_QML)
+    message(STATUS "To enable the QML debugger/profiler, run with: '-qmljsdebugger=port:1234'")
+    add_definitions(-DQMLJSDEBUGGER)
+    add_definitions(-DQT_DECLARATIVE_DEBUG)
+    add_definitions(-DQT_QML_DEBUG)
+endif()
 
 #=============================================================================
 # GStreamer
@@ -69,6 +87,7 @@ find_package(PkgConfig)
 pkg_check_modules(GST
     gstreamer-1.0>=1.14
     gstreamer-video-1.0>=1.14
+    gstreamer-gl-1.0>=1.14
 )
 
 if (GST_FOUND)
@@ -82,14 +101,21 @@ if (GST_FOUND)
         -DQGC_GST_TAISYNC_ENABLED
         -DQGC_GST_MICROHARD_ENABLED
     )
+
+    include(qmlglsink.cmake)
 endif()
+
+add_definitions(
+    -DQGC_ENABLE_MAVLINK_INSPECTOR
+)
+
 #=============================================================================
 # Qt5
 #
-include(Qt5QGCConfiguration)
 find_package(Qt5 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
+		Charts
 		Concurrent
 		Core
 		Location
@@ -122,10 +148,6 @@ endif()
 
 # Sets the default flags for compilation and linking.
 include(CompileOptions)
-
-# TODO: get qtquick compiler working
-#qtquick_compiler_add_resources(QGC_RESOURCES ${QGC_RESOURCES}
-#find_package(Qt5QuickCompiler)
 
 include_directories(
 	libs/eigen

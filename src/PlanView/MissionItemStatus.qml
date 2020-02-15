@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,9 +25,11 @@ Rectangle {
     opacity:    0.80
     clip:       true
 
-    property var missionItems                ///< List of all available mission items
+    property var    missionItems                    ///< List of all available mission items
+    property real   maxWidth:          parent.width
 
-    property real maxWidth:          parent.width
+    signal setCurrentSeqNum(int seqNum)
+
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     onMaxWidthChanged: {
@@ -60,7 +62,7 @@ Rectangle {
         orientation:            ListView.Horizontal
         spacing:                0
         clip:                   true
-        currentIndex:           _missionController.currentPlanViewIndex
+        currentIndex:           _missionController.currentPlanViewSeqNum
 
         onCountChanged: {
             var calcLength = (statusListView.count + 1) * (statusListView.count ? statusListView.contentItem.children[0].width : 1)
@@ -97,7 +99,9 @@ Rectangle {
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
                 index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
+                showSequenceNumbers:        true
                 visible:                    true
+                onClicked:                  root.setCurrentSeqNum(object.sequenceNumber)
             }
         }
     }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,20 +14,25 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
+// Important Note: Toolbar buttons must manage their checked state manually in order to support
+// view switch prevention. This means they can't be checkable or autoExclusive.
+
 Button {
     id:                 button
     height:             ScreenTools.defaultFontPixelHeight * 3
     leftPadding:        _horizontalMargin
     rightPadding:       _horizontalMargin
-    autoExclusive:      true
+    checkable:          false
 
     property bool logo: false
 
     property real _horizontalMargin: ScreenTools.defaultFontPixelWidth
 
+    onCheckedChanged: checkable = false
+
     background: Rectangle {
         anchors.fill: parent
-        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0))
+        color:  logo ? qgcPal.brandingPurple : (button.checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0))
     }
 
     contentItem: Row {

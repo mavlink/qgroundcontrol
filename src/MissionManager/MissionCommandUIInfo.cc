@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -351,7 +351,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
             MissionCmdParamInfo* paramInfo = new MissionCmdParamInfo(this);
 
             paramInfo->_label =         paramObject.value(_labelJsonKey).toString();
-            paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::unknownDecimalPlaces);
+            paramInfo->_decimalPlaces = paramObject.value(_decimalPlacesJsonKey).toInt(FactMetaData::kUnknownDecimalPlaces);
             paramInfo->_enumStrings =   paramObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
             paramInfo->_param =         i;
             paramInfo->_units =         paramObject.value(_unitsJsonKey).toString();

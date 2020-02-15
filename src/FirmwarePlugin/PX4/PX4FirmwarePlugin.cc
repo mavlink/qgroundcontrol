@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -226,10 +226,13 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
+    //-- This is arbitrary until I find how to really tell if ROI is avaiable
+    if (vehicle->multiRotor()) {
+        available |= ROIModeCapability;
+    }
     if (vehicle->multiRotor() || vehicle->vtol()) {
         available |= TakeoffVehicleCapability | OrbitModeCapability;
     }
-
     return (capabilities & available) == capabilities;
 }
 

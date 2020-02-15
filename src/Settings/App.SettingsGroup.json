@@ -12,7 +12,7 @@
     "shortDescription": "Offline editing vehicle type",
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
-    "enumValues":       "1,2,19,10,12",
+    "enumValues":       "1,2,20,10,12",
     "defaultValue":     2
 },
 {
@@ -139,6 +139,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "enforceChecklist",
+    "shortDescription": "Preflight checklist must pass before arming",
+    "longDescription":  "If this option is enabled the preflight checklist must pass before arming.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":                 "appFontPointSize",
     "shortDescription":     "Application font size",
     "longDescription":      "The point size for the default font used.",
@@ -146,8 +153,7 @@
     "units":                "pt",
     "min":                  6,
     "max":                  48,
-    "defaultValue":         0,
-    "qgcRebootRequired":    true
+    "defaultValue":         0
 },
 {
     "name":             "indoorPalette",

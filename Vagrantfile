@@ -20,13 +20,13 @@ Vagrant.configure(2) do |config|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["modifyvm", :id, "--memory", "4096"]
+    vb.customize ["modifyvm", :id, "--memory", "6144"]
     vb.customize ["modifyvm", :id, "--cpus", "1"]
     vb.gui = true
   end
   ["vmware_fusion", "vmware_workstation"].each do |p|
     config.vm.provider p do |v|
-      v.vmx["memsize"] = "4096"
+      v.vmx["memsize"] = "6144"
       v.vmx["numvcpus"] = "1"
       v.gui = true
     end
@@ -67,11 +67,38 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
 
      su - vagrant -c 'mkdir -p %{shadow_build_dir}'
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}"
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j${JOBS}"
 
-     #su - vagrant -c 'mkdir -p %{shadow_build_dir}/release/package'
-     #su - vagrant -c 'cd %{project_root_dir}; ./deploy/create_linux_appimage.sh %{project_root_dir} %{shadow_build_dir}/release %{shadow_build_dir}/release/package'
+     # write out a pair of scripts to make rebuilding on the VM easy:
+     su - vagrant -c "cat <<QMAKE >do-qmake.sh
+#!/bin/bash
+
+set -e
+set -x
+
+cd %{shadow_build_dir}
+export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
+export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
+qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}
+QMAKE
+"
+
+     su - vagrant -c "cat <<MAKE >do-make.sh
+#!/bin/bash
+
+set -e
+set -x
+
+cd %{shadow_build_dir}
+export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
+export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
+make -j${JOBS}
+MAKE
+"
+    su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
+
+    # now run the scripts:
+    su - vagrant -c ./do-qmake.sh
+    su - vagrant -c ./do-make.sh
 
    SHELL
 
@@ -81,7 +108,7 @@ Vagrant.configure(2) do |config|
     :pro => yaml_config['pro'],
     :spec => yaml_config['spec'],
     :deps_url => yaml_config['deps_url'],
-    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse']).join(' '),
+    :apt_pkgs => (travisfile['addons']['apt']['packages']+['git', 'build-essential', 'fuse', 'libsdl2-dev']).join(' '),
     :build_env => travisfile['env']['global'].select { |item| item.is_a?(String) }.join(' '),
 
     :project_root_dir => yaml_config['project_root_dir'],

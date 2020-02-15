@@ -103,13 +103,12 @@ Column {
             rowSpacing:     0
             columns:        3
 
-            Item { width: 1; height: 1 }
+            QGCLabel { text: qsTr("Gimbal") }
             QGCLabel { text: qsTr("Pitch") }
             QGCLabel { text: qsTr("Yaw") }
 
             QGCCheckBox {
                 id:                 gimbalCheckBox
-                text:               qsTr("Gimbal")
                 checked:            _camera.specifyGimbal
                 onClicked:          _camera.specifyGimbal = checked
                 Layout.fillWidth:   true

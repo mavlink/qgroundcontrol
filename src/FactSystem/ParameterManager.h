@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -66,8 +66,8 @@ public:
     void resetAllToVehicleConfiguration();
 
     /// Returns true if the specifed parameter exists
-    ///     @param componentId Component id or FactSystem::defaultComponentId
-    ///     @param name Parameter name
+    ///     @param componentId: Component id or FactSystem::defaultComponentId
+    ///     @param name: Parameter name
     bool parameterExists(int componentId, const QString& paramName);
 
     /// Returns all parameter names
@@ -75,8 +75,8 @@ public:
 
     /// Returns the specified Parameter. Returns a default empty fact is parameter does not exists. Also will pop
     /// a missing parameter error to user if parameter does not exist.
-    ///     @param componentId Component id or FactSystem::defaultComponentId
-    ///     @param name Parameter name
+    ///     @param componentId: Component id or FactSystem::defaultComponentId
+    ///     @param name: Parameter name
     Fact* getParameter(int componentId, const QString& paramName);
 
     int  getComponentId(const QString& category);

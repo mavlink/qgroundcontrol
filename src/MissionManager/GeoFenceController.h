@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -39,21 +39,21 @@ public:
     Q_PROPERTY(double               paramCircularFence  READ paramCircularFence                             NOTIFY paramCircularFenceChanged)
 
     /// Add a new inclusion polygon to the fence
-    ///     @param topLeft - Top left coordinate or map viewport
-    ///     @param topLeft - Bottom right left coordinate or map viewport
+    ///     @param topLeft: Top left coordinate or map viewport
+    ///     @param bottomRight: Bottom right left coordinate or map viewport
     Q_INVOKABLE void addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Add a new inclusion circle to the fence
-    ///     @param topLeft - Top left coordinate or map viewport
-    ///     @param topLeft - Bottom right left coordinate or map viewport
+    ///     @param topLeft: Top left coordinate or map viewport
+    ///     @param bottomRight: Bottom right left coordinate or map viewport
     Q_INVOKABLE void addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Deletes the specified polygon from the polygon list
-    ///     @param index Index of poygon to delete
+    ///     @param index: Index of poygon to delete
     Q_INVOKABLE void deletePolygon(int index);
 
     /// Deletes the specified circle from the circle list
-    ///     @param index Index of circle to delete
+    ///     @param index: Index of circle to delete
     Q_INVOKABLE void deleteCircle(int index);
 
     /// Clears the interactive bit from all fence items

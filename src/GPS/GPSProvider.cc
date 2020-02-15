@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -179,7 +179,7 @@ void GPSProvider::publishGPSSatellite()
 
 void GPSProvider::gotRTCMData(uint8_t* data, size_t len)
 {
-    QByteArray message((char*)data, len);
+    QByteArray message((char*)data, static_cast<int>(len));
     emit RTCMDataUpdate(message);
 }
 

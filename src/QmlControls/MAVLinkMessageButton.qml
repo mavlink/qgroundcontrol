@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,13 +16,12 @@ import QGroundControl.ScreenTools   1.0
 
 Button {
     id:                 control
-    height:             ScreenTools.defaultFontPixelHeight * 2
     autoExclusive:      true
     leftPadding:        ScreenTools.defaultFontPixelWidth
     rightPadding:       leftPadding
 
     property real _compIDWidth: ScreenTools.defaultFontPixelWidth * 3
-    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 7
+    property real _hzWidth:     ScreenTools.defaultFontPixelWidth * 6
     property real _nameWidth:   nameLabel.contentWidth
 
     background: Rectangle {
@@ -40,19 +39,23 @@ Button {
         QGCLabel {
             text:                   control.compID
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            verticalAlignment:      Text.AlignVCenter
+            Layout.minimumHeight:   ScreenTools.isMobile ? (ScreenTools.defaultFontPixelHeight * 2) : (ScreenTools.defaultFontPixelHeight * 1.5)
             Layout.minimumWidth:    _compIDWidth
         }
         QGCLabel {
-            id:                 nameLabel
-            text:               control.text
-            color:              checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-            Layout.fillWidth:   true
+            id:                     nameLabel
+            text:                   control.text
+            color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            Layout.fillWidth:       true
+            Layout.alignment:       Qt.AlignVCenter
         }
         QGCLabel {
             color:                  checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             text:                   messageHz.toFixed(1) + 'Hz'
             horizontalAlignment:    Text.AlignRight
             Layout.minimumWidth:    _hzWidth
+            Layout.alignment:       Qt.AlignVCenter
         }
     }
 

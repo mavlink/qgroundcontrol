@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -256,7 +256,7 @@ Item {
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Loiter"
+                label:      qsTr("Loiter")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
@@ -457,6 +457,7 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters)) +
                             QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
@@ -488,6 +489,7 @@ Item {
             visible:        _missionItem.isCurrentItem
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: Math.floor(QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters)) +
                             QGroundControl.appSettingsDistanceUnitsString + "<sup>*</sup>"
             }
@@ -522,6 +524,7 @@ Item {
             coordinate:     _missionItem.loiterTangentCoordinate
 
             sourceItem: HeightIndicator {
+                map:        _root.map
                 heightText: _missionItem.loiterAltitude.value.toFixed(1) + QGroundControl.appSettingsDistanceUnitsString
             }
         }

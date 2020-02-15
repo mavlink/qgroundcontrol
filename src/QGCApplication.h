@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -35,10 +35,21 @@ class QGCSingleton;
 class QGCToolbox;
 class QGCFileDownload;
 
-class QGCApplication : public QGuiApplication
+/**
+ * @brief The main application and management class.
+ *
+ * This class is started by the main method and provides
+ * the central management unit of the groundstation application.
+ *
+ * Needs QApplication base to support QtCharts module. This way
+ * we avoid application crashing on 5.12 when using the module.
+ *
+ * Note: `lastWindowClosed` will be sent by MessageBox popups and other
+ * dialogs, that are spawned in QML, when they are closed
+**/
+class QGCApplication : public QApplication
 {
     Q_OBJECT
-
 public:
     QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();

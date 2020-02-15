@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -319,6 +319,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 emit vehicleHeartbeatInfo(link, _message.sysid, _message.compid, highLatency2.autopilot, highLatency2.type);
             }
 
+#if 0
+            // Given the current state of SiK Radio firmwares there is no way to make the code below work.
+            // The ArduPilot implementation of SiK Radio firmware always sends MAVLINK_MSG_ID_RADIO_STATUS as a mavlink 1
+            // packet even if the vehicle is sending Mavlink 2.
+
             // Detect if we are talking to an old radio not supporting v2
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
             if (_message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _radio_version_mismatch_count != -1) {
@@ -337,6 +342,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 qDebug() << "Switching outbound to mavlink 1.0 due to incoming mavlink 1.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
             }
+#endif
 
             // Update MAVLink status on every 32th packet
             if ((totalReceiveCounter[mavlinkChannel] & 0x1F) == 0) {

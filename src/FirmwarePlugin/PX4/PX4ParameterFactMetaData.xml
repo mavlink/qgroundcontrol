@@ -1,4 +1,3 @@
-<?xml version='1.0' encoding='UTF-8'?>
 <parameters>
   <version>3</version>
   <parameter_version_major>1</parameter_version_major>
@@ -368,18 +367,206 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Battery Calibration">
-    <parameter default="-1" name="BAT_ADC_CHANNEL" type="INT32">
-      <short_desc>Battery ADC Channel</short_desc>
+    <parameter default="-1" name="BAT1_ADC_CHANNEL" type="INT32">
+      <short_desc>Battery 1 ADC Channel</short_desc>
       <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_A_PER_V" type="FLOAT">
+      <short_desc>Battery 1 current per volt (A/V)</short_desc>
+      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_CAPACITY" type="FLOAT">
+      <short_desc>Battery 1 capacity</short_desc>
+      <long_desc>Defines the capacity of battery 1 in mAh.</long_desc>
+      <min>-1.0</min>
+      <max>100000</max>
+      <unit>mAh</unit>
+      <decimal>0</decimal>
+      <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT1_N_CELLS" type="INT32">
+      <short_desc>Number of cells for battery 1</short_desc>
+      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="2">2S Battery</value>
+        <value code="3">3S Battery</value>
+        <value code="4">4S Battery</value>
+        <value code="5">5S Battery</value>
+        <value code="6">6S Battery</value>
+        <value code="7">7S Battery</value>
+        <value code="8">8S Battery</value>
+        <value code="9">9S Battery</value>
+        <value code="10">10S Battery</value>
+        <value code="11">11S Battery</value>
+        <value code="12">12S Battery</value>
+        <value code="13">13S Battery</value>
+        <value code="14">14S Battery</value>
+        <value code="15">15S Battery</value>
+        <value code="16">16S Battery</value>
+      </values>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_R_INTERNAL" type="FLOAT">
+      <short_desc>Explicitly defines the per cell internal resistance for battery 1</short_desc>
+      <long_desc>If non-negative, then this will be used in place of BAT1_V_LOAD_DROP for all calculations.</long_desc>
+      <min>-1.0</min>
+      <max>0.2</max>
+      <unit>Ohm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT1_SOURCE" type="INT32">
+      <short_desc>Battery 1 monitoring source</short_desc>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <unit>mAh</unit>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Power Module</value>
+        <value code="1">External</value>
+      </values>
+    </parameter>
+    <parameter default="4.05" name="BAT1_V_CHARGED" type="FLOAT">
+      <short_desc>Full cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT1_V_DIV" type="FLOAT">
+      <short_desc>Battery 1 voltage divider (V divider)</short_desc>
+      <long_desc>This is the divider from battery 1 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="3.5" name="BAT1_V_EMPTY" type="FLOAT">
+      <short_desc>Empty cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0.3" name="BAT1_V_LOAD_DROP" type="FLOAT">
+      <short_desc>Voltage drop per cell on full throttle</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT1_R_INTERNAL is set.</long_desc>
+      <min>0.07</min>
+      <max>0.5</max>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT2_ADC_CHANNEL" type="INT32">
+      <short_desc>Battery 2 ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_A_PER_V" type="FLOAT">
+      <short_desc>Battery 2 current per volt (A/V)</short_desc>
+      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_CAPACITY" type="FLOAT">
+      <short_desc>Battery 2 capacity</short_desc>
+      <long_desc>Defines the capacity of battery 2 in mAh.</long_desc>
+      <min>-1.0</min>
+      <max>100000</max>
+      <unit>mAh</unit>
+      <decimal>0</decimal>
+      <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT2_N_CELLS" type="INT32">
+      <short_desc>Number of cells for battery 2</short_desc>
+      <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="2">2S Battery</value>
+        <value code="3">3S Battery</value>
+        <value code="4">4S Battery</value>
+        <value code="5">5S Battery</value>
+        <value code="6">6S Battery</value>
+        <value code="7">7S Battery</value>
+        <value code="8">8S Battery</value>
+        <value code="9">9S Battery</value>
+        <value code="10">10S Battery</value>
+        <value code="11">11S Battery</value>
+        <value code="12">12S Battery</value>
+        <value code="13">13S Battery</value>
+        <value code="14">14S Battery</value>
+        <value code="15">15S Battery</value>
+        <value code="16">16S Battery</value>
+      </values>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_R_INTERNAL" type="FLOAT">
+      <short_desc>Explicitly defines the per cell internal resistance for battery 2</short_desc>
+      <long_desc>If non-negative, then this will be used in place of BAT2_V_LOAD_DROP for all calculations.</long_desc>
+      <min>-1.0</min>
+      <max>0.2</max>
+      <unit>Ohm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="BAT2_SOURCE" type="INT32">
+      <short_desc>Battery 2 monitoring source</short_desc>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <unit>mAh</unit>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Power Module</value>
+        <value code="1">External</value>
+      </values>
+    </parameter>
+    <parameter default="4.05" name="BAT2_V_CHARGED" type="FLOAT">
+      <short_desc>Full cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1.0" name="BAT2_V_DIV" type="FLOAT">
+      <short_desc>Battery 2 voltage divider (V divider)</short_desc>
+      <long_desc>This is the divider from battery 2 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <decimal>8</decimal>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="3.5" name="BAT2_V_EMPTY" type="FLOAT">
+      <short_desc>Empty cell voltage (5C load)</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0.3" name="BAT2_V_LOAD_DROP" type="FLOAT">
+      <short_desc>Voltage drop per cell on full throttle</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT2_R_INTERNAL is set.</long_desc>
+      <min>0.07</min>
+      <max>0.5</max>
+      <unit>V</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT_ADC_CHANNEL" type="INT32">
+      <short_desc>This parameter is deprecated. Please use BAT1_ADC_CHANNEL</short_desc>
     </parameter>
     <parameter default="-1.0" name="BAT_A_PER_V" type="FLOAT">
-      <short_desc>Battery current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_A_PER_V</short_desc>
       <decimal>8</decimal>
     </parameter>
     <parameter default="-1.0" name="BAT_CAPACITY" type="FLOAT">
-      <short_desc>Battery capacity</short_desc>
-      <long_desc>Defines the capacity of the attached battery.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_CAPACITY instead</short_desc>
+      <long_desc>Defines the capacity of battery 1.</long_desc>
       <min>-1.0</min>
       <max>100000</max>
       <unit>mAh</unit>
@@ -428,7 +615,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="BAT_N_CELLS" type="INT32">
-      <short_desc>Number of cells</short_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_N_CELLS instead</short_desc>
       <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
       <unit>S</unit>
       <reboot_required>true</reboot_required>
@@ -452,7 +639,7 @@ Set to 2 to use heading from motion capture</short_desc>
       </values>
     </parameter>
     <parameter default="-1.0" name="BAT_R_INTERNAL" type="FLOAT">
-      <short_desc>Explicitly defines the per cell internal resistance</short_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_R_INTERNAL instead</short_desc>
       <long_desc>If non-negative, then this will be used in place of BAT_V_LOAD_DROP for all calculations.</long_desc>
       <min>-1.0</min>
       <max>0.2</max>
@@ -460,8 +647,8 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="BAT_SOURCE" type="INT32">
-      <short_desc>Battery monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_SOURCE instead</short_desc>
+      <long_desc>Battery monitoring source. This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
@@ -470,29 +657,28 @@ Set to 2 to use heading from motion capture</short_desc>
       </values>
     </parameter>
     <parameter default="4.05" name="BAT_V_CHARGED" type="FLOAT">
-      <short_desc>Full cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_CHARGED instead</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="-1.0" name="BAT_V_DIV" type="FLOAT">
-      <short_desc>Battery voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_DIV</short_desc>
       <decimal>8</decimal>
     </parameter>
     <parameter default="3.5" name="BAT_V_EMPTY" type="FLOAT">
-      <short_desc>Empty cell voltage (5C load)</short_desc>
-      <long_desc>Defines the voltage where a single cell of the battery is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_EMPTY instead</short_desc>
+      <long_desc>Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.</long_desc>
       <unit>V</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0.3" name="BAT_V_LOAD_DROP" type="FLOAT">
-      <short_desc>Voltage drop per cell on full throttle</short_desc>
-      <long_desc>This implicitely defines the internal resistance to maximum current ratio and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.</long_desc>
+      <short_desc>This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead</short_desc>
+      <long_desc>This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.</long_desc>
       <min>0.07</min>
       <max>0.5</max>
       <unit>V</unit>
@@ -626,7 +812,7 @@ Set to 2 to use heading from motion capture</short_desc>
   <group name="Circuit Breaker">
     <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
-      <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 162128 will disable the check for an airspeed sensor. The sensor driver will not be started and it cannot be calibrated. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>162128</max>
       <reboot_required>true</reboot_required>
@@ -650,13 +836,6 @@ Set to 2 to use heading from motion capture</short_desc>
       <long_desc>Setting this parameter to 121212 will disable the flight termination action if triggered by the FailureDetector logic or if FMU is lost. This circuit breaker does not affect the RC loss, data link loss and geofence safety logic.</long_desc>
       <min>0</min>
       <max>121212</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter category="Developer" default="0" name="CBRK_GPSFAIL" type="INT32">
-      <short_desc>Circuit breaker for GPS failure detection</short_desc>
-      <long_desc>Setting this parameter to 240024 will disable the GPS failure detection. If this check is enabled, then the sensor check will fail if the GPS module is missing. It will also check for excessive signal noise on the GPS receiver and warn the user if detected. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
-      <min>0</min>
-      <max>240024</max>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_IO_SAFETY" type="INT32">
@@ -692,6 +871,13 @@ Set to 2 to use heading from motion capture</short_desc>
       <long_desc>Setting this parameter to 201607 will disable the position and velocity accuracy checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
       <min>0</min>
       <max>201607</max>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter category="Developer" default="0" name="CBRK_VTOLARMING" type="INT32">
+      <short_desc>Circuit breaker for arming in fixed-wing mode check</short_desc>
+      <long_desc>Setting this parameter to 159753 will enable arming in fixed-wing mode for VTOLs. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <min>0</min>
+      <max>159753</max>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
@@ -735,7 +921,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF height innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -743,7 +928,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF position innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -751,7 +935,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF velocity innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -759,7 +942,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <short_desc>Maximum EKF yaw innovation test ratio that will allow arming</short_desc>
       <min>0.1</min>
       <max>1.0</max>
-      <unit>rad</unit>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
@@ -786,6 +968,10 @@ Set -1 to disable the check</short_desc>
       <max>180</max>
       <unit>deg</unit>
     </parameter>
+    <parameter default="1" name="COM_ARM_MAG_STR" type="INT32">
+      <short_desc>Enable mag strength preflight check</short_desc>
+      <long_desc>Deny arming if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
+    </parameter>
     <parameter default="0" name="COM_ARM_MIS_REQ" type="INT32">
       <short_desc>Require valid mission to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a valid mission.</long_desc>
@@ -793,12 +979,6 @@ Set -1 to disable the check</short_desc>
     <parameter default="0" name="COM_ARM_SWISBTN" type="INT32">
       <short_desc>Arm switch is only a button</short_desc>
       <long_desc>The default uses the arm switch as real switch. If parameter set button gets handled like stick arming.</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Arm switch is a switch that stays on when armed</value>
-        <value code="1">Arm switch is a button that only triggers arming and disarming</value>
-      </values>
     </parameter>
     <parameter default="1" name="COM_ARM_WO_GPS" type="INT32">
       <short_desc>Allow arming without GPS</short_desc>
@@ -1158,8 +1338,14 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <increment>0.1</increment>
     </parameter>
     <parameter default="1" name="COM_RC_OVERRIDE" type="INT32">
-      <short_desc>Enable RC stick override of auto modes</short_desc>
-      <long_desc>When an auto mode is active (except a critical battery reaction) moving the RC sticks gives control back to the pilot in manual position mode immediately. Only has an effect on multicopters and VTOLS in multicopter mode.</long_desc>
+      <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
+      <long_desc>When RC stick override is enabled, moving the RC sticks immediately gives control back to the pilot (switches to manual position mode): bit 0: Enable for auto modes (except for in critical battery reaction), bit 1: Enable for offboard mode. Only has an effect on multicopters, and VTOLS in multicopter mode.</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <bitmask>
+        <bit index="0"> Enable override in auto modes</bit>
+        <bit index="1"> Enable override in offboard mode</bit>
+      </bitmask>
     </parameter>
     <parameter default="12.0" name="COM_RC_STICK_OV" type="FLOAT">
       <short_desc>RC stick override threshold</short_desc>
@@ -1211,6 +1397,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -1489,7 +1676,7 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.05" name="EKF2_EVA_NOISE" type="FLOAT">
-      <short_desc>Measurement noise for vision angle observations used when the vision system does not supply error estimates</short_desc>
+      <short_desc>Measurement noise for vision angle observations used to lower bound or replace the uncertainty included in the message</short_desc>
       <min>0.01</min>
       <unit>rad</unit>
       <decimal>2</decimal>
@@ -1502,7 +1689,7 @@ Sets the number of standard deviations used by the innovation consistency test</
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.1" name="EKF2_EVP_NOISE" type="FLOAT">
-      <short_desc>Measurement noise for vision position observations used when the vision system does not supply error estimates</short_desc>
+      <short_desc>Measurement noise for vision position observations used to lower bound or replace the uncertainty included in the message</short_desc>
       <min>0.01</min>
       <unit>m</unit>
       <decimal>2</decimal>
@@ -1515,7 +1702,7 @@ Sets the number of standard deviations used by the innovation consistency test</
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.1" name="EKF2_EVV_NOISE" type="FLOAT">
-      <short_desc>Measurement noise for vision velocity observations used when the vision system does not supply error estimates</short_desc>
+      <short_desc>Measurement noise for vision velocity observations used to lower bound or replace the uncertainty included in the message</short_desc>
       <min>0.01</min>
       <unit>m/s</unit>
       <decimal>2</decimal>
@@ -1533,17 +1720,17 @@ Sets the number of standard deviations used by the innovation consistency test</
       <long_desc>If set to true the observation noise is set from the parameters directly, if set to false the measurement noise is taken from the vision message and the parameter are used as a lower bound.</long_desc>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_X" type="FLOAT">
-      <short_desc>X position of VI sensor focal point in body frame</short_desc>
+      <short_desc>X position of VI sensor focal point in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_Y" type="FLOAT">
-      <short_desc>Y position of VI sensor focal point in body frame</short_desc>
+      <short_desc>Y position of VI sensor focal point in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_Z" type="FLOAT">
-      <short_desc>Z position of VI sensor focal point in body frame</short_desc>
+      <short_desc>Z position of VI sensor focal point in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -1612,17 +1799,17 @@ Sets the number of standard deviations used by the innovation consistency test</
       </bitmask>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_X" type="FLOAT">
-      <short_desc>X position of GPS antenna in body frame</short_desc>
+      <short_desc>X position of GPS antenna in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_Y" type="FLOAT">
-      <short_desc>Y position of GPS antenna in body frame</short_desc>
+      <short_desc>Y position of GPS antenna in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_Z" type="FLOAT">
-      <short_desc>Z position of GPS antenna in body frame</short_desc>
+      <short_desc>Z position of GPS antenna in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -1701,18 +1888,25 @@ Sets the number of standard deviations used by the innovation consistency test</
         <value code="3">Vision</value>
       </values>
     </parameter>
+    <parameter category="Developer" default="0" name="EKF2_IMU_ID" type="INT32">
+      <short_desc>Device id of IMU</short_desc>
+      <long_desc>Set to 0 to use system selected (sensor_combined) IMU, otherwise set to the device id of the desired IMU (vehicle_imu).</long_desc>
+      <values>
+        <value code="0">System Primary</value>
+      </values>
+    </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_X" type="FLOAT">
-      <short_desc>X position of IMU in body frame</short_desc>
+      <short_desc>X position of IMU in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_Y" type="FLOAT">
-      <short_desc>Y position of IMU in body frame</short_desc>
+      <short_desc>Y position of IMU in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_IMU_POS_Z" type="FLOAT">
-      <short_desc>Z position of IMU in body frame</short_desc>
+      <short_desc>Z position of IMU in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -1900,17 +2094,17 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <decimal>2</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_X" type="FLOAT">
-      <short_desc>X position of optical flow focal point in body frame</short_desc>
+      <short_desc>X position of optical flow focal point in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_Y" type="FLOAT">
-      <short_desc>Y position of optical flow focal point in body frame</short_desc>
+      <short_desc>Y position of optical flow focal point in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_OF_POS_Z" type="FLOAT">
-      <short_desc>Z position of optical flow focal point in body frame</short_desc>
+      <short_desc>Z position of optical flow focal point in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -2070,17 +2264,17 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_X" type="FLOAT">
-      <short_desc>X position of range finder origin in body frame</short_desc>
+      <short_desc>X position of range finder origin in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_Y" type="FLOAT">
-      <short_desc>Y position of range finder origin in body frame</short_desc>
+      <short_desc>Y position of range finder origin in body frame (right axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_RNG_POS_Z" type="FLOAT">
-      <short_desc>Z position of range finder origin in body frame</short_desc>
+      <short_desc>Z position of range finder origin in body frame (down axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
@@ -2850,15 +3044,6 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter default="3.0" name="FW_T_HGT_OMEGA" type="FLOAT">
-      <short_desc>Complementary filter "omega" parameter for height</short_desc>
-      <long_desc>This is the cross-over frequency (in radians/second) of the complementary filter used to fuse vertical acceleration and barometric height to obtain an estimate of height rate and height. Increasing this frequency weights the solution more towards use of the barometer, whilst reducing it weights the solution more towards use of the accelerometer data.</long_desc>
-      <min>1.0</min>
-      <max>10.0</max>
-      <unit>rad/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter default="0.8" name="FW_T_HRATE_FF" type="FLOAT">
       <short_desc>Height rate feed forward</short_desc>
       <min>0.0</min>
@@ -2976,6 +3161,18 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
   </group>
   <group name="Failure Detector">
+    <parameter default="0" name="FD_EXT_ATS_EN" type="INT32">
+      <short_desc>Enable PWM input on AUX5 or MAIN5 (depending on board) for engaging failsafe from an external
+automatic trigger system (ATS)</short_desc>
+      <long_desc>External ATS is required by ASTM F3322-18.</long_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="1900" name="FD_EXT_ATS_TRIG" type="INT32">
+      <short_desc>The PWM threshold from external automatic trigger system for engaging failsafe</short_desc>
+      <long_desc>External ATS is required by ASTM F3322-18.</long_desc>
+      <unit>microseconds</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter default="60" name="FD_FAIL_P" type="INT32">
       <short_desc>FailureDetector Max Pitch</short_desc>
       <long_desc>Maximum pitch angle before FailureDetector triggers the attitude_failure flag If flight termination is enabled (@CBRK_FLIGHTTERM set to 0), the autopilot will terminate the flight and set all the outputs to their failsafe value as soon as the attitude_failure flag is set. Setting this parameter to 0 disables the check</long_desc>
@@ -3051,6 +3248,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3067,6 +3265,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3200,6 +3399,32 @@ but also ignore less noise</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Hover Thrust Estimator">
+    <parameter default="3.0" name="HTE_ACC_GATE" type="FLOAT">
+      <short_desc>Gate size for acceleration fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1.0</min>
+      <max>10.0</max>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="0.1" name="HTE_HT_ERR_INIT" type="FLOAT">
+      <short_desc>1-sigma initial hover thrust uncertainty</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>normalized_thrust</unit>
+      <decimal>3</decimal>
+    </parameter>
+    <parameter default="0.0005" name="HTE_HT_NOISE" type="FLOAT">
+      <short_desc>Hover thrust process noise</short_desc>
+      <long_desc>Reduce to make the hover thrust estimate more stable, increase if the real hover thrust is expected to change quickly over time.</long_desc>
+      <min>0.0001</min>
+      <max>1.0</max>
+      <unit>normalized_thrust/s</unit>
+      <decimal>4</decimal>
+    </parameter>
+  </group>
   <group name="Iridium SBD">
     <parameter default="0" name="ISBD_CONFIG" type="INT32">
       <short_desc>Serial Configuration for Iridium (with MAVLink)</short_desc>
@@ -3214,6 +3439,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3685,6 +3911,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3708,6 +3935,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
+    <parameter default="1" name="MAV_0_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 0</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="1200" name="MAV_0_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 0</short_desc>
       <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
@@ -3728,6 +3960,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3751,6 +3984,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
+    <parameter default="1" name="MAV_1_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 1</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="0" name="MAV_1_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 1</short_desc>
       <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).</long_desc>
@@ -3771,6 +4009,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -3793,6 +4032,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
       </values>
+    </parameter>
+    <parameter default="1" name="MAV_2_RADIO_CTL" type="INT32">
+      <short_desc>Enable software throttling of mavlink on instance 2</short_desc>
+      <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
+      <reboot_required>True</reboot_required>
     </parameter>
     <parameter default="0" name="MAV_2_RATE" type="INT32">
       <short_desc>Maximum MAVLink sending rate for instance 2</short_desc>
@@ -3840,9 +4084,16 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="2">Always use version 2</value>
       </values>
     </parameter>
-    <parameter default="0" name="MAV_RADIO_ID" type="INT32">
-      <short_desc>MAVLink Radio ID</short_desc>
-      <long_desc>When non-zero the MAVLink app will attempt to configure the radio to this ID and re-set the parameter to 0. If the value is negative it will reset the complete radio config to factory defaults.</long_desc>
+    <parameter default="5" name="MAV_RADIO_TOUT" type="INT32">
+      <short_desc>Timeout in seconds for the RADIO_STATUS reports coming in</short_desc>
+      <long_desc>If the connected radio stops reporting RADIO_STATUS for a certain time, a warning is triggered and, if MAV_X_RADIO_CTL is enabled, the software-flow control is reset.</long_desc>
+      <min>1</min>
+      <max>250</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter default="0" name="MAV_SIK_RADIO_ID" type="INT32">
+      <short_desc>MAVLink SiK Radio ID</short_desc>
+      <long_desc>When non-zero the MAVLink app will attempt to configure the SiK radio to this ID and re-set the parameter to 0. If the value is negative it will reset the complete radio config to factory defaults. Only applies if this mavlink instance is going through a SiK radio</long_desc>
       <min>-1</min>
       <max>240</max>
     </parameter>
@@ -3895,43 +4146,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
   <group name="MKBLCTRL Testmode">
     <parameter default="0" name="MKBLCTRL_TEST" type="INT32">
       <short_desc>Test mode (Identify) of MKBLCTRL Driver</short_desc>
-    </parameter>
-  </group>
-  <group name="MPU9x50 Configuration">
-    <parameter default="4" name="MPU_ACC_LPF_ENM" type="INT32">
-      <short_desc>Low pass filter frequency for Accelerometer</short_desc>
-      <values>
-        <value code="0">MPU9X50_ACC_LPF_460HZ</value>
-        <value code="1">MPU9X50_ACC_LPF_184HZ</value>
-        <value code="2">MPU9X50_ACC_LPF_92HZ</value>
-        <value code="3">MPU9X50_ACC_LPF_41HZ</value>
-        <value code="4">MPU9X50_ACC_LPF_20HZ</value>
-        <value code="5">MPU9X50_ACC_LPF_10HZ</value>
-        <value code="6">MPU9X50_ACC_LPF_5HZ</value>
-        <value code="7">MPU9X50_ACC_LPF_460HZ_NOLPF</value>
-      </values>
-    </parameter>
-    <parameter default="4" name="MPU_GYRO_LPF_ENM" type="INT32">
-      <short_desc>Low pass filter frequency for Gyro</short_desc>
-      <values>
-        <value code="0">MPU9X50_GYRO_LPF_250HZ</value>
-        <value code="1">MPU9X50_GYRO_LPF_184HZ</value>
-        <value code="2">MPU9X50_GYRO_LPF_92HZ</value>
-        <value code="3">MPU9X50_GYRO_LPF_41HZ</value>
-        <value code="4">MPU9X50_GYRO_LPF_20HZ</value>
-        <value code="5">MPU9X50_GYRO_LPF_10HZ</value>
-        <value code="6">MPU9X50_GYRO_LPF_5HZ</value>
-        <value code="7">MPU9X50_GYRO_LPF_3600HZ_NOLPF</value>
-      </values>
-    </parameter>
-    <parameter default="2" name="MPU_SAMPLE_R_ENM" type="INT32">
-      <short_desc>Sample rate in Hz</short_desc>
-      <values>
-        <value code="0">MPU9x50_SAMPLE_RATE_100HZ</value>
-        <value code="1">MPU9x50_SAMPLE_RATE_200HZ</value>
-        <value code="2">MPU9x50_SAMPLE_RATE_500HZ</value>
-        <value code="3">MPU9x50_SAMPLE_RATE_1000HZ</value>
-      </values>
     </parameter>
   </group>
   <group name="Mission">
@@ -4125,7 +4339,21 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="1">Warn only</value>
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
+        <value code="4">Position Hold mode</value>
       </values>
+    </parameter>
+    <parameter default="500" name="NAV_TRAFF_A_RADM" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID RADIUS MANNED</short_desc>
+      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Manned Aviation</long_desc>
+      <min>500</min>
+      <unit>m</unit>
+    </parameter>
+    <parameter default="10" name="NAV_TRAFF_A_RADU" type="FLOAT">
+      <short_desc>Set NAV TRAFFIC AVOID RADIUS</short_desc>
+      <long_desc>Defines the Radius where NAV TRAFFIC AVOID is Called For Unmanned Aviation</long_desc>
+      <min>10</min>
+      <max>500</max>
+      <unit>m</unit>
     </parameter>
   </group>
   <group name="Mixer Output">
@@ -4392,20 +4620,9 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="0.5" name="MPC_ACC_HOR_ESTM" type="FLOAT">
-      <short_desc>Horizontal acceleration in manual modes when te estimator speed limit is removed.
-If full stick is being applied and the estimator stops demanding a speed limit,
-which it had been before (e.g if GPS is gained while flying on optical flow/vision only),
-the vehicle will accelerate at this rate until the normal position control speed is achieved</short_desc>
-      <min>0.2</min>
-      <max>2.0</max>
-      <unit>m/s/s</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
-    </parameter>
     <parameter default="5.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
-      <long_desc>Manual mode: Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3. Auto mode: Used with MPC_AUTO_MODE 0 only. For MPC_AUTO_MODE 1, MPC_ACC_HOR is always used.</long_desc>
+      <long_desc>Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s/s</unit>
@@ -4430,23 +4647,6 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="1">Terrain following</value>
         <value code="2">Terrain hold</value>
       </values>
-    </parameter>
-    <parameter default="1" name="MPC_AUTO_MODE" type="INT32">
-      <short_desc>Auto sub-mode</short_desc>
-      <values>
-        <value code="0">Default line tracking</value>
-        <value code="1">Jerk-limited trajectory</value>
-      </values>
-    </parameter>
-    <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
-      <short_desc>Cruise speed when angle prev-current/current-next setpoint
-is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
-      <long_desc>Applies only in AUTO modes (includes also RTL / hold / etc.)</long_desc>
-      <min>1.0</min>
-      <max>20.0</max>
-      <unit>m/s</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
     </parameter>
     <parameter default="5.0" name="MPC_DEC_HOR_SLOW" type="FLOAT">
       <short_desc>Slow horizontal manual deceleration for manual mode</short_desc>
@@ -4479,7 +4679,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="8.0" name="MPC_JERK_AUTO" type="FLOAT">
       <short_desc>Jerk limit in auto mode</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility. Note: This is only used in jerk-limited trajectory mode (MPC_AUTO_MODE 1)</long_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility.</long_desc>
       <min>5.0</min>
       <max>80.0</max>
       <unit>m/s/s/s</unit>
@@ -4506,7 +4706,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="10.0" name="MPC_LAND_ALT1" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" to enable a smooth descent experience Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
+      <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4514,7 +4714,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_LAND_ALT2" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
-      <long_desc>Below this altitude descending velocity gets limited to "MPC_LAND_SPEED" Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
+      <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
       <max>122</max>
       <unit>m</unit>
@@ -4523,6 +4723,13 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     <parameter default="0.7" name="MPC_LAND_SPEED" type="FLOAT">
       <short_desc>Landing descend rate</short_desc>
       <min>0.6</min>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="2." name="MPC_LAND_VEL_XY" type="FLOAT">
+      <short_desc>Maximum horizontal velocity during landing
+Set the value higher than the otherwise expected maximum to disable any slowdown</short_desc>
+      <min>0</min>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
@@ -4730,12 +4937,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>1.5</max>
       <decimal>2</decimal>
-    </parameter>
-    <parameter default="0.3" name="MPC_Z_TRAJ_P" type="FLOAT">
-      <short_desc>Proportional gain for vertical trajectory position error</short_desc>
-      <min>0.1</min>
-      <max>1.0</max>
-      <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
@@ -5871,12 +6072,6 @@ default 1.5 turns per second</short_desc>
       <increment>0.1</increment>
     </parameter>
   </group>
-  <group name="RC Receiver Configuration">
-    <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
-      <short_desc>RC receiver type</short_desc>
-      <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
-    </parameter>
-  </group>
   <group name="RTPS">
     <parameter default="0" name="RTPS_CONFIG" type="INT32">
       <short_desc>Serial Configuration for FastRTPS</short_desc>
@@ -5891,6 +6086,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -5907,6 +6103,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -7602,6 +7799,7 @@ default 1.5 turns per second</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -7878,7 +8076,7 @@ FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
 A taildragger with stearable wheel might need to pitch up
 a little to keep it's wheel on the ground before airspeed
 to takeoff is reached</short_desc>
-      <min>0.0</min>
+      <min>-10.0</min>
       <max>20.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
@@ -7897,6 +8095,10 @@ to takeoff is reached</short_desc>
     </parameter>
   </group>
   <group name="SD Logging">
+    <parameter default="0" name="SDLOG_BOOT_BAT" type="INT32">
+      <short_desc>Battery-only Logging</short_desc>
+      <long_desc>When enabled, logging will not start from boot if battery power is not detected (e.g. powered via USB on a test bench). This prevents extraneous flight logs from being created during bench testing. Note that this only applies to log-from-boot modes. This has no effect on arm-based modes.</long_desc>
+    </parameter>
     <parameter default="0" name="SDLOG_DIRS_MAX" type="INT32">
       <short_desc>Maximum number of log directories to keep</short_desc>
       <long_desc>If there are more log directories than this value, the system will delete the oldest directories during startup. In addition, the system will delete old logs if there is not enough free space left. The minimum amount is 300 MB. If this is set to 0, old directories will only be removed if the free space falls below the minimum. Note: this does not apply to mission log files.</long_desc>
@@ -7956,6 +8158,14 @@ to takeoff is reached</short_desc>
     </parameter>
   </group>
   <group name="SITL">
+    <parameter default="0" name="SIM_ACCEL_BLOCK" type="INT32">
+      <short_desc>Simulator block accelerometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation accelerometer data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_BARO_BLOCK" type="INT32">
+      <short_desc>Simulator block barometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation barometer data.</long_desc>
+    </parameter>
     <parameter default="60" name="SIM_BAT_DRAIN" type="FLOAT">
       <short_desc>Simulator Battery drain interval</short_desc>
       <min>1</min>
@@ -7971,6 +8181,29 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <max>100</max>
       <unit>%</unit>
       <increment>0.1</increment>
+    </parameter>
+    <parameter default="0" name="SIM_DPRES_BLOCK" type="INT32">
+      <short_desc>Simulator block differential pressure data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation differential pressure data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_GPS_BLOCK" type="INT32">
+      <short_desc>Simulator block GPS data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation GPS data.</long_desc>
+    </parameter>
+    <parameter default="0.0" name="SIM_GPS_NOISE_X" type="FLOAT">
+      <short_desc>Simulator GPS noise multiplier</short_desc>
+      <min>0</min>
+      <max>10</max>
+      <unit>%</unit>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter default="0" name="SIM_GYRO_BLOCK" type="INT32">
+      <short_desc>Simulator block gyroscope data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation gyroscope data.</long_desc>
+    </parameter>
+    <parameter default="0" name="SIM_MAG_BLOCK" type="INT32">
+      <short_desc>Simulator block magnetometer data</short_desc>
+      <long_desc>Enable to block the publication of any incoming simulation magnetometer data.</long_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
@@ -8061,20 +8294,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO0_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO0_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO0_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO0_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="1" name="CAL_GYRO1_EN" type="INT32">
       <short_desc>Gyro 1 enabled</short_desc>
@@ -8085,20 +8309,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO1_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO1_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO1_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO1_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="1" name="CAL_GYRO2_EN" type="INT32">
       <short_desc>Gyro 2 enabled</short_desc>
@@ -8109,20 +8324,11 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO2_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_XSCALE" type="FLOAT">
-      <short_desc>Gyro X-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO2_YOFF" type="FLOAT">
       <short_desc>Gyro Y-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_YSCALE" type="FLOAT">
-      <short_desc>Gyro Y-axis scaling factor</short_desc>
-    </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO2_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="CAL_GYRO2_ZSCALE" type="FLOAT">
-      <short_desc>Gyro Z-axis scaling factor</short_desc>
     </parameter>
     <parameter category="System" default="0" name="CAL_GYRO_PRIME" type="INT32">
       <short_desc>Primary gyro ID</short_desc>
@@ -8431,7 +8637,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
       <short_desc>Bitfield selecting mag sides for calibration</short_desc>
-      <long_desc>DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <long_desc>If set to two side calibration, only the offsets are estimated, the scale calibration is left unchanged. Thus an initial six side calibration is recommended. Bits: DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
       <min>34</min>
       <max>63</max>
       <values>
@@ -8441,16 +8647,40 @@ is less than 50% of this value</short_desc>
       </values>
     </parameter>
     <parameter default="30.0" name="IMU_ACCEL_CUTOFF" type="FLOAT">
-      <short_desc>Driver level cutoff frequency for accel</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the accel driver. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <short_desc>Low pass filter cutoff frequency for accel</short_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary accelerometer. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="10.0" name="IMU_DGYRO_CUTOFF" type="FLOAT">
+      <short_desc>Cutoff frequency for angular acceleration</short_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter used on the time derivative of the measured angular velocity. Set to 0 to disable the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="30.0" name="IMU_GYRO_CUTOFF" type="FLOAT">
-      <short_desc>Driver level cutoff frequency for gyro</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the gyro driver. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <short_desc>Low pass filter cutoff frequency for gyro</short_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary gyro. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <min>0</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="20.0" name="IMU_GYRO_NF_BW" type="FLOAT">
+      <short_desc>Notch filter bandwidth for gyro</short_desc>
+      <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF_FREQ" to activate the filter and to set the notch frequency.</long_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0.0" name="IMU_GYRO_NF_FREQ" type="FLOAT">
+      <short_desc>Notch filter frequency for gyro</short_desc>
+      <long_desc>The center frequency for the 2nd order notch filter on the primary gyro. This filter can be enabled to avoid feedback amplification of structural resonances at a specific frequency. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter. See "IMU_GYRO_NF_BW" to set the bandwidth of the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
@@ -8458,7 +8688,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="IMU_GYRO_RATEMAX" type="INT32">
       <short_desc>Gyro control data maximum publication rate</short_desc>
-      <long_desc>This is the maximum rate the gyro control data (sensor_gyro_control) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
+      <long_desc>This is the maximum rate the gyro control data (sensor_gyro) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
       <min>0</min>
       <max>2000</max>
       <unit>Hz</unit>
@@ -8493,6 +8723,27 @@ is less than 50% of this value</short_desc>
       <max>0.1</max>
       <decimal>10</decimal>
       <increment>.000000001</increment>
+    </parameter>
+    <parameter default="80" name="PCF8583_ADDR" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) i2c address</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="80">0x50</value>
+        <value code="81">0x51</value>
+      </values>
+    </parameter>
+    <parameter default="1000000" name="PCF8583_POOL" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) pool interval</short_desc>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="500000" name="PCF8583_RESET" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) counter reset value</short_desc>
+      <long_desc>Internal device counter is reset to 0 when overun this value, counter is able to store upto 6 digits reset of counter takes some time - measurement with reset has worse accurancy</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">- reset avter every measurement</value>
+      </values>
     </parameter>
     <parameter default="1013.25" name="SENS_BARO_QNH" type="FLOAT">
       <short_desc>QNH for barometer</short_desc>
@@ -8572,6 +8823,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -8726,6 +8978,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9150,6 +9403,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9169,6 +9423,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9185,6 +9440,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9203,6 +9459,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9242,6 +9499,39 @@ is less than 50% of this value</short_desc>
     <parameter default="0" name="SER_GPS2_BAUD" type="INT32">
       <short_desc>Baudrate for the GPS 2 Serial Port</short_desc>
       <long_desc>Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SER_GPS3_BAUD" type="INT32">
+      <short_desc>Baudrate for the GPS 3 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the GPS 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto</value>
@@ -9624,33 +9914,6 @@ is less than 50% of this value</short_desc>
       <increment>0.5</increment>
     </parameter>
   </group>
-  <group name="Snapdragon UART ESC">
-    <parameter default="250000" name="UART_ESC_BAUD" type="INT32">
-      <short_desc>ESC UART baud rate</short_desc>
-      <long_desc>Default rate is 250Kbps, whic is used in off-the-shelf QRP ESC products.</long_desc>
-    </parameter>
-    <parameter default="2" name="UART_ESC_MODEL" type="INT32">
-      <short_desc>ESC model</short_desc>
-      <long_desc>See esc_model_t enum definition in uart_esc_dev.h for all supported ESC model enum values.</long_desc>
-      <values>
-        <value code="0">ESC_200QX</value>
-        <value code="1">ESC_350QX</value>
-        <value code="2">ESC_210QC</value>
-      </values>
-    </parameter>
-    <parameter default="4" name="UART_ESC_MOTOR1" type="INT32">
-      <short_desc>Motor 1 Mapping</short_desc>
-    </parameter>
-    <parameter default="2" name="UART_ESC_MOTOR2" type="INT32">
-      <short_desc>Motor 2 Mapping</short_desc>
-    </parameter>
-    <parameter default="1" name="UART_ESC_MOTOR3" type="INT32">
-      <short_desc>Motor 3 Mapping</short_desc>
-    </parameter>
-    <parameter default="3" name="UART_ESC_MOTOR4" type="INT32">
-      <short_desc>Motor 4 Mapping</short_desc>
-    </parameter>
-  </group>
   <group name="System">
     <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
@@ -9795,6 +10058,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -9811,6 +10075,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
@@ -10341,17 +10606,6 @@ is less than 50% of this value</short_desc>
       <min>1</min>
       <max>125</max>
     </parameter>
-    <parameter default="1000000" name="ESC_BITRATE" type="INT32">
-      <short_desc>UAVCAN CAN bus bitrate</short_desc>
-      <min>20000</min>
-      <max>1000000</max>
-    </parameter>
-    <parameter default="120" name="ESC_NODE_ID" type="INT32">
-      <short_desc>UAVCAN Node ID</short_desc>
-      <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
-      <min>1</min>
-      <max>125</max>
-    </parameter>
     <parameter default="1000000" name="UAVCAN_BITRATE" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
@@ -10382,6 +10636,45 @@ is less than 50% of this value</short_desc>
       <min>1</min>
       <max>125</max>
       <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
+  <group name="UUV Attitude Control">
+    <parameter default="0.0" name="UUV_DIRCT_PITCH" type="FLOAT">
+      <short_desc>Direct pitch input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_ROLL" type="FLOAT">
+      <short_desc>Direct roll input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_THRUST" type="FLOAT">
+      <short_desc>Direct thrust input</short_desc>
+    </parameter>
+    <parameter default="0.0" name="UUV_DIRCT_YAW" type="FLOAT">
+      <short_desc>Direct yaw input</short_desc>
+    </parameter>
+    <parameter default="0" name="UUV_INPUT_MODE" type="INT32">
+      <short_desc>Select Input Mode</short_desc>
+      <values>
+        <value code="0">use Attitude Setpoints</value>
+        <value code="1">Direct Feedthrough</value>
+      </values>
+    </parameter>
+    <parameter default="2.0" name="UUV_PITCH_D" type="FLOAT">
+      <short_desc>Pitch differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_PITCH_P" type="FLOAT">
+      <short_desc>Pitch proportional gain</short_desc>
+    </parameter>
+    <parameter default="1.5" name="UUV_ROLL_D" type="FLOAT">
+      <short_desc>Roll differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_ROLL_P" type="FLOAT">
+      <short_desc>Roll proportional gain</short_desc>
+    </parameter>
+    <parameter default="2.0" name="UUV_YAW_D" type="FLOAT">
+      <short_desc>Yaw differential gain</short_desc>
+    </parameter>
+    <parameter default="4.0" name="UUV_YAW_P" type="FLOAT">
+      <short_desc>Yawh proportional gain</short_desc>
     </parameter>
   </group>
   <group name="VTOL Attitude Control">
@@ -10658,6 +10951,12 @@ MPC_Z_VEL_MAX_DN at zero throttle, and 0.5 * MPC_LAND_SPEED at full throttle</sh
         <value code="0">Fixed descent speed of MPC_LAND_SPEED</value>
         <value code="1">User assisted descent speed</value>
       </values>
+    </parameter>
+    <parameter default="2" name="PCF8583_MAGNET" type="INT32">
+      <short_desc>PCF8583 rotorfreq (i2c) magnet count</short_desc>
+      <long_desc>Nmumber of signals per rotation of rotor</long_desc>
+      <min>1</min>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>

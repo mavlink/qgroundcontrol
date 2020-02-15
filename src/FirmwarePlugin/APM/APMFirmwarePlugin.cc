@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,7 @@
 #include "APMAirframeComponentController.h"
 #include "APMSensorsComponentController.h"
 #include "APMFollowComponentController.h"
+#include "APMSubMotorComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "QGCFileDownload.h"
@@ -160,6 +161,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
     qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
     qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
     qmlRegisterType<APMFollowComponentController>       ("QGroundControl.Controllers", 1, 0, "APMFollowComponentController");
+    qmlRegisterType<APMSubMotorComponentController>     ("QGroundControl.Controllers", 1, 0, "APMSubMotorComponentController");
 }
 
 AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
@@ -876,8 +878,11 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
 
     case MAV_TYPE_SUBMARINE:
-        if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.5.x
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.6dev.xml");
+        if (vehicle->versionCompare(4, 0, 0) >= 0) { // 4.0.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.4.0.xml");
+        }
+        if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.6.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.6.xml");
         }
         if (vehicle->versionCompare(3, 5, 0) >= 0) { // 3.5.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.5.xml");

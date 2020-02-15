@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -49,13 +49,15 @@ SetupPage {
             property int  _followComboMaintainIndex:    0
             property int  _followComboSpecifyIndex:     1
             property bool _followMaintain:              followPositionCombo.currentIndex === _followComboMaintainIndex
-            property bool _isFollowMeSetup:             _followEnabled.rawValue == 1 && _followParamsAvailable && _followOffsetType.rawValue == 1 && (_roverFirmware || (!_roverFirmware && _followAltitudeType.rawValue == 1)) && _followSysId.rawValue == 0
+            property bool _isFollowMeSetup:             _followEnabled.rawValue == 1 && _followParamsAvailable && _followOffsetType.rawValue == _followOffsetTypeHeadingRelative && _followSysId.rawValue == 0
             property bool _roverFirmware:               controller.roverFirmware
 
-            readonly property int _followYawBehaviorNone:   0
-            readonly property int _followYawBehaviorFace:   1
-            readonly property int _followYawBehaviorSame:   2
-            readonly property int _followYawBehaviorFlight: 3
+            readonly property int _followYawBehaviorNone:           0
+            readonly property int _followYawBehaviorFace:           1
+            readonly property int _followYawBehaviorSame:           2
+            readonly property int _followYawBehaviorFlight:         3
+            readonly property int _followOffsetTypeHeadingRelative: 1
+            readonly property int _followAltitudeTypeRelative:      1
 
             Component.onCompleted: _setUIFromParams()
 
@@ -89,7 +91,7 @@ SetupPage {
                 _followOffsetType.rawValue =    1   // Relative to vehicle
                 _followSysId.rawValue =         0   // Follow first message sent
                 if (!_roverFirmware) {
-                    _followAltitudeType.rawValue = 1   // Altitude is relative
+                    _followAltitudeType.rawValue = _followAltitudeTypeRelative
                 }
 
                 controller.distance.value = controller.distance.defaultValue
@@ -112,10 +114,10 @@ SetupPage {
                     } else {
                         _followOffsetX.rawValue = Math.sin(angleRadians) * distance
                         _followOffsetY.rawValue = Math.cos(angleRadians) * distance
-                        if (_followOffsetX.rawValue < 0.0001) {
+                        if (Math.abs(_followOffsetX.rawValue) < 0.0001) {
                             _followOffsetX.rawValue = 0
                         }
-                        if (_followOffsetY.rawValue < 0.0001) {
+                        if (Math.abs(_followOffsetY.rawValue) < 0.0001) {
                             _followOffsetY.rawValue = 0
                         }
                     }
