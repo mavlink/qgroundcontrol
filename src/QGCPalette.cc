@@ -77,6 +77,9 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(alertText,            "#000000", "#000000", "#000000", "#000000")
     DECLARE_QGC_COLOR(missionItemEditor,    "#585858", "#dbfef8", "#585858", "#585d83")
     DECLARE_QGC_COLOR(hoverColor,           "#585858", "#dbfef8", "#585858", "#585d83")
+    DECLARE_QGC_COLOR(statusFailedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
+    DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
+    DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
 
     // Colors are not affecting by theming
     DECLARE_QGC_COLOR(mapWidgetBorderLight, "#ffffff", "#ffffff", "#ffffff", "#ffffff")
