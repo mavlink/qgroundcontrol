@@ -17,6 +17,7 @@ import QGroundControl.ScreenTools   1.0
 Column  {
     property string name
     property bool   passed: false
+    property bool   failed: false
 
     spacing: ScreenTools.defaultFontPixelHeight / 2
 
@@ -47,6 +48,7 @@ Column  {
         anchors.left:   parent.left
         anchors.right:  parent.right
         text:           name + (passed ? qsTr(" (passed)") : "")
+        color:          failed ? qgcPal.statusFailedText : (passed ? qgcPal.statusPassedText : qgcPal.statusPendingText)
     }
 
     Column {
@@ -58,9 +60,11 @@ Column  {
             for (var i=0; i<children.length; i++) {
                 if (!children[i].passed) {
                     passed = false
+                    failed = children[i].failed
                     return
                 }
             }
+            failed = false
             passed = true
         }
     }

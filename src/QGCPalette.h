@@ -115,6 +115,9 @@ public:
     DEFINE_QGC_COLOR(alertText,             setAlertText)
     DEFINE_QGC_COLOR(missionItemEditor,     setMissionItemEditor)
     DEFINE_QGC_COLOR(hoverColor,            setHoverColor)
+    DEFINE_QGC_COLOR(statusFailedText,      setstatusFailedText)
+    DEFINE_QGC_COLOR(statusPassedText,      setstatusPassedText)
+    DEFINE_QGC_COLOR(statusPendingText,     setstatusPendingText)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();
