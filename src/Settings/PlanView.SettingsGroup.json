@@ -16,5 +16,12 @@
     "shortDescription": "Show/Hide the mission item status display",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "enableROI",
+    "shortDescription": "Enable ROI",
+    "longDescription":  "If this option is enabled, ROI locations can be set while planning a mission.",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]

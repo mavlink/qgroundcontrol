@@ -53,6 +53,7 @@ Item {
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
+    property bool   _enableROI:                         _planViewSettings.enableROI
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -606,7 +607,7 @@ Item {
                     name:               _missionController.isROIActive ? qsTr("Cancel ROI") : qsTr("ROI"),
                     iconSource:         "/qmlimages/MapAddMission.svg",
                     buttonEnabled:      true,
-                    buttonVisible:      _isMissionLayer,
+                    buttonVisible:      _isMissionLayer && _enableROI,
                     toggle:             !_missionController.isROIActive
                 },
                 {
