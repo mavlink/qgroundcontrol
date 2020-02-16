@@ -30,6 +30,9 @@ Map {
     gesture.flickDeceleration:  3000
     plugin:                     Plugin { name: "QGroundControl" }
 
+    // https://bugreports.qt.io/browse/QTBUG-82185
+    opacity:                    0.99
+
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
     property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
