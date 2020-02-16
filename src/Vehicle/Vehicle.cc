@@ -3469,6 +3469,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         _mavCommandAckTimer.stop();
         showError = _mavCommandQueue[0].showError;
         _mavCommandQueue.removeFirst();
+        _sendNextQueuedMavCommand();
     }
 
     emit mavCommandResult(_id, message.compid, ack.command, ack.result, false /* noResponsefromVehicle */);
@@ -3493,8 +3494,6 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
             break;
         }
     }
-
-    _sendNextQueuedMavCommand();
 }
 
 void Vehicle::setPrearmError(const QString& prearmError)
