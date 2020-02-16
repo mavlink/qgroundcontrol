@@ -70,6 +70,12 @@ Item {
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
 
+    on_CanArmChanged: {
+        if (_guidedController.showStartMission && _canArm) {
+            _guidedController.confirmAction(_guidedController.actionStartMission)
+        }
+    }
+
     function setStates() {
         QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
         if(mainIsMap) {
