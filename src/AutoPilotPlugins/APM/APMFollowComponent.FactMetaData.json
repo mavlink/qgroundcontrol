@@ -20,7 +20,7 @@
 },
 {
     "name":             "height",
-    "shortDescription": "Vertical distance from ground station to vehicle",
+    "shortDescription": "Vertical distance from Launch (home) position to vehicle",
     "type":             "double",
     "min":              0,
     "decimalPlaces":    1,

@@ -49,20 +49,37 @@ SetupPage {
             property int  _followComboMaintainIndex:    0
             property int  _followComboSpecifyIndex:     1
             property bool _followMaintain:              followPositionCombo.currentIndex === _followComboMaintainIndex
-            property bool _isFollowMeSetup:             _followEnabled.rawValue == 1 && _followParamsAvailable && _followOffsetType.rawValue == _followOffsetTypeHeadingRelative && _followSysId.rawValue == 0
+            property bool _supportedSetup:              true
             property bool _roverFirmware:               controller.roverFirmware
+            property bool _showMainSetup:               _followEnabled.rawValue == 1 && _supportedSetup
+            property bool _showOffsetsSetup:            _showMainSetup && !_followMaintain
 
             readonly property int _followYawBehaviorNone:           0
             readonly property int _followYawBehaviorFace:           1
             readonly property int _followYawBehaviorSame:           2
             readonly property int _followYawBehaviorFlight:         3
-            readonly property int _followOffsetTypeHeadingRelative: 1
+            readonly property int _followAltitudeTypeAbsolute:      0
             readonly property int _followAltitudeTypeRelative:      1
+            readonly property int _followOffsetTypeRelative:        1
 
             Component.onCompleted: _setUIFromParams()
 
+            function validateSupportedParamSetup() {
+                var followSysIdOk = _followSysId.rawValue == QGroundControl.mavlinkSystemID
+                var followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
+                var followAltOk = true
+                var followYawOk = true
+                if (!_roverFirmware) {
+                    followAltOk = _followAltitudeType.rawValue == _followAltitudeTypeRelative
+                    followYawOk = _followYawBehavior.rawValue == _followYawBehaviorNone || _followYawBehavior.rawValue == _followYawBehaviorFace || _followYawBehavior.rawValue == _followYawBehaviorFlight
+                }
+                _supportedSetup = followOffsetOk && followAltOk && followYawOk && followSysIdOk
+                console.log("_supportedSetup", _supportedSetup, followSysIdOk, followOffsetOk, followAltOk, followYawOk)
+                return _supportedSetup
+            }
+
             function _setUIFromParams() {
-                if (!_followParamsAvailable) {
+                if (!_followParamsAvailable || !validateSupportedParamSetup()) {
                     return
                 }
 
@@ -83,15 +100,24 @@ SetupPage {
                 }
                 controller.height.rawValue = -_followOffsetZ.rawValue
                 if (!_roverFirmware) {
-                    pointVehicleCombo.currentIndex = _followYawBehavior.rawValue
+                    var comboIndex = -1
+                    for (var i=0; i<pointVehicleCombo.rgValues.length; i++) {
+                        if (pointVehicleCombo.rgValues[i] == _followYawBehavior.rawValue) {
+                            comboIndex = i
+                            break
+                        }
+                    }
+
+                    pointVehicleCombo.currentIndex = comboIndex
                 }
             }
 
             function _setFollowMeParamDefaults() {
-                _followOffsetType.rawValue =    1   // Relative to vehicle
-                _followSysId.rawValue =         0   // Follow first message sent
+                _followSysId.rawValue = QGroundControl.mavlinkSystemID
+                _followOffsetType.rawValue = _followOffsetTypeRelative
                 if (!_roverFirmware) {
                     _followAltitudeType.rawValue = _followAltitudeTypeRelative
+                    _followYawBehavior.rawValue = _followYawBehaviorFace
                 }
 
                 controller.distance.value = controller.distance.defaultValue
@@ -153,12 +179,11 @@ SetupPage {
                     if (!_roverFirmware) {
                         _followAltitudeType =   controller.getParameterFact(-1, "FOLL_ALT_TYPE")
                         _followYawBehavior =    controller.getParameterFact(-1, "FOLL_YAW_BEHAVE")
-                        _followYawBehavior.rawValue = 1   // Point at GCS
                     }
 
                     _followParamsAvailable = true
                     vehicleParamRefreshLabel.visible = false
-                    _setFollowMeParamDefaults()
+                    validateSupportedParamSetup()
                 }
             }
 
@@ -166,14 +191,13 @@ SetupPage {
 
             QGCCheckBox {
                 text:       qsTr("Enable Follow Me")
-                checked:    _isFollowMeSetup
+                checked:    _followEnabled.rawValue == 1
                 onClicked: {
                     if (checked) {
                         _followEnabled.rawValue = 1
                         var missingParameters = [ "FOLL_DIST_MAX", "FOLL_SYSID", "FOLL_OFS_X", "FOLL_OFS_Y", "FOLL_OFS_Z", "FOLL_OFS_TYPE"  ]
                         if (!_roverFirmware) {
-                            missingParameters.push("FOLL_ALT_TYPE")
-                            missingParameters.push("FOLL_YAW_BEHAVE")
+                            missingParameters.push("FOLL_ALT_TYPE", "FOLL_YAW_BEHAVE")
                         }
                         controller.getMissingParameters(missingParameters)
                         vehicleParamRefreshLabel.visible = true
@@ -189,15 +213,33 @@ SetupPage {
                 visible:    false
             }
 
+            Column {
+                width:      offsetSetupLayout.width
+                spacing:    ScreenTools.defaultFontPixelWidth
+                visible:    !_supportedSetup
+
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("The vehicle parameters required for follow me are currently set in a way which is not supported. Using follow with this setup may lead to unpredictable/hazardous results.")
+                    wrapMode:       Text.WordWrap
+                    onWidthChanged: console.log('width', width)
+                }
+
+                QGCButton {
+                    text:       qsTr("Reset To Supported Settings")
+                    onClicked:  _setFollowMeParamDefaults()
+                }
+            }
+
             ColumnLayout {
                 Layout.fillWidth:   true
                 spacing:            ScreenTools.defaultFontPixelWidth
-                visible:            _isFollowMeSetup
+                visible:            _showMainSetup
 
                 ColumnLayout {
                     Layout.fillWidth:   true
                     spacing:            ScreenTools.defaultFontPixelWidth
-                    visible:            _followParamsAvailable && _isFollowMeSetup
 
                     GridLayout {
                         Layout.fillWidth:   true
@@ -226,10 +268,12 @@ SetupPage {
                         QGCComboBox {
                             id:                     pointVehicleCombo
                             Layout.fillWidth:       true
-                            // NOTE: The indices for the model below must match the values for FOLL_YAW_BEHAVE
-                            model:                  [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same orientation as ground station"), qsTr("Same direction as ground station movement") ]
+                            model:                  rgText
                             visible:                !_roverFirmware
-                            onActivated:            _followYawBehavior.rawValue = index
+                            onActivated:            _followYawBehavior.rawValue = rgValues[index]
+
+                            property var rgText:    [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same direction as ground station movement") ]
+                            property var rgValues:  [ _followYawBehaviorNone, _followYawBehaviorFace, _followYawBehaviorFlight ]
                         }
                     }
 
@@ -271,8 +315,9 @@ SetupPage {
             }
 
             RowLayout {
-                spacing: ScreenTools.defaultFontPixelWidth * 2
-                visible: _isFollowMeSetup && !_followMaintain
+                id:         offsetSetupLayout
+                spacing:    ScreenTools.defaultFontPixelWidth * 2
+                visible:    _showOffsetsSetup
 
                 Item {
                     height: ScreenTools.defaultFontPixelWidth * 50
@@ -392,6 +437,7 @@ SetupPage {
                             var x = mouse.x - (width / 2)
                             var y = (height - mouse.y) - (height / 2)
                             controller.angle.rawValue = _radiansToHeading(Math.atan2(y, x))
+                            _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue)
                         }
                     }
                 }
@@ -455,21 +501,25 @@ SetupPage {
                         }
                     }
 
-                    Image {
-                        id:                 gcsIconHeight
-                        source:             "/res/QGCLogoArrow"
-                        mipmap:             true
-                        antialiasing:       true
-                        fillMode:           Image.PreserveAspectFit
-                        height:             ScreenTools.defaultFontPixelHeight * 2.5
-                        sourceSize.height:  height
+                    MissionItemIndexLabel {
+                        id:                 launchIconHeight
+                        Layout.alignment:   Qt.AlignHCenter
+                        label:              qsTr("L")
 
-                        transform: Rotation {
-                            origin.x:       gcsIconHeight.width  / 2
-                            origin.y:       gcsIconHeight.height / 2
-                            angle:          65
-                            axis { x: 1; y: 0; z: 0 }
-                        }
+                        transform: [
+                            Scale {
+                                origin.x:       launchIconHeight.width  / 2
+                                origin.y:       launchIconHeight.height / 2
+                                xScale:         1.5
+                                yScale:         2.5
+
+                            },
+                            Rotation {
+                                origin.x:       launchIconHeight.width  / 2
+                                origin.y:       launchIconHeight.height / 2
+                                angle:          75
+                                axis { x: 1; y: 0; z: 0 }
+                            } ]
                     }
                 }
             }
