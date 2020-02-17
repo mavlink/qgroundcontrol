@@ -43,6 +43,8 @@ static void gst_android_log(GstDebugCategory * category,
 #endif
 
 #include "VideoStreaming.h"
+#include "VideoSurface.h"
+#include "VideoManager.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
@@ -171,6 +173,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     }
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
+    qmlRegisterType<VideoReceiver> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoReceiver");
+    qmlRegisterType<VideoSurface> ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface");
 #else
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)

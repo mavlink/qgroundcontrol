@@ -26,6 +26,8 @@
 #include <QDir>
 #include <QDateTime>
 #include <QSysInfo>
+#include <QImage>
+#include <QStandardPaths>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -77,6 +79,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
 {
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
+    // TODO: Move this away from the videoManager.
+    _videoSink = qgcApp()->toolbox()->videoManager()->makeVideoSink();
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
     _tcp_timer.setSingleShot(true);
@@ -87,13 +91,16 @@ VideoReceiver::VideoReceiver(QObject* parent)
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
 #endif
+    // TODO: This should be triggered when the Settings change.
+    start();
 }
 
 VideoReceiver::~VideoReceiver()
 {
 #if defined(QGC_GST_STREAMING)
-    stop();
-    setVideoSink(nullptr);
+//    stop();
+//    setVideoSink(nullptr);
+    gst_element_set_state (_pipeline, GST_STATE_NULL);
 #endif
 }
 
@@ -107,8 +114,8 @@ VideoReceiver::grabImage(QString imageFile)
 
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
-static void
-newPadCB(GstElement* element, GstPad* pad, gpointer data)
+//TODO: re-add static to this function when the pad is used.
+void newPadCB(GstElement* element, GstPad* pad, gpointer data)
 {
     gchar* name = gst_pad_get_name(pad);
     //g_print("A new pad %s was created\n", name);
@@ -294,6 +301,7 @@ _padProbe(GstElement* element, GstPad* pad, gpointer user_data)
 GstElement*
 VideoReceiver::_makeSource(const QString& uri)
 {
+    qDebug() << "Trying to make source again";
     if (uri.isEmpty()) {
         qCritical() << "VideoReceiver::_makeSource() failed because URI is not specified";
         return nullptr;
@@ -430,7 +438,7 @@ VideoReceiver::_makeSource(const QString& uri)
 void
 VideoReceiver::_restart_timeout()
 {
-    qgcApp()->toolbox()->videoManager()->restartVideo();
+   // qgcApp()->toolbox()->videoManager()->restartVideo();
 }
 #endif
 
@@ -499,15 +507,20 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
-//                                   +-->queue-->decoder-->_videosink
+//                                   +-->queue-->decoder-->glUpload-->_videosink
 //                                   |
 //    datasource-->demux-->parser-->tee
 //                                   ^
 //                                   |
 //                                   +-Here we will later link elements for recording
-void
-VideoReceiver::start()
+// This creates the pipeline but does not start it. The start must happen in the Qml Render Thread.
+void VideoReceiver::start()
 {
+    qDebug() << "Trying to start the video";
+    if (_uri.isEmpty()) {
+        qCDebug(VideoReceiverLog) << "No uri, leaving";
+        return;
+    }
     qCDebug(VideoReceiverLog) << "start():" << _uri;
     if(qgcApp()->runningUnitTests()) {
         return;
@@ -517,7 +530,7 @@ VideoReceiver::start()
         qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
         return;
     }
-
+    /* OLD AND PROPERLY MORE CORRECT WAY TO DEAL WITH THE PIPELINE. */
 #if defined(QGC_GST_STREAMING)
     _stop = false;
 
@@ -620,10 +633,14 @@ VideoReceiver::start()
         }
 
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
-        running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
+//        running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
 
     } while(0);
 
+#if 0
+    /* do not try to verify if it's running just after creating the pipeline, this needs to be set inside of the
+     * GL event loop
+     */
     if (!running) {
         qCritical() << "VideoReceiver::start() failed";
 
@@ -663,8 +680,9 @@ VideoReceiver::start()
         _running = true;
         qCDebug(VideoReceiverLog) << "Running";
     }
-    _starting = false;
 #endif
+#endif
+    _starting = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -674,6 +692,9 @@ VideoReceiver::stop()
     if(qgcApp() && qgcApp()->runningUnitTests()) {
         return;
     }
+    // TODO: Figure out how to stop without destroying the pipeline.
+    // this needs to be communicated via signal / slots probably.
+    return;
 #if defined(QGC_GST_STREAMING)
     _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
@@ -868,6 +889,7 @@ VideoReceiver::_cleanupOldVideos()
 void
 VideoReceiver::setVideoSink(GstElement* videoSink)
 {
+
     if(_pipeline != nullptr) {
         qCDebug(VideoReceiverLog) << "Video receiver pipeline is active, video sink change is not possible";
         return;
@@ -879,6 +901,7 @@ VideoReceiver::setVideoSink(GstElement* videoSink)
     }
 
     if (videoSink != nullptr) {
+        qDebug() << "Setting the Video Sink Bin correctly";
         _videoSink = videoSink;
         gst_object_ref(_videoSink);
 
@@ -1213,12 +1236,17 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
 
     return GST_PAD_PROBE_REMOVE;
 }
+
 #endif
 
 //-----------------------------------------------------------------------------
 void
 VideoReceiver::_updateTimer()
 {
+    /* This updatetimer is trying to restart the stream, but it
+     * runs in the wrong thread.
+     */
+    return;
 #if defined(QGC_GST_STREAMING)
     if(_stopping || _starting) {
         return;
@@ -1252,6 +1280,7 @@ VideoReceiver::_updateTimer()
     } else {
 		// FIXME: AV: if pipeline is _running but not _streaming for some time then we need to restart
         if(!_stop && !_running && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
+            qDebug() << "Timer is triggering a restart";
             start();
         }
     }

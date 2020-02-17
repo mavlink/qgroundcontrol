@@ -58,8 +58,11 @@ public:
     virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
 
 #if defined(QGC_GST_STREAMING)
-    void                  setVideoSink      (GstElement* videoSink);
+    void setVideoSink(GstElement* videoSink);
+    GstElement *videoSink() const { return _videoSink; }
+    GstElement *pipeline() const { return _pipeline; }
 #endif
+
 
 signals:
     void videoRunningChanged                ();

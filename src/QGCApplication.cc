@@ -128,22 +128,6 @@
 
 #include "QGCMapEngine.h"
 
-class FinishVideoInitialization : public QRunnable
-{
-public:
-  FinishVideoInitialization(VideoManager* manager)
-      : _manager(manager)
-  {}
-
-  void run () {
-      _manager->_initVideo();
-  }
-
-private:
-  VideoManager* _manager;
-};
-
-
 QGCApplication* QGCApplication::_app = nullptr;
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
@@ -575,13 +559,6 @@ bool QGCApplication::_initForNormalAppBoot()
     QSettings settings;
 
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
-
-    QQuickWindow* rootWindow = (QQuickWindow*)qgcApp()->mainRootWindow();
-
-    if (rootWindow) {
-        rootWindow->scheduleRenderJob (new FinishVideoInitialization (toolbox()->videoManager()),
-                QQuickWindow::BeforeSynchronizingStage);
-    }
 
     // Safe to show popup error messages now that main window is created
     UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();

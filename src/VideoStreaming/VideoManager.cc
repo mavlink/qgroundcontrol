@@ -34,15 +34,14 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+    qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
+    qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
 }
 
 //-----------------------------------------------------------------------------
 VideoManager::~VideoManager()
 {
-    delete _videoReceiver;
-    _videoReceiver = nullptr;
-    delete _thermalVideoReceiver;
-    _thermalVideoReceiver = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -50,15 +49,9 @@ void
 VideoManager::setToolbox(QGCToolbox *toolbox)
 {
    QGCTool::setToolbox(toolbox);
-   QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-   qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
-   qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
-   connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
-   connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
-   connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
@@ -71,33 +64,10 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
-    _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
-    _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _videoReceiver = new VideoReceiver();
     _updateSettings();
-    if(isGStreamer()) {
-        startVideo();
-        _subtitleWriter.setVideoReceiver(_videoReceiver);
-    } else {
-        stopVideo();
-    }
-
+    _videoReceiver->start();
 #endif
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::startVideo()
-{
-    if(_videoReceiver) _videoReceiver->start();
-    if(_thermalVideoReceiver) _thermalVideoReceiver->start();
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::stopVideo()
-{
-    if(_videoReceiver) _videoReceiver->stop();
-    if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
 }
 
 //-----------------------------------------------------------------------------
@@ -204,28 +174,6 @@ VideoManager::_videoSourceChanged()
     emit hasVideoChanged();
     emit isGStreamerChanged();
     emit isAutoStreamChanged();
-    restartVideo();
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_udpPortChanged()
-{
-    restartVideo();
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_rtspUrlChanged()
-{
-    restartVideo();
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_tcpUrlChanged()
-{
-    restartVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -236,7 +184,9 @@ VideoManager::hasVideo()
         return true;
     }
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo && videoSource != VideoSettings::videoDisabled;
+    return !videoSource.isEmpty()
+            && videoSource != VideoSettings::videoSourceNoVideo
+            && videoSource != VideoSettings::videoDisabled;
 }
 
 //-----------------------------------------------------------------------------
@@ -283,14 +233,13 @@ VideoManager::setfullScreen(bool f)
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
 GstElement*
-VideoManager::_makeVideoSink(gpointer widget)
+VideoManager::makeVideoSink()
 {
-    GstElement* sink;
+    GstElement* sink = gst_element_factory_make("qgcvideosinkbin", nullptr);
 
-    if ((sink = gst_element_factory_make("qgcvideosinkbin", nullptr)) != nullptr) {
-        g_object_set(sink, "widget", widget, NULL);
-    } else {
+    if (!sink) {
         qCritical() << "VideoManager::_makeVideoSink() failed. Error with gst_element_factory_make('qgcvideosinkbin')";
+        exit(1);
     }
 
     return sink;
@@ -299,64 +248,39 @@ VideoManager::_makeVideoSink(gpointer widget)
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::_initVideo()
-{
-#if defined(QGC_GST_STREAMING)
-    QQuickItem* root = qgcApp()->mainRootWindow();
-
-    if (root == nullptr) {
-        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. No root window";
-        return;
-    }
-
-    QQuickItem* widget = root->findChild<QQuickItem*>("videoContent");
-
-    if (widget != nullptr) {
-        _videoReceiver->setVideoSink(_makeVideoSink(widget));
-    } else {
-        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. 'videoContent' widget not found";
-    }
-
-    widget = root->findChild<QQuickItem*>("thermalVideo");
-
-    if (widget != nullptr) {
-        _thermalVideoReceiver->setVideoSink(_makeVideoSink(widget));
-    } else {
-        qCDebug(VideoManagerLog) << "VideoManager::_makeVideoSink() failed. 'thermalVideo' widget not found";
-    }
-#endif
-}
-
-//-----------------------------------------------------------------------------
-void
 VideoManager::_updateSettings()
 {
-    if(!_videoSettings || !_videoReceiver)
+    //TODO: This should be done in the Video Stream
+    if(!_videoSettings)
         return;
     //-- Auto discovery
+    QString uri;
+    QString thermalUri;
+    auto videoSource = _toolbox->settingsManager()->videoSettings()->videoSource();
+
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
                 case VIDEO_STREAM_TYPE_RTSP:
-                    _videoReceiver->setUri(pInfo->uri());
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                    uri = pInfo->uri();
+                    videoSource->setRawValue(VideoSettings::videoSourceRTSP);
                     break;
                 case VIDEO_STREAM_TYPE_TCP_MPEG:
-                    _videoReceiver->setUri(pInfo->uri());
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
+                    uri = (pInfo->uri());
+                    videoSource->setRawValue(VideoSettings::videoSourceTCP);
                     break;
                 case VIDEO_STREAM_TYPE_RTPUDP:
-                    _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+                    uri = QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri());
+                    videoSource->setRawValue(VideoSettings::videoSourceUDPH264);
                     break;
                 case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                    _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
+                    uri = QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri());
+                    videoSource->setRawValue(VideoSettings::videoSourceMPEGTS);
                     break;
                 default:
-                    _videoReceiver->setUri(pInfo->uri());
+                    uri = pInfo->uri();
                     break;
             }
             //-- Thermal stream (if any)
@@ -366,16 +290,16 @@ VideoManager::_updateSettings()
                 switch(pTinfo->type()) {
                     case VIDEO_STREAM_TYPE_RTSP:
                     case VIDEO_STREAM_TYPE_TCP_MPEG:
-                        _thermalVideoReceiver->setUri(pTinfo->uri());
+                        thermalUri = pTinfo->uri();
                         break;
                     case VIDEO_STREAM_TYPE_RTPUDP:
-                        _thermalVideoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
+                        thermalUri = QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri());
                         break;
                     case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                        _thermalVideoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
+                        thermalUri = QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri());
                         break;
                     default:
-                        _thermalVideoReceiver->setUri(pTinfo->uri());
+                        thermalUri = pTinfo->uri();
                         break;
                 }
             }
@@ -383,29 +307,17 @@ VideoManager::_updateSettings()
         }
     }
     QString source = _videoSettings->videoSource()->rawValue().toString();
-    if (source == VideoSettings::videoSourceUDPH264)
-        _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceUDPH265)
-        _videoReceiver->setUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceMPEGTS)
-        _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (source == VideoSettings::videoSourceRTSP)
-        _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
-    else if (source == VideoSettings::videoSourceTCP)
-        _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
-}
+    const int udpPort = _videoSettings->udpPort()->rawValue().toInt();
+    const QString tcpUrl = _videoSettings->tcpUrl()->rawValue().toString();
 
-//-----------------------------------------------------------------------------
-void
-VideoManager::restartVideo()
-{
-#if defined(QGC_GST_STREAMING)
-    qCDebug(VideoManagerLog) << "Restart video streaming";
-    stopVideo();
-    _updateSettings();
-    startVideo();
-    emit aspectRatioChanged();
-#endif
+    uri = source == VideoSettings::videoSourceUDPH264 ? QStringLiteral("udp://0.0.0.0:%1").arg(udpPort)
+        : source == VideoSettings::videoSourceUDPH265 ? QStringLiteral("udp265://0.0.0.0:%1").arg(udpPort)
+        : source == VideoSettings::videoSourceMPEGTS  ? QStringLiteral("mpegts://0.0.0.0:%1").arg(udpPort)
+        : source == VideoSettings::videoSourceTCP     ? QStringLiteral("tcp://%1").arg(tcpUrl)
+        : source == VideoSettings::videoSourceRTSP    ? _videoSettings->rtspUrl()->rawValue().toString()
+        : uri;
+
+    _videoReceiver->setUri(uri);
 }
 
 //----------------------------------------------------------------------------------------
@@ -419,14 +331,12 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             if(pCamera) {
                 pCamera->stopStream();
             }
-            disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::restartVideo);
         }
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
         connect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
         if(_activeVehicle->dynamicCameras()) {
-            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::restartVideo);
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
                 pCamera->resumeStream();
@@ -437,7 +347,6 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
         setfullScreen(false);
     }
     emit autoStreamConfiguredChanged();
-    restartVideo();
 }
 
 //----------------------------------------------------------------------------------------
