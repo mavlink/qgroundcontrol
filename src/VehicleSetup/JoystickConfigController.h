@@ -14,7 +14,7 @@
 #ifndef JoystickConfigController_H
 #define JoystickConfigController_H
 
-#include <QTimer>
+#include <QElapsedTimer>
 
 #include "FactPanelController.h"
 #include "QGCLoggingCategory.h"
@@ -273,7 +273,7 @@ private:
     int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
-    QTime   _stickDetectSettleElapsed;
+    QElapsedTimer   _stickDetectSettleElapsed;
 
     static const int _stickDetectSettleMSecs;
 
