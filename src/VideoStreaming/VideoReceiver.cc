@@ -902,11 +902,11 @@ VideoReceiver::setVideoSink(GstElement* videoSink)
 //                                   |
 //                         source-->tee
 //                                   |
-//                                   |    +--------------_sink-------------------+
-//                                   |    |                                      |
-//   we are adding these elements->  +->teepad-->queue-->matroskamux-->_filesink |
-//                                        |                                      |
-//                                        +--------------------------------------+
+//                                   |    +---------_sink----------+
+//                                   |    |                        |
+//   we are adding these elements->  +->teepad-->queue-->_filesink |
+//                                        |                        |
+//                                        +------------------------+
 GstElement*
 VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
 {
@@ -917,12 +917,12 @@ VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
     bool releaseElements = true;
 
     do{
-        if ((mux = gst_element_factory_make(kVideoMuxes[format], "mux")) == nullptr) {
+        if ((mux = gst_element_factory_make(kVideoMuxes[format], nullptr)) == nullptr) {
             qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('" << kVideoMuxes[format] << "')";
             break;
         }
 
-        if ((sink = gst_element_factory_make("filesink", "filesink")) == nullptr) {
+        if ((sink = gst_element_factory_make("filesink", nullptr)) == nullptr) {
             qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('filesink')";
             break;
         }
