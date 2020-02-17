@@ -67,6 +67,7 @@ static void gst_android_log(GstDebugCategory * category,
 #endif
 #endif
     GST_PLUGIN_STATIC_DECLARE(qmlgl);
+    GST_PLUGIN_STATIC_DECLARE(qgc);
     G_END_DECLS
 #endif
 
@@ -168,6 +169,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     } else {
         qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
+
+    GST_PLUGIN_STATIC_REGISTER(qgc);
 #else
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)
