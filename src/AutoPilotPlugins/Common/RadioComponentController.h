@@ -310,7 +310,7 @@ private:
     int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
-    QTime   _stickDetectSettleElapsed;
+    QElapsedTimer   _stickDetectSettleElapsed;
     static const int _stickDetectSettleMSecs;
 
     bool        _unitTestMode   = false;
