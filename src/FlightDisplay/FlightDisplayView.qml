@@ -76,6 +76,12 @@ Item {
         }
     }
 
+    onVisibleChanged: {
+        if (visible && activeVehicle && !_canArm) {
+            checklistDropPanel.open()
+        }
+    }
+
     function setStates() {
         QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
         if(mainIsMap) {
