@@ -1136,15 +1136,16 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
     mavlink_global_position_int_t globalPositionInt;
     memset(&globalPositionInt, 0, sizeof(globalPositionInt));
 
+    // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
     globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
     globalPositionInt.lat =             motionReport.lat_int;
     globalPositionInt.lon =             motionReport.lon_int;
-    globalPositionInt.alt =             static_cast<int32_t>(motionReport.altMetersAMSL * 1000);                                        // mm
-    globalPositionInt.relative_alt =    static_cast<int32_t>((motionReport.altMetersAMSL - vehicle->homePosition().altitude()) * 1000); // mm
-    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);                                        // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);                                        // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);                                        // cm/sec
-    globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);                                     // centi-degrees
+    globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
+    globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
+    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
+    globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
 
     mavlink_message_t message;
     mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
