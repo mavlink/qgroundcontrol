@@ -99,7 +99,7 @@ signals:
     void aspectRatioChanged         ();
     void autoStreamConfiguredChanged();
     void imageFileChanged           ();
-
+    void requestPicturesFromVideoStream(const QString& path);
 protected slots:
     void _videoSourceChanged        ();
     void _udpPortChanged            ();

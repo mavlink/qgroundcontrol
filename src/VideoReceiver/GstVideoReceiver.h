@@ -95,7 +95,7 @@ public slots:
     virtual void stopDecoding(void);
     virtual void startRecording(const QString& videoFile, FILE_FORMAT format);
     virtual void stopRecording(void);
-    virtual void takeScreenshot(const QString& imageFile);
+    virtual void takeScreenshot(const QString& path, const QString& imageFile);
 
 protected slots:
     virtual void _watchdog(void);

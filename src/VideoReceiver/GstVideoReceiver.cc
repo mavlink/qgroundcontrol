@@ -491,11 +491,11 @@ GstVideoReceiver::stopRecording(void)
 }
 
 void
-GstVideoReceiver::takeScreenshot(const QString& imageFile)
+GstVideoReceiver::takeScreenshot(const QString& path, const QString& imageFile)
 {
     if (_apiHandler.needDispatch()) {
-        _apiHandler.dispatch([this, imageFile]() {
-            takeScreenshot(imageFile);
+        _apiHandler.dispatch([this, path, imageFile]() {
+            takeScreenshot(path, imageFile);
         });
         return;
     }
@@ -555,11 +555,19 @@ GstVideoReceiver::takeScreenshot(const QString& imageFile)
 
     QImage image(bufferData, width, height, imageFormat);
 
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QString savePath = path;
+    bool appendDatetime = false;
+    if (savePath.isEmpty()) {
+        savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+        appendDatetime = true;
+    }
     if(savePath.isEmpty()) {
         savePath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+        appendDatetime = true;
     }
-    savePath += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".png";
+    if (appendDatetime) {
+        savePath += "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + ".png";
+     }
 
     image.save(savePath);
     qDebug() << "Image saved in" << savePath;

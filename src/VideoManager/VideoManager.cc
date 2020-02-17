@@ -668,6 +668,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
                 pCamera->stopStream();
+                disconnect(pCamera, &QGCCameraControl::requestPicturesFromVideoStream, this, &VideoManager::requestPicturesFromVideoStream);
             }
             disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
         }
@@ -679,6 +680,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
+                connect(pCamera, &QGCCameraControl::requestPicturesFromVideoStream, this, &VideoManager::requestPicturesFromVideoStream);
                 pCamera->resumeStream();
             }
         }
