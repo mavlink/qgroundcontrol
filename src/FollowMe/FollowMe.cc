@@ -84,6 +84,23 @@ void FollowMe::_sendGCSMotionReport()
         return;
     }
 
+    // First check to see if any vehicles need follow me updates
+    bool needFollowMe = false;
+    if (_currentMode == MODE_ALWAYS) {
+        needFollowMe = true;
+    } else if (_currentMode == MODE_FOLLOWME) {
+        QmlObjectListModel* vehicles = _toolbox->multiVehicleManager()->vehicles();
+        for (int i=0; i<vehicles->count(); i++) {
+            Vehicle* vehicle = vehicles->value<Vehicle*>(i);
+            if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
+                needFollowMe = true;
+            }
+        }
+    }
+    if (!needFollowMe) {
+        return;
+    }
+
     GCSMotionReport motionReport = {};
     uint8_t         estimatation_capabilities = 0;
 
@@ -134,7 +151,7 @@ void FollowMe::_sendGCSMotionReport()
 
     for (int i=0; i<vehicles->count(); i++) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
-        if (_currentMode == MODE_ALWAYS || (_currentMode == MODE_FOLLOWME && _isFollowFlightMode(vehicle, vehicle->flightMode()))) {
+        if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
             qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimatation_capabilities);
         }
