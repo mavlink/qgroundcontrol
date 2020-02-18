@@ -17,6 +17,8 @@
 #include <QtQml>
 #include <QDebug>
 
+#include "VideoReceiver.h"
+
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
 
@@ -146,7 +148,7 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
 
     GError* error = nullptr;
     if (!gst_init_check(&argc, &argv, &error)) {
-        qCritical() << "gst_init_check() failed: " << error->message;
+        qCCritical(VideoReceiverLog) << "gst_init_check() failed: " << error->message;
         g_error_free(error);
     }
 
@@ -192,7 +194,7 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
         gst_object_unref(sink);
         sink = nullptr;
     } else {
-        qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
+        qCCritical(VideoReceiverLog) << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
 
     GST_PLUGIN_STATIC_REGISTER(qgc);
