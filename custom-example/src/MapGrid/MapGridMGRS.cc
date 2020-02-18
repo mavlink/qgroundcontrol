@@ -190,8 +190,15 @@ MapGridMGRS::_rectOverlapsRect(const QGeoRectangle& r1, const QGeoRectangle& r2)
 void
 MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, const QGeoCoordinate& bottomRight)
 {
+    if (zoomLevel < 3) {
+        emit updateValues(QVariant());
+        return;
+    }
+    bool zoomingIn = zoomLevel > _zoomLevel;
     if (topLeft.isValid() && bottomRight.isValid() &&
-        (_zoomLevel != zoomLevel || !_currentViewportRect.contains(topLeft) || !_currentViewportRect.contains(bottomRight))) {
+        (!_currentViewportRect.contains(topLeft) || !_currentViewportRect.contains(bottomRight) ||
+         (zoomingIn && zoomLevel > maxZoneZoomLevel) ||
+         (_zoomLevel <= maxLevel1LabelsZoomLevel && zoomLevel > maxLevel1LabelsZoomLevel))) {
 
         _zoomLevel = zoomLevel;
 
@@ -230,8 +237,8 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
         QGeoCoordinate centerLeft = QGeoCoordinate(centerLat, topLeft.longitude());
         QGeoCoordinate centerRight = QGeoCoordinate(centerLat, bottomRight.longitude());
         _minDistanceBetweenLines = centerLeft.distanceTo(centerRight) / maxNumberOfLinesOnScreen;
-    } else if (_zoomLevel < 3) {
-        emit updateValues(QVariant());
+    } else {
+        emit updateValues(QVariant(false));
         return;
     }
 
@@ -240,15 +247,12 @@ MapGridMGRS::geometryChanged(double zoomLevel, const QGeoCoordinate& topLeft, co
     _addLevel1Labels();
 
     QJsonArray lines;
-    _addLines(lines, _level1Paths, level1LineBackgroundColor, level1LineBackgroundWidth);
-    _addLines(lines, _level1Paths, level1LineForegroundColor, level1LineForgroundWidth);
+    _addLines(lines, _level1Paths, level1LineBackgroundColor, level1LineBackgroundWidth, level1LineForegroundColor, level1LineForgroundWidth);
 
     if (_zoomLevel > maxZoneZoomLevel) {
         _findZoneBoundaries(QGeoCoordinate((topLeft.latitude() + bottomRight.latitude()) / 2, (topLeft.longitude() + bottomRight.longitude()) / 2));
-        _addLines(lines, _level2Paths, level2LineBackgroundColor, level2LineBackgroundWidth);
-        _addLines(lines, _level2Paths, level2LineForegroundColor, level2LineForgroundWidth);
-        _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth);
-        _addLines(lines, _level3Paths, level3LineForegroundColor, level3LineForgroundWidth);
+        _addLines(lines, _level2Paths, level2LineBackgroundColor, level2LineBackgroundWidth, level2LineForegroundColor, level2LineForgroundWidth);
+        _addLines(lines, _level3Paths, level3LineBackgroundColor, level3LineBackgroundWidth, level3LineForegroundColor, level3LineForgroundWidth);
         while (_zoneMapQueue.count() > maxZoneMapCacheSize) {
             _zoneMap.remove(_zoneMapQueue.dequeue());
         }
@@ -349,7 +353,7 @@ MapGridMGRS::_addLevel1Labels()
         }
     }
 
-    if (_zoomLevel > 4 && _zoomLevel <= maxZoneZoomLevel) {
+    if (_zoomLevel > maxLevel1LabelsZoomLevel && _zoomLevel <= maxZoneZoomLevel) {
         for (int i = 0; i < _level1labels.count(); i++) {
             if (_zoomLevel < 6 || _currentViewportRect.contains(_level1labels[i]._pos)) {
                 _mgrsLabels.push_back(_level1labels[i]);
@@ -517,7 +521,7 @@ MapGridMGRS::_createLevel3Paths(std::shared_ptr<MGRSZone> &tile)
 
 //-----------------------------------------------------------------------------
 void
-MapGridMGRS::_addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QString& color, int width)
+MapGridMGRS::_addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QString& color1, int width1, const QString& color2, int width2)
 {
     for (int i = 0; i < paths.length(); i++) {
         QJsonArray pathPts;
@@ -533,8 +537,10 @@ MapGridMGRS::_addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QS
         }
         QJsonObject line;
         line.insert(QStringLiteral("points"), pathPts);
-        line.insert(QStringLiteral("color"), color);
-        line.insert(QStringLiteral("width"), width);
+        line.insert(QStringLiteral("color1"), color1);
+        line.insert(QStringLiteral("width1"), width1);
+        line.insert(QStringLiteral("color2"), color2);
+        line.insert(QStringLiteral("width2"), width2);
         lines.push_back(line);
     }
 }

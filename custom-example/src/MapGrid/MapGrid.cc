@@ -28,6 +28,9 @@ void
 MapGrid::updateValues(const QVariant& newValues)
 {
     _calculationRunning = false;
+    if (newValues.userType() == QMetaType::Bool) {
+        return;
+    }
     _values = newValues;
     emit valuesChanged();
     if (_calculationPending) {

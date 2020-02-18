@@ -27,11 +27,10 @@ Item {
     property var viewportGeomerty: (centerViewport) ? centerViewport.width * centerViewport.height : 0
     property var mapComponents: []
     property var componentsToAdd: []
+    property var labelsToAdd: null
     property var values: mapGrid.values
     property double startTime: 0
     property int maxTimePerStepMs: 50
-    property bool timeMeasured: false
-    property int maxNumberOfComponentsPerStep: 100
 
     MapGrid {
         id: mapGrid
@@ -88,49 +87,43 @@ Item {
     }
 
     function addVisuals() {
-        if (!mapControl || !centerViewport || !values || !values.hasOwnProperty("lines")) {
+        if (!mapControl || !centerViewport) {
             return;
         }
 
-        if (!timeMeasured) {
-            startTime = new Date().getTime()
-        }
+        startTime = new Date().getTime()
 
         removeVisuals()
 
-//        console.info("MapGrid.qml - adding lines: " + values.lines.length)
-        for (var i = 0; i < values.lines.length; i++) {
-            var pc = polylineComponent.createObject(mapControl)
-            if (pc) {
-                pc.visible = true
-                var pl = values.lines[i]
-                pc.line.width = pl.width
-                pc.line.color = pl.color
-                for (var j = 0; j < pl.points.length; j++) {
-                    pc.addCoordinate(QtPositioning.coordinate(pl.points[j].lat, pl.points[j].lng))
-                }
-
-                componentsToAdd.push(pc)
-            }
-        }
-
-        if (!values.hasOwnProperty("labels")) {
+        if (!values || !values.hasOwnProperty("lines")) {
             return;
         }
 
-//        console.info("MapGrid.qml - adding labels: " + values.labels.length)
-        for (i = 0; i < values.labels.length; i++) {
-            var lc = labelComponent.createObject(mapControl)
-            if (lc) {
-                lc.visible = true
-                var l = values.labels[i]
-                lc.labelText = l.text
-                lc.coordinate = QtPositioning.coordinate(l.lat, l.lng)
-                lc.backgroundColor = l.backgroundColor
-                lc.foregroundColor = l.foregroundColor
+//        console.info("MapGrid.qml - adding lines: " + values.lines.length)
+        for (var i = 0; i < values.lines.length; i++) {
+            var pc1 = polylineComponent.createObject(mapControl)
+            var pc2 = polylineComponent.createObject(mapControl)
+            if (pc1 && pc2) {
+                pc1.visible = true
+                pc2.visible = true
+                var pl = values.lines[i]
+                pc1.line.width = pl.width1
+                pc1.line.color = pl.color1
+                pc2.line.width = pl.width2
+                pc2.line.color = pl.color2
+                for (var j = 0; j < pl.points.length; j++) {
+                    var c = QtPositioning.coordinate(pl.points[j].lat, pl.points[j].lng)
+                    pc1.addCoordinate(c)
+                    pc2.addCoordinate(c)
+                }
 
-                componentsToAdd.push(lc)
+                componentsToAdd.push(pc1)
+                componentsToAdd.push(pc2)
             }
+        }
+
+        if (values.hasOwnProperty("labels")) {
+            labelsToAdd = values.labels
         }
 
         addComponents()
@@ -144,23 +137,61 @@ Item {
     }
 
     function addComponents() {
-        for (var count = 0; count < maxNumberOfComponentsPerStep && componentsToAdd.length > 0; count++) {
+        var count
+        var dt
+
+        if (startTime == 0) {
+            startTime = new Date().getTime()
+        }
+
+        for (count = 0; componentsToAdd.length > 0; count++) {
+            if (count % 100 == 0) {
+                dt = new Date().getTime() - startTime
+                if (dt > maxTimePerStepMs) {
+//                    console.info("Components added: " + count + " time needed: " + (new Date().getTime() - startTime))
+                    startTime = 0
+                    addComponentsTimer.restart()
+                    return
+                }
+            }
+
             var c = componentsToAdd.pop()
             mapControl.addMapItem(c)
             mapComponents.push(c)
         }
 
-        if (componentsToAdd.length > 0) {
-            if (!timeMeasured) {
-                var dt = new Date().getTime() - startTime
-                maxNumberOfComponentsPerStep = maxNumberOfComponentsPerStep / dt * maxTimePerStepMs;
-//                console.info("Max number of components: " + maxNumberOfComponentsPerStep)
-                timeMeasured = true;
+        if (labelsToAdd != null) {
+//          console.info("MapGrid.qml - adding labels: " + values.labels.length)
+            for (count = 0; labelsToAdd.length > 0; count++) {
+                if (count % 100 == 0) {
+                    dt = new Date().getTime() - startTime
+                    if (dt > maxTimePerStepMs) {
+//                        console.info("Labels added: " + count + " time needed: " + (new Date().getTime() - startTime))
+                        startTime = 0
+                        addComponentsTimer.restart()
+                        return
+                    }
+                }
+                var l = labelsToAdd.pop()
+                var lc = labelComponent.createObject(mapControl)
+                if (lc) {
+                    lc.visible = true
+                    lc.labelText = l.text
+                    lc.coordinate = QtPositioning.coordinate(l.lat, l.lng)
+                    lc.backgroundColor = l.backgroundColor
+                    lc.foregroundColor = l.foregroundColor
+
+                    componentsToAdd.push(lc)
+                }
             }
-
-            addComponentsTimer.restart()
         }
+        labelsToAdd = null
 
+        if (componentsToAdd.length > 0) {
+            addComponents()
+            return
+        }
+//        console.info("Add components finished: " + count + " time needed: " + (new Date().getTime() - startTime))
     }
 
     Component {
