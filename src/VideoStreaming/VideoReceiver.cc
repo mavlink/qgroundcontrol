@@ -62,7 +62,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _sink(nullptr)
     , _tee(nullptr)
     , _pipeline(nullptr)
-    , _pipelineStopRec(nullptr)
     , _videoSink(nullptr)
     , _lastFrameId(G_MAXUINT64)
     , _lastFrameTime(0)
@@ -571,6 +570,8 @@ VideoReceiver::start()
             break;
         }
 
+        g_object_set(_pipeline, "message-forward", TRUE, nullptr);
+
         if ((source = _makeSource(uri)) == nullptr) {
             qCritical() << "VideoReceiver::start() failed. Error with _makeSource()";
             break;
@@ -747,6 +748,9 @@ VideoReceiver::_handleError() {
 void
 VideoReceiver::_handleEOS() {
     if(_stopping) {
+        if(_recording && _sink->removing) {
+            _shutdownRecordingBranch();
+        }
         _shutdownPipeline();
         qCDebug(VideoReceiverLog) << "Stopped";
     } else if(_recording && _sink->removing) {
@@ -794,6 +798,22 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
         break;
     case(GST_MESSAGE_STATE_CHANGED):
         pThis->msgStateChangedReceived();
+        break;
+    case(GST_MESSAGE_ELEMENT): {
+        const GstStructure *s = gst_message_get_structure (msg);
+
+        if (gst_structure_has_name (s, "GstBinForwarded")) {
+            GstMessage *forward_msg = NULL;
+            gst_structure_get (s, "message", GST_TYPE_MESSAGE, &forward_msg, NULL);
+            if (forward_msg != nullptr) {
+                if (GST_MESSAGE_TYPE(forward_msg) == GST_MESSAGE_EOS) {
+                    pThis->msgEOSReceived();
+                }
+                gst_message_unref(forward_msg);
+                forward_msg = nullptr;
+            }
+        }
+    }
         break;
     default:
         break;
@@ -882,11 +902,93 @@ VideoReceiver::setVideoSink(GstElement* videoSink)
 //                                   |
 //                         source-->tee
 //                                   |
-//                                   |    +--------------_sink-------------------+
-//                                   |    |                                      |
-//   we are adding these elements->  +->teepad-->queue-->matroskamux-->_filesink |
-//                                        |                                      |
-//                                        +--------------------------------------+
+//                                   |    +---------_sink----------+
+//                                   |    |                        |
+//   we are adding these elements->  +->teepad-->queue-->_filesink |
+//                                        |                        |
+//                                        +------------------------+
+GstElement*
+VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
+{
+    GstElement* fileSink = nullptr;
+    GstElement* mux = nullptr;
+    GstElement* sink = nullptr;
+    GstElement* bin = nullptr;
+    bool releaseElements = true;
+
+    do{
+        if ((mux = gst_element_factory_make(kVideoMuxes[format], nullptr)) == nullptr) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('" << kVideoMuxes[format] << "')";
+            break;
+        }
+
+        if ((sink = gst_element_factory_make("filesink", nullptr)) == nullptr) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('filesink')";
+            break;
+        }
+
+        g_object_set(static_cast<gpointer>(sink), "location", qPrintable(videoFile), nullptr);
+
+        if ((bin = gst_bin_new("sinkbin")) == nullptr) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_bin_new('sinkbin')";
+            break;
+        }
+
+        GstPadTemplate* padTemplate;
+
+        if ((padTemplate = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(mux), "video_%u")) == nullptr) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_class_get_pad_template(mux)";
+            break;
+        }
+
+        // FIXME: AV: pad handling is potentially leaking (and other similar places too!)
+        GstPad* pad;
+
+        if ((pad = gst_element_request_pad(mux, padTemplate, nullptr, nullptr)) == nullptr) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_request_pad(mux)";
+            break;
+        }
+
+        gst_bin_add_many(GST_BIN(bin), mux, sink, nullptr);
+
+        releaseElements = false;
+
+        GstPad* ghostpad = gst_ghost_pad_new("sink", pad);
+
+        gst_element_add_pad(bin, ghostpad);
+
+        gst_object_unref(pad);
+        pad = nullptr;
+
+        if (!gst_element_link(mux, sink)) {
+            qCritical() << "VideoReceiver::_makeFileSink() failed. Error with gst_element_link()";
+            break;
+        }
+
+        fileSink = bin;
+        bin = nullptr;
+    } while(0);
+
+    if (releaseElements) {
+        if (sink != nullptr) {
+            gst_object_unref(sink);
+            sink = nullptr;
+        }
+
+        if (mux != nullptr) {
+            gst_object_unref(mux);
+            mux = nullptr;
+        }
+    }
+
+    if (bin != nullptr) {
+        gst_object_unref(bin);
+        bin = nullptr;
+    }
+
+    return fileSink;
+}
+
 void
 VideoReceiver::startRecording(const QString &videoFile)
 {
@@ -908,18 +1010,6 @@ VideoReceiver::startRecording(const QString &videoFile)
     //-- Disk usage maintenance
     _cleanupOldVideos();
 
-    _sink           = new Sink();
-    _sink->teepad   = gst_element_get_request_pad(_tee, "src_%u");
-    _sink->queue    = gst_element_factory_make("queue", nullptr);
-    _sink->mux      = gst_element_factory_make(kVideoMuxes[muxIdx], nullptr);
-    _sink->filesink = gst_element_factory_make("filesink", nullptr);
-    _sink->removing = false;
-
-    if(!_sink->teepad || !_sink->queue || !_sink->mux || !_sink->filesink) {
-        qCritical() << "VideoReceiver::startRecording() failed to make _sink elements";
-        return;
-    }
-
     if(videoFile.isEmpty()) {
         QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
         if(savePath.isEmpty()) {
@@ -930,20 +1020,28 @@ VideoReceiver::startRecording(const QString &videoFile)
     } else {
         _videoFile = videoFile;
     }
+
+    qDebug() << "New video file:" << _videoFile;
+
     emit videoFileChanged();
 
-    g_object_set(static_cast<gpointer>(_sink->filesink), "location", qPrintable(_videoFile), nullptr);
-    qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
+    _sink           = new Sink();
+    _sink->teepad   = gst_element_get_request_pad(_tee, "src_%u");
+    _sink->queue    = gst_element_factory_make("queue", nullptr);
+    _sink->filesink = _makeFileSink(_videoFile, muxIdx);
+    _sink->removing = false;
+
+    if(!_sink->teepad || !_sink->queue || !_sink->filesink) {
+        qCritical() << "VideoReceiver::startRecording() failed to make _sink elements";
+        return;
+    }
 
     gst_object_ref(_sink->queue);
-    gst_object_ref(_sink->mux);
     gst_object_ref(_sink->filesink);
 
-    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, nullptr);
-    gst_element_link_many(_sink->queue, _sink->mux, nullptr);
+    gst_bin_add(GST_BIN(_pipeline), _sink->queue);
 
     gst_element_sync_state_with_parent(_sink->queue);
-    gst_element_sync_state_with_parent(_sink->mux);
 
     // Install a probe on the recording branch to drop buffers until we hit our first keyframe
     // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
@@ -951,13 +1049,20 @@ VideoReceiver::startRecording(const QString &videoFile)
     // Once we have this valid frame, we attach the filesink.
     // Attaching it here would cause the filesink to fail to preroll and to stall the pipeline for a few seconds.
     GstPad* probepad = gst_element_get_static_pad(_sink->queue, "src");
-    gst_pad_add_probe(probepad, (GstPadProbeType)(GST_PAD_PROBE_TYPE_BUFFER /* | GST_PAD_PROBE_TYPE_BLOCK */), _keyframeWatch, this, nullptr); // to drop the buffer or to block the buffer?
+    gst_pad_add_probe(probepad, GST_PAD_PROBE_TYPE_BUFFER, _keyframeWatch, this, nullptr); // to drop the buffer
     gst_object_unref(probepad);
 
     // Link the recording branch to the pipeline
     GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
     gst_pad_link(_sink->teepad, sinkpad);
     gst_object_unref(sinkpad);
+
+//    // Add the filesink once we have a valid I-frame
+//    gst_bin_add(GST_BIN(_pipeline), _sink->filesink);
+//    if (!gst_element_link(_sink->queue, _sink->filesink)) {
+//        qCritical() << "Failed to link queue and file sink";
+//    }
+//    gst_element_sync_state_with_parent(_sink->filesink);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-recording");
 
@@ -995,20 +1100,13 @@ VideoReceiver::stopRecording(void)
 void
 VideoReceiver::_shutdownRecordingBranch()
 {
-    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->queue);
-    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->mux);
-    gst_bin_remove(GST_BIN(_pipelineStopRec), _sink->filesink);
+    gst_bin_remove(GST_BIN(_pipeline), _sink->queue);
+    gst_bin_remove(GST_BIN(_pipeline), _sink->filesink);
 
-    gst_element_set_state(_pipelineStopRec, GST_STATE_NULL);
-    gst_object_unref(_pipelineStopRec);
-    _pipelineStopRec = nullptr;
-
-    gst_element_set_state(_sink->filesink,  GST_STATE_NULL);
-    gst_element_set_state(_sink->mux,       GST_STATE_NULL);
     gst_element_set_state(_sink->queue,     GST_STATE_NULL);
+    gst_element_set_state(_sink->filesink,  GST_STATE_NULL);
 
     gst_object_unref(_sink->queue);
-    gst_object_unref(_sink->mux);
     gst_object_unref(_sink->filesink);
 
     delete _sink;
@@ -1027,39 +1125,18 @@ VideoReceiver::_shutdownRecordingBranch()
 // -Send an EOS event at the beginning of that pipeline
 #if defined(QGC_GST_STREAMING)
 void
-VideoReceiver::_detachRecordingBranch(GstPadProbeInfo* info)
+VideoReceiver::_unlinkRecordingBranch(GstPadProbeInfo* info)
 {
     Q_UNUSED(info)
-
-    // Also unlinks and unrefs
-    gst_bin_remove_many(GST_BIN(_pipeline), _sink->queue, _sink->mux, _sink->filesink, nullptr);
-
+    // Send EOS at the beginning of the pipeline
+    GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
+    gst_pad_unlink(_sink->teepad, sinkpad);
+    gst_pad_send_event(sinkpad, gst_event_new_eos());
+    gst_object_unref(sinkpad);
+    qCDebug(VideoReceiverLog) << "Recording EOS was sent";
     // Give tee its pad back
     gst_element_release_request_pad(_tee, _sink->teepad);
     gst_object_unref(_sink->teepad);
-
-    // Create temporary pipeline
-    _pipelineStopRec = gst_pipeline_new("pipeStopRec");
-
-    // Put our elements from the recording branch into the temporary pipeline
-    gst_bin_add_many(GST_BIN(_pipelineStopRec), _sink->queue, _sink->mux, _sink->filesink, nullptr);
-    gst_element_link_many(_sink->queue, _sink->mux, _sink->filesink, nullptr);
-
-    // Add handler for EOS event
-    GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipelineStopRec));
-    gst_bus_enable_sync_message_emission(bus);
-    g_signal_connect(bus, "sync-message", G_CALLBACK(_onBusMessage), this);
-    gst_object_unref(bus);
-
-    if(gst_element_set_state(_pipelineStopRec, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
-        qCDebug(VideoReceiverLog) << "problem starting _pipelineStopRec";
-    }
-
-    // Send EOS at the beginning of the pipeline
-    GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
-    gst_pad_send_event(sinkpad, gst_event_new_eos());
-    gst_object_unref(sinkpad);
-    qCDebug(VideoReceiverLog) << "Recording branch unlinked";
 }
 #endif
 
@@ -1073,7 +1150,7 @@ VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user
         VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
         // We will only act once
         if(g_atomic_int_compare_and_exchange(&pThis->_sink->removing, FALSE, TRUE)) {
-            pThis->_detachRecordingBranch(info);
+            pThis->_unlinkRecordingBranch(info);
         }
     }
     return GST_PAD_PROBE_REMOVE;
@@ -1118,24 +1195,13 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
             VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
 
             // set media file '0' offset to current timeline position - we don't want to touch other elements in the graph, except these which are downstream!
-
-            gint64 position;
-
-            if (gst_element_query_position(pThis->_pipeline, GST_FORMAT_TIME, &position) != TRUE) {
-                qCDebug(VideoReceiverLog) << "Unable to get timeline position, let's hope that downstream elements will survive";
-
-                if (buf->pts != GST_CLOCK_TIME_NONE) {
-                    position = buf->pts;
-                } else {
-                    position = gst_pad_get_offset(pad);
-                }
-            }
-
-            gst_pad_set_offset(pad, position);
+            gst_pad_set_offset(pad, -buf->pts);
 
             // Add the filesink once we have a valid I-frame
-            gst_bin_add_many(GST_BIN(pThis->_pipeline), pThis->_sink->filesink, nullptr);
-            gst_element_link_many(pThis->_sink->mux, pThis->_sink->filesink, nullptr);
+            gst_bin_add(GST_BIN(pThis->_pipeline), pThis->_sink->filesink);
+            if (!gst_element_link(pThis->_sink->queue, pThis->_sink->filesink)) {
+                qCritical() << "Failed to link queue and file sink";
+            }
             gst_element_sync_state_with_parent(pThis->_sink->filesink);
 
             qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
