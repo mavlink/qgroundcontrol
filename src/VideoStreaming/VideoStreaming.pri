@@ -127,6 +127,10 @@ VideoEnabled {
             $$PWD/iOS
     }
 
+    SOURCES += \
+        $$PWD/gstqgcvideosinkbin.c \
+        $$PWD/gstqgc.c
+
     include($$PWD/../../qmlglsink.pri)
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
