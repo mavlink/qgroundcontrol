@@ -66,7 +66,7 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Move 'T' Takeoff to the climbout location.")
+                text:               qsTr("Move 'T' Takeoff to the %1 location.").arg(missionItem.vehicle.vtol ? qsTr("desired") : qsTr("climbout"))
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
@@ -76,7 +76,7 @@ Rectangle {
                 text:               qsTr("Ensure clear of obstacles and into the wind.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                visible:            !initialClickLabel.visible
+                visible:            !initialClickLabel.visible && !missionItem.vehicle.vtol
             }
 
             QGCButton {
