@@ -907,6 +907,7 @@ VideoReceiver::setVideoSink(GstElement* videoSink)
 //   we are adding these elements->  +->teepad-->queue-->_filesink |
 //                                        |                        |
 //                                        +------------------------+
+#if defined(QGC_GST_STREAMING)
 GstElement*
 VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
 {
@@ -988,6 +989,7 @@ VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
 
     return fileSink;
 }
+#endif
 
 void
 VideoReceiver::startRecording(const QString &videoFile)
