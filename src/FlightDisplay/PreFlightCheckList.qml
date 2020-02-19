@@ -30,7 +30,15 @@ Rectangle {
         source: "/checklists/DefaultChecklist.qml"
     }
 
-    property bool _passed:  false
+    property bool allChecksPassed:  false
+
+    onAllChecksPassedChanged: {
+        if (allChecksPassed) {
+            activeVehicle.checkListState = Vehicle.CheckListPassed
+        } else {
+            activeVehicle.checkListState = Vehicle.CheckListFailed
+        }
+    }
 
     function _handleGroupPassedChanged(index, passed) {
         if (passed) {
@@ -53,7 +61,7 @@ Rectangle {
                 break
             }
         }
-        _passed = allPassed;
+        allChecksPassed = allPassed;
     }
 
     //-- Pick a checklist model that matches the current airframe type (if any)
@@ -85,12 +93,6 @@ Rectangle {
         if(activeVehicle) {
             if(visible) {
                 _updateModel()
-            } else {
-                if(modelContainer.item.model.isPassed()) {
-                    activeVehicle.checkListState = Vehicle.CheckListPassed
-                } else {
-                    activeVehicle.checkListState = Vehicle.CheckListFailed
-                }
             }
         }
     }
@@ -139,7 +141,7 @@ Rectangle {
                 height:     1.75 * ScreenTools.defaultFontPixelHeight
 
                 QGCLabel {
-                    text:                   qsTr("Pre-Flight Checklist %1").arg(_passed ? qsTr("(passed)") : "")
+                    text:                   qsTr("Pre-Flight Checklist %1").arg(allChecksPassed ? qsTr("(passed)") : "")
                     anchors.left:           parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     font.pointSize:         ScreenTools.mediumFontPointSize

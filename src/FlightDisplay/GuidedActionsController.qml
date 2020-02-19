@@ -96,13 +96,17 @@ Item {
     readonly property int actionVtolTransitionToMRFlight:   21
     readonly property int actionROI:                        22
 
+    property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+    property bool   _enforceChecklist:          _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
+    property bool   _canArm:                    activeVehicle ? (_useChecklist ? (_enforceChecklist ? activeVehicle.checkListState === Vehicle.CheckListPassed : true) : true) : false
+
     property bool showEmergenyStop:     _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
-    property bool showArm:              _guidedActionsEnabled && !_vehicleArmed
+    property bool showArm:              _guidedActionsEnabled && !_vehicleArmed && _canArm
     property bool showDisarm:           _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
     property bool showRTL:              _guidedActionsEnabled && _vehicleArmed && activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:          _guidedActionsEnabled && activeVehicle.takeoffVehicleSupported && !_vehicleFlying
+    property bool showTakeoff:          _guidedActionsEnabled && activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canArm
     property bool showLand:             _guidedActionsEnabled && activeVehicle.guidedModeSupported && _vehicleArmed && !activeVehicle.fixedWing && !_vehicleInLandMode
-    property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying
+    property bool showStartMission:     _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canArm
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
