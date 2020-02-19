@@ -31,6 +31,7 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject
     , _cameraSection                    (vehicle)
     , _speedSection                     (vehicle)
 {
+    _isIncomplete = false;
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
     if (_metaDataMap.isEmpty()) {
