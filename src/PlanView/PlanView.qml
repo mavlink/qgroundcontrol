@@ -846,12 +846,11 @@ Item {
                         readOnly:       false
                         onClicked:      _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
                         onRemove: {
-                            var removeIndex = index
-                            _missionController.removeMissionItem(removeIndex)
-                            if (removeIndex >= _missionController.visualItems.count) {
-                                removeIndex--
+                            var removeVIIndex = index
+                            _missionController.removeMissionItem(removeVIIndex)
+                            if (removeVIIndex >= _missionController.visualItems.count) {
+                                removeVIIndex--
                             }
-                            _missionController.setCurrentPlanViewSeqNum(removeIndex, true)
                         }
                         onSelectNextNotReadyItem:   selectNextNotReady()
                     }
