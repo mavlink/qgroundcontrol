@@ -21,16 +21,22 @@
 #include <stddef.h>                 // Hack workaround for Mav 2.0 header problem with respect to offsetof usage
 
 // Ignore warnings from mavlink headers for both GCC/Clang and MSVC
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#else
 #pragma warning(push, 0)
+#endif
 
 #include <mavlink_types.h>
 extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 #include <mavlink.h>
 
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#else
 #pragma warning(pop, 0)
+#endif
 
 class QGCMAVLink {
 public:
