@@ -139,7 +139,7 @@ static QString s_findImageResourceRover(int frameClass, int frameType)
 }
 
 APMAirframeComponentController::APMAirframeComponentController(void)
-    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS")))
+    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
     , _frameTypeFact    (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
     , _frameClassModel  (new QmlObjectListModel(this))
 {
