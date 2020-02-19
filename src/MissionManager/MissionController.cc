@@ -2278,9 +2278,10 @@ bool MissionController::_isROICancelItem(SimpleMissionItem* simpleItem)
 void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 {
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
-        bool    foundLand =         false;
-        int     takeoffIndex =      -1;
-        int     landIndex =         -1;
+        bool    foundLand =             false;
+        int     takeoffSeqNum =         -1;
+        int     landSeqNum =            -1;
+        int     lastFlyThroughSeqNum =  -1;
 
         _splitSegment =                 nullptr;
         _currentPlanViewItem  =         nullptr;
@@ -2294,10 +2295,11 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _previousCoordinate =           QGeoCoordinate();
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
-            VisualMissionItem* pVI =        qobject_cast<VisualMissionItem*>(_visualItems->get(viIndex));
-            SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(pVI);
+            VisualMissionItem*  pVI =        qobject_cast<VisualMissionItem*>(_visualItems->get(viIndex));
+            SimpleMissionItem*  simpleItem = qobject_cast<SimpleMissionItem*>(pVI);
+            int                 currentSeqNumber = pVI->sequenceNumber();
 
-            if (sequenceNumber != 0 && pVI->sequenceNumber() <= sequenceNumber) {
+            if (sequenceNumber != 0 && currentSeqNumber <= sequenceNumber) {
                 if (pVI->specifiesCoordinate() && !pVI->isStandaloneCoordinate()) {
                     // Coordinate based flight commands prior to where the takeoff would be inserted
                     _isInsertTakeoffValid = false;
@@ -2305,7 +2307,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             }
 
             if (qobject_cast<TakeoffMissionItem*>(pVI)) {
-                takeoffIndex = viIndex;
+                takeoffSeqNum = currentSeqNumber;
                 _isInsertTakeoffValid = false;
             }
 
@@ -2317,7 +2319,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                     case MAV_CMD_DO_LAND_START:
                     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
                         foundLand = true;
-                        landIndex = viIndex;
+                        landSeqNum = currentSeqNumber;
                         break;
                     default:
                         break;
@@ -2326,19 +2328,19 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                     FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(pVI);
                     if (fwLanding) {
                         foundLand = true;
-                        landIndex = viIndex;
+                        landSeqNum = currentSeqNumber;
                     }
                 }
             }
 
             if (simpleItem) {
                 // Remember previous coordinate
-                if (pVI->sequenceNumber() < sequenceNumber && simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate()) {
+                if (currentSeqNumber < sequenceNumber && simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate()) {
                     _previousCoordinate = simpleItem->coordinate();
                 }
 
                 // ROI state handling
-                if (pVI->sequenceNumber() <= sequenceNumber) {
+                if (currentSeqNumber <= sequenceNumber) {
                     if (_isROIActive) {
                         if (_isROICancelItem(simpleItem)) {
                             _isROIActive = false;
@@ -2349,12 +2351,17 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                         }
                     }
                 }
-                if (pVI->sequenceNumber() == sequenceNumber && _isROIBeginItem(simpleItem)) {
+                if (currentSeqNumber == sequenceNumber && _isROIBeginItem(simpleItem)) {
                     _isROIBeginCurrentItem = true;
+                }
+
+                if (simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate()) {
+                    lastFlyThroughSeqNum = currentSeqNumber;
                 }
             }
 
-            if (pVI->sequenceNumber() == sequenceNumber) {
+
+            if (currentSeqNumber == sequenceNumber) {
                 pVI->setIsCurrentItem(true);
                 pVI->setHasCurrentChildItem(false);
 
@@ -2383,9 +2390,9 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             }
         }
 
-        if (takeoffIndex != -1) {
+        if (takeoffSeqNum != -1) {
             // Takeoff item was found which means mission starts from ground
-            if (sequenceNumber < takeoffIndex) {
+            if (sequenceNumber < takeoffSeqNum) {
                 // Land is only valid after the takeoff item.
                 _isInsertLandValid = false;
                 // Fly through commands are not allowed prior to the takeoff command
@@ -2393,10 +2400,17 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             }
         }
 
+        if (lastFlyThroughSeqNum != -1) {
+            // Land item must be after any fly through coordinates
+            if (sequenceNumber < lastFlyThroughSeqNum) {
+                _isInsertLandValid = false;
+            }
+        }
+
         if (foundLand) {
             // Can't have more than one land sequence
             _isInsertLandValid = false;
-            if (sequenceNumber >= landIndex) {
+            if (sequenceNumber >= landSeqNum) {
                 // Can't have fly through commands after a land item
                 _flyThroughCommandsAllowed = false;
             }
