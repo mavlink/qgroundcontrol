@@ -118,7 +118,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
     g_free(description);
     GstElement* sink = GST_ELEMENT(data);
     if(gst_element_link_pads(element, name, sink, "sink") == false)
-        qCCritical(VideoReceiverLog) << "newPadCB : failed to link elements\n";
+        qCCritical(VideoReceiverLog) << "Failed to link elements\n";
     g_free(name);
 }
 
@@ -130,7 +130,7 @@ autoplugQueryCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* q
     GstPad* sinkpad = gst_element_get_static_pad(glupload, "sink");
 
     if (!sinkpad) {
-        qCCritical(VideoReceiverLog) << "autoplugQueryCaps(): No sink pad found";
+        qCCritical(VideoReceiverLog) << "No sink pad found";
         return FALSE;
     }
 
@@ -161,7 +161,7 @@ autoplugQueryContext(GstElement* bin, GstPad* pad, GstElement* element, GstQuery
     GstPad* sinkpad = gst_element_get_static_pad(glsink, "sink");
 
     if (!sinkpad){
-        qCCritical(VideoReceiverLog) << "autoplugQueryContext(): No sink pad found";
+        qCCritical(VideoReceiverLog) << "No sink pad found";
         return FALSE;
     }
 
@@ -252,13 +252,13 @@ _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
                     pad = gst_element_get_static_pad(buffer, "src");
                     element = buffer;
                 } else {
-                    qCDebug(VideoReceiverLog) << "_wrapWithGhostPad partially failed. Error with gst_pad_link()";
+                    qCDebug(VideoReceiverLog) << "Partially failed - gst_pad_link()";
                 }
             } else {
-                qCDebug(VideoReceiverLog) << "_wrapWithGhostPad partially failed. Error with gst_element_get_static_pad()";
+                qCDebug(VideoReceiverLog) << "Partially failed - gst_element_get_static_pad()";
             }
         } else {
-            qCDebug(VideoReceiverLog) << "_wrapWithGhostPad partially failed. Error with gst_element_factory_make('rtpjitterbuffer')";
+            qCDebug(VideoReceiverLog) << "Partially failed - gst_element_factory_make('rtpjitterbuffer')";
         }
     }
 
@@ -297,7 +297,7 @@ GstElement*
 VideoReceiver::_makeSource(const QString& uri)
 {
     if (uri.isEmpty()) {
-        qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed because URI is not specified";
+        qCCritical(VideoReceiverLog) << "Failed because URI is not specified";
         return nullptr;
     }
 
@@ -333,12 +333,12 @@ VideoReceiver::_makeSource(const QString& uri)
 
                 if(isUdp264) {
                     if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == nullptr) {
-                        qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_caps_from_string()";
+                        qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
                     }
                 } else if (isUdp264) {
                     if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265")) == nullptr) {
-                        qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_caps_from_string()";
+                        qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
                     }
                 }
@@ -350,11 +350,11 @@ VideoReceiver::_makeSource(const QString& uri)
                 }
             }
         } else {
-            qCDebug(VideoReceiverLog) << "VideoReceiver::_makeSource(): URI is not recognized";
+            qCDebug(VideoReceiverLog) << "URI is not recognized";
         }
 
         if (!source) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make() for data source";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make() for data source failed";
             break;
         }
 
@@ -372,7 +372,7 @@ VideoReceiver::_makeSource(const QString& uri)
         }
 
         if ((bin = gst_bin_new("sourcebin")) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_bin_new('sourcebin')";
+            qCCritical(VideoReceiverLog) << "gst_bin_new('sourcebin') failed";
             break;
         }
 
@@ -385,19 +385,19 @@ VideoReceiver::_makeSource(const QString& uri)
         if (probeRes & 1) {
             if (probeRes & 2) {
                 if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
-                    qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make('rtpjitterbuffer')";
+                    qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
                 }
 
                 gst_bin_add(GST_BIN(bin), buffer);
 
                 if (!gst_element_link_many(source, buffer, parser, nullptr)) {
-                    qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_element_link()";
+                    qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                     break;
                 }
             } else {
                 if (!gst_element_link(source, parser)) {
-                    qCCritical(VideoReceiverLog) << "VideoReceiver::_makeSource() failed. Error with gst_element_link()";
+                    qCCritical(VideoReceiverLog) << "gst_element_link() failed";
                     break;
                 }
             }
@@ -518,13 +518,13 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
 void
 VideoReceiver::start()
 {
-    qCDebug(VideoReceiverLog) << "start():" << _uri;
+    qCDebug(VideoReceiverLog) << "Starting " << _uri;
     if(qgcApp()->runningUnitTests()) {
         return;
     }
     if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
        !_videoSettings->streamConfigured()) {
-        qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
+        qCDebug(VideoReceiverLog) << "Stream not enabled/configured";
         return;
     }
 
@@ -541,14 +541,14 @@ VideoReceiver::start()
 #endif
 
     if (uri.isEmpty()) {
-        qCDebug(VideoReceiverLog) << "VideoReceiver::start() failed because URI is not specified";
+        qCDebug(VideoReceiverLog) << "Failed because URI is not specified";
         return;
     }
 
     bool useTcpConnection = uri.contains("rtsp://") || uri.contains("tcp://");
 
     if (_videoSink == nullptr) {
-        qCWarning(VideoReceiverLog) << "VideoReceiver::start() failed because video sink is not set";
+        qCWarning(VideoReceiverLog) << "Failed because video sink is not set";
         return;
     }
     if(_running) {
@@ -576,31 +576,31 @@ VideoReceiver::start()
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed. Error with gst_pipeline_new()";
+            qCCritical(VideoReceiverLog) << "gst_pipeline_new() failed";
             break;
         }
 
         g_object_set(_pipeline, "message-forward", TRUE, nullptr);
 
         if ((source = _makeSource(uri)) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed. Error with _makeSource()";
+            qCCritical(VideoReceiverLog) << "_makeSource() failed";
             break;
         }
 
         if((_tee = gst_element_factory_make("tee", nullptr)) == nullptr)  {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('tee') failed";
             break;
         }
 
         if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
             // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
             //       We should compare gstreamer scripts to QGroundControl to determine the need
-            qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('queue') failed";
             break;
         }
 
         if ((decoder = gst_element_factory_make("decodebin", "decoder")) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed. Error with gst_element_factory_make('decodebin')";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('decodebin') failed";
             break;
         }
 
@@ -611,7 +611,7 @@ VideoReceiver::start()
         g_signal_connect(source, "pad-added", G_CALLBACK(newPadCB), _tee);
 
         if(!gst_element_link_many(_tee, queue, decoder, nullptr)) {
-            qCCritical(VideoReceiverLog) << "Unable to link UDP elements.";
+            qCCritical(VideoReceiverLog) << "Unable to receiver pipeline.";
             break;
         }
 
@@ -635,7 +635,7 @@ VideoReceiver::start()
     } while(0);
 
     if (!running) {
-        qCCritical(VideoReceiverLog) << "VideoReceiver::start() failed";
+        qCCritical(VideoReceiverLog) << "Failed";
 
         // In newer versions, the pipeline will clean up all references that are added to it
         if (_pipeline != nullptr) {
@@ -686,7 +686,7 @@ VideoReceiver::stop()
     }
 #if defined(QGC_GST_STREAMING)
     _stop = true;
-    qCDebug(VideoReceiverLog) << "stop()";
+    qCDebug(VideoReceiverLog) << "Stopping";
     if(!_streaming) {
         _shutdownPipeline();
     } else if (_pipeline != nullptr && !_stopping) {
@@ -766,7 +766,7 @@ VideoReceiver::_handleEOS() {
     } else if(_recording && _sink->removing) {
         _shutdownRecordingBranch();
     } else {
-        qCWarning(VideoReceiverLog) << "VideoReceiver: Unexpected EOS!";
+        qCWarning(VideoReceiverLog) << "Unexpected EOS!";
         _handleError();
     }
 }
@@ -929,26 +929,26 @@ VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
 
     do{
         if ((mux = gst_element_factory_make(kVideoMuxes[format], nullptr)) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('" << kVideoMuxes[format] << "')";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('" << kVideoMuxes[format] << "') failed";
             break;
         }
 
         if ((sink = gst_element_factory_make("filesink", nullptr)) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_element_factory_make('filesink')";
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('filesink') failed";
             break;
         }
 
         g_object_set(static_cast<gpointer>(sink), "location", qPrintable(videoFile), nullptr);
 
         if ((bin = gst_bin_new("sinkbin")) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_bin_new('sinkbin')";
+            qCCritical(VideoReceiverLog) << "gst_bin_new('sinkbin') failed";
             break;
         }
 
         GstPadTemplate* padTemplate;
 
         if ((padTemplate = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(mux), "video_%u")) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_element_class_get_pad_template(mux)";
+            qCCritical(VideoReceiverLog) << "gst_element_class_get_pad_template(mux) failed";
             break;
         }
 
@@ -956,7 +956,7 @@ VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
         GstPad* pad;
 
         if ((pad = gst_element_request_pad(mux, padTemplate, nullptr, nullptr)) == nullptr) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_element_request_pad(mux)";
+            qCCritical(VideoReceiverLog) << "gst_element_request_pad(mux) failed";
             break;
         }
 
@@ -972,7 +972,7 @@ VideoReceiver::_makeFileSink(const QString& videoFile, unsigned format)
         pad = nullptr;
 
         if (!gst_element_link(mux, sink)) {
-            qCCritical(VideoReceiverLog) << "VideoReceiver::_makeFileSink() failed. Error with gst_element_link()";
+            qCCritical(VideoReceiverLog) << "gst_element_link() failed";
             break;
         }
 
@@ -1006,7 +1006,7 @@ VideoReceiver::startRecording(const QString &videoFile)
 {
 #if defined(QGC_GST_STREAMING)
 
-    qCDebug(VideoReceiverLog) << "startRecording()";
+    qCDebug(VideoReceiverLog) << "Starting recording";
     // exit immediately if we are already recording
     if(_pipeline == nullptr || _recording) {
         qCDebug(VideoReceiverLog) << "Already recording!";
@@ -1043,7 +1043,7 @@ VideoReceiver::startRecording(const QString &videoFile)
     _sink->removing = false;
 
     if(!_sink->teepad || !_sink->queue || !_sink->filesink) {
-        qCCritical(VideoReceiverLog) << "VideoReceiver::startRecording() failed to make _sink elements";
+        qCCritical(VideoReceiverLog) << "Failed to make _sink elements";
         return;
     }
 
@@ -1090,7 +1090,7 @@ void
 VideoReceiver::stopRecording(void)
 {
 #if defined(QGC_GST_STREAMING)
-    qCDebug(VideoReceiverLog) << "stopRecording()";
+    qCDebug(VideoReceiverLog) << "Stopping recording";
     // exit immediately if we are not recording
     if(_pipeline == nullptr || !_recording) {
         qCDebug(VideoReceiverLog) << "Not recording!";
@@ -1125,7 +1125,7 @@ VideoReceiver::_shutdownRecordingBranch()
     _recording = false;
 
     emit recordingChanged();
-    qCDebug(VideoReceiverLog) << "Recording Stopped";
+    qCDebug(VideoReceiverLog) << "Recording stopped";
 }
 #endif
 
