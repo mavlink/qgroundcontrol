@@ -598,6 +598,16 @@ void MissionController::removeMissionItem(int viIndex)
     }
 
     _recalcAll();
+
+    // Adjust current item
+    int newVIIndex;
+    if (viIndex >= _visualItems->count()) {
+        newVIIndex = _visualItems->count() - 1;
+    } else {
+        newVIIndex = viIndex;
+    }
+    setCurrentPlanViewSeqNum(_visualItems->value<VisualMissionItem*>(newVIIndex)->sequenceNumber(), true);
+
     setDirty(true);
 }
 
