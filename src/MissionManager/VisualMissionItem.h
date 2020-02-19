@@ -47,6 +47,7 @@ public:
     };
     Q_ENUM(ReadyForSaveState)
 
+    Q_PROPERTY(Vehicle*         vehicle                             READ vehicle                                                            CONSTANT)
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                       CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                    NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known

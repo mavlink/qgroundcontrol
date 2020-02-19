@@ -115,7 +115,7 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
     if (specifiesCoordinate()) {
-        if (_vehicle->fixedWing()) {
+        if (_vehicle->fixedWing() || _vehicle->vtol()) {
             setLaunchTakeoffAtSameLocation(false);
         } else {
             // PX4 specifies a coordinate for takeoff even for non fixed wing. But it makes more sense to not have a coordinate
