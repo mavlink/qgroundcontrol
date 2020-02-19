@@ -21,6 +21,11 @@
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 
+namespace Config {
+    static const char* kQSettingsName = "FirmwarePlugin";
+    static int kVersionUpdateTimeoutSeconds = 24/*hours*/ * 360;
+}
+
 static FirmwarePluginFactoryRegister* _instance = nullptr;
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
@@ -808,26 +813,55 @@ uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
 
 void FirmwarePlugin::checkIfIsLatestStable(Vehicle* vehicle)
 {
-    // This is required as mocklink uses a hardcoded firmware version
     if (qgcApp()->runningUnitTests()) {
         qCDebug(FirmwarePluginLog) << "Skipping version check";
         return;
     }
-    QString versionFile = _getLatestVersionFileUrl(vehicle);
-    qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
-    QGCFileDownload* downloader = new QGCFileDownload(this);
-    connect(
-        downloader,
-        &QGCFileDownload::downloadFinished,
-        this,
-        [vehicle, this](QString remoteFile, QString localFile) {
-            _versionFileDownloadFinished(remoteFile, localFile, vehicle);
-            sender()->deleteLater();
-        });
-    downloader->download(versionFile);
+
+    auto fwTypeName = vehicle->firmwareTypeString().replace(' ', '_');
+    if(_runningFwVerDl.contains(fwTypeName)) {
+        qCDebug(FirmwarePluginLog()) << "Ver download in progress for FW: " << fwTypeName;
+        return;
+    }
+    _runningFwVerDl.insert(fwTypeName);
+
+    FwVersion vehicleVersion(vehicle->firmwareMajorVersion(), vehicle->firmwareMinorVersion(), vehicle->firmwarePatchVersion());
+    int currType = vehicle->firmwareVersionType();
+    // Check if we require FW download
+    bool outdated = true;
+    auto latestVerSaved = _retrieveLatestAvailableFirmwareVersion(fwTypeName, outdated);
+    if(outdated) {
+        QString versionFile = _getLatestVersionFileUrl(vehicle);
+        qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
+        auto downloader = new QGCFileDownload(this);
+        connect(
+            downloader,
+            &QGCFileDownload::downloadFinished,
+            this,
+            [=](QString remoteFile, QString localFile) {
+                _versionFileDownloadFinished(remoteFile, localFile, fwTypeName);
+                bool outdated = false;
+                _notifyUserAboutFirmwareUpdate(currType, vehicleVersion, _retrieveLatestAvailableFirmwareVersion(fwTypeName, outdated));
+                _runningFwVerDl.remove(fwTypeName);
+                downloader->deleteLater();
+            });
+        connect(
+            downloader,
+            &QGCFileDownload::error,
+            this,
+            [=](QString errorMsg) {
+                qCDebug(FirmwarePluginLog()) << "Failed to download the latest fw version file. Error: " << errorMsg;
+                _runningFwVerDl.remove(fwTypeName);
+                downloader->deleteLater();
+            });
+        downloader->download(versionFile);
+    }
+    else {
+        _notifyUserAboutFirmwareUpdate(currType, vehicleVersion, latestVerSaved);
+    }
 }
 
-void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle)
+void FirmwarePlugin::_versionFileDownloadFinished(const QString& remoteFile, const QString& localFile, const QString& fwName)
 {
     qCDebug(FirmwarePluginLog) << "Download complete" << remoteFile << localFile;
     // Now read the version file and pull out the version string
@@ -852,48 +886,15 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     }
 
     qCDebug(FirmwarePluginLog) << "Latest stable version = "  << version;
+    _saveAvailableFirmwareVersion(fwName, FwVersion(version));
+}
 
-    int currType = vehicle->firmwareVersionType();
-
+void FirmwarePlugin::_notifyUserAboutFirmwareUpdate(int vehicleVersionType, FwVersion vehicleVersion, FwVersion latest)
+{
     // Check if lower version than stable or same version but different type
-    if (currType == FIRMWARE_VERSION_TYPE_OFFICIAL && vehicle->versionCompare(version) < 0) {
-        QString currentVersionNumber = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
-                .arg(vehicle->firmwareMinorVersion())
-                .arg(vehicle->firmwarePatchVersion());
-        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+    if (vehicleVersionType == FIRMWARE_VERSION_TYPE_OFFICIAL && vehicleVersion.compare(latest) < 0) {
+        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(vehicleVersion.toString(), latest.toString()));
     }
-}
-
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int patch)
-{
-    int currMajor = vehicle->firmwareMajorVersion();
-    int currMinor = vehicle->firmwareMinorVersion();
-    int currPatch = vehicle->firmwarePatchVersion();
-
-    if (currMajor == major && currMinor == minor && currPatch == patch) {
-        return 0;
-    }
-
-    if (currMajor > major
-       || (currMajor == major && currMinor > minor)
-       || (currMajor == major && currMinor == minor && currPatch > patch))
-    {
-        return 1;
-    }
-    return -1;
-}
-
-int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
-{
-    QStringList versionNumbers = compare.split(".");
-    if(versionNumbers.size() != 3) {
-        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
-        return -1;
-    }
-    int major = versionNumbers[0].toInt();
-    int minor = versionNumbers[1].toInt();
-    int patch = versionNumbers[2].toInt();
-    return versionCompare(vehicle, major, minor, patch);
 }
 
 QString FirmwarePlugin::gotoFlightMode(void) const
@@ -924,4 +925,25 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionRe
                                           &message,
                                           &follow_target);
     vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+}
+
+void FirmwarePlugin::_saveAvailableFirmwareVersion(const QString& fwName, const FwVersion& version)
+{
+    QSettings settings;
+    settings.beginGroup(Config::kQSettingsName + QString("/") + fwName);
+    settings.setValue("major", version.major);
+    settings.setValue("minor", version.minor);
+    settings.setValue("patch", version.patch);
+    settings.setValue("updateTime", QDateTime::currentDateTime());
+}
+
+FwVersion FirmwarePlugin::_retrieveLatestAvailableFirmwareVersion(const QString& fwName, bool& outdated) const
+{
+    QSettings settings;
+    settings.beginGroup(Config::kQSettingsName + QString("/") + fwName);
+    FwVersion version(settings.value("major", 0).toInt(),
+                      settings.value("minor", 0).toInt(),
+                      settings.value("patch", 0).toInt());
+    outdated = !settings.contains("updateTime") || settings.value("updateTime").toDateTime().secsTo(QDateTime::currentDateTime()) > Config::kVersionUpdateTimeoutSeconds;
+    return version;
 }

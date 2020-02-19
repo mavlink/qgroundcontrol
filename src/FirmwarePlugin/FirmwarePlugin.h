@@ -28,6 +28,9 @@
 class Vehicle;
 class QGCCameraControl;
 class QGCCameraManager;
+class QGCFileDownload;
+
+struct FwVersion;
 
 /// This is the base class for Firmware specific plugins
 ///
@@ -316,11 +319,6 @@ public:
     /// Used to check if running firmware is latest stable version.
     virtual void checkIfIsLatestStable(Vehicle* vehicle);
 
-    /// Used to check if running current version is equal or higher than the one being compared.
-    /// returns 1 if current > compare, 0 if current == compare, -1 if current < compare
-    int versionCompare(Vehicle* vehicle, QString& compare);
-    int versionCompare(Vehicle* vehicle, int major, int minor, int patch);
-
     /// Allows the Firmware plugin to override the facts meta data.
     ///     @param vehicleType - Type of current vehicle
     ///     @param metaData - MetaData for fact
@@ -344,11 +342,16 @@ protected:
     // @return: true - vehicle in specified flight mode, false - flight mode change failed
     bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
 
+    void _saveAvailableFirmwareVersion(const QString& fwName, const FwVersion& version);
+    FwVersion _retrieveLatestAvailableFirmwareVersion(const QString& fwName, bool& outdated) const;
+
     // returns url with latest firmware release information.
     virtual QString _getLatestVersionFileUrl(Vehicle* /*vehicle*/) { return QString(); }
 
     // Callback to process file with latest release information
-    virtual void _versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle);
+    virtual void _versionFileDownloadFinished(const QString& remoteFile, const QString& localFile, const QString& fwName);
+
+    void _notifyUserAboutFirmwareUpdate(int flyingVesionType, FwVersion flying, FwVersion latest);
 
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
@@ -356,6 +359,7 @@ protected:
 private:
     QVariantList _toolBarIndicatorList;
     static QVariantList _cameraList;    ///< Standard QGC camera list
+    QSet<QString> _runningFwVerDl;      ///< Keep running download sessions for each FW type. Protect against AUTOPILOT_VERSION sent out of control
 };
 
 class FirmwarePluginFactory : public QObject
@@ -392,6 +396,48 @@ public:
 
 private:
     QList<FirmwarePluginFactory*> _factoryList;
+};
+
+
+struct FwVersion {
+    FwVersion() {};
+    explicit FwVersion(int majorV, int minorV, int patchV) {
+        major = majorV;
+        minor = minorV;
+        patch = patchV;
+    };
+    explicit FwVersion(const QString& strVersion) {
+        auto versionNumbers = strVersion.split(".");
+        if(versionNumbers.size() == 3) {
+            major = versionNumbers[0].toInt();
+            minor = versionNumbers[1].toInt();
+            patch = versionNumbers[2].toInt();
+        }
+    }
+
+    bool isValid() { return major > 0 || minor > 0 || patch > 0; }
+
+    /// Used to check if first `this` instance is equal or higher than the `second`.
+    /// returns 1 if `this` > `second`, 0 if `this` == `second`, -1 if `this` < `second`
+    int compare(const FwVersion& other)
+    {
+        if (major == other.major && minor == other.minor && patch == other.patch) {
+            return 0;
+        }
+
+        if (major > other.major
+           || (major == other.major && minor > other.minor)
+           || (major == other.major && minor == other.minor && patch > other.patch))
+        {
+            return 1;
+        }
+        return -1;
+    }
+    QString toString() { return QString("%1.%2.%3").arg(major).arg(minor).arg(patch); };
+
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
 };
 
 #endif

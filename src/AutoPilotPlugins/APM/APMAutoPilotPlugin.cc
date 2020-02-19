@@ -79,8 +79,9 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_radioComponent));
             }
 
+            FwVersion vehicleVersion(_vehicle->firmwareMajorVersion(), _vehicle->firmwareMinorVersion(), _vehicle->firmwarePatchVersion());
             // No flight modes component for Sub versions 3.5 and up
-            if (!_vehicle->sub() || (_vehicle->versionCompare(3, 5, 0) < 0)) {
+            if (!_vehicle->sub() || (vehicleVersion.compare(FwVersion(3, 5, 0)) < 0)) {
                 _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
                 _flightModesComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
@@ -94,7 +95,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
-            if (!_vehicle->sub() || (_vehicle->sub() && _vehicle->versionCompare(3, 5, 3) >= 0)) {
+            if (!_vehicle->sub() || (_vehicle->sub() && vehicleVersion.compare(FwVersion(3, 5, 3)) >= 0)) {
                 _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
@@ -111,7 +112,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
             }
 
-            if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER && (_vehicle->versionCompare(4, 0, 0) >= 0)) {
+            if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER && (vehicleVersion.compare(FwVersion(4, 0, 0)) >= 0)) {
                 _heliComponent = new APMHeliComponent(_vehicle, this);
                 _heliComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_heliComponent));
@@ -130,7 +131,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _lightsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_lightsComponent));
 
-                if(_vehicle->versionCompare(3, 5, 0) >= 0) {
+                if(vehicleVersion.compare(FwVersion(3, 5, 0)) >= 0) {
                     _subFrameComponent = new APMSubFrameComponent(_vehicle, this);
                     _subFrameComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue((VehicleComponent*)_subFrameComponent));

@@ -4030,16 +4030,6 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
     }
 }
 
-int  Vehicle::versionCompare(QString& compare)
-{
-    return _firmwarePlugin->versionCompare(this, compare);
-}
-
-int  Vehicle::versionCompare(int major, int minor, int patch)
-{
-    return _firmwarePlugin->versionCompare(this, major, minor, patch);
-}
-
 void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
 {
     if (_pidTuningWaitingForRates) {

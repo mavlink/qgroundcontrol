@@ -18,6 +18,9 @@
 #include "ParameterManager.h"
 #include "PX4ParameterMetaData.h"
 
+/**
+ * Single ton instance used for handling firmware related information. Most of the functionality requires a Vehicle instance
+*/
 class PX4FirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT
