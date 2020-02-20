@@ -207,7 +207,7 @@ Item {
         addCommonVisuals()
         _handleInteractiveChanged()
     }
-    Component.onDestruction: map.traceMode = false
+    Component.onDestruction: mapPolygon.traceMode = false
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrToolVisuals }
