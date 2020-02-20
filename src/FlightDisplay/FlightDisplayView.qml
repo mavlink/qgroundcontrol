@@ -50,7 +50,7 @@ Item {
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
     property bool   _enforceChecklist:              _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
-    property bool   _canArm:                        activeVehicle ? (_useChecklist ? (_enforceChecklist ? activeVehicle.checkListState === Vehicle.CheckListPassed : true) : true) : false
+    property bool   _checklistComplete:             activeVehicle && (activeVehicle.checkListState === Vehicle.CheckListPassed)
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
@@ -69,6 +69,26 @@ Item {
     readonly property string    _showMapBackgroundKey:  "/showMapBackground"
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
+
+    onVisibleChanged: {
+        if (activeVehicle && !_checklistComplete && _enforceChecklist) {
+            checklistPopupTimer.restart()
+        }
+    }
+
+    Timer {
+        id:             checklistPopupTimer
+        interval:       1000
+        repeat:         false
+        onTriggered: {
+            if (visible && !_checklistComplete) {
+                checklistDropPanel.open()
+            }
+            else {
+                checklistDropPanel.close()
+            }
+        }
+    }
 
     function setStates() {
         QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
@@ -597,7 +617,7 @@ Item {
                     name:               _guidedController.takeoffTitle,
                     iconSource:         "/res/takeoff.svg",
                     buttonVisible:      _guidedController.showTakeoff || !_guidedController.showLand,
-                    buttonEnabled:      _guidedController.showTakeoff && _canArm,
+                    buttonEnabled:      _guidedController.showTakeoff,
                     action:             _guidedController.actionTakeoff
                 },
                 {
@@ -625,7 +645,7 @@ Item {
                     name:               qsTr("Action"),
                     iconSource:         "/res/action.svg",
                     buttonVisible:      !_guidedController.showPause,
-                    buttonEnabled:      _anyActionAvailable && _canArm,
+                    buttonEnabled:      _anyActionAvailable,
                     action:             -1
                 }
             ]
@@ -659,7 +679,7 @@ Item {
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
-                if (showStartMission && _canArm) {
+                if (showStartMission) {
                     confirmAction(actionStartMission)
                 }
             }
@@ -778,9 +798,22 @@ Item {
             color:      Qt.rgba(0,0,0,0)
             clip:       true
         }
+
         Loader {
             id:         checkList
             anchors.centerIn: parent
+        }
+
+        property alias checkListItem: checkList.item
+
+        Connections {
+            target: checkList.item
+            onAllChecksPassedChanged: {
+                if (target.allChecksPassed)
+                {
+                    checklistPopupTimer.restart()
+                }
+            }
         }
     }
 
