@@ -26,10 +26,7 @@ VideoSurface::~VideoSurface() {
         return;
     }
 
-    GstElement *realSink = gst_bin_get_by_name(GST_BIN(sink), "qmlsink");
-    if (realSink) {
-        g_object_set(sink, "widget", nullptr, nullptr);
-    }
+    g_object_set(sink, "widget", nullptr, nullptr);
 #endif
 }
 
@@ -58,15 +55,14 @@ void VideoSurface::startVideo() {
     auto *pipeline = _videoReceiver->pipeline();
     if (pipeline && sink) {
         GObject *videoSinkHasWidget = nullptr;
-        GstElement *realSink = gst_bin_get_by_name(GST_BIN(sink), "qmlglsink");
 
         /* the qtqmlsink needs a property named 'Widget' to be set,
          * then it will send data to that widget directly without our intervention
          * this widget is the GstGlVideoItem we need to create in Qml
          */
-        g_object_get(realSink, "widget", videoSinkHasWidget, nullptr);
+        g_object_get(sink, "widget", videoSinkHasWidget, nullptr);
         if (!videoSinkHasWidget) {
-            g_object_set(realSink, "widget", _videoItem, nullptr);
+            g_object_set(sink, "widget", _videoItem, nullptr);
         }
 
         _shouldStartVideo = true;
