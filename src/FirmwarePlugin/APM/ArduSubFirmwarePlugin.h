@@ -57,6 +57,7 @@ public:
     static const char* _lightsLevel2FactName;
     static const char* _pilotGainFactName;
     static const char* _inputHoldFactName;
+    static const char* _rollPitchToggleFactName;
     static const char* _rangefinderDistanceFactName;
 
     static const char* _settingsGroup;
@@ -68,6 +69,7 @@ private:
     Fact            _lightsLevel2Fact;
     Fact            _pilotGainFact;
     Fact            _inputHoldFact;
+    Fact            _rollPitchToggleFact;
     Fact            _rangefinderDistanceFact;
 };
 
