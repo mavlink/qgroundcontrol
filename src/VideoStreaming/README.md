@@ -7,6 +7,10 @@ To build video streaming support, you will need to install the GStreamer develop
 
 If you do have the proper GStreamer development libraries installed where QGC looks for it, the QGC build system will automatically use it and build video streaming support. If you would like to disable video streaming support, you can add **DISABLE_VIDEOSTREAMING** to the **DEFINES** build variable.
 
+### Gstreamer logs
+
+For cases, when it is need to have more control over gstreamer logging than is availabe via QGroundControl's UI, it is possible to configure gstreamer logging via environment variables. Please see https://developer.gnome.org/gstreamer/stable/gst-running.html for details.
+
 ### UDP Pipeline
 
 For the time being, the RTP UDP pipeline is somewhat hardcoded, using h.264 or h.265. It's best to use a camera capable of hardware encoding either h.264 (such as the Logitech C920) or h.265. On the sender end, for RTP (UDP Streaming) you would run something like this:
