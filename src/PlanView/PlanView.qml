@@ -291,6 +291,17 @@ Item {
         _missionController.insertComplexMissionItem(complexItemName, mapCenter(), nextIndex, true /* makeCurrentItem */)
     }
 
+    function insertTakeItemAfterCurrent() {
+        var nextIndex = _missionController.currentPlanViewVIIndex + 1
+        _missionController.insertTakeoffItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
+    }
+
+    function insertLandItemAfterCurrent() {
+        var nextIndex = _missionController.currentPlanViewVIIndex + 1
+        _missionController.insertLandItem(mapCenter(), nextIndex, true /* makeCurrentItem */)
+    }
+
+
     function selectNextNotReady() {
         var foundCurrent = false
         for (var i=0; i<_missionController.visualItems.count; i++) {
@@ -643,7 +654,7 @@ Item {
                     break*/
                 case takeoffButtonIndex:
                     allAddClickBoolsOff()
-                    _missionController.insertTakeoffItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
+                    insertTakeItemAfterCurrent()
                     break
                 case waypointButtonIndex:
                     if (_addWaypointOnClick) {
@@ -675,7 +686,7 @@ Item {
                     break
                 case landButtonIndex:
                     allAddClickBoolsOff()
-                    _missionController.insertLandItem(mapCenter(), _missionController.currentMissionIndex, true /* makeCurrentItem */)
+                    insertLandItemAfterCurrent()
                     break
                 }
             }
@@ -835,12 +846,11 @@ Item {
                         readOnly:       false
                         onClicked:      _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
                         onRemove: {
-                            var removeIndex = index
-                            _missionController.removeMissionItem(removeIndex)
-                            if (removeIndex >= _missionController.visualItems.count) {
-                                removeIndex--
+                            var removeVIIndex = index
+                            _missionController.removeMissionItem(removeVIIndex)
+                            if (removeVIIndex >= _missionController.visualItems.count) {
+                                removeVIIndex--
                             }
-                            _missionController.setCurrentPlanViewSeqNum(removeIndex, true)
                         }
                         onSelectNextNotReadyItem:   selectNextNotReady()
                     }
