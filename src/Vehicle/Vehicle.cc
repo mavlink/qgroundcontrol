@@ -1343,7 +1343,8 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         nullStr[8] = 0;
         _gitHash = nullStr;
     }
-    if (_toolbox->corePlugin()->options()->checkFirmwareVersion()) {
+    if (_toolbox->corePlugin()->options()->checkFirmwareVersion() && !_checkLatestStableFWDone) {
+        _checkLatestStableFWDone = true;
         _firmwarePlugin->checkIfIsLatestStable(this);
     }
     emit gitHashChanged(_gitHash);
