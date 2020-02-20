@@ -45,6 +45,12 @@
     "type":             "float",
     "decimalPlaces":    2,
     "units":            "meters"
+},
+{   "name":             "roll pitch toggle",
+    "shortDescription": "Roll/Pitch Toggle",
+    "type":             "int16",
+    "enumStrings":      "Disabled,Enabled,Unavailable",
+    "enumValues":       "0,1,2"
 }
 ]
 }
