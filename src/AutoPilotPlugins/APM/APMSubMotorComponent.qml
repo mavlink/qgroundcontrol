@@ -28,7 +28,8 @@ SetupPage {
 
     property int neutralValue: 50;
     property int _lastIndex: 0;
-    property bool canDoManualTest: controller.vehicle.flightMode !== 'Motor Detection' && controller.vehicle.armed && motorPage.visible
+    property bool canRunManualTest: controller.vehicle.flightMode !== 'Motor Detection' && controller.vehicle.armed && motorPage.visible && setupView.visible
+    property var shouldRunManualTest: false // Does the operator intend to run the motor test?
 
     APMSubMotorComponentController {
         id:             controller
@@ -49,7 +50,7 @@ SetupPage {
 
             Row {
                 id:         motorSliders
-                enabled:    canDoManualTest
+                enabled:    canRunManualTest && shouldRunManualTest
                 spacing:    ScreenTools.defaultFontPixelWidth * 4
 
                 Column {
@@ -169,7 +170,7 @@ SetupPage {
                     id: safetySwitch
                     onToggled: {
                         if (controller.vehicle.armed) {
-                            timer.stop()
+                            shouldRunManualTest = false
                             enabled = false
                             coolDownTimer.start()
                         }
@@ -186,11 +187,11 @@ SetupPage {
                     {
                         safetySwitch.checked = armed
                             if (!armed) {
-                                timer.stop()
+                                shouldRunManualTest = false
                                 safetySwitch.enabled = false
                                 coolDownTimer.start()
                             } else {
-                                timer.start()
+                                shouldRunManualTest = true
                             }
                             for (var sliderIndex=0; sliderIndex<sliderRepeater.count; sliderIndex++) {
                                 sliderRepeater.itemAt(sliderIndex).motorSlider.value = neutralValue
@@ -278,7 +279,7 @@ SetupPage {
                 id: timer
                 interval:       50
                 repeat:         true
-                running:        canDoManualTest
+                running:        canRunManualTest
 
                 onTriggered: {
                     if (controller.vehicle.armed) {
