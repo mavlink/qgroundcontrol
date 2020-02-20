@@ -1308,8 +1308,10 @@ void MissionController::_recalcWaypointLines(void)
                     startVIForIncompleteItem = visualItem;
                 }
 
-                if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
-                    // Direction arrows are added to the first segment and every 5 segments in the middle.
+                if (i != 1 && (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome))) {
+                    // Direction arrows are added to the second segment and every 5 segments thereafter.
+                    // The reason for start with second segment is to prevent an arrow being added in between the home position
+                    // and a takeoff item which may be right over each other. In that case the arrow points in a random direction.
                     bool addDirectionArrow = false;
                     if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
                         addDirectionArrow = true;
