@@ -198,6 +198,6 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)
     Q_UNUSED(argv)
-    Q_UNUSED(debuglevel)
+    Q_UNUSED(gstDebuglevel)
 #endif
 }
