@@ -38,7 +38,6 @@ Item {
     property bool   _circleRadiusDrag:          false
     property var    _circleRadiusDragCoord:     QtPositioning.coordinate()
     property bool   _editCircleRadius:          false
-    property bool   _traceMode:                 false
     property string _instructionText:           _polygonToolsText
     property var    _savedVertices:             [ ]
     property bool   _savedCircleMode
@@ -157,7 +156,7 @@ Item {
             addEditingVisuals()
             addToolbarVisuals()
         } else {
-            _traceMode = false
+            mapPolygon.traceMode = false
             removeEditingVisuals()
             removeToolVisuals()
         }
@@ -183,16 +182,6 @@ Item {
 
     onInteractiveChanged: _handleInteractiveChanged()
 
-    on_TraceModeChanged: {
-        if (_traceMode) {
-            _instructionText = _traceText
-            _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
-        } else {
-            _instructionText = _polygonToolsText
-            _objMgrTraceVisuals.destroyObjects()
-        }
-    }
-
     on_CircleModeChanged: {
         if (_circleMode) {
             addCircleVisuals()
@@ -201,10 +190,24 @@ Item {
         }
     }
 
+    Connections {
+        target: mapPolygon
+        onTraceModeChanged: {
+            if (mapPolygon.traceMode) {
+                _instructionText = _traceText
+                _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
+            } else {
+                _instructionText = _polygonToolsText
+                _objMgrTraceVisuals.destroyObjects()
+            }
+        }
+    }
+
     Component.onCompleted: {
         addCommonVisuals()
         _handleInteractiveChanged()
     }
+    Component.onDestruction: map.traceMode = false
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrToolVisuals }
@@ -526,30 +529,30 @@ Item {
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Basic")
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
                 onClicked:          _resetPolygon()
             }
 
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Circular")
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
                 onClicked:          _resetCircle()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
+                text:               mapPolygon.traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
-                    if (_traceMode) {
+                    if (mapPolygon.traceMode) {
                         if (mapPolygon.count < 3) {
                             _restorePreviousVertices()
                         }
-                        _traceMode = false
+                        mapPolygon.traceMode = false
                     } else {
                         _saveCurrentVertices()
                         _circleMode = false
-                        _traceMode = true
+                        mapPolygon.traceMode = true
                         mapPolygon.clear();
                     }
                 }
@@ -559,7 +562,7 @@ Item {
                 _horizontalPadding: 0
                 text:               qsTr("Load KML/SHP...")
                 onClicked:          kmlOrSHPLoadDialog.openForLoad()
-                visible:            !_traceMode
+                visible:            !mapPolygon.traceMode
             }
         }
     }
