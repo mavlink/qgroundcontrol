@@ -157,7 +157,6 @@ target_link_libraries(qgc
 		comm
 		FactSystem
 		FirmwarePlugin
-		FlightDisplay
 		FlightMap
 		FollowMe
 		Geo
