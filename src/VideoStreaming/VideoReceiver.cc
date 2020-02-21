@@ -218,11 +218,12 @@ _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
     GstCaps* filter = gst_caps_from_string("application/x-rtp");
 
     if (filter != nullptr) {
-        GstCaps* caps;
+        GstCaps* caps = gst_pad_query_caps(pad, nullptr);
 
-        if ((caps = gst_pad_query_caps(pad, filter)) && !gst_caps_is_empty(caps)) {
-            qDebug() << gst_caps_to_string(caps);
-            isRtpPad = TRUE;
+        if (caps != nullptr) {
+            if (!gst_caps_is_any(caps) && gst_caps_can_intersect(caps, filter)) {
+                isRtpPad = TRUE;
+            }
 
             gst_caps_unref(caps);
             caps = nullptr;
@@ -275,10 +276,12 @@ _padProbe(GstElement* element, GstPad* pad, gpointer user_data)
     GstCaps* filter = gst_caps_from_string("application/x-rtp");
 
     if (filter != nullptr) {
-        GstCaps* caps;
+        GstCaps* caps = gst_pad_query_caps(pad, nullptr);
 
-        if ((caps = gst_pad_query_caps(pad, filter)) && !gst_caps_is_empty(caps)) {
-            *probeRes |= 2;
+        if (caps != nullptr) {
+            if (!gst_caps_is_any(caps) && gst_caps_can_intersect(caps, filter)) {
+                *probeRes |= 2;
+            }
 
             gst_caps_unref(caps);
             caps = nullptr;
