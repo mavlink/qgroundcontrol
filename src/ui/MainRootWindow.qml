@@ -99,42 +99,49 @@ ApplicationWindow {
         return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
     }
 
-    function viewSwitch(isPlanView) {
+    function showFlyView() {
+        settingsWindow.visible  = false
+        setupWindow.visible     = false
+        analyzeWindow.visible   = false
+        planViewLoader.visible  = false
+        flightView.visible      = true
+        toolbar.source          = _mainToolbar
+    }
+
+    function showPlanView() {
         settingsWindow.visible  = false
         setupWindow.visible     = false
         analyzeWindow.visible   = false
         flightView.visible      = false
-        planViewLoader.visible  = false
-        if(isPlanView) {
-            toolbar.source  = _planToolbar
-        } else {
-            toolbar.source  = _mainToolbar
-        }
-    }
-
-    function showFlyView() {
-        viewSwitch(false)
-        flightView.visible = true
-    }
-
-    function showPlanView() {
-        viewSwitch(true)
-        planViewLoader.visible = true
+        planViewLoader.visible  = true
+        toolbar.source          = _planToolbar
     }
 
     function showAnalyzeView() {
-        viewSwitch(false)
-        analyzeWindow.visible = true
+        settingsWindow.visible  = false
+        setupWindow.visible     = false
+        flightView.visible      = false
+        planViewLoader.visible  = false
+        analyzeWindow.visible   = true
+        toolbar.source          = _mainToolbar
     }
 
     function showSetupView() {
-        viewSwitch(false)
-        setupWindow.visible = true
+        settingsWindow.visible  = false
+        analyzeWindow.visible   = false
+        flightView.visible      = false
+        planViewLoader.visible  = false
+        setupWindow.visible     = true
+        toolbar.source          = _mainToolbar
     }
 
     function showSettingsView() {
-        viewSwitch(false)
-        settingsWindow.visible = true
+        setupWindow.visible     = false
+        analyzeWindow.visible   = false
+        flightView.visible      = false
+        planViewLoader.visible  = false
+        settingsWindow.visible  = true
+        toolbar.source          = _mainToolbar
     }
 
     //-------------------------------------------------------------------------
