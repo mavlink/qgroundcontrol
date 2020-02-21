@@ -48,7 +48,7 @@ public:
         GuidedModeCapability =              1 << 2, ///< Vehicle supports guided mode commands
         OrbitModeCapability =               1 << 3, ///< Vehicle supports orbit mode
         TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
-        ROIModeCapability =                 1 << 5, ///< Vehicle supports ROI
+        ROIModeCapability =                 1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
