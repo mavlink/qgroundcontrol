@@ -9,6 +9,10 @@
 
 QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in make files
 
+# These are disabled until proven correct
+DEFINES += QGC_GST_TAISYNC_DISABLED
+DEFINES += QGC_GST_MICROHARD_DISABLED
+
 exists($${OUT_PWD}/qgroundcontrol.pro) {
     error("You must use shadow build (e.g. mkdir build; cd build; qmake ../qgroundcontrol.pro).")
 }
@@ -1164,48 +1168,58 @@ contains (DEFINES, QGC_ENABLE_MAVLINK_INSPECTOR) {
 
 #-------------------------------------------------------------------------------------
 # Taisync
-contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
-    INCLUDEPATH += \
-        src/Taisync
+contains (DEFINES, QGC_GST_TAISYNC_DISABLED) {
+    DEFINES -= QGC_GST_TAISYNC_ENABLED
+    message("Taisync disabled")
+} else {
+    contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
+        INCLUDEPATH += \
+            src/Taisync
 
-    HEADERS += \
-        src/Taisync/TaisyncManager.h \
-        src/Taisync/TaisyncHandler.h \
-        src/Taisync/TaisyncSettings.h \
-
-    SOURCES += \
-        src/Taisync/TaisyncManager.cc \
-        src/Taisync/TaisyncHandler.cc \
-        src/Taisync/TaisyncSettings.cc \
-
-    iOSBuild | AndroidBuild {
         HEADERS += \
-            src/Taisync/TaisyncTelemetry.h \
-            src/Taisync/TaisyncVideoReceiver.h \
+            src/Taisync/TaisyncManager.h \
+            src/Taisync/TaisyncHandler.h \
+            src/Taisync/TaisyncSettings.h \
 
         SOURCES += \
-            src/Taisync/TaisyncTelemetry.cc \
-            src/Taisync/TaisyncVideoReceiver.cc \
+            src/Taisync/TaisyncManager.cc \
+            src/Taisync/TaisyncHandler.cc \
+            src/Taisync/TaisyncSettings.cc \
+
+        iOSBuild | AndroidBuild {
+            HEADERS += \
+                src/Taisync/TaisyncTelemetry.h \
+                src/Taisync/TaisyncVideoReceiver.h \
+
+            SOURCES += \
+                src/Taisync/TaisyncTelemetry.cc \
+                src/Taisync/TaisyncVideoReceiver.cc \
+        }
     }
 }
 
 #-------------------------------------------------------------------------------------
 # Microhard
-contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
-    INCLUDEPATH += \
-        src/Microhard
+QGC_GST_MICROHARD_DISABLED
+contains (DEFINES, QGC_GST_MICROHARD_DISABLED) {
+    DEFINES -= QGC_GST_MICROHARD_ENABLED
+    message("Microhard disabled")
+} else {
+    contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
+        INCLUDEPATH += \
+            src/Microhard
 
-    HEADERS += \
-        src/Microhard/MicrohardManager.h \
-        src/Microhard/MicrohardHandler.h \
-        src/Microhard/MicrohardSettings.h \
+        HEADERS += \
+            src/Microhard/MicrohardManager.h \
+            src/Microhard/MicrohardHandler.h \
+            src/Microhard/MicrohardSettings.h \
 
-    SOURCES += \
-        src/Microhard/MicrohardManager.cc \
-        src/Microhard/MicrohardHandler.cc \
-        src/Microhard/MicrohardSettings.cc \
+        SOURCES += \
+            src/Microhard/MicrohardManager.cc \
+            src/Microhard/MicrohardHandler.cc \
+            src/Microhard/MicrohardSettings.cc \
+    }
 }
-
 #-------------------------------------------------------------------------------------
 # AirMap
 
