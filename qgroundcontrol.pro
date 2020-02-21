@@ -568,7 +568,6 @@ HEADERS += \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
-    src/FlightDisplay/VideoManager.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
@@ -775,7 +774,6 @@ SOURCES += \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
-    src/FlightDisplay/VideoManager.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
@@ -1317,11 +1315,13 @@ HEADERS += \
     src/VideoStreaming/VideoReceiver.h \
     src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/SubtitleWriter.h \
+    src/VideoStreaming/VideoManager.h
 
 SOURCES += \
     src/VideoStreaming/VideoReceiver.cc \
     src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/SubtitleWriter.cc \
+    src/VideoStreaming/VideoManager.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
