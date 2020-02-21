@@ -121,14 +121,14 @@ LinuxBuild {
         libicui18n.so* \
         libQt5TextToSpeech.so.5
 
-    DISTRO_NAME = $$system(cat /etc/os-release | grep "NAME=")
-    contains(DISTRO_NAME, "Ubuntu") {
-        VERSION = = $$system(cat /etc/os-release | grep "VERSION=")
-        contains(VERSION, "16.04") {
-            QT_LIB_LIST += \
-            libicudata.so.56 \
-            libicui18n.so.56 \
-            libicuuc.so.56
+        exists($$[QT_INSTALL_LIBS]/libicudata.so.56) {
+            QT_LIB_LIST += libicudata.so.56
+        }
+        exists($$[QT_INSTALL_LIBS]/libicui18n.so.56) {
+            QT_LIB_LIST += libicui18n.so.56
+        }
+        exists($$[QT_INSTALL_LIBS]/libicuuc.so.56) {
+            QT_LIB_LIST += libicuuc.so.56
         }
     }
 
