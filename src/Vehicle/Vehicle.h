@@ -1504,6 +1504,7 @@ private:
     bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
 
+    bool _checkLatestStableFWDone = false;
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
     int _firmwarePatchVersion;
