@@ -1012,17 +1012,14 @@ VideoReceiver::startRecording(const QString &videoFile)
     //-- Disk usage maintenance
     _cleanupOldVideos();
 
-    if(videoFile.isEmpty()) {
-        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-        if(savePath.isEmpty()) {
-            qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
-            return;
-        }
-        _videoFile = savePath + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") + "." + kVideoExtensions[muxIdx];
-    } else {
-        _videoFile = videoFile;
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    if(savePath.isEmpty()) {
+        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        return;
     }
-
+    _videoFile = savePath + "/"
+                + (videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile)
+                + "." + kVideoExtensions[muxIdx];
     qDebug() << "New video file:" << _videoFile;
 
     emit videoFileChanged();
