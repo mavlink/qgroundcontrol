@@ -7,6 +7,8 @@ endif()
 add_library(VideoStreaming
     GLVideoItemStub.cc
     GLVideoItemStub.h
+    gstqgc.c
+    gstqgcvideosinkbin.c
     SubtitleWriter.cc
     SubtitleWriter.h
     VideoReceiver.cc
