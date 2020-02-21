@@ -121,12 +121,15 @@ LinuxBuild {
         libicui18n.so* \
         libQt5TextToSpeech.so.5
 
-    !contains(DEFINES, __rasp_pi2__) {
-        # Some Qt distributions link with *.so.56
-        QT_LIB_LIST += \
+    DISTRO_NAME = $$system(cat /etc/os-release | grep "NAME=")
+    contains(DISTRO_NAME, "Ubuntu") {
+        VERSION = = $$system(cat /etc/os-release | grep "VERSION=")
+        contains(VERSION, "16.04") {
+            QT_LIB_LIST += \
             libicudata.so.56 \
             libicui18n.so.56 \
             libicuuc.so.56
+        }
     }
 
     for(QT_LIB, QT_LIB_LIST) {
