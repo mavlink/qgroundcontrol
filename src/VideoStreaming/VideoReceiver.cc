@@ -359,9 +359,17 @@ VideoReceiver::_makeSource(const QString& uri)
             break;
         }
 
-        if ((parser = gst_element_factory_make("parsebin", "parser")) == nullptr) {
-            qCritical() << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make('parsebin')";
-            break;
+        // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
+        if (isTcpMPEGTS || isUdpMPEGTS) {
+            if ((parser = gst_element_factory_make("tsdemux", "parser")) == nullptr) {
+                qCritical(VideoReceiverLog) << "gst_element_factory_make('tsdemux') failed";
+                break;
+            }
+        } else {
+            if ((parser = gst_element_factory_make("parsebin", "parser")) == nullptr) {
+                qCritical() << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make('parsebin')";
+                break;
+            }
         }
 
         if ((bin = gst_bin_new("sourcebin")) == nullptr) {

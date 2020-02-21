@@ -89,6 +89,7 @@ static void qt_gst_log(GstDebugCategory * category,
     GST_PLUGIN_STATIC_DECLARE(rtpmanager);
     GST_PLUGIN_STATIC_DECLARE(isomp4);
     GST_PLUGIN_STATIC_DECLARE(matroska);
+    GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
     GST_PLUGIN_STATIC_DECLARE(opengl);
 #if defined(__android__)
     GST_PLUGIN_STATIC_DECLARE(androidmedia);
@@ -162,6 +163,7 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
     GST_PLUGIN_STATIC_REGISTER(rtpmanager);
     GST_PLUGIN_STATIC_REGISTER(isomp4);
     GST_PLUGIN_STATIC_REGISTER(matroska);
+    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
     GST_PLUGIN_STATIC_REGISTER(opengl);
 
 #if defined(__android__)
