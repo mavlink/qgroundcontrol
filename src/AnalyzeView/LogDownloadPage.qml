@@ -176,6 +176,7 @@ AnalyzePage {
                             message:    qsTr("All log files will be erased permanently. Is this really what you want?")
                             function accept() {
                                 logController.eraseAll()
+                                hideDialog()
                             }
                         }
                     }
