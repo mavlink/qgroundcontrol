@@ -113,6 +113,10 @@ ApplicationWindow {
     }
 
     function showFlyView() {
+        if (!flightView.visible) {
+            flightView.showPreflightChecklistIfNeeded()
+        }
+
         viewSwitch(false)
         flightView.visible = true
     }
