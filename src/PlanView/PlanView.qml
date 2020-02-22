@@ -617,7 +617,7 @@ Item {
                     name:               _missionController.isROIActive ? qsTr("Cancel ROI") : qsTr("ROI"),
                     iconSource:         "/qmlimages/MapAddMission.svg",
                     buttonEnabled:      true,
-                    buttonVisible:      _isMissionLayer,
+                    buttonVisible:      _isMissionLayer && _planMasterController.controllerVehicle.roiModeSupported,
                     toggle:             !_missionController.isROIActive
                 },
                 {
