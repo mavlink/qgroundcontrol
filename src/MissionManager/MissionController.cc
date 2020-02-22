@@ -1308,18 +1308,20 @@ void MissionController::_recalcWaypointLines(void)
                     startVIForIncompleteItem = visualItem;
                 }
 
-                if (i != 1 && (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome))) {
-                    // Direction arrows are added to the second segment and every 5 segments thereafter.
-                    // The reason for start with second segment is to prevent an arrow being added in between the home position
-                    // and a takeoff item which may be right over each other. In that case the arrow points in a random direction.
+                if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
                     bool addDirectionArrow = false;
-                    if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
-                        addDirectionArrow = true;
-                    } else if (segmentCount > 5) {
-                        segmentCount = 0;
-                        addDirectionArrow = true;
+                    if (i != 1) {
+                        // Direction arrows are added to the second segment and every 5 segments thereafter.
+                        // The reason for start with second segment is to prevent an arrow being added in between the home position
+                        // and a takeoff item which may be right over each other. In that case the arrow points in a random direction.
+                        if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
+                            addDirectionArrow = true;
+                        } else if (segmentCount > 5) {
+                            segmentCount = 0;
+                            addDirectionArrow = true;
+                        }
+                        segmentCount++;
                     }
-                    segmentCount++;
 
                     lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, visualItem);
                     if (!_flyView || addDirectionArrow) {
