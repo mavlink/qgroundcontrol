@@ -15,7 +15,7 @@ Vagrant.configure(2) do |config|
   config.vm.provider "virtualbox"
   config.vm.provider "vmware_fusion"
 
-  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "ubuntu/bionic64"
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
   end
