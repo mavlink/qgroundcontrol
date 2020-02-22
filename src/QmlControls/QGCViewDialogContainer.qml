@@ -112,20 +112,14 @@ Item {
                 id:                 _rejectButton
                 anchors.right:      _acceptButton.visible ?  _acceptButton.left : parent.right
                 anchors.bottom:     parent.bottom
-                onClicked: {
-                    _dialogComponentLoader.item.reject()
-                    mainWindowDialog.close()
-                }
+                onClicked:          _dialogComponentLoader.item.reject()
             }
             QGCButton {
                 id:                 _acceptButton
                 anchors.right:      parent.right
                 anchors.bottom:     parent.bottom
                 primary:            true
-                onClicked: {
-                    _dialogComponentLoader.item.accept()
-                    mainWindowDialog.close()
-                }
+                onClicked:          _dialogComponentLoader.item.accept()
             }
         }
         Item {
