@@ -70,12 +70,6 @@ Item {
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
 
-    onVisibleChanged: {
-        if (activeVehicle && !_checklistComplete && _enforceChecklist) {
-            checklistPopupTimer.restart()
-        }
-    }
-
     Timer {
         id:             checklistPopupTimer
         interval:       1000
@@ -120,6 +114,12 @@ Item {
             }
         }
         return true;
+    }
+
+    function showPreflightChecklistIfNeeded () {
+        if (activeVehicle && !_checklistComplete && _enforceChecklist) {
+            checklistPopupTimer.restart()
+        }
     }
 
     Connections {
