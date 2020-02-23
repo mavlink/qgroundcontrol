@@ -241,6 +241,11 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
 
     _distanceToSurfaceRelative = v1Json[distanceToSurfaceRelativeName].toBool();
 
+    _cameraNameFact.setRawValue                 (v1Json[cameraNameName].toString());
+    _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
+    _adjustedFootprintFrontalFact.setRawValue   (v1Json[adjustedFootprintFrontalName].toDouble());
+    _distanceToSurfaceFact.setRawValue          (v1Json[distanceToSurfaceName].toDouble());
+
     if (!isManualCamera()) {
         QList<JsonHelper::KeyValidateInfo> keyInfoList2 = {
             { valueSetIsDistanceName,   QJsonValue::Bool,   true },
@@ -256,14 +261,7 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         _valueSetIsDistanceFact.setRawValue (v1Json[valueSetIsDistanceName].toBool());
         _frontalOverlapFact.setRawValue     (v1Json[frontalOverlapName].toDouble());
         _sideOverlapFact.setRawValue        (v1Json[sideOverlapName].toDouble());
-    }
-
-    _cameraNameFact.setRawValue                 (v1Json[cameraNameName].toString());
-    _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
-    _adjustedFootprintFrontalFact.setRawValue   (v1Json[adjustedFootprintFrontalName].toDouble());
-    _distanceToSurfaceFact.setRawValue          (v1Json[distanceToSurfaceName].toDouble());
-    if (!isManualCamera()) {
-        _imageDensityFact.setRawValue(v1Json[imageDensityName].toDouble());
+        _imageDensityFact.setRawValue       (v1Json[imageDensityName].toDouble());
 
         if (!CameraSpec::load(v1Json, errorString)) {
             _disableRecalc = false;
