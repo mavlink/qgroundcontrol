@@ -71,7 +71,7 @@ Rectangle {
             QGCButton {
                 text:               qsTr("Done With Polyline")
                 Layout.fillWidth:   true
-                enabled:            missionItem.corridorPolyline.isValid
+                enabled:            missionItem.corridorPolyline.isValid && !missionItem.corridorPolyline.traceMode
                 onClicked: {
                     missionItem.wizardMode = false
                     editorRoot.selectNextNotReadyItem()
