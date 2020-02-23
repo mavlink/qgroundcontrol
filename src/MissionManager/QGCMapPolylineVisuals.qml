@@ -32,7 +32,6 @@ Item {
 
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
-    property bool   _traceMode:             false
     property string _instructionText:       _corridorToolsText
     property real   _zorderDragHandle:      QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real   _zorderSplitHandle:     QGroundControl.zOrderMapItems + 2
@@ -96,13 +95,16 @@ Item {
         }
     }
 
-    on_TraceModeChanged: {
-        if (_traceMode) {
-            _instructionText = _traceText
-            _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
-        } else {
-            _instructionText = _corridorToolsText
-            _objMgrTraceVisuals.destroyObjects()
+    Connections {
+        target: mapPolyline
+        onTraceModeChanged: {
+            if (mapPolyline.traceMode) {
+                _instructionText = _traceText
+                _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
+            } else {
+                _instructionText = _corridorToolsText
+                _objMgrTraceVisuals.destroyObjects()
+            }
         }
     }
 
@@ -112,6 +114,7 @@ Item {
             _addInteractiveVisuals()
         }
     }
+    Component.onDestruction: mapPolyline.traceMode = false
 
     QGCDynamicObjectManager { id: _objMgrCommonVisuals }
     QGCDynamicObjectManager { id: _objMgrInteractiveVisuals }
@@ -323,22 +326,22 @@ Item {
             QGCButton {
                 _horizontalPadding: 0
                 text:               qsTr("Basic")
-                visible:            !_traceMode
+                visible:            !mapPolyline.traceMode
                 onClicked:          _resetPolyline()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
+                text:               mapPolyline.traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
-                    if (_traceMode) {
+                    if (mapPolyline.traceMode) {
                         if (mapPolyline.count < 2) {
                             _restorePreviousVertices()
                         }
-                        _traceMode = false
+                        mapPolyline.traceMode = false
                     } else {
                         _saveCurrentVertices()
-                        _traceMode = true
+                        mapPolyline.traceMode = true
                         mapPolyline.clear();
                     }
                 }
@@ -348,7 +351,7 @@ Item {
                 _horizontalPadding: 0
                 text:               qsTr("Load KML...")
                 onClicked:          kmlLoadDialog.openForLoad()
-                visible:            !_traceMode
+                visible:            !mapPolyline.traceMode
             }
         }
     }
