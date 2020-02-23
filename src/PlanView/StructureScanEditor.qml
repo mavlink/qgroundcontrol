@@ -72,7 +72,7 @@ Rectangle {
             QGCButton {
                 text:               qsTr("Done With Polygon")
                 Layout.fillWidth:   true
-                enabled:            missionItem.structurePolygon.isValid
+                enabled:            missionItem.structurePolygon.isValid && !missionItem.structurePolygon.traceMode
                 onClicked: {
                     missionItem.wizardMode = false
                     editorRoot.selectNextNotReadyItem()
