@@ -329,8 +329,8 @@ void
 MapGridMGRS::_addLevel1Labels()
 {
     if (_level1labels.empty()) {
-        for (int lng = -180; lng <= 180; lng += 6) {
-            for (int lat = -80; lat <= 84; lat += (lat < 70) ? 8 : 12) {
+        for (int lng = -180; lng < 180; lng += 6) {
+            for (int lat = -80; lat <= 72; lat += (lat < 70) ? 8 : 12) {
                 if ((lat == 72 && (lng == 6 || lng == 18 || lng == 30))) {
                     continue;
                 }
