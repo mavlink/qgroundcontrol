@@ -66,24 +66,21 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _lastFrameId(G_MAXUINT64)
     , _lastFrameTime(0)
     , _restart_time_ms(1389)
-    , _socket(nullptr)
-    , _serverPresent(false)
-    , _tcpTestInterval_ms(5000)
     , _udpReconnect_us(5000000)
 #endif
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
 {
+    // FIXME: AV: temporal workaround to allow for Qt::QueuedConnection for gstreamer signals. Need to evaluate proper solution - perhaps QtGst will be helpful
+    moveToThread(qgcApp()->thread());
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
-    _tcp_timer.setSingleShot(true);
-    connect(&_tcp_timer, &QTimer::timeout, this, &VideoReceiver::_tcp_timeout);
-    connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
-    connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS);
-    connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged);
+    connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError, Qt::QueuedConnection);
+    connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS, Qt::QueuedConnection);
+    connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged, Qt::QueuedConnection);
     connect(&_frameTimer, &QTimer::timeout, this, &VideoReceiver::_updateTimer);
     _frameTimer.start(1000);
 #endif
@@ -445,68 +442,6 @@ VideoReceiver::_restart_timeout()
 #endif
 
 //-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_tcp_timeout()
-{
-    //-- If socket is live, we got no connection nor a socket error
-    delete _socket;
-    _socket = nullptr;
-
-    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
-        //-- RTSP will try to connect to the server. If it cannot connect,
-        //   it will simply give up and never try again. Instead, we keep
-        //   attempting a connection on this timer. Once a connection is
-        //   found to be working, only then we actually start the stream.
-        QUrl url(_uri);
-        //-- If RTSP and no port is defined, set default RTSP port (554)
-        if(_uri.contains("rtsp://") && url.port() <= 0) {
-            url.setPort(554);
-        }
-        _socket = new QTcpSocket;
-        QNetworkProxy tempProxy;
-        tempProxy.setType(QNetworkProxy::DefaultProxy);
-        _socket->setProxy(tempProxy);
-        connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
-        connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
-        _socket->connectToHost(url.host(), static_cast<uint16_t>(url.port()));
-        _tcp_timer.start(_tcpTestInterval_ms);
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_connected()
-{
-    //-- Server showed up. Now we start the stream.
-    _tcp_timer.stop();
-    _socket->deleteLater();
-    _socket = nullptr;
-    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
-        _serverPresent = true;
-        start();
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
-{
-    Q_UNUSED(socketError);
-    _socket->deleteLater();
-    _socket = nullptr;
-    //-- Try again in a while
-    if(_videoSettings->streamEnabled()->rawValue().toBool()) {
-        _tcp_timer.start(_tcpTestInterval_ms);
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
 //                                   +-->queue-->decoder-->_videosink
@@ -545,8 +480,6 @@ VideoReceiver::start()
         return;
     }
 
-    bool useTcpConnection = uri.contains("rtsp://") || uri.contains("tcp://");
-
     if (_videoSink == nullptr) {
         qCWarning(VideoReceiverLog) << "Failed because video sink is not set";
         return;
@@ -557,12 +490,6 @@ VideoReceiver::start()
     }
 
     _starting = true;
-
-    //-- For RTSP and TCP, check to see if server is there first
-    if(!_serverPresent && useTcpConnection) {
-        _tcp_timer.start(100);
-        return;
-    }
 
     _lastFrameId = G_MAXUINT64;
     _lastFrameTime = 0;
@@ -639,6 +566,7 @@ VideoReceiver::start()
 
         // In newer versions, the pipeline will clean up all references that are added to it
         if (_pipeline != nullptr) {
+            gst_bin_remove(GST_BIN(_pipeline), _videoSink);
             gst_object_unref(_pipeline);
             _pipeline = nullptr;
         }
@@ -730,11 +658,14 @@ VideoReceiver::_shutdownPipeline() {
         bus = nullptr;
     }
     gst_element_set_state(_pipeline, GST_STATE_NULL);
+    gst_bin_remove(GST_BIN(_pipeline), _videoSink);
+    gst_bin_remove(GST_BIN(_pipeline), _tee);
+    gst_object_unref(_tee);
+    _tee = nullptr;
     gst_object_unref(_pipeline);
     _pipeline = nullptr;
     delete _sink;
     _sink = nullptr;
-    _serverPresent = false;
     _streaming = false;
     _recording = false;
     _stopping = false;
