@@ -1,13 +1,15 @@
 ---
 name: Feature request
-about: If you have an idea for a new feature.
+about: Tell us about your new idea
 
 ---
 
-## Summary
-_A clear and concise description of what you want to happen and the use case._
+Tell us a bit about the feature:
+- What problem does it solve?
+- What does it do?
+- What flight stacks must it work with? (All, PX4, ArduPilot)
+- Relevant vehicle types? (All, multirotor, fixed-wing, VTOL, submarine, etc.)
+- Are there other systems that have this feature?
+- What communication/integration standards does the feature rely on (e.g. MAVLink commands etc.)
 
-## Additional information
-_Add any other context or screenshots/mockups about the feature request here._
-
-> If you are using an old stable release please upgrade first and verify if your features is not there.
+Any additional context you can provide will make the feature easier to evaluate (e.g. mockups, detailed specification, etc.)
