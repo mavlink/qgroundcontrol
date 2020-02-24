@@ -91,7 +91,8 @@ LinuxBuild {
             -lgstmatroska \
             -lgstmpegtsdemux \
             -lgstandroidmedia \
-            -lgstopengl
+            -lgstopengl \
+            -lgsttcp
 
         # Rest of GStreamer dependencies
         LIBS += -L$$GST_ROOT/lib \

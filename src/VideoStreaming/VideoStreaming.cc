@@ -93,6 +93,7 @@ static void qt_gst_log(GstDebugCategory * category,
     GST_PLUGIN_STATIC_DECLARE(matroska);
     GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
     GST_PLUGIN_STATIC_DECLARE(opengl);
+    GST_PLUGIN_STATIC_DECLARE(tcp);
 #if defined(__android__)
     GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(__ios__)
@@ -167,6 +168,7 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
     GST_PLUGIN_STATIC_REGISTER(matroska);
     GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
     GST_PLUGIN_STATIC_REGISTER(opengl);
+    GST_PLUGIN_STATIC_REGISTER(tcp);
 
 #if defined(__android__)
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
