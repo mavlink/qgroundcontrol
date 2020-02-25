@@ -571,6 +571,7 @@ Item {
             anchors.top:        parent.top
             z:                  _mapAndVideo.z + 4
             maxHeight:          parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
+            title:              qsTr("Fly")
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
