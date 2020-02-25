@@ -88,7 +88,7 @@ SetupPage {
                 _autoTuneSwitchChannelIndex = 0
                 for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
                     var optionFact = controller.getParameterFact(-1, "r.RC" + channel + "_OPTION")
-                    if (optionFact.value == _autoTuneOption) {
+                    if (optionFact.value === _autoTuneOption) {
                         _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
                         break
                     }
@@ -97,17 +97,18 @@ SetupPage {
 
             /// We need to clear AutoTune from any previous channel before setting it to a new one
             function setChannelAutoTuneOption(channel) {
+                var optionFact;
                 // First clear any previous settings for AutTune
                 for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
-                    var optionFact = controller.getParameterFact(-1, "r.RC" + optionChannel + "_OPTION")
-                    if (optionFact.value == _autoTuneOption) {
+                    optionFact = controller.getParameterFact(-1, "r.RC" + optionChannel + "_OPTION")
+                    if (optionFact.value === _autoTuneOption) {
                         optionFact.value = 0
                     }
                 }
 
                 // Now set the function into the new channel
-                if (channel != 0) {
-                    var optionFact = controller.getParameterFact(-1, "r.RC" + channel + "_OPTION")
+                if (channel !== 0) {
+                    optionFact = controller.getParameterFact(-1, "r.RC" + channel + "_OPTION")
                     optionFact.value = _autoTuneOption
                 }
             }

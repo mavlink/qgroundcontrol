@@ -52,7 +52,7 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Git Revision")
-            valueText: activeVehicle.gitHash == -1 ? qsTr("Unknown") : activeVehicle.gitHash
+            valueText: activeVehicle.gitHash === -1 ? qsTr("Unknown") : activeVehicle.gitHash
         }
     }
 }

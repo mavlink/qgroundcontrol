@@ -109,7 +109,7 @@ SetupPage {
                             anchors.fill: parent
                             onClicked: {
                                 if (!airframeCheckBox.checked || !combo.valid) {
-                                    if (_frameTypeAvailable && object.defaultFrameType != -1) {
+                                    if (_frameTypeAvailable && object.defaultFrameType !== -1) {
                                         _frameType.rawValue = object.defaultFrameType
                                     }
                                     airframeCheckBox.checked = true
@@ -179,12 +179,12 @@ SetupPage {
                                     property bool valid: true
 
                                     function checkFrameType(value) {
-                                        return value == _frameType.rawValue
+                                        return value === _frameType.rawValue
                                     }
 
                                     function selectFrameType() {
                                         var index = object.frameTypeEnumValues.findIndex(checkFrameType)
-                                        if (index == -1 && combo.visible) {
+                                        if (index === -1 && combo.visible) {
                                             // Frame Class/Type is set to an invalid combination
                                             combo.valid = false
                                         } else {

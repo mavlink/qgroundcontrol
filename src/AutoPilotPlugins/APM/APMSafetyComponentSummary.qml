@@ -108,13 +108,13 @@ Item {
             labelText: qsTr("GeoFence:")
             valueText: {
                 if(_copterFenceEnable && _copterFenceType) {
-                    if(_copterFenceEnable.value == 0 || _copterFenceType == 0) {
+                    if(_copterFenceEnable.value === 0 || _copterFenceType === 0) {
                         return qsTr("Disabled")
                     } else {
-                        if(_copterFenceType.value == 1) {
+                        if(_copterFenceType.value === 1) {
                             return qsTr("Altitude")
                         }
-                        if(_copterFenceType.value == 2) {
+                        if(_copterFenceType.value === 2) {
                             return qsTr("Circle")
                         }
                         return qsTr("Altitude,Circle")
@@ -127,15 +127,15 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("GeoFence:")
-            valueText: _copterFenceAction.value == 0 ?
+            valueText: _copterFenceAction.value === 0 ?
                            qsTr("Report only") :
-                           (_copterFenceAction.value == 1 ? qsTr("RTL or Land") : qsTr("Unknown"))
+                           (_copterFenceAction.value === 1 ? qsTr("RTL or Land") : qsTr("Unknown"))
             visible: controller.vehicle.multiRotor && _copterFenceEnable.value !== 0
         }
 
         VehicleSummaryRow {
             labelText:  qsTr("RTL min alt:")
-            valueText:  fact ? (fact.value == 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
+            valueText:  fact ? (fact.value === 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.multiRotor
 
             property Fact fact: controller.getParameterFact(-1, "RTL_ALT", false /* reportMissing */)

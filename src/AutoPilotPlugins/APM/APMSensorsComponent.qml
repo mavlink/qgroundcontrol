@@ -80,7 +80,7 @@ SetupPage {
             property real   _margins:                       ScreenTools.defaultFontPixelHeight / 2
             property bool   _compassAutoRotAvailable:       controller.parameterExists(-1, "COMPASS_AUTO_ROT")
             property Fact   _compassAutoRotFact:            controller.getParameterFact(-1, "COMPASS_AUTO_ROT", false /* reportMissing */)
-            property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue == 2 : false
+            property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue === 2 : false
 
             function showOrientationsDialog(calType) {
                 var dialogTitle

@@ -127,13 +127,13 @@ SetupPage {
                             QGCLabel {
                                 text:               qsTr( "Detector Pin:")
                                 width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
+                                visible:            leakEnableCombo.currentIndex !== 0
                                 anchors.baseline:   leakEnableCombo.baseline
                             }
 
                             FactComboBox {
                                 width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
+                                visible:            leakEnableCombo.currentIndex !== 0
                                 anchors.baseline:   leakEnableCombo.baseline
                                 fact:               _failsafeLeakPin
                                 indexModel:         false
@@ -142,13 +142,13 @@ SetupPage {
                             QGCLabel {
                                 text: "Logic when Dry:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            leakEnableCombo.currentIndex != 0
+                                visible:            leakEnableCombo.currentIndex !== 0
                                 anchors.baseline:   leakEnableCombo.baseline
                             }
 
                             FactComboBox {
                                 width:              failsafeSettings._editWidth
-                                visible:            leakEnableCombo.currentIndex != 0
+                                visible:            leakEnableCombo.currentIndex !== 0
                                 anchors.baseline:   leakEnableCombo.baseline
                                 fact:               _failsafeLeakLogic
                                 indexModel:         false
@@ -177,13 +177,13 @@ SetupPage {
                             QGCLabel {
                                 text: "Voltage:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
+                                visible:            batteryEnableCombo.currentIndex !== 0
                                 anchors.baseline:   batteryEnableCombo.baseline
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
+                                visible:            batteryEnableCombo.currentIndex !== 0
                                 anchors.baseline:   batteryEnableCombo.baseline
                                 fact:               _failsafeBatteryVoltage
                             }
@@ -191,13 +191,13 @@ SetupPage {
                             QGCLabel {
                                 text: "Remaining Capacity:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
+                                visible:            batteryEnableCombo.currentIndex !== 0
                                 anchors.baseline:   batteryEnableCombo.baseline
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            batteryEnableCombo.currentIndex != 0
+                                visible:            batteryEnableCombo.currentIndex !== 0
                                 anchors.baseline:   batteryEnableCombo.baseline
                                 fact:               _failsafeBatteryCapacity
                             }
@@ -225,13 +225,13 @@ SetupPage {
                             QGCLabel {
                                 text: "Threshold:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            ekfEnableCombo.currentIndex != 0
+                                visible:            ekfEnableCombo.currentIndex !== 0
                                 anchors.baseline:   ekfEnableCombo.baseline
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            ekfEnableCombo.currentIndex != 0
+                                visible:            ekfEnableCombo.currentIndex !== 0
                                 anchors.baseline:   ekfEnableCombo.baseline
                                 fact:               _failsafeEKFThreshold
                             }
@@ -259,14 +259,14 @@ SetupPage {
                             QGCLabel {
                                 text: "Timeout:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
+                                visible:            pilotEnableCombo.currentIndex !== 0
                                 anchors.baseline:   pilotEnableCombo.baseline
 
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            pilotEnableCombo.currentIndex != 0
+                                visible:            pilotEnableCombo.currentIndex !== 0
                                 anchors.baseline:   pilotEnableCombo.baseline
                                 fact:               _failsafePilotTimeout
                             }
@@ -293,13 +293,13 @@ SetupPage {
                             QGCLabel {
                                 text: "Threshold:"
                                 width:              failsafeSettings._labelWidth
-                                visible:            temperatureEnableCombo.currentIndex != 0
+                                visible:            temperatureEnableCombo.currentIndex !== 0
                                 anchors.baseline:   temperatureEnableCombo.baseline
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            temperatureEnableCombo.currentIndex != 0
+                                visible:            temperatureEnableCombo.currentIndex !== 0
                                 anchors.baseline:   temperatureEnableCombo.baseline
                                 fact:               _failsafeTemperatureThreshold
                             }
@@ -326,13 +326,13 @@ SetupPage {
                             QGCLabel {
                                 text:               qsTr("Threshold:")
                                 width:              failsafeSettings._labelWidth
-                                visible:            pressureEnableCombo.currentIndex != 0
+                                visible:            pressureEnableCombo.currentIndex !== 0
                                 anchors.baseline:   pressureEnableCombo.baseline
                             }
 
                             FactTextField {
                                 width:              failsafeSettings._editWidth
-                                visible:            pressureEnableCombo.currentIndex != 0
+                                visible:            pressureEnableCombo.currentIndex !== 0
                                 anchors.baseline:   pressureEnableCombo.baseline
                                 fact:               _failsafePressureThreshold
                             }
@@ -377,7 +377,7 @@ SetupPage {
                             wrapMode:       Text.WordWrap
                             color:          qgcPal.warningText
                             text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
-                            visible:        _armingCheck.value != 1
+                            visible:        _armingCheck.value !== 1
                         }
                     }
                 } // Rectangle - Arming checks

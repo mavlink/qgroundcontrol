@@ -106,43 +106,43 @@ Item {
         var nextY = manualMode.y + manualMode.height + spacing
 
         for (var index = 0; index < 9; index++) {
-            if (controller.assistModeRow == index) {
+            if (controller.assistModeRow === index) {
                 if (controller.assistModeVisible) {
                     assistMode.y = nextY
                     assistMode.z = 9 - index
                     nextY += assistMode.height + spacing
                 }
-            } else if (controller.autoModeRow == index) {
+            } else if (controller.autoModeRow === index) {
                 if (controller.autoModeVisible) {
                     autoMode.y = nextY
                     autoMode.z = 9 - index
                     nextY += autoMode.height  + spacing
                 }
-            } else if (controller.acroModeRow == index) {
+            } else if (controller.acroModeRow === index) {
                 acroMode.y = nextY
                 acroMode.z = 9 - index
                 nextY += acroMode.height + spacing
-            } else if (controller.altCtlModeRow == index) {
+            } else if (controller.altCtlModeRow === index) {
                 altCtlMode.y = nextY
                 altCtlMode.z = 9 - index
                 nextY += altCtlMode.height + spacing
-            } else if (controller.posCtlModeRow == index) {
+            } else if (controller.posCtlModeRow === index) {
                 posCtlMode.y = nextY
                 posCtlMode.z = 9 - index
                 nextY += posCtlMode.height + spacing
-            } else if (controller.loiterModeRow == index) {
+            } else if (controller.loiterModeRow === index) {
                 loiterMode.y = nextY
                 loiterMode.z = 9 - index
                 nextY += loiterMode.height + spacing
-            } else if (controller.missionModeRow == index) {
+            } else if (controller.missionModeRow === index) {
                 missionMode.y = nextY
                 missionMode.z = 9 - index
                 nextY += missionMode.height + spacing
-            } else if (controller.returnModeRow == index) {
+            } else if (controller.returnModeRow === index) {
                 returnMode.y = nextY
                 returnMode.z = 9 - index
                 nextY += returnMode.height + spacing
-            } else if (controller.offboardModeRow == index) {
+            } else if (controller.offboardModeRow === index) {
                 offboardMode.y = nextY
                 offboardMode.z = 9 - index
                 nextY += offboardMode.height + spacing

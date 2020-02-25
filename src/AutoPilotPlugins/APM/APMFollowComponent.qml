@@ -51,7 +51,7 @@ SetupPage {
             property bool _followMaintain:              followPositionCombo.currentIndex === _followComboMaintainIndex
             property bool _supportedSetup:              true
             property bool _roverFirmware:               controller.roverFirmware
-            property bool _showMainSetup:               _followEnabled.rawValue == 1 && _supportedSetup
+            property bool _showMainSetup:               _followEnabled.rawValue === 1 && _supportedSetup
             property bool _showOffsetsSetup:            _showMainSetup && !_followMaintain
 
             readonly property int _followYawBehaviorNone:           0
@@ -65,13 +65,13 @@ SetupPage {
             Component.onCompleted: _setUIFromParams()
 
             function validateSupportedParamSetup() {
-                var followSysIdOk = _followSysId.rawValue == QGroundControl.mavlinkSystemID
-                var followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
+                var followSysIdOk = _followSysId.rawValue === QGroundControl.mavlinkSystemID
+                var followOffsetOk = _followOffsetType.rawValue === _followOffsetTypeRelative
                 var followAltOk = true
                 var followYawOk = true
                 if (!_roverFirmware) {
-                    followAltOk = _followAltitudeType.rawValue == _followAltitudeTypeRelative
-                    followYawOk = _followYawBehavior.rawValue == _followYawBehaviorNone || _followYawBehavior.rawValue == _followYawBehaviorFace || _followYawBehavior.rawValue == _followYawBehaviorFlight
+                    followAltOk = _followAltitudeType.rawValue === _followAltitudeTypeRelative
+                    followYawOk = _followYawBehavior.rawValue === _followYawBehaviorNone || _followYawBehavior.rawValue == _followYawBehaviorFace || _followYawBehavior.rawValue == _followYawBehaviorFlight
                 }
                 _supportedSetup = followOffsetOk && followAltOk && followYawOk && followSysIdOk
                 console.log("_supportedSetup", _supportedSetup, followSysIdOk, followOffsetOk, followAltOk, followYawOk)
@@ -83,7 +83,7 @@ SetupPage {
                     return
                 }
 
-                if (_followOffsetX.rawValue == 0 && _followOffsetY.rawValue == 0 && _followOffsetZ.rawValue == 0) {
+                if (_followOffsetX.rawValue === 0 && _followOffsetY.rawValue === 0 && _followOffsetZ.rawValue === 0) {
                     followPositionCombo.currentIndex =_followComboMaintainIndex
                     controller.distance.rawValue = 0
                     controller.angle.rawValue = 0
@@ -91,7 +91,7 @@ SetupPage {
                 } else {
                     followPositionCombo.currentIndex =_followComboSpecifyIndex
                     var angleRadians = Math.atan2(_followOffsetX.rawValue, _followOffsetY.rawValue)
-                    if (angleRadians == 0) {
+                    if (angleRadians === 0) {
                         controller.distance.rawValue = _followOffsetY.rawValue
                     } else {
                         controller.distance.rawValue = _followOffsetX.rawValue / Math.sin(angleRadians)
@@ -102,7 +102,7 @@ SetupPage {
                 if (!_roverFirmware) {
                     var comboIndex = -1
                     for (var i=0; i<pointVehicleCombo.rgValues.length; i++) {
-                        if (pointVehicleCombo.rgValues[i] == _followYawBehavior.rawValue) {
+                        if (pointVehicleCombo.rgValues[i] === _followYawBehavior.rawValue) {
                             comboIndex = i
                             break
                         }
@@ -130,11 +130,11 @@ SetupPage {
             }
 
             function _setXYOffsetByAngleAndDistance(headingAngleDegrees, distance) {
-                if (distance == 0) {
+                if (distance === 0) {
                     _followOffsetX.rawValue = _followOffsetY.rawValue = 0
                 } else {
                     var angleRadians = _headingToRadians(headingAngleDegrees)
-                    if (angleRadians == 0) {
+                    if (angleRadians === 0) {
                         _followOffsetX.rawValue = 0
                         _followOffsetY.rawValue = distance
                     } else {
@@ -191,7 +191,7 @@ SetupPage {
 
             QGCCheckBox {
                 text:       qsTr("Enable Follow Me")
-                checked:    _followEnabled.rawValue == 1
+                checked:    _followEnabled.rawValue === 1
                 onClicked: {
                     if (checked) {
                         _followEnabled.rawValue = 1
@@ -382,9 +382,9 @@ SetupPage {
                                 origin.x:       vehicleIcon.width  / 2
                                 origin.y:       vehicleIcon.height / 2
                                 angle:          _roverFirmware ? 0 :
-                                                                 (_followYawBehavior.rawValue == _followYawBehaviorNone ?
+                                                                 (_followYawBehavior.rawValue === _followYawBehaviorNone ?
                                                                       0 :
-                                                                      (_followYawBehavior.rawValue == _followYawBehaviorFace ?
+                                                                      (_followYawBehavior.rawValue === _followYawBehaviorFace ?
                                                                            180 :
                                                                            -controller.angle.rawValue))
                             }

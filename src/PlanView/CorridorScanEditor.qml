@@ -100,7 +100,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 0
+                visible:            tabBar.currentIndex === 0
 
                 QGCLabel {
                     anchors.left:   parent.left
@@ -245,7 +245,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 1
+                visible:            tabBar.currentIndex === 1
 
                 CameraCalcCamera {
                     cameraCalc:                     missionItem.cameraCalc

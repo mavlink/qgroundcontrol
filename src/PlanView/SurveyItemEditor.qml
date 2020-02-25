@@ -112,7 +112,7 @@ Rectangle {
                 QGCButton {
                     Layout.fillWidth:   true
                     text:               qsTr("Apply Preset")
-                    enabled:            missionItem.presetNames.length != 0
+                    enabled:            missionItem.presetNames.length !== 0
                     onClicked:          missionItem.loadPreset(wizardPresetCombo.textAt(wizardPresetCombo.currentIndex))
                 }
 
@@ -194,7 +194,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 0
+                visible:            tabBar.currentIndex === 0
 
                 QGCLabel {
                     anchors.left:   parent.left
@@ -394,7 +394,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 1
+                visible:            tabBar.currentIndex === 1
 
                 CameraCalcCamera {
                     cameraCalc:                     missionItem.cameraCalc
@@ -412,7 +412,7 @@ Rectangle {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 2
+                visible:            tabBar.currentIndex === 2
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -432,14 +432,14 @@ Rectangle {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Apply Preset")
-                        enabled:            missionItem.presetNames.length != 0
+                        enabled:            missionItem.presetNames.length !== 0
                         onClicked:          missionItem.loadPreset(presetCombo.textAt(presetCombo.currentIndex))
                     }
 
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
-                        enabled:            missionItem.presetNames.length != 0
+                        enabled:            missionItem.presetNames.length !== 0
                         onClicked:          mainWindow.showComponentDialog(deletePresetMessage, qsTr("Delete Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
 
                         Component {
@@ -526,7 +526,7 @@ Rectangle {
 
             QGCViewDialog {
                 function accept() {
-                    if (presetNameField.text != "") {
+                    if (presetNameField.text !== "") {
                         missionItem.savePreset(presetNameField.text)
                         hideDialog()
                     }

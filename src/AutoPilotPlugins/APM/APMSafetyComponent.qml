@@ -249,7 +249,7 @@ SetupPage {
 
                             QGCCheckBox {
                                 text:       qsTr("GCS failsafe")
-                                checked:    _failsafeGCSEnable.value != 0
+                                checked:    _failsafeGCSEnable.value !== 0
                                 onClicked:  _failsafeGCSEnable.value = checked ? 1 : 0
                             }
                         }
@@ -426,11 +426,11 @@ SetupPage {
                             anchors.left:       parent.left
                             anchors.top:        parent.top
                             text:               qsTr("Circle GeoFence enabled")
-                            checked:            _fenceEnable.value != 0 && _fenceType.value & 2
+                            checked:            _fenceEnable.value !== 0 && _fenceType.value & 2
 
                             onClicked: {
                                 if (checked) {
-                                    if (_fenceEnable.value == 1) {
+                                    if (_fenceEnable.value === 1) {
                                         _fenceType.value |= 2
                                     } else {
                                         _fenceEnable.value = 1
@@ -451,11 +451,11 @@ SetupPage {
                             anchors.left:       circleGeo.left
                             anchors.top:        circleGeo.bottom
                             text:               qsTr("Altitude GeoFence enabled")
-                            checked:            _fenceEnable.value != 0 && _fenceType.value & 1
+                            checked:            _fenceEnable.value !== 0 && _fenceType.value & 1
 
                             onClicked: {
                                 if (checked) {
-                                    if (_fenceEnable.value == 1) {
+                                    if (_fenceEnable.value === 1) {
                                         _fenceType.value |= 1
                                     } else {
                                         _fenceEnable.value = 1
@@ -476,7 +476,7 @@ SetupPage {
                             anchors.left:       parent.left
                             anchors.top:        altitudeGeo.bottom
                             text:               qsTr("Report only")
-                            checked:            _fenceAction.value == 0
+                            checked:            _fenceAction.value === 0
 
                             onClicked: _fenceAction.value = 0
                         }
@@ -487,7 +487,7 @@ SetupPage {
                             anchors.left:       circleGeo.left
                             anchors.top:        geoReportRadio.bottom
                             text:               qsTr("RTL or Land")
-                            checked:            _fenceAction.value == 1
+                            checked:            _fenceAction.value === 1
 
                             onClicked: _fenceAction.value = 1
                         }
@@ -582,7 +582,7 @@ SetupPage {
                             anchors.left:       _showIcon ? icon.right : parent.left
                             anchors.top:        parent.top
                             text:               qsTr("Return at current altitude")
-                            checked:            _rtlAltFact.value == 0
+                            checked:            _rtlAltFact.value === 0
 
                             onClicked: _rtlAltFact.value = 0
                         }
@@ -593,7 +593,7 @@ SetupPage {
                             anchors.left:       returnAtCurrentRadio.left
                             anchors.top:        returnAtCurrentRadio.bottom
                             text:               qsTr("Return at specified altitude:")
-                            checked:            _rtlAltFact.value != 0
+                            checked:            _rtlAltFact.value !== 0
 
                             onClicked: _rtlAltFact.value = 1500
                         }
@@ -633,7 +633,7 @@ SetupPage {
                             anchors.left:       returnAtCurrentRadio.left
                             anchors.baseline:   landSpeedField.baseline
                             text:               qsTr("Land with descent speed:")
-                            checked:            _rtlAltFinalFact.value == 0
+                            checked:            _rtlAltFinalFact.value === 0
 
                             onClicked: _rtlAltFinalFact.value = 0
                         }
@@ -767,7 +767,7 @@ SetupPage {
                             wrapMode:       Text.WordWrap
                             color:          qgcPal.warningText
                             text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
-                            visible:        _armingCheck.value != 1
+                            visible:        _armingCheck.value !== 1
                         }
                     }
                 } // Rectangle - Arming checks

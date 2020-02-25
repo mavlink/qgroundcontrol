@@ -136,7 +136,7 @@ SetupPage {
 
                                 QGCCheckBox {
                                     width: sliderRow.width / (controller.vehicle.motorCount - 0.5)
-                                    checked: controller.getParameterFact(-1, "MOT_" + (index + 1) + "_DIRECTION").value == -1
+                                    checked: controller.getParameterFact(-1, "MOT_" + (index + 1) + "_DIRECTION").value === -1
                                     onClicked: {
                                         sliderRepeater.itemAt(index).motorSlider.value = neutralValue
                                         setMotorDirection(index + 1, checked)
@@ -285,7 +285,7 @@ SetupPage {
                     if (controller.vehicle.armed) {
                             var slider = sliderRepeater.itemAt(_lastIndex)
 
-                            var reversed = controller.getParameterFact(-1, "MOT_" + (_lastIndex + 1) + "_DIRECTION").value == -1
+                            var reversed = controller.getParameterFact(-1, "MOT_" + (_lastIndex + 1) + "_DIRECTION").value === -1
 
                             if (reversed) {
                                 controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value, 0)

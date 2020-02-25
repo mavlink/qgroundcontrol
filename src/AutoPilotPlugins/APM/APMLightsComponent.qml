@@ -65,26 +65,27 @@ SetupPage {
                 lightsLoader.lights2OutIndex = 0
                 for (var channel=_firstLightsOutChannel; channel<=_lastLightsOutChannel; channel++) {
                     var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
-                    if (functionFact.value == _rcFunctionRCIN9) {
+                    if (functionFact.value === _rcFunctionRCIN9) {
                         lightsLoader.lights1OutIndex = channel - 4
-                    } else if (functionFact.value == _rcFunctionRCIN10) {
+                    } else if (functionFact.value === _rcFunctionRCIN10) {
                         lightsLoader.lights2OutIndex = channel - 4
                     }
                 }
             }
 
             function setRCFunction(channel, rcFunction) {
+                var functionFact;
                 // First clear any previous settings for this function
                 for (var index=_firstLightsOutChannel; index<=_lastLightsOutChannel; index++) {
-                    var functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
-                    if (functionFact.value != _rcFunctionDisabled && functionFact.value == rcFunction) {
+                    functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
+                    if (functionFact.value !== _rcFunctionDisabled && functionFact.value === rcFunction) {
                         functionFact.value = _rcFunctionDisabled
                     }
                 }
 
                 // Now set the function into the new channel
-                if (channel != 0) {
-                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
+                if (channel !== 0) {
+                    functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     functionFact.value = rcFunction
                 }
             }
@@ -151,7 +152,7 @@ SetupPage {
                     // Extra outputs
                     // http://ardupilot.org/copter/docs/parameters.html#brd-pwm-count-auxiliary-pin-config
                     var brd_pwm_count_value = controller.getParameterFact(-1, "BRD_PWM_COUNT").value
-                    update(8 + (brd_pwm_count_value == 7 ? 3 : brd_pwm_count_value))
+                    update(8 + (brd_pwm_count_value === 7 ? 3 : brd_pwm_count_value))
                 }
             }
 

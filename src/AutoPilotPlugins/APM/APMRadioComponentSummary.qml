@@ -21,22 +21,22 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Roll")
-            valueText: mapRollFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapRollFact.valueString)
+            valueText: mapRollFact.value === 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapRollFact.valueString)
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Pitch")
-            valueText: mapPitchFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapPitchFact.valueString)
+            valueText: mapPitchFact.value === 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapPitchFact.valueString)
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Yaw")
-            valueText: mapYawFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapYawFact.valueString)
+            valueText: mapYawFact.value === 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapYawFact.valueString)
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Throttle")
-            valueText: mapThrottleFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapThrottleFact.valueString)
+            valueText: mapThrottleFact.value === 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapThrottleFact.valueString)
         }
     }
 }

@@ -292,8 +292,8 @@ SetupPage {
 
             function calcSensor() {
                 for (var i=0; i<sensorModel.count - 1; i++) {
-                    if (sensorModel.get(i).voltPin == battVoltPin.value &&
-                            sensorModel.get(i).currPin == battCurrPin.value &&
+                    if (sensorModel.get(i).voltPin === battVoltPin.value &&
+                            sensorModel.get(i).currPin === battCurrPin.value &&
                             Math.abs(sensorModel.get(i).voltMult - battVoltMult.value) < 0.001 &&
                             Math.abs(sensorModel.get(i).ampPerVolt - battAmpPerVolt.value) < 0.0001 &&
                             Math.abs(sensorModel.get(i).ampOffset - battAmpOffset.value) < 0.0001) {
@@ -578,7 +578,7 @@ SetupPage {
 
                         onClicked:  {
                             var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                            if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
+                            if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue)) {
                                 return
                             }
                             var newVoltageMultiplier = (measuredVoltageValue * _calcVoltageDlgBattVoltMultParam.value) / _calcVoltageDlgVehicleVoltage.value
@@ -640,11 +640,11 @@ SetupPage {
 
                         onClicked:  {
                             var measuredCurrentValue = parseFloat(measuredCurrent.text)
-                            if (measuredCurrentValue == 0) {
+                            if (measuredCurrentValue === 0) {
                                 return
                             }
                             var newAmpsPerVolt = (measuredCurrentValue * _calcAmpsPerVoltDlgBattAmpPerVoltParam.value) / _calcAmpsPerVoltDlgVehicleCurrent.value
-                            if (newAmpsPerVolt != 0) {
+                            if (newAmpsPerVolt !== 0) {
                                 _calcAmpsPerVoltDlgBattAmpPerVoltParam.value = newAmpsPerVolt
                             }
                         }

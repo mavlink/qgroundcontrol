@@ -38,9 +38,9 @@ Item {
         lightsLoader.lights2OutIndex = 0
         for (var channel=_firstLightsOutChannel; channel<=_lastLightsOutChannel; channel++) {
             var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
-            if (functionFact.value == _rcFunctionRCIN9) {
+            if (functionFact.value === _rcFunctionRCIN9) {
                 lightsLoader.lights1OutIndex = channel - 4
-            } else if (functionFact.value == _rcFunctionRCIN10) {
+            } else if (functionFact.value === _rcFunctionRCIN10) {
                 lightsLoader.lights2OutIndex = channel - 4
             }
         }

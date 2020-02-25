@@ -55,7 +55,7 @@ Item {
         if (dist >= 5280) {
             dist = Math.round(dist / 5280)
             dist = dist
-            if (dist == 1) {
+            if (dist === 1) {
                 dist += qsTr(" mile")
             } else {
                 dist += qsTr(" miles")

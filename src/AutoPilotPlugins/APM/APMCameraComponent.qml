@@ -111,13 +111,13 @@ SetupPage {
                 _rollEnabled = false
                 for (var channel=_firstGimbalOutChannel; channel<=_lastGimbalOutChannel; channel++) {
                     var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
-                    if (functionFact.value == _rcFunctionMountTilt) {
+                    if (functionFact.value === _rcFunctionMountTilt) {
                         _tiltEnabled = true
                         setGimbalSettingsServoInfo(gimbalDirectionTiltLoader, channel)
-                    } else if (functionFact.value == _rcFunctionMountPan) {
+                    } else if (functionFact.value === _rcFunctionMountPan) {
                         _panEnabled = true
                         setGimbalSettingsServoInfo(gimbalDirectionPanLoader, channel)
-                    } else if (functionFact.value == _rcFunctionMountRoll) {
+                    } else if (functionFact.value === _rcFunctionMountRoll) {
                         _rollEnabled = true
                         setGimbalSettingsServoInfo(gimbalDirectionRollLoader, channel)
                     }
@@ -125,17 +125,18 @@ SetupPage {
             }
 
             function setRCFunction(channel, rcFunction) {
+                var functionFact;
                 // First clear any previous settings for this function
                 for (var index=_firstGimbalOutChannel; index<=_lastGimbalOutChannel; index++) {
-                    var functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
-                    if (functionFact.value != _rcFunctionDisabled && functionFact.value == rcFunction) {
+                    functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
+                    if (functionFact.value !== _rcFunctionDisabled && functionFact.value === rcFunction) {
                         functionFact.value = _rcFunctionDisabled
                     }
                 }
 
                 // Now set the function into the new channel
-                if (channel != 0) {
-                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
+                if (channel !== 0) {
+                    functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     functionFact.value = rcFunction
                 }
             }
@@ -191,7 +192,7 @@ SetupPage {
                     // Extra outputs
                     // http://ardupilot.org/copter/docs/parameters.html#brd-pwm-count-auxiliary-pin-config
                     var brd_pwm_count_value = controller.getParameterFact(-1, "BRD_PWM_COUNT").value
-                    update(8 + (brd_pwm_count_value == 7 ? 3 : brd_pwm_count_value))
+                    update(8 + (brd_pwm_count_value === 7 ? 3 : brd_pwm_count_value))
                 }
             }
 
