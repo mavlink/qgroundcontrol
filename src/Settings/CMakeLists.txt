@@ -28,8 +28,6 @@ add_library(Settings
 	SettingsManager.h
 	UnitsSettings.cc
 	UnitsSettings.h
-	VideoSettings.cc
-	VideoSettings.h
 )
 
 target_link_libraries(Settings

@@ -17,6 +17,8 @@ add_library(VideoStreaming
     VideoStreaming.h
     VideoManager.cc
     VideoManager.h
+    VideoSettings.cc
+    VideoSettings.h
 )
 
 target_link_libraries(VideoStreaming

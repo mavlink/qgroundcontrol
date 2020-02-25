@@ -663,7 +663,6 @@ HEADERS += \
     src/Settings/SettingsGroup.h \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
-    src/Settings/VideoSettings.h \
     src/ShapeFileHelper.h \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
@@ -868,7 +867,6 @@ SOURCES += \
     src/Settings/SettingsGroup.cc \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
-    src/Settings/VideoSettings.cc \
     src/ShapeFileHelper.cc \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
@@ -1321,13 +1319,16 @@ HEADERS += \
     src/VideoStreaming/VideoReceiver.h \
     src/VideoStreaming/VideoStreaming.h \
     src/VideoStreaming/SubtitleWriter.h \
-    src/VideoStreaming/VideoManager.h
+    src/VideoStreaming/VideoManager.h \
+    src/VideoStreaming/VideoSettings.h
+
 
 SOURCES += \
     src/VideoStreaming/VideoReceiver.cc \
     src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/SubtitleWriter.cc \
-    src/VideoStreaming/VideoManager.cc
+    src/VideoStreaming/VideoManager.cc \
+    src/VideoStreaming/VideoSettings.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
