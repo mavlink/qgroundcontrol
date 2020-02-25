@@ -354,7 +354,7 @@ Item {
             height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
-            visible:        QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
+            visible:        (!mainIsMap || _isPipVisible)
 
             onParentChanged: {
                 /* If video comes back from popup
@@ -459,7 +459,7 @@ Item {
             anchors.left:       _mapAndVideo.left
             anchors.bottom:     _mapAndVideo.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
+            visible:            !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             enablePopup:        mainIsMap
