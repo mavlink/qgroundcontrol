@@ -1,5 +1,6 @@
 Module QGroundControl.FlightDisplay
 
+VideoSettings               1.0 VideoSettings.qml
 FlightDisplayView           1.0 FlightDisplayView.qml
 FlightDisplayViewMap        1.0 FlightDisplayViewMap.qml
 FlightDisplayViewVideo      1.0 FlightDisplayViewVideo.qml
