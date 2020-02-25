@@ -15,6 +15,13 @@ import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.Airspace      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.FactSystem    1.0
+import QGroundControl.FlightDisplay 1.0
+import QGroundControl.FlightMap     1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 Item {
     id: pip
@@ -186,6 +193,29 @@ Item {
             onClicked: {
                 pip.hideIt(false)
             }
+        }
+    }
+
+    //-- PIP Corner Indicator
+    Image {
+        id:             configureVideo
+        source:         "/qmlimages/pipHide.svg"
+        mipmap:         true
+        fillMode:       Image.PreserveAspectFit
+        anchors.right:   parent.right
+        anchors.bottom: parent.bottom
+        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
+        height:         ScreenTools.defaultFontPixelHeight * 2.5
+        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+
+            }
+        }
+        VideoSettings {
+            visible: false
         }
     }
 }

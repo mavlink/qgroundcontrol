@@ -45,14 +45,6 @@ Rectangle {
     property real _margins:                     ScreenTools.defaultFontPixelWidth
     property var _planViewSettings:             QGroundControl.settingsManager.planViewSettings
 
-    property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
-    property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
-    property bool   _isUDP264:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
-    property bool   _isUDP265:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
-    property bool   _isRTSP:                    _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
-    property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
-    property bool   _isMPEGTS:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
-
     property string gpsDisabled: "Disabled"
     property string gpsUdpPort:  "UDP Port"
 

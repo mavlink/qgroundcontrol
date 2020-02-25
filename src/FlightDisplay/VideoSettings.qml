@@ -1,6 +1,5 @@
 import QtQuick          2.3
-import QtQuick.Controls 1.12
-import QtQuick.Layouts  1.12 as Layout
+import QtQuick.Layouts  1.12
 import QtQuick.Controls 2.12 as QQC2
 
 import QGroundControl                       1.0
@@ -13,8 +12,17 @@ import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
 import QGroundControl.SettingsManager       1.0
 
-Layout.ColumnLayout {
+ColumnLayout {
     property var settings: QGroundControl.settingsManager.videoSettings
+    property string _videoSource: QGroundControl.settingsManager.videoSettings.videoSource.value
+    property bool _isGst: QGroundControl.videoManager.isGStreamer
+    property bool _isUDP264: _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
+    property bool _isUDP265: _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
+    property bool _isRTSP: _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
+    property bool _isTCP: _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
+    property bool _isMPEGTS: _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
+    property real _comboFieldWidth: ScreenTools.defaultFontPixelWidth * 30
+
     QGCLabel {
         id:         videoSectionLabel
         text:       qsTr("Video")
