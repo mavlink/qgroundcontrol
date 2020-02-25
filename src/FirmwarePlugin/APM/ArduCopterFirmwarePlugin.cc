@@ -141,7 +141,10 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+#if 0
+    // Follow me not ready for Stable
 void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
 {
     _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
 }
+#endif
