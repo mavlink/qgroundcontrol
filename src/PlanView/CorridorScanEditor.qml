@@ -118,7 +118,7 @@ Rectangle {
                     distanceToSurfaceLabel:         qsTr("Altitude")
                     distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
                                                         QGroundControl.AltitudeModeAboveTerrain :
-                                                        missionItem.cameraCalc.distanceToSurfaceRelative
+                                                        (missionItem.cameraCalc.distanceToSurfaceRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute)
                     frontalDistanceLabel:           qsTr("Trigger Dist")
                     sideDistanceLabel:              qsTr("Spacing")
                 }
