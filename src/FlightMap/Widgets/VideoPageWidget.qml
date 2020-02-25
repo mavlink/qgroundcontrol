@@ -33,7 +33,7 @@ Item {
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
     property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
-    property bool   _videoRunning:          _videoReceiver && _videoReceiver.videoRunning
+    property bool   _decodingVideo:         _videoReceiver && _videoReceiver.decoding
     property bool   _streamingEnabled:      QGroundControl.settingsManager.videoSettings.streamConfigured
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -136,7 +136,7 @@ Item {
                 anchors.bottom:     parent.bottom
                 width:              height
                 radius:             _recordingVideo ? 0 : height
-                color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
+                color:              (_decodingVideo && _streamingEnabled) ? "red" : "gray"
                 SequentialAnimation on opacity {
                     running:        _recordingVideo
                     loops:          Animation.Infinite
@@ -157,14 +157,14 @@ Item {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        _videoRunning && _streamingEnabled
+                enabled:        _decodingVideo && _streamingEnabled
                 onClicked: {
                     if (_recordingVideo) {
-                        _videoReceiver.stopRecording()
+                        QGroundControl.videoManager.stopRecording()
                         // reset blinking animation
                         recordBtnBackground.opacity = 1
                     } else {
-                        _videoReceiver.startRecording(videoFileName.text)
+                        QGroundControl.videoManager.startRecording(videoFileName.text)
                     }
                 }
             }
