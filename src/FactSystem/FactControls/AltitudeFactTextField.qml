@@ -38,7 +38,8 @@ FactTextField {
         if (altitudeMode === QGroundControl.AltitudeModeNone) {
             _altitudeModeExtraUnits = _altModeNoneExtraUnits
         } else if (altitudeMode === QGroundControl.AltitudeModeRelative) {
-            _altitudeModeExtraUnits = _altModeRelativeExtraUnits
+            //_altitudeModeExtraUnits = _altModeRelativeExtraUnits
+            _altitudeModeExtraUnits = "" // Showing (rel) all the time is too noisy
         } else if (altitudeMode === QGroundControl.AltitudeModeAbsolute) {
             _altitudeModeExtraUnits = _altModeAbsoluteExtraUnits
         } else if (altitudeMode === QGroundControl.AltitudeModeAboveTerrain) {
