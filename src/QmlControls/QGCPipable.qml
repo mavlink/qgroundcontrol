@@ -206,8 +206,8 @@ Item {
         anchors.right:   parent.right
         anchors.bottom: parent.bottom
         visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
-        height:         ScreenTools.defaultFontPixelHeight * 2.5
-        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        height:         ScreenTools.defaultFontPixelHeight * 2.0
+        width:          ScreenTools.defaultFontPixelHeight * 2.0
         sourceSize.height:  height
         MouseArea {
             anchors.fill: parent
