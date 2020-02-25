@@ -25,7 +25,10 @@ public:
         STEERING        = 3,
         HOLD            = 4,
         LOITER          = 5,
+#if 0
+    // Follow me not ready for Stable
         FOLLOW          = 6,
+#endif
         SIMPLE          = 7,
         AUTO            = 10,
         RTL             = 11,
