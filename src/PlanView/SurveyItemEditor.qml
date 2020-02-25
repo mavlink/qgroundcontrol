@@ -30,7 +30,7 @@ Rectangle {
     property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
     property bool   _polygonDone:               false
     property string _doneAdjusting:             qsTr("Done Adjusting")
-    property bool   _presetsAvailable:          missionItem.presetNames.length !== 0
+    property bool   _presetsAvailable:          missionItem.presetNames.length > 1
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -107,13 +107,11 @@ Rectangle {
                     id:                 wizardPresetCombo
                     Layout.fillWidth:   true
                     model:              missionItem.presetNames
-                }
-
-                QGCButton {
-                    Layout.fillWidth:   true
-                    text:               qsTr("Apply Preset")
-                    enabled:            missionItem.presetNames.length != 0
-                    onClicked:          missionItem.loadPreset(wizardPresetCombo.textAt(wizardPresetCombo.currentIndex))
+                    onActivated: {
+                        if (currentIndex > 0) {
+                            missionItem.loadPreset(textAt(currentIndex))
+                        }
+                    }
                 }
 
                 SectionHeader {
@@ -424,6 +422,12 @@ Rectangle {
                     id:                 presetCombo
                     Layout.fillWidth:   true
                     model:              missionItem.presetNames
+
+                    onActivated: {
+                        if (currentIndex > 0) {
+                            missionItem.loadPreset(textAt(currentIndex))
+                        }
+                    }
                 }
 
                 RowLayout {
@@ -431,15 +435,8 @@ Rectangle {
 
                     QGCButton {
                         Layout.fillWidth:   true
-                        text:               qsTr("Apply Preset")
-                        enabled:            missionItem.presetNames.length != 0
-                        onClicked:          missionItem.loadPreset(presetCombo.textAt(presetCombo.currentIndex))
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
-                        enabled:            missionItem.presetNames.length != 0
+                        enabled:            presetCombo.currentIndex > 0
                         onClicked:          missionItem.deletePreset(presetCombo.textAt(presetCombo.currentIndex))
                     }
 

@@ -37,7 +37,11 @@ QStringList ComplexMissionItem::presetNames(void)
 
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    return settings.childKeys();
+
+    names << "Select a preset";
+    names += settings.childKeys();
+
+    return names;
 }
 
 void ComplexMissionItem::loadPreset(const QString& name)
