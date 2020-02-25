@@ -197,7 +197,7 @@ Item {
         }
     }
 
-    //-- PIP Corner Indicator
+    //-- Configure VideoReceiver
     Image {
         id:             configureVideo
         source:         "/qmlimages/Gears.svg"
