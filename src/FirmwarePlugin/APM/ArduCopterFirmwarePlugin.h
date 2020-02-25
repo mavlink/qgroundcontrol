@@ -71,7 +71,10 @@ public:
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const override;
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
+#if 0
+    // Follow me not ready for Stable
     void    sendGCSMotionReport                 (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
+#endif
 
 private:
     static bool _remapParamNameIntialized;
