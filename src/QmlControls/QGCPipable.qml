@@ -10,6 +10,7 @@
 
 import QtQuick                      2.3
 import QtQuick.Controls             1.2
+import QtQuick.Controls 2.12
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -211,11 +212,19 @@ Item {
         MouseArea {
             anchors.fill: parent
             onClicked: {
-
+                popup.open()
             }
         }
-        VideoSettings {
-            visible: false
+        Popup {
+            id: popup
+            parent: Overlay.overlay
+            modal: true
+            focus: true
+            x: Math.round((parent.width - width) / 2)
+            y: Math.round((parent.height - height) / 2)
+            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+            contentItem: VideoSettings {
+            }
         }
     }
 }
