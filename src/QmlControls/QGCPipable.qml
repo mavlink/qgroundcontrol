@@ -200,7 +200,7 @@ Item {
     //-- PIP Corner Indicator
     Image {
         id:             configureVideo
-        source:         "/qmlimages/pipHide.svg"
+        source:         "/qmlimages/Gears.svg"
         mipmap:         true
         fillMode:       Image.PreserveAspectFit
         anchors.right:   parent.right
