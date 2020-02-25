@@ -440,7 +440,19 @@ Rectangle {
                         Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
                         enabled:            missionItem.presetNames.length != 0
-                        onClicked:          missionItem.deletePreset(presetCombo.textAt(presetCombo.currentIndex))
+                        onClicked:          mainWindow.showComponentDialog(deletePresetMessage, qsTr("Delete Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+
+                        Component {
+                            id: deletePresetMessage
+                            QGCViewMessage {
+                                message: qsTr("Are you sure you want to delete '%1' preset?").arg(presetName)
+                                property string presetName: presetCombo.textAt(presetCombo.currentIndex)
+                                function accept() {
+                                    missionItem.deletePreset(presetName)
+                                    hideDialog()
+                                }
+                            }
+                        }
                     }
 
                 }
