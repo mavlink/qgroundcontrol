@@ -175,16 +175,6 @@ QString AppSettings::logSavePath(void)
     return QString();
 }
 
-QString AppSettings::videoSavePath(void)
-{
-    QString path = savePath()->rawValue().toString();
-    if (!path.isEmpty() && QDir(path).exists()) {
-        QDir dir(path);
-        return dir.filePath(videoDirectory);
-    }
-    return QString();
-}
-
 QString AppSettings::crashSavePath(void)
 {
     QString path = savePath()->rawValue().toString();

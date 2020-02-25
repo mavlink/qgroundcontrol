@@ -121,7 +121,7 @@ void VideoManager::_cleanupOldVideos()
     if(!_videoSettings->enableStorageLimit()->rawValue().toBool()) {
         return;
     }
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QString savePath = _videoSettings->videoSavePath()->rawValue().toString();
     QDir videoDir = QDir(savePath);
     videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
     videoDir.setSorting(QDir::Time);

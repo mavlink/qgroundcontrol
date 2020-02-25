@@ -30,6 +30,7 @@ public:
     DEFINE_SETTINGFACT(showRecControl)
     DEFINE_SETTINGFACT(recordingFormat)
     DEFINE_SETTINGFACT(maxVideoSize)
+    DEFINE_SETTINGFACT(videoSavePath)
     DEFINE_SETTINGFACT(enableStorageLimit)
     DEFINE_SETTINGFACT(rtspTimeout)
     DEFINE_SETTINGFACT(streamEnabled)
