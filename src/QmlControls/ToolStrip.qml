@@ -24,6 +24,7 @@ Rectangle {
 
     property alias  model:              repeater.model
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
+    property alias  title:              titleLabel.text
 
     property AbstractButton lastClickedButton: null
 
@@ -70,6 +71,15 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelWidth * 0.25
+
+            QGCLabel {
+                id:                     titleLabel
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                title != ""
+            }
 
             Repeater {
                 id: repeater
