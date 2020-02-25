@@ -16,9 +16,9 @@
         <file alias="MapGrid.qml">src/MapGrid/MapGrid.qml</file>
     </qresource>
     <qresource prefix="/QtQuick/VirtualKeyboard/content/styles/custom">
-        <file alias="style.qml">res/VKStyles/CustomStyle/style.qml</file>
+        <file alias="style.qml">res/VirtualKeyboard/CustomStyle/style.qml</file>
     </qresource>
-    <qresource prefix="custom/img">
+    <qresource prefix="/custom/img">
         <file alias="altitude.svg">res/Images/altitude.svg</file>
         <file alias="attitude_crosshair.svg">res/Images/attitude_crosshair.svg</file>
         <file alias="attitude_dial.svg">res/Images/attitude_dial.svg</file>
@@ -55,7 +55,7 @@
         <file alias="eye-slash-solid.svg">res/Images/eye-slash-solid.svg</file>
         <file alias="map-center.svg">res/Images/centercode-brands.svg</file>
     </qresource>
-    <qresource prefix="Custom/Widgets">
+    <qresource prefix="/Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>
         <file alias="Custom/Widgets/CustomAttitudeWidget.qml">res/Custom/Widgets/CustomAttitudeWidget.qml</file>
         <file alias="Custom/Widgets/CustomIconButton.qml">res/Custom/Widgets/CustomIconButton.qml</file>
@@ -66,7 +66,7 @@
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
     </qresource>
-    <qresource prefix="Custom/Camera">
+    <qresource prefix="/Custom/Camera">
         <file alias="Custom/Camera/qmldir">res/Custom/Camera/qmldir</file>
         <file alias="Custom/Camera/ZoomControl.qml">res/Custom/Camera/ZoomControl.qml</file>
     </qresource>

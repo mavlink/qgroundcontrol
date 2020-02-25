@@ -68,6 +68,22 @@ matrix:
         - APPIMAGE_BINARY_NAME="CustomQGC_linux"
       # We only build tags / deployment - the rest is built in Github Actions
       if: tag IS present
+    # Android Installer - only built on tags
+    - name: Android Installer
+      <<: *template_linux
+      env:
+        - DOCKER_IMAGE=mavlink/qgc-build-android
+      before_script:
+      #  - $SH 'ln -snf $QGC_ANDROID_GSTREAMER_PATH ./'
+        - $SH 'ln -snf /opt/gstreamer-1.0-android-universal-1.14.4 ./'
+      before_deploy:
+        - mkdir -p $RELEASE_DIR
+        # copy the apk from container to the build host
+        - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/android-build/build/outputs/apk/android-build-debug.apk $RELEASE_DIR
+        # rename to add version number to file name
+        - mv $RELEASE_DIR/android-build-debug.apk  $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME-android-$TRAVIS_BRANCH-release.apk
+      # We only build tags / deployment - the rest is built in Github Actions
+      if: tag IS present
 
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
