@@ -22,7 +22,6 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 
@@ -220,90 +219,49 @@ Item {
             Layout.fillWidth: true
         }
 
-        Image {
+        QGCImageButton {
             id: playPause
-            source: _videoSettings.streamEnabled.rawValue ? "/res/Stop" : "/res/Play"
-            fillMode: Image.PreserveAspectFit
-            height: ScreenTools.defaultFontPixelHeight * 1.5
-            width: ScreenTools.defaultFontPixelHeight * 1.5
-            sourceSize.height:  height
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    if(!_videoSettings.streamEnabled.rawValue) {
-                        _videoReceiver.start();
-                    } else {
-                        _videoReceiver.stop();
-                    }
-                    _videoSettings.streamEnabled.rawValue = !_videoSettings.streamEnabled.rawValue;
+            checkState: _videoSettings.streamEnabled.rawValue
+            imageOff: "/res/Stop"
+            imageOn: "/res/Play"
+            onClicked: {
+                if(!_videoSettings.streamEnabled.rawValue) {
+                    _videoReceiver.start();
+                } else {
+                    _videoReceiver.stop();
                 }
+                _videoSettings.streamEnabled.rawValue = !_videoSettings.streamEnabled.rawValue;
             }
         }
 
-        Image {
+        QGCImageButton {
             id: gridLines
-            source: _videoSettings.gridLines.rawValue ? "/res/takeoff.svg" : "/res/wind-rose.svg"
-            fillMode: Image.PreserveAspectFit
-            height: ScreenTools.defaultFontPixelHeight * 1.5
-            width: ScreenTools.defaultFontPixelHeight * 1.5
-            sourceSize.height:  height
+            checkState: _videoSettings.gridLines.rawValue
+            imageOff: "/res/takeoff.svg"
+            imageOn:"/res/wind-rose.svg"
             enabled: _streamingEnabled && activeVehicle
             visible: QGroundControl.videoManager.isGStreamer && _videoSettings.gridLines.visible
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    _videoSettings.gridLines.rawValue = !_videoSettings.gridLines.rawValue
-                }
+            onClicked: {
+                _videoSettings.gridLines.rawValue = !_videoSettings.gridLines.rawValue
             }
         }
 
-        // TODO: Remove this.
         // Button to start/stop video recording
-        Item {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            height: ScreenTools.defaultFontPixelHeight * 1.5
-            width: ScreenTools.defaultFontPixelHeight * 1.5
-            visible:            QGroundControl.videoManager.isGStreamer
-            Rectangle {
-                id:                 recordBtnBackground
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                radius:             _recordingVideo ? 0 : height
-                color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
-                SequentialAnimation on opacity {
-                    running:        _recordingVideo
-                    loops:          Animation.Infinite
-                    PropertyAnimation { to: 0.5; duration: 500 }
-                    PropertyAnimation { to: 1.0; duration: 500 }
-                }
-            }
-            QGCColoredImage {
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
-                anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      height * 0.625
-                sourceSize.width:           width
-                source:                     "/qmlimages/CameraIcon.svg"
-                visible:                    recordBtnBackground.visible
-                fillMode:                   Image.PreserveAspectFit
-                color:                      "white"
-            }
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        _videoRunning && _streamingEnabled
-                onClicked: {
-                    if (_recordingVideo) {
-                        _videoReceiver.stopRecording()
-                        // reset blinking animation
-                        recordBtnBackground.opacity = 1
-                    } else {
-                        _videoReceiver.startRecording(videoFileName.text)
-                    }
+        QGCImageButton {
+            id: recordVideo
+            checkState: _recordingVideo
+            imageOff: "/res/wind-rose.svg"
+            imageOn: "/res/wind-rose.svg"
+            enabled: _videoSettings.streamEnabled.rawValue
+            onClicked: {
+                if (_recordingVideo) {
+                    _videoReceiver.stopRecording()
+                } else {
+                    _videoReceiver.startRecording(videoFileName.text)
                 }
             }
         }
+
         //-- Configure VideoReceiver
         Image {
             id:             configureVideo
