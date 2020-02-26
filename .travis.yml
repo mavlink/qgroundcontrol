@@ -270,6 +270,7 @@ deploy:
 
   # deploy installers to Github releases if on a tag
   - provider: releases
+    edge: true # Use V2 provider to work around V1 bug
     api-key:
       secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
     file_glob: true
