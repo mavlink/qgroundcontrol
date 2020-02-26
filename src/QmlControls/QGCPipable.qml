@@ -221,36 +221,49 @@ Item {
         }
 
         Image {
-            id:                 enableSwitch
-            visible: !_camera || !_camera.autoStream
-            enabled: _streamingEnabled
-            source: _videoSettings.streamEnabled.rawValue === 1 ? "/qmlimages/Stop.svg" : "/qmlimages/Play.svg"
+            id: playPause
+            source: _videoSettings.streamEnabled.rawValue ? "/res/Stop" : "/res/Play"
+            fillMode: Image.PreserveAspectFit
+            height: ScreenTools.defaultFontPixelHeight * 1.5
+            width: ScreenTools.defaultFontPixelHeight * 1.5
+            sourceSize.height:  height
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    if(_videoSettings.streamEnabled.rawValue === 0) {
-                        _videoSettings.streamEnabled.rawValue = 1
-                        _videoReceiver.start()
+                    if(!_videoSettings.streamEnabled.rawValue) {
+                        _videoReceiver.start();
                     } else {
-                        _videoSettings.streamEnabled.rawValue = 0
-                        _videoReceiver.stop()
+                        _videoReceiver.stop();
                     }
+                    _videoSettings.streamEnabled.rawValue = !_videoSettings.streamEnabled.rawValue;
                 }
             }
         }
 
-        QGCSwitch {
+        Image {
+            id: gridLines
+            source: _videoSettings.gridLines.rawValue ? "/res/takeoff.svg" : "/res/wind-rose.svg"
+            fillMode: Image.PreserveAspectFit
+            height: ScreenTools.defaultFontPixelHeight * 1.5
+            width: ScreenTools.defaultFontPixelHeight * 1.5
+            sourceSize.height:  height
             enabled: _streamingEnabled && activeVehicle
-            checked: _videoSettings.gridLines.rawValue
             visible: QGroundControl.videoManager.isGStreamer && _videoSettings.gridLines.visible
-            onClicked: _videoSettings.gridLines.rawValue = checked ? 1 : 0
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    _videoSettings.gridLines.rawValue = !_videoSettings.gridLines.rawValue
+                }
+            }
         }
+
         // TODO: Remove this.
         // Button to start/stop video recording
         Item {
             anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            height:             ScreenTools.defaultFontPixelHeight * 2
-            width:              height
+            height: ScreenTools.defaultFontPixelHeight * 1.5
+            width: ScreenTools.defaultFontPixelHeight * 1.5
             visible:            QGroundControl.videoManager.isGStreamer
             Rectangle {
                 id:                 recordBtnBackground
@@ -296,8 +309,8 @@ Item {
             id:             configureVideo
             source:         "/qmlimages/Gears.svg"
             fillMode:       Image.PreserveAspectFit
-            height:         ScreenTools.defaultFontPixelHeight * 2.0
-            width:          ScreenTools.defaultFontPixelHeight * 2.0
+            height: ScreenTools.defaultFontPixelHeight * 1.5
+            width: ScreenTools.defaultFontPixelHeight * 1.5
             sourceSize.height:  height
             MouseArea {
                 anchors.fill: parent

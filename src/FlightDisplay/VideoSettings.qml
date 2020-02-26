@@ -40,14 +40,6 @@ Rectangle {
     Layout.fillWidth: true
     color: qgcPal.windowShade
 
-    Connections {
-        // For some reason, the normal signal is not reflected in the control below
-        target: QGroundControl.settingsManager.videoSettings.streamEnabled
-        onRawValueChanged: {
-            enableSwitch.checked = QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
-        }
-    }
-
     GridLayout {
         id:                         videoGrid
         anchors.margins:            _margins
