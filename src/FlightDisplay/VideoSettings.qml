@@ -48,6 +48,14 @@ Rectangle {
         Layout.fillWidth:           false
         Layout.fillHeight:          false
         columns:                    2
+
+        QGCLabel {
+            text: "Streaming Settings"
+            Layout.columnSpan: 2
+            Layout.margins: 10
+            Layout.alignment: Qt.AlignHCenter
+        }
+
         QGCLabel {
             text:                   qsTr("Video Source")
             visible:                settings.videoSource.visible
@@ -110,6 +118,13 @@ Rectangle {
         }
 
         QGCLabel {
+            text: "Video Settings"
+            Layout.margins: 10
+            Layout.columnSpan: 2
+            Layout.alignment: Qt.AlignHCenter
+        }
+
+        QGCLabel {
             text:                   qsTr("Auto-Delete Files")
             visible:                settings.enableStorageLimit.visible
         }
@@ -128,7 +143,16 @@ Rectangle {
             fact:                   settings.maxVideoSize
             visible:                settings.maxVideoSize.visible && settings.enableStorageLimit.value
         }
-
+        QGCLabel {
+            text: qsTr("File Name");
+            visible: QGroundControl.videoManager.isGStreamer
+        }
+        FactTextField {
+            id: videoFileName
+            fact: settings.videoSavePath
+            Layout.preferredWidth:  _comboFieldWidth
+            visible: QGroundControl.videoManager.isGStreamer
+        }
         QGCLabel {
             text:                   qsTr("Video File Format")
             visible:                settings.recordingFormat.visible
@@ -143,22 +167,13 @@ Rectangle {
         QGCLabel {
             text:               qsTr("Video Screen Fit")
             visible:            QGroundControl.videoManager.isGStreamer
-            font.pointSize:     ScreenTools.smallFontPointSize
         }
         FactComboBox {
+            Layout.preferredWidth:  _comboFieldWidth
             fact:               QGroundControl.settingsManager.videoSettings.videoFit
             visible:            QGroundControl.videoManager.isGStreamer
             indexModel:         false
             Layout.alignment:   Qt.AlignHCenter
-        }
-        QGCLabel {
-            text: qsTr("File Name");
-            visible: QGroundControl.videoManager.isGStreamer
-        }
-        QQC2.TextField {
-            id: videoFileName
-            visible: QGroundControl.videoManager.isGStreamer
-            width: 100
         }
     }
 }
