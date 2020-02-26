@@ -11,6 +11,7 @@
 import QtQuick                      2.3
 import QtQuick.Controls             1.2
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -24,6 +25,8 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
+
+
 Item {
     id: pip
 
@@ -36,6 +39,17 @@ Item {
 
     property bool inPopup: false
     property bool enablePopup: true
+
+    property var _videoSettings: QGroundControl.settingsManager.videoSettings
+
+    property var    _videoReceiver: QGroundControl.videoManager.videoReceiver
+    property bool   _recordingVideo: _videoReceiver && _videoReceiver.recording
+    property bool   _videoRunning: _videoReceiver && _videoReceiver.videoRunning
+    property bool   _streamingEnabled: QGroundControl.settingsManager.videoSettings.streamConfigured
+    property var    _dynamicCameras: activeVehicle ? activeVehicle.dynamicCameras : null
+    property int    _curCameraIndex: _dynamicCameras ? _dynamicCameras.currentCamera : 0
+    property var    _currentCamera: _dynamicCameras? _dynamicCameras.cameras.get(_curCameraIndex) : null
+    property var    _camera: _currentCamera && _currentCamera.paramComplete ?_currentCamera : null
 
     signal  activated()
     signal  hideIt(bool state)
@@ -197,34 +211,114 @@ Item {
         }
     }
 
-    //-- Configure VideoReceiver
-    Image {
-        id:             configureVideo
-        source:         "/qmlimages/Gears.svg"
-        mipmap:         true
-        fillMode:       Image.PreserveAspectFit
-        anchors.right:   parent.right
-        anchors.bottom: parent.bottom
+    RowLayout {
+        width: parent.width
+        y: parent.height - height
         visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
-        height:         ScreenTools.defaultFontPixelHeight * 2.0
-        width:          ScreenTools.defaultFontPixelHeight * 2.0
-        sourceSize.height:  height
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                popup.open()
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Image {
+            id:                 enableSwitch
+            visible: !_camera || !_camera.autoStream
+            enabled: _streamingEnabled
+            source: _videoSettings.streamEnabled.rawValue === 1 ? "/qmlimages/Stop.svg" : "/qmlimages/Play.svg"
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    if(_videoSettings.streamEnabled.rawValue === 0) {
+                        _videoSettings.streamEnabled.rawValue = 1
+                        _videoReceiver.start()
+                    } else {
+                        _videoSettings.streamEnabled.rawValue = 0
+                        _videoReceiver.stop()
+                    }
+                }
             }
         }
-        Popup {
-            id: popup
-            parent: Overlay.overlay
-            modal: true
-            focus: true
-            x: Math.round((parent.width - width) / 2)
-            y: Math.round((parent.height - height) / 2)
-            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-            contentItem: VideoSettings {
+
+        QGCSwitch {
+            enabled: _streamingEnabled && activeVehicle
+            checked: _videoSettings.gridLines.rawValue
+            visible: QGroundControl.videoManager.isGStreamer && _videoSettings.gridLines.visible
+            onClicked: _videoSettings.gridLines.rawValue = checked ? 1 : 0
+        }
+        // TODO: Remove this.
+        // Button to start/stop video recording
+        Item {
+            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            width:              height
+            visible:            QGroundControl.videoManager.isGStreamer
+            Rectangle {
+                id:                 recordBtnBackground
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                width:              height
+                radius:             _recordingVideo ? 0 : height
+                color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
+                SequentialAnimation on opacity {
+                    running:        _recordingVideo
+                    loops:          Animation.Infinite
+                    PropertyAnimation { to: 0.5; duration: 500 }
+                    PropertyAnimation { to: 1.0; duration: 500 }
+                }
             }
+            QGCColoredImage {
+                anchors.top:                parent.top
+                anchors.bottom:             parent.bottom
+                anchors.horizontalCenter:   parent.horizontalCenter
+                width:                      height * 0.625
+                sourceSize.width:           width
+                source:                     "/qmlimages/CameraIcon.svg"
+                visible:                    recordBtnBackground.visible
+                fillMode:                   Image.PreserveAspectFit
+                color:                      "white"
+            }
+            MouseArea {
+                anchors.fill:   parent
+                enabled:        _videoRunning && _streamingEnabled
+                onClicked: {
+                    if (_recordingVideo) {
+                        _videoReceiver.stopRecording()
+                        // reset blinking animation
+                        recordBtnBackground.opacity = 1
+                    } else {
+                        _videoReceiver.startRecording(videoFileName.text)
+                    }
+                }
+            }
+        }
+        //-- Configure VideoReceiver
+        Image {
+            id:             configureVideo
+            source:         "/qmlimages/Gears.svg"
+            fillMode:       Image.PreserveAspectFit
+            height:         ScreenTools.defaultFontPixelHeight * 2.0
+            width:          ScreenTools.defaultFontPixelHeight * 2.0
+            sourceSize.height:  height
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    popup.open()
+                }
+            }
+            Popup {
+                id: popup
+                parent: Overlay.overlay
+                modal: true
+                focus: true
+                x: Math.round((parent.width - width) / 2)
+                y: Math.round((parent.height - height) / 2)
+                closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                contentItem: VideoSettings {
+                }
+            }
+        }
+        Item {
+            Layout.fillWidth: true
         }
     }
 }

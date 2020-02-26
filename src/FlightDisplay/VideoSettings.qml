@@ -147,51 +147,6 @@ Rectangle {
             visible:                settings.recordingFormat.visible
         }
 
-        // TODO: Remove this.
-        QGCLabel {
-           text:                qsTr("Enable Stream")
-           font.pointSize:      ScreenTools.smallFontPointSize
-           visible:             !_camera || !_camera.autoStream
-        }
-
-        QGCSwitch {
-            id:                 enableSwitch
-            visible:            !_camera || !_camera.autoStream
-            enabled:            _streamingEnabled
-            checked:            QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
-            Layout.alignment:   Qt.AlignHCenter
-            onClicked: {
-                if(checked) {
-                    QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 1
-                    _videoReceiver.start()
-                } else {
-                    QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 0
-                    _videoReceiver.stop()
-                }
-            }
-        }
-
-        // TODO: Remove this.
-        // Grid Lines
-        QGCLabel {
-           text:                qsTr("Grid Lines")
-           font.pointSize:      ScreenTools.smallFontPointSize
-           visible:             QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
-        }
-        QGCSwitch {
-            enabled:            _streamingEnabled && activeVehicle
-            checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
-            visible:            QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
-            Layout.alignment:   Qt.AlignHCenter
-            onClicked: {
-                if(checked) {
-                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
-                } else {
-                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 0
-                }
-            }
-        }
-
         //-- Video Fit
         QGCLabel {
             text:               qsTr("Video Screen Fit")
@@ -212,60 +167,6 @@ Rectangle {
             id: videoFileName
             visible: QGroundControl.videoManager.isGStreamer
             width: 100
-        }
-        //-- Video Recording
-        QGCLabel {
-           text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
-           font.pointSize:  ScreenTools.smallFontPointSize
-           visible:         QGroundControl.videoManager.isGStreamer
-        }
-
-        // TODO: Remove this.
-        // Button to start/stop video recording
-        Item {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            height:             ScreenTools.defaultFontPixelHeight * 2
-            width:              height
-            Layout.alignment:   Qt.AlignHCenter
-            visible:            QGroundControl.videoManager.isGStreamer
-            Rectangle {
-                id:                 recordBtnBackground
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                radius:             _recordingVideo ? 0 : height
-                color:              (_videoRunning && _streamingEnabled) ? "red" : "gray"
-                SequentialAnimation on opacity {
-                    running:        _recordingVideo
-                    loops:          Animation.Infinite
-                    PropertyAnimation { to: 0.5; duration: 500 }
-                    PropertyAnimation { to: 1.0; duration: 500 }
-                }
-            }
-            QGCColoredImage {
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
-                anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      height * 0.625
-                sourceSize.width:           width
-                source:                     "/qmlimages/CameraIcon.svg"
-                visible:                    recordBtnBackground.visible
-                fillMode:                   Image.PreserveAspectFit
-                color:                      "white"
-            }
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        _videoRunning && _streamingEnabled
-                onClicked: {
-                    if (_recordingVideo) {
-                        _videoReceiver.stopRecording()
-                        // reset blinking animation
-                        recordBtnBackground.opacity = 1
-                    } else {
-                        _videoReceiver.startRecording(videoFileName.text)
-                    }
-                }
-            }
         }
     }
 }
