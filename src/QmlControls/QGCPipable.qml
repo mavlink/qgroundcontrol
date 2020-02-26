@@ -106,16 +106,11 @@ Item {
     }
 
     // Resize icon
-    Image {
+    QGCImageButton {
         source:         "/qmlimages/pipResize.svg"
-        fillMode:       Image.PreserveAspectFit
-        mipmap: true
         anchors.right:  parent.right
         anchors.top:    parent.top
         visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup
-        height:         ScreenTools.defaultFontPixelHeight * 2.5
-        width:          ScreenTools.defaultFontPixelHeight * 2.5
-        sourceSize.height:  height
     }
 
     // Resize pip window if necessary when main window is resized
@@ -142,43 +137,27 @@ Item {
     }
 
      //-- PIP Popup Indicator
-    Image {
+    QGCImageButton {
         id:             popupPIP
         source:         "/qmlimages/PiP.svg"
-        mipmap:         true
-        fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.top:    parent.top
         visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup && pipMouseArea.containsMouse
-        height:         ScreenTools.defaultFontPixelHeight * 2.5
-        width:          ScreenTools.defaultFontPixelHeight * 2.5
-        sourceSize.height:  height
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                inPopup = true
-                pip.popup()
-            }
+        onClicked: {
+            inPopup = true
+            pip.popup()
         }
     }
 
     //-- PIP Corner Indicator
-    Image {
+    QGCImageButton {
         id:             closePIP
         source:         "/qmlimages/pipHide.svg"
-        mipmap:         true
-        fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
         visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
-        height:         ScreenTools.defaultFontPixelHeight * 2.5
-        width:          ScreenTools.defaultFontPixelHeight * 2.5
-        sourceSize.height:  height
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                pip.hideIt(true)
-            }
+        onClicked: {
+            pip.hideIt(true)
         }
     }
 
