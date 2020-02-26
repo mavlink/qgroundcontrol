@@ -659,8 +659,6 @@ VideoReceiver::_shutdownPipeline() {
     }
     gst_element_set_state(_pipeline, GST_STATE_NULL);
     gst_bin_remove(GST_BIN(_pipeline), _videoSink);
-    gst_bin_remove(GST_BIN(_pipeline), _tee);
-    gst_object_unref(_tee);
     _tee = nullptr;
     gst_object_unref(_pipeline);
     _pipeline = nullptr;
