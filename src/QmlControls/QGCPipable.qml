@@ -236,7 +236,7 @@ Item {
                 if (_recordingVideo) {
                     _videoReceiver.stopRecording()
                 } else {
-                    _videoReceiver.startRecording(videoFileName.text)
+                    _videoReceiver.startRecording(_videoSettings.videoSavePath)
                 }
             }
         }

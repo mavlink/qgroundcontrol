@@ -144,12 +144,20 @@ Rectangle {
             visible:                settings.maxVideoSize.visible && settings.enableStorageLimit.value
         }
         QGCLabel {
-            text: qsTr("File Name");
+            text: qsTr("Video Save Folder");
             visible: QGroundControl.videoManager.isGStreamer
         }
         FactTextField {
-            id: videoFileName
             fact: settings.videoSavePath
+            Layout.preferredWidth:  _comboFieldWidth
+            visible: QGroundControl.videoManager.isGStreamer
+        }
+        QGCLabel {
+            text: qsTr("Video file Name");
+            visible: QGroundControl.videoManager.isGStreamer
+        }
+        FactTextField {
+            fact: settings.videoFileName
             Layout.preferredWidth:  _comboFieldWidth
             visible: QGroundControl.videoManager.isGStreamer
         }

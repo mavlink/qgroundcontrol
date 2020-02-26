@@ -222,7 +222,6 @@ VideoManager::startRecording(const QString& videoFile)
     _cleanupOldVideos();
 
     QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-
     if(savePath.isEmpty()) {
         qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;

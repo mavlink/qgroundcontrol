@@ -36,6 +36,13 @@
     "defaultValue":     ""
 },
 {
+    "name":             "videoFileName",
+    "shortDescription": "Video File Name",
+    "longDescription":  "Save the videos with this name.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
     "name":             "aspectRatio",
     "shortDescription": "Video Aspect Ratio",
     "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",

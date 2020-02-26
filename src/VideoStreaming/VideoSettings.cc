@@ -83,6 +83,7 @@ DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
 DECLARE_SETTINGSFACT(VideoSettings, videoSavePath)
+DECLARE_SETTINGSFACT(VideoSettings, videoFileName)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
