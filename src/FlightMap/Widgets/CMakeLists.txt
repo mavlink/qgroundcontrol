@@ -14,7 +14,6 @@ SOURCES
     QGCInstrumentWidgetAlternate.qml
     ValuePageWidget.qml
     CenterMapDropPanel.qml
-    VideoPageWidget.qml
     MapFitFunctions.qml
     VibrationPageWidget.qml
     CompassRing.qml
