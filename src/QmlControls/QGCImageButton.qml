@@ -6,12 +6,15 @@ import QGroundControl.ScreenTools   1.0
 
 Image {
     id: root
-    property var checkState: false
+    property bool isCheckable: true
+    property bool checkState: false
     property var imageOn
     property var imageOff
     signal clicked()
 
-    source: checkState ? imageOff : imageOn
+    source: !isCheckable ? source
+          : checkState ? imageOff : imageOn
+
     fillMode: Image.PreserveAspectFit
     height: ScreenTools.defaultFontPixelHeight * 1.5
     width: ScreenTools.defaultFontPixelHeight * 1.5

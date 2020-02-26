@@ -263,18 +263,11 @@ Item {
         }
 
         //-- Configure VideoReceiver
-        Image {
-            id:             configureVideo
-            source:         "/qmlimages/Gears.svg"
-            fillMode:       Image.PreserveAspectFit
-            height: ScreenTools.defaultFontPixelHeight * 1.5
-            width: ScreenTools.defaultFontPixelHeight * 1.5
-            sourceSize.height:  height
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    popup.open()
-                }
+        QGCImageButton {
+            id: configureVideo
+            source: "/qmlimages/Gears.svg"
+            onClicked: {
+                popup.open()
             }
             Popup {
                 id: popup
