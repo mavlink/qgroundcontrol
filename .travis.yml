@@ -223,6 +223,7 @@ before_deploy:
     fi
 
 deploy:
+  edge: true # Use V2 provider to work around V1 bug
   # deploy installers to s3 builds/ if on a branch
   - provider: s3
     access_key_id: AKIAIVORNALE7NHD3T6Q
@@ -270,7 +271,6 @@ deploy:
 
   # deploy installers to Github releases if on a tag
   - provider: releases
-    edge: true # Use V2 provider to work around V1 bug
     api-key:
       secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
     file_glob: true
