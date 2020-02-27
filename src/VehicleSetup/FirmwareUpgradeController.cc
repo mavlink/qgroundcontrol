@@ -724,7 +724,7 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
 #if !defined(NO_ARDUPILOT_DIALECT)
-    qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames";
+    qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames" << _foundBoardInfo.description() << _foundBoardInfo.vendorIdentifier() << _foundBoardInfo.productIdentifier();
 
     bool                    chibios =       _apmChibiOSSetting->rawValue().toInt() == 0;
     FirmwareVehicleType_t   vehicleType =   static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
