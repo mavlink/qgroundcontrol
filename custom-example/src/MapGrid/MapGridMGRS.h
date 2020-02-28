@@ -84,6 +84,7 @@ signals:
     void updateValues(const QVariant& values);
 
 private:
+    const double maxLevel1LabelsZoomLevel = 4;
     const double maxZoneZoomLevel = 7;
     const double leve3ZoomLevel = 10;
     const int maxNumberOfLinesOnScreen = 10;
@@ -138,7 +139,7 @@ private:
 
     void _createLevel3Paths(std::shared_ptr<MGRSZone> &tile);
 
-    void _addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QString& color, int width);
+    void _addLines(QJsonArray& lines, const QList<QGeoPath>& paths, const QString& color1, int width1, const QString& color2, int width2);
 
     void _addLabels(QJsonArray& labels);
 };

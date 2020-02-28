@@ -824,6 +824,14 @@ void FirmwarePlugin::checkIfIsLatestStable(Vehicle* vehicle)
             _versionFileDownloadFinished(remoteFile, localFile, vehicle);
             sender()->deleteLater();
         });
+    connect(
+          downloader,
+          &QGCFileDownload::error,
+          this,
+          [=](QString errorMsg) {
+              qCDebug(FirmwarePluginLog) << "Failed to download the latest fw version file. Error: " << errorMsg;
+              downloader->deleteLater();
+          });
     downloader->download(versionFile);
 }
 

@@ -75,7 +75,6 @@ Item {
                     Layout.fillWidth:   true
                     font.pointSize:     ScreenTools.largeFontPointSize
                     text:               !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                    visible:            !ScreenTools.isShortScreen
                 }
 
                 QGCLabel {

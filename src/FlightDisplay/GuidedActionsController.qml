@@ -143,7 +143,6 @@ Item {
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
-    property bool   _:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
 
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
     property bool __guidedModeSupported:    activeVehicle ? activeVehicle.guidedModeSupported : false

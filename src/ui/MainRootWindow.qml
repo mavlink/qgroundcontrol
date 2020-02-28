@@ -21,8 +21,6 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
 
-import QtQuick.VirtualKeyboard      2.1
-
 /// Native QML top level window
 ApplicationWindow {
     id:             mainWindow
