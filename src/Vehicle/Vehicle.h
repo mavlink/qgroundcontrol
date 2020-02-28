@@ -1506,6 +1506,7 @@ private:
     Joystick*           _activeJoystick = nullptr;
     QTimer              _gimbalTimer;
 
+    bool _checkLatestStableFWDone = false;
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
     int _firmwarePatchVersion;
