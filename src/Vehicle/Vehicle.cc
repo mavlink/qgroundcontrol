@@ -3323,6 +3323,8 @@ void Vehicle::_sendMavCommandAgain()
 
     _mavCommandAckTimer.start();
 
+    qCDebug(VehicleLog) << "_sendMavCommandAgain sending" << queuedCommand.command;
+
     mavlink_message_t       msg;
     if (queuedCommand.commandInt) {
         mavlink_command_int_t  cmd;
@@ -3427,6 +3429,8 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
+
+    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(ack.command).arg(ack.result);
 
     if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES && ack.result != MAV_RESULT_ACCEPTED) {
         qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error(%1). Setting no capabilities.").arg(ack.result);
