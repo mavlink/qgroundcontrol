@@ -3878,7 +3878,8 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
         vehicleInfo.availableFlags = 0;
 
         vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
-        vehicleInfo.location.setLatitude(adsbVehicleMsg.lon / 1e7);
+        vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
+        vehicleInfo.availableFlags |= ADSBVehicle::LocationAvailable;
 
         vehicleInfo.callsign = adsbVehicleMsg.callsign;
         vehicleInfo.availableFlags |= ADSBVehicle::CallsignAvailable;
