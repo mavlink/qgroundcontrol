@@ -2,9 +2,13 @@
 
 Note: This file only contains high level features or important fixes.
 
+## 4.1 - Daily Build
+
+* Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
+
 ## 4.0
 
-### 4.0.0 - Daily Build
+### 4.0.0 - Stable
 
 * Added ROI option during manual flight.
 * Windows: Move builds to 64 bit, Qt 5.12.5
