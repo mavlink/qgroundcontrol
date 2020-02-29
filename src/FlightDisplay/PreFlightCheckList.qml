@@ -23,7 +23,9 @@ Rectangle {
     color:      qgcPal.windowShade
     radius:     3
 
-    property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 2
+    property real   _verticalMargin:                ScreenTools.defaultFontPixelHeight / 2
+    property var    _offlineEditingVehicleType:     QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
+
 
     Loader {
         id:     modelContainer
@@ -82,6 +84,27 @@ Rectangle {
             }
             return
         }
+
+        // "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
+        // "enumValues":       "1,2,20,10,12",
+        switch (_offlineEditingVehicleType.rawValue) {
+            case 1:
+                modelContainer.source = "/checklists/FixedWingChecklist.qml"
+                return
+            case 2:
+                modelContainer.source = "/checklists/MultiRotorChecklist.qml"
+                return
+            case 20:
+                modelContainer.source = "/checklists/VTOLChecklist.qml"
+                return
+            case 10:
+                modelContainer.source = "/checklists/RoverChecklist.qml"
+                return
+            case 12:
+                modelContainer.source = "/checklists/SubChecklist.qml"
+                return
+        }
+
         modelContainer.source = "/checklists/DefaultChecklist.qml"
     }
 
