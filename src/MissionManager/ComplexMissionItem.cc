@@ -80,22 +80,6 @@ void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& prese
     // Use this to save a survey preset as a JSON file to be included in the build
     // as a built-in survey preset that cannot be deleted.
     #if 0
-    _saveSettingsValueAsJson(settings, name);
-    #endif
-
-    emit presetNamesChanged();
-}
-
-QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
-{
-    QSettings settings;
-    settings.beginGroup(presetsSettingsGroup());
-    settings.beginGroup(_presetSettingsKey);
-    return QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
-}
-
-void ComplexMissionItem::_saveSettingsValueAsJson(const QSettings& settings, const QString& name)
-{
     QString savePath = _settingsManager->appSettings()->missionSavePath();
     QDir saveDir(savePath);
 
@@ -108,8 +92,17 @@ void ComplexMissionItem::_saveSettingsValueAsJson(const QSettings& settings, con
     }
 
     qDebug() << "Saving survey preset to JSON";
-    QJsonObject jsonObj = QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
     auto jsonDoc = QJsonDocument(jsonObj);
-
     jsonFile.write(jsonDoc.toJson());
+    #endif
+
+    emit presetNamesChanged();
+}
+
+QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
+{
+    QSettings settings;
+    settings.beginGroup(presetsSettingsGroup());
+    settings.beginGroup(_presetSettingsKey);
+    return QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
 }

@@ -86,8 +86,6 @@ protected:
     void        _savePresetJson (const QString& name, QJsonObject& presetObject);
     QJsonObject _loadPresetJson (const QString& name);
 
-    void        _saveSettingsValueAsJson(const QSettings& settings, const QString& name);
-
     bool _isIncomplete = true;
 
     QMap<QString, FactMetaData*> _metaDataMap;
