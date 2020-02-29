@@ -26,6 +26,7 @@
 #include "MissionController.h"
 
 class MissionItem;
+class PlanMasterController;
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
@@ -33,7 +34,7 @@ class VisualMissionItem : public QObject
     Q_OBJECT
 
 public:
-    VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    VisualMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent);
     VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent);
 
     ~VisualMissionItem();
@@ -47,7 +48,6 @@ public:
     };
     Q_ENUM(ReadyForSaveState)
 
-    Q_PROPERTY(Vehicle*         vehicle                             READ vehicle                                                            CONSTANT)
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                       CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                    NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
@@ -70,7 +70,6 @@ public:
     Q_PROPERTY(bool             isTakeoffItem                       READ isTakeoffItem                                                      NOTIFY isTakeoffItemChanged)                        ///< true: Takeoff item special case
     Q_PROPERTY(QString          editorQml                           MEMBER _editorQml                                                       CONSTANT)                                           ///< Qml code for editing this item
     Q_PROPERTY(QString          mapVisualQML                        READ mapVisualQML                                                       CONSTANT)                                           ///< QMl code for map visuals
-    Q_PROPERTY(QmlObjectListModel* childItems                       READ childItems                                                         CONSTANT)
     Q_PROPERTY(double           specifiedFlightSpeed                READ specifiedFlightSpeed                                               NOTIFY specifiedFlightSpeedChanged)                 ///< NaN for not specified
     Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                                 NOTIFY specifiedGimbalYawChanged)                   ///< NaN for not specified
     Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                               NOTIFY specifiedGimbalPitchChanged)                 ///< NaN for not specified
@@ -79,10 +78,12 @@ public:
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                                  NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
     Q_PROPERTY(bool             flyView                             READ flyView                                                            CONSTANT)
     Q_PROPERTY(bool             wizardMode                          READ wizardMode                        WRITE setWizardMode              NOTIFY wizardModeChanged)
-    Q_PROPERTY(ReadyForSaveState readyForSaveState                  READ readyForSaveState                                                  NOTIFY readyForSaveStateChanged)
-    Q_PROPERTY(VisualMissionItem* parentItem                        READ parentItem                        WRITE setParentItem              NOTIFY parentItemChanged)
 
-    Q_PROPERTY(QGCGeoBoundingCube* boundingCube                     READ boundingCube                                                       NOTIFY boundingCubeChanged)
+    Q_PROPERTY(PlanMasterController*    masterController    READ masterController                                                   CONSTANT)
+    Q_PROPERTY(ReadyForSaveState        readyForSaveState   READ readyForSaveState                                                  NOTIFY readyForSaveStateChanged)
+    Q_PROPERTY(VisualMissionItem*       parentItem          READ parentItem                        WRITE setParentItem              NOTIFY parentItemChanged)
+    Q_PROPERTY(QmlObjectListModel*      childItems          READ childItems                                                         CONSTANT)
+    Q_PROPERTY(QGCGeoBoundingCube*      boundingCube        READ boundingCube                                                       NOTIFY boundingCubeChanged)
 
     // The following properties are calculated/set by the MissionController recalc methods
 
@@ -123,7 +124,7 @@ public:
 
     void setHomePositionSpecialCase (bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
 
-    Vehicle* vehicle(void) { return _vehicle; }
+    PlanMasterController* masterController(void) { return _masterController; }
 
     // Pure virtuals which must be provides by derived classes
 
@@ -229,23 +230,25 @@ signals:
     void exitCoordinateSameAsEntryChanged           (bool exitCoordinateSameAsEntry);
 
 protected:
-    Vehicle*    _vehicle;
-    bool        _flyView    =               false;
-    bool        _isCurrentItem =            false;
-    bool        _hasCurrentChildItem =      false;
-    bool        _dirty =                    false;
-    bool        _homePositionSpecialCase =  false;      ///< true: This item is being used as a ui home position indicator
-    bool        _wizardMode =               false;      ///< true: Item editor is showing wizard completion panel
-    double      _terrainAltitude =          qQNaN();    ///< Altitude of terrain at coordinate position, NaN for not known
-    double      _altDifference =            0;          ///< Difference in altitude from previous waypoint
-    double      _altPercent =               0;          ///< Percent of total altitude change in mission
-    double      _terrainPercent =           qQNaN();    ///< Percent of terrain altitude for coordinate
-    bool        _terrainCollision =         false;      ///< true: item collides with terrain
-    double      _azimuth =                  0;          ///< Azimuth to previous waypoint
-    double      _distance =                 0;          ///< Distance to previous waypoint
-    QString     _editorQml;                             ///< Qml resource for editing item
-    double      _missionGimbalYaw =         qQNaN();
-    double      _missionVehicleYaw =        qQNaN();
+    bool     _flyView    =               false;
+    bool    _isCurrentItem =            false;
+    bool    _hasCurrentChildItem =      false;
+    bool    _dirty =                    false;
+    bool    _homePositionSpecialCase =  false;      ///< true: This item is being used as a ui home position indicator
+    bool    _wizardMode =               false;      ///< true: Item editor is showing wizard completion panel
+    double  _terrainAltitude =          qQNaN();    ///< Altitude of terrain at coordinate position, NaN for not known
+    double  _altDifference =            0;          ///< Difference in altitude from previous waypoint
+    double  _altPercent =               0;          ///< Percent of total altitude change in mission
+    double  _terrainPercent =           qQNaN();    ///< Percent of terrain altitude for coordinate
+    bool    _terrainCollision =         false;      ///< true: item collides with terrain
+    double  _azimuth =                  0;          ///< Azimuth to previous waypoint
+    double  _distance =                 0;          ///< Distance to previous waypoint
+    QString _editorQml;                             ///< Qml resource for editing item
+    double  _missionGimbalYaw =         qQNaN();
+    double  _missionVehicleYaw =        qQNaN();
+
+    PlanMasterController*   _masterController = nullptr;
+    Vehicle*                _controllerVehicle = nullptr;
 
     VisualMissionItem*  _parentItem = nullptr;
     QGCGeoBoundingCube  _boundingCube;          ///< The bounding "cube" of this element.

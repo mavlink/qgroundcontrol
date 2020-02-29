@@ -13,6 +13,7 @@
 #include "QGCGeo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SimpleMissionItem.h"
+#include "PlanMasterController.h"
 
 #include <QPolygonF>
 
@@ -45,8 +46,8 @@ const char* FixedWingLandingComplexItem::_jsonFallRateKey =                 "fal
 const char* FixedWingLandingComplexItem::_jsonLandingAltitudeRelativeKey =  "landAltitudeRelative";
 const char* FixedWingLandingComplexItem::_jsonLoiterAltitudeRelativeKey =   "loiterAltitudeRelative";
 
-FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
-    : ComplexMissionItem        (vehicle, flyView, parent)
+FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent)
+    : ComplexMissionItem        (masterController, flyView, parent)
     , _sequenceNumber           (0)
     , _dirty                    (false)
     , _landingCoordSet          (false)
@@ -105,7 +106,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     connect(this,                       &FixedWingLandingComplexItem::landingCoordSetChanged,           this, &FixedWingLandingComplexItem::readyForSaveStateChanged);
     connect(this,                       &FixedWingLandingComplexItem::wizardModeChanged,                this, &FixedWingLandingComplexItem::readyForSaveStateChanged);
 
-    if (vehicle->apmFirmware()) {
+    if (_masterController->controllerVehicle()->apmFirmware()) {
         // ArduPilot does not support camera commands
         _stopTakingVideoFact.setRawValue(false);
         _stopTakingPhotosFact.setRawValue(false);
@@ -364,7 +365,7 @@ void FixedWingLandingComplexItem::appendMissionItems(QList<MissionItem*>& items,
     items.append(item);
 }
 
-bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool flyView, Vehicle* vehicle)
+bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController)
 {
     qCDebug(FixedWingLandingComplexItemLog) << "FixedWingLandingComplexItem::scanForItem count" << visualItems->count();
 
@@ -455,7 +456,7 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
 
     // Now stuff all the scanned information into the item
 
-    FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(vehicle, flyView, visualItems);
+    FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(masterController, flyView, visualItems);
 
     complexItem->_ignoreRecalcSignals = true;
 

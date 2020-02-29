@@ -1,0 +1,16 @@
+[
+{
+    "name":             "blocksPending",
+    "shortDescription": "Blocks Pending",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "default":          0
+},
+{
+    "name":             "blocksLoaded",
+    "shortDescription": "Blocks Loaded",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "default":          0
+}
+]

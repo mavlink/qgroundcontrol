@@ -14,3 +14,4 @@ PreFlightGPSCheck           1.0 PreFlightGPSCheck.qml
 PreFlightRCCheck            1.0 PreFlightRCCheck.qml
 PreFlightSensorsHealthCheck 1.0 PreFlightSensorsHealthCheck.qml
 PreFlightSoundCheck         1.0 PreFlightSoundCheck.qml
+TerrainProgress             1.0 TerrainProgress.qml

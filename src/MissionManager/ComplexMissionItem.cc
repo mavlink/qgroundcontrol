@@ -11,6 +11,7 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
+#include "PlanMasterController.h"
 
 #include <QSettings>
 
@@ -18,8 +19,8 @@ const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
 const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
 
-ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
-    : VisualMissionItem (vehicle, flyView, parent)
+ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
+    : VisualMissionItem (masterController, flyView, parent)
 {
 
 }

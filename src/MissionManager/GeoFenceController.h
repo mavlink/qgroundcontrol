@@ -75,7 +75,6 @@ public:
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-    void managerVehicleChanged      (Vehicle* managerVehicle) final;
     bool showPlanFromManagerVehicle (void) final;
 
     QmlObjectListModel* polygons                (void) { return &_polygons; }
@@ -101,19 +100,21 @@ private slots:
     void _managerSendComplete       (bool error);
     void _managerRemoveAllComplete  (bool error);
     void _parametersReady           (void);
+    void _managerVehicleChanged      (Vehicle* managerVehicle);
 
 private:
     void _init(void);
 
-    GeoFenceManager*    _geoFenceManager;
-    bool                _dirty;
+    Vehicle*            _managerVehicle =               nullptr;
+    GeoFenceManager*    _geoFenceManager =              nullptr;
+    bool                _dirty =                        false;
     QmlObjectListModel  _polygons;
     QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;
     Fact                _breachReturnAltitudeFact;
-    double              _breachReturnDefaultAltitude;
-    bool                _itemsRequested;
-    Fact*               _px4ParamCircularFenceFact;
+    double              _breachReturnDefaultAltitude =  qQNaN();
+    bool                _itemsRequested =               false;
+    Fact*               _px4ParamCircularFenceFact =    nullptr;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 

@@ -28,22 +28,19 @@ const size_t MissionItemTest::_cTestCases = sizeof(_rgTestCases)/sizeof(_rgTestC
 #endif
 
 MissionItemTest::MissionItemTest(void)
-    : _offlineVehicle(nullptr)
+    : _masterController(nullptr)
 {
 }
 
 void MissionItemTest::init(void)
 {
     UnitTest::init();
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4,
-                                  MAV_TYPE_QUADROTOR,
-                                  qgcApp()->toolbox()->firmwarePluginManager(),
-                                  this);
+    _masterController = new PlanMasterController(this);
 }
 
 void MissionItemTest::cleanup(void)
 {
-    _offlineVehicle->deleteLater();
+    _masterController->deleteLater();
     UnitTest::cleanup();
 }
 
@@ -281,7 +278,7 @@ void MissionItemTest::_testSimpleLoadFromStream(void)
 {
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
-    SimpleMissionItem simpleMissionItem(_offlineVehicle, false /* flyView */, nullptr);
+    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, nullptr);
 
     QString testString("10\t0\t3\t80\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n");
     QTextStream testStream(&testString, QIODevice::ReadOnly);
@@ -451,7 +448,7 @@ void MissionItemTest::_testSimpleLoadFromJson(void)
     // We specifically test SimpleMissionItem loading as well since it has additional
     // signalling which can affect values.
 
-    SimpleMissionItem simpleMissionItem(_offlineVehicle, false /* flyView */, nullptr);
+    SimpleMissionItem simpleMissionItem(_masterController, false /* flyView */, nullptr);
     QString     errorString;
     QJsonArray  coordinateArray;
     QJsonObject jsonObject;
