@@ -17,8 +17,6 @@
 PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
     : QObject           (parent)
     , _masterController (masterController)
-    , _controllerVehicle(masterController->controllerVehicle())
-    , _managerVehicle   (masterController->managerVehicle())
     , _flyView          (false)
 {
 
@@ -32,9 +30,4 @@ PlanElementController::~PlanElementController()
 void PlanElementController::start(bool flyView)
 {
     _flyView = flyView;
-}
-
-void PlanElementController::managerVehicleChanged(Vehicle* managerVehicle)
-{
-    _managerVehicle = managerVehicle;
 }

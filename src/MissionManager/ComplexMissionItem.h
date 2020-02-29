@@ -7,20 +7,21 @@
  *
  ****************************************************************************/
 
-#ifndef ComplexMissionItem_H
-#define ComplexMissionItem_H
+#pragma once
 
 #include "VisualMissionItem.h"
 #include "QGCGeo.h"
 
 #include <QSettings>
 
+class PlanMasterController;
+
 class ComplexMissionItem : public VisualMissionItem
 {
     Q_OBJECT
 
 public:
-    ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent);
 
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
@@ -88,5 +89,3 @@ protected:
 
     static const char* _presetSettingsKey;
 };
-
-#endif

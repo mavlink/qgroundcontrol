@@ -18,24 +18,25 @@
 #include "MissionCommandUIInfo.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
+#include "PlanMasterController.h"
 
-TakeoffMissionItem::TakeoffMissionItem(Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, parent)
     , _settingsItem     (settingsItem)
 {
     _init();
 }
 
-TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, parent)
     , _settingsItem     (settingsItem)
 {
     setCommand(takeoffCmd);
     _init();
 }
 
-TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, missionItem, parent)
+TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
+    : SimpleMissionItem (masterController, flyView, missionItem, parent)
     , _settingsItem     (settingsItem)
 {
     _init();
@@ -115,7 +116,7 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
     if (specifiesCoordinate()) {
-        if (_vehicle->fixedWing() || _vehicle->vtol()) {
+        if (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) {
             setLaunchTakeoffAtSameLocation(false);
         } else {
             // PX4 specifies a coordinate for takeoff even for non fixed wing. But it makes more sense to not have a coordinate

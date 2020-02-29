@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "SpeedSectionTest.h"
+#include "PlanMasterController.h"
 
 SpeedSectionTest::SpeedSectionTest(void)
     : _spySpeed(nullptr)
@@ -134,7 +135,7 @@ void SpeedSectionTest::_checkAvailable(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    SimpleMissionItem* item = new SimpleMissionItem(_offlineVehicle, false /* flyView */, missionItem, this);
+    SimpleMissionItem* item = new SimpleMissionItem(_masterController, false /* flyView */, missionItem, this);
     QVERIFY(item->speedSection());
     QCOMPARE(item->speedSection()->available(), false);
 }
@@ -176,7 +177,7 @@ void SpeedSectionTest::_testAppendSectionItems(void)
     _speedSection->appendSectionItems(rgMissionItems, this, seqNum);
     QCOMPARE(rgMissionItems.count(), 1);
     QCOMPARE(seqNum, 1);
-    MissionItem expectedSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _offlineVehicle->multiRotor() ? 1 : 0, _speedSection->flightSpeed()->rawValue().toDouble(), -1, 0, 0, 0, 0, true, false);
+    MissionItem expectedSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _controllerVehicle->multiRotor() ? 1 : 0, _speedSection->flightSpeed()->rawValue().toDouble(), -1, 0, 0, 0, 0, true, false);
     _missionItemsEqual(*rgMissionItems[0], expectedSpeedItem);
 }
 
@@ -192,8 +193,8 @@ void SpeedSectionTest::_testScanForSection(void)
     // Check for a scan success
 
     double flightSpeed = 10.123456;
-    MissionItem validSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _offlineVehicle->multiRotor() ? 1 : 0, flightSpeed, -1, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleItem(_offlineVehicle, false /* flyView */, validSpeedItem, nullptr);
+    MissionItem validSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _controllerVehicle->multiRotor() ? 1 : 0, flightSpeed, -1, 0, 0, 0, 0, true, false);
+    SimpleMissionItem simpleItem(_masterController, false /* flyView */, validSpeedItem, nullptr);
     MissionItem& simpleMissionItem = simpleItem.missionItem();
     visualItems.append(&simpleItem);
     scanIndex = 0;
@@ -209,7 +210,7 @@ void SpeedSectionTest::_testScanForSection(void)
     // Flight speed command but incorrect settings
 
     simpleMissionItem = validSpeedItem;
-    simpleMissionItem.setParam1(_offlineVehicle->multiRotor() ? 0 : 1);
+    simpleMissionItem.setParam1(_controllerVehicle->multiRotor() ? 0 : 1);
     visualItems.append(&simpleItem);
     QCOMPARE(_speedSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -264,7 +265,7 @@ void SpeedSectionTest::_testScanForSection(void)
 
     // Valid item in wrong position
     MissionItem waypointMissionItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleWaypointItem(_offlineVehicle, false /* flyView */, waypointMissionItem, nullptr);
+    SimpleMissionItem simpleWaypointItem(_masterController, false /* flyView */, waypointMissionItem, nullptr);
     simpleMissionItem = validSpeedItem;
     visualItems.append(&simpleWaypointItem);
     visualItems.append(&simpleMissionItem);

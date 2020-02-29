@@ -10,9 +10,9 @@
 #include "VisualMissionItemTest.h"
 #include "SimpleMissionItem.h"
 #include "QGCApplication.h"
+#include "PlanMasterController.h"
 
 VisualMissionItemTest::VisualMissionItemTest(void)
-    : _offlineVehicle(nullptr)
 {
     
 }
@@ -20,10 +20,9 @@ VisualMissionItemTest::VisualMissionItemTest(void)
 void VisualMissionItemTest::init(void)
 {
     UnitTest::init();
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4,
-                                  MAV_TYPE_QUADROTOR,
-                                  qgcApp()->toolbox()->firmwarePluginManager(),
-                                  this);
+
+    _masterController = new PlanMasterController(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, this);
+    _controllerVehicle = _masterController->controllerVehicle();
 
     rgVisualItemSignals[altDifferenceChangedIndex] =                        SIGNAL(altDifferenceChanged(double));
     rgVisualItemSignals[altPercentChangedIndex] =                           SIGNAL(altPercentChanged(double));
@@ -54,7 +53,7 @@ void VisualMissionItemTest::init(void)
 
 void VisualMissionItemTest::cleanup(void)
 {
-    _offlineVehicle->deleteLater();
+    _masterController->deleteLater();
     UnitTest::cleanup();
 }
 

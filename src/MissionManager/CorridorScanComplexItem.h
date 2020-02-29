@@ -23,10 +23,9 @@ class CorridorScanComplexItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    /// @param vehicle Vehicle which this is being contructed for
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
     /// @param kmlFile Polyline comes from this file, empty for default polyline
-    CorridorScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent);
+    CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlFile, QObject* parent);
 
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)

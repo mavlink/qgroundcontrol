@@ -16,6 +16,8 @@
 
 #include <QGeoCoordinate>
 
+class PlanMasterController;
+
 /// Unit test for SimpleMissionItem
 class VisualMissionItemTest : public UnitTest
 {
@@ -90,5 +92,6 @@ protected:
     static const size_t cVisualItemSignals = maxSignalIndex;
     const char*         rgVisualItemSignals[cVisualItemSignals];
 
-    Vehicle*        _offlineVehicle;
+    PlanMasterController*   _masterController =     nullptr;
+    Vehicle*                _controllerVehicle =    nullptr;
 };

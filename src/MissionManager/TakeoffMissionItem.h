@@ -12,6 +12,8 @@
 #include "SimpleMissionItem.h"
 #include "MissionSettingsItem.h"
 
+class PlanMasterController;
+
 /// Takeoff mission item is a special case of a SimpleMissionItem which supports Launch Location display/editing
 /// which is tied to home position.
 class TakeoffMissionItem : public SimpleMissionItem
@@ -19,9 +21,9 @@ class TakeoffMissionItem : public SimpleMissionItem
     Q_OBJECT
     
 public:
-    TakeoffMissionItem(Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
-    TakeoffMissionItem(MAV_CMD takeoffCmd, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
-    TakeoffMissionItem(const MissionItem& missionItem,  Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
+    TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
+    TakeoffMissionItem(MAV_CMD takeoffCmd, PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
+    TakeoffMissionItem(const MissionItem& missionItem,  PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, QObject* parent);
 
     Q_PROPERTY(QGeoCoordinate   launchCoordinate            READ launchCoordinate               WRITE setLaunchCoordinate               NOTIFY launchCoordinateChanged)
     Q_PROPERTY(bool             launchTakeoffAtSameLocation READ launchTakeoffAtSameLocation    WRITE setLaunchTakeoffAtSameLocation    NOTIFY launchTakeoffAtSameLocationChanged)

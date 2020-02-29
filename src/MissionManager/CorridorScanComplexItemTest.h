@@ -13,6 +13,7 @@
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 #include "CorridorScanComplexItem.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
@@ -50,8 +51,9 @@ private:
     static const size_t _cCorridorPolygonSignals = maxCorridorPolygonSignalIndex;
     const char*         _rgCorridorPolygonSignals[_cCorridorPolygonSignals];
 
-    Vehicle*                    _offlineVehicle;
-    MultiSignalSpy*             _multiSpyCorridorPolygon;
-    CorridorScanComplexItem*    _corridorItem;
+    PlanMasterController*       _masterController =         nullptr;
+    Vehicle*                    _controllerVehicle =        nullptr;
+    MultiSignalSpy*             _multiSpyCorridorPolygon =  nullptr;
+    CorridorScanComplexItem*    _corridorItem =             nullptr;
     QList<QGeoCoordinate>       _linePoints;
 };

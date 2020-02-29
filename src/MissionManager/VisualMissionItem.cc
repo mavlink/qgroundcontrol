@@ -17,22 +17,23 @@
 #include "JsonHelper.h"
 #include "TerrainQuery.h"
 #include "TakeoffMissionItem.h"
+#include "PlanMasterController.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
 const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
 
-VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
-    : QObject                   (parent)
-    , _vehicle                  (vehicle)
-    , _flyView                  (flyView)
+VisualMissionItem::VisualMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
+    : QObject           (parent)
+    , _flyView          (flyView)
+    , _masterController (masterController)
+    , _controllerVehicle(masterController->controllerVehicle())
 {
     _commonInit();
 }
 
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent)
     : QObject                   (parent)
-    , _vehicle                  (nullptr)
     , _flyView                  (flyView)
 {
     *this = other;
@@ -43,7 +44,8 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyVie
 void VisualMissionItem::_commonInit(void)
 {
     // Don't get terrain altitude information for submarines or boats
-    if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
+    Vehicle* controllerVehicle = _masterController->controllerVehicle();
+    if (controllerVehicle->vehicleType() != MAV_TYPE_SUBMARINE && controllerVehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
         _updateTerrainTimer.setInterval(500);
         _updateTerrainTimer.setSingleShot(true);
         connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
@@ -54,7 +56,8 @@ void VisualMissionItem::_commonInit(void)
 
 const VisualMissionItem& VisualMissionItem::operator=(const VisualMissionItem& other)
 {
-    _vehicle = other._vehicle;
+    _masterController = other._masterController;
+    _controllerVehicle = other._controllerVehicle;
 
     setIsCurrentItem(other._isCurrentItem);
     setDirty(other._dirty);

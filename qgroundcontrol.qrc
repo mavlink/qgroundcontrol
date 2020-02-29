@@ -197,6 +197,7 @@
         <file alias="QGroundControl/FlightDisplay/PreFlightRCCheck.qml">src/FlightDisplay/PreFlightRCCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSensorsHealthCheck.qml">src/FlightDisplay/PreFlightSensorsHealthCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSoundCheck.qml">src/FlightDisplay/PreFlightSoundCheck.qml</file>
+        <file alias="QGroundControl/FlightDisplay/TerrainProgress.qml">src/FlightDisplay/TerrainProgress.qml</file>
         <file alias="QGroundControl/FlightDisplay/qmldir">src/QmlControls/QGroundControl/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CameraTriggerIndicator.qml">src/FlightMap/MapItems/CameraTriggerIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">src/FlightMap/Widgets/CenterMapDropButton.qml</file>
@@ -285,6 +286,7 @@
         <file alias="Vehicle/SetpointFact.json">src/Vehicle/SetpointFact.json</file>
         <file alias="Vehicle/SubmarineFact.json">src/Vehicle/SubmarineFact.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
+        <file alias="Vehicle/TerrainFactGroup.json">src/Vehicle/TerrainFactGroup.json</file>
         <file alias="Vehicle/VehicleFact.json">src/Vehicle/VehicleFact.json</file>
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
         <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>

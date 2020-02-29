@@ -11,7 +11,6 @@
 #include "QGCApplication.h"
 
 SurveyComplexItemTest::SurveyComplexItemTest(void)
-    : _offlineVehicle(nullptr)
 {
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
                    QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
@@ -28,8 +27,9 @@ void SurveyComplexItemTest::init(void)
     _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
     _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
 
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _surveyItem = new SurveyComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    _masterController = new PlanMasterController(this);
+    _controllerVehicle = _masterController->controllerVehicle();
+    _surveyItem = new SurveyComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     _surveyItem->turnAroundDistance()->setRawValue(0);  // Unit test written for no turnaround distance
     _surveyItem->setDirty(false);
     _mapPolygon = _surveyItem->surveyAreaPolygon();
@@ -46,7 +46,6 @@ void SurveyComplexItemTest::init(void)
 void SurveyComplexItemTest::cleanup(void)
 {
     delete _surveyItem;
-    delete _offlineVehicle;
     delete _multiSpy;
 }
 

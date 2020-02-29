@@ -16,15 +16,16 @@
 
 Q_DECLARE_LOGGING_CATEGORY(SurveyComplexItemLog)
 
+class PlanMasterController;
+
 class SurveyComplexItem : public TransectStyleComplexItem
 {
     Q_OBJECT
 
 public:
-    /// @param vehicle Vehicle which this is being contructed for
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
     /// @param kmlOrShpFile Polygon comes from this file, empty for default polygon
-    SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent);
+    SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile, QObject* parent);
 
     Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
     Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
