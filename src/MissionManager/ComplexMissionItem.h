@@ -15,6 +15,10 @@
 
 #include <QSettings>
 
+#include <QGCToolbox.h>
+#include <SettingsManager.h>
+
+
 class ComplexMissionItem : public VisualMissionItem
 {
     Q_OBJECT
@@ -82,11 +86,16 @@ protected:
     void        _savePresetJson (const QString& name, QJsonObject& presetObject);
     QJsonObject _loadPresetJson (const QString& name);
 
+    void        _saveSettingsValueAsJson(const QSettings& settings, const QString& name);
+
     bool _isIncomplete = true;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _presetSettingsKey;
+
+    QGCToolbox* _toolbox;
+    SettingsManager* _settingsManager;
 };
 
 #endif
