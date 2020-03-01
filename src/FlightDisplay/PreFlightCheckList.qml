@@ -66,23 +66,25 @@ Rectangle {
 
     //-- Pick a checklist model that matches the current airframe type (if any)
     function _updateModel() {
-        if(activeVehicle) {
-            if(activeVehicle.multiRotor) {
-                modelContainer.source = "/checklists/MultiRotorChecklist.qml"
-            } else if(activeVehicle.vtol) {
-                modelContainer.source = "/checklists/VTOLChecklist.qml"
-            } else if(activeVehicle.rover) {
-                modelContainer.source = "/checklists/RoverChecklist.qml"
-            } else if(activeVehicle.sub) {
-                modelContainer.source = "/checklists/SubChecklist.qml"
-            } else if(activeVehicle.fixedWing) {
-                modelContainer.source = "/checklists/FixedWingChecklist.qml"
-            } else {
-                modelContainer.source = "/checklists/DefaultChecklist.qml"
-            }
-            return
+        var vehicle = activeVehicle
+        if (!vehicle) {
+           vehicle = QGroundControl.multiVehicleManager.offlineEditingVehicle
         }
-        modelContainer.source = "/checklists/DefaultChecklist.qml"
+
+        if(vehicle.multiRotor) {
+            modelContainer.source = "/checklists/MultiRotorChecklist.qml"
+        } else if(vehicle.vtol) {
+            modelContainer.source = "/checklists/VTOLChecklist.qml"
+        } else if(vehicle.rover) {
+            modelContainer.source = "/checklists/RoverChecklist.qml"
+        } else if(vehicle.sub) {
+            modelContainer.source = "/checklists/SubChecklist.qml"
+        } else if(vehicle.fixedWing) {
+            modelContainer.source = "/checklists/FixedWingChecklist.qml"
+        } else {
+            modelContainer.source = "/checklists/DefaultChecklist.qml"
+        }
+        return
     }
 
     Component.onCompleted: {
