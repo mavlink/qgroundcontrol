@@ -39,18 +39,18 @@ const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "Cam
 
 const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000;
 
-TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyView, QString settingsGroup, QObject* parent)
-    : ComplexMissionItem                (vehicle, flyView, parent)
+TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup, QObject* parent)
+    : ComplexMissionItem                (masterController, flyView, parent)
     , _sequenceNumber                   (0)
     , _terrainPolyPathQuery             (nullptr)
     , _ignoreRecalc                     (false)
     , _complexDistance                  (0)
     , _cameraShots                      (0)
-    , _cameraCalc                       (vehicle, settingsGroup)
+    , _cameraCalc                       (masterController, settingsGroup)
     , _followTerrain                    (false)
     , _loadedMissionItemsParent         (nullptr)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
-    , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
+    , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_controllerVehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
     , _cameraTriggerInTurnAroundFact    (settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
     , _hoverAndCaptureFact              (settingsGroup, _metaDataMap[hoverAndCaptureName])
     , _refly90DegreesFact               (settingsGroup, _metaDataMap[refly90DegreesName])
@@ -347,7 +347,7 @@ double TransectStyleComplexItem::_turnaroundDistance(void) const
 
 bool TransectStyleComplexItem::hoverAndCaptureAllowed(void) const
 {
-    return _vehicle->multiRotor() || _vehicle->vtol();
+    return _controllerVehicle->multiRotor() || _controllerVehicle->vtol();
 }
 
 void TransectStyleComplexItem::_rebuildTransects(void)

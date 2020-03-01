@@ -42,13 +42,10 @@ const char* GeoFenceController::_px4ParamCircularFence =    "GF_MAX_HOR_DIST";
 
 GeoFenceController::GeoFenceController(PlanMasterController* masterController, QObject* parent)
     : PlanElementController         (masterController, parent)
-    , _geoFenceManager              (_managerVehicle->geoFenceManager())
-    , _dirty                        (false)
+    , _managerVehicle               (masterController->managerVehicle())
+    , _geoFenceManager              (masterController->managerVehicle()->geoFenceManager())
     , _breachReturnAltitudeFact     (0, _breachReturnAltitudeFactName, FactMetaData::valueTypeDouble)
     , _breachReturnDefaultAltitude  (qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble())
-
-    , _itemsRequested           (false)
-    , _px4ParamCircularFenceFact(nullptr)
 {
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/BreachReturn.FactMetaData.json"), nullptr /* metaDataParent */);
@@ -59,8 +56,6 @@ GeoFenceController::GeoFenceController(PlanMasterController* masterController, Q
 
     connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
     connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
-
-    managerVehicleChanged(_managerVehicle);
 
     connect(this,                       &GeoFenceController::breachReturnPointChanged,  this, &GeoFenceController::_setDirty);
     connect(&_breachReturnAltitudeFact, &Fact::rawValueChanged,                         this, &GeoFenceController::_setDirty);
@@ -76,6 +71,9 @@ GeoFenceController::~GeoFenceController()
 void GeoFenceController::start(bool flyView)
 {
     qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+
+    _managerVehicleChanged(_masterController->managerVehicle());
+    connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &GeoFenceController::_managerVehicleChanged);
 
     PlanElementController::start(flyView);
     _init();
@@ -95,7 +93,7 @@ void GeoFenceController::setBreachReturnPoint(const QGeoCoordinate& breachReturn
     }
 }
 
-void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
+void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
 {
     if (_managerVehicle) {
         _geoFenceManager->disconnect(this);

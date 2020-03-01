@@ -21,6 +21,7 @@
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
 #include "QGCMapCircle.h"
+#include "TerrainFactGroup.h"
 
 class UAS;
 class UASInterface;
@@ -38,6 +39,7 @@ class QGCCameraManager;
 class Joystick;
 class VehicleObjectAvoidance;
 class TrajectoryPoints;
+class TerrainProtocolHandler;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -619,7 +621,7 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
-    Q_PROPERTY(bool                 supportsTerrainFrame    READ supportsTerrainFrame                                   NOTIFY firmwareTypeChanged)
+    Q_PROPERTY(bool                 supportsTerrainFrame    READ supportsTerrainFrame                                   NOTIFY capabilityBitsChanged)
     Q_PROPERTY(QString              priorityLinkName        READ priorityLinkName       WRITE setPriorityLinkByName     NOTIFY priorityLinkNameChanged)
     Q_PROPERTY(QVariantList         links                   READ links                                                  NOTIFY linksChanged)
     Q_PROPERTY(LinkInterface*       priorityLink            READ priorityLink                                           NOTIFY priorityLinkNameChanged)
@@ -682,6 +684,7 @@ public:
     Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
     Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
     Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -996,6 +999,7 @@ public:
     FactGroup* setpointFactGroup            () { return &_setpointFactGroup; }
     FactGroup* distanceSensorFactGroup      () { return &_distanceSensorFactGroup; }
     FactGroup* estimatorStatusFactGroup     () { return &_estimatorStatusFactGroup; }
+    FactGroup* terrainFactGroup             () { return &_terrainFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -1573,6 +1577,9 @@ private:
     VehicleSetpointFactGroup        _setpointFactGroup;
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
+    TerrainFactGroup                _terrainFactGroup;
+
+    TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -1603,6 +1610,7 @@ private:
     static const char* _clockFactGroupName;
     static const char* _distanceSensorFactGroupName;
     static const char* _estimatorStatusFactGroupName;
+    static const char* _terrainFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 

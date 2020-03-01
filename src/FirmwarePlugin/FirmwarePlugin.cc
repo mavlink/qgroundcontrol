@@ -148,12 +148,6 @@ bool FirmwarePlugin::supportsJSButton(void)
     return false;
 }
 
-bool FirmwarePlugin::supportsTerrainFrame(void) const
-{
-    // Generic firmware supports this since we don't know
-    return true;
-}
-
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);

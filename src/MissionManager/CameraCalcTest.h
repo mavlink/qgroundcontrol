@@ -12,6 +12,7 @@
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "CameraCalc.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
@@ -50,7 +51,8 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
 
-    Vehicle*        _offlineVehicle;
-    MultiSignalSpy* _multiSpy;
-    CameraCalc*     _cameraCalc;
+    PlanMasterController*   _masterController =     nullptr;
+    Vehicle*                _controllerVehicle =    nullptr;
+    MultiSignalSpy*         _multiSpy =             nullptr;
+    CameraCalc*             _cameraCalc =           nullptr;
 };

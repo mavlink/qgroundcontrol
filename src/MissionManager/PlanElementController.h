@@ -27,10 +27,13 @@ public:
     PlanElementController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~PlanElementController();
     
-    Q_PROPERTY(bool supported       READ supported                      NOTIFY supportedChanged)        ///< true: Element is supported by Vehicle
-    Q_PROPERTY(bool containsItems   READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
-    Q_PROPERTY(bool syncInProgress  READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
-    Q_PROPERTY(bool dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
+    Q_PROPERTY(PlanMasterController*    masterController    READ masterController               CONSTANT)
+    Q_PROPERTY(bool                     supported           READ supported                      NOTIFY supportedChanged)        ///< true: Element is supported by Vehicle
+    Q_PROPERTY(bool                     containsItems       READ containsItems                  NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool                     syncInProgress      READ syncInProgress                 NOTIFY syncInProgressChanged)   ///< true: information is currently being saved/sent, false: no active save/send in progress
+    Q_PROPERTY(bool                     dirty               READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
+
+    PlanMasterController* masterController(void) { return _masterController; }
 
     /// Should be called immediately upon Component.onCompleted.
     virtual void start(bool flyView);
@@ -55,9 +58,6 @@ public:
     ///     Signals removeAllComplete when done
     virtual void removeAllFromVehicle(void) = 0;
 
-    /// Called when a new manager vehicle has been set.
-    virtual void managerVehicleChanged(Vehicle* managerVehicle) = 0;
-
 signals:
     void supportedChanged       (bool supported);
     void containsItemsChanged   (bool containsItems);
@@ -68,8 +68,6 @@ signals:
 
 protected:
     PlanMasterController*   _masterController;
-    Vehicle*                _controllerVehicle; ///< Offline controller vehicle
-    Vehicle*                _managerVehicle;    ///< Either active vehicle or _controllerVehicle if none
     bool                    _flyView;
 };
 

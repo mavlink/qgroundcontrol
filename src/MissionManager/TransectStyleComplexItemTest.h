@@ -12,6 +12,7 @@
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "CorridorScanComplexItem.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
@@ -72,10 +73,11 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
 
-    Vehicle*                _offlineVehicle;
-    MultiSignalSpy*         _multiSpy;
+    PlanMasterController*   _masterController =     nullptr;
+    Vehicle*                _controllerVehicle =    nullptr;
+    MultiSignalSpy*         _multiSpy =             nullptr;
     QList<QGeoCoordinate>   _polygonVertices;
-    TransectStyleItem*      _transectStyleItem;
+    TransectStyleItem*      _transectStyleItem =    nullptr;
 };
 
 class TransectStyleItem : public TransectStyleComplexItem
@@ -83,7 +85,7 @@ class TransectStyleItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    TransectStyleItem(Vehicle* vehicle, QObject* parent = nullptr);
+    TransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
 
     // Overrides from ComplexMissionItem
     QString mapVisualQML        (void) const final { return QString(); }

@@ -13,12 +13,14 @@
 #include "FactSystem.h"
 #include "QmlObjectListModel.h"
 
+class PlanMasterController;
+
 class SpeedSection : public Section
 {
     Q_OBJECT
 
 public:
-    SpeedSection(Vehicle* vehicle, QObject* parent = nullptr);
+    SpeedSection(PlanMasterController* masterController, QObject* parent = nullptr);
 
     Q_PROPERTY(bool     specifyFlightSpeed  READ specifyFlightSpeed WRITE setSpecifyFlightSpeed NOTIFY specifyFlightSpeedChanged)
     Q_PROPERTY(Fact*    flightSpeed         READ flightSpeed                                    CONSTANT)
