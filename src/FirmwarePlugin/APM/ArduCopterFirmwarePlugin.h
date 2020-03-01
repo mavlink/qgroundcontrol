@@ -43,7 +43,10 @@ public:
         GUIDED_NOGPS= 20,
         SMART_RTL   = 21,  // SMART_RTL returns to home by retracing its steps
         FLOWHOLD    = 22,  // FLOWHOLD holds position with optical flow without rangefinder
+#if 0
+    // Follow me not ready for Stable
         FOLLOW      = 23,  // follow attempts to follow another vehicle or ground station
+#endif
         ZIGZAG      = 24,  // ZIGZAG mode is able to fly in a zigzag manner with predefined point A and point B
     };
 
@@ -71,7 +74,10 @@ public:
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const override;
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
+#if 0
+    // Follow me not ready for Stable
     void    sendGCSMotionReport                 (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
+#endif
 
 private:
     static bool _remapParamNameIntialized;
