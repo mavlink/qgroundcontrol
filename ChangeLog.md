@@ -2,7 +2,14 @@
 
 Note: This file only contains high level features or important fixes.
 
+## 4.1 - Daily build
+
 ## 4.0
+
+### 4.0.1 - Not yet release
+
+* Fix ArduPilot current mission item tracking in Fly view
+* Fix ADSB vehicle display
 
 ### 4.0.0 - Stable
 
