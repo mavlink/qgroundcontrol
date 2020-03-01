@@ -11,6 +11,7 @@
 
 #include "SectionTest.h"
 #include "CameraSection.h"
+#include "PlanMasterController.h"
 
 /// Unit test for CameraSection
 class CameraSectionTest : public SectionTest
@@ -23,9 +24,9 @@ public:
     void init(void) override;
     void cleanup(void) override;
 
-    static SimpleMissionItem* createValidStopVideoItem   (Vehicle* vehicle, QObject* parent);
-    static SimpleMissionItem* createValidStopDistanceItem(Vehicle* vehicle, QObject* parent);
-    static SimpleMissionItem* createValidStopTimeItem    (Vehicle* vehicle, QObject* parent);
+    static SimpleMissionItem* createValidStopVideoItem   (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createValidStopDistanceItem(PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createValidStopTimeItem    (PlanMasterController* masterController, QObject* parent);
 
 private slots:
     void _testDirty                                 (void);

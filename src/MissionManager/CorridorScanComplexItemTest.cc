@@ -11,7 +11,6 @@
 #include "QGCApplication.h"
 
 CorridorScanComplexItemTest::CorridorScanComplexItemTest(void)
-    : _offlineVehicle(nullptr)
 {
     _linePoints << QGeoCoordinate(47.633550640000003, -122.08982199)
                 << QGeoCoordinate(47.634129020000003, -122.08887249)
@@ -22,8 +21,9 @@ void CorridorScanComplexItemTest::init(void)
 {
     UnitTest::init();
 
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _corridorItem = new CorridorScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
+    _masterController = new PlanMasterController(this);
+    _controllerVehicle = _masterController->controllerVehicle();
+    _corridorItem = new CorridorScanComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */, this /* parent */);
 
     // vehicleSpeed need for terrain calcs
     MissionController::MissionFlightStatus_t missionFlightStatus;
@@ -42,7 +42,6 @@ void CorridorScanComplexItemTest::init(void)
 void CorridorScanComplexItemTest::cleanup(void)
 {
     delete _corridorItem;
-    delete _offlineVehicle;
 }
 
 void CorridorScanComplexItemTest::_testDirty(void)

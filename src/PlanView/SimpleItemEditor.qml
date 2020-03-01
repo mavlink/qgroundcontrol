@@ -19,7 +19,8 @@ Rectangle {
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property bool _supportsTerrainFrame:    missionItem
+    property bool _supportsTerrainFrame:    missionItem.masterController.supportsTerrain
+    property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
 
     property string _altModeRelativeHelpText:       qsTr("Altitude relative to launch altitude")
     property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
@@ -66,7 +67,7 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Move 'T' Takeoff to the %1 location.").arg(missionItem.vehicle.vtol ? qsTr("desired") : qsTr("climbout"))
+                text:               qsTr("Move 'T' Takeoff to the %1 location.").arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
@@ -76,7 +77,7 @@ Rectangle {
                 text:               qsTr("Ensure clear of obstacles and into the wind.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                visible:            !initialClickLabel.visible && !missionItem.vehicle.vtol
+                visible:            !initialClickLabel.visible && !_controllerVehicle.vtol
             }
 
             QGCButton {
@@ -214,7 +215,7 @@ Rectangle {
                                 text:           qsTr("Terrain Frame")
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
-                                visible:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
+                                visible:        _supportsTerrainFrame && (missionItem.specifiesCoordinate || missionItem.specifiesAltitudeOnly)
                                 onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeTerrainFrame
                             }
                         }

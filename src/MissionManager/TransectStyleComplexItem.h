@@ -20,12 +20,14 @@
 
 Q_DECLARE_LOGGING_CATEGORY(TransectStyleComplexItemLog)
 
+class PlanMasterController;
+
 class TransectStyleComplexItem : public ComplexMissionItem
 {
     Q_OBJECT
 
 public:
-    TransectStyleComplexItem(Vehicle* vehicle, bool flyView, QString settignsGroup, QObject* parent);
+    TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settignsGroup, QObject* parent);
 
     Q_PROPERTY(QGCMapPolygon*   surveyAreaPolygon           READ surveyAreaPolygon                                  CONSTANT)
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                         CONSTANT)

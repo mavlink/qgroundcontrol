@@ -34,15 +34,11 @@ const char* RallyPointController::_jsonFileTypeValue =  "RallyPoints";
 const char* RallyPointController::_jsonPointsKey =      "points";
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
-    : PlanElementController(masterController, parent)
-    , _rallyPointManager(_managerVehicle->rallyPointManager())
-    , _dirty(false)
-    , _currentRallyPoint(nullptr)
-    , _itemsRequested(false)
+    : PlanElementController (masterController, parent)
+    , _managerVehicle               (masterController->managerVehicle())
+    , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
-
-    managerVehicleChanged(_managerVehicle);
 }
 
 RallyPointController::~RallyPointController()
@@ -50,7 +46,17 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
+void RallyPointController::start(bool flyView)
+{
+    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+
+    _managerVehicleChanged(_masterController->managerVehicle());
+    connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &RallyPointController::_managerVehicleChanged);
+
+    PlanElementController::start(flyView);
+}
+
+void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
 {
     if (_managerVehicle) {
         _rallyPointManager->disconnect(this);

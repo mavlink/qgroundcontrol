@@ -11,6 +11,7 @@
 #include "JsonHelper.h"
 #include "Vehicle.h"
 #include "CameraMetaData.h"
+#include "PlanMasterController.h"
 
 #include <QQmlEngine>
 
@@ -26,10 +27,9 @@ const char* CameraCalc::adjustedFootprintSideName =         "AdjustedFootprintSi
 
 const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
 
-CameraCalc::CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* parent)
+CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
-    , _vehicle                      (vehicle)
-    , _dirty                        (false)
+    , _dirty                        (masterController)
     , _disableRecalc                (false)
     , _distanceToSurfaceRelative    (true)
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))
@@ -43,7 +43,7 @@ CameraCalc::CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* 
     , _adjustedFootprintFrontalFact (settingsGroup, _metaDataMap[adjustedFootprintFrontalName])
     , _imageFootprintSide           (0)
     , _imageFootprintFrontal        (0)
-    , _knownCameraList              (_vehicle->staticCameraList())
+    , _knownCameraList              (masterController->controllerVehicle()->staticCameraList())
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 

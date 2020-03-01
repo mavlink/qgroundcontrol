@@ -669,6 +669,8 @@ HEADERS += \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/TerrainFactGroup.h \
+    src/Vehicle/TerrainProtocolHandler.h \
     src/Vehicle/TrajectoryPoints.h \
     src/Vehicle/Vehicle.h \
     src/Vehicle/VehicleObjectAvoidance.h \
@@ -872,6 +874,8 @@ SOURCES += \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/TerrainFactGroup.cc \
+    src/Vehicle/TerrainProtocolHandler.cc \
     src/Vehicle/TrajectoryPoints.cc \
     src/Vehicle/Vehicle.cc \
     src/Vehicle/VehicleObjectAvoidance.cc \

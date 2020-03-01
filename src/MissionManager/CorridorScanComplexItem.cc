@@ -16,6 +16,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCQGeoCoordinate.h"
+#include "PlanMasterController.h"
 
 #include <QPolygonF>
 
@@ -27,8 +28,8 @@ const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
 
 const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
 
-CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
+CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlFile, QObject* parent)
+    : TransectStyleComplexItem  (masterController, flyView, settingsGroup, parent)
     , _entryPoint               (0)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])

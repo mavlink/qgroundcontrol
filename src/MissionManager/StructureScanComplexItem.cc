@@ -16,6 +16,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCQGeoCoordinate.h"
+#include "PlanMasterController.h"
 
 #include <QPolygonF>
 
@@ -32,15 +33,15 @@ const char* StructureScanComplexItem::startFromTopName =            "StartFromTo
 const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
 const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
 
-StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent)
-    : ComplexMissionItem        (vehicle, flyView, parent)
+StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile, QObject* parent)
+    : ComplexMissionItem        (masterController, flyView, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _entryVertex              (0)
     , _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
-    , _cameraCalc               (vehicle, settingsGroup)
+    , _cameraCalc               (masterController, settingsGroup)
     , _scanBottomAltFact        (settingsGroup, _metaDataMap[scanBottomAltName])
     , _structureHeightFact      (settingsGroup, _metaDataMap[structureHeightName])
     , _layersFact               (settingsGroup, _metaDataMap[layersName])

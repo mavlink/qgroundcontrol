@@ -12,14 +12,14 @@
 #include "CameraSpec.h"
 #include "SettingsFact.h"
 
-class Vehicle;
+class PlanMasterController;
 
 class CameraCalc : public CameraSpec
 {
     Q_OBJECT
 
 public:
-    CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* parent = nullptr);
+    CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent = nullptr);
 
     Q_PROPERTY(QString          customCameraName            READ customCameraName                                               CONSTANT)                                   ///< Camera name for custom camera setting
     Q_PROPERTY(QString          manualCameraName            READ manualCameraName                                               CONSTANT)                                   ///< Camera name for manual camera setting
@@ -97,7 +97,6 @@ private slots:
     void _cameraNameChanged                 (void);
 
 private:
-    Vehicle*        _vehicle;
     bool            _dirty;
     bool            _disableRecalc;
     bool            _distanceToSurfaceRelative;

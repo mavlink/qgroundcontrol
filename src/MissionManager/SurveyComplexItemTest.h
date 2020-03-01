@@ -13,6 +13,7 @@
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 #include "SurveyComplexItem.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
@@ -63,9 +64,10 @@ private:
     static const size_t _cSurveySignals = surveyMaxSignalIndex;
     const char*         _rgSurveySignals[_cSurveySignals];
 
-    Vehicle*                _offlineVehicle;
-    MultiSignalSpy*         _multiSpy;
-    SurveyComplexItem*      _surveyItem;
-    QGCMapPolygon*          _mapPolygon;
+    PlanMasterController*   _masterController =     nullptr;
+    Vehicle*                _controllerVehicle =    nullptr;
+    MultiSignalSpy*         _multiSpy =             nullptr;
+    SurveyComplexItem*      _surveyItem =           nullptr;
+    QGCMapPolygon*          _mapPolygon =           nullptr;
     QList<QGeoCoordinate>   _polyPoints;
 };

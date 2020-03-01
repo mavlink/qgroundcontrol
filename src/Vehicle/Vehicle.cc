@@ -45,6 +45,7 @@
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
 #include "QGCGeo.h"
+#include "TerrainProtocolHandler.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -91,6 +92,7 @@ const char* Vehicle::_temperatureFactGroupName =        "temperature";
 const char* Vehicle::_clockFactGroupName =              "clock";
 const char* Vehicle::_distanceSensorFactGroupName =     "distanceSensor";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
+const char* Vehicle::_terrainFactGroupName =            "terrain";
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -149,7 +151,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _mavlinkProtocolRequestComplete(false)
     , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
-    , _capabilityBits(0)
+    , _capabilityBits(firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ?
+                          MAV_PROTOCOL_CAPABILITY_MISSION_INT | MAV_PROTOCOL_CAPABILITY_COMMAND_INT | MAV_PROTOCOL_CAPABILITY_TERRAIN | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY : // Hack workound for ArduPilot startup problems
+                          0)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
     , _cameras(nullptr)
@@ -222,6 +226,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _clockFactGroup(this)
     , _distanceSensorFactGroup(this)
     , _estimatorStatusFactGroup(this)
+    , _terrainFactGroup(this)
+    , _terrainProtocolHandler(new TerrainProtocolHandler(this, &_terrainFactGroup, this))
 {
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
@@ -429,6 +435,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     connect(_settingsManager->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
+    // This add correct terrain capability bit
+    _offlineFirmwareTypeSettingChanged(_firmwareType);
+
     _firmwarePlugin->initializeVehicle(this);
 }
 
@@ -505,6 +514,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_clockFactGroup,             _clockFactGroupName);
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
+    _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -578,7 +588,13 @@ void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(value.toInt());
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        _capabilityBits |= MAV_PROTOCOL_CAPABILITY_TERRAIN;
+    } else {
+        _capabilityBits &= ~MAV_PROTOCOL_CAPABILITY_TERRAIN;
+    }
     emit firmwareTypeChanged();
+    emit capabilityBitsChanged(_capabilityBits);
 }
 
 void Vehicle::_offlineVehicleTypeSettingChanged(QVariant value)
@@ -689,6 +705,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     // Give the Core Plugin access to all mavlink traffic
     if (!_toolbox->corePlugin()->mavlinkMessage(this, link, message)) {
+        return;
+    }
+
+    if (!_terrainProtocolHandler->mavlinkMessageReceived(message)) {
         return;
     }
 
@@ -1300,6 +1320,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_COMMAND_INT").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_COMMAND_INT ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 GeoFence").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 RallyPoints").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 Terrain").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_TERRAIN ? supports : doesNotSupport);
 }
 
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
@@ -2906,7 +2927,7 @@ bool Vehicle::supportsMotorInterference() const
 
 bool Vehicle::supportsTerrainFrame() const
 {
-    return _firmwarePlugin->supportsTerrainFrame();
+    return _capabilityBits & MAV_PROTOCOL_CAPABILITY_TERRAIN;
 }
 
 QString Vehicle::vehicleTypeName() const {

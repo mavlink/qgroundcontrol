@@ -341,7 +341,7 @@ void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQu
         bool error;
         QList<double> altitudes;
 
-        if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
+        if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
             qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery queue count" << _requestQueue.count();
             QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModeCoordinates, 0, 0, coordinates };
             _requestQueue.append(queuedRequestInfo);
@@ -380,7 +380,7 @@ void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInt
 
     bool error;
     QList<double> altitudes;
-    if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
+    if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
         qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery queue count" << _requestQueue.count();
         QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModePath, latStep, lonStep, coordinates };
         _requestQueue.append(queuedRequestInfo);
@@ -400,13 +400,13 @@ void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInt
 /// Either returns altitudes from cache or queues database request
 ///     @param[out] error true: altitude not returned due to error, false: altitudes returned
 /// @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
-bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error)
+bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error)
 {
     error = false;
 
     for (const QGeoCoordinate& coordinate: coordinates) {
         QString tileHash = _getTileHash(coordinate);
-        qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates hash:coordinate" << tileHash << coordinate;
+        qCDebug(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates hash:coordinate" << tileHash << coordinate;
 
         _tilesMutex.lock();
         if (_tiles.contains(tileHash)) {
@@ -414,20 +414,20 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
                 double elevation = _tiles[tileHash].elevation(coordinate);
                 if (qIsNaN(elevation)) {
                     error = true;
-                    qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: negative elevation in tile cache";
+                    qCWarning(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates Internal Error: missing elevation in tile cache";
                 } else {
-                    qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates returning elevation from tile cache" << elevation;
+                    qCDebug(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates returning elevation from tile cache" << elevation;
                 }
                 altitudes.push_back(elevation);
             } else {
-                qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: coordinate not in tile region";
+                qCWarning(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates Internal Error: coordinate not in tile region";
                 altitudes.push_back(qQNaN());
                 error = true;
             }
         } else {
             if (_state != State::Downloading) {
                 QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL("Airmap Elevation", getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation",coordinate.longitude(), 1), getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1), 1, &_networkManager);
-                qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates query from database" << request.url();
+                qCDebug(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates query from database" << request.url();
                 QGeoTileSpec spec;
                 spec.setX(getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation", coordinate.longitude(), 1));
                 spec.setY(getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1));
@@ -512,7 +512,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         QList<double> altitudes;
         QueuedRequestInfo_t& requestInfo = _requestQueue[i];
 
-        if (_getAltitudesForCoordinates(requestInfo.coordinates, altitudes, error)) {
+        if (getAltitudesForCoordinates(requestInfo.coordinates, altitudes, error)) {
             if (requestInfo.queryMode == QueryMode::QueryModeCoordinates) {
                 if (error) {
                     QList<double> noAltitudes;
@@ -696,6 +696,11 @@ void TerrainAtCoordinateQuery::requestData(const QList<QGeoCoordinate>& coordina
     }
 
     _TerrainAtCoordinateBatchManager->addQuery(this, coordinates);
+}
+
+bool TerrainAtCoordinateQuery::getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error)
+{
+    return _terrainTileManager->getAltitudesForCoordinates(coordinates, altitudes, error);
 }
 
 void TerrainAtCoordinateQuery::_signalTerrainData(bool success, QList<double>& heights)

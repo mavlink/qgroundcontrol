@@ -182,9 +182,6 @@ public:
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference(void);
 
-    /// Returns true if the firmware supports MAV_FRAME_GLOBAL_TERRAIN_ALT
-    virtual bool supportsTerrainFrame(void) const;
-
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.

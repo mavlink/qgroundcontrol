@@ -18,13 +18,14 @@
 Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 
 class FWLandingPatternTest;
+class PlanMasterController;
 
 class FixedWingLandingComplexItem : public ComplexMissionItem
 {
     Q_OBJECT
 
 public:
-    FixedWingLandingComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*            loiterAltitude          READ    loiterAltitude                                              CONSTANT)
     Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                                CONSTANT)
@@ -62,7 +63,7 @@ public:
     void setLoiterDragAngleOnly     (bool loiterDragAngleOnly);
 
     /// Scans the loaded items for a landing pattern complex item
-    static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, Vehicle* vehicle);
+    static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
 
     static MissionItem* createDoLandStartItem   (int seqNum, QObject* parent);
     static MissionItem* createLoiterToAltItem   (int seqNum, bool altRel, double loiterRaidus, double lat, double lon, double alt, QObject* parent);
