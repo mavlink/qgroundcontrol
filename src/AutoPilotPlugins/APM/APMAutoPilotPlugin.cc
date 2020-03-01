@@ -53,7 +53,10 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _tuningComponent          (nullptr)
     , _esp8266Component         (nullptr)
     , _heliComponent            (nullptr)
+#if 0
+    // Follow me not ready for Stable
     , _followComponent          (nullptr)
+#endif
 {
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
@@ -104,12 +107,16 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
 
+#if 0
+    // Follow me not ready for Stable
+
             if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
                     _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("FOLL_ENABLE"))) {
                 _followComponent = new APMFollowComponent(_vehicle, this);
                 _followComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
             }
+#endif
 
             if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER && (_vehicle->versionCompare(4, 0, 0) >= 0)) {
                 _heliComponent = new APMHeliComponent(_vehicle, this);
