@@ -11,6 +11,8 @@
 
 #include "VisualMissionItem.h"
 #include "QGCGeo.h"
+#include "QGCToolbox.h"
+#include "SettingsManager.h"
 
 #include <QSettings>
 
@@ -88,4 +90,7 @@ protected:
     QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _presetSettingsKey;
+
+    QGCToolbox* _toolbox;
+    SettingsManager* _settingsManager;
 };

@@ -2,11 +2,16 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 4.1 - Daily Build
+## 4.1 - Daily build
 
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
 
 ## 4.0
+
+### 4.0.1 - Not yet release
+
+* Fix ArduPilot current mission item tracking in Fly view
+* Fix ADSB vehicle display
 
 ### 4.0.0 - Stable
 
@@ -19,9 +24,7 @@ Note: This file only contains high level features or important fixes.
 * Plan View: New create plan UI for initial plan creation
 * New Corridor editing tools ui. Includes ability to trace polyline by clicking.
 * New Polygon editing tools ui. Includes ability to trace polygon by clicking.
-* ArduCopter/Rover: Follow Me setup page
 * More performant flight path display algorithm. Mobile builds no longer show limited path length.
-* ArduCopter/Rover: Add support for Follow Me
 * ArduPilot: Add Motor Test vehicle setup page
 * Compass Instrument: Add indicators for Home, COG and Next Waypoint headings.
 * Log Replay: Support changing speed of playback
@@ -56,9 +59,9 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.6 - Not yet released
+## 3.5
 
-### 3.5.5 - Stable
+### 3.5.5
 * Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
 * Disable Pause when fixed wing is on landing approach.
 

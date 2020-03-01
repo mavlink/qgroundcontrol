@@ -29,6 +29,7 @@ Rectangle {
     property AbstractButton lastClickedButton: null
 
     function simulateClick(buttonIndex) {
+        buttonIndex = buttonIndex + 1 // skip over title
         toolStripColumn.children[buttonIndex].checked = true
         toolStripColumn.children[buttonIndex].clicked()
     }

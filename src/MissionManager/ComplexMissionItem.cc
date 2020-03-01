@@ -21,6 +21,8 @@ const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
 
 ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
     : VisualMissionItem (masterController, flyView, parent)
+    , _toolbox          (qgcApp()->toolbox())
+    , _settingsManager  (_toolbox->settingsManager())
 {
 
 }
@@ -75,6 +77,26 @@ void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& prese
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
     settings.setValue(name, QJsonDocument(presetObject).toBinaryData());
+
+    // Use this to save a survey preset as a JSON file to be included in the build
+    // as a built-in survey preset that cannot be deleted.
+    #if 0
+    QString savePath = _settingsManager->appSettings()->missionSavePath();
+    QDir saveDir(savePath);
+
+    QString fileName = saveDir.absoluteFilePath(name);
+    fileName.append(".json");
+    QFile jsonFile(fileName);
+
+    if (!jsonFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "Couldn't open .json file.";
+    }
+
+    qDebug() << "Saving survey preset to JSON";
+    auto jsonDoc = QJsonDocument(jsonObj);
+    jsonFile.write(jsonDoc.toJson());
+    #endif
+
     emit presetNamesChanged();
 }
 
