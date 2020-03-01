@@ -436,7 +436,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
     // This add correct terrain capability bit
-    _offlineFirmwareTypeSettingChanged(_settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue());
+    _offlineFirmwareTypeSettingChanged(_firmwareType);
 
     _firmwarePlugin->initializeVehicle(this);
 }
