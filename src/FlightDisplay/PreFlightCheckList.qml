@@ -23,9 +23,7 @@ Rectangle {
     color:      qgcPal.windowShade
     radius:     3
 
-    property real   _verticalMargin:                ScreenTools.defaultFontPixelHeight / 2
-    property var    _offlineEditingVehicleType:     QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
-
+    property real _verticalMargin: ScreenTools.defaultFontPixelHeight / 2
 
     Loader {
         id:     modelContainer
@@ -68,44 +66,25 @@ Rectangle {
 
     //-- Pick a checklist model that matches the current airframe type (if any)
     function _updateModel() {
-        if(activeVehicle) {
-            if(activeVehicle.multiRotor) {
-                modelContainer.source = "/checklists/MultiRotorChecklist.qml"
-            } else if(activeVehicle.vtol) {
-                modelContainer.source = "/checklists/VTOLChecklist.qml"
-            } else if(activeVehicle.rover) {
-                modelContainer.source = "/checklists/RoverChecklist.qml"
-            } else if(activeVehicle.sub) {
-                modelContainer.source = "/checklists/SubChecklist.qml"
-            } else if(activeVehicle.fixedWing) {
-                modelContainer.source = "/checklists/FixedWingChecklist.qml"
-            } else {
-                modelContainer.source = "/checklists/DefaultChecklist.qml"
-            }
-            return
+        var vehicle = activeVehicle
+        if (!vehicle) {
+           vehicle = QGroundControl.multiVehicleManager.offlineEditingVehicle
         }
 
-        // "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
-        // "enumValues":       "1,2,20,10,12",
-        switch (_offlineEditingVehicleType.rawValue) {
-            case 1:
-                modelContainer.source = "/checklists/FixedWingChecklist.qml"
-                return
-            case 2:
-                modelContainer.source = "/checklists/MultiRotorChecklist.qml"
-                return
-            case 20:
-                modelContainer.source = "/checklists/VTOLChecklist.qml"
-                return
-            case 10:
-                modelContainer.source = "/checklists/RoverChecklist.qml"
-                return
-            case 12:
-                modelContainer.source = "/checklists/SubChecklist.qml"
-                return
+        if(vehicle.multiRotor) {
+            modelContainer.source = "/checklists/MultiRotorChecklist.qml"
+        } else if(vehicle.vtol) {
+            modelContainer.source = "/checklists/VTOLChecklist.qml"
+        } else if(vehicle.rover) {
+            modelContainer.source = "/checklists/RoverChecklist.qml"
+        } else if(vehicle.sub) {
+            modelContainer.source = "/checklists/SubChecklist.qml"
+        } else if(vehicle.fixedWing) {
+            modelContainer.source = "/checklists/FixedWingChecklist.qml"
+        } else {
+            modelContainer.source = "/checklists/DefaultChecklist.qml"
         }
-
-        modelContainer.source = "/checklists/DefaultChecklist.qml"
+        return
     }
 
     Component.onCompleted: {
