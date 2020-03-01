@@ -178,7 +178,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         MissionSettingsItem* settingsItem = _addMissionSettings(newControllerMissionItems);
 
         int i=0;
-        if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0 && !_flyView) {
+        if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
             // First item is fake home position
             MissionItem* fakeHomeItem = newMissionItems[0];
             if (fakeHomeItem->coordinate().latitude() != 0 || fakeHomeItem->coordinate().longitude() != 0) {
