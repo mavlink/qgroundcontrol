@@ -27,7 +27,7 @@ installer {
         # We cd to release directory so we can run macdeployqt without a path to the
         # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
         # links to plugins will not be created correctly.
-        QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=2 -qmldir=$${BASEDIR}/src
+        QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${BASEDIR}/src
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
         QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1

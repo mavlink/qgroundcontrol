@@ -724,28 +724,39 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
 #if !defined(NO_ARDUPILOT_DIALECT)
-    qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames";
 
-    bool                    chibios =       _apmChibiOSSetting->rawValue().toInt() == 0;
-    FirmwareVehicleType_t   vehicleType =   static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
+    bool                    chibios =           _apmChibiOSSetting->rawValue().toInt() == 0;
+    FirmwareVehicleType_t   vehicleType =       static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
+    QString                 boardDescription =  _foundBoardInfo.description();
+    quint16                 boardVID =          _foundBoardInfo.vendorIdentifier();
+    quint16                 boardPID =          _foundBoardInfo.productIdentifier();
+
+#if 0
+    // This is left in for debugging manifest problems
+    boardDescription = "KakuteF7";
+    boardVID = 1155;
+    boardPID = 22336;
+#endif
+
+    qCDebug(FirmwareUpgradeLog) << QStringLiteral("_buildAPMFirmwareNames description(%1) vid(%2/0x%3) pid(%4/0x%5)").arg(boardDescription).arg(boardVID).arg(boardVID, 1, 16).arg(boardPID).arg(boardPID, 1, 16);
 
     _apmFirmwareNames.clear();
     _apmFirmwareUrls.clear();
 
     QString apmDescriptionSuffix("-BL");
-    bool    bootloaderMatch = _foundBoardInfo.description().endsWith(apmDescriptionSuffix);
+    bool    bootloaderMatch = boardDescription.endsWith(apmDescriptionSuffix);
 
     for (const ManifestFirmwareInfo_t& firmwareInfo: _rgManifestFirmwareInfo) {
         bool match = false;
         if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType) {
             if (bootloaderMatch) {
-                if (firmwareInfo.rgBootloaderPortString.contains(_foundBoardInfo.description())) {
-                    qCDebug(FirmwareUpgradeLog) << "Bootloader match:" << firmwareInfo.friendlyName << _foundBoardInfo.description() << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
+                if (firmwareInfo.rgBootloaderPortString.contains(boardDescription)) {
+                    qCDebug(FirmwareUpgradeLog) << "Bootloader match:" << firmwareInfo.friendlyName << boardDescription << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
                     match = true;
                 }
             } else {
-                if (firmwareInfo.rgVID.contains(_foundBoardInfo.vendorIdentifier()) && firmwareInfo.rgPID.contains(_foundBoardInfo.productIdentifier())) {
-                    qCDebug(FirmwareUpgradeLog) << "Fallback match:" << firmwareInfo.friendlyName << _foundBoardInfo.vendorIdentifier() << _foundBoardInfo.productIdentifier() << _bootloaderBoardID << firmwareInfo.url << firmwareInfo.vehicleType;
+                if (firmwareInfo.rgVID.contains(boardVID) && firmwareInfo.rgPID.contains(boardPID)) {
+                    qCDebug(FirmwareUpgradeLog) << "VID/PID match:" << firmwareInfo.friendlyName << boardVID << boardPID << _bootloaderBoardID << firmwareInfo.url << firmwareInfo.vehicleType;
                     match = true;
                 }
             }

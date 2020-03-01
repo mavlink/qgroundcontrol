@@ -62,8 +62,14 @@ Item {
         var east = normalizeLon(coordList[0].longitude)
         var west = east
         for (var i = 1; i < coordList.length; i++) {
-            var lat = normalizeLat(coordList[i].latitude)
-            var lon = normalizeLon(coordList[i].longitude)
+            var lat = coordList[i].latitude
+            var lon = coordList[i].longitude
+            if (isNaN(lat) || lat == 0 || isNan(lon) || lon == 0) {
+                // Be careful of invalid coords which can happen when items are not yet complete
+                continue
+            }
+            lat = normalizeLat(lat)
+            lon = normalizeLon(lat)
             north = Math.max(north, lat)
             south = Math.min(south, lat)
             east  = Math.max(east,  lon)
@@ -110,19 +116,6 @@ Item {
             // Being called prior to controller.start
             return
         }
-        /*
-        for (var i=1; i<_missionController.visualItems.count; i++) {
-            var missionItem = _missionController.visualItems.get(i)
-            if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {
-                console.log(missionItem.boundingCube.pointNW)
-                console.log(missionItem.boundingCube.pointSE)
-                var loc = QtPositioning.rectangle(missionItem.boundingCube.pointNW, missionItem.boundingCube.pointSE)
-                console.log(loc)
-                map.visibleRegion = loc
-                return
-            }
-        }
-        */
         var coordList = [ ]
         addMissionItemCoordsForFit(coordList)
         fitMapViewportToAllCoordinates(coordList)

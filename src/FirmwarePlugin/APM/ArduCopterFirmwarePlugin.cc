@@ -43,7 +43,10 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
+#if 0
+    // Follow me not ready for Stable
         { FOLLOW,       "Follow" },
+#endif
         { ZIGZAG,       "ZigZag" },
     });
 }
@@ -71,7 +74,10 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::GUIDED_NOGPS,  true),
         APMCopterMode(APMCopterMode::SMART_RTL,     true),
         APMCopterMode(APMCopterMode::FLOWHOLD,      true),
+#if 0
+    // Follow me not ready for Stable
         APMCopterMode(APMCopterMode::FOLLOW,        true),
+#endif
         APMCopterMode(APMCopterMode::ZIGZAG,        true),
     });
 
@@ -141,7 +147,10 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+#if 0
+    // Follow me not ready for Stable
 void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
 {
     _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
 }
+#endif
