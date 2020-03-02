@@ -53,6 +53,8 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
    qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
+
+   // TODO: Those connections should be Per Video, not per VideoManager.
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -72,7 +74,69 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
     _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _videoReceiver->setUnittestMode(qgcApp()->runningUnitTests());
     _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _thermalVideoReceiver->setUnittestMode(qgcApp()->runningUnitTests());
+    _videoReceiver->moveToThread(qgcApp()->thread());
+    _thermalVideoReceiver->moveToThread(qgcApp()->thread());
+
+    // Those connects are temporary: In a perfect world those connections are going to be done on the Qml
+    // but because currently the videoReceiver is created in the C++ world, this is easier.
+    // The fact returning a QVariant is a quite annoying to use proper signal / slot connection.
+    _updateSettings();
+
+    auto appSettings = toolbox->settingsManager()->appSettings();
+    for (auto *videoReceiver : { _videoReceiver, _thermalVideoReceiver}) {
+        // First, Setup the current values from the settings.
+        videoReceiver->setRtspTimeout(_videoSettings->rtspTimeout()->rawValue().toInt());
+        videoReceiver->setMaxVideoSize(_videoSettings->maxVideoSize()->rawValue().toInt());
+        videoReceiver->setStreamEnabled(_videoSettings->streamEnabled()->rawValue().toBool());
+        videoReceiver->setRecordingFormatId(_videoSettings->recordingFormat()->rawValue().toInt());
+        videoReceiver->setStreamConfigured(_videoSettings->streamConfigured());
+        videoReceiver->setStorageLimit(_videoSettings->enableStorageLimit()->rawValue().toBool());
+
+        connect(_videoSettings->rtspTimeout(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setRtspTimeout(value.toInt());
+            }
+        );
+
+        connect(_videoSettings->maxVideoSize(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setMaxVideoSize(value.toInt());
+            }
+        );
+
+        connect(_videoSettings->streamEnabled(), &Fact::rawValueChanged,
+                videoReceiver, [videoReceiver](const QVariant &value) {
+                    videoReceiver->setStreamEnabled(value.toBool());
+            }
+        );
+
+        connect(_videoSettings->recordingFormat(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setRecordingFormatId(value.toInt());
+            }
+        );
+
+        connect(_videoSettings->enableStorageLimit(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setStorageLimit(value.toInt());
+            }
+        );
+
+        // Why some options are facts while others aren't?
+        connect(_videoSettings, &VideoSettings::streamConfiguredChanged, videoReceiver, &VideoReceiver::setStreamConfigured);
+
+        // Fix those.
+        // connect(appSettings, &Fact::rawValueChanged, videoReceiver, &VideoReceiver::setVideoPath);
+        // connect(appSettings->videoSavePath(), &Fact::rawValueChanged, videoReceiver, &VideoReceiver::setImagePath);
+
+        // Connect the video receiver with the rest of the app.
+        connect(videoReceiver, &VideoReceiver::restartTimeout, this, &VideoManager::restartVideo);
+        connect(videoReceiver, &VideoReceiver::sendMessage, qgcApp(), &QGCApplication::showMessage);
+    }
+
     _updateSettings();
     if(isGStreamer()) {
         startVideo();
