@@ -64,7 +64,7 @@ Item {
         for (var i = 1; i < coordList.length; i++) {
             var lat = coordList[i].latitude
             var lon = coordList[i].longitude
-            if (isNaN(lat) || lat == 0 || isNan(lon) || lon == 0) {
+            if (isNaN(lat) || lat == 0 || isNaN(lon) || lon == 0) {
                 // Be careful of invalid coords which can happen when items are not yet complete
                 continue
             }
