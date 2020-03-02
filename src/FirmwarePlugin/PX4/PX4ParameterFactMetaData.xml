@@ -1221,13 +1221,6 @@ Set -1 to disable the check</short_desc>
       <short_desc>Enable Motor Testing</short_desc>
       <long_desc>If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that allows spinning the motors for testing purposes.</long_desc>
     </parameter>
-    <parameter default="100" name="COM_OA_BOOT_T" type="INT32">
-      <short_desc>Set avoidance system bootup timeout</short_desc>
-      <long_desc>The avoidance system running on the companion computer is expected to boot within this time and start providing trajectory points. If no avoidance system is detected a MAVLink warning message is sent.</long_desc>
-      <min>0</min>
-      <max>200</max>
-      <unit>s</unit>
-    </parameter>
     <parameter default="0" name="COM_OBL_ACT" type="INT32">
       <short_desc>Set offboard loss failsafe mode</short_desc>
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
