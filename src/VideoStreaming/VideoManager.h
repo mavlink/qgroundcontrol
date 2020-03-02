@@ -67,6 +67,9 @@ public:
     virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
 
+    QStringList videoExtensions();
+    QStringList videoMuxes();
+
 #if defined(QGC_DISABLE_UVC)
     virtual bool        uvcEnabled          () { return false; }
 #else
@@ -81,6 +84,8 @@ public:
 
     Q_INVOKABLE void startVideo     ();
     Q_INVOKABLE void stopVideo      ();
+
+    void cleanupOldVideos();
 
 signals:
     void hasVideoChanged            ();

@@ -70,7 +70,6 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _showFullScreen(false)
     , _streamEnabled(false)
     , _streamConfigured(false)
-    , _storageLimit(false)
     , _unittTestMode(false)
     , _isTaisync(false)
 {
@@ -459,19 +458,6 @@ void VideoReceiver::setStreamConfigured(bool enabled)
     }
 }
 
-bool VideoReceiver::storageLimit() const
-{
-    return _storageLimit;
-}
-
-void VideoReceiver::setStorageLimit(bool enabled)
-{
-    if (_storageLimit != enabled) {
-        _storageLimit = enabled;
-        emit storageLimitChanged();
-    }
-}
-
 bool VideoReceiver::isTaisync() const
 {
     return _isTaisync;
@@ -508,19 +494,6 @@ void VideoReceiver::setImagePath(const QString& value)
     if (_imagePath != value) {
         _imagePath = value;
         emit imagePathChanged();
-    }
-}
-
-int VideoReceiver::maxVideoSize() const
-{
-    return _maxVideoSize;
-}
-
-void VideoReceiver::setMaxVideoSize(int value)
-{
-    if (_maxVideoSize != value) {
-        _maxVideoSize = value;
-        emit maxVideoSizeChanged();
     }
 }
 
@@ -880,46 +853,6 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
 void
-VideoReceiver::_cleanupOldVideos()
-{
-    //-- Only perform cleanup if storage limit is enabled
-    if(_storageLimit) {
-        QString savePath = _videoPath;
-        QDir videoDir = QDir(savePath);
-        videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
-        videoDir.setSorting(QDir::Time);
-        //-- All the movie extensions we support
-        QStringList nameFilters;
-        for(uint32_t i = 0; i < NUM_MUXES; i++) {
-            nameFilters << QString("*.") + QString(kVideoExtensions[i]);
-        }
-        videoDir.setNameFilters(nameFilters);
-        //-- get the list of videos stored
-        QFileInfoList vidList = videoDir.entryInfoList();
-        if(!vidList.isEmpty()) {
-            uint64_t total   = 0;
-            //-- Settings are stored using MB
-            uint64_t maxSize = _maxVideoSize * 1024 * 1024;
-            //-- Compute total used storage
-            for(int i = 0; i < vidList.size(); i++) {
-                total += vidList[i].size();
-            }
-            //-- Remove old movies until max size is satisfied.
-            while(total >= maxSize && !vidList.isEmpty()) {
-                total -= vidList.last().size();
-                qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
-                QFile file (vidList.last().filePath());
-                file.remove();
-                vidList.removeLast();
-            }
-        }
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-void
 VideoReceiver::setVideoSink(GstElement* videoSink)
 {
     if(_pipeline != nullptr) {
@@ -1049,6 +982,7 @@ void
 VideoReceiver::startRecording(const QString &videoFile)
 {
 #if defined(QGC_GST_STREAMING)
+    emit beforeRecording();
 
     qCDebug(VideoReceiverLog) << "Starting recording";
     // exit immediately if we are already recording
@@ -1062,9 +996,6 @@ VideoReceiver::startRecording(const QString &videoFile)
         emit sendMessage(tr("Invalid video format defined."));
         return;
     }
-
-    //-- Disk usage maintenance
-    _cleanupOldVideos();
 
     QString savePath = _videoPath;
     if(savePath.isEmpty()) {
