@@ -181,6 +181,7 @@ protected:
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
     bool            _followTerrain;
+    bool            _useMavCmdConditionGate = false;
 
     QObject*            _loadedMissionItemsParent;	///< Parent for all items in _loadedMissionItems for simpler delete
     QList<MissionItem*> _loadedMissionItems;		///< Mission items loaded from plan file

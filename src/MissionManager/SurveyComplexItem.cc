@@ -666,6 +666,26 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
         bool transectEntry = true;
 
         for (const CoordInfo_t& transectCoordInfo: transect) {
+            if (triggerCamera() && !hoverAndCaptureEnabled() && !imagesEverywhere && transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge && !transectEntry) {
+                // We are right before adding the transect exit waypoint at survey edge
+                if (_useMavCmdConditionGate) {
+                    // Gate the mission state machine to not proceed until the vehicle flies through the gate. This way the camera
+                    // trigger stop command does not trigger off too early
+                    item = new MissionItem(seqNum++,
+                                           MAV_CMD_CONDITION_GATE,
+                                           mavFrame,
+                                           0,                                   // gate is orthogonal to path
+                                           0,                                   // ignore altitude
+                                           0, 0,                                // param 3-4 empty
+                                           transectCoordInfo.coord.latitude(),
+                                           transectCoordInfo.coord.longitude(),
+                                           0,                                   // no altitude sent
+                                           true,                                // autoContinue
+                                           false,                               // isCurrentItem
+                                           missionItemParent);
+                    items.append(item);
+                }
+            }
             item = new MissionItem(seqNum++,
                                    MAV_CMD_NAV_WAYPOINT,
                                    mavFrame,
@@ -715,6 +735,23 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
             // Possibly add trigger start/stop to survey area entrance/exit
             if (triggerCamera() && !hoverAndCaptureEnabled() && transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge) {
                 if (transectEntry) {
+                    if (_useMavCmdConditionGate) {
+                        // Gate the mission state machine to not proceed until the vehicle flies through the gate. This way the camera
+                        // trigger start command does not trigger on too early
+                        item = new MissionItem(seqNum++,
+                                               MAV_CMD_CONDITION_GATE,
+                                               mavFrame,
+                                               0,                                   // gate is orthogonal to path
+                                               0,                                   // ignore altitude
+                                               0, 0,                                // param 3-4 empty
+                                               transectCoordInfo.coord.latitude(),
+                                               transectCoordInfo.coord.longitude(),
+                                               0,                                   // no altitude sent
+                                               true,                                // autoContinue
+                                               false,                               // isCurrentItem
+                                               missionItemParent);
+                        items.append(item);
+                    }
                     // Start of transect, always start triggering. We do this even if we are taking images everywhere.
                     // This allows a restart of the mission in mid-air without losing images from the entire mission.
                     // At most you may lose part of a transect.

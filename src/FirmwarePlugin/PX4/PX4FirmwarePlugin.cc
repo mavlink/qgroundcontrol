@@ -297,6 +297,10 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
         MAV_CMD_IMAGE_START_CAPTURE, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_CMD_VIDEO_START_CAPTURE, MAV_CMD_VIDEO_STOP_CAPTURE,
         MAV_CMD_NAV_DELAY,
         MAV_CMD_CONDITION_YAW,
+#if 1
+        // Turn on this ifdef for condition gate testing
+        MAV_CMD_CONDITION_GATE,
+#endif
     };
 }
 

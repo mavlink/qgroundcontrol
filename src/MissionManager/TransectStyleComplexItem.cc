@@ -16,6 +16,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCQGeoCoordinate.h"
+#include "PlanMasterController.h"
 
 #include <QPolygonF>
 
@@ -48,6 +49,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     , _cameraShots                      (0)
     , _cameraCalc                       (masterController, settingsGroup)
     , _followTerrain                    (false)
+    , _useMavCmdConditionGate           (masterController->controllerVehicle()->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_CONDITION_GATE))
     , _loadedMissionItemsParent         (nullptr)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
     , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_controllerVehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
@@ -756,6 +758,10 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
             } else {
                 // Each transect will have a camera start and stop in it
                 itemCount += _transects.count() * 2;
+                if (_useMavCmdConditionGate) {
+                    // Each transect will have a condition gate at the entry/exit of the transect
+                    itemCount += _transects.count() * 2;
+                }
             }
         }
 

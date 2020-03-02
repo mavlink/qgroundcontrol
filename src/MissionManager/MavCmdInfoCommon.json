@@ -1063,6 +1063,22 @@
                 "enumValues":       "3,4"
             }
         },
+        {
+            "id":                   4501,
+            "rawName":              "MAV_CMD_CONDITION_GATE",
+            "friendlyName":         "Delay gate",
+            "description":          "Delay mission until vehicle flies through gate.",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "category":             "Conditionals",
+            "friendlyEdit":         true,
+            "param2": {
+                "label":            "Alt Mode",
+                "default":          0,
+                "enumStrings":      "Ignore Altitude,Use Altitude",
+                "enumValues":       "0,1"
+            }
+        },
         { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "Payload prepare deploy" },
         { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" }
     ]
