@@ -45,10 +45,8 @@ public:
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
     Q_PROPERTY(bool             streamEnabled       READ    streamEnabled       WRITE   setStreamEnabled      NOTIFY streamEnabledChanged)
     Q_PROPERTY(bool             streamConfigured    READ    streamConfigured    WRITE   setStreamConfigured   NOTIFY streamConfiguredChanged)
-    Q_PROPERTY(bool             storageLimit        READ    storageLimit        WRITE   setStorageLimit       NOTIFY storageLimitChanged)
     Q_PROPERTY(bool             isTaisync           READ    isTaisync           WRITE   setIsTaysinc          NOTIFY isTaisyncChanged)
 
-    Q_PROPERTY(int              maxVideoSize        READ    maxVideoSize        WRITE   setMaxVideoSize       NOTIFY maxVideoSizeChanged)
     Q_PROPERTY(int              recordingFormatId   READ    recordingFormatId   WRITE   setRecordingFormatId  NOTIFY recordingFormatIdChanged)
     Q_PROPERTY(int              rtspTimeout         READ    rtspTimeout         WRITE   setRtspTimeout        NOTIFY rtspTimeoutChanged)
 
@@ -63,10 +61,6 @@ public:
     Q_SLOT void setStreamConfigured(bool enabled);
     Q_SIGNAL void streamConfiguredChanged();
 
-    bool storageLimit() const;
-    Q_SLOT void setStorageLimit(bool enabled);
-    Q_SIGNAL void storageLimitChanged();
-
     bool isTaisync() const;
     Q_SLOT void setIsTaysinc(bool value);
     Q_SIGNAL void isTaisyncChanged();
@@ -79,10 +73,6 @@ public:
     Q_SLOT void setImagePath(const QString& path);
     Q_SIGNAL void imagePathChanged();
 
-    int maxVideoSize() const;
-    Q_SLOT void setMaxVideoSize(int value);
-    Q_SIGNAL void maxVideoSizeChanged();
-
     int recordingFormatId() const;
     Q_SLOT void setRecordingFormatId(int value);
     Q_SIGNAL void recordingFormatIdChanged();
@@ -94,6 +84,8 @@ public:
     Q_SIGNAL void restartTimeout();
     Q_SIGNAL void sendMessage(const QString& message);
 
+    // Emitted before recording starts.
+    Q_SIGNAL void beforeRecording();
     void setUnittestMode(bool runUnitTests);
 #if defined(QGC_GST_STREAMING)
     virtual bool            recording       () { return _recording; }
@@ -172,7 +164,6 @@ protected:
     virtual void                _unlinkRecordingBranch  (GstPadProbeInfo* info);
     virtual void                _shutdownRecordingBranch();
     virtual void                _shutdownPipeline       ();
-    virtual void                _cleanupOldVideos       ();
 
     GstElement*     _pipeline;
     GstElement*     _videoSink;
@@ -201,7 +192,6 @@ protected:
     bool            _storageLimit;
     bool            _unittTestMode;
     bool            _isTaisync;
-    int            _maxVideoSize; // in mbs.
     int            _recordingFormatId; // 0 - 2, defined in VideoReceiver.cc / kVideoExtensions. TODO: use a better representation.
     int            _rtspTimeout;
 

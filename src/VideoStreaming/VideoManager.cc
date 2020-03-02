@@ -89,21 +89,13 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     for (auto *videoReceiver : { _videoReceiver, _thermalVideoReceiver}) {
         // First, Setup the current values from the settings.
         videoReceiver->setRtspTimeout(_videoSettings->rtspTimeout()->rawValue().toInt());
-        videoReceiver->setMaxVideoSize(_videoSettings->maxVideoSize()->rawValue().toInt());
         videoReceiver->setStreamEnabled(_videoSettings->streamEnabled()->rawValue().toBool());
         videoReceiver->setRecordingFormatId(_videoSettings->recordingFormat()->rawValue().toInt());
         videoReceiver->setStreamConfigured(_videoSettings->streamConfigured());
-        videoReceiver->setStorageLimit(_videoSettings->enableStorageLimit()->rawValue().toBool());
 
         connect(_videoSettings->rtspTimeout(), &Fact::rawValueChanged,
             videoReceiver, [videoReceiver](const QVariant &value) {
                 videoReceiver->setRtspTimeout(value.toInt());
-            }
-        );
-
-        connect(_videoSettings->maxVideoSize(), &Fact::rawValueChanged,
-            videoReceiver, [videoReceiver](const QVariant &value) {
-                videoReceiver->setMaxVideoSize(value.toInt());
             }
         );
 
@@ -119,12 +111,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
             }
         );
 
-        connect(_videoSettings->enableStorageLimit(), &Fact::rawValueChanged,
-            videoReceiver, [videoReceiver](const QVariant &value) {
-                videoReceiver->setStorageLimit(value.toInt());
-            }
-        );
-
         // Why some options are facts while others aren't?
         connect(_videoSettings, &VideoSettings::streamConfiguredChanged, videoReceiver, &VideoReceiver::setStreamConfigured);
 
@@ -135,6 +121,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         // Connect the video receiver with the rest of the app.
         connect(videoReceiver, &VideoReceiver::restartTimeout, this, &VideoManager::restartVideo);
         connect(videoReceiver, &VideoReceiver::sendMessage, qgcApp(), &QGCApplication::showMessage);
+        connect(videoReceiver, &VideoReceiver::beforeRecording, this, &VideoManager::cleanupOldVideos);
     }
 
     _updateSettings();
@@ -145,6 +132,55 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         stopVideo();
     }
 
+#endif
+}
+
+QStringList VideoManager::videoMuxes()
+{
+    return {"matroskamux", "qtmux", "mp4mux"};
+}
+
+QStringList VideoManager::videoExtensions()
+{
+    return {"mkv", "mov", "mp4"};
+}
+
+void VideoManager::cleanupOldVideos()
+{
+#if defined(QGC_GST_STREAMING)
+    //-- Only perform cleanup if storage limit is enabled
+    if(!_videoSettings->enableStorageLimit()->rawValue().toBool()) {
+        return;
+    }
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QDir videoDir = QDir(savePath);
+    videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+    videoDir.setSorting(QDir::Time);
+
+    QStringList nameFilters;
+    for(const QString& extension : videoExtensions()) {
+        nameFilters << QString("*.") + extension;
+    }
+    videoDir.setNameFilters(nameFilters);
+    //-- get the list of videos stored
+    QFileInfoList vidList = videoDir.entryInfoList();
+    if(!vidList.isEmpty()) {
+        uint64_t total   = 0;
+        //-- Settings are stored using MB
+        uint64_t maxSize = _videoSettings->maxVideoSize()->rawValue().toUInt() * 1024 * 1024;
+        //-- Compute total used storage
+        for(int i = 0; i < vidList.size(); i++) {
+            total += vidList[i].size();
+        }
+        //-- Remove old movies until max size is satisfied.
+        while(total >= maxSize && !vidList.isEmpty()) {
+            total -= vidList.last().size();
+            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+            QFile file (vidList.last().filePath());
+            file.remove();
+            vidList.removeLast();
+        }
+    }
 #endif
 }
 
