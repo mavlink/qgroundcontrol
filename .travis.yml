@@ -241,6 +241,7 @@ deploy:
 
   # deploy tagged installers to s3 latest/
   - provider: s3
+    edge: true # Use V2 provider to work around V1 bug
     access_key_id: AKIAIVORNALE7NHD3T6Q
     secret_access_key:
       secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
