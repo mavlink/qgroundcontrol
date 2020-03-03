@@ -9,6 +9,7 @@ Note: This file only contains high level features or important fixes.
 * Fix ArduPilot current mission item tracking in Fly view
 * Fix ADSB vehicle display
 * Fix map positioning bug in Plan view
+* Fix Windows 0xcc000007b startup error causes by incorrect VC runtimes being installed.
 
 ### 4.0.0 - Stable
 
