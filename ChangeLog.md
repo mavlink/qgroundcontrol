@@ -4,10 +4,11 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.1 - Not yet release
+### 4.0.1 - Not yet released
 
 * Fix ArduPilot current mission item tracking in Fly view
 * Fix ADSB vehicle display
+* Fix map positioning bug in Plan view
 
 ### 4.0.0 - Stable
 
