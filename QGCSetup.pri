@@ -79,8 +79,6 @@ WindowsBuild {
         # Copy Visual Studio DLLs
         # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_1.dll\"  \"$$DESTDIR_WIN\"
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140_2.dll\"  \"$$DESTDIR_WIN\"
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
     }
 
