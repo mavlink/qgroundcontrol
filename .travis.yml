@@ -284,6 +284,7 @@ deploy:
     on:
       tags: true
       condition: $CONFIG = installer
+      condition: $SPEC != macx-clang # GitHub OSX deploy broken due to travis problem
 
 notifications:
   webhooks:
