@@ -1003,7 +1003,7 @@ Set -1 to disable the check</short_desc>
       <max>300</max>
       <unit>s</unit>
       <decimal>1</decimal>
-      <increment>0.5</increment>
+      <increment>1</increment>
     </parameter>
     <parameter default="5.0" name="COM_EF_C2T" type="FLOAT">
       <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
@@ -1248,13 +1248,13 @@ Set -1 to disable the check</short_desc>
         <value code="7">Lockdown</value>
       </values>
     </parameter>
-    <parameter default="0.0" name="COM_OF_LOSS_T" type="FLOAT">
+    <parameter default="0.5" name="COM_OF_LOSS_T" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action.
 See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <min>0</min>
       <max>60</max>
       <unit>s</unit>
-      <increment>1</increment>
+      <increment>0.01</increment>
     </parameter>
     <parameter default="0" name="COM_POSCTL_NAVL" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
