@@ -39,11 +39,54 @@ public:
     Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
     Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
+    Q_PROPERTY(QString          imagePath           READ    imagePath           NOTIFY  imagePathChanged)
+    Q_PROPERTY(QString          videoPath           READ    videoPath           NOTIFY  videoPathChanged)
+
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
+    Q_PROPERTY(bool             streamEnabled       READ    streamEnabled       WRITE   setStreamEnabled      NOTIFY streamEnabledChanged)
+    Q_PROPERTY(bool             streamConfigured    READ    streamConfigured    WRITE   setStreamConfigured   NOTIFY streamConfiguredChanged)
+    Q_PROPERTY(bool             isTaisync           READ    isTaisync           WRITE   setIsTaysinc          NOTIFY isTaisyncChanged)
+
+    Q_PROPERTY(int              recordingFormatId   READ    recordingFormatId   WRITE   setRecordingFormatId  NOTIFY recordingFormatIdChanged)
+    Q_PROPERTY(int              rtspTimeout         READ    rtspTimeout         WRITE   setRtspTimeout        NOTIFY rtspTimeoutChanged)
 
     explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver();
 
+    bool streamEnabled() const;
+    Q_SLOT void setStreamEnabled(bool enabled);
+    Q_SIGNAL void streamEnabledChanged();
+
+    bool streamConfigured() const;
+    Q_SLOT void setStreamConfigured(bool enabled);
+    Q_SIGNAL void streamConfiguredChanged();
+
+    bool isTaisync() const;
+    Q_SLOT void setIsTaysinc(bool value);
+    Q_SIGNAL void isTaisyncChanged();
+
+    QString videoPath() const;
+    Q_SLOT void setVideoPath(const QString& path);
+    Q_SIGNAL void videoPathChanged();
+
+    QString imagePath() const;
+    Q_SLOT void setImagePath(const QString& path);
+    Q_SIGNAL void imagePathChanged();
+
+    int recordingFormatId() const;
+    Q_SLOT void setRecordingFormatId(int value);
+    Q_SIGNAL void recordingFormatIdChanged();
+
+    int rtspTimeout() const;
+    Q_SLOT void setRtspTimeout(int value);
+    Q_SIGNAL void rtspTimeoutChanged();
+
+    Q_SIGNAL void restartTimeout();
+    Q_SIGNAL void sendMessage(const QString& message);
+
+    // Emitted before recording starts.
+    Q_SIGNAL void beforeRecording();
+    void setUnittestMode(bool runUnitTests);
 #if defined(QGC_GST_STREAMING)
     virtual bool            recording       () { return _recording; }
 #endif
@@ -86,7 +129,6 @@ protected slots:
 #if defined(QGC_GST_STREAMING)
     GstElement*  _makeSource                (const QString& uri);
     GstElement*  _makeFileSink              (const QString& videoFile, unsigned format);
-    virtual void _restart_timeout           ();
     virtual void _handleError               ();
     virtual void _handleEOS                 ();
     virtual void _handleStateChanged        ();
@@ -122,7 +164,6 @@ protected:
     virtual void                _unlinkRecordingBranch  (GstPadProbeInfo* info);
     virtual void                _shutdownRecordingBranch();
     virtual void                _shutdownPipeline       ();
-    virtual void                _cleanupOldVideos       ();
 
     GstElement*     _pipeline;
     GstElement*     _videoSink;
@@ -141,8 +182,18 @@ protected:
     QString         _uri;
     QString         _imageFile;
     QString         _videoFile;
+    QString         _videoPath;
+    QString         _imagePath;
+
     bool            _videoRunning;
     bool            _showFullScreen;
-    VideoSettings*  _videoSettings;
+    bool            _streamEnabled;
+    bool            _streamConfigured;
+    bool            _storageLimit;
+    bool            _unittTestMode;
+    bool            _isTaisync;
+    int            _recordingFormatId; // 0 - 2, defined in VideoReceiver.cc / kVideoExtensions. TODO: use a better representation.
+    int            _rtspTimeout;
+
 };
 

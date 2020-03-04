@@ -53,6 +53,8 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
    qmlRegisterUncreatableType<VideoManager> ("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
    qmlRegisterUncreatableType<VideoReceiver>("QGroundControl",              1, 0, "VideoReceiver","Reference only");
+
+   // TODO: Those connections should be Per Video, not per VideoManager.
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
@@ -72,7 +74,56 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
     _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _videoReceiver->setUnittestMode(qgcApp()->runningUnitTests());
     _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _thermalVideoReceiver->setUnittestMode(qgcApp()->runningUnitTests());
+    _videoReceiver->moveToThread(qgcApp()->thread());
+    _thermalVideoReceiver->moveToThread(qgcApp()->thread());
+
+    // Those connects are temporary: In a perfect world those connections are going to be done on the Qml
+    // but because currently the videoReceiver is created in the C++ world, this is easier.
+    // The fact returning a QVariant is a quite annoying to use proper signal / slot connection.
+    _updateSettings();
+
+    auto appSettings = toolbox->settingsManager()->appSettings();
+    for (auto *videoReceiver : { _videoReceiver, _thermalVideoReceiver}) {
+        // First, Setup the current values from the settings.
+        videoReceiver->setRtspTimeout(_videoSettings->rtspTimeout()->rawValue().toInt());
+        videoReceiver->setStreamEnabled(_videoSettings->streamEnabled()->rawValue().toBool());
+        videoReceiver->setRecordingFormatId(_videoSettings->recordingFormat()->rawValue().toInt());
+        videoReceiver->setStreamConfigured(_videoSettings->streamConfigured());
+
+        connect(_videoSettings->rtspTimeout(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setRtspTimeout(value.toInt());
+            }
+        );
+
+        connect(_videoSettings->streamEnabled(), &Fact::rawValueChanged,
+                videoReceiver, [videoReceiver](const QVariant &value) {
+                    videoReceiver->setStreamEnabled(value.toBool());
+            }
+        );
+
+        connect(_videoSettings->recordingFormat(), &Fact::rawValueChanged,
+            videoReceiver, [videoReceiver](const QVariant &value) {
+                videoReceiver->setRecordingFormatId(value.toInt());
+            }
+        );
+
+        // Why some options are facts while others aren't?
+        connect(_videoSettings, &VideoSettings::streamConfiguredChanged, videoReceiver, &VideoReceiver::setStreamConfigured);
+
+        // Fix those.
+        // connect(appSettings, &Fact::rawValueChanged, videoReceiver, &VideoReceiver::setVideoPath);
+        // connect(appSettings->videoSavePath(), &Fact::rawValueChanged, videoReceiver, &VideoReceiver::setImagePath);
+
+        // Connect the video receiver with the rest of the app.
+        connect(videoReceiver, &VideoReceiver::restartTimeout, this, &VideoManager::restartVideo);
+        connect(videoReceiver, &VideoReceiver::sendMessage, qgcApp(), &QGCApplication::showMessage);
+        connect(videoReceiver, &VideoReceiver::beforeRecording, this, &VideoManager::cleanupOldVideos);
+    }
+
     _updateSettings();
     if(isGStreamer()) {
         startVideo();
@@ -81,6 +132,55 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         stopVideo();
     }
 
+#endif
+}
+
+QStringList VideoManager::videoMuxes()
+{
+    return {"matroskamux", "qtmux", "mp4mux"};
+}
+
+QStringList VideoManager::videoExtensions()
+{
+    return {"mkv", "mov", "mp4"};
+}
+
+void VideoManager::cleanupOldVideos()
+{
+#if defined(QGC_GST_STREAMING)
+    //-- Only perform cleanup if storage limit is enabled
+    if(!_videoSettings->enableStorageLimit()->rawValue().toBool()) {
+        return;
+    }
+    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QDir videoDir = QDir(savePath);
+    videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+    videoDir.setSorting(QDir::Time);
+
+    QStringList nameFilters;
+    for(const QString& extension : videoExtensions()) {
+        nameFilters << QString("*.") + extension;
+    }
+    videoDir.setNameFilters(nameFilters);
+    //-- get the list of videos stored
+    QFileInfoList vidList = videoDir.entryInfoList();
+    if(!vidList.isEmpty()) {
+        uint64_t total   = 0;
+        //-- Settings are stored using MB
+        uint64_t maxSize = _videoSettings->maxVideoSize()->rawValue().toUInt() * 1024 * 1024;
+        //-- Compute total used storage
+        for(int i = 0; i < vidList.size(); i++) {
+            total += vidList[i].size();
+        }
+        //-- Remove old movies until max size is satisfied.
+        while(total >= maxSize && !vidList.isEmpty()) {
+            total -= vidList.last().size();
+            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+            QFile file (vidList.last().filePath());
+            file.remove();
+            vidList.removeLast();
+        }
+    }
 #endif
 }
 

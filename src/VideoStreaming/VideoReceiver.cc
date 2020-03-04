@@ -15,8 +15,6 @@
  */
 
 #include "VideoReceiver.h"
-#include "SettingsManager.h"
-#include "QGCApplication.h"
 #include "VideoManager.h"
 #ifdef QGC_GST_TAISYNC_ENABLED
 #include "TaisyncHandler.h"
@@ -70,14 +68,15 @@ VideoReceiver::VideoReceiver(QObject* parent)
 #endif
     , _videoRunning(false)
     , _showFullScreen(false)
-    , _videoSettings(nullptr)
+    , _streamEnabled(false)
+    , _streamConfigured(false)
+    , _unittTestMode(false)
+    , _isTaisync(false)
 {
     // FIXME: AV: temporal workaround to allow for Qt::QueuedConnection for gstreamer signals. Need to evaluate proper solution - perhaps QtGst will be helpful
-    moveToThread(qgcApp()->thread());
-    _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     _restart_timer.setSingleShot(true);
-    connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
+    connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::restartTimeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError, Qt::QueuedConnection);
     connect(this, &VideoReceiver::msgEOSReceived, this, &VideoReceiver::_handleEOS, Qt::QueuedConnection);
     connect(this, &VideoReceiver::msgStateChangedReceived, this, &VideoReceiver::_handleStateChanged, Qt::QueuedConnection);
@@ -433,12 +432,102 @@ VideoReceiver::_makeSource(const QString& uri)
     return srcbin;
 }
 
-//-----------------------------------------------------------------------------
-void
-VideoReceiver::_restart_timeout()
+bool VideoReceiver::streamEnabled() const
 {
-    qgcApp()->toolbox()->videoManager()->restartVideo();
+    return _streamEnabled;
 }
+
+void VideoReceiver::setStreamEnabled(bool enabled)
+{
+    if (_streamEnabled != enabled) {
+        _streamEnabled = enabled;
+        emit streamEnabledChanged();
+    }
+}
+
+bool VideoReceiver::streamConfigured() const
+{
+    return _streamConfigured;
+}
+
+void VideoReceiver::setStreamConfigured(bool enabled)
+{
+    if (_streamConfigured != enabled) {
+        _streamConfigured = enabled;
+        emit streamEnabledChanged();
+    }
+}
+
+bool VideoReceiver::isTaisync() const
+{
+    return _isTaisync;
+}
+
+void VideoReceiver::setIsTaysinc(bool enabled)
+{
+    if (_isTaisync != enabled) {
+        _isTaisync = enabled;
+        emit isTaisyncChanged();
+    }
+}
+
+QString VideoReceiver::videoPath() const
+{
+    return _videoPath;
+}
+
+void VideoReceiver::setVideoPath(const QString& value)
+{
+    if (_videoPath != value) {
+        _videoPath = value;
+        emit videoPathChanged();
+    }
+}
+
+QString VideoReceiver::imagePath() const
+{
+    return _imagePath;
+}
+
+void VideoReceiver::setImagePath(const QString& value)
+{
+    if (_imagePath != value) {
+        _imagePath = value;
+        emit imagePathChanged();
+    }
+}
+
+int VideoReceiver::recordingFormatId() const
+{
+    return _recordingFormatId;
+}
+
+void VideoReceiver::setRecordingFormatId(int value)
+{
+    if (_recordingFormatId != value && value < (int) NUM_MUXES) {
+        _recordingFormatId = value;
+        emit recordingFormatIdChanged();
+    }
+}
+
+int VideoReceiver::rtspTimeout() const
+{
+    return _rtspTimeout;
+}
+
+void VideoReceiver::setRtspTimeout(int value)
+{
+    if (_rtspTimeout != value) {
+        _rtspTimeout = value;
+        emit rtspTimeoutChanged();
+    }
+}
+
+void VideoReceiver::setUnittestMode(bool runUnitTests)
+{
+    _unittTestMode = runUnitTests;
+}
+
 #endif
 
 //-----------------------------------------------------------------------------
@@ -454,11 +543,10 @@ void
 VideoReceiver::start()
 {
     qCDebug(VideoReceiverLog) << "Starting " << _uri;
-    if(qgcApp()->runningUnitTests()) {
+    if(_unittTestMode) {
         return;
     }
-    if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
-       !_videoSettings->streamConfigured()) {
+    if(!_streamEnabled || !_streamConfigured) {
         qCDebug(VideoReceiverLog) << "Stream not enabled/configured";
         return;
     }
@@ -470,7 +558,7 @@ VideoReceiver::start()
 
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
     //-- Taisync on iOS or Android sends a raw h.264 stream
-    if (qgcApp()->toolbox()->videoManager()->isTaisync()) {
+    if (_isTaisync) {
         uri = QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
     }
 #endif
@@ -609,7 +697,7 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
-    if(qgcApp() && qgcApp()->runningUnitTests()) {
+    if(_unittTestMode) {
         return;
     }
 #if defined(QGC_GST_STREAMING)
@@ -765,46 +853,6 @@ VideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 //-----------------------------------------------------------------------------
 #if defined(QGC_GST_STREAMING)
 void
-VideoReceiver::_cleanupOldVideos()
-{
-    //-- Only perform cleanup if storage limit is enabled
-    if(_videoSettings->enableStorageLimit()->rawValue().toBool()) {
-        QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-        QDir videoDir = QDir(savePath);
-        videoDir.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
-        videoDir.setSorting(QDir::Time);
-        //-- All the movie extensions we support
-        QStringList nameFilters;
-        for(uint32_t i = 0; i < NUM_MUXES; i++) {
-            nameFilters << QString("*.") + QString(kVideoExtensions[i]);
-        }
-        videoDir.setNameFilters(nameFilters);
-        //-- get the list of videos stored
-        QFileInfoList vidList = videoDir.entryInfoList();
-        if(!vidList.isEmpty()) {
-            uint64_t total   = 0;
-            //-- Settings are stored using MB
-            uint64_t maxSize = (_videoSettings->maxVideoSize()->rawValue().toUInt() * 1024 * 1024);
-            //-- Compute total used storage
-            for(int i = 0; i < vidList.size(); i++) {
-                total += vidList[i].size();
-            }
-            //-- Remove old movies until max size is satisfied.
-            while(total >= maxSize && !vidList.isEmpty()) {
-                total -= vidList.last().size();
-                qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
-                QFile file (vidList.last().filePath());
-                file.remove();
-                vidList.removeLast();
-            }
-        }
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-void
 VideoReceiver::setVideoSink(GstElement* videoSink)
 {
     if(_pipeline != nullptr) {
@@ -934,6 +982,7 @@ void
 VideoReceiver::startRecording(const QString &videoFile)
 {
 #if defined(QGC_GST_STREAMING)
+    emit beforeRecording();
 
     qCDebug(VideoReceiverLog) << "Starting recording";
     // exit immediately if we are already recording
@@ -942,18 +991,15 @@ VideoReceiver::startRecording(const QString &videoFile)
         return;
     }
 
-    uint32_t muxIdx = _videoSettings->recordingFormat()->rawValue().toUInt();
+    uint32_t muxIdx = _recordingFormatId;
     if(muxIdx >= NUM_MUXES) {
-        qgcApp()->showMessage(tr("Invalid video format defined."));
+        emit sendMessage(tr("Invalid video format defined."));
         return;
     }
 
-    //-- Disk usage maintenance
-    _cleanupOldVideos();
-
-    QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
+    QString savePath = _videoPath;
     if(savePath.isEmpty()) {
-        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        emit sendMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
 
@@ -1175,11 +1221,7 @@ VideoReceiver::_updateTimer()
     }
 
     if(_videoRunning) {
-        uint32_t timeout = 1;
-        if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
-            timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
-        }
-
+        uint32_t timeout = _rtspTimeout;
         const qint64 now = QDateTime::currentSecsSinceEpoch();
 
         if(now - _lastFrameTime > timeout) {
@@ -1189,7 +1231,7 @@ VideoReceiver::_updateTimer()
         }
     } else {
 		// FIXME: AV: if pipeline is _running but not _streaming for some time then we need to restart
-        if(!_stop && !_running && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
+        if(!_stop && !_running && !_uri.isEmpty() && _streamEnabled) {
             start();
         }
     }

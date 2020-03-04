@@ -60,7 +60,7 @@ public:
     static const char* videoSourceMPEGTS;
 
 signals:
-    void streamConfiguredChanged    ();
+    void streamConfiguredChanged    (bool configured);
 
 private slots:
     void _configChanged             (QVariant value);
