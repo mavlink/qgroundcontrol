@@ -20,6 +20,10 @@ add_library(Vehicle
 	Vehicle.h
 	VehicleObjectAvoidance.cc
 	VehicleObjectAvoidance.h
+  TerrainProtocolHandler.cc
+  TerrainProtocolHandler.h
+  TerrainFactGroup.cc
+  TerrainFactGroup.h
 
 	${EXTRA_SRC}
 )
