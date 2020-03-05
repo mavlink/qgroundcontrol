@@ -362,12 +362,15 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
-        double  prevAltitude;
-        int     prevAltitudeMode;
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, command);
+        if (!uiInfo->isLandCommand()) {
+            double  prevAltitude;
+            int     prevAltitudeMode;
 
-        if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
-            newItem->altitude()->setRawValue(prevAltitude);
-            newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
+            if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
+                newItem->altitude()->setRawValue(prevAltitude);
+                newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
+            }
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
@@ -432,7 +435,7 @@ VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, 
         fwLanding->setLoiterDragAngleOnly(true);
         return fwLanding;
     } else {
-        return _insertSimpleMissionItemWorker(coordinate, MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
+        return _insertSimpleMissionItemWorker(coordinate, _managerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
     }
 }
 
