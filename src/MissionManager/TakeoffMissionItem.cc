@@ -71,7 +71,7 @@ void TakeoffMissionItem::_init(void)
     _initLaunchTakeoffAtSameLocation();
 
     if (homePosition.isValid() && coordinate().isValid()) {
-        // Item already full specified, most likely from mission load from storage
+        // Item already fully specified, most likely from mission load from storage
         _wizardMode = false;
     } else {
         if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
@@ -148,6 +148,7 @@ bool TakeoffMissionItem::load(const QJsonObject& json, int sequenceNumber, QStri
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Should always be off for loaded items
     return success;
 }
 
