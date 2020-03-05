@@ -102,7 +102,7 @@ Item {
                                 QGCLabel {
                                     Layout.fillWidth:   true
                                     text:               qsTr("Flight Mode %1").arg(modelData + 1)
-                                    color:              controller.activeFlightMode == index ? "yellow" : qgcPal.text
+                                    color:              (controller.activeFlightMode - 1) == index ? "yellow" : qgcPal.text
                                 }
                             }
 
