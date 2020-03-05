@@ -981,6 +981,6 @@ void SimpleMissionItem::_possibleAdditionalTimeDelayChanged(void)
 bool SimpleMissionItem::isLandCommand(void) const
 {
     MAV_CMD command = static_cast<MAV_CMD>(this->command());
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, command);
     return uiInfo->isLandCommand();
 }
