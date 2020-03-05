@@ -1078,7 +1078,7 @@ public:
     const QVariantList&         toolBarIndicators   ();
     const QVariantList&         staticCameraList    () const;
 
-    bool capabilitiesKnown      () const { return _vehicleCapabilitiesKnown; }
+    bool capabilitiesKnown      () const { return _capabilityBitsKnown; }
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
     QGCCameraManager*           dynamicCameras      () { return _cameras; }
@@ -1096,7 +1096,8 @@ public:
     void _setFlying(bool flying);
     void _setLanding(bool landing);
     void _setHomePosition(QGeoCoordinate& homeCoord);
-    void _setMaxProtoVersion (unsigned version);
+    void _setMaxProtoVersion(unsigned version);
+    void _setMaxProtoVersionFromBothSources();
 
     /// Vehicle is about to be deleted
     void prepareDelete();
@@ -1406,9 +1407,10 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
-    bool            _mavlinkProtocolRequestComplete;
-    unsigned        _maxProtoVersion;
-    bool            _vehicleCapabilitiesKnown;
+    bool            _mavlinkProtocolRequestComplete =           false;
+    unsigned        _mavlinkProtocolRequestMaxProtoVersion =    0;
+    unsigned        _maxProtoVersion =                          0;
+    bool            _capabilityBitsKnown =                      false;
     uint64_t        _capabilityBits;
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
@@ -1428,8 +1430,9 @@ private:
     QList<MavCommandQueueEntry_t>   _mavCommandQueue;
     QTimer                          _mavCommandAckTimer;
     int                             _mavCommandRetryCount;
-    static const int                _mavCommandMaxRetryCount = 3;
-    static const int                _mavCommandAckTimeoutMSecs = 3000;
+    int                             _capabilitiesRetryCount =               0;
+    static const int                _mavCommandMaxRetryCount =              3;
+    static const int                _mavCommandAckTimeoutMSecs =            3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
 
     QString             _prearmError;
