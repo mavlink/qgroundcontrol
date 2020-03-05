@@ -100,6 +100,7 @@ public:
     bool            dirty                   (void) const override { return _dirty; }
     bool            isSimpleItem            (void) const final { return true; }
     bool            isStandaloneCoordinate  (void) const final;
+    bool            isLandCommand           (void) const final;
     bool            specifiesCoordinate     (void) const final;
     bool            specifiesAltitudeOnly   (void) const final;
     QString         commandDescription      (void) const final;
