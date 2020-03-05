@@ -15,6 +15,6 @@
     "name":             "showMissionItemStatus",
     "shortDescription": "Show/Hide the mission item status display",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 }
 ]
