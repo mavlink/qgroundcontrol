@@ -39,6 +39,7 @@ TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, Vehicle* 
     , _settingsItem     (settingsItem)
 {
     _init();
+    _wizardMode = false;
 }
 
 TakeoffMissionItem::~TakeoffMissionItem()
@@ -139,6 +140,7 @@ bool TakeoffMissionItem::load(QTextStream &loadStream)
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 
@@ -148,7 +150,7 @@ bool TakeoffMissionItem::load(const QJsonObject& json, int sequenceNumber, QStri
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
-    _wizardMode = false; // Should always be off for loaded items
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 
