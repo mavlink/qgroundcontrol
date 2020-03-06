@@ -703,7 +703,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
                 _capabilitiesRetryElapsed.start();
             } else if (_capabilitiesRetryElapsed.elapsed() > 10000){
                 qCDebug(VehicleLog) << "Giving up on getting AUTOPILOT_VERSION after 10 seconds";
-                qgcApp()->showMessage(QStringLiteral("Vehicle failed to send AUTOPILOT_VERSION"));
+                qgcApp()->showMessage(QStringLiteral("Vehicle failed to send AUTOPILOT_VERSION after waiting/retrying for 10 seconds"));
                 _handleUnsupportedRequestAutopilotCapabilities();
             } else {
                 // Vehicle never sent us AUTOPILOT_VERSION response. Try again.
