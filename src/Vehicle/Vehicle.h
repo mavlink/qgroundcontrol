@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QVariantList>
 #include <QGeoCoordinate>
+#include <QTime>
 
 #include "FactGroup.h"
 #include "LinkInterface.h"
@@ -1431,6 +1432,7 @@ private:
     QTimer                          _mavCommandAckTimer;
     int                             _mavCommandRetryCount;
     int                             _capabilitiesRetryCount =               0;
+    QTime                           _capabilitiesRetryElapsed;
     static const int                _mavCommandMaxRetryCount =              3;
     static const int                _mavCommandAckTimeoutMSecs =            3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
