@@ -5964,48 +5964,6 @@ default 1.5 turns per second</short_desc>
       <max>1.0</max>
     </parameter>
   </group>
-  <group name="Payload drop">
-    <parameter default="0.03" name="BD_GPROPERTIES" type="FLOAT">
-      <short_desc>Ground drag property</short_desc>
-      <long_desc>This parameter encodes the ground drag coefficient and the corresponding decrease in wind speed from the plane altitude to ground altitude.</long_desc>
-      <min>0.001</min>
-      <max>0.1</max>
-    </parameter>
-    <parameter default="0.1" name="BD_OBJ_CD" type="FLOAT">
-      <short_desc>Payload drag coefficient of the dropped object</short_desc>
-      <long_desc>The drag coefficient (cd) is the typical drag constant for air. It is in general object specific, but the closest primitive shape to the actual object should give good results: http://en.wikipedia.org/wiki/Drag_coefficient</long_desc>
-      <min>0.08</min>
-      <max>1.5</max>
-    </parameter>
-    <parameter default="0.6" name="BD_OBJ_MASS" type="FLOAT">
-      <short_desc>Payload mass</short_desc>
-      <long_desc>A typical small toy ball: 0.025 kg OBC water bottle: 0.6 kg</long_desc>
-      <min>0.001</min>
-      <max>5.0</max>
-      <unit>kg</unit>
-    </parameter>
-    <parameter default="0.00311724531" name="BD_OBJ_SURFACE" type="FLOAT">
-      <short_desc>Payload front surface area</short_desc>
-      <long_desc>A typical small toy ball: (0.045 * 0.045) / 4.0 * pi = 0.001590 m^2 OBC water bottle: (0.063 * 0.063) / 4.0 * pi = 0.003117 m^2</long_desc>
-      <min>0.001</min>
-      <max>0.5</max>
-      <unit>m^2</unit>
-    </parameter>
-    <parameter default="30.0" name="BD_PRECISION" type="FLOAT">
-      <short_desc>Drop precision</short_desc>
-      <long_desc>If the system is closer than this distance on passing over the drop position, it will release the payload. This is a safeguard to prevent a drop out of the required accuracy.</long_desc>
-      <min>1.0</min>
-      <max>80.0</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="120.0" name="BD_TURNRADIUS" type="FLOAT">
-      <short_desc>Plane turn radius</short_desc>
-      <long_desc>The planes known minimal turn radius - use a higher value to make the plane maneuver more distant from the actual drop position. This is to ensure the wings are level during the drop.</long_desc>
-      <min>30.0</min>
-      <max>500.0</max>
-      <unit>m</unit>
-    </parameter>
-  </group>
   <group name="Peripheral">
     <parameter default="0" name="LIGHT_EN_BLINKM" type="INT32">
       <short_desc>BlinkM LED</short_desc>
