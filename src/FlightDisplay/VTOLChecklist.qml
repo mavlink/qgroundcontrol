@@ -17,39 +17,12 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.Vehicle       1.0
 
-import CustomQuickInterface         1.0
-
 Item {
     property var model: listModel
     PreFlightCheckModel {
         id:     listModel
         PreFlightCheckGroup {
             name: qsTr("VTOL Initial Checks")
-
-            // Standard check list items (group 0) - Available from the start
-            Rectangle {
-                width:      ScreenTools.defaultFontPixelWidth * 40
-                height:     testFlight.height + ScreenTools.defaultFontPixelHeight
-                color:      qgcPal.button
-                property bool   passed: true
-                function reset() {
-                    if(activeVehicle) {
-                        CustomQuickInterface.testFlight = false
-                        activeVehicle.checkListState = Vehicle.CheckListNotSetup
-                    }
-                }
-                QGCCheckBox {
-                    id:             testFlight
-                    text:           "Test Flight"
-                    enabled:        !CustomQuickInterface.debugBuild
-                    checked:        CustomQuickInterface.testFlight
-                    anchors.centerIn: parent
-                    onClicked:      CustomQuickInterface.testFlight = checked
-                    Component.onCompleted: {
-                        CustomQuickInterface.testFlight = false
-                    }
-                }
-            }
 
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
