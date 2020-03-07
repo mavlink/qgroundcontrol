@@ -685,6 +685,18 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
                                            missionItemParent);
                     items.append(item);
                 }
+                // End of transect, stop triggering
+                item = new MissionItem(seqNum++,
+                                       MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                       MAV_FRAME_MISSION,
+                                       0,           // stop triggering
+                                       0,           // shutter integration (ignore)
+                                       0,           // trigger immediately when starting
+                                       0, 0, 0, 0,  // param 4-7 unused
+                                       true,        // autoContinue
+                                       false,       // isCurrentItem
+                                       missionItemParent);
+                items.append(item);
             }
             item = new MissionItem(seqNum++,
                                    MAV_CMD_NAV_WAYPOINT,
@@ -767,19 +779,6 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
                                            missionItemParent);
                     items.append(item);
                     transectEntry = false;
-                } else if (!imagesEverywhere && !transectEntry){
-                    // End of transect, stop triggering
-                    item = new MissionItem(seqNum++,
-                                           MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                           MAV_FRAME_MISSION,
-                                           0,           // stop triggering
-                                           0,           // shutter integration (ignore)
-                                           0,           // trigger immediately when starting
-                                           0, 0, 0, 0,  // param 4-7 unused
-                                           true,        // autoContinue
-                                           false,       // isCurrentItem
-                                           missionItemParent);
-                    items.append(item);
                 }
             }
         }
