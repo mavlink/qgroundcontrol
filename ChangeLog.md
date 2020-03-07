@@ -4,14 +4,22 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.1 - Not yet released
+### 4.0.3 - Not yet released
+
+### 4.0.2 - Stable
+
+* Fix Mavlink V2 protocol negotation based on capability bits
+* Fix waiting for AUTOPILOT_VERSION response to get capability bits
+* ArduPilot: Above two fixes make fence/rally support enabling more reliable
+
+### 4.0.1
 
 * Fix ArduPilot current mission item tracking in Fly view
 * Fix ADSB vehicle display
 * Fix map positioning bug in Plan view
 * Fix Windows 0xcc000007b startup error causes by incorrect VC runtimes being installed.
 
-### 4.0.0 - Stable
+### 4.0.0
 
 * Added ROI option during manual flight.
 * Windows: Move builds to 64 bit, Qt 5.12.5
