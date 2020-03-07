@@ -16,5 +16,11 @@
     "shortDescription": "Show/Hide the mission item status display",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "takeoffItemNotRequired",
+    "shortDescription": "Allow missions to not require a takeoff item",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
