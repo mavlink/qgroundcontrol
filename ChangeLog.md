@@ -6,6 +6,12 @@ Note: This file only contains high level features or important fixes.
 
 ### 4.0.3 - Not yet released
 
+
+### 4.0.3 - Not yet released
+
+* Plan: Add setting for takeoff item not required
+* Plan: Takeoff item must be added prior to allowing other item types to enable
+
 ### 4.0.2 - Stable
 
 * Fix Mavlink V2 protocol negotation based on capability bits
