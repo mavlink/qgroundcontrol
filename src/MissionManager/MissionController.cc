@@ -31,6 +31,7 @@
 #include "KML.h"
 #include "QGCCorePlugin.h"
 #include "TakeoffMissionItem.h"
+#include "PlanViewSettings.h"
 
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
@@ -59,6 +60,7 @@ const QString MissionController::patternCorridorScanName    (QT_TRANSLATE_NOOP("
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController     (masterController, parent)
+    , _planViewSettings         (qgcApp()->toolbox()->settingsManager()->planViewSettings())
     , _missionManager           (_managerVehicle->missionManager())
     , _missionItemCount         (0)
     , _visualItems              (nullptr)
@@ -77,6 +79,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     managerVehicleChanged(_managerVehicle);
     _updateTimer.setSingleShot(true);
     connect(&_updateTimer, &QTimer::timeout, this, &MissionController::_updateTimeout);
+
+    connect(_planViewSettings->takeoffItemNotRequired(), &Fact::rawValueChanged, this, &MissionController::_takeoffItemNotRequiredChanged);
 }
 
 MissionController::~MissionController()
@@ -2301,6 +2305,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _currentPlanViewItem  =         nullptr;
         _currentPlanViewSeqNum =        -1;
         _currentPlanViewVIIndex =       -1;
+        _onlyInsertTakeoffValid =       !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && _visualItems->count() == 1; // First item must be takeoff
         _isInsertTakeoffValid =         true;
         _isInsertLandValid =            true;
         _isROIActive =                  false;
@@ -2430,10 +2435,15 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
             }
         }
 
+        // These are not valid when only takeoff is allowed
+        _isInsertLandValid =            _isInsertLandValid && !_onlyInsertTakeoffValid;
+        _flyThroughCommandsAllowed =    _flyThroughCommandsAllowed && !_onlyInsertTakeoffValid;
+
         emit currentPlanViewSeqNumChanged();
         emit currentPlanViewVIIndexChanged();
         emit currentPlanViewItemChanged();
         emit splitSegmentChanged();
+        emit onlyInsertTakeoffValidChanged();
         emit isInsertTakeoffValidChanged();
         emit isInsertLandValidChanged();
         emit isROIActiveChanged();
@@ -2530,4 +2540,10 @@ void MissionController::_complexBoundingBoxChanged()
 bool MissionController::isEmpty(void) const
 {
     return _visualItems->count() <= 1;
+}
+
+void MissionController::_takeoffItemNotRequiredChanged(void)
+{
+    // Force a recalc of allowed bits
+    setCurrentPlanViewSeqNum(_currentPlanViewSeqNum, true /* force */);
 }

@@ -43,6 +43,7 @@ Rectangle {
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
+    property var _planViewSettings:             QGroundControl.settingsManager.planViewSettings
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
@@ -595,7 +596,7 @@ Rectangle {
                     QGCLabel {
                         id:         planViewSectionLabel
                         text:       qsTr("Plan View")
-                        visible:    QGroundControl.settingsManager.planViewSettings.visible
+                        visible:    _planViewSettings.visible
                     }
                     Rectangle {
                         Layout.preferredHeight: planViewCol.height + (_margins * 2)
@@ -620,6 +621,12 @@ Rectangle {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                                 }
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Missions Do Not Require Takeoff Item")
+                                fact:       _planViewSettings.takeoffItemNotRequired
+                                visible:    _planViewSettings.takeoffItemNotRequired.visible
                             }
                         }
                     }
