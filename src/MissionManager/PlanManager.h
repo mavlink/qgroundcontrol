@@ -20,6 +20,7 @@
 #include "LinkInterface.h"
 
 class Vehicle;
+class MissionCommandTree;
 
 Q_DECLARE_LOGGING_CATEGORY(PlanManagerLog)
 
@@ -60,10 +61,10 @@ public:
     typedef enum {
         InternalError,
         AckTimeoutError,        ///< Timed out waiting for response from vehicle
-        ProtocolOrderError,     ///< Incorrect protocol sequence from vehicle
+        ProtocolError,          ///< Incorrect protocol sequence from vehicle
         RequestRangeError,      ///< Vehicle requested item out of range
         ItemMismatchError,      ///< Vehicle returned item with seq # different than requested
-        VehicleError,           ///< Vehicle returned error
+        VehicleAckError,        ///< Vehicle returned error in ack
         MissingRequestsError,   ///< Vehicle did not request all items during write sequence
         MaxRetryExceeded,       ///< Retry failed
         MissionTypeMismatch,    ///< MAV_MISSION_TYPE does not match _planType
@@ -134,11 +135,12 @@ protected:
     QString _planTypeString(void);
 
 protected:
-    Vehicle*            _vehicle;
+    Vehicle*            _vehicle =              nullptr;
+    MissionCommandTree* _missionCommandTree =   nullptr;
     MAV_MISSION_TYPE    _planType;
-    LinkInterface*      _dedicatedLink;
+    LinkInterface*      _dedicatedLink =        nullptr;
 
-    QTimer*             _ackTimeoutTimer;
+    QTimer*             _ackTimeoutTimer =      nullptr;
     AckType_t           _expectedAck;
     int                 _retryCount;
 

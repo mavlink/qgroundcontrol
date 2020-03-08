@@ -1013,9 +1013,9 @@ void MockLink::_respondWithAutopilotVersion(void)
     respondWithMavlinkMessage(msg);
 }
 
-void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode)
+void MockLink::setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult)
 {
-    _missionItemHandler.setMissionItemFailureMode(failureMode);
+    _missionItemHandler.setFailureMode(failureMode, failureAckResult);
 }
 
 void MockLink::_sendHomePosition(void)
