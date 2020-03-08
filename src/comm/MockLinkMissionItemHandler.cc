@@ -200,7 +200,7 @@ void MockLinkMissionItemHandler::_handleMissionRequest(const mavlink_message_t& 
         
         if ((_failureMode == FailReadRequest0ErrorAck && request.seq == 0) ||
                 (_failureMode == FailReadRequest1ErrorAck && request.seq == 1)) {
-            _sendAck(MAV_MISSION_ERROR);
+            _sendAck(_failureAckResult);
         } else {
             MissionItemBoth_t missionItemBoth;
 
@@ -327,7 +327,7 @@ void MockLinkMissionItemHandler::_requestNextMissionItem(int sequenceNumber)
         if ((_failureMode == FailWriteRequest0ErrorAck && sequenceNumber == 0) ||
                 (_failureMode == FailWriteRequest1ErrorAck && sequenceNumber == 1)) {
             qCDebug(MockLinkMissionItemHandlerLog) << "_requestNextMissionItem sending ack error due to failure mode";
-            _sendAck(MAV_MISSION_ERROR);
+            _sendAck(_failureAckResult);
         } else {
             mavlink_message_t message;
 
@@ -408,7 +408,7 @@ void MockLinkMissionItemHandler::_handleMissionItem(const mavlink_message_t& msg
     _writeSequenceIndex++;
     if (_writeSequenceIndex < _writeSequenceCount) {
         if (_failureMode == FailWriteFinalAckMissingRequests && _writeSequenceIndex == 3) {
-            // Send MAV_MISSION_ACCPETED ack too early
+            // Send MAV_MISSION_ACCEPTED ack too early
             _sendAck(MAV_MISSION_ACCEPTED);
         } else {
             _requestNextMissionItem(_writeSequenceIndex);
@@ -448,9 +448,10 @@ void MockLinkMissionItemHandler::sendUnexpectedMissionRequest(void)
     Q_ASSERT(false);
 }
 
-void MockLinkMissionItemHandler::setMissionItemFailureMode(FailureMode_t failureMode)
+void MockLinkMissionItemHandler::setFailureMode(FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult)
 {
     _failureMode = failureMode;
+    _failureAckResult = failureAckResult;
 }
 
 void MockLinkMissionItemHandler::shutdown(void)
