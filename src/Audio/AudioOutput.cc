@@ -65,8 +65,12 @@ void AudioOutput::_stateChanged(QTextToSpeech::State state)
 {
     if(state == QTextToSpeech::Ready) {
         if(_texts.size()) {
-            QString text = _texts.first();
-            _texts.removeFirst();
+            // Speak the end of a multi-buffered message
+            QString text;
+            for (int num = 0; num < _texts.size(); ++num) {
+                text = _texts.first();
+                _texts.removeFirst();
+            }
             _tts->say(text);
         }
     }
