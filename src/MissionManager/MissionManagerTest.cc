@@ -27,9 +27,9 @@ MissionManagerTest::MissionManagerTest(void)
     
 }
 
-void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail)
+void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult, bool shouldFail)
 {
-    _mockLink->setMissionItemFailureMode(failureMode);
+    _mockLink->setMissionItemFailureMode(failureMode, failureAckResult);
     
     // Setup our test case data
     QList<MissionItem*> missionItems;
@@ -115,11 +115,11 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     _multiSpyMissionManager->clearAllSignals();
 }
 
-void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, bool shouldFail)
+void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult, bool shouldFail)
 {
-    _writeItems(MockLinkMissionItemHandler::FailNone, false);
+    _writeItems(MockLinkMissionItemHandler::FailNone, failureAckResult, false);
     
-    _mockLink->setMissionItemFailureMode(failureMode);
+    _mockLink->setMissionItemFailureMode(failureMode, failureAckResult);
 
     // Read the items back from the vehicle
     _missionManager->loadFromVehicle();
@@ -253,8 +253,8 @@ void MissionManagerTest::_testWriteFailureHandlingWorker(void)
 
     for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
         const WriteTestCase_t* pCase = &rgTestCases[i];
-        qDebug() << "TEST CASE " << pCase->failureText;
-        _writeItems(pCase->failureMode, pCase->shouldFail);
+        qDebug() << "TEST CASE _testWriteFailureHandlingWorker" << pCase->failureText;
+        _writeItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
         _mockLink->resetMissionItemHandler();
     }
 }
@@ -298,8 +298,8 @@ void MissionManagerTest::_testReadFailureHandlingWorker(void)
 
     for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
         const ReadTestCase_t* pCase = &rgTestCases[i];
-        qDebug() << "TEST CASE " << pCase->failureText;
-        _roundTripItems(pCase->failureMode, pCase->shouldFail);
+        qDebug() << "TEST CASE _testReadFailureHandlingWorker" << pCase->failureText;
+        _roundTripItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
         _mockLink->resetMissionItemHandler();
         _multiSpyMissionManager->clearAllSignals();
     }
@@ -328,4 +328,35 @@ void MissionManagerTest::_testReadFailureHandlingPX4(void)
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
     _testReadFailureHandlingWorker();
+}
+
+void MissionManagerTest::_testErrorAckFailureStrings(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    typedef struct {
+        const char*                                 ackResultStr;
+        MAV_MISSION_RESULT                          ackResult;
+    } ErrorStringTestCase_t;
+
+    static const ErrorStringTestCase_t rgTestCases[] = {
+        { "MAV_MISSION_UNSUPPORTED_FRAME",  MAV_MISSION_UNSUPPORTED_FRAME },
+        { "MAV_MISSION_UNSUPPORTED",        MAV_MISSION_UNSUPPORTED },
+        { "MAV_MISSION_INVALID_PARAM1",     MAV_MISSION_INVALID_PARAM1 },
+        { "MAV_MISSION_INVALID_PARAM2",     MAV_MISSION_INVALID_PARAM2 },
+        { "MAV_MISSION_INVALID_PARAM3",     MAV_MISSION_INVALID_PARAM3 },
+        { "MAV_MISSION_INVALID_PARAM4",     MAV_MISSION_INVALID_PARAM4 },
+        { "MAV_MISSION_INVALID_PARAM5_X",   MAV_MISSION_INVALID_PARAM5_X },
+        { "MAV_MISSION_INVALID_PARAM6_Y",   MAV_MISSION_INVALID_PARAM6_Y },
+        { "MAV_MISSION_INVALID_PARAM7",     MAV_MISSION_INVALID_PARAM7 },
+        { "MAV_MISSION_INVALID_SEQUENCE",   MAV_MISSION_INVALID_SEQUENCE },
+    };
+
+    for (size_t i=0; i<sizeof(rgTestCases)/sizeof(rgTestCases[0]); i++) {
+        const ErrorStringTestCase_t* pCase = &rgTestCases[i];
+        qDebug() << "TEST CASE _testErrorAckFailureStrings" << pCase->ackResultStr;
+        _writeItems(MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, pCase->ackResult, true /* shouldFail */);
+        _mockLink->resetMissionItemHandler();
+    }
+
 }
