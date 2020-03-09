@@ -336,7 +336,7 @@ VideoReceiver::_makeSource(const QString& uri)
                         qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
                     }
-                } else if (isUdp264) {
+                } else if (isUdp265) {
                     if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265")) == nullptr) {
                         qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
