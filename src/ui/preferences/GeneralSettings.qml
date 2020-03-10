@@ -621,6 +621,11 @@ Rectangle {
                                     fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                                 }
                             }
+
+                            FactCheckBox {
+                                text:   qsTr("Use MAV_CMD_CONDITION_GATE for pattern generation")
+                                fact:   QGroundControl.settingsManager.planViewSettings.useConditionGate
+                            }
                         }
                     }
 

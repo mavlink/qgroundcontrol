@@ -23,6 +23,8 @@
 #include "RadioComponentController.h"
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
+#include "SettingsManager.h"
+#include "PlanViewSettings.h"
 
 #include <QDebug>
 
@@ -279,7 +281,7 @@ void PX4FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataF
 
 QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
 {
-    return {
+    QList<MAV_CMD> cmds = {
         MAV_CMD_NAV_WAYPOINT,
         MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TIME, MAV_CMD_NAV_LOITER_TO_ALT,
         MAV_CMD_NAV_LAND, MAV_CMD_NAV_TAKEOFF, MAV_CMD_NAV_RETURN_TO_LAUNCH,
@@ -298,6 +300,12 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
         MAV_CMD_NAV_DELAY,
         MAV_CMD_CONDITION_YAW,
     };
+
+    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
+        cmds.append(MAV_CMD_CONDITION_GATE);
+    }
+
+    return cmds;
 }
 
 QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
