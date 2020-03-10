@@ -74,6 +74,9 @@ public:
     bool    hoverAndCaptureEnabled  (void) const { return hoverAndCapture()->rawValue().toBool(); }
     bool    triggerCamera           (void) const { return triggerDistance() != 0; }
 
+    // Used internally only by unit tests
+    int _transectCount(void) { return _transects.count(); }
+
     // Overrides from ComplexMissionItem
 
     int                 lastSequenceNumber  (void) const final;
@@ -159,8 +162,9 @@ protected:
         CoordTypeInterior,              ///< Interior waypoint for flight path only
         CoordTypeInteriorHoverTrigger,  ///< Interior waypoint for hover and capture trigger
         CoordTypeInteriorTerrainAdded,  ///< Interior waypoint added for terrain
-        CoordTypeSurveyEdge,            ///< Waypoint at edge of survey polygon
-        CoordTypeTurnaround             ///< Waypoint outside of survey polygon for turnaround
+        CoordTypeSurveyEntry,           ///< Waypoint at entry edge of survey polygon
+        CoordTypeSurveyExit,            ///< Waypoint at exit edge of survey polygon
+        CoordTypeTurnaround,            ///< First turnaround waypoint
     };
 
     typedef struct {
