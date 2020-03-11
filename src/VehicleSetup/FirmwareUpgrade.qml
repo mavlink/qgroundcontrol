@@ -383,8 +383,7 @@ SetupPage {
                                 anchors.right:  parent.right
                                 visible:        !px4Flow && apmFlightStack.checked && !controller.downloadingFirmwareList && controller.apmFirmwareNames.length !== 0
                                 model:          controller.apmFirmwareNames
-
-                                onModelChanged: console.log("model", model)
+                                onModelChanged: currentIndex = controller.apmFirmwareNamesBestIndex
                             }
 
                             QGCLabel {
