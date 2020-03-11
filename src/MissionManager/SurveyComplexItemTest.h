@@ -14,6 +14,7 @@
 #include "MultiSignalSpy.h"
 #include "SurveyComplexItem.h"
 #include "PlanMasterController.h"
+#include "PlanViewSettings.h"
 
 #include <QGeoCoordinate>
 
@@ -30,15 +31,18 @@ protected:
     void cleanup(void) final;
     
 private slots:
+    void _testHoverCaptureItemGeneration(void);
+
+private:
     void _testDirty(void);
     void _testGridAngle(void);
     void _testEntryLocation(void);
     void _testItemCount(void);
-
-private:
-
+    void _testItemGeneration(void);
     double _clampGridAngle180(double gridAngle);
     void _setPolygon(void);
+    QList<MAV_CMD> _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
+    void _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
 
     // SurveyComplexItem signals
 
@@ -69,5 +73,8 @@ private:
     MultiSignalSpy*         _multiSpy =             nullptr;
     SurveyComplexItem*      _surveyItem =           nullptr;
     QGCMapPolygon*          _mapPolygon =           nullptr;
-    QList<QGeoCoordinate>   _polyPoints;
+    PlanViewSettings*       _planViewSettings =     nullptr;
+    QList<QGeoCoordinate>   _polyVertices;
+
+    static const int _expectedTransectCount = 2;
 };
