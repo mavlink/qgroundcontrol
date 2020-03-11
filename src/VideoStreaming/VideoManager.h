@@ -97,6 +97,7 @@ protected slots:
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
+    void _lowLatencyModeChanged     ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
