@@ -19,26 +19,27 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
-TakeoffMissionItem::TakeoffMissionItem(Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+TakeoffMissionItem::TakeoffMissionItem(Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, bool forLoad, QObject* parent)
+    : SimpleMissionItem (vehicle, flyView, forLoad, parent)
     , _settingsItem     (settingsItem)
 {
-    _init();
+    _init(forLoad);
 }
 
 TakeoffMissionItem::TakeoffMissionItem(MAV_CMD takeoffCmd, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
-    : SimpleMissionItem (vehicle, flyView, parent)
+    : SimpleMissionItem (vehicle, flyView, false /* forLoad */, parent)
     , _settingsItem     (settingsItem)
 {
     setCommand(takeoffCmd);
-    _init();
+    _init(false /* forLoad */);
 }
 
 TakeoffMissionItem::TakeoffMissionItem(const MissionItem& missionItem, Vehicle* vehicle, bool flyView, MissionSettingsItem* settingsItem, QObject* parent)
     : SimpleMissionItem (vehicle, flyView, missionItem, parent)
     , _settingsItem     (settingsItem)
 {
-    _init();
+    _init(false /* forLoad */);
+    _wizardMode = false;
 }
 
 TakeoffMissionItem::~TakeoffMissionItem()
@@ -46,7 +47,7 @@ TakeoffMissionItem::~TakeoffMissionItem()
 
 }
 
-void TakeoffMissionItem::_init(void)
+void TakeoffMissionItem::_init(bool forLoad)
 {
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
@@ -68,10 +69,15 @@ void TakeoffMissionItem::_init(void)
         }
     }
 
+    if (forLoad) {
+        // Load routines will set the rest up after load
+        return;
+    }
+
     _initLaunchTakeoffAtSameLocation();
 
     if (homePosition.isValid() && coordinate().isValid()) {
-        // Item already full specified, most likely from mission load from storage
+        // Item already fully specified, most likely from mission load from storage
         _wizardMode = false;
     } else {
         if (_launchTakeoffAtSameLocation && homePosition.isValid()) {
@@ -139,6 +145,7 @@ bool TakeoffMissionItem::load(QTextStream &loadStream)
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 
@@ -148,6 +155,7 @@ bool TakeoffMissionItem::load(const QJsonObject& json, int sequenceNumber, QStri
     if (success) {
         _initLaunchTakeoffAtSameLocation();
     }
+    _wizardMode = false; // Always be off for loaded items
     return success;
 }
 

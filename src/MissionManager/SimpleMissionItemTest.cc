@@ -167,7 +167,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
 
 void SimpleMissionItemTest::_testDefaultValues(void)
 {
-    SimpleMissionItem item(_offlineVehicle, false /* flyView */, nullptr);
+    SimpleMissionItem item(_offlineVehicle, false /* flyView */, false /* forLoad */, nullptr);
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
