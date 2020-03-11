@@ -310,6 +310,7 @@ VideoReceiver::_makeSource(const QString& uri)
 
     GstElement* source  = nullptr;
     GstElement* buffer  = nullptr;
+    GstElement* tsdemux = nullptr;
     GstElement* parser  = nullptr;
     GstElement* bin     = nullptr;
     GstElement* srcbin  = nullptr;
@@ -336,7 +337,7 @@ VideoReceiver::_makeSource(const QString& uri)
                         qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
                     }
-                } else if (isUdp264) {
+                } else if (isUdp265) {
                     if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265")) == nullptr) {
                         qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
                         break;
@@ -358,25 +359,36 @@ VideoReceiver::_makeSource(const QString& uri)
             break;
         }
 
-        // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
-        if (isTcpMPEGTS || isUdpMPEGTS) {
-            if ((parser = gst_element_factory_make("tsdemux", "parser")) == nullptr) {
-                qCritical(VideoReceiverLog) << "gst_element_factory_make('tsdemux') failed";
-                break;
-            }
-        } else {
-            if ((parser = gst_element_factory_make("parsebin", "parser")) == nullptr) {
-                qCritical() << "VideoReceiver::_makeSource() failed. Error with gst_element_factory_make('parsebin')";
-                break;
-            }
-        }
-
         if ((bin = gst_bin_new("sourcebin")) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_bin_new('sourcebin') failed";
             break;
         }
 
+        if ((parser = gst_element_factory_make("parsebin", "parser")) == nullptr) {
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('parsebin') failed";
+            break;
+        }
+
         gst_bin_add_many(GST_BIN(bin), source, parser, nullptr);
+
+        // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
+        // FIXME: AV: tsdemux handling is a bit ugly - let's try to find elegant solution for that later
+        if (isTcpMPEGTS || isUdpMPEGTS) {
+            if ((tsdemux = gst_element_factory_make("tsdemux", nullptr)) == nullptr) {
+                qCCritical(VideoReceiverLog) << "gst_element_factory_make('tsdemux') failed";
+                break;
+            }
+
+            gst_bin_add(GST_BIN(bin), tsdemux);
+
+            if (!gst_element_link(source, tsdemux)) {
+                qCCritical(VideoReceiverLog) << "gst_element_link() failed";
+                break;
+            }
+
+            source = tsdemux;
+            tsdemux = nullptr;
+        }
 
         int probeRes = 0;
 
@@ -421,6 +433,11 @@ VideoReceiver::_makeSource(const QString& uri)
     if (parser != nullptr) {
         gst_object_unref(parser);
         parser = nullptr;
+    }
+
+    if (tsdemux != nullptr) {
+        gst_object_unref(tsdemux);
+        tsdemux = nullptr;
     }
 
     if (buffer != nullptr) {
