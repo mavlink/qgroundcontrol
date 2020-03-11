@@ -15,9 +15,6 @@
  */
 
 #include "SubtitleWriter.h"
-#include "SettingsManager.h"
-#include "VideoReceiver.h"
-#include "VideoManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include <QDateTime>
@@ -31,48 +28,11 @@ const int SubtitleWriter::_sampleRate = 1; // Sample rate in Hz for getting tele
 SubtitleWriter::SubtitleWriter(QObject* parent)
     : QObject(parent)
 {
+    connect(&_timer, &QTimer::timeout, this, &SubtitleWriter::_captureTelemetry);
 }
 
-void SubtitleWriter::setVideoReceiver(VideoReceiver* videoReceiver)
+void SubtitleWriter::startCapturingTelemetry(const QString& videoFile)
 {
-    if(!videoReceiver) {
-        qCWarning(SubtitleWriterLog) << "Invalid VideoReceiver pointer! Aborting subtitle capture!";
-        return;
-    }
-    _videoReceiver = videoReceiver;
-
-#if defined(QGC_GST_STREAMING)
-    // Only start writing subtitles once the recording pipeline actually starts
-    connect(_videoReceiver, &VideoReceiver::gotFirstRecordingKeyFrame,  this,  &SubtitleWriter::_startCapturingTelemetry);
-
-    // Captures recordingChanged() signals to stop writing subtitles
-    connect(_videoReceiver, &VideoReceiver::recordingChanged,           this,  &SubtitleWriter::_onVideoRecordingChanged);
-#endif
-
-    // Timer for telemetry capture and writing to file
-    connect(&_timer,        &QTimer::timeout,                           this,  &SubtitleWriter::_captureTelemetry);
-}
-
-void SubtitleWriter::_onVideoRecordingChanged()
-{
-#if defined(QGC_GST_STREAMING)
-    // Stop capturing data if recording stopped
-    if(!_videoReceiver->recording()) {
-        qCDebug(SubtitleWriterLog) << "Stopping writing";
-        _timer.stop();
-        _file.close();
-    }
-#endif
-}
-
-void SubtitleWriter::_startCapturingTelemetry()
-{
-    if(!_videoReceiver) {
-        qCWarning(SubtitleWriterLog) << "Invalid VideoReceiver pointer! Aborting subtitle capture!";
-        _timer.stop();
-        return;
-    }
-
     // Get the facts displayed in the values widget and capture them, removing the "Vehicle." prefix.
     QSettings settings;
     settings.beginGroup("ValuesWidget");
@@ -81,8 +41,8 @@ void SubtitleWriter::_startCapturingTelemetry()
 
     _startTime = QDateTime::currentDateTime();
 
-    QFileInfo videoFile(_videoReceiver->videoFile());
-    QString subtitleFilePath = QStringLiteral("%1/%2.ass").arg(videoFile.path(), videoFile.completeBaseName());
+    QFileInfo videoFileInfo(videoFile);
+    QString subtitleFilePath = QStringLiteral("%1/%2.ass").arg(videoFileInfo.path(), videoFileInfo.completeBaseName());
     qCDebug(SubtitleWriterLog) << "Writing overlay to file:" << subtitleFilePath;
     _file.setFileName(subtitleFilePath);
 
@@ -118,14 +78,17 @@ void SubtitleWriter::_startCapturingTelemetry()
     _timer.start(1000/_sampleRate);
 }
 
+void SubtitleWriter::stopCapturingTelemetry()
+{
+#if defined(QGC_GST_STREAMING)
+    qCDebug(SubtitleWriterLog) << "Stopping writing";
+    _timer.stop();
+    _file.close();
+#endif
+}
+
 void SubtitleWriter::_captureTelemetry()
 {
-    if(!_videoReceiver) {
-        qCWarning(SubtitleWriterLog) << "Invalid VideoReceiver pointer! Aborting subtitle capture!";
-        _timer.stop();
-        return;
-    }
-
     static const float nRows = 3; // number of rows used for displaying data
     static const int offsetFactor = 700; // Used to simulate a larger resolution and reduce the borders in the layout
 
