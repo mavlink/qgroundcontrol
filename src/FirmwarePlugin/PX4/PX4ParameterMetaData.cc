@@ -213,9 +213,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
                 
                 // Now that we know type we can create meta data object and add it to the system
-                
                 metaData = new FactMetaData(foundType, this);
-                Q_CHECK_PTR(metaData);
                 if (_mapParameterName2FactMetaData.contains(name)) {
                     // We can't trust the meta data since we have dups
                     qCWarning(PX4ParameterMetaDataLog) << "Duplicate parameter found:" << name;
