@@ -89,7 +89,7 @@ public:
     ~GstVideoReceiver(void);
 
 public slots:
-    virtual void start(const QString& uri, unsigned timeout);
+    virtual void start(const QString& uri, unsigned timeout, int buffer = 0);
     virtual void stop(void);
     virtual void startDecoding(void* sink);
     virtual void stopDecoding(void);
@@ -160,6 +160,7 @@ protected:
 
     QString             _uri;
     unsigned            _timeout;
+    int                 _buffer;
 
     Worker              _slotHandler;
     uint32_t            _signalDepth;

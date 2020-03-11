@@ -64,7 +64,11 @@ signals:
     void onTakeScreenshotComplete(STATUS status);
 
 public slots:
-    virtual void start(const QString& uri, unsigned timeout) = 0;
+    // buffer:
+    //      -1 - disable buffer and video sync
+    //      0 - default buffer length
+    //      N - buffer length, ms
+    virtual void start(const QString& uri, unsigned timeout, int buffer = 0) = 0;
     virtual void stop(void) = 0;
     virtual void startDecoding(void* sink) = 0;
     virtual void stopDecoding(void) = 0;
