@@ -359,7 +359,7 @@ int MissionController::_nextSequenceNumber(void)
 VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
+    SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, false /* forLoad */, this);
     newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
     newItem->setCommand(command);
@@ -673,7 +673,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
 
     MissionSettingsItem* settingsItem = _addMissionSettings(visualItems);
     if (json.contains(_jsonPlannedHomePositionKey)) {
-        SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
+        SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, true /* forLoad */, visualItems);
         if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
             settingsItem->setInitialHomePositionFromUser(item->coordinate());
             item->deleteLater();
@@ -709,11 +709,11 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             }
 
             const QJsonObject itemObject = itemValue.toObject();
-            SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
+            SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, true /* forLoad */, visualItems);
             if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
                 if (TakeoffMissionItem::isTakeoffCommand(item->mavCommand())) {
                     // This needs to be a TakeoffMissionItem
-                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, visualItems);
+                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, true /* forLoad */, visualItems);
                     takeoffItem->load(itemObject, itemObject["id"].toInt(), errorString);
                     item->deleteLater();
                     item = takeoffItem;
@@ -797,11 +797,11 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
         QString itemType = itemObject[VisualMissionItem::jsonTypeKey].toString();
 
         if (itemType == VisualMissionItem::jsonTypeSimpleItemValue) {
-            SimpleMissionItem* simpleItem = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
+            SimpleMissionItem* simpleItem = new SimpleMissionItem(_controllerVehicle, _flyView, true /* forLoad */, visualItems);
             if (simpleItem->load(itemObject, nextSequenceNumber, errorString)) {
                 if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                     // This needs to be a TakeoffMissionItem
-                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, this);
+                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, true /* forLoad */, this);
                     takeoffItem->load(itemObject, nextSequenceNumber, errorString);
                     simpleItem->deleteLater();
                     simpleItem = takeoffItem;
@@ -941,14 +941,14 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
         MissionSettingsItem* settingsItem = _addMissionSettings(visualItems);
 
         while (!stream.atEnd()) {
-            SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, visualItems);
+            SimpleMissionItem* item = new SimpleMissionItem(_controllerVehicle, _flyView, true /* forLoad */, visualItems);
             if (item->load(stream)) {
                 if (firstItem && plannedHomePositionInFile) {
                     settingsItem->setInitialHomePositionFromUser(item->coordinate());
                 } else {
                     if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(item->command()))) {
                         // This needs to be a TakeoffMissionItem
-                        TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, visualItems);
+                        TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_controllerVehicle, _flyView, settingsItem, true /* forLoad */, visualItems);
                         takeoffItem->load(stream);
                         item->deleteLater();
                         item = takeoffItem;
