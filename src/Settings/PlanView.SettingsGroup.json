@@ -16,5 +16,11 @@
     "shortDescription": "Show/Hide the mission item status display",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":                 "useConditionGate",
+    "shortDescription":     "Use MAV_CMD_CONDITION_GATE for pattern generation",
+    "type":                 "bool",
+    "defaultValue":         false
 }
 ]

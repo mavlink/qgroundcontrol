@@ -217,7 +217,7 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
             firstOverallPoint = false;
 
             // Possibly add trigger start/stop to survey area entrance/exit
-            if (triggerCamera() && transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge) {
+            if (triggerCamera() && (transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEntry || transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyExit)) {
                 if (transectEntry) {
                     // Start of transect, always start triggering. We do this even if we are taking images everywhere.
                     // This allows a restart of the mission in mid-air without losing images from the entire mission.
@@ -370,9 +370,9 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
                 TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords[j], CoordTypeInterior };
                 transect.append(coordInfo);
             }
-            TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords.first(), CoordTypeSurveyEdge };
+            TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords.first(), CoordTypeSurveyEntry };
             transect.prepend(coordInfo);
-            coordInfo = { transectCoords.last(), CoordTypeSurveyEdge };
+            coordInfo = { transectCoords.last(), CoordTypeSurveyExit };
             transect.append(coordInfo);
 
             // Extend the transect ends for turnaround
