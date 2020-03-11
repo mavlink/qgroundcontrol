@@ -249,7 +249,7 @@ void TerrainAirMapQuery::_parseCarpetData(const QJsonValue& carpetJson)
 
     QJsonObject statsObject =   jsonObject["stats"].toObject();
     double      minHeight =     statsObject["min"].toDouble();
-    double      maxHeight =     statsObject["min"].toDouble();
+    double      maxHeight =     statsObject["max"].toDouble();
 
     QList<QList<double>> carpet;
     if (!_carpetStatsOnly) {
