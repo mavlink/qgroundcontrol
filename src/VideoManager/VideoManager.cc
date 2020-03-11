@@ -509,7 +509,7 @@ VideoManager::_tcpUrlChanged()
 void
 VideoManager::_lowLatencyModeChanged()
 {
-    //restartVideo();
+    _restartAllVideos();
 }
 
 //-----------------------------------------------------------------------------
@@ -614,36 +614,43 @@ VideoManager::_updateSettings(unsigned id)
 {
     if(!_videoSettings)
         return false;
+
+    const bool lowLatencyStreaming  =_videoSettings->lowLatencyMode()->rawValue().toBool();
+
+    bool settingsChanged = _lowLatencyStreaming[id] != lowLatencyStreaming;
+
+    _lowLatencyStreaming[id] = lowLatencyStreaming;
+
     //-- Auto discovery
+
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
-            bool status = false;
             if (id == 0) {
                 qCDebug(VideoManagerLog) << "Configure primary stream:" << pInfo->uri();
                 switch(pInfo->type()) {
                     case VIDEO_STREAM_TYPE_RTSP:
-                        if ((status = _updateVideoUri(id, pInfo->uri()))) {
+                        if ((settingsChanged |= _updateVideoUri(id, pInfo->uri()))) {
                             _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
                         }
                         break;
                     case VIDEO_STREAM_TYPE_TCP_MPEG:
-                        if ((status = _updateVideoUri(id, pInfo->uri()))) {
+                        if ((settingsChanged |= _updateVideoUri(id, pInfo->uri()))) {
                             _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
                         }
                         break;
                     case VIDEO_STREAM_TYPE_RTPUDP:
-                        if ((status = _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri())))) {
+                        if ((settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri())))) {
                             _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
                         }
                         break;
                     case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                        if ((status = _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri())))) {
+                        if ((settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri())))) {
                             _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
                         }
                         break;
                     default:
-                        status = _updateVideoUri(id, pInfo->uri());
+                        settingsChanged |= _updateVideoUri(id, pInfo->uri());
                         break;
                 }
             }
@@ -654,36 +661,36 @@ VideoManager::_updateSettings(unsigned id)
                     switch(pTinfo->type()) {
                         case VIDEO_STREAM_TYPE_RTSP:
                         case VIDEO_STREAM_TYPE_TCP_MPEG:
-                            status |= _updateVideoUri(id, pTinfo->uri());
+                            settingsChanged |= _updateVideoUri(id, pTinfo->uri());
                             break;
                         case VIDEO_STREAM_TYPE_RTPUDP:
-                            status |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
+                            settingsChanged |= _updateVideoUri(id, QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
                             break;
                         case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                            status |= _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
+                            settingsChanged |= _updateVideoUri(id, QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
                             break;
                         default:
-                            status |= _updateVideoUri(id, pTinfo->uri());
+                            settingsChanged |= _updateVideoUri(id, pTinfo->uri());
                             break;
                     }
                 }
             }
-            return status;
+            return settingsChanged;
         }
     }
     QString source = _videoSettings->videoSource()->rawValue().toString();
     if (source == VideoSettings::videoSourceUDPH264)
-        return _updateVideoUri(0, QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceUDPH265)
-        return _updateVideoUri(0, QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceMPEGTS)
-        return _updateVideoUri(0, QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceRTSP)
-        return _updateVideoUri(0, _videoSettings->rtspUrl()->rawValue().toString());
+        settingsChanged |= _updateVideoUri(0, _videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
-        return _updateVideoUri(0, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
 
-    return false;
+    return settingsChanged;
 }
 
 //-----------------------------------------------------------------------------
@@ -720,11 +727,14 @@ void
 VideoManager::_restartVideo(unsigned id)
 {
 #if defined(QGC_GST_STREAMING)
+    bool oldLowLatencyStreaming = _lowLatencyStreaming[id];
     QString oldUri = _videoUri[id];
     _updateSettings(id);
+    bool newLowLatencyStreaming = _lowLatencyStreaming[id];
     QString newUri = _videoUri[id];
 
-    if (oldUri == newUri && _videoStarted[id]) {
+    // FIXME: AV: use _updateSettings() result to check if settings were changed
+    if (oldUri == newUri && oldLowLatencyStreaming == newLowLatencyStreaming && _videoStarted[id]) {
         qCDebug(VideoManagerLog) << "No sense to restart video streaming, skipped"  << id;
         return;
     }
@@ -758,7 +768,7 @@ VideoManager::_startReceiver(unsigned id)
         qCDebug(VideoManagerLog) << "Unsupported receiver id" << id;
     } else if (_videoReceiver[id] != nullptr/* && _videoSink[id] != nullptr*/) {
         if (!_videoUri[id].isEmpty()) {
-            _videoReceiver[id]->start(_videoUri[id], timeout);
+            _videoReceiver[id]->start(_videoUri[id], timeout, _lowLatencyStreaming[id] ? -1 : 0);
         }
     }
 #endif

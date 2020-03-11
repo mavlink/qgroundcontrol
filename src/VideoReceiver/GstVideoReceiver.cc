@@ -68,12 +68,12 @@ GstVideoReceiver::~GstVideoReceiver(void)
 }
 
 void
-GstVideoReceiver::start(const QString& uri, unsigned timeout)
+GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 {
     if (_needDispatch()) {
         QString cachedUri = uri;
-        _slotHandler.dispatch([this, cachedUri, timeout]() {
-            start(cachedUri, timeout);
+        _slotHandler.dispatch([this, cachedUri, timeout, buffer]() {
+            start(cachedUri, timeout, buffer);
         });
         return;
     }
@@ -95,12 +95,12 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
     }
 
     _uri = uri;
+    _timeout = timeout;
+    _buffer = buffer;
 
-    qCDebug(VideoReceiverLog) << "Starting" << _uri;
+    qCDebug(VideoReceiverLog) << "Starting" << _uri << ", buffer" << _buffer;
 
     _endOfStream = false;
-
-    _timeout = timeout;
 
     bool running    = false;
     bool pipelineUp = false;
@@ -791,7 +791,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
         gst_element_foreach_src_pad(source, _padProbe, &probeRes);
 
         if (probeRes & 1) {
-            if (probeRes & 2) {
+            if (probeRes & 2 && _buffer >= 0) {
                 if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
@@ -1095,6 +1095,8 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
     }
 
     gst_element_sync_state_with_parent(_videoSink);
+
+    g_object_set(_videoSink, "sync", _buffer >= 0, NULL);
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
