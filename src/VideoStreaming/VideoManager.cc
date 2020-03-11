@@ -464,6 +464,8 @@ VideoManager::_makeVideoSink(gpointer widget)
 
     if ((sink = gst_element_factory_make("qgcvideosinkbin", nullptr)) != nullptr) {
         g_object_set(sink, "widget", widget, NULL);
+        // FIXME: AV: temporally disable sync due to MPEG2-TS sync issues
+        g_object_set(sink, "sync", FALSE, NULL);
     } else {
         qCritical() << "gst_element_factory_make('qgcvideosinkbin') failed";
     }
