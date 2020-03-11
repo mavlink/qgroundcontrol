@@ -167,14 +167,10 @@ void VisualMissionItem::_updateTerrainAltitude(void)
         return;
     }
     if (!_flyView && specifiesCoordinate() && coordinate().isValid()) {
-        if (specifiesCoordinate()) {
-            if (coordinate().isValid()) {
-                // We use a timer so that any additional requests before the timer fires result in only a single request
-                _updateTerrainTimer.start();
-            }
-        } else {
-            _terrainAltitude = qQNaN();
-        }
+        // We use a timer so that any additional requests before the timer fires result in only a single request
+        _updateTerrainTimer.start();
+    } else {
+        _terrainAltitude = qQNaN();
     }
 }
 
