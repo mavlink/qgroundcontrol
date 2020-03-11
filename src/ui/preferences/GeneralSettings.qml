@@ -890,16 +890,27 @@ Rectangle {
                         visible:    QGroundControl.settingsManager.adsbVehicleManagerSettings.visible
                     }
                     Rectangle {
-                        Layout.preferredHeight: adsbGrid.height + (_margins * 2)
+                        Layout.preferredHeight: adsbGrid.y + adsbGrid.height + _margins
                         Layout.preferredWidth:  adsbGrid.width + (_margins * 2)
                         color:                  qgcPal.windowShade
                         visible:                adsbSectionLabel.visible
                         Layout.fillWidth:       true
 
+                        QGCLabel {
+                            id:                 warningLabel
+                            anchors.margins:    _margins
+                            anchors.top:        parent.top
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            font.pointSize:     ScreenTools.smallFontPointSize
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("Note: These setting are not meant for use with an ADSB transponder which is situated on the vehicle.")
+                        }
+
                         GridLayout {
                             id:                         adsbGrid
                             anchors.topMargin:          _margins
-                            anchors.top:                parent.top
+                            anchors.top:                warningLabel.bottom
                             Layout.fillWidth:           true
                             anchors.horizontalCenter:   parent.horizontalCenter
                             columns:                    2
