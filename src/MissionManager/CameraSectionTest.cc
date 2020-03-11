@@ -592,7 +592,7 @@ void CameraSectionTest::_testScanForGimbalSection(void)
 
     // Check for a scan success
 
-    SimpleMissionItem* newValidGimbalItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidGimbalItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidGimbalItem->missionItem() = _validGimbalItem->missionItem();
     visualItems.append(newValidGimbalItem);
     scanIndex = 0;
@@ -676,7 +676,7 @@ void CameraSectionTest::_testScanForCameraModeSection(void)
 
     // Check for a scan success
 
-    SimpleMissionItem* newValidCameraModeItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidCameraModeItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidCameraModeItem->missionItem() = _validCameraPhotoModeItem->missionItem();
     visualItems.append(newValidCameraModeItem);
     scanIndex = 0;
@@ -735,7 +735,7 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
     Mission Param #3	Number of images to capture total - 0 for unlimited capture
 */
 
-    SimpleMissionItem* newValidTimeItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidTimeItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidTimeItem->missionItem() = _validTimeItem->missionItem();
     visualItems.append(newValidTimeItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -776,7 +776,7 @@ void CameraSectionTest::_testScanForPhotoIntervalDistanceSection(void)
     Mission Param #7	Empty
     */
 
-    SimpleMissionItem* newValidDistanceItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidDistanceItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidDistanceItem->missionItem() = _validDistanceItem->missionItem();
     visualItems.append(newValidDistanceItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -862,7 +862,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     Mission Param #3	Reserved
     */
 
-    SimpleMissionItem* newValidStartVideoItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidStartVideoItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidStartVideoItem->missionItem() = _validStartVideoItem->missionItem();
     visualItems.append(newValidStartVideoItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -898,7 +898,7 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
     Mission Param #1 Reserved (Set to 0)
     */
 
-    SimpleMissionItem* newValidStopVideoItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidStopVideoItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidStopVideoItem->missionItem() = _validStopVideoItem->missionItem();
     visualItems.append(newValidStopVideoItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -936,8 +936,8 @@ void CameraSectionTest::_testScanForStopPhotoSection(void)
 
     _commonScanTest(_cameraSection);
 
-    SimpleMissionItem* newValidStopDistanceItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
-    SimpleMissionItem* newValidStopTimeItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidStopDistanceItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
+    SimpleMissionItem* newValidStopTimeItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidStopDistanceItem->missionItem() = _validStopDistanceItem->missionItem();
     newValidStopTimeItem->missionItem() = _validStopTimeItem->missionItem();
     visualItems.append(newValidStopDistanceItem);
@@ -950,8 +950,8 @@ void CameraSectionTest::_testScanForStopPhotoSection(void)
 
     // Out of order commands
 
-    SimpleMissionItem validStopDistanceItem(_masterController, false /* flyView */, nullptr);
-    SimpleMissionItem validStopTimeItem(_masterController, false /* flyView */, nullptr);
+    SimpleMissionItem validStopDistanceItem(_masterController, false /* flyView */, false /* forLoad */, nullptr);
+    SimpleMissionItem validStopTimeItem(_masterController, false /* flyView */, false /* forLoad */, nullptr);
     validStopDistanceItem.missionItem() = _validStopDistanceItem->missionItem();
     validStopTimeItem.missionItem() = _validStopTimeItem->missionItem();
     visualItems.append(&validStopTimeItem);
@@ -979,7 +979,7 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
     Mission Param #4	0 Unused sequence id
     */
 
-    SimpleMissionItem* newValidTakePhotoItem = new SimpleMissionItem(_masterController, false /* flyView */, this);
+    SimpleMissionItem* newValidTakePhotoItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
     newValidTakePhotoItem->missionItem() = _validTakePhotoItem->missionItem();
     visualItems.append(newValidTakePhotoItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
@@ -1051,9 +1051,9 @@ void CameraSectionTest::_testScanForMultipleItems(void)
     // Camera action followed by gimbal/mode
     for (SimpleMissionItem* actionItem: rgActionItems) {
         for (SimpleMissionItem* cameraItem: rgCameraItems) {
-            SimpleMissionItem* item1 = new SimpleMissionItem(_masterController, false /* flyView */, this);
+            SimpleMissionItem* item1 = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
             item1->missionItem() = actionItem->missionItem();
-            SimpleMissionItem* item2 = new SimpleMissionItem(_masterController, false /* flyView */, this);
+            SimpleMissionItem* item2 = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
@@ -1072,9 +1072,9 @@ void CameraSectionTest::_testScanForMultipleItems(void)
     // Gimbal/Mode followed by camera action
     for (SimpleMissionItem* actionItem: rgCameraItems) {
         for (SimpleMissionItem* cameraItem: rgActionItems) {
-            SimpleMissionItem* item1 = new SimpleMissionItem(_masterController, false /* flyView */, this);
+            SimpleMissionItem* item1 = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
             item1->missionItem() = actionItem->missionItem();
-            SimpleMissionItem* item2 = new SimpleMissionItem(_masterController, false /* flyView */, this);
+            SimpleMissionItem* item2 = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, this);
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);

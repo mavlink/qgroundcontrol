@@ -52,7 +52,7 @@ static const struct EnumInfo_s _rgMavFrameInfo[] = {
 { "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
 };
 
-SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
+SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad, QObject* parent)
     : VisualMissionItem                 (masterController, flyView, parent)
     , _commandTree                      (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact             (0, "Command:",             FactMetaData::valueTypeUint32)
@@ -69,13 +69,15 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
 
     _setupMetaData();
-    _connectSignals();
-    _updateOptionalSections();
 
-    _setDefaultsForCommand();
-    _rebuildFacts();
-
-    setDirty(false);
+    if (!forLoad) {
+        // We are are going to load the SimpleItem right after this then don't connnect up signalling until after load is done
+        _connectSignals();
+        _updateOptionalSections();
+        _setDefaultsForCommand();
+        _rebuildFacts();
+        setDirty(false);
+    }
 }
 
 SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem, QObject* parent)
@@ -280,7 +282,10 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
             _amslAltAboveTerrainFact.setRawValue(qQNaN());
         }
+        _connectSignals();
         _updateOptionalSections();
+        _rebuildFacts();
+        setDirty(false);
     }
 
     return success;
@@ -313,7 +318,10 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
         }
     }
 
+    _connectSignals();
     _updateOptionalSections();
+    _rebuildFacts();
+    setDirty(false);
 
     return true;
 }

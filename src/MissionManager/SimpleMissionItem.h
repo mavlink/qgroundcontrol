@@ -24,9 +24,8 @@ class SimpleMissionItem : public VisualMissionItem
     Q_OBJECT
     
 public:
-    SimpleMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent);
+    SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad, QObject* parent);
     SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem, QObject* parent);
-    //SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent);
 
     ~SimpleMissionItem();
 
