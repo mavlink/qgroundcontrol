@@ -30,8 +30,10 @@ Rectangle {
 
     function simulateClick(buttonIndex) {
         buttonIndex = buttonIndex + 1 // skip over title
-        toolStripColumn.children[buttonIndex].checked = true
-        toolStripColumn.children[buttonIndex].clicked()
+        if (!toolStripColumn.children[buttonIndex].checked) {
+            toolStripColumn.children[buttonIndex].checked = true
+            toolStripColumn.children[buttonIndex].clicked()
+        }
     }
 
     // Ensure we don't get narrower than content
