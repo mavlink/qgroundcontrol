@@ -8,6 +8,14 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
+### 4.0.3 - Not yet released
+
+
+### 4.0.3 - Not yet released
+
+* Plan: Add setting for takeoff item not required
+* Plan: Takeoff item must be added prior to allowing other item types to enable
+
 ### 4.0.2 - Stable
 
 * Fix Mavlink V2 protocol negotation based on capability bits
@@ -18,6 +26,8 @@ Note: This file only contains high level features or important fixes.
 
 * Fix ArduPilot current mission item tracking in Fly view
 * Fix ADSB vehicle display
+* Fix map positioning bug in Plan view
+* Fix Windows 0xcc000007b startup error causes by incorrect VC runtimes being installed.
 
 ### 4.0.0
 

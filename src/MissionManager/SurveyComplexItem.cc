@@ -79,6 +79,11 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
         _turnAroundDistanceFact.setRawValue(10);
     }
 
+    if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
+        // Only fixed wing flight paths support alternate transects
+        _flyAlternateTransectsFact.setRawValue(false);
+    }
+
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
         _cameraCalc.distanceToSurface()->setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());

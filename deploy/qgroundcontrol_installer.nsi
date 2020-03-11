@@ -71,8 +71,7 @@ check64BitUninstall:
   StrCmp $R0 "" doInstall
 
 doUninstall:
-  DetailPrint "Uninstalling previous version..."  
-  ExecWait "$R0 /S -LEAVE_DATA=1"
+  DetailPrint "Uninstalling previous version..."  ExecWait "$R0 /S -LEAVE_DATA=1 _?=$INSTDIR"
   IntCmp $0 0 doInstall
 
   MessageBox MB_OK|MB_ICONEXCLAMATION \
