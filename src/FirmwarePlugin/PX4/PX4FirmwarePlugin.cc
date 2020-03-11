@@ -482,14 +482,13 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
 void PX4FirmwarePlugin::startMission(Vehicle* vehicle)
 {
-
     if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
         if (!_armVehicleAndValidate(vehicle)) {
             qgcApp()->showMessage(tr("Unable to start mission: Vehicle rejected arming."));
             return;
         }
     } else {
-        qgcApp()->showMessage(tr("Unable to start mission: Vehicle not ready."));
+        qgcApp()->showMessage(tr("Unable to start mission: Vehicle not changing to %1 flight mode.").arg(missionFlightMode()));
     }
 }
 

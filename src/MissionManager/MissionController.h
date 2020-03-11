@@ -28,6 +28,7 @@ class SimpleMissionItem;
 class ComplexMissionItem;
 class MissionSettingsItem;
 class QDomDocument;
+class PlanViewSettings;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -95,6 +96,7 @@ public:
     Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
     Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
+    Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY onlyInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
     Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
@@ -263,6 +265,7 @@ signals:
     void currentPlanViewItemChanged         (void);
     void missionBoundingCubeChanged         (void);
     void missionItemCountChanged            (int missionItemCount);
+    void onlyInsertTakeoffValidChanged      (void);
     void isInsertTakeoffValidChanged        (void);
     void isInsertLandValidChanged           (void);
     void isROIActiveChanged                 (void);
@@ -286,6 +289,7 @@ private slots:
     void _complexBoundingBoxChanged             (void);
     void _recalcAll                             (void);
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
+    void _takeoffItemNotRequiredChanged         (void);
 
 private:
     void _init(void);
@@ -334,6 +338,7 @@ private:
     int                     _missionItemCount =             0;
     QmlObjectListModel*     _visualItems =                  nullptr;
     MissionSettingsItem*    _settingsItem =                 nullptr;
+    PlanViewSettings*       _planViewSettings =             nullptr;
     QmlObjectListModel      _waypointLines;
     QVariantList            _waypointPath;
     QmlObjectListModel      _directionArrows;
@@ -353,10 +358,11 @@ private:
     QGeoCoordinate          _takeoffCoordinate;
     QGeoCoordinate          _previousCoordinate;
     CoordinateVector*       _splitSegment =                 nullptr;
+    bool                    _onlyInsertTakeoffValid =       true;
     bool                    _isInsertTakeoffValid =         true;
-    bool                    _isInsertLandValid =            true;
+    bool                    _isInsertLandValid =            false;
     bool                    _isROIActive =                  false;
-    bool                    _flyThroughCommandsAllowed =    true;
+    bool                    _flyThroughCommandsAllowed =    false;
     bool                    _isROIBeginCurrentItem =        false;
 
     static const char*  _settingsGroup;
