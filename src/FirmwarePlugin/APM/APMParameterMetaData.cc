@@ -260,7 +260,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                     qCDebug(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
                     rawMetaData = _vehicleTypeToParametersMap[currentCategory][name];
                 } else {
-                    rawMetaData = new APMFactMetaDataRaw();
+                    rawMetaData = new APMFactMetaDataRaw(this);
                     _vehicleTypeToParametersMap[currentCategory][name] = rawMetaData;
                     groupMembers[group] << name;
                 }
