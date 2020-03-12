@@ -726,6 +726,14 @@
       <output name="MAIN0">Speed of left wheels</output>
       <output name="MAIN1">Speed of right wheels</output>
     </airframe>
+    <airframe id="50004" maintainer="Katrin Moritz" name="DF Robot GPX:Asurada">
+      <class>Rover</class>
+      <maintainer>Katrin Moritz</maintainer>
+      <type>Rover</type>
+      <output name="MAIN2">Steering servo</output>
+      <output name="MAIN3">Speed of left wheels</output>
+      <output name="MAIN4">Speed of right wheels</output>
+    </airframe>
   </airframe_group>
   <airframe_group image="AirframeUnknown" name="Underwater Robot">
     <airframe id="60000" maintainer="" name="Generic Underwater Robot">

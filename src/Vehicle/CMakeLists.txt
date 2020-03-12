@@ -16,6 +16,10 @@ add_library(Vehicle
 	MultiVehicleManager.h
 	TrajectoryPoints.cc
 	TrajectoryPoints.h
+	TerrainFactGroup.cc
+	TerrainFactGroup.h
+	TerrainProtocolHandler.cc
+	TerrainProtocolHandler.h
 	Vehicle.cc
 	Vehicle.h
 	VehicleObjectAvoidance.cc

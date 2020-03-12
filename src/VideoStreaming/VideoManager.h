@@ -50,6 +50,7 @@ public:
     Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
+    Q_PROPERTY(QString          imageFile               READ    imageFile                                   NOTIFY imageFileChanged)
 
     virtual bool        hasVideo            ();
     virtual bool        isGStreamer         ();
@@ -62,7 +63,8 @@ public:
     virtual double      thermalHfov         ();
     virtual bool        autoStreamConfigured();
     virtual bool        hasThermal          ();
-    virtual void        restartVideo        ();
+    virtual QString     imageFile           ();
+
 
     virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
@@ -82,6 +84,11 @@ public:
     Q_INVOKABLE void startVideo     ();
     Q_INVOKABLE void stopVideo      ();
 
+    Q_INVOKABLE void startRecording (const QString& videoFile = QString());
+    Q_INVOKABLE void stopRecording  ();
+
+    Q_INVOKABLE void grabImage(const QString& imageFile);
+
 signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
@@ -91,6 +98,7 @@ signals:
     void isTaisyncChanged           ();
     void aspectRatioChanged         ();
     void autoStreamConfiguredChanged();
+    void imageFileChanged           ();
 
 protected slots:
     void _videoSourceChanged        ();
@@ -110,13 +118,29 @@ protected:
 #endif
     void _initVideo                 ();
     void _updateSettings            ();
+    void _setVideoUri               (const QString& uri);
+    void _setThermalVideoUri        (const QString& uri);
+    void _cleanupOldVideos          ();
+    void _restartVideo              ();
+    void _streamingChanged          ();
+    void _recordingStarted          ();
+    void _recordingChanged          ();
+    void _screenshotComplete        ();
 
 protected:
+    QString         _videoFile;
+    QString         _imageFile;
     SubtitleWriter  _subtitleWriter;
     bool            _isTaisync              = false;
     VideoReceiver*  _videoReceiver          = nullptr;
     VideoReceiver*  _thermalVideoReceiver   = nullptr;
+#if defined(QGC_GST_STREAMING)
+    GstElement*     _videoSink              = nullptr;
+    GstElement*     _thermalVideoSink       = nullptr;
+#endif
     VideoSettings*  _videoSettings          = nullptr;
+    QString         _videoUri;
+    QString         _thermalVideoUri;
     QString         _videoSourceID;
     bool            _fullScreen             = false;
     Vehicle*        _activeVehicle          = nullptr;

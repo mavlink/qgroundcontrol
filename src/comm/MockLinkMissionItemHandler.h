@@ -63,7 +63,8 @@ public:
 
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
-    void setMissionItemFailureMode(FailureMode_t failureMode);
+    ///     @param failureAckResult Error to send if one the ack error modes
+    void setFailureMode(FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult);
     
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType);
@@ -115,6 +116,7 @@ private:
 
     QTimer*             _missionItemResponseTimer;
     FailureMode_t       _failureMode;
+    MAV_MISSION_RESULT  _failureAckResult;
     bool                _sendHomePositionOnEmptyList;
     MAVLinkProtocol*    _mavlinkProtocol;
     bool                _failReadRequestListFirstResponse;

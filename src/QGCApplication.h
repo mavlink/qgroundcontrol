@@ -71,7 +71,7 @@ public:
     void reportMissingParameter(int componentId, const QString& name);
 
     /// Show a non-modal message to the user
-    void showMessage(const QString& message);
+    Q_SLOT void showMessage(const QString& message);
 
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }

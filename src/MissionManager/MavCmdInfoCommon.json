@@ -858,6 +858,20 @@
                 "default":          25,
                 "units":            "m",
                 "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Shutter",
+                "default":          0,
+                "units":            "msecs",
+                "decimalPlaces":    0
+            },
+            "param3": {
+                "label":            "Trigger",
+                "default":          25,
+                "enumStrings":      "No Trigger,Once Immediately",
+                "enumValues":       "0,1",
+                "default":          0,
+                "decimalPlaces":    0
             }
         },
         {
@@ -1061,6 +1075,22 @@
                 "default":          3,
                 "enumStrings":      "Hover Mode,Plane Mode",
                 "enumValues":       "3,4"
+            }
+        },
+        {
+            "id":                   4501,
+            "rawName":              "MAV_CMD_CONDITION_GATE",
+            "friendlyName":         "Condition Gate",
+            "description":          "Delay mission state machine until gate has been reached.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "Conditionals",
+            "param2": {
+                "label":            "Ignore Alt",
+                "enumStrings":      "False,True",
+                "enumValues":       "0,1",
+                "default":          1,
+                "decimalPlaces":    0
             }
         },
         { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "Payload prepare deploy" },

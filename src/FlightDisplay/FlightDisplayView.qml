@@ -778,17 +778,17 @@ Item {
     //-- Checklist GUI
     Popup {
         id:             checklistDropPanel
-        x:              Math.round((mainWindow.width  - width)  * 0.5)
-        y:              Math.round((mainWindow.height - height) * 0.5)
+        x:              toolStrip.x + toolStrip.width + (ScreenTools.defaultFontPixelWidth * 2)
+        y:              toolStrip.y
         height:         checkList.height
         width:          checkList.width
         modal:          true
         focus:          true
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
-            anchors.fill:  parent
-            color:      Qt.rgba(0,0,0,0)
-            clip:       true
+            anchors.fill:   parent
+            color:          Qt.rgba(0,0,0,0)
+            clip:           true
         }
 
         Loader {

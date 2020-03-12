@@ -89,7 +89,7 @@ void FWLandingPatternTest::_testAppendSectionItems(void)
     QmlObjectListModel* simpleItems = new QmlObjectListModel(this);
 
     for (MissionItem* item: rgMissionItems) {
-        SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, simpleItems);
+        SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, simpleItems);
         simpleItem->missionItem() = *item;
         simpleItems->append(simpleItem);
     }
@@ -110,7 +110,7 @@ void FWLandingPatternTest::_testAppendSectionItems(void)
     _fwItem->appendMissionItems(rgMissionItems, this);
     simpleItems = new QmlObjectListModel(this);
     for (MissionItem* item: rgMissionItems) {
-        SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, simpleItems);
+        SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, false /* flyView */, false /* forLoad */, simpleItems);
         simpleItem->missionItem() = *item;
         simpleItems->append(simpleItem);
     }

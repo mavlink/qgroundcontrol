@@ -43,6 +43,7 @@ Rectangle {
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
+    property var _planViewSettings:             QGroundControl.settingsManager.planViewSettings
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
@@ -595,7 +596,7 @@ Rectangle {
                     QGCLabel {
                         id:         planViewSectionLabel
                         text:       qsTr("Plan View")
-                        visible:    QGroundControl.settingsManager.planViewSettings.visible
+                        visible:    _planViewSettings.visible
                     }
                     Rectangle {
                         Layout.preferredHeight: planViewCol.height + (_margins * 2)
@@ -620,6 +621,17 @@ Rectangle {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                                 }
+                            }
+
+                            FactCheckBox {
+                                text:   qsTr("Use MAV_CMD_CONDITION_GATE for pattern generation")
+                                fact:   QGroundControl.settingsManager.planViewSettings.useConditionGate
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Missions Do Not Require Takeoff Item")
+                                fact:       _planViewSettings.takeoffItemNotRequired
+                                visible:    _planViewSettings.takeoffItemNotRequired.visible
                             }
                         }
                     }
@@ -883,16 +895,27 @@ Rectangle {
                         visible:    QGroundControl.settingsManager.adsbVehicleManagerSettings.visible
                     }
                     Rectangle {
-                        Layout.preferredHeight: adsbGrid.height + (_margins * 2)
+                        Layout.preferredHeight: adsbGrid.y + adsbGrid.height + _margins
                         Layout.preferredWidth:  adsbGrid.width + (_margins * 2)
                         color:                  qgcPal.windowShade
                         visible:                adsbSectionLabel.visible
                         Layout.fillWidth:       true
 
+                        QGCLabel {
+                            id:                 warningLabel
+                            anchors.margins:    _margins
+                            anchors.top:        parent.top
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            font.pointSize:     ScreenTools.smallFontPointSize
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("Note: These setting are not meant for use with an ADSB transponder which is situated on the vehicle.")
+                        }
+
                         GridLayout {
                             id:                         adsbGrid
                             anchors.topMargin:          _margins
-                            anchors.top:                parent.top
+                            anchors.top:                warningLabel.bottom
                             Layout.fillWidth:           true
                             anchors.horizontalCenter:   parent.horizontalCenter
                             columns:                    2
