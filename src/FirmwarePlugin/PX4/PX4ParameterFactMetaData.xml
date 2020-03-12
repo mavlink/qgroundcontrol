@@ -4842,6 +4842,10 @@ Setting this parameter to 0 disables the filter</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter category="Developer" default="0" name="MPC_USE_HTE" type="INT32">
+      <short_desc>Hover thrust source selector</short_desc>
+      <long_desc>Set false to use the fixed parameter MPC_THR_HOVER (EXPERIMENTAL) Set true to use the value computed by the hover thrust estimator</long_desc>
+    </parameter>
     <parameter default="5.0" name="MPC_VELD_LP" type="FLOAT">
       <short_desc>Low pass filter cut freq. for numerical velocity derivative</short_desc>
       <min>0.0</min>
