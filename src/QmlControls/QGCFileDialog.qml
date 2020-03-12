@@ -117,12 +117,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, fileExtension)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
                                 hamburgerMenu.popup()
                             }
 
@@ -162,12 +162,12 @@ Item {
                     return
                 }
                 if (!replaceMessage.visible) {
-                    if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))) {
+                    if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))) {
                         replaceMessage.visible = true
                         return
                     }
                 }
-                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))
+                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))
                 hideDialog()
             }
 
@@ -230,12 +230,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, fileExtension)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
                                 hamburgerMenu.popup()
                             }
 

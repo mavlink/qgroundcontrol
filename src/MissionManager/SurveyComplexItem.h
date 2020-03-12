@@ -98,7 +98,6 @@ private:
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
-    int _appendWaypointToMission(QList<MissionItem*>& items, int seqNum, QGeoCoordinate& coord, CameraTriggerCode cameraTrigger, QObject* missionItemParent);
     bool _nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord);
     bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
     void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
@@ -130,6 +129,11 @@ private:
     // return true if vertex a can see vertex b
     bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
     bool _VertexIsReflex(const QPolygonF& polygon, const QPointF* vertex);
+    void _appendWaypoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, float holdTime, const QGeoCoordinate& coordinate);
+    void _appendSinglePhotoCapture(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum);
+    void _appendConditionGate(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate);
+    void _appendCameraTriggerDistance(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, float triggerDistance);
+    void _appendCameraTriggerDistanceUpdatePoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate, bool useConditionGate, float triggerDistance);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

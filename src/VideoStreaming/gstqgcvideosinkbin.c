@@ -125,6 +125,9 @@ _vsb_init(GstQgcVideoSinkBin *vsb)
             break;
         }
 
+        // FIXME: AV: temporally disable sync due to MPEG2-TS sync issues
+        g_object_set(vsb->qmlglsink, "sync", FALSE, NULL);
+
         if ((glcolorconvert = gst_element_factory_make("glcolorconvert", NULL)) == NULL) {
             GST_ERROR_OBJECT(vsb, "gst_element_factory_make('glcolorconvert' failed)");
             break;

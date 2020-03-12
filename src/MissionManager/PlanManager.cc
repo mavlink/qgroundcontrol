@@ -23,6 +23,7 @@ QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : _vehicle                  (vehicle)
+    , _missionCommandTree       (qgcApp()->toolbox()->missionCommandTree())
     , _planType                 (planType)
     , _dedicatedLink            (nullptr)
     , _ackTimeoutTimer          (nullptr)
@@ -178,7 +179,7 @@ void PlanManager::_ackTimeout(void)
     case AckMissionCount:
         // MISSION_COUNT message expected
         if (_retryCount > _maxRetryCount) {
-            _sendError(VehicleError, tr("Mission request list failed, maximum retries exceeded."));
+            _sendError(MaxRetryExceeded, tr("Mission request list failed, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
             _retryCount++;
@@ -189,7 +190,7 @@ void PlanManager::_ackTimeout(void)
     case AckMissionItem:
         // MISSION_ITEM expected
         if (_retryCount > _maxRetryCount) {
-            _sendError(VehicleError, tr("Mission read failed, maximum retries exceeded."));
+            _sendError(MaxRetryExceeded, tr("Mission read failed, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
             _retryCount++;
@@ -201,12 +202,12 @@ void PlanManager::_ackTimeout(void)
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (_itemIndicesToWrite.count() == 0) {
             // Vehicle did not send final MISSION_ACK at end of sequence
-            _sendError(VehicleError, tr("Mission write failed, vehicle failed to send final ack."));
+            _sendError(ProtocolError, tr("Mission write failed, vehicle failed to send final ack."));
             _finishTransaction(false);
         } else if (_itemIndicesToWrite[0] == 0) {
             // Vehicle did not respond to MISSION_COUNT, try again
             if (_retryCount > _maxRetryCount) {
-                _sendError(VehicleError, tr("Mission write mission count failed, maximum retries exceeded."));
+                _sendError(MaxRetryExceeded, tr("Mission write mission count failed, maximum retries exceeded."));
                 _finishTransaction(false);
             } else {
                 _retryCount++;
@@ -215,7 +216,7 @@ void PlanManager::_ackTimeout(void)
             }
         } else {
             // Vehicle did not request all items from ground station
-            _sendError(AckTimeoutError, tr("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
+            _sendError(ProtocolError, tr("Vehicle did not request all items from ground station: %1").arg(_ackTypeToString(_expectedAck)));
             _expectedAck = AckNone;
             _finishTransaction(false);
         }
@@ -223,7 +224,7 @@ void PlanManager::_ackTimeout(void)
     case AckMissionClearAll:
         // MISSION_ACK expected
         if (_retryCount > _maxRetryCount) {
-            _sendError(VehicleError, tr("Mission remove all, maximum retries exceeded."));
+            _sendError(MaxRetryExceeded, tr("Mission remove all, maximum retries exceeded."));
             _finishTransaction(false);
         } else {
             _retryCount++;
@@ -341,7 +342,7 @@ void PlanManager::_handleMissionCount(const mavlink_message_t& message)
 void PlanManager::_requestNextMissionItem(void)
 {
     if (_itemIndicesToRead.count() == 0) {
-        _sendError(InternalError, "Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read");
+        _sendError(InternalError, tr("Internal Error: Call to Vehicle _requestNextMissionItem with no more indices to read"));
         return;
     }
 
@@ -623,47 +624,51 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
     switch (savedExpectedAck) {
     case AckNone:
         // State machine is idle. Vehicle is confused.
-	qCDebug(PlanManagerLog) << QStringLiteral("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type));
+        qCDebug(PlanManagerLog) << QStringLiteral("Vehicle sent unexpected MISSION_ACK message, error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         break;
     case AckMissionCount:
         // MISSION_COUNT message expected
-        _sendError(VehicleError, tr("Vehicle returned error: %1.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+        // FIXME: Protocol error
+        _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         _finishTransaction(false);
         break;
     case AckMissionItem:
         // MISSION_ITEM expected
-        _sendError(VehicleError, tr("Vehicle returned error: %1.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+        // FIXME: Protocol error
+        _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
         _finishTransaction(false);
         break;
     case AckMissionRequest:
-        // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+        // MISSION_REQUEST is expected, or MAV_MISSION_ACCEPTED to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             if (_itemIndicesToWrite.count() == 0) {
                 qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck write sequence complete %1").arg(_planTypeString());
                 _finishTransaction(true);
             } else {
-                _sendError(MissingRequestsError, tr("Vehicle did not request all items during write sequence, missed count %1.").arg(_itemIndicesToWrite.count()));
+                // FIXME: Protocol error
+                _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
                 _finishTransaction(false);
             }
         } else {
-            _sendError(VehicleError, tr("Vehicle returned error: %1.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+            _sendError(VehicleAckError, _missionResultToString((MAV_MISSION_RESULT)missionAck.type));
             _finishTransaction(false);
         }
         break;
     case AckMissionClearAll:
-        // MISSION_ACK expected
+        // MAV_MISSION_ACCEPTED expected
         if (missionAck.type != MAV_MISSION_ACCEPTED) {
-            _sendError(VehicleError, tr("Vehicle returned error: %1. Vehicle remove all failed.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+            _sendError(VehicleAckError, tr("Vehicle remove all failed. Error: %1").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
         }
         _finishTransaction(missionAck.type == MAV_MISSION_ACCEPTED);
         break;
     case AckGuidedItem:
-        // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
+        // MISSION_REQUEST is expected, or MAV_MISSION_ACCEPTED to end sequence
         if (missionAck.type == MAV_MISSION_ACCEPTED) {
             qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck %1 guided mode item accepted").arg(_planTypeString());
             _finishTransaction(true, true /* apmGuidedItemWrite */);
         } else {
-            _sendError(VehicleError, tr("Vehicle returned error: %1. %2Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
+            // FIXME: Protocol error
+            _sendError(VehicleAckError, tr("Vehicle returned error: %1. %2Vehicle did not accept guided item.").arg(_missionResultToString((MAV_MISSION_RESULT)missionAck.type)));
             _finishTransaction(false, true /* apmGuidedItemWrite */);
         }
         break;
@@ -702,7 +707,7 @@ void PlanManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
 void PlanManager::_sendError(ErrorCode_t errorCode, const QString& errorMsg)
 {
-    qCDebug(PlanManagerLog) << QStringLiteral("Sending %1 error").arg(_planTypeString()) << errorCode << errorMsg;
+    qCDebug(PlanManagerLog) << QStringLiteral("Sending error - _planTypeString(%1) errorCode(%2) errorMsg(%4)").arg(_planTypeString()).arg(errorCode).arg(errorMsg);
 
     emit error(errorCode, errorMsg);
 }
@@ -728,104 +733,115 @@ QString PlanManager::_ackTypeToString(AckType_t ackType)
 
 QString PlanManager::_lastMissionReqestString(MAV_MISSION_RESULT result)
 {
+    QString prefix;
+    QString postfix;
+
     if (_lastMissionRequest >= 0 && _lastMissionRequest < _writeMissionItems.count()) {
         MissionItem* item = _writeMissionItems[_lastMissionRequest];
 
+        prefix = tr("Item #%1 Command: %2").arg(_lastMissionRequest).arg(_missionCommandTree->friendlyName(item->command()));
+
         switch (result) {
         case MAV_MISSION_UNSUPPORTED_FRAME:
-            return QString(". Frame: %1").arg(item->frame());
+            postfix = tr("Frame: %1").arg(item->frame());
+            break;
         case MAV_MISSION_UNSUPPORTED:
-        {
-            const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_vehicle, item->command());
-            QString friendlyName;
-            QString rawName;
-            if (uiInfo) {
-                friendlyName = uiInfo->friendlyName();
-                rawName = uiInfo->rawName();
-            }
-            return QString(". Command: (%1, %2, %3)").arg(friendlyName).arg(rawName).arg(item->command());
-        }
+            // All we need is the prefix
+            break;
         case MAV_MISSION_INVALID_PARAM1:
-            return QString(". Param1: %1").arg(item->param1());
+            postfix = tr("Value: %1").arg(item->param1());
+            break;
         case MAV_MISSION_INVALID_PARAM2:
-            return QString(". Param2: %1").arg(item->param2());
+            postfix = tr("Value: %1").arg(item->param2());
+            break;
         case MAV_MISSION_INVALID_PARAM3:
-            return QString(". Param3: %1").arg(item->param3());
+            postfix = tr("Value: %1").arg(item->param3());
+            break;
         case MAV_MISSION_INVALID_PARAM4:
-            return QString(". Param4: %1").arg(item->param4());
+            postfix = tr("Value: %1").arg(item->param4());
+            break;
         case MAV_MISSION_INVALID_PARAM5_X:
-            return QString(". Param5: %1").arg(item->param5());
+            postfix = tr("Value: %1").arg(item->param5());
+            break;
         case MAV_MISSION_INVALID_PARAM6_Y:
-            return QString(". Param6: %1").arg(item->param6());
+            postfix = tr("Value: %1").arg(item->param6());
+            break;
         case MAV_MISSION_INVALID_PARAM7:
-            return QString(". Param7: %1").arg(item->param7());
+            postfix = tr("Value: %1").arg(item->param7());
+            break;
         case MAV_MISSION_INVALID_SEQUENCE:
-            return QString(". Sequence: %1").arg(item->sequenceNumber());
+            // All we need is the prefix
+            break;
         default:
             break;
         }
     }
 
-    return QString();
+    return prefix + (postfix.isEmpty() ? QStringLiteral("") : QStringLiteral(" ")) + postfix;
 }
 
 QString PlanManager::_missionResultToString(MAV_MISSION_RESULT result)
 {
-    QString resultString;
-    QString lastRequestString = _lastMissionReqestString(result);
+    QString error;
 
     switch (result) {
     case MAV_MISSION_ACCEPTED:
-        resultString = tr("Mission accepted (MAV_MISSION_ACCEPTED)");
+        error = tr("Mission accepted.");
         break;
     case MAV_MISSION_ERROR:
-        resultString = tr("Unspecified error (MAV_MISSION_ERROR)");
+        error = tr("Unspecified error.");
         break;
     case MAV_MISSION_UNSUPPORTED_FRAME:
-        resultString = tr("Coordinate frame is not supported (MAV_MISSION_UNSUPPORTED_FRAME)");
+        error = tr("Coordinate frame is not supported.");
         break;
     case MAV_MISSION_UNSUPPORTED:
-        resultString = tr("Command is not supported (MAV_MISSION_UNSUPPORTED)");
+        error = tr("Command is not supported.");
         break;
     case MAV_MISSION_NO_SPACE:
-        resultString = tr("Mission item exceeds storage space (MAV_MISSION_NO_SPACE)");
+        error = tr("Mission item exceeds storage space.");
         break;
     case MAV_MISSION_INVALID:
-        resultString = tr("One of the parameters has an invalid value (MAV_MISSION_INVALID)");
+        error = tr("One of the parameters has an invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM1:
-        resultString = tr("Param1 has an invalid value (MAV_MISSION_INVALID_PARAM1)");
+        error = tr("Param 1 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM2:
-        resultString = tr("Param2 has an invalid value (MAV_MISSION_INVALID_PARAM2)");
+        error = tr("Param 2 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM3:
-        resultString = tr("Param3 has an invalid value (MAV_MISSION_INVALID_PARAM3)");
+        error = tr("Param 3 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM4:
-        resultString = tr("Param4 has an invalid value (MAV_MISSION_INVALID_PARAM4)");
+        error = tr("Param 4 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM5_X:
-        resultString = tr("X/Param5 has an invalid value (MAV_MISSION_INVALID_PARAM5_X)");
+        error = tr("Param 5 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM6_Y:
-        resultString = tr("Y/Param6 has an invalid value (MAV_MISSION_INVALID_PARAM6_Y)");
+        error = tr("Param 6 invalid value.");
         break;
     case MAV_MISSION_INVALID_PARAM7:
-        resultString = tr("Param7 has an invalid value (MAV_MISSION_INVALID_PARAM7)");
+        error = tr("Param 7 invalid value.");
         break;
     case MAV_MISSION_INVALID_SEQUENCE:
-        resultString = tr("Received mission item out of sequence (MAV_MISSION_INVALID_SEQUENCE)");
+        error = tr("Received mission item out of sequence.");
         break;
     case MAV_MISSION_DENIED:
-        resultString = tr("Not accepting any mission commands (MAV_MISSION_DENIED)");
+        error = tr("Not accepting any mission commands.");
         break;
     default:
-        qWarning(PlanManagerLog) << QStringLiteral("Fell off end of switch statement %1").arg(_planTypeString());
-        resultString = tr("QGC Internal Error");
+        qWarning(PlanManagerLog) << QStringLiteral("Fell off end of switch statement %1 %2").arg(_planTypeString()).arg(result);
+        error = tr("Unknown error: %1.").arg(result);
+        break;
     }
 
-    return resultString + lastRequestString;
+    QString lastRequestString = _lastMissionReqestString(result);
+    if (!lastRequestString.isEmpty()) {
+        error += QStringLiteral(" ") + lastRequestString;
+    }
+
+    return error;
 }
 
 void PlanManager::_finishTransaction(bool success, bool apmGuidedItemWrite)

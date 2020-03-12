@@ -88,6 +88,7 @@ pkg_check_modules(GST
     gstreamer-1.0>=1.14
     gstreamer-video-1.0>=1.14
     gstreamer-gl-1.0>=1.14
+    egl
 )
 
 if (GST_FOUND)

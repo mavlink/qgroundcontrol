@@ -42,7 +42,8 @@ Item {
     Connections {
         target: setupWindow
         onVisibleChanged: {
-            if(setupWindow.visible) {
+            if (setupWindow.visible) {
+                buttonRow.clearAllChecks()
                 setupButton.checked = true
             }
         }
