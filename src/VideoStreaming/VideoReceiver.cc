@@ -395,7 +395,7 @@ VideoReceiver::_makeSource(const QString& uri)
         gst_element_foreach_src_pad(source, _padProbe, &probeRes);
 
         if (probeRes & 1) {
-            if (probeRes & 2) {
+            if (probeRes & 2 && !_videoSettings->lowLatencyMode()->rawValue().toBool()) {
                 if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
@@ -414,7 +414,11 @@ VideoReceiver::_makeSource(const QString& uri)
                 }
             }
         } else {
-            g_signal_connect(source, "pad-added", G_CALLBACK(_linkPadWithOptionalBuffer), parser);
+            if (_videoSettings->lowLatencyMode()->rawValue().toBool()) {
+                g_signal_connect(source, "pad-added", G_CALLBACK(newPadCB), parser);
+            } else {
+                g_signal_connect(source, "pad-added", G_CALLBACK(_linkPadWithOptionalBuffer), parser);
+            }
         }
 
         g_signal_connect(parser, "pad-added", G_CALLBACK(_wrapWithGhostPad), nullptr);
@@ -568,6 +572,9 @@ VideoReceiver::start()
         qCWarning(VideoReceiverLog) << "Failed because video sink is not set";
         return;
     }
+
+    g_object_set(_videoSink, "sync", !_videoSettings->lowLatencyMode()->rawValue().toBool(), NULL);
+
     if(_running) {
         qCDebug(VideoReceiverLog) << "Already running!";
         return;
