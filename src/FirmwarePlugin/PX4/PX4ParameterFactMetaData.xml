@@ -8171,9 +8171,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0" name="CAL_ACC_PRIME" type="INT32">
       <short_desc>Primary accel ID</short_desc>
     </parameter>
-    <parameter category="System" default="0" name="CAL_BARO_PRIME" type="INT32">
-      <short_desc>Primary baro ID</short_desc>
-    </parameter>
     <parameter category="System" default="1" name="CAL_GYRO0_EN" type="INT32">
       <short_desc>Gyro 0 enabled</short_desc>
     </parameter>
