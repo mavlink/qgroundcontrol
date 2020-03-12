@@ -24,11 +24,12 @@
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
-class APMFactMetaDataRaw
+class APMFactMetaDataRaw : public QObject
 {
+    Q_OBJECT
 public:
-    APMFactMetaDataRaw(void)
-        : rebootRequired(false)
+    APMFactMetaDataRaw(QObject *parent = nullptr)
+        : QObject(parent), rebootRequired(false)
     { }
 
     QString name;
