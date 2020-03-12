@@ -1422,57 +1422,6 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <max>1800000000</max>
       <unit>deg * 1e7</unit>
     </parameter>
-    <parameter default="120.0" name="NAV_DLL_AH_T" type="FLOAT">
-      <short_desc>Airfield home wait time</short_desc>
-      <long_desc>The amount of time in seconds the system should wait at the airfield home waypoint</long_desc>
-      <min>0.0</min>
-      <max>3600.0</max>
-      <unit>s</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter default="0" name="NAV_DLL_CHSK" type="INT32">
-      <short_desc>Skip comms hold wp</short_desc>
-      <long_desc>If set to 1 the system will skip the comms hold wp on data link loss and will directly fly to airfield home</long_desc>
-    </parameter>
-    <parameter default="600.0" name="NAV_DLL_CH_ALT" type="FLOAT">
-      <short_desc>Comms hold alt</short_desc>
-      <long_desc>Altitude of comms hold waypoint</long_desc>
-      <min>-50</min>
-      <max>30000</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter default="-266072120" name="NAV_DLL_CH_LAT" type="INT32">
-      <short_desc>Comms hold Lat</short_desc>
-      <long_desc>Latitude of comms hold waypoint</long_desc>
-      <min>-900000000</min>
-      <max>900000000</max>
-      <unit>deg * 1e7</unit>
-    </parameter>
-    <parameter default="1518453890" name="NAV_DLL_CH_LON" type="INT32">
-      <short_desc>Comms hold Lon</short_desc>
-      <long_desc>Longitude of comms hold waypoint</long_desc>
-      <min>-1800000000</min>
-      <max>1800000000</max>
-      <unit>deg * 1e7</unit>
-    </parameter>
-    <parameter default="120.0" name="NAV_DLL_CH_T" type="FLOAT">
-      <short_desc>Comms hold wait time</short_desc>
-      <long_desc>The amount of time in seconds the system should wait at the comms hold waypoint</long_desc>
-      <min>0.0</min>
-      <max>3600.0</max>
-      <unit>s</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter default="2" name="NAV_DLL_N" type="INT32">
-      <short_desc>Number of allowed Datalink timeouts</short_desc>
-      <long_desc>After more than this number of data link timeouts the aircraft returns home directly</long_desc>
-      <min>0</min>
-      <max>1000</max>
-    </parameter>
   </group>
   <group name="EKF2">
     <parameter default="0.2" name="EKF2_ABIAS_INIT" type="FLOAT">
@@ -4258,13 +4207,12 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
     <parameter default="0" name="NAV_DLL_ACT" type="INT32">
       <short_desc>Set data link loss failsafe mode</short_desc>
-      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed. Setting this parameter to 4 will enable CASA Outback Challenge rules, which are only recommended to participants of that competition.</long_desc>
+      <long_desc>The data link loss failsafe will only be entered after a timeout, set by COM_DL_LOSS_T in seconds. Once the timeout occurs the selected action will be executed.</long_desc>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Hold mode</value>
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
-        <value code="4">Data Link Auto Recovery (CASA Outback Challenge rules)</value>
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
       </values>
@@ -4309,24 +4257,15 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
     <parameter default="2" name="NAV_RCL_ACT" type="INT32">
       <short_desc>Set RC loss failsafe mode</short_desc>
-      <long_desc>The RC loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. If RC input checks have been disabled by setting the COM_RC_IN_MODE param it will not be triggered. Setting this parameter to 4 will enable CASA Outback Challenge rules, which are only recommended to participants of that competition.</long_desc>
+      <long_desc>The RC loss failsafe will only be entered after a timeout, set by COM_RC_LOSS_T in seconds. If RC input checks have been disabled by setting the COM_RC_IN_MODE param it will not be triggered.</long_desc>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Hold mode</value>
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
-        <value code="4">RC Auto Recovery (CASA Outback Challenge rules)</value>
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
       </values>
-    </parameter>
-    <parameter default="120.0" name="NAV_RCL_LT" type="FLOAT">
-      <short_desc>RC Loss Loiter Time (CASA Outback Challenge rules)</short_desc>
-      <long_desc>The amount of time in seconds the system should loiter at current position before termination. Only applies if NAV_RCL_ACT is set to 2 (CASA Outback Challenge rules). Set to -1 to make the system skip loitering.</long_desc>
-      <min>-1.0</min>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
     </parameter>
     <parameter default="1" name="NAV_TRAFF_AVOID" type="INT32">
       <short_desc>Set traffic avoidance mode</short_desc>
