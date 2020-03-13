@@ -8,15 +8,17 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.3 - Not yet released
+### 4.0.4 - Not yet released
 
 
-### 4.0.3 - Not yet released
+### 4.0.3 - Stable
 
 * Plan: Add setting for takeoff item not required
 * Plan: Takeoff item must be added prior to allowing other item types to enable
+* Video: Add low latency mode as optional configuration setting (defaults to false)
+* ArduPilot: Fix generated list of available firmwares
 
-### 4.0.2 - Stable
+### 4.0.2
 
 * Fix Mavlink V2 protocol negotation based on capability bits
 * Fix waiting for AUTOPILOT_VERSION response to get capability bits
