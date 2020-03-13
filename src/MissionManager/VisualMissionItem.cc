@@ -146,7 +146,7 @@ void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightS
     if (qIsNaN(_missionFlightStatus.gimbalYaw) && qIsNaN(_missionGimbalYaw)) {
         return;
     }
-    if (_missionFlightStatus.gimbalYaw != _missionGimbalYaw) {
+    if (!qFuzzyCompare(_missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
         _missionGimbalYaw = _missionFlightStatus.gimbalYaw;
         emit missionGimbalYawChanged(_missionGimbalYaw);
     }
