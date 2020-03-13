@@ -162,7 +162,7 @@ void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 
 void VisualMissionItem::_updateTerrainAltitude(void)
 {
-    if (coordinate().latitude() == 0 && coordinate().longitude() == 0) {
+    if (!coordinate().isValid()) {
         // This is an intermediate state we don't react to
         return;
     }
