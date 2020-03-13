@@ -194,7 +194,7 @@ signals:
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);
     void terrainPercentChanged          (double terrainPercent);
-    void terrainCollisionChanged        (double terrainCollision);
+    void terrainCollisionChanged        (bool terrainCollision);
     void azimuthChanged                 (double azimuth);
     void commandDescriptionChanged      (void);
     void commandNameChanged             (void);
