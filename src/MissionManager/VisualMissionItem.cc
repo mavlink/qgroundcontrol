@@ -166,7 +166,7 @@ void VisualMissionItem::_updateTerrainAltitude(void)
         // This is an intermediate state we don't react to
         return;
     }
-    if (!_flyView && specifiesCoordinate() && coordinate().isValid()) {
+    if (!_flyView && specifiesCoordinate()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
     } else {
