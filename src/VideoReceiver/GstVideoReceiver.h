@@ -16,81 +16,87 @@
 #pragma once
 
 #include "QGCLoggingCategory.h"
-#include <QObject>
-#include <QSize>
 #include <QTimer>
-#include <QTcpSocket>
 #include <QThread>
 #include <QWaitCondition>
 #include <QMutex>
 #include <QQueue>
+#include <QQuickItem>
 
-#if defined(QGC_GST_STREAMING)
+#include "VideoReceiver.h"
+
 #include <gst/gst.h>
-typedef GstElement VideoSink;
-#else
-typedef void VideoSink;
-#endif
 
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
 
-class VideoReceiver : public QThread
+class Worker : public QThread
 {
     Q_OBJECT
 
 public:
-    explicit VideoReceiver(QObject* parent = nullptr);
-    ~VideoReceiver(void);
-
-    typedef enum {
-        FILE_FORMAT_MIN = 0,
-        FILE_FORMAT_MKV = FILE_FORMAT_MIN,
-        FILE_FORMAT_MOV,
-        FILE_FORMAT_MP4,
-        FILE_FORMAT_MAX
-    } FILE_FORMAT;
-
-    Q_PROPERTY(bool     streaming   READ    streaming   NOTIFY  streamingChanged)
-    Q_PROPERTY(bool     decoding    READ    decoding    NOTIFY  decodingChanged)
-    Q_PROPERTY(bool     recording   READ    recording   NOTIFY  recordingChanged)
-    Q_PROPERTY(QSize    videoSize   READ    videoSize   NOTIFY  videoSizeChanged)
-
-    bool streaming(void) {
-        return _streaming;
+    bool needDispatch() {
+        return QThread::currentThread() != this;
     }
 
-    bool decoding(void) {
-        return _decoding;
+    void dispatch(std::function<void()> t) {
+        QMutexLocker lock(&_taskQueueSync);
+        _taskQueue.enqueue(t);
+        _taskQueueUpdate.wakeOne();
     }
 
-    bool recording(void) {
-        return _recording;
+    void shutdown() {
+        if (needDispatch()) {
+            dispatch([this](){
+                _shutdown = true;
+            });
+            QThread::wait();
+        } else {
+            QThread::terminate();
+        }
     }
 
-    QSize videoSize(void) {
-        const quint32 size = _videoSize;
-        return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
+protected:
+    void run() {
+        while(!_shutdown) {
+            _taskQueueSync.lock();
+
+            while (_taskQueue.isEmpty()) {
+                _taskQueueUpdate.wait(&_taskQueueSync);
+            }
+
+            Task t = _taskQueue.dequeue();
+
+            _taskQueueSync.unlock();
+
+            t();
+        }
     }
 
-signals:
-    void timeout(void);
-    void streamingChanged(void);
-    void decodingChanged(void);
-    void recordingChanged(void);
-    void recordingStarted(void);
-    void videoSizeChanged(void);
-    void screenshotComplete(void);
+private:
+    typedef std::function<void()> Task;
+    QWaitCondition      _taskQueueUpdate;
+    QMutex              _taskQueueSync;
+    QQueue<Task>        _taskQueue;
+    bool                _shutdown = false;
+};
+
+class GstVideoReceiver : public VideoReceiver
+{
+    Q_OBJECT
+
+public:
+    explicit GstVideoReceiver(QObject* parent = nullptr);
+    ~GstVideoReceiver(void);
 
 public slots:
     virtual void start(const QString& uri, unsigned timeout);
     virtual void stop(void);
-    virtual void startDecoding(VideoSink* videoSink);
+    virtual void startDecoding(void* sink);
     virtual void stopDecoding(void);
     virtual void startRecording(const QString& videoFile, FILE_FORMAT format);
     virtual void stopRecording(void);
     virtual void takeScreenshot(const QString& imageFile);
 
-#if defined(QGC_GST_STREAMING)
 protected slots:
     virtual void _watchdog(void);
     virtual void _handleEOS(void);
@@ -115,11 +121,6 @@ protected:
     virtual void _unlinkBranch(GstElement* from);
     virtual void _shutdownDecodingBranch (void);
     virtual void _shutdownRecordingBranch(void);
-
-    typedef std::function<void(void)> Task;
-    bool _isOurThread(void);
-    void _post(Task t);
-    void run(void);
 
 private:
     static gboolean _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
@@ -158,18 +159,14 @@ private:
 
     unsigned            _timeout;
 
-    QWaitCondition      _taskQueueUpdate;
-    QMutex              _taskQueueSync;
-    QQueue<Task>        _taskQueue;
-    bool                _shutdown;
+    Worker              _apiHandler;
+    Worker              _notificationHandler;
+
+    bool                _endOfStream;
 
     static const char*  _kFileMux[FILE_FORMAT_MAX - FILE_FORMAT_MIN];
-#else
-private:
-#endif
-
-    std::atomic<bool>   _streaming;
-    std::atomic<bool>   _decoding;
-    std::atomic<bool>   _recording;
-    std::atomic<quint32>_videoSize;
 };
+
+void* createVideoSink(void* widget);
+
+void initializeVideoReceiver(int argc, char* argv[], int debuglevel);

@@ -112,10 +112,7 @@ protected slots:
 
 protected:
     friend class FinishVideoInitialization;
-#if defined(QGC_GST_STREAMING)
-    static gboolean _videoSinkQuery (GstPad* pad, GstObject* parent, GstQuery* query);
-    GstElement*     _makeVideoSink  (gpointer widget);
-#endif
+
     void _initVideo                 ();
     void _updateSettings            ();
     void _setVideoUri               (const QString& uri);
@@ -134,10 +131,8 @@ protected:
     bool            _isTaisync              = false;
     VideoReceiver*  _videoReceiver          = nullptr;
     VideoReceiver*  _thermalVideoReceiver   = nullptr;
-#if defined(QGC_GST_STREAMING)
-    GstElement*     _videoSink              = nullptr;
-    GstElement*     _thermalVideoSink       = nullptr;
-#endif
+    void*           _videoSink              = nullptr;
+    void*           _thermalVideoSink       = nullptr;
     VideoSettings*  _videoSettings          = nullptr;
     QString         _videoUri;
     QString         _thermalVideoUri;
