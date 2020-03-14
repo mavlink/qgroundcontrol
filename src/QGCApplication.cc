@@ -34,7 +34,9 @@
 
 #include <QDebug>
 
-#include "VideoStreaming.h"
+#if defined(QGC_GST_STREAMING)
+#include "GStreamer.h"
+#endif
 
 #include "QGC.h"
 #include "QGCApplication.h"
@@ -323,8 +325,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (settings.contains(AppSettings::gstDebugLevelName)) {
         gstDebugLevel = settings.value(AppSettings::gstDebugLevelName).toInt();
     }
-    // Initialize Video Streaming
-    initializeVideoStreaming(argc, argv, gstDebugLevel);
+
+#if defined(QGC_GST_STREAMING)
+    // Initialize Video Receiver
+    GStreamer::initialize(argc, argv, gstDebugLevel);
+#else
+    Q_UNUSED(gstDebugLevel)
+#endif
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
