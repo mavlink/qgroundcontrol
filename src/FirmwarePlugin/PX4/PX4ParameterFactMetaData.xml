@@ -735,6 +735,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <max>3000</max>
       <unit>ms</unit>
       <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="25.0" name="TRIG_DISTANCE" type="FLOAT">
       <short_desc>Camera trigger distance</short_desc>
@@ -743,6 +744,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>1</increment>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="4" name="TRIG_INTERFACE" type="INT32">
       <short_desc>Camera trigger Interface</short_desc>
@@ -762,6 +764,16 @@ Set to 2 to use heading from motion capture</short_desc>
       <max>10000.0</max>
       <unit>ms</unit>
       <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="1.0" name="TRIG_MIN_INTERVA" type="FLOAT">
+      <short_desc>Minimum camera trigger interval</short_desc>
+      <long_desc>This parameter sets the minimum time between two consecutive trigger events the specific camera setup is supporting.</long_desc>
+      <min>1.0</min>
+      <max>10000.0</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="TRIG_MODE" type="INT32">
       <short_desc>Camera trigger mode</short_desc>
@@ -789,6 +801,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <long_desc>This parameter sets the polarity of the trigger (0 = active low, 1 = active high )</long_desc>
       <min>0</min>
       <max>1</max>
+      <reboot_required>true</reboot_required>
       <values>
         <value code="0">Active low</value>
         <value code="1">Active high</value>
