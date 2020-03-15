@@ -38,7 +38,6 @@ public:
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
     bool    specifiesCoordinate (void) const final;
-    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void    applyNewAltitude    (double newAltitude) final;
     double  timeBetweenShots    (void) final;
 
@@ -68,10 +67,8 @@ private slots:
     void _recalcCameraShots         (void) final;
 
 private:
-    double  _transectSpacing            (void) const;
-    int     _transectCount              (void) const;
-    void    _buildAndAppendMissionItems (QList<MissionItem*>& items, QObject* missionItemParent);
-    void    _appendLoadedMissionItems   (QList<MissionItem*>& items, QObject* missionItemParent);
+    double  _calcTransectSpacing    (void) const;
+    int     _calcTransectCount      (void) const;
 
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points

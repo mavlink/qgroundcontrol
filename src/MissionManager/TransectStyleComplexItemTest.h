@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "UnitTest.h"
+#include "TransectStyleComplexItemTestBase.h"
 #include "MultiSignalSpy.h"
 #include "CorridorScanComplexItem.h"
 #include "PlanMasterController.h"
@@ -18,7 +18,7 @@
 
 class TransectStyleItem;
 
-class TransectStyleComplexItemTest : public UnitTest
+class TransectStyleComplexItemTest : public TransectStyleComplexItemTestBase
 {
     Q_OBJECT
     
@@ -28,7 +28,7 @@ public:
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty             (void);
     void _testRebuildTransects  (void);
@@ -73,8 +73,6 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
 
-    PlanMasterController*   _masterController =     nullptr;
-    Vehicle*                _controllerVehicle =    nullptr;
     MultiSignalSpy*         _multiSpy =             nullptr;
     QList<QGeoCoordinate>   _polygonVertices;
     TransectStyleItem*      _transectStyleItem =    nullptr;
@@ -94,7 +92,6 @@ public:
     // Overrides from VisualMissionItem
     void    save                (QJsonArray&  missionItems) final { Q_UNUSED(missionItems); }
     bool    specifiesCoordinate (void) const final { return true; }
-    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
     void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
     double  additionalTimeDelay (void) const final { return 0; }
 
