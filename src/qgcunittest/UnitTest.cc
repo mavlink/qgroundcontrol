@@ -17,6 +17,8 @@
 #include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
 #include <QTemporaryFile>
 #include <QTime>
@@ -103,6 +105,11 @@ void UnitTest::init(void)
     }
 
     _linkManager->restart();
+
+    // Force offline vehicle back to defaults
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    appSettings->offlineEditingFirmwareType()->setRawValue(appSettings->offlineEditingFirmwareType()->rawDefaultValue());
+    appSettings->offlineEditingVehicleType()->setRawValue(appSettings->offlineEditingVehicleType()->rawDefaultValue());
     
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
