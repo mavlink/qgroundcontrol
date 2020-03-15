@@ -37,15 +37,20 @@ SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObjec
 
     if (metaData->defaultValueAvailable()) {
         QVariant rawDefaultValue = metaData->rawDefaultValue();
-        if (_visible) {
-            QVariant typedValue;
-            QString errorString;
-            metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
-            _rawValue = typedValue;
-        } else {
-            // Setting is not visible, force to default value always
-            settings.setValue(_name, rawDefaultValue);
+        if (qgcApp()->runningUnitTests()) {
+            // Don't use saved settings
             _rawValue = rawDefaultValue;
+        } else {
+            if (_visible) {
+                QVariant typedValue;
+                QString errorString;
+                metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
+                _rawValue = typedValue;
+            } else {
+                // Setting is not visible, force to default value always
+                settings.setValue(_name, rawDefaultValue);
+                _rawValue = rawDefaultValue;
+            }
         }
     }
 
