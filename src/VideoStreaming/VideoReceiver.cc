@@ -195,6 +195,35 @@ VideoReceiver::_timeout()
         if(_uri.contains("rtsp://") && url.port() <= 0) {
             url.setPort(554);
         }
+
+        if(_uri.contains("http://")){
+            QNetworkAccessManager networkManager;
+
+            qCritical() << _uri;
+
+            QUrl url(_uri);
+            QNetworkRequest request;
+            request.setUrl(url);
+
+            QNetworkReply *reply = networkManager.get(request);
+
+            QEventLoop loop;
+            connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+            connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), &loop, SLOT(quit()));
+            loop.exec();
+
+            QString replyText( reply->readAll() );
+            qCritical() << replyText;
+
+            if(replyText.contains("rtsp://")){
+                 _uri = replyText;
+                 QUrl url(_uri);
+            }
+
+      }
+
+
+
         _socket = new QTcpSocket;
         QNetworkProxy tempProxy;
         tempProxy.setType(QNetworkProxy::DefaultProxy);
@@ -243,6 +272,7 @@ VideoReceiver::start()
     bool isRtsp     = _uri.contains("rtsp://") && !isTaisyncUSB;
     bool isTCP      = _uri.contains("tcp://")  && !isTaisyncUSB;
     bool isMPEGTS   = _uri.contains("mpegts://")  && !isTaisyncUSB;
+    bool isHttp     = _uri.contains("http://") && !isTaisyncUSB;
 
     if (!isTaisyncUSB && _uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
@@ -260,7 +290,7 @@ VideoReceiver::start()
     _starting = true;
 
     //-- For RTSP and TCP, check to see if server is there first
-    if(!_serverPresent && (isRtsp || isTCP)) {
+    if(!_serverPresent && (isRtsp || isTCP || isHttp)) {
         _timer.start(100);
         return;
     }
@@ -503,6 +533,28 @@ void
 VideoReceiver::setUri(const QString & uri)
 {
     _uri = uri;
+/*
+    QNetworkAccessManager networkManager;
+
+    qCritical() << uri;
+
+    QUrl url(uri);
+    QNetworkRequest request;
+    request.setUrl(url);
+
+    QNetworkReply *reply = networkManager.get(request);
+
+    QEventLoop loop;
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), &loop, SLOT(quit()));
+    loop.exec();
+
+    QString replyText( reply->readAll() );
+    qCritical() << replyText;
+
+
+    _uri = replyText;
+    */
 }
 
 //-----------------------------------------------------------------------------

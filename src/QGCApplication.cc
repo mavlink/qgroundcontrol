@@ -797,7 +797,7 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
             if (_majorVersion < majorVersion ||
                     (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
                     (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
+                //QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
             }
         }
     }
