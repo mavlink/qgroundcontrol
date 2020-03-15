@@ -75,7 +75,7 @@ public:
     bool    triggerCamera           (void) const { return triggerDistance() != 0; }
 
     // Used internally only by unit tests
-    int _transectCount(void) { return _transects.count(); }
+    int _transectCount(void) const { return _transects.count(); }
 
     // Overrides from ComplexMissionItem
 
@@ -90,7 +90,7 @@ public:
 
     void            save                    (QJsonArray&  planItems) override = 0;
     bool            specifiesCoordinate     (void) const override = 0;
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) override = 0;
+    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) override = 0;
 
     bool            dirty                   (void) const final { return _dirty; }
@@ -151,7 +151,14 @@ protected:
     void    _setCameraShots                 (int cameraShots);
     double  _triggerDistance                (void) const;
     bool    _hasTurnaround                  (void) const;
-    double  _turnaroundDistance             (void) const;
+    double  _turnAroundDistance             (void) const;
+    void    _appendWaypoint                 (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, float holdTime, const QGeoCoordinate& coordinate);
+    void    _appendSinglePhotoCapture       (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum);
+    void    _appendConditionGate            (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate);
+    void    _appendCameraTriggerDistance    (QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, float triggerDistance);
+    void    _appendCameraTriggerDistanceUpdatePoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate, bool useConditionGate, float triggerDistance);
+    void    _buildAndAppendMissionItems     (QList<MissionItem*>& items, QObject* missionItemParent);
+    void    _appendLoadedMissionItems       (QList<MissionItem*>& items, QObject* missionItemParent);
 
     int                 _sequenceNumber;
     QGeoCoordinate      _coordinate;
@@ -206,7 +213,8 @@ protected:
     static const char* _jsonFollowTerrainKey;
     static const char* _jsonCameraShotsKey;
 
-    static const int _terrainQueryTimeoutMsecs;
+    static const int _terrainQueryTimeoutMsecs=     1000;
+    static const int _hoverAndCaptureDelaySeconds = 4;
 
 private slots:
     void _reallyQueryTransectsPathHeightInfo(void);
