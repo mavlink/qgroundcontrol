@@ -20,10 +20,8 @@ TransectStyleComplexItemTest::TransectStyleComplexItemTest(void)
 
 void TransectStyleComplexItemTest::init(void)
 {
-    UnitTest::init();
+    TransectStyleComplexItemTestBase::init();
 
-    _masterController = new PlanMasterController(this);
-    _controllerVehicle = _masterController->controllerVehicle();
     _transectStyleItem = new TransectStyleItem(_masterController, this);
     _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
     _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
@@ -50,6 +48,7 @@ void TransectStyleComplexItemTest::cleanup(void)
 {
     delete _transectStyleItem;
     delete _multiSpy;
+    TransectStyleComplexItemTestBase::cleanup();
 }
 
 void TransectStyleComplexItemTest::_testDirty(void)
