@@ -23,7 +23,7 @@ SurveyComplexItemTest::SurveyComplexItemTest(void)
 
 void SurveyComplexItemTest::init(void)
 {
-    UnitTest::init();
+    TransectStyleComplexItemTestBase::init();
 
     _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
     _rgSurveySignals[surveyCameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged());
@@ -32,9 +32,6 @@ void SurveyComplexItemTest::init(void)
     _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
     _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
 
-    _planViewSettings = qgcApp()->toolbox()->settingsManager()->planViewSettings();
-    _masterController = new PlanMasterController(this);
-    _controllerVehicle = _masterController->controllerVehicle();
     _surveyItem = new SurveyComplexItem(_masterController, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     _mapPolygon = _surveyItem->surveyAreaPolygon();
     _mapPolygon->appendVertices(_polyVertices);
@@ -66,6 +63,8 @@ void SurveyComplexItemTest::cleanup(void)
 {
     delete _surveyItem;
     delete _multiSpy;
+
+    TransectStyleComplexItemTestBase::cleanup();
 }
 
 void SurveyComplexItemTest::_testDirty(void)
@@ -124,15 +123,8 @@ double SurveyComplexItemTest::_clampGridAngle180(double gridAngle)
     return gridAngle;
 }
 
-void SurveyComplexItemTest::_setPolygon(void)
-{
-    _mapPolygon->appendVertices(_polyVertices);
-}
-
 void SurveyComplexItemTest::_testGridAngle(void)
 {
-    _setPolygon();
-
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
 
@@ -141,14 +133,14 @@ void SurveyComplexItemTest::_testGridAngle(void)
         QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
         double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
         //qDebug() << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
-        QCOMPARE((int)_clampGridAngle180(gridAngle), (int)_clampGridAngle180(azimuth));
+        int clampGridAngle = qRound(_clampGridAngle180(gridAngle));
+        int clampAzimuth = qRound(_clampGridAngle180(azimuth));
+        QCOMPARE(clampGridAngle, clampAzimuth);
     }
 }
 
 void SurveyComplexItemTest::_testEntryLocation(void)
 {
-    _setPolygon();
-
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
 
@@ -165,40 +157,43 @@ void SurveyComplexItemTest::_testEntryLocation(void)
     }
 }
 
-
 void SurveyComplexItemTest::_testItemCount(void)
 {
+    typedef struct {
+        bool        hoverAndCapture;
+        bool        triggerInTurnAround;
+        bool        refly90;
+        bool        hasTurnaround;
+    } TestCase_t;
+
+    QList<TestCase_t> rgTestCases;
+
+    for (int i=0; i<2; i++) {
+        for (int j=0; i<2; i++) {
+            for (int k=0; i<2; i++) {
+                for (int l=0; i<2; i++) {
+                    TestCase_t testCase;
+                    testCase.hoverAndCapture =      i;
+                    testCase.triggerInTurnAround =  j;
+                    testCase.refly90 =              k;
+                    testCase.hasTurnaround =        l;
+                    rgTestCases.append(testCase);
+                }
+            }
+        }
+    }
+
     QList<MissionItem*> items;
-
-    _setPolygon();
-
-    _surveyItem->hoverAndCapture()->setRawValue(false);
-    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
-    _surveyItem->refly90Degrees()->setRawValue(false);
-    _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
-    items.clear();
-
-    _surveyItem->hoverAndCapture()->setRawValue(false);
-    _surveyItem->cameraTriggerInTurnAround()->setRawValue(true);
-    _surveyItem->refly90Degrees()->setRawValue(false);
-    _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
-    items.clear();
-
-    _surveyItem->hoverAndCapture()->setRawValue(true);
-    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
-    _surveyItem->refly90Degrees()->setRawValue(false);
-    _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
-    items.clear();
-
-    _surveyItem->hoverAndCapture()->setRawValue(true);
-    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
-    _surveyItem->refly90Degrees()->setRawValue(true);
-    _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
-    items.clear();
+    for (const TestCase_t& testCase : rgTestCases) {
+        qDebug() << "hoverAndCapture:triggerInTurnAround:refly90:hasTuraround" << testCase.hoverAndCapture << testCase.triggerInTurnAround << testCase.refly90 << testCase.hasTurnaround;
+        _surveyItem->hoverAndCapture()->setRawValue(testCase.hoverAndCapture);
+        _surveyItem->cameraTriggerInTurnAround()->setRawValue(testCase.triggerInTurnAround);
+        _surveyItem->refly90Degrees()->setRawValue(testCase.refly90);
+        _surveyItem->turnAroundDistance()->setRawValue(testCase.hasTurnaround ? 50 : 0);
+        _surveyItem->appendMissionItems(items, this);
+        QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
+        items.clear();
+    }
 }
 
 QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround, bool useConditionGate)
@@ -245,9 +240,7 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
     _surveyItem->appendMissionItems(items, this);
 #if 0
     // Handy for debugging failures
-    for (const MissionItem* item : items) {
-        qDebug() << "Cmd" << item->command();
-    }
+    _printItemCommands(items);
 #endif
     QCOMPARE(items.count(), expectedCommands.count());
     for (int i=0; i<expectedCommands.count(); i++) {
@@ -283,7 +276,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
 
     // Test cameraTriggerInTurnAround = true cases
 
-    QList<MAV_CMD> imagesInTurnaroundCommands = {
+    QList<MAV_CMD> imagesInTurnaroundWithTurnaroundDistanceCommands = {
         // Transect 1
         MAV_CMD_CONDITION_GATE,         // First turaround
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
@@ -300,13 +293,33 @@ void SurveyComplexItemTest::_testItemGeneration(void)
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
     };
 
-    _testItemGenerationWorker(true /* imagesInTurnaround */, true /* hasTurnaround */, true /* useConditionGate */, imagesInTurnaroundCommands);
+    _testItemGenerationWorker(true /* imagesInTurnaround */, true /* hasTurnaround */, true /* useConditionGate */, imagesInTurnaroundWithTurnaroundDistanceCommands);
 
     // Switch to non CONDITION_GATE usage
-    for (MAV_CMD& cmd : imagesInTurnaroundCommands) {
+    for (MAV_CMD& cmd : imagesInTurnaroundWithTurnaroundDistanceCommands) {
         cmd = cmd == MAV_CMD_CONDITION_GATE ? MAV_CMD_NAV_WAYPOINT : cmd;
     }
-    _testItemGenerationWorker(true /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */, imagesInTurnaroundCommands);
+    _testItemGenerationWorker(true /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */, imagesInTurnaroundWithTurnaroundDistanceCommands);
+
+    QList<MAV_CMD> imagesInTurnaroundWithoutTurnaroundDistanceCommands = {
+        // Transect 1
+        MAV_CMD_CONDITION_GATE,         // Survey entry
+        MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Camera trigger start for entire survey
+        MAV_CMD_NAV_WAYPOINT,           // Survey exit
+        // Transect 2
+        MAV_CMD_CONDITION_GATE,         // Survey entry
+        MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Survey entry also has trigger start
+        MAV_CMD_CONDITION_GATE,         // Survey exit
+        MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Camera trigger stop for entire survey
+    };
+
+    _testItemGenerationWorker(true /* imagesInTurnaround */, false /* hasTurnaround */, true /* useConditionGate */, imagesInTurnaroundWithoutTurnaroundDistanceCommands);
+
+    // Switch to non CONDITION_GATE usage
+    for (MAV_CMD& cmd : imagesInTurnaroundWithoutTurnaroundDistanceCommands) {
+        cmd = cmd == MAV_CMD_CONDITION_GATE ? MAV_CMD_NAV_WAYPOINT : cmd;
+    }
+    _testItemGenerationWorker(true /* imagesInTurnaround */, false /* hasTurnaround */, false /* useConditionGate */, imagesInTurnaroundWithoutTurnaroundDistanceCommands);
 }
 
 void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
@@ -334,7 +347,6 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
     double triggerDistance = (polyHeightDistance / 3.0) + 1.0;
     _surveyItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(triggerDistance);
 
-    qDebug() << "_testHoverCaptureItemGeneration";
     _surveyItem->hoverAndCapture()->setRawValue(true);
     _testItemGenerationWorker(false /* imagesInTurnaround */, true /* hasTurnaround */, true /* useConditionGate */, expectedCommands);
     _testItemGenerationWorker(false /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */, expectedCommands);

@@ -47,7 +47,6 @@ public:
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
     bool    specifiesCoordinate (void) const final { return true; }
-    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void    applyNewAltitude    (double newAltitude) final;
     double  timeBetweenShots    (void) final;
 
@@ -109,8 +108,6 @@ private:
     void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
     bool _gridAngleIsNorthSouthTransects();
     double _clampGridAngle90(double gridAngle);
-    void _buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent);
-    void _appendLoadedMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent);
     bool _imagesEverywhere(void) const;
     bool _triggerCamera(void) const;
     bool _hasTurnaround(void) const;
@@ -129,11 +126,6 @@ private:
     // return true if vertex a can see vertex b
     bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
     bool _VertexIsReflex(const QPolygonF& polygon, const QPointF* vertex);
-    void _appendWaypoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, float holdTime, const QGeoCoordinate& coordinate);
-    void _appendSinglePhotoCapture(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum);
-    void _appendConditionGate(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate);
-    void _appendCameraTriggerDistance(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, float triggerDistance);
-    void _appendCameraTriggerDistanceUpdatePoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate, bool useConditionGate, float triggerDistance);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -172,7 +164,4 @@ private:
     static const char* _jsonV3CameraOrientationLandscapeKey;
     static const char* _jsonV3FixedValueIsAltitudeKey;
     static const char* _jsonV3Refly90DegreesKey;
-
-
-    static const int _hoverAndCaptureDelaySeconds = 4;
 };
