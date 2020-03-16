@@ -49,7 +49,7 @@ Item {
     property bool   _addWaypointOnClick:                false
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-    property int    _editingLayer:                      bar.currentIndex ? _layers[bar.currentIndex] : _layerMission
+    property int    _editingLayer:                      layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
@@ -704,7 +704,7 @@ Item {
             height:             parent.height
             width:              _rightPanelWidth
             color:              qgcPal.window
-            opacity:            planExpanded.visible ? 0.2 : 0
+            opacity:            layerTabBar.visible ? 0.2 : 0
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             anchors.rightMargin: _toolsMargin
@@ -781,38 +781,21 @@ Item {
                 }
                 //-------------------------------------------------------
                 // Mission Controls (Expanded)
-                Rectangle {
-                    id:         planExpanded
+                QGCTabBar {
+                    id:         layerTabBar
                     width:      parent.width
-                    height:     (!planControlColapsed || !_airspaceEnabled) ? bar.height + ScreenTools.defaultFontPixelHeight : 0
-                    color:      qgcPal.missionItemEditor
-                    radius:     _radius
                     visible:    (!planControlColapsed || !_airspaceEnabled) && QGroundControl.corePlugin.options.enablePlanViewSelector
-                    Item {
-                        height:             bar.height
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        anchors.margins:    ScreenTools.defaultFontPixelWidth
-                        anchors.verticalCenter: parent.verticalCenter
-                        QGCTabBar {
-                            id:             bar
-                            width:          parent.width
-                            anchors.centerIn: parent
-                            Component.onCompleted: {
-                                currentIndex = 0
-                            }
-                            QGCTabButton {
-                                text:       qsTr("Mission")
-                            }
-                            QGCTabButton {
-                                text:       qsTr("Fence")
-                                enabled:    _geoFenceController.supported
-                            }
-                            QGCTabButton {
-                                text:       qsTr("Rally")
-                                enabled:    _rallyPointController.supported
-                            }
-                        }
+                    Component.onCompleted: currentIndex = 0
+                    QGCTabButton {
+                        text:       qsTr("Mission")
+                    }
+                    QGCTabButton {
+                        text:       qsTr("Fence")
+                        enabled:    _geoFenceController.supported
+                    }
+                    QGCTabButton {
+                        text:       qsTr("Rally")
+                        enabled:    _rallyPointController.supported
                     }
                 }
             }
