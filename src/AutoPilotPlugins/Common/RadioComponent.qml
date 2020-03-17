@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick.Controls 2.4
 import QtQuick.Dialogs  1.2
 import QtQuick.Layouts  1.11
 
@@ -90,13 +90,15 @@ SetupPage {
                 QGCViewDialog {
 
                     function accept() {
-                        controller.spektrumBindMode(radioGroup.current.bindMode)
+                        controller.spektrumBindMode(radioGroup.checkedButton.bindMode)
                         hideDialog()
                     }
 
                     function reject() {
                         hideDialog()
                     }
+
+                    ButtonGroup { id: radioGroup }
 
                     Column {
                         anchors.fill:   parent
@@ -109,18 +111,21 @@ SetupPage {
                         }
 
                         QGCRadioButton {
-                            text:       qsTr("DSM2 Mode")
+                            text:               qsTr("DSM2 Mode")
+                            ButtonGroup.group:  radioGroup
                             property int bindMode: RadioComponentController.DSM2
                         }
 
                         QGCRadioButton {
-                            text:       qsTr("DSMX (7 channels or less)")
+                            text:               qsTr("DSMX (7 channels or less)")
+                            ButtonGroup.group:  radioGroup
                             property int bindMode: RadioComponentController.DSMX7
                         }
 
                         QGCRadioButton {
-                            checked:    true
-                            text:       qsTr("DSMX (8 channels or more)")
+                            checked:            true
+                            text:               qsTr("DSMX (8 channels or more)")
+                            ButtonGroup.group:  radioGroup
                             property int bindMode: RadioComponentController.DSMX8
                         }
                     }
