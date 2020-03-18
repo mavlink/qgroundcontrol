@@ -58,6 +58,7 @@ SetupPage {
             property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
+            property real _innerMargin:     _margins / 2
             property bool _showIcon:        !ScreenTools.isTinyScreen
             property bool _roverFirmware:   controller.parameterExists(-1, "MODE1") // This catches all usage of ArduRover firmware vehicle types: Rover, Boat...
 
@@ -551,8 +552,8 @@ SetupPage {
 
                     Rectangle {
                         id:     rtlSettings
-                        width:  rltAltFinalField.x + rltAltFinalField.width + _margins
-                        height: rltAltFinalField.y + rltAltFinalField.height + _margins
+                        width:  landSpeedField.x + landSpeedField.width + _margins
+                        height: landSpeedField.y + landSpeedField.height + _margins
                         color:  ggcPal.windowShade
 
                         Image {
@@ -578,7 +579,7 @@ SetupPage {
 
                         QGCRadioButton {
                             id:                 returnAtCurrentRadio
-                            anchors.margins:    _margins
+                            anchors.margins:    _innerMargin
                             anchors.left:       _showIcon ? icon.right : parent.left
                             anchors.top:        parent.top
                             text:               qsTr("Return at current altitude")
@@ -589,9 +590,9 @@ SetupPage {
 
                         QGCRadioButton {
                             id:                 returnAltRadio
-                            anchors.topMargin:  _margins
-                            anchors.left:       returnAtCurrentRadio.left
+                            anchors.topMargin:  _innerMargin
                             anchors.top:        returnAtCurrentRadio.bottom
+                            anchors.left:       returnAtCurrentRadio.left
                             text:               qsTr("Return at specified altitude:")
                             checked:            _rtlAltFact.value != 0
 
@@ -620,7 +621,7 @@ SetupPage {
 
                         FactTextField {
                             id:                 landDelayField
-                            anchors.topMargin:  _margins * 1.5
+                            anchors.topMargin:  _innerMargin
                             anchors.left:       rltAltField.left
                             anchors.top:        rltAltField.bottom
                             fact:               _rtlLoitTimeFact
@@ -628,42 +629,33 @@ SetupPage {
                             enabled:            homeLoiterCheckbox.checked === true
                         }
 
-                        QGCRadioButton {
-                            id:                 landRadio
-                            anchors.left:       returnAtCurrentRadio.left
-                            anchors.baseline:   landSpeedField.baseline
-                            text:               qsTr("Land with descent speed:")
-                            checked:            _rtlAltFinalFact.value == 0
-
-                            onClicked: _rtlAltFinalFact.value = 0
-                        }
-
-                        FactTextField {
-                            id:                 landSpeedField
-                            anchors.topMargin:  _margins * 1.5
-                            anchors.top:        landDelayField.bottom
-                            anchors.left:       rltAltField.left
-                            fact:               _landSpeedFact
-                            showUnits:          true
-                            enabled:            landRadio.checked
-                        }
-
-                        QGCRadioButton {
-                            id:                 finalLoiterRadio
+                        QGCLabel {
                             anchors.left:       returnAtCurrentRadio.left
                             anchors.baseline:   rltAltFinalField.baseline
-                            text:               qsTr("Final loiter altitude:")
-
-                            onClicked: _rtlAltFinalFact.value = _rtlAltFact.value
+                            text:               qsTr("Final land stage altitude:")
                         }
 
                         FactTextField {
                             id:                 rltAltFinalField
-                            anchors.topMargin:  _margins / 2
+                            anchors.topMargin:  _innerMargin
                             anchors.left:       rltAltField.left
-                            anchors.top:        landSpeedField.bottom
+                            anchors.top:        landDelayField.bottom
                             fact:               _rtlAltFinalFact
-                            enabled:            finalLoiterRadio.checked
+                            showUnits:          true
+                        }
+
+                        QGCLabel {
+                            anchors.left:       returnAtCurrentRadio.left
+                            anchors.baseline:   landSpeedField.baseline
+                            text:               qsTr("Final land stage descent speed:")
+                        }
+
+                        FactTextField {
+                            id:                 landSpeedField
+                            anchors.topMargin: _innerMargin
+                            anchors.left:       rltAltField.left
+                            anchors.top:        rltAltFinalField.bottom
+                            fact:               _landSpeedFact
                             showUnits:          true
                         }
                     } // Rectangle - RTL Settings
