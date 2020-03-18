@@ -8,10 +8,15 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.4 - Not yet released
+### 4.0.5 - Not yet releases
 
+### 4.0.4 - Stable
 
-### 4.0.3 - Stable
+* Mobile File Save: Fix problem with incorrect file extension being added
+* Radio Setup: Fix problem with Spektrum bind
+* Plan/Fly: Bring back waypoint number display in map items
+
+### 4.0.3
 
 * Plan: Add setting for takeoff item not required
 * Plan: Takeoff item must be added prior to allowing other item types to enable
