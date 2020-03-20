@@ -367,14 +367,9 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Battery Calibration">
-    <parameter default="-1" name="BAT1_ADC_CHANNEL" type="INT32">
-      <short_desc>Battery 1 ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
     <parameter default="-1.0" name="BAT1_A_PER_V" type="FLOAT">
       <short_desc>Battery 1 current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <long_desc>The voltage seen by the ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
       <decimal>8</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
@@ -386,6 +381,11 @@ Set to 2 to use heading from motion capture</short_desc>
       <unit>mAh</unit>
       <decimal>0</decimal>
       <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT1_I_CHANNEL" type="INT32">
+      <short_desc>Battery 1 Current ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
       <reboot_required>True</reboot_required>
     </parameter>
     <parameter default="0" name="BAT1_N_CELLS" type="INT32">
@@ -430,6 +430,11 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">External</value>
       </values>
     </parameter>
+    <parameter default="-1" name="BAT1_V_CHANNEL" type="INT32">
+      <short_desc>Battery 1 Voltage ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="4.05" name="BAT1_V_CHARGED" type="FLOAT">
       <short_desc>Full cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
@@ -440,7 +445,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="-1.0" name="BAT1_V_DIV" type="FLOAT">
       <short_desc>Battery 1 voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery 1 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <long_desc>This is the divider from battery 1 voltage to ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
       <decimal>8</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
@@ -462,14 +467,9 @@ Set to 2 to use heading from motion capture</short_desc>
       <increment>0.01</increment>
       <reboot_required>True</reboot_required>
     </parameter>
-    <parameter default="-1" name="BAT2_ADC_CHANNEL" type="INT32">
-      <short_desc>Battery 2 ADC Channel</short_desc>
-      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
-      <reboot_required>True</reboot_required>
-    </parameter>
     <parameter default="-1.0" name="BAT2_A_PER_V" type="FLOAT">
       <short_desc>Battery 2 current per volt (A/V)</short_desc>
-      <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
+      <long_desc>The voltage seen by the ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
       <decimal>8</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
@@ -481,6 +481,11 @@ Set to 2 to use heading from motion capture</short_desc>
       <unit>mAh</unit>
       <decimal>0</decimal>
       <increment>50</increment>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="-1" name="BAT2_I_CHANNEL" type="INT32">
+      <short_desc>Battery 2 Current ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.</long_desc>
       <reboot_required>True</reboot_required>
     </parameter>
     <parameter default="0" name="BAT2_N_CELLS" type="INT32">
@@ -525,6 +530,11 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">External</value>
       </values>
     </parameter>
+    <parameter default="-1" name="BAT2_V_CHANNEL" type="INT32">
+      <short_desc>Battery 2 Voltage ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="4.05" name="BAT2_V_CHARGED" type="FLOAT">
       <short_desc>Full cell voltage (5C load)</short_desc>
       <long_desc>Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V</long_desc>
@@ -535,7 +545,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="-1.0" name="BAT2_V_DIV" type="FLOAT">
       <short_desc>Battery 2 voltage divider (V divider)</short_desc>
-      <long_desc>This is the divider from battery 2 voltage to 3.3V ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
+      <long_desc>This is the divider from battery 2 voltage to ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.</long_desc>
       <decimal>8</decimal>
       <reboot_required>True</reboot_required>
     </parameter>
@@ -573,16 +583,6 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>0</decimal>
       <increment>50</increment>
       <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="-1.0" name="BAT_CNT_V_CURR" type="FLOAT">
-      <short_desc>Scaling from ADC counts to volt on the ADC input (battery current)</short_desc>
-      <long_desc>This is not the battery current, but the intermediate ADC voltage. A value of -1 signifies that the board defaults are used, which is highly recommended.</long_desc>
-      <decimal>8</decimal>
-    </parameter>
-    <parameter default="-1.0" name="BAT_CNT_V_VOLT" type="FLOAT">
-      <short_desc>Scaling from ADC counts to volt on the ADC input (battery voltage)</short_desc>
-      <long_desc>This is not the battery voltage, but the intermediate ADC voltage. A value of -1 signifies that the board defaults are used, which is highly recommended.</long_desc>
-      <decimal>8</decimal>
     </parameter>
     <parameter default="0.07" name="BAT_CRIT_THR" type="FLOAT">
       <short_desc>Critical threshold</short_desc>
