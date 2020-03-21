@@ -94,9 +94,10 @@ public slots:
     }
 
     void enableSensorHIL(bool enable) {
-        if (enable != _sensorHilEnabled)
+        if (enable != _sensorHilEnabled) {
             _sensorHilEnabled = enable;
             emit sensorHilChanged(enable);
+        }
     }
 
     void readBytes();
