@@ -131,9 +131,10 @@ public slots:
     void setVersion(unsigned int version);
 
     void enableSensorHIL(bool enable) {
-        if (enable != _sensorHilEnabled)
+        if (enable != _sensorHilEnabled) {
             _sensorHilEnabled = enable;
             emit sensorHilChanged(enable);
+        }
     }
 
     void enableHilActuatorControls(bool enable);
