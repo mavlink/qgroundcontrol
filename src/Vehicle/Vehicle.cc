@@ -77,6 +77,7 @@ const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 const char* Vehicle::_flightTimeFactName =          "flightTime";
 const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
+const char* Vehicle::_missionItemIndexFactName =    "missionItemIndex";
 const char* Vehicle::_headingToNextWPFactName =     "headingToNextWP";
 const char* Vehicle::_headingToHomeFactName =       "headingToHome";
 const char* Vehicle::_distanceToGCSFactName =       "distanceToGCS";
@@ -206,6 +207,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
+    , _missionItemIndexFact (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
     , _headingToNextWPFact  (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
     , _headingToHomeFact    (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
     , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
@@ -409,6 +411,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
     , _headingToNextWPFact  (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
+    , _missionItemIndexFact (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
     , _headingToHomeFact    (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
     , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
@@ -454,6 +457,7 @@ void Vehicle::_commonInit()
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::currentIndexChanged,      this, &Vehicle::_updateHeadingToNextWP);
+    connect(_missionManager, &MissionManager::currentIndexChanged,      this, &Vehicle::_updateMissionItemIndex);
 
     connect(_missionManager, &MissionManager::sendComplete,             _trajectoryPoints, &TrajectoryPoints::clear);
     connect(_missionManager, &MissionManager::newMissionItemsAvailable, _trajectoryPoints, &TrajectoryPoints::clear);
@@ -491,6 +495,7 @@ void Vehicle::_commonInit()
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
+    _addFact(&_missionItemIndexFact,    _missionItemIndexFactName);
     _addFact(&_headingToNextWPFact,     _headingToNextWPFactName);
     _addFact(&_headingToHomeFact,       _headingToHomeFactName);
     _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
@@ -3969,19 +3974,30 @@ void Vehicle::_updateDistanceHeadingToHome()
 
 void Vehicle::_updateHeadingToNextWP()
 {
-    const int _currentIndex = _missionManager->currentIndex();
-    MissionItem _currentItem;
+    const int currentIndex = _missionManager->currentIndex();
     QList<MissionItem*> llist = _missionManager->missionItems();
 
-    if(llist.size()>_currentIndex && _currentIndex!=-1
-            && llist[_currentIndex]->coordinate().longitude()!=0.0
-            && coordinate().distanceTo(llist[_currentIndex]->coordinate())>5.0 ){
+    if(llist.size()>currentIndex && currentIndex!=-1
+            && llist[currentIndex]->coordinate().longitude()!=0.0
+            && coordinate().distanceTo(llist[currentIndex]->coordinate())>5.0 ){
 
-        _headingToNextWPFact.setRawValue(coordinate().azimuthTo(llist[_currentIndex]->coordinate()));
+        _headingToNextWPFact.setRawValue(coordinate().azimuthTo(llist[currentIndex]->coordinate()));
     }
     else{
         _headingToNextWPFact.setRawValue(qQNaN());
     }
+}
+
+void Vehicle::_updateMissionItemIndex()
+{
+    const int currentIndex = _missionManager->currentIndex();
+
+    unsigned offset = 0;
+    if (!_firmwarePlugin->sendHomePositionToVehicle()) {
+        offset = 1;
+    }
+
+    _missionItemIndexFact.setRawValue(currentIndex + offset);
 }
 
 void Vehicle::_updateDistanceToGCS()
