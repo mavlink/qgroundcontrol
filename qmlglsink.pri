@@ -15,19 +15,19 @@ LinuxBuild {
 }
 
 SOURCES += \
-    libs/gst-plugins-good/ext/qt/gstplugin.cc \
-    libs/gst-plugins-good/ext/qt/gstqtglutility.cc \
-    libs/gst-plugins-good/ext/qt/gstqsgtexture.cc \
-    libs/gst-plugins-good/ext/qt/gstqtsink.cc \
-    libs/gst-plugins-good/ext/qt/gstqtsrc.cc \
-    libs/gst-plugins-good/ext/qt/qtwindow.cc \
-    libs/gst-plugins-good/ext/qt/qtitem.cc
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstplugin.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtglutility.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqsgtexture.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.cc \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.cc
 
 HEADERS += \
-    libs/gst-plugins-good/ext/qt/gstqsgtexture.h \
-    libs/gst-plugins-good/ext/qt/gstqtgl.h \
-    libs/gst-plugins-good/ext/qt/gstqtglutility.h \
-    libs/gst-plugins-good/ext/qt/gstqtsink.h \
-    libs/gst-plugins-good/ext/qt/gstqtsrc.h \
-    libs/gst-plugins-good/ext/qt/qtwindow.h \
-    libs/gst-plugins-good/ext/qt/qtitem.h
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqsgtexture.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtgl.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtglutility.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsink.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/gstqtsrc.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtwindow.h \
+    libs/qmlglsink/gst-plugins-good/ext/qt/qtitem.h
