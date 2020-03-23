@@ -151,7 +151,7 @@ void FollowMe::_sendGCSMotionReport()
 
     for (int i=0; i<vehicles->count(); i++) {
         Vehicle* vehicle = vehicles->value<Vehicle*>(i);
-        if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
+        if (_currentMode == MODE_ALWAYS || _isFollowFlightMode(vehicle, vehicle->flightMode())) {
             qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimatation_capabilities);
         }
