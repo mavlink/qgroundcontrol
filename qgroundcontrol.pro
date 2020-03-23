@@ -1315,19 +1315,15 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
 # Video Streaming
 
 INCLUDEPATH += \
-    src/VideoStreaming
+    src/VideoManager
 
 HEADERS += \
-    src/VideoStreaming/VideoReceiver.h \
-    src/VideoStreaming/VideoStreaming.h \
-    src/VideoStreaming/SubtitleWriter.h \
-    src/VideoStreaming/VideoManager.h
+    src/VideoManager/SubtitleWriter.h \
+    src/VideoManager/VideoManager.h
 
 SOURCES += \
-    src/VideoStreaming/VideoReceiver.cc \
-    src/VideoStreaming/VideoStreaming.cc \
-    src/VideoStreaming/SubtitleWriter.cc \
-    src/VideoStreaming/VideoManager.cc
+    src/VideoManager/SubtitleWriter.cc \
+    src/VideoManager/VideoManager.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
@@ -1335,14 +1331,19 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
-    include(src/VideoStreaming/VideoStreaming.pri)
+    include(src/VideoReceiver/VideoReceiver.pri)
 }
 
 !VideoEnabled {
+    INCLUDEPATH += \
+        src/VideoReceiver
+
     HEADERS += \
-       src/VideoStreaming/GLVideoItemStub.h
+        src/VideoManager/GLVideoItemStub.h \
+        src/VideoReceiver/VideoReceiver.h
+
     SOURCES += \
-        src/VideoStreaming/GLVideoItemStub.cc
+        src/VideoManager/GLVideoItemStub.cc
 }
 
 #-------------------------------------------------------------------------------------

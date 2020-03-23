@@ -80,11 +80,9 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile)
 
 void SubtitleWriter::stopCapturingTelemetry()
 {
-#if defined(QGC_GST_STREAMING)
     qCDebug(SubtitleWriterLog) << "Stopping writing";
     _timer.stop();
     _file.close();
-#endif
 }
 
 void SubtitleWriter::_captureTelemetry()

@@ -28,18 +28,33 @@
 #include "Vehicle.h"
 #include "QGCCameraManager.h"
 
+#if defined(QGC_GST_STREAMING)
+#include "GStreamer.h"
+#else
+#include "GLVideoItemStub.h"
+#endif
+
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
+#if defined(QGC_GST_STREAMING)
 static const char* kFileExtension[VideoReceiver::FILE_FORMAT_MAX - VideoReceiver::FILE_FORMAT_MIN] = {
     "mkv",
     "mov",
     "mp4"
 };
+#endif
 
 //-----------------------------------------------------------------------------
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
+#if !defined(QGC_GST_STREAMING)
+    static bool once = false;
+    if (!once) {
+        qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
+        once = true;
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -50,15 +65,10 @@ VideoManager::~VideoManager()
     delete _thermalVideoReceiver;
     _thermalVideoReceiver = nullptr;
 #if defined(QGC_GST_STREAMING)
-    if (_thermalVideoSink != nullptr) {
-        gst_object_unref(_thermalVideoSink);
-        _thermalVideoSink = nullptr;
-    }
-
-    if (_videoSink != nullptr) {
-        gst_object_unref(_videoSink);
-        _videoSink = nullptr;
-    }
+    GStreamer::releaseVideoSink(_thermalVideoSink);
+    _thermalVideoSink = nullptr;
+    GStreamer::releaseVideoSink(_videoSink);
+    _videoSink = nullptr;
 #endif
 }
 
@@ -90,6 +100,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
+#if defined(QGC_GST_STREAMING)
     _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
     _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
 
@@ -103,7 +114,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     // and I expect that it will be changed during multiple video stream activity
     connect(_thermalVideoReceiver, &VideoReceiver::timeout, this, &VideoManager::_restartVideo);
     connect(_thermalVideoReceiver, &VideoReceiver::streamingChanged, this, &VideoManager::_streamingChanged);
-
+#endif
     _updateSettings();
     if(isGStreamer()) {
         startVideo();
@@ -146,7 +157,7 @@ void VideoManager::_cleanupOldVideos()
         //-- Remove old movies until max size is satisfied.
         while(total >= maxSize && !vidList.isEmpty()) {
             total -= vidList.last().size();
-            qCDebug(VideoReceiverLog) << "Removing old video file:" << vidList.last().filePath();
+            qCDebug(VideoManagerLog) << "Removing old video file:" << vidList.last().filePath();
             QFile file (vidList.last().filePath());
             file.remove();
             vidList.removeLast();
@@ -164,7 +175,7 @@ VideoManager::startVideo()
     }
 
     if(!_videoSettings->streamEnabled()->rawValue().toBool() || !_videoSettings->streamConfigured()) {
-        qCDebug(VideoReceiverLog) << "Stream not enabled/configured";
+        qCDebug(VideoManagerLog) << "Stream not enabled/configured";
         return;
     }
 
@@ -194,9 +205,10 @@ VideoManager::stopVideo()
     if (qgcApp()->runningUnitTests()) {
         return;
     }
-
+#if defined(QGC_GST_STREAMING)
     if(_videoReceiver) _videoReceiver->stop();
     if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
+#endif
 }
 
 void
@@ -205,7 +217,7 @@ VideoManager::startRecording(const QString& videoFile)
     if (qgcApp()->runningUnitTests()) {
         return;
     }
-
+#if defined(QGC_GST_STREAMING)
     if (!_videoReceiver) {
         qgcApp()->showMessage(tr("Video receiver is not ready."));
         return;
@@ -233,6 +245,9 @@ VideoManager::startRecording(const QString& videoFile)
             + "." + kFileExtension[fileFormat - VideoReceiver::FILE_FORMAT_MIN];
 
     _videoReceiver->startRecording(_videoFile, fileFormat);
+#else
+    Q_UNUSED(videoFile)
+#endif
 }
 
 void
@@ -241,12 +256,13 @@ VideoManager::stopRecording()
     if (qgcApp()->runningUnitTests()) {
         return;
     }
-
+#if defined(QGC_GST_STREAMING)
     if (!_videoReceiver) {
         return;
     }
 
     _videoReceiver->stopRecording();
+#endif
 }
 
 void
@@ -255,7 +271,7 @@ VideoManager::grabImage(const QString& imageFile)
     if (qgcApp()->runningUnitTests()) {
         return;
     }
-
+#if defined(QGC_GST_STREAMING)
     if (!_videoReceiver) {
         return;
     }
@@ -265,6 +281,9 @@ VideoManager::grabImage(const QString& imageFile)
     emit imageFileChanged();
 
     _videoReceiver->takeScreenshot(_imageFile);
+#else
+    Q_UNUSED(imageFile)
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -455,26 +474,6 @@ VideoManager::setfullScreen(bool f)
     emit fullScreenChanged();
 }
 
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-GstElement*
-VideoManager::_makeVideoSink(gpointer widget)
-{
-    GstElement* sink;
-
-    if ((sink = gst_element_factory_make("qgcvideosinkbin", nullptr)) != nullptr) {
-        g_object_set(sink, "widget", widget, NULL);
-        // FIXME: AV: temporally disable sync due to MPEG2-TS sync issues
-        g_object_set(sink, "sync", FALSE, NULL);
-    } else {
-        qCritical() << "gst_element_factory_make('qgcvideosinkbin') failed";
-    }
-
-    return sink;
-}
-#endif
-
-//-----------------------------------------------------------------------------
 void
 VideoManager::_initVideo()
 {
@@ -489,10 +488,10 @@ VideoManager::_initVideo()
     QQuickItem* widget = root->findChild<QQuickItem*>("videoContent");
 
     if (widget != nullptr && _videoReceiver != nullptr) {
-        if ((_videoSink = _makeVideoSink(widget)) != nullptr) {
+        if ((_videoSink = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget)) != nullptr) {
             _videoReceiver->startDecoding(_videoSink);
         } else {
-            qCDebug(VideoManagerLog) << "_makeVideoSink() failed";
+            qCDebug(VideoManagerLog) << "createVideoSink() failed";
         }
     } else {
         qCDebug(VideoManagerLog) << "video receiver disabled";
@@ -501,10 +500,10 @@ VideoManager::_initVideo()
     widget = root->findChild<QQuickItem*>("thermalVideo");
 
     if (widget != nullptr && _thermalVideoReceiver != nullptr) {
-        if ((_thermalVideoSink = _makeVideoSink(widget)) != nullptr) {
+        if ((_thermalVideoSink = qgcApp()->toolbox()->corePlugin()->createVideoSink(this, widget)) != nullptr) {
             _thermalVideoReceiver->startDecoding(_thermalVideoSink);
         } else {
-            qCDebug(VideoManagerLog) << "_makeVideoSink() failed";
+            qCDebug(VideoManagerLog) << "createVideoSink() failed";
         }
     } else {
         qCDebug(VideoManagerLog) << "thermal video receiver disabled";
@@ -516,7 +515,7 @@ VideoManager::_initVideo()
 void
 VideoManager::_updateSettings()
 {
-    if(!_videoSettings || !_videoReceiver)
+    if(!_videoSettings)
         return;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
@@ -646,9 +645,11 @@ VideoManager::_recordingStarted()
 void
 VideoManager::_recordingChanged()
 {
+#if defined(QGC_GST_STREAMING)
     if (_videoReceiver && !_videoReceiver->recording()) {
         _subtitleWriter.stopCapturingTelemetry();
     }
+#endif
 }
 
 //----------------------------------------------------------------------------------------
