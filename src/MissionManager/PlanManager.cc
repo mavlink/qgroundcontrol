@@ -541,8 +541,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
     MissionItem* item = _writeMissionItems[missionRequestSeq];
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
+    // ArduPilot always expects to get MISSION_ITEM_INT if possible
+    bool                forceMissionItemInt = (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) && _vehicle->apmFirmware();
     mavlink_message_t   messageOut;
-    if (missionItemInt || _vehicle->apmFirmware() /* ArduPilot always expects to get MISSION_ITEM_INT no matter what */) {
+    if (missionItemInt || forceMissionItemInt) {
         mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                _dedicatedLink->mavlinkChannel(),
