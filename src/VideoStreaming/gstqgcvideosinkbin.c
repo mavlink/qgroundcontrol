@@ -46,6 +46,7 @@ enum {
     PROP_WIDGET,
     PROP_FORCE_ASPECT_RATIO,
     PROP_PIXEL_ASPECT_RATIO,
+    PROP_SYNC,
 };
 
 #define PROP_ENABLE_LAST_SAMPLE_NAME    "enable-last-sample"
@@ -53,11 +54,13 @@ enum {
 #define PROP_WIDGET_NAME                "widget"
 #define PROP_FORCE_ASPECT_RATIO_NAME    "force-aspect-ratio"
 #define PROP_PIXEL_ASPECT_RATIO_NAME    "pixel-aspect-ratio"
+#define PROP_SYNC_NAME                  "sync"
 
 #define DEFAULT_ENABLE_LAST_SAMPLE TRUE
 #define DEFAULT_FORCE_ASPECT_RATIO TRUE
 #define DEFAULT_PAR_N 0
 #define DEFAULT_PAR_D 1
+#define DEFAULT_SYNC TRUE
 
 static GstBinClass *parent_class;
 
@@ -124,9 +127,6 @@ _vsb_init(GstQgcVideoSinkBin *vsb)
             GST_ERROR_OBJECT(vsb, "gst_element_factory_make('qmlglsink') failed");
             break;
         }
-
-        // FIXME: AV: temporally disable sync due to MPEG2-TS sync issues
-        g_object_set(vsb->qmlglsink, "sync", FALSE, NULL);
 
         if ((glcolorconvert = gst_element_factory_make("glcolorconvert", NULL)) == NULL) {
             GST_ERROR_OBJECT(vsb, "gst_element_factory_make('glcolorconvert' failed)");
@@ -259,6 +259,13 @@ _vsb_get_property(GObject *object, guint prop_id, GValue *value, GParamSpec *psp
             gst_value_set_fraction(value, num, den);
         } while(0);
         break;
+    case PROP_SYNC:
+        do {
+            gboolean enable = FALSE;
+            g_object_get(G_OBJECT(vsb->qmlglsink), PROP_SYNC_NAME, &enable, NULL);
+            g_value_set_boolean(value, enable);
+        } while(0);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -284,6 +291,9 @@ _vsb_set_property(GObject *object, guint prop_id, const GValue *value, GParamSpe
         break;
     case PROP_PIXEL_ASPECT_RATIO:
         g_object_set(G_OBJECT(vsb->qmlglsink), PROP_PIXEL_ASPECT_RATIO_NAME, gst_value_get_fraction_numerator(value), gst_value_get_fraction_denominator(value), NULL);
+        break;
+    case PROP_SYNC:
+        g_object_set(G_OBJECT(vsb->qmlglsink), PROP_SYNC_NAME, g_value_get_boolean(value), NULL);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -355,6 +365,11 @@ _vsb_class_init(GstQgcVideoSinkBinClass *klass)
         gst_param_spec_fraction(PROP_PIXEL_ASPECT_RATIO_NAME, "Pixel Aspect Ratio",
             "The pixel aspect ratio of the device", DEFAULT_PAR_N, DEFAULT_PAR_D,
             G_MAXINT, 1, 1, 1,
+            (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+
+    g_object_class_install_property(gobject_klass, PROP_SYNC,
+        g_param_spec_boolean(PROP_SYNC_NAME, "Sync",
+            "Sync on the clock", DEFAULT_SYNC,
             (GParamFlags)(G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(gstelement_klass,
