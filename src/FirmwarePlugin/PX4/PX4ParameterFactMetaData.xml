@@ -4787,7 +4787,7 @@ Setting this parameter to 0 disables the filter</short_desc>
       <short_desc>Maximum tilt angle in air</short_desc>
       <long_desc>Limits maximum tilt in AUTO and POSCTRL modes during flight.</long_desc>
       <min>20.0</min>
-      <max>180.0</max>
+      <max>89.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
@@ -4795,7 +4795,7 @@ Setting this parameter to 0 disables the filter</short_desc>
       <short_desc>Maximum tilt during landing</short_desc>
       <long_desc>Limits maximum tilt angle on landing.</long_desc>
       <min>10.0</min>
-      <max>90.0</max>
+      <max>89.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
