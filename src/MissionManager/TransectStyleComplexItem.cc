@@ -750,6 +750,9 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
     if (_loadedMissionItems.count()) {
         // We have stored mission items, just use those
         return _sequenceNumber + _loadedMissionItems.count() - 1;
+    } else if (_transects.count() == 0) {
+        // Polygon has not yet been set so we just return back a one item complex item for now
+        return _sequenceNumber;
     } else {
         // We have to determine from transects
         int itemCount = 0;
