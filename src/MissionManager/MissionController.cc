@@ -1214,8 +1214,7 @@ void MissionController::_recalcWaypointLines(void)
     bool                foundRTL =                      false;
     bool                homePositionValid =             _settingsItem->coordinate().isValid();
     bool                roiActive =                     false;
-    bool                setupIncompleteItem =           false;
-    VisualMissionItem*  startVIForIncompleteItem =      nullptr;
+    bool                previousItemIsIncomplete =      false;
 
     qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
 
@@ -1223,6 +1222,10 @@ void MissionController::_recalcWaypointLines(void)
 
     _linesTable.clear();
     _waypointPath.clear();
+
+    // Note: Although visual support _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
+    // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
+    // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
 
     _waypointLines.beginReset();
     _directionArrows.beginReset();
@@ -1278,22 +1281,17 @@ void MissionController::_recalcWaypointLines(void)
 
         if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
             // Incomplete items are complex items which are waiting for the user to complete setup before there visuals can become valid.
-            // For example a Survey which has no polygon set for it yet. For these cases we draw incomplete segment lines so that there
-            // isn't a hole in the flight path lines.
+            // They may not yet have valid entry/exit coordinates associated with them while in the incomplete state.
+            // For examples a Survey item which has no polygon set yet.
             if (complexItem && complexItem->isIncomplete()) {
-                setupIncompleteItem = true;
+                // We don't link lines from a valid item to an incomplete item
+                previousItemIsIncomplete = true;
+            } else if (previousItemIsIncomplete) {
+                // We also don't link lines from an incomplete item to a valid item.
+                previousItemIsIncomplete = false;
+                firstCoordinateNotFound = false;
+                lastCoordinateItemBeforeRTL = visualItem;
             } else {
-                if (setupIncompleteItem) {
-                    VisualItemPair viPair(startVIForIncompleteItem, visualItem);
-                    CoordinateVector* coordVector = _createCoordinateVectorWorker(viPair);
-
-                    _incompleteComplexItemLines.append(coordVector);
-                    startVIForIncompleteItem = nullptr;
-                    setupIncompleteItem = false;
-                } else {
-                    startVIForIncompleteItem = visualItem;
-                }
-
                 if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
                     bool addDirectionArrow = false;
                     if (i != 1) {
