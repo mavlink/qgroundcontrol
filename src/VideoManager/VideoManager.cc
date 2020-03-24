@@ -34,6 +34,10 @@
 #include "GLVideoItemStub.h"
 #endif
 
+#ifdef QGC_GST_TAISYNC_ENABLED
+#include "TaisyncHandler.h"
+#endif
+
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
 #if defined(QGC_GST_STREAMING)
