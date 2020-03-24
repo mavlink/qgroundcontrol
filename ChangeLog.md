@@ -11,6 +11,7 @@ Note: This file only contains high level features or important fixes.
 ### 4.0.5 - Not yet released
 
 * Solo: Fix mission upload failures
+* Plan: Fix crash when using Create Plan - Survey for fixed wing vehicle
 
 ### 4.0.4 - Stable
 
