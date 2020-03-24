@@ -8,7 +8,9 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.5 - Not yet releases
+### 4.0.5 - Not yet released
+
+* Solo: Fix mission upload failures
 
 ### 4.0.4 - Stable
 
