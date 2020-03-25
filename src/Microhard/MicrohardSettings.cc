@@ -84,8 +84,8 @@ MicrohardSettings::configure(QString key, int power, int channel, int bandwidth,
     if (power > 0) {
         _writeList.append("AT+MWTXPOWER=" + QString::number(power) + "\n");
     }
-    _writeList.append("AT+MWFREQ=" + QString::number(channel) + "\n");
     _writeList.append("AT+MWBAND=" + QString::number(bandwidth) + "\n");
+    _writeList.append("AT+MWFREQ=" + QString::number(channel) + "\n");
     _writeList.append(key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=" + _encryptionType + "," + key + "\n");
     if (!networkId.isEmpty()) {
         _writeList.append("AT+MWNETWORKID=" + networkId + "\n");
@@ -246,6 +246,7 @@ MicrohardSettings::_socketError(QAbstractSocket::SocketError socketError)
 {
     qCDebug(MicrohardLog) << "Socket error: " << socketError;
     emit connected(tr("Not Connected"));
+    _configureAfterConnect = _configurationRunning;
     _start();
 }
 
