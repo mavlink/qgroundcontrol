@@ -125,7 +125,7 @@ void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
         if (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) {
             setLaunchTakeoffAtSameLocation(false);
         } else {
-            // PX4 specifies a coordinate for takeoff even for non fixed wing. But it makes more sense to not have a coordinate
+            // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a coordinate
             // from and end user standpoint. So even for PX4 we try to keep launch and takeoff at the same position. Unless the
             // user has moved/loaded launch at a different location than takeoff.
             if (coordinate().isValid() && _settingsItem->coordinate().isValid()) {

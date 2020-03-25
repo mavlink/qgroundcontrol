@@ -25,7 +25,8 @@
         {
             "id":           22,
             "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "1"
+            "paramRemove":  "1",
+            "description":  "Hover straight up to specified altitude. Then travel to specified position."
         }
     ]
 }
