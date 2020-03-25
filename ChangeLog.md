@@ -6,6 +6,8 @@ Note: This file only contains high level features or important fixes.
 
 ### 4.0.6 - Not yet released
 
+* Analyze/Log Download - Fix download on mobile versions of QGC
+
 ### 4.0.5 - Stable
 
 * Solo: Fix mission upload failures

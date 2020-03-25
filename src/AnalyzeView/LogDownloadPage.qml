@@ -147,11 +147,16 @@ AnalyzePage {
                             var o = logController.model.get(rowIndex)
                             if (o) o.selected = true
                         })
-                        fileDialog.title =          qsTr("Select save directory")
-                        fileDialog.selectExisting = true
-                        fileDialog.folder =         QGroundControl.settingsManager.appSettings.logSavePath
-                        fileDialog.selectFolder =   true
-                        fileDialog.openForLoad()
+                        if (ScreenTools.isMobile) {
+                            // You can't pick folders in mobile, only default location is used
+                            logController.download()
+                        } else {
+                            fileDialog.title =          qsTr("Select save directory")
+                            fileDialog.selectExisting = true
+                            fileDialog.folder =         QGroundControl.settingsManager.appSettings.logSavePath
+                            fileDialog.selectFolder =   true
+                            fileDialog.openForLoad()
+                        }
                     }
                     QGCFileDialog {
                         id: fileDialog
