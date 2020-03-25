@@ -414,6 +414,15 @@
       <output name="MAIN3">motor 3</output>
       <output name="MAIN4">motor 4</output>
     </airframe>
+    <airframe id="4073" maintainer="Hyon Lim &lt;lim@uvify.com&gt;" name="UVify IFO">
+      <class>Copter</class>
+      <maintainer>Hyon Lim &lt;lim@uvify.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
     <airframe id="4080" maintainer="Anton Matosov &lt;anton.matosov@gmail.com&gt;" name="ZMR250 Racer">
       <class>Copter</class>
       <maintainer>Anton Matosov &lt;anton.matosov@gmail.com&gt;</maintainer>
