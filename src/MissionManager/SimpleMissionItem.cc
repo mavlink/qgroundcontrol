@@ -182,6 +182,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::specifiesCoordinateChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::specifiesAltitudeOnlyChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::isStandaloneCoordinateChanged);
+    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::isLandCommandChanged);
 
     // Whenever these properties change the ui model changes as well
     connect(this, &SimpleMissionItem::commandChanged,       this, &SimpleMissionItem::_rebuildFacts);
@@ -743,21 +744,13 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
         }
     }
 
-    switch (command) {
-    case MAV_CMD_NAV_WAYPOINT:
+    if (command == MAV_CMD_NAV_WAYPOINT) {
         // We default all acceptance radius to 0. This allows flight controller to be in control of
         // accept radius.
         _missionItem.setParam2(0);
-        break;
-
-    case MAV_CMD_NAV_LAND:
-    case MAV_CMD_NAV_VTOL_LAND:
-    case MAV_CMD_DO_SET_ROI_LOCATION:
+    } else if ((uiInfo && uiInfo->isLandCommand()) || command == MAV_CMD_DO_SET_ROI_LOCATION) {
         _altitudeFact.setRawValue(0);
         _missionItem.setParam7(0);
-        break;
-    default:
-        break;
     }
 
     _missionItem.setAutoContinue(true);
@@ -983,4 +976,11 @@ void SimpleMissionItem::_possibleAdditionalTimeDelayChanged(void)
     }
 
     return;
+}
+
+bool SimpleMissionItem::isLandCommand(void) const
+{
+    MAV_CMD command = static_cast<MAV_CMD>(this->command());
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, command);
+    return uiInfo->isLandCommand();
 }

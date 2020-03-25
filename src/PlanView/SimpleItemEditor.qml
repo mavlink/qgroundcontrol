@@ -59,6 +59,16 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         anchors.top:        parent.top
+        spacing:            _margin
+
+        QGCLabel {
+            width:          parent.width
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           missionItem.rawEdit ?
+                                qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
+                                missionItem.commandDescription
+        }
 
         ColumnLayout {
             anchors.left:       parent.left
@@ -67,7 +77,7 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Move 'T' Takeoff to the %1 location.").arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
+                text:               qsTr("Move '%1' Takeoff to the %2 location.").arg(_controllerVehicle.vtol ? qsTr("V") : qsTr("T")).arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
@@ -77,7 +87,7 @@ Rectangle {
                 text:               qsTr("Ensure clear of obstacles and into the wind.")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                visible:            !initialClickLabel.visible && !_controllerVehicle.vtol
+                visible:            !initialClickLabel.visible
             }
 
             QGCButton {
@@ -106,15 +116,6 @@ Rectangle {
             anchors.right:      parent.right
             spacing:            _margin
             visible:            !missionItem.wizardMode
-
-            QGCLabel {
-                width:          parent.width
-                wrapMode:       Text.WordWrap
-                font.pointSize: ScreenTools.smallFontPointSize
-                text:           missionItem.rawEdit ?
-                                    qsTr("Provides advanced access to all commands/parameters. Be very careful!") :
-                                    missionItem.commandDescription
-            }
 
             GridLayout {
                 anchors.left:   parent.left
@@ -161,6 +162,14 @@ Rectangle {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
                     spacing:            _margin
+
+                    QGCLabel {
+                        width:          parent.width
+                        wrapMode:       Text.WordWrap
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        text:           qsTr("Altitude below specifies the approximate altitude of the ground. Normally 0 for landing back at original launch location.")
+                        visible:        missionItem.isLandCommand
+                    }
 
                     Item {
                         width:  altHamburger.x + altHamburger.width

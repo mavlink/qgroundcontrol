@@ -629,7 +629,7 @@ Item {
                     dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                 },
                 {
-                    name:               _planMasterController.controllerVehicle.fixedWing ? qsTr("Land") : qsTr("Return"),
+                    name:               _planMasterController.controllerVehicle.multiRotor ? qsTr("Return") : qsTr("Land"),
                     iconSource:         "/res/rtl.svg",
                     buttonEnabled:      _missionController.isInsertLandValid,
                     buttonVisible:      _isMissionLayer
