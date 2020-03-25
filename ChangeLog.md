@@ -4,15 +4,27 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.3 - Not yet released
+### 4.0.6 - Not yet released
 
+### 4.0.5 - Stable
 
-### 4.0.3 - Not yet released
+* Solo: Fix mission upload failures
+* Plan: Fix crash when using Create Plan - Survey for fixed wing vehicle
+
+### 4.0.4
+
+* Mobile File Save: Fix problem with incorrect file extension being added
+* Radio Setup: Fix problem with Spektrum bind
+* Plan/Fly: Bring back waypoint number display in map items
+
+### 4.0.3
 
 * Plan: Add setting for takeoff item not required
 * Plan: Takeoff item must be added prior to allowing other item types to enable
+* Video: Add low latency mode as optional configuration setting (defaults to false)
+* ArduPilot: Fix generated list of available firmwares
 
-### 4.0.2 - Stable
+### 4.0.2
 
 * Fix Mavlink V2 protocol negotation based on capability bits
 * Fix waiting for AUTOPILOT_VERSION response to get capability bits
