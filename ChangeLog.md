@@ -8,12 +8,14 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.5 - Not yet released
+### 4.0.6 - Not yet released
+
+### 4.0.5 - Stable
 
 * Solo: Fix mission upload failures
 * Plan: Fix crash when using Create Plan - Survey for fixed wing vehicle
 
-### 4.0.4 - Stable
+### 4.0.4
 
 * Mobile File Save: Fix problem with incorrect file extension being added
 * Radio Setup: Fix problem with Spektrum bind
