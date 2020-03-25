@@ -14,32 +14,40 @@ env:
 jobs:
     fast_finish: true
     include:
-        - name: "Linux Installer"
+        - stage: "Build"
+          name: "Linux Installer"
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
-        - name: "Linux Debug"
+        - stage: "Build"
+          name: "Linux Debug"
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - name: "Android 32 bit"
+        - stage: "Build"
+          name: "Android 32 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32 GSTREAMER_NAME=armv7
           sudo: false
-        - name: "Android 64 bit"
+        - stage: "Build"
+          name: "Android 64 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=64 GSTREAMER_NAME=arm64
           sudo: false
-        - name: "OSX Installer"
+        - stage: "Build"
+          name: "OSX Installer"
           os: osx
           osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
+        - stage: "Google Play Upload"
+          script: echo "Final Stage"
+        
 # iOS build needs updating Qt to > 5.10
 #        - os: osx
 #          osx_image: xcode9.2
