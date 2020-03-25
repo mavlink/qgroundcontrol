@@ -748,7 +748,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
         // We default all acceptance radius to 0. This allows flight controller to be in control of
         // accept radius.
         _missionItem.setParam2(0);
-    } else if (uiInfo->isLandCommand() || command == MAV_CMD_DO_SET_ROI_LOCATION) {
+    } else if ((uiInfo && uiInfo->isLandCommand()) || command == MAV_CMD_DO_SET_ROI_LOCATION) {
         _altitudeFact.setRawValue(0);
         _missionItem.setParam7(0);
     }
