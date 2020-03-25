@@ -64,6 +64,7 @@ const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
 const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
 const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
 const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
+const char* Joystick::_buttonActionEmergencyStop =      QT_TR_NOOP("Emergency Stop");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -664,6 +665,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            disconnect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -687,6 +689,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
+            connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
             // FIXME: ****
             //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
@@ -1008,6 +1011,8 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
             _localYaw   = 0.0;
             emit gimbalControlValue(0.0, 0.0);
         }
+    } else if(action == _buttonActionEmergencyStop) {
+      if(buttonDown) emit emergencyStop();
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
@@ -1096,6 +1101,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionEmergencyStop));
     for(int i = 0; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();
