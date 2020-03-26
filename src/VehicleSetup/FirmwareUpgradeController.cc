@@ -332,6 +332,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/modalai_fc-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/modalai_fc-v1_default.px4"},
     };
+    //////////////////////////////////// UVify FC firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgUVifyCoreFirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/uvify_core_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/uvify_core_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/uvify_core_default.px4"},
+    };
 
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
@@ -438,6 +444,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgModalFCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgUVifyCoreFirmwareArray)/sizeof(rgUVifyCoreFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgUVifyCoreFirmwareArray[i];
+        _rgUVifyCoreFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
@@ -520,6 +532,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardIDModalFCV1:
         _rgFirmwareDynamic = _rgModalFCV1Firmware;
+        break;
+    case Bootloader::boardIDUVifyCore:
+        _rgFirmwareDynamic = _rgUVifyCoreFirmware;
         break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;
