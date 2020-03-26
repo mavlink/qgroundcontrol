@@ -11,35 +11,58 @@ env:
     # ANDROID_STOREPASS
     - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
-matrix:
+jobs:
     fast_finish: true
     include:
-        - name: "Linux Installer"
+        - stage: "Build"
+          name: "Linux Installer"
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
-        - name: "Linux Debug"
+          after_success: skip
+        - stage: "Build"
+          name: "Linux Debug"
           os: linux
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - name: "Android 32 bit"
+          after_success: skip
+        - stage: "Build"
+          name: "Android 32 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32 GSTREAMER_NAME=armv7
           sudo: false
-        - name: "Android 64 bit"
+          after_success: skip
+        - stage: "Build"
+          name: "Android 64 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=64 GSTREAMER_NAME=arm64
           sudo: false
-        - name: "OSX Installer"
+          after_success: skip
+        - stage: "Build"
+          name: "OSX Installer"
           os: osx
           osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
+          after_success: skip
+        - stage: "Google Play Upload"
+          name: "Google Play Upload"
+          dist: trusty
+          language: android
+          sudo: false
+          before_install: skip
+          install: skip
+          before_script: skip
+          before_deploy: skip
+          deploy: skip
+          after_deploy: skip
+          script: echo "Final Stage"
+        
 # iOS build needs updating Qt to > 5.10
 #        - os: osx
 #          osx_image: xcode9.2
@@ -196,10 +219,8 @@ script:
     fi
 
 after_success:
+  # This is only used to upload android builds to Google Play
   - cd ${TRAVIS_BUILD_DIR}
-
-  # master development builds to beta track
-  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
@@ -208,10 +229,12 @@ after_success:
         GOOGLE_PLAY_PKG=none;
     fi
   - if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl32.apk &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl64.apk &&
         pip install --user --upgrade oauth2client &&
         pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
+        ./deploy/GooglePlayUpload.py ${GOOGLE_PLAY_PKG};
     fi
 
 before_deploy:
