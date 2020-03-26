@@ -8292,17 +8292,38 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="25">Pitch 270°</value>
       </values>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_XCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+X component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG0_XSCALE" type="FLOAT">
       <short_desc>Magnetometer X-axis scaling factor</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_YCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Y component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG0_YSCALE" type="FLOAT">
       <short_desc>Magnetometer Y-axis scaling factor</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_ZCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Z component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
@@ -8352,17 +8373,38 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="25">Pitch 270°</value>
       </values>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_XCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+X component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG1_XSCALE" type="FLOAT">
       <short_desc>Magnetometer X-axis scaling factor</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_YCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Y component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG1_YSCALE" type="FLOAT">
       <short_desc>Magnetometer Y-axis scaling factor</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_ZCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Z component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
@@ -8412,17 +8454,38 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="25">Pitch 270°</value>
       </values>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_XCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+X component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG2_XSCALE" type="FLOAT">
       <short_desc>Magnetometer X-axis scaling factor</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_YCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Y component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG2_YSCALE" type="FLOAT">
       <short_desc>Magnetometer Y-axis scaling factor</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_ZCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Z component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
@@ -8472,11 +8535,25 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="25">Pitch 270°</value>
       </values>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_XCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+X component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG3_XSCALE" type="FLOAT">
       <short_desc>Magnetometer X-axis scaling factor</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_YCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Y component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
@@ -8484,11 +8561,26 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="1.0" name="CAL_MAG3_YSCALE" type="FLOAT">
       <short_desc>Magnetometer Y-axis scaling factor</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_ZCOMP" type="FLOAT">
+      <short_desc>Coefficient describing linear relationship between
+Z component of magnetometer in body frame axis
+and either current or throttle depending on value of CAL_MAG_COMP_TYP
+Unit for throttle-based compensation is [G] and
+for current-based compensation [G/kA]</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG3_ZSCALE" type="FLOAT">
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
+    </parameter>
+    <parameter category="System" default="0" name="CAL_MAG_COMP_TYP" type="INT32">
+      <short_desc>Type of magnetometer compensation</short_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Throttle-based compensation</value>
+        <value code="2">Current-based compensation</value>
+      </values>
     </parameter>
     <parameter category="System" default="0" name="CAL_MAG_PRIME" type="INT32">
       <short_desc>Primary mag ID</short_desc>
