@@ -20,6 +20,7 @@ jobs:
           dist: bionic
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
+          after_success: skip
         - stage: "Build"
           name: "Linux Debug"
           os: linux
@@ -27,25 +28,35 @@ jobs:
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
+          after_success: skip
         - stage: "Build"
           name: "Android 32 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32 GSTREAMER_NAME=armv7
           sudo: false
+          after_success: skip
         - stage: "Build"
           name: "Android 64 bit"
           dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=64 GSTREAMER_NAME=arm64
           sudo: false
+          after_success: skip
         - stage: "Build"
           name: "OSX Installer"
           os: osx
           osx_image: xcode11.3
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
+          after_success: skip
         - stage: "Google Play Upload"
+          before_install: skip
+          install: skip
+          before_script: skip
+          before_deploy: skip
+          deploy: skip
+          after_deploy: skip
           script: echo "Final Stage"
         
 # iOS build needs updating Qt to > 5.10
