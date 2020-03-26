@@ -55,7 +55,6 @@ jobs:
           install: skip
           before_script: skip
           before_deploy: skip
-          deploy: skip
           after_deploy: skip
           script: echo "Google Play Upload"
         
