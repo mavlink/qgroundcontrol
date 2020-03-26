@@ -247,21 +247,27 @@ GstVideoReceiver::stop(void)
         if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != nullptr) {
             gst_bus_disable_sync_message_emission(bus);
 
-            gst_element_send_event(_pipeline, gst_event_new_eos());
+            gboolean recordingValveClosed = TRUE;
 
-            GstMessage* msg;
+            g_object_get(_recorderValve, "drop", &recordingValveClosed, nullptr);
 
-            if((msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR))) != nullptr) {
-                if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
-                    qCCritical(VideoReceiverLog) << "Error stopping pipeline!";
-                } else if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS) {
-                    qCDebug(VideoReceiverLog) << "End of stream received!";
+            if (recordingValveClosed == FALSE) {
+                gst_element_send_event(_pipeline, gst_event_new_eos());
+
+                GstMessage* msg;
+
+                if((msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR))) != nullptr) {
+                    if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
+                        qCCritical(VideoReceiverLog) << "Error stopping pipeline!";
+                    } else if(GST_MESSAGE_TYPE(msg) == GST_MESSAGE_EOS) {
+                        qCDebug(VideoReceiverLog) << "End of stream received!";
+                    }
+
+                    gst_message_unref(msg);
+                    msg = nullptr;
+                } else {
+                    qCCritical(VideoReceiverLog) << "gst_bus_timed_pop_filtered() failed";
                 }
-
-                gst_message_unref(msg);
-                msg = nullptr;
-            } else {
-                qCCritical(VideoReceiverLog) << "gst_bus_timed_pop_filtered() failed";
             }
 
             gst_object_unref(bus);
