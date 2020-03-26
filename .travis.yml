@@ -51,6 +51,10 @@ jobs:
           sudo: required
           after_success: skip
         - stage: "Google Play Upload"
+          name: "Google Play Upload"
+          dist: trusty
+          language: android
+          sudo: false
           before_install: skip
           install: skip
           before_script: skip
@@ -215,10 +219,8 @@ script:
     fi
 
 after_success:
+  # This is only used to upload android builds to Google Play
   - cd ${TRAVIS_BUILD_DIR}
-
-  # master development builds to beta track
-  - GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrolbeta
   - if [ "${TRAVIS_TAG}" ]; then
         GOOGLE_PLAY_PKG=org.mavlink.qgroundcontrol;
     elif [ "${TRAVIS_BRANCH}" = "master" ]; then
@@ -227,10 +229,12 @@ after_success:
         GOOGLE_PLAY_PKG=none;
     fi
   - if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl32.apk &&
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl64.apk &&
         pip install --user --upgrade oauth2client &&
         pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
+        ./deploy/GooglePlayUpload.py ${GOOGLE_PLAY_PKG};
     fi
 
 before_deploy:
