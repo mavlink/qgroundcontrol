@@ -8878,6 +8878,10 @@ is less than 50% of this value</short_desc>
         <value code="1">Autodetect</value>
       </values>
     </parameter>
+    <parameter default="0" name="SENS_EN_PAW3902" type="INT32">
+      <short_desc>PAW3902 Optical Flow</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="SENS_EN_PGA460" type="INT32">
       <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
       <reboot_required>true</reboot_required>
