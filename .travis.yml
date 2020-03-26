@@ -228,7 +228,7 @@ after_success:
     else
         GOOGLE_PLAY_PKG=none;
     fi
-  - if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+  - if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl32.apk &&
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/builds/${TRAVIS_BRANCH}/QGroundControl64.apk &&
         pip install --user --upgrade oauth2client &&
