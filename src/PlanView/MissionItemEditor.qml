@@ -81,7 +81,6 @@ Rectangle {
         id:                 topRowLayout
         anchors.margins:    _margin
         anchors.left:       parent.left
-        anchors.right:      parent.right
         anchors.top:        parent.top
         spacing:            _margin
 
@@ -179,15 +178,13 @@ Rectangle {
             text:                   missionItem.commandName
             color:                  _outerTextColor
         }
-
-
     }
 
    QGCColoredImage {
         id:                     hamburger
         anchors.margins:        _margin
         anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: topRowLayout.verticalCenter
         width:                  _hamburgerSize
         height:                 _hamburgerSize
         sourceSize.height:      _hamburgerSize
