@@ -125,7 +125,7 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
 #endif
 
     //-- If gstreamer debugging is not configured via environment then use internal QT logging
-    if (qgetenv("GST_DEBUG").isEmpty()) {
+    if (qEnvironmentVariableIsEmpty("GST_DEBUG")) {
         gst_debug_set_default_threshold(static_cast<GstDebugLevel>(debuglevel));
         gst_debug_remove_log_function(gst_debug_log_default);
         gst_debug_add_log_function(qt_gst_log, nullptr, nullptr);
