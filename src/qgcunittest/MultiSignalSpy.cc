@@ -58,10 +58,6 @@ bool MultiSignalSpy::init(QObject*        signalEmitter,    ///< [in] object whi
     Q_ASSERT(_rgSpys != nullptr);
     for (size_t i=0; i<_cSignals; i++) {
         _rgSpys[i] = new QSignalSpy(_signalEmitter, _rgSignals[i]);
-        if (_rgSpys[i] == nullptr) {
-            qDebug() << "Unabled to allocated QSignalSpy";
-            return false;
-        }
         if (!_rgSpys[i]->isValid()) {
             qDebug() << "Invalid signal";
             return false;
