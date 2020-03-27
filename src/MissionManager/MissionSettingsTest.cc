@@ -9,7 +9,6 @@
 
 #include "MissionSettingsTest.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
 MissionSettingsTest::MissionSettingsTest(void)

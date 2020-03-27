@@ -81,11 +81,15 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
 
-    // Colors are not affecting by theming
-    DECLARE_QGC_COLOR(mapWidgetBorderLight, "#ffffff", "#ffffff", "#ffffff", "#ffffff")
-    DECLARE_QGC_COLOR(mapWidgetBorderDark,  "#000000", "#000000", "#000000", "#000000")
-    DECLARE_QGC_COLOR(brandingPurple,       "#4A2C6D", "#4A2C6D", "#4A2C6D", "#4A2C6D")
-    DECLARE_QGC_COLOR(brandingBlue,         "#48D6FF", "#6045c5", "#48D6FF", "#6045c5")
+    // Colors not affecting by theming
+    //                                          Disabled    Enabled
+    DECLARE_QGC_NONTHEMED_COLOR(brandingPurple, "#4A2C6D", "#4A2C6D")
+    DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,   "#48D6FF", "#6045c5")
+
+    // Colors not affecting by theming or enable/disable
+    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight, "#ffffff")
+    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderDark,  "#000000")
+    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory, "#be781c")
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)

@@ -13,7 +13,6 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
-#include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"

@@ -14,7 +14,6 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
 #include "SettingsManager.h"
