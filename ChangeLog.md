@@ -11,6 +11,7 @@ Note: This file only contains high level features or important fixes.
 ### 4.0.6 - Not yet released
 
 * Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
+* Analyze/Log Download - Fix download on mobile versions of QGC
 
 ### 4.0.5 - Stable
 

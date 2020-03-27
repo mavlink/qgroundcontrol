@@ -99,12 +99,32 @@ Rectangle {
                 checked:                    object.isCurrentItem
                 label:                      object.abbreviation.charAt(0)
                 index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
-                showSequenceNumbers:        true
-                visible:                    true
-                onClicked:                  root.setCurrentSeqNum(object.sequenceNumber)
+                showSequenceNumbers:        false
+            }
+
+            Rectangle {
+                id:                     indexBackground
+                anchors.leftMargin:     -2
+                anchors.rightMargin:    -2
+                anchors.fill:           indexLabel
+                color:                  qgcPal.window
+                opacity:                0.3
+                visible:                indexLabel.visible
+                transform:              Rotation { angle: 90; origin.x: indexBackground.width / 2; origin.y: indexBackground.height / 2 }
+            }
+
+            QGCLabel {
+                id:                 indexLabel
+                anchors.centerIn:   parent
+                text:               object.sequenceNumber
+                visible:            indicator.index != -1
+                transform:          Rotation { angle: 90; origin.x: indexLabel.width / 2; origin.y: indexLabel.height / 2 }
+            }
+
+            MouseArea {
+                anchors.fill:   parent
+                onClicked:      root.setCurrentSeqNum(object.sequenceNumber)
             }
         }
     }
 }
-
-
