@@ -181,8 +181,6 @@ CalWorkerThread::calibrate_return CalWorkerThread::mag_calibration_worker(detect
         }
 
         int prev_count[max_mags];
-        bool rejected = false;
-
         for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
             prev_count[cur_mag] = worker_data->calibration_counter_total[cur_mag];
 
