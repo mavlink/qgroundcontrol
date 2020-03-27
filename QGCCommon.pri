@@ -25,9 +25,12 @@ linux {
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
+        } else {
+            QMAKE_CXXFLAGS += -Wno-deprecated-copy
         }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
