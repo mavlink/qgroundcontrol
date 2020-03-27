@@ -28,6 +28,34 @@
         _colors << #name; \
     }
 
+#define DECLARE_QGC_NONTHEMED_COLOR(name, disabledColor, enabledColor) \
+    { \
+        PaletteColorInfo_t colorInfo = { \
+            { QColor(disabledColor), QColor(enabledColor) }, \
+            { QColor(disabledColor), QColor(enabledColor) } \
+        }; \
+        qgcApp()->toolbox()->corePlugin()->paletteOverride(#name, colorInfo); \
+        _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupEnabled]; \
+        _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
+        _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \
+        _colorInfoMap[Dark][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupDisabled]; \
+        _colors << #name; \
+    }
+
+#define DECLARE_QGC_SINGLE_COLOR(name, color) \
+    { \
+        PaletteColorInfo_t colorInfo = { \
+            { QColor(color), QColor(color) }, \
+            { QColor(color), QColor(color) } \
+        }; \
+        qgcApp()->toolbox()->corePlugin()->paletteOverride(#name, colorInfo); \
+        _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupEnabled]; \
+        _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
+        _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \
+        _colorInfoMap[Dark][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupDisabled]; \
+        _colors << #name; \
+    }
+
 #define DEFINE_QGC_COLOR(NAME, SETNAME) \
     Q_PROPERTY(QColor NAME READ NAME WRITE SETNAME NOTIFY paletteChanged) \
     Q_PROPERTY(QStringList NAME ## Colors READ NAME ## Colors NOTIFY paletteChanged) \
@@ -103,6 +131,7 @@ public:
     DEFINE_QGC_COLOR(mapIndicatorChild,     setMapIndicatorChild)
     DEFINE_QGC_COLOR(mapWidgetBorderLight,  setMapWidgetBorderLight)
     DEFINE_QGC_COLOR(mapWidgetBorderDark,   setMapWidgetBorderDark)
+    DEFINE_QGC_COLOR(mapMissionTrajectory,  setMapMissionTrajectory)
     DEFINE_QGC_COLOR(brandingPurple,        setBrandingPurple)
     DEFINE_QGC_COLOR(brandingBlue,          setBrandingBlue)
     DEFINE_QGC_COLOR(colorGreen,            setColorGreen)
