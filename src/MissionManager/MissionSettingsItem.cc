@@ -11,7 +11,6 @@
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SimpleMissionItem.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
