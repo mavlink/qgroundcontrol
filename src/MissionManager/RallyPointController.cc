@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "RallyPointController.h"
 #include "RallyPoint.h"
 #include "Vehicle.h"
@@ -20,7 +16,6 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
