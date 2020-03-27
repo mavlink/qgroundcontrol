@@ -257,6 +257,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
     connect(&_mavCommandAckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandAgain);
 
+    // Chunked status text timeout timer
+    _chunkedStatusTextTimer.setSingleShot(true);
+    _chunkedStatusTextTimer.setInterval(1000);
+    connect(&_chunkedStatusTextTimer, &QTimer::timeout, this, &Vehicle::_chunkedStatusTextTimeout);
+
     _mav = uas();
 
     // Listen for system messages
@@ -843,10 +848,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleEstimatorStatus(message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
-        _handleStatusText(message, false /* longVersion */);
-        break;
-    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
-        _handleStatusText(message, true /* longVersion */);
+        _handleStatusText(message);
         break;
     case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
         _handleOrbitExecutionStatus(message);
@@ -952,27 +954,34 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleStatusText(mavlink_message_t& message, bool longVersion)
+void Vehicle::_chunkedStatusTextTimeout(void)
 {
-    QByteArray  b;
-    QString     messageText;
-    int         severity;
-
-    if (longVersion) {
-        b.resize(MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN+1);
-        mavlink_statustext_long_t statustextLong;
-        mavlink_msg_statustext_long_decode(&message, &statustextLong);
-        strncpy(b.data(), statustextLong.text, MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN);
-        severity = statustextLong.severity;
-    } else {
-        b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-        mavlink_statustext_t statustext;
-        mavlink_msg_statustext_decode(&message, &statustext);
-        strncpy(b.data(), statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
-        severity = statustext.severity;
+    // Spit out all incomplete chunks
+    QList<uint8_t> rgCompId = _chunkedStatusTextInfoMap.keys();
+    for (uint8_t compId : rgCompId) {
+        _chunkedStatusTextInfoMap[compId].rgMessageChunks.append(QString());
+        _chunkedStatusTextCompleted(compId);
     }
-    b[b.length()-1] = '\0';
-    messageText = QString(b);
+}
+
+void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
+{
+    ChunkedStatusTextInfo_t&    chunkedInfo =   _chunkedStatusTextInfoMap[compId];
+    uint8_t                     severity =      chunkedInfo.severity;
+    QStringList&                rgChunks =      chunkedInfo.rgMessageChunks;
+
+    // Build up message from chunks
+    QString messageText;
+    for (const QString& chunk : rgChunks) {
+        if (chunk.isEmpty()) {
+            // Indicates missing chunk
+            messageText += tr(" ... ", "Indicates missing chunk from chunked STATUS_TEXT");
+        } else {
+            messageText += chunk;
+        }
+    }
+
+    _chunkedStatusTextInfoMap.remove(compId);
 
     bool skipSpoken = false;
     bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));
@@ -987,7 +996,6 @@ void Vehicle::_handleStatusText(mavlink_message_t& message, bool longVersion)
         }
     }
 
-
     // If the message is NOTIFY or higher severity, or starts with a '#',
     // then read it aloud.
     if (messageText.startsWith("#") || severity <= MAV_SEVERITY_NOTICE) {
@@ -996,7 +1004,64 @@ void Vehicle::_handleStatusText(mavlink_message_t& message, bool longVersion)
             qgcApp()->toolbox()->audioOutput()->say(messageText);
         }
     }
-    emit textMessageReceived(id(), message.compid, severity, messageText);
+    emit textMessageReceived(id(), compId, severity, messageText);
+}
+
+void Vehicle::_handleStatusText(mavlink_message_t& message)
+{
+    QByteArray  b;
+    QString     messageText;
+
+    mavlink_statustext_t statustext;
+    mavlink_msg_statustext_decode(&message, &statustext);
+
+    uint8_t compId = message.compid;
+
+    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+    strncpy(b.data(), statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+    b[b.length()-1] = '\0';
+    messageText = QString(b);
+    bool includesNullTerminator = messageText.length() < MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
+
+    if (_chunkedStatusTextInfoMap.contains(compId) && _chunkedStatusTextInfoMap[compId].chunkId != statustext.id) {
+        // We have an incomplete chunked status still pending
+        _chunkedStatusTextInfoMap[compId].rgMessageChunks.append(QString());
+        _chunkedStatusTextCompleted(compId);
+    }
+
+    if (statustext.id == 0) {
+        // Non-chunked status text. We still use common chunked text output mechanism.
+        ChunkedStatusTextInfo_t chunkedInfo;
+        chunkedInfo.chunkId = 0;
+        chunkedInfo.severity = statustext.severity;
+        chunkedInfo.rgMessageChunks.append(messageText);
+        _chunkedStatusTextInfoMap[compId] = chunkedInfo;
+    } else {
+        if (_chunkedStatusTextInfoMap.contains(compId)) {
+            // A chunk sequence is in progress
+            QStringList& chunks = _chunkedStatusTextInfoMap[compId].rgMessageChunks;
+            if (statustext.chunk_seq > chunks.size()) {
+                // We are missing some chunks in between, fill them in as missing
+                for (int i=chunks.size(); i<statustext.chunk_seq; i++) {
+                    chunks.append(QString());
+                }
+            }
+            chunks.append(messageText);
+        } else {
+            // Starting a new chunk sequence
+            ChunkedStatusTextInfo_t chunkedInfo;
+            chunkedInfo.chunkId = statustext.id;
+            chunkedInfo.severity = statustext.severity;
+            chunkedInfo.rgMessageChunks.append(messageText);
+            _chunkedStatusTextInfoMap[compId] = chunkedInfo;
+        }
+        _chunkedStatusTextTimer.start();
+    }
+
+    if (statustext.id == 0 || includesNullTerminator) {
+        _chunkedStatusTextTimer.stop();
+        _chunkedStatusTextCompleted(message.compid);
+    }
 }
 
 void Vehicle::_handleVfrHud(mavlink_message_t& message)
