@@ -25,27 +25,27 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 class JoystickManager : public QGCTool
 {
     Q_OBJECT
-    
+
 public:
     JoystickManager(QGCApplication* app, QGCToolbox* toolbox);
     ~JoystickManager();
 
     Q_PROPERTY(QVariantList joysticks READ joysticks NOTIFY availableJoysticksChanged)
     Q_PROPERTY(QStringList  joystickNames READ joystickNames NOTIFY availableJoysticksChanged)
-    
+
     Q_PROPERTY(Joystick* activeJoystick READ activeJoystick WRITE setActiveJoystick NOTIFY activeJoystickChanged)
     Q_PROPERTY(QString activeJoystickName READ activeJoystickName WRITE setActiveJoystickName NOTIFY activeJoystickNameChanged)
-    
+
     /// List of available joysticks
     QVariantList joysticks();
     /// List of available joystick names
     QStringList joystickNames(void);
-    
+
     /// Get active joystick
     Joystick* activeJoystick(void);
     /// Set active joystick
     void setActiveJoystick(Joystick* joystick);
-    
+
     QString activeJoystickName(void);
     void setActiveJoystickName(const QString& name);
 
@@ -65,15 +65,15 @@ signals:
 
 private slots:
     void _updateAvailableJoysticks(void);
-    
+
 private:
     void _setActiveJoystickFromSettings(void);
-    
+
 private:
     Joystick*                   _activeJoystick;
     QMap<QString, Joystick*>    _name2JoystickMap;
     MultiVehicleManager*        _multiVehicleManager;
-    
+
     static const char * _settingsGroup;
     static const char * _settingsKeyActiveJoystick;
 
