@@ -751,9 +751,6 @@ HEADERS += \
     src/GPS/vehicle_gps_position.h \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
-    src/comm/QGCHilLink.h \
-    src/comm/QGCJSBSimLink.h \
-    src/comm/QGCXPlaneLink.h \
 }
 
 iOSBuild {
@@ -940,8 +937,6 @@ SOURCES += \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
-    src/comm/QGCJSBSimLink.cc \
-    src/comm/QGCXPlaneLink.cc \
 }
 
 #
