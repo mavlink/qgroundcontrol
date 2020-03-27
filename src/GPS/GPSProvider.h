@@ -85,8 +85,8 @@ private:
     float   _fixedBaseAltitudeMeters;
     float   _fixedBaseAccuracyMeters;
 
-	struct vehicle_gps_position_s	_reportGpsPos;
-	struct satellite_info_s		*_pReportSatInfo = nullptr;
+	struct sensor_gps_s        _reportGpsPos;
+	struct satellite_info_s    *_pReportSatInfo = nullptr;
 
 	QSerialPort *_serial = nullptr;
 };
