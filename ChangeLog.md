@@ -10,6 +10,8 @@ Note: This file only contains high level features or important fixes.
 
 ### 4.0.6 - Not yet released
 
+* Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
+
 ### 4.0.5 - Stable
 
 * Solo: Fix mission upload failures

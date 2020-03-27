@@ -172,6 +172,7 @@
             "friendlyName":         "Takeoff",
             "description":          "Launch from the ground and travel towards the specified takeoff position.",
             "specifiesCoordinate":  true,
+            "isTakeoffCommand":     true,
             "friendlyEdit":         true,
             "category":             "Basic",
             "param1": {
@@ -290,6 +291,7 @@
             "friendlyName":         "VTOL takeoff",
             "description":          "Hover straight up to specified altitude, transition to fixed-wing and fly to the specified takeoff location.",
             "specifiesCoordinate":  true,
+            "isTakeoffCommand":     true,
             "friendlyEdit":         true,
             "category":             "Basic",
             "param4": {

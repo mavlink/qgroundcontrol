@@ -28,7 +28,7 @@
 #include "MissionSettingsItem.h"
 #include "QGCQGeoCoordinate.h"
 #include "PlanMasterController.h"
-#include "KML.h"
+#include "KMLPlanDomDocument.h"
 #include "QGCCorePlugin.h"
 #include "TakeoffMissionItem.h"
 #include "PlanViewSettings.h"
@@ -273,46 +273,14 @@ bool MissionController::_convertToMissionItems(QmlObjectListModel* visualMission
     return endActionSet;
 }
 
-void MissionController::convertToKMLDocument(QDomDocument& document)
+void MissionController::addMissionToKML(KMLPlanDomDocument& planKML)
 {
     QObject*            deleteParent = new QObject();
     QList<MissionItem*> rgMissionItems;
 
     _convertToMissionItems(_visualItems, rgMissionItems, deleteParent);
-    if (rgMissionItems.count() == 0) {
-        return;
-    }
-
-    const double homePositionAltitude = _settingsItem->coordinate().altitude();
-
-    QString coord;
-    QStringList coords;
-    // Drop home position
-    bool dropPoint = true;
-    for(const auto& item : rgMissionItems) {
-        if(dropPoint) {
-            dropPoint = false;
-            continue;
-        }
-        const MissionCommandUIInfo* uiInfo = \
-                qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
-
-        if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            double amslAltitude = item->param7() + (item->frame() == MAV_FRAME_GLOBAL ? 0 : homePositionAltitude);
-            coord = QString::number(item->param6(),'f',7) \
-                    + "," \
-                    + QString::number(item->param5(),'f',7) \
-                    + "," \
-                    + QString::number(amslAltitude,'f',2);
-            coords.append(coord);
-        }
-    }
-
+    planKML.addMissionItems(_controllerVehicle, rgMissionItems);
     deleteParent->deleteLater();
-
-    Kml kml;
-    kml.points(coords);
-    kml.save(document);
 }
 
 void MissionController::sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems)

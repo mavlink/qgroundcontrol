@@ -15,7 +15,7 @@
 #include "AppSettings.h"
 #include "JsonHelper.h"
 #include "MissionManager.h"
-#include "KML.h"
+#include "KMLPlanDomDocument.h"
 #include "SurveyPlanCreator.h"
 #include "StructureScanPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
@@ -492,10 +492,10 @@ void PlanMasterController::saveToKml(const QString& filename)
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showMessage(tr("KML save error %1 : %2").arg(filename).arg(file.errorString()));
     } else {
-        QDomDocument domDocument;
-        _missionController.convertToKMLDocument(domDocument);
+        KMLPlanDomDocument planKML;
+        _missionController.addMissionToKML(planKML);
         QTextStream stream(&file);
-        stream << domDocument.toString();
+        stream << planKML.toString();
         file.close();
     }
 }

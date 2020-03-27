@@ -13,7 +13,7 @@
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
-
+#include "KMLPlanDomDocument.h"
 #include "QGCGeoBoundingCube.h"
 
 #include <QHash>
@@ -195,7 +195,7 @@ public:
     bool showPlanFromManagerVehicle (void) final;
 
     // Create KML file
-    void convertToKMLDocument(QDomDocument& document);
+    void addMissionToKML(KMLPlanDomDocument& planKML);
 
     // Property accessors
 
