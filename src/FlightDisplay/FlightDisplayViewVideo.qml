@@ -80,10 +80,9 @@ Item {
             QGCVideoBackground {
                 id:             videoContent
                 objectName:     "videoContent"
-                receiver:       _videoReceiver
 
                 Connections {
-                    target:         _videoReceiver
+                    target: QGroundControl.videoManager
                     onImageFileChanged: {
                         videoContent.grabToImage(function(result) {
                             if (!result.saveToFile(QGroundControl.videoManager.imageFile)) {
