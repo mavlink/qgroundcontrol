@@ -73,7 +73,7 @@ Item {
         interactive:        polygonInteractive && _missionItem.isCurrentItem
         borderWidth:        1
         borderColor:        "black"
-        interiorColor:      "green"
+        interiorColor:      QGroundControl.globalPalette.surveyPolygonInterior
         interiorOpacity:    0.5
     }
 
