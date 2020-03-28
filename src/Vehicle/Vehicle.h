@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QVariantList>
 #include <QGeoCoordinate>
@@ -1519,7 +1520,7 @@ private:
     QString _gitHash;
     quint64 _uid;
 
-    QTime   _lastBatteryAnnouncement;
+    QElapsedTimer   _lastBatteryAnnouncement;
     int     _lastAnnouncedLowBatteryPercent;
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
