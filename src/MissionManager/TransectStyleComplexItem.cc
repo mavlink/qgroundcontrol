@@ -989,3 +989,15 @@ void TransectStyleComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& it
         items.append(item);
     }
 }
+
+void TransectStyleComplexItem::addKMLVisuals(KMLPlanDomDocument& domDocument)
+{
+    // We add the survey area polygon as a Placemark
+
+    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
+    QDomElement polygonElement = _surveyAreaPolygon.kmlPolygonElement(domDocument);
+
+    placemarkElement.appendChild(polygonElement);
+    domDocument.addTextElement(placemarkElement, "styleUrl", QStringLiteral("#%1").arg(domDocument.surveyPolygonStyleName));
+    domDocument.appendChildToRoot(placemarkElement);
+}

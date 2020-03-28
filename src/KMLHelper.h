@@ -16,7 +16,7 @@
 
 #include "ShapeFileHelper.h"
 
-class KMLFileHelper : public QObject
+class KMLHelper : public QObject
 {
     Q_OBJECT
 

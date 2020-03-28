@@ -279,7 +279,7 @@ void MissionController::addMissionToKML(KMLPlanDomDocument& planKML)
     QList<MissionItem*> rgMissionItems;
 
     _convertToMissionItems(_visualItems, rgMissionItems, deleteParent);
-    planKML.addMissionItems(_controllerVehicle, rgMissionItems);
+    planKML.addMission(_controllerVehicle, _visualItems, rgMissionItems);
     deleteParent->deleteLater();
 }
 
