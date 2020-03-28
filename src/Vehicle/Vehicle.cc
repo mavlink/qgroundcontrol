@@ -788,9 +788,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_WIND_COV:
         _handleWindCov(message);
         break;
-    case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
-        _handleHilActuatorControls(message);
-        break;
     case MAVLINK_MSG_ID_LOGGING_DATA:
         _handleMavlinkLoggingData(message);
         break;
@@ -1449,30 +1446,6 @@ QString Vehicle::vehicleUIDStr()
             pUid[6] & 0xff,
             pUid[7] & 0xff);
     return uid;
-}
-
-void Vehicle::_handleHilActuatorControls(mavlink_message_t &message)
-{
-    mavlink_hil_actuator_controls_t hil;
-    mavlink_msg_hil_actuator_controls_decode(&message, &hil);
-    emit hilActuatorControlsChanged(hil.time_usec, hil.flags,
-                                    hil.controls[0],
-            hil.controls[1],
-            hil.controls[2],
-            hil.controls[3],
-            hil.controls[4],
-            hil.controls[5],
-            hil.controls[6],
-            hil.controls[7],
-            hil.controls[8],
-            hil.controls[9],
-            hil.controls[10],
-            hil.controls[11],
-            hil.controls[12],
-            hil.controls[13],
-            hil.controls[14],
-            hil.controls[15],
-            hil.mode);
 }
 
 void Vehicle::_handleCommandLong(mavlink_message_t& message)
@@ -2524,30 +2497,6 @@ void Vehicle::setPriorityLinkByName(const QString& priorityLinkName)
         emit priorityLinkNameChanged(_priorityLink->getName());
         _linkActiveChanged(_priorityLink.data(), _priorityLink->link_active(_id), _id);
     }
-}
-
-bool Vehicle::hilMode()
-{
-    return _base_mode & MAV_MODE_FLAG_HIL_ENABLED;
-}
-
-void Vehicle::setHilMode(bool hilMode)
-{
-    mavlink_message_t msg;
-
-    uint8_t newBaseMode = _base_mode & ~MAV_MODE_FLAG_DECODE_POSITION_HIL;
-    if (hilMode) {
-        newBaseMode |= MAV_MODE_FLAG_HIL_ENABLED;
-    }
-
-    mavlink_msg_set_mode_pack_chan(_mavlink->getSystemId(),
-                                   _mavlink->getComponentId(),
-                                   priorityLink()->mavlinkChannel(),
-                                   &msg,
-                                   id(),
-                                   newBaseMode,
-                                   _custom_mode);
-    sendMessageOnLink(priorityLink(), msg);
 }
 
 void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple)
