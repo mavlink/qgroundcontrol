@@ -23,7 +23,7 @@ class KMLDomDocument : public QDomDocument
 public:
     KMLDomDocument(const QString& name);
 
-    QDomNode    appendChildToRoot   (const QDomNode& child);
+    void        appendChildToRoot   (const QDomNode& child);
     QDomElement addPlacemark        (const QString& name, bool visible);
     void        addTextElement      (QDomElement& parentElement, const QString& name, const QString& value);
     QString     kmlColorString      (const QColor& color, double opacity = 1);
