@@ -1051,22 +1051,61 @@ void MockLink::_sendGpsRawInt(void)
                                       _vehicleComponentId,
                                       _mavlinkChannel,
                                       &msg,
-                                      timeTick++,                            // time since boot
-                                      3,                                     // 3D fix
+                                      timeTick++,                           // time since boot
+                                      3,                                    // 3D fix
                                       (int32_t)(_vehicleLatitude  * 1E7),
                                       (int32_t)(_vehicleLongitude * 1E7),
                                       (int32_t)(_vehicleAltitude  * 1000),
-                                      UINT16_MAX, UINT16_MAX,                // HDOP/VDOP not known
-                                      UINT16_MAX,                            // velocity not known
-                                      UINT16_MAX,                            // course over ground not known
-                                      8,                                     // satellite count
+                                      UINT16_MAX, UINT16_MAX,               // HDOP/VDOP not known
+                                      UINT16_MAX,                           // velocity not known
+                                      UINT16_MAX,                           // course over ground not known
+                                      8,                                    // satellites visible
                                       //-- Extension
                                       0,                                    // Altitude (above WGS84, EGM96 ellipsoid), in meters * 1000 (positive for up).
                                       0,                                    // Position uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Altitude uncertainty in meters * 1000 (positive for up).
                                       0,                                    // Speed uncertainty in meters * 1000 (positive for up).
-                                      0);                                   // Heading / track uncertainty in degrees * 1e5.
+                                      0,                                    // Heading / track uncertainty in degrees * 1e5.
+                                      65535);                               // Yaw not provided
     respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendChunkedStatusText(uint16_t chunkId, bool missingChunks)
+{
+    mavlink_message_t msg;
+
+    int cChunks = 4;
+    int num = 0;
+    for (int i=0; i<cChunks; i++) {
+        if (missingChunks && (i & 1)) {
+            continue;
+        }
+        int cBuf = MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
+        char msgBuf[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN];
+        memset(msgBuf, 0, sizeof(msgBuf));
+        if (i == cChunks - 1) {
+            // Last chunk is partial
+            cBuf /= 2;
+        }
+        for (int j=0; j<cBuf-1; j++) {
+            msgBuf[j] = '0' + num++;
+            if (num > 9) {
+                num = 0;
+            }
+        }
+        msgBuf[cBuf-1] = 'A' + i;
+
+        mavlink_msg_statustext_pack_chan(_vehicleSystemId,
+                                         _vehicleComponentId,
+                                         _mavlinkChannel,
+                                         &msg,
+                                         MAV_SEVERITY_INFO,
+                                         msgBuf,
+                                         chunkId,
+                                         i);                    // chunk sequence number
+        respondWithMavlinkMessage(msg);
+    }
+
 }
 
 void MockLink::_sendStatusTextMessages(void)
@@ -1086,10 +1125,11 @@ void MockLink::_sendStatusTextMessages(void)
     { MAV_SEVERITY_NOTICE,      "Status text notice" },
     { MAV_SEVERITY_INFO,        "Status text info" },
     { MAV_SEVERITY_DEBUG,       "Status text debug" },
-};
+    };
+
+    mavlink_message_t msg;
 
     for (size_t i=0; i<sizeof(rgMessages)/sizeof(rgMessages[0]); i++) {
-        mavlink_message_t msg;
         const struct StatusMessage* status = &rgMessages[i];
 
         mavlink_msg_statustext_pack_chan(_vehicleSystemId,
@@ -1097,17 +1137,16 @@ void MockLink::_sendStatusTextMessages(void)
                                          _mavlinkChannel,
                                          &msg,
                                          status->severity,
-                                         status->msg);
-        respondWithMavlinkMessage(msg);
-
-        mavlink_msg_statustext_long_pack_chan(_vehicleSystemId,
-                                              _vehicleComponentId,
-                                              _mavlinkChannel,
-                                              &msg,
-                                              status->severity,
-                                              status->msg);
-        respondWithMavlinkMessage(msg);
+                                         status->msg,
+                                         0,                     // Not a chunked sequence
+                                         0);                    // Not a chunked sequence
+        //respondWithMavlinkMessage(msg);
     }
+
+    _sendChunkedStatusText(1, false /* missingChunks */);
+    _sendChunkedStatusText(2, true /* missingChunks */);
+    _sendChunkedStatusText(3, false /* missingChunks */);   // This should cause the previous incomplete chunk to spit out
+    _sendChunkedStatusText(4, true /* missingChunks */);    // This should cause the timeout to fire
 }
 
 MockConfiguration::MockConfiguration(const QString& name)
@@ -1280,7 +1319,8 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
                                      _mavlinkChannel,
                                      &msg,
                                      MAV_SEVERITY_INFO,
-                                     pCalMessage);
+                                     pCalMessage,
+                                     0, 0);                 // Not chunked
     respondWithMavlinkMessage(msg);
 }
 
