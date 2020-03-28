@@ -519,19 +519,9 @@ void
 LogDownloadController::download(QString path)
 {
     QString dir = path;
-#if defined(__mobile__)
-    if(dir.isEmpty()) {
+    if (dir.isEmpty()) {
         dir = qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath();
     }
-#else
-    if(dir.isEmpty()) {
-        dir = QString(); //-- TODO: QGCQFileDialog::getExistingDirectory(
-        //        MainWindow::instance(),
-        //        tr("Log Download Directory"),
-        //        QDir::homePath(),
-        //        QGCQFileDialog::ShowDirsOnly | QGCQFileDialog::DontResolveSymlinks);
-    }
-#endif
     downloadToDirectory(dir);
 }
 

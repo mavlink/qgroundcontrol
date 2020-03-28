@@ -3287,7 +3287,7 @@ void Vehicle::setCurrentMissionSequence(int seq)
         &msg,
         static_cast<uint8_t>(id()),
         _compID,
-        static_cast<uint8_t>(seq));
+        static_cast<uint16_t>(seq));
     sendMessageOnLink(priorityLink(), msg);
 }
 
