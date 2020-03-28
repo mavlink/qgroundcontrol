@@ -1306,7 +1306,7 @@ private:
     void _handleAttitudeTarget          (mavlink_message_t& message);
     void _handleDistanceSensor          (mavlink_message_t& message);
     void _handleEstimatorStatus         (mavlink_message_t& message);
-    void _handleStatusText              (mavlink_message_t& message, bool longVersion);
+    void _handleStatusText              (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
     void _handleMessageInterval         (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
@@ -1343,6 +1343,8 @@ private:
     void _flightTimerStart              ();
     void _flightTimerStop               ();
     void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
+    void _chunkedStatusTextTimeout      (void);
+    void _chunkedStatusTextCompleted    (uint8_t compId);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1541,6 +1543,15 @@ private:
     bool            _pidTuningWaitingForRates;
     QList<int>      _pidTuningMessages;
     QMap<int, int>  _pidTuningMessageRatesUsecs;
+
+    // Chunked status text support
+    typedef struct {
+        uint16_t    chunkId;
+        uint8_t     severity;
+        QStringList rgMessageChunks;
+    } ChunkedStatusTextInfo_t;
+    QMap<uint8_t /* compId */, ChunkedStatusTextInfo_t> _chunkedStatusTextInfoMap;
+    QTimer _chunkedStatusTextTimer;
 
     // FactGroup facts
 
