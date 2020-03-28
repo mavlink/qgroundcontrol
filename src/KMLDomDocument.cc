@@ -90,7 +90,7 @@ QDomElement KMLDomDocument::addPlacemark(const QString& name, bool visible)
     return placemarkElement;
 }
 
-QDomNode KMLDomDocument::appendChildToRoot(const QDomNode& child)
+void KMLDomDocument::appendChildToRoot(const QDomNode& child)
 {
     _rootDocumentElement.appendChild(child);
 }
