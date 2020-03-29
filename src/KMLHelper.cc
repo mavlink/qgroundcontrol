@@ -7,14 +7,14 @@
  *
  ****************************************************************************/
 
-#include "KMLFileHelper.h"
+#include "KMLHelper.h"
 
 #include <QFile>
 #include <QVariant>
 
-const char* KMLFileHelper::_errorPrefix = QT_TR_NOOP("KML file load failed. %1");
+const char* KMLHelper::_errorPrefix = QT_TR_NOOP("KML file load failed. %1");
 
-QDomDocument KMLFileHelper::_loadFile(const QString& kmlFile, QString& errorString)
+QDomDocument KMLHelper::_loadFile(const QString& kmlFile, QString& errorString)
 {
     QFile file(kmlFile);
 
@@ -41,9 +41,9 @@ QDomDocument KMLFileHelper::_loadFile(const QString& kmlFile, QString& errorStri
     return doc;
 }
 
-ShapeFileHelper::ShapeType KMLFileHelper::determineShapeType(const QString& kmlFile, QString& errorString)
+ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString& kmlFile, QString& errorString)
 {
-    QDomDocument domDocument = KMLFileHelper::_loadFile(kmlFile, errorString);
+    QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
     if (!errorString.isEmpty()) {
         return ShapeFileHelper::Error;
     }
@@ -62,12 +62,12 @@ ShapeFileHelper::ShapeType KMLFileHelper::determineShapeType(const QString& kmlF
     return ShapeFileHelper::Error;
 }
 
-bool KMLFileHelper::loadPolygonFromFile(const QString& kmlFile, QList<QGeoCoordinate>& vertices, QString& errorString)
+bool KMLHelper::loadPolygonFromFile(const QString& kmlFile, QList<QGeoCoordinate>& vertices, QString& errorString)
 {
     errorString.clear();
     vertices.clear();
 
-    QDomDocument domDocument = KMLFileHelper::_loadFile(kmlFile, errorString);
+    QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
     if (!errorString.isEmpty()) {
         return false;
     }
@@ -123,12 +123,12 @@ bool KMLFileHelper::loadPolygonFromFile(const QString& kmlFile, QList<QGeoCoordi
     return true;
 }
 
-bool KMLFileHelper::loadPolylineFromFile(const QString& kmlFile, QList<QGeoCoordinate>& coords, QString& errorString)
+bool KMLHelper::loadPolylineFromFile(const QString& kmlFile, QList<QGeoCoordinate>& coords, QString& errorString)
 {
     errorString.clear();
     coords.clear();
 
-    QDomDocument domDocument = KMLFileHelper::_loadFile(kmlFile, errorString);
+    QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
     if (!errorString.isEmpty()) {
         return false;
     }

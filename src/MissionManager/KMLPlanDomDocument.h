@@ -9,31 +9,27 @@
 
 #pragma once
 
-#include <QDomDocument>
-#include <QDomElement>
-#include <QGeoCoordinate>
+#include "KMLDomDocument.h"
 
 class MissionItem;
 class Vehicle;
+class QmlObjectListModel;
 
 /// Used to convert a Plan to a KML document
-class KMLPlanDomDocument : public QDomDocument
+class KMLPlanDomDocument : public KMLDomDocument
 {
 
 public:
     KMLPlanDomDocument();
 
-    void addMissionItems(Vehicle* vehicle, QList<MissionItem*> rgMissionItems);
+    void addMission(Vehicle* vehicle, QmlObjectListModel* visualItems, QList<MissionItem*> rgMissionItems);
+
+    static const char* surveyPolygonStyleName;
 
 private:
-    void    _addStyles      (void);
-    QString _kmlColorString (const QColor& color);
-    void    _addTextElement (QDomElement& element, const QString& name, const QString& value);
-    QString _kmlCoordString (const QGeoCoordinate& coord);
-    void    _addLookAt(QDomElement& element, const QGeoCoordinate& coord);
-
-    QDomElement _documentElement;
+    void _addStyles         (void);
+    void _addFlightPath     (Vehicle* vehicle, QList<MissionItem*> rgMissionItems);
+    void _addComplexItems   (QmlObjectListModel* visualItems);
 
     static const char* _missionLineStyleName;
-    static const char* _ballonStyleName;
 };

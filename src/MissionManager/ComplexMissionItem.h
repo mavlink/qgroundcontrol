@@ -13,6 +13,7 @@
 #include "QGCGeo.h"
 #include "QGCToolbox.h"
 #include "SettingsManager.h"
+#include "KMLPlanDomDocument.h"
 
 #include <QSettings>
 
@@ -51,7 +52,7 @@ public:
     ///     @param name User visible name for preset. Will replace existing preset if already exists.
     Q_INVOKABLE virtual void savePreset(const QString& name);
 
-     Q_INVOKABLE void deletePreset(const QString& name);
+    Q_INVOKABLE void deletePreset(const QString& name);
 
 
     /// Get the point of complex mission item furthest away from a coordinate
@@ -67,6 +68,8 @@ public:
     /// Returns the name of the settings group for presets.
     ///     Empty string signals no support for presets.
     virtual QString presetsSettingsGroup(void) { return QString(); }
+
+    virtual void addKMLVisuals(KMLPlanDomDocument& domDocument);
 
     bool presetsSupported   (void) { return !presetsSettingsGroup().isEmpty(); }
     bool isIncomplete       (void) const { return _isIncomplete; }

@@ -147,6 +147,7 @@ public:
     DEFINE_QGC_COLOR(statusFailedText,      setstatusFailedText)
     DEFINE_QGC_COLOR(statusPassedText,      setstatusPassedText)
     DEFINE_QGC_COLOR(statusPendingText,     setstatusPendingText)
+    DEFINE_QGC_COLOR(surveyPolygonInterior, setSurveyPolygonInterior)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();
