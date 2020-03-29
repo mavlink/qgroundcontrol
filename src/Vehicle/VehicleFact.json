@@ -105,6 +105,11 @@
     "units":            "m"
 },
 {
+    "name":             "missionItemIndex",
+    "shortDescription": "Mission Item Index",
+    "type":             "uint16"
+},
+{
     "name":             "headingToNextWP",
     "shortDescription": "Next WP Heading",
     "type":             "double",
