@@ -912,7 +912,10 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         return;
     }
 
-    setGuidedMode(vehicle, true);
+    // Only set guided mode if altitude change has been requested.
+    if (abs(altitudeChange)>0.01) {
+        setGuidedMode(vehicle, true);
+    }
 
     mavlink_message_t msg;
     mavlink_set_position_target_local_ned_t cmd;
