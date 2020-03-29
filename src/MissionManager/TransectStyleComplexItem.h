@@ -78,10 +78,10 @@ public:
     int _transectCount(void) const { return _transects.count(); }
 
     // Overrides from ComplexMissionItem
-
-    int                 lastSequenceNumber  (void) const final;
-    QString             mapVisualQML        (void) const override = 0;
-    bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
+    int             lastSequenceNumber  (void) const final;
+    QString         mapVisualQML        (void) const override = 0;
+    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
+    void            addKMLVisuals       (KMLPlanDomDocument& domDocument) final;
 
     double          complexDistance     (void) const final { return _complexDistance; }
     double          greatestDistanceTo  (const QGeoCoordinate &other) const final;

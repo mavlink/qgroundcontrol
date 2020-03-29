@@ -107,3 +107,8 @@ QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
     settings.beginGroup(_presetSettingsKey);
     return QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
 }
+
+void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
+{
+    // Default implementation has no visuals
+}

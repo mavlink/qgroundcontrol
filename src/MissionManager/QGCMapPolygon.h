@@ -16,6 +16,7 @@
 #include <QPolygon>
 
 #include "QmlObjectListModel.h"
+#include "KMLDomDocument.h"
 
 /// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
@@ -91,6 +92,8 @@ public:
 
     /// Returns the area of the polygon in meters squared
     double area(void) const;
+
+    QDomElement kmlPolygonElement(KMLDomDocument& domDocument);
 
     // Property methods
 
