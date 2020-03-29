@@ -217,7 +217,7 @@ Item {
     property var _actionData
 
     on_FlightModeChanged: {
-        _vehiclePaused =        activeVehicle ? _flightMode === activeVehicle.pauseFlightMode : false
+        _vehiclePaused =        activeVehicle ? _flightMode === activeVehicle.pauseFlightMode || activeVehicle.guidedMode: false
         _vehicleInRTLMode =     activeVehicle ? _flightMode === activeVehicle.rtlFlightMode || _flightMode === activeVehicle.smartRTLFlightMode : false
         _vehicleInLandMode =    activeVehicle ? _flightMode === activeVehicle.landFlightMode : false
         _vehicleInMissionMode = activeVehicle ? _flightMode === activeVehicle.missionFlightMode : false // Must be last to get correct signalling for showStartMission popups
