@@ -386,7 +386,6 @@ VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, 
 {
     if (_managerVehicle->fixedWing()) {
         FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(MissionController::patternFWLandingName, coordinate, visualItemIndex, makeCurrentItem));
-        fwLanding->setLoiterDragAngleOnly(true);
         return fwLanding;
     } else {
         return _insertSimpleMissionItemWorker(coordinate, _managerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
