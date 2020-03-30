@@ -204,14 +204,12 @@ Item {
 
             onItemCoordinateChanged: {
                 if (!_preventReentrancy) {
-                    if (Drag.active && _missionItem.loiterDragAngleOnly) {
+                    if (Drag.active) {
                         _preventReentrancy = true
                         var angle = _missionItem.landingCoordinate.azimuthTo(itemCoordinate)
                         var distance = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
                         _missionItem.loiterCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(distance, angle)
                         _preventReentrancy = false
-                    } else {
-                        _missionItem.loiterCoordinate = itemCoordinate
                     }
                 }
             }
@@ -227,7 +225,7 @@ Item {
             itemIndicator:  _landingPointObject
             itemCoordinate: _missionItem.landingCoordinate
 
-            onItemCoordinateChanged: _missionItem.landingCoordinate = itemCoordinate
+            onItemCoordinateChanged: _missionItem.moveLandingPosition(itemCoordinate)
         }
     }
 
