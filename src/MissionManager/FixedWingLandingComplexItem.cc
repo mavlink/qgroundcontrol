@@ -51,7 +51,6 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
     , _dirty                    (false)
     , _landingCoordSet          (false)
     , _ignoreRecalcSignals      (false)
-    , _loiterDragAngleOnly      (false)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
     , _landingDistanceFact      (settingsGroup, _metaDataMap[loiterToLandDistanceName])
     , _loiterAltitudeFact       (settingsGroup, _metaDataMap[loiterAltitudeName])
@@ -719,10 +718,12 @@ FixedWingLandingComplexItem::ReadyForSaveState FixedWingLandingComplexItem::read
     return _landingCoordSet && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
 }
 
-void FixedWingLandingComplexItem::setLoiterDragAngleOnly(bool loiterDragAngleOnly)
+void FixedWingLandingComplexItem::moveLandingPosition(const QGeoCoordinate& coordinate)
 {
-    if (loiterDragAngleOnly != _loiterDragAngleOnly) {
-        _loiterDragAngleOnly = loiterDragAngleOnly;
-        emit loiterDragAngleOnlyChanged(_loiterDragAngleOnly);
-    }
+    double savedHeading = landingHeading()->rawValue().toDouble();
+    double savedDistance = landingDistance()->rawValue().toDouble();
+
+    setLandingCoordinate(coordinate);
+    landingHeading()->setRawValue(savedHeading);
+    landingDistance()->setRawValue(savedDistance);
 }
