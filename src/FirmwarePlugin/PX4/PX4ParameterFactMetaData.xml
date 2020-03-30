@@ -4598,7 +4598,7 @@ if required by the gimbal (only in AUX output mode)</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
       <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
-      <long_desc>Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3.</long_desc>
+      <long_desc>Maximum deceleration for MPC_POS_MODE 1. Maximum acceleration and deceleration for MPC_POS_MODE 3.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s/s</unit>
@@ -4653,16 +4653,16 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="8.0" name="MPC_JERK_AUTO" type="FLOAT">
+    <parameter default="4.0" name="MPC_JERK_AUTO" type="FLOAT">
       <short_desc>Jerk limit in auto mode</short_desc>
       <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility.</long_desc>
-      <min>5.0</min>
+      <min>1.0</min>
       <max>80.0</max>
       <unit>m/s/s/s</unit>
       <decimal>1</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
+    <parameter default="8.0" name="MPC_JERK_MAX" type="FLOAT">
       <short_desc>Maximum jerk limit</short_desc>
       <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 1 or 3.</long_desc>
       <min>0.5</min>
@@ -4746,7 +4746,6 @@ Setting this parameter to 0 disables the filter</short_desc>
       <values>
         <value code="0">Default position control</value>
         <value code="1">Smooth position control</value>
-        <value code="2">Sport position control</value>
         <value code="3">Smooth position control (Velocity)</value>
       </values>
     </parameter>
