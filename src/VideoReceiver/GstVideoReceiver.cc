@@ -69,19 +69,26 @@ void
 GstVideoReceiver::start(const QString& uri, unsigned timeout)
 {
     if (_apiHandler.needDispatch()) {
-        _apiHandler.dispatch([this, uri, timeout]() {
-            start(uri, timeout);
+        QString cachedUri = uri;
+        _apiHandler.dispatch([this, cachedUri, timeout]() {
+            start(cachedUri, timeout);
         });
         return;
     }
 
     if(_pipeline) {
         qCDebug(VideoReceiverLog) << "Already running!";
+        _notificationHandler.dispatch([this](){
+            emit onStartComplete(false);
+        });
         return;
     }
 
     if (uri.isEmpty()) {
         qCDebug(VideoReceiverLog) << "Failed because URI is not specified";
+        _notificationHandler.dispatch([this](){
+            emit onStartComplete(false);
+        });
         return;
     }
 
@@ -223,9 +230,17 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
                 _source = nullptr;
             }
         }
+
+        _notificationHandler.dispatch([this](){
+            emit onStartComplete(false);
+        });
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
         qCDebug(VideoReceiverLog) << "Started";
+
+        _notificationHandler.dispatch([this](){
+            emit onStartComplete(true);
+        });
     }
 }
 
@@ -246,6 +261,8 @@ GstVideoReceiver::stop(void)
 
         if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != nullptr) {
             gst_bus_disable_sync_message_emission(bus);
+
+            g_signal_handlers_disconnect_by_data(bus, this);
 
             gboolean recordingValveClosed = TRUE;
 
@@ -305,6 +322,11 @@ GstVideoReceiver::stop(void)
             _notificationHandler.dispatch([this](){
                 emit streamingChanged();
             });
+        } else {
+            qCDebug(VideoReceiverLog) << "Streaming did not start";
+           _notificationHandler.dispatch([this](){
+               emit timeout();
+           });
         }
     }
 
@@ -1148,18 +1170,20 @@ GstVideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
             }
 
             if (error != nullptr) {
-                qCCritical(VideoReceiverLog) << error->message;
+                qCCritical(VideoReceiverLog) << "GStreamer error:" << error->message;
                 g_error_free(error);
                 error = nullptr;
             }
 
-            pThis->_apiHandler.dispatch([pThis](){
-                pThis->stop();
-            });
+        //    pThis->_apiHandler.dispatch([pThis](){
+        //        qCDebug(VideoReceiverLog) << "Stoppping because of error";
+        //        pThis->stop();
+        //    });
         } while(0);
         break;
     case GST_MESSAGE_EOS:
         pThis->_apiHandler.dispatch([pThis](){
+            qCDebug(VideoReceiverLog) << "Received EOS";
             pThis->_handleEOS();
         });
         break;
@@ -1181,6 +1205,7 @@ GstVideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
 
             if (GST_MESSAGE_TYPE(forward_msg) == GST_MESSAGE_EOS) {
                 pThis->_apiHandler.dispatch([pThis](){
+                    qCDebug(VideoReceiverLog) << "Received branch EOS";
                     pThis->_handleEOS();
                 });
             }

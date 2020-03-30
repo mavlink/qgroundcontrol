@@ -75,6 +75,16 @@ signals:
     void videoSizeChanged(void);
     void screenshotComplete(void);
 
+    // FIXME: AV: I see very big sense to convert 'bool status' into 'enum status' and clearly state what happend during operation
+    void onStartComplete(bool status);
+    // FIXME: AV: add these signals after completing onStartComplete()
+    // void onStopComplete(bool status);
+    // void onStartDecodingComplete(bool status);
+    // void onStopDecodingComplete(bool status);
+    // void onStartRecordingComplete(bool status);
+    // void onStopRecordingComplete(bool status);
+    // void onTakeScreenshotComplete(bool status);
+
 public slots:
     virtual void start(const QString& uri, unsigned timeout) = 0;
     virtual void stop(void) = 0;
