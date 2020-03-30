@@ -115,10 +115,12 @@ protected:
     friend class FinishVideoInitialization;
 
     void _initVideo                 ();
-    void _updateSettings            ();
-    void _setVideoUri               (const QString& uri);
-    void _setThermalVideoUri        (const QString& uri);
+    bool _updateSettings            ();
+    bool _updateVideoUri            (const QString& uri);
+    void _updateThermalVideoUri     (const QString& uri);
     void _cleanupOldVideos          ();
+    void _streamChanged             ();
+    void _onStartComplete           (bool status);
     void _restartVideo              ();
     void _streamingChanged          ();
     void _recordingStarted          ();

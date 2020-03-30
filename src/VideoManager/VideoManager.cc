@@ -190,6 +190,7 @@ VideoManager::startVideo()
     const unsigned timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
 
     if(_videoReceiver != nullptr) {
+        connect(_videoReceiver, &VideoReceiver::onStartComplete, this, &VideoManager::_onStartComplete);
         _videoReceiver->start(_videoUri, timeout);
         if (_videoSink != nullptr) {
             _videoReceiver->startDecoding(_videoSink);
@@ -212,6 +213,10 @@ VideoManager::stopVideo()
     if (qgcApp()->runningUnitTests()) {
         return;
     }
+
+    disconnect(_videoReceiver, &VideoReceiver::timeout, this, &VideoManager::_restartVideo);
+    disconnect(_videoReceiver, &VideoReceiver::streamingChanged, this, &VideoManager::_streamingChanged);
+
 #if defined(QGC_GST_STREAMING)
     if(_videoReceiver) _videoReceiver->stop();
     if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
@@ -526,35 +531,40 @@ VideoManager::_initVideo()
 }
 
 //-----------------------------------------------------------------------------
-void
+bool
 VideoManager::_updateSettings()
 {
     if(!_videoSettings)
-        return;
+        return false;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
+            bool status = false;
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
                 case VIDEO_STREAM_TYPE_RTSP:
-                    _setVideoUri(pInfo->uri());
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                    if (status = _updateVideoUri(pInfo->uri())) {
+                        _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                    }
                     break;
                 case VIDEO_STREAM_TYPE_TCP_MPEG:
-                    _setVideoUri(pInfo->uri());
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
+                    if (status = _updateVideoUri(pInfo->uri())) {
+                        _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
+                    }
                     break;
                 case VIDEO_STREAM_TYPE_RTPUDP:
-                    _setVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+                    if (status = _updateVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()))) {
+                        _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
+                    }
                     break;
                 case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                    _setVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
-                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
+                    if (status = _updateVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()))) {
+                        _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
+                    }
                     break;
                 default:
-                    _setVideoUri(pInfo->uri());
+                    status = _updateVideoUri(pInfo->uri());
                     break;
             }
             //-- Thermal stream (if any)
@@ -564,50 +574,55 @@ VideoManager::_updateSettings()
                 switch(pTinfo->type()) {
                     case VIDEO_STREAM_TYPE_RTSP:
                     case VIDEO_STREAM_TYPE_TCP_MPEG:
-                        _setThermalVideoUri(pTinfo->uri());
+                        _updateThermalVideoUri(pTinfo->uri());
                         break;
                     case VIDEO_STREAM_TYPE_RTPUDP:
-                        _setThermalVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
+                        _updateThermalVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
                         break;
                     case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                        _setThermalVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
+                        _updateThermalVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
                         break;
                     default:
-                        _setThermalVideoUri(pTinfo->uri());
+                        _updateThermalVideoUri(pTinfo->uri());
                         break;
                 }
             }
-            return;
+            return status;
         }
     }
     QString source = _videoSettings->videoSource()->rawValue().toString();
     if (source == VideoSettings::videoSourceUDPH264)
-        _setVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        return _updateVideoUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceUDPH265)
-        _setVideoUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        return _updateVideoUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceMPEGTS)
-        _setVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+        return _updateVideoUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceRTSP)
-        _setVideoUri(_videoSettings->rtspUrl()->rawValue().toString());
+        return _updateVideoUri(_videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
-        _setVideoUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+        return _updateVideoUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
 }
 
-void
-VideoManager::_setVideoUri(const QString& uri)
+bool
+VideoManager::_updateVideoUri(const QString& uri)
 {
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
     //-- Taisync on iOS or Android sends a raw h.264 stream
     if (isTaisync()) {
-        _videoUri = QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
-        return;
+        uri = QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
     }
 #endif
+    if (uri == _videoUri) {
+        return false;
+    }
+
     _videoUri = uri;
+
+    return true;
 }
 
 void
-VideoManager::_setThermalVideoUri(const QString& uri)
+VideoManager::_updateThermalVideoUri(const QString& uri)
 {
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
     //-- Taisync on iOS or Android sends a raw h.264 stream
@@ -637,6 +652,31 @@ VideoManager::_streamingChanged()
 
 //-----------------------------------------------------------------------------
 void
+VideoManager::_streamChanged()
+{
+    if (_updateSettings()) {
+        _restartVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_onStartComplete(bool status)
+{
+    disconnect(_videoReceiver, &VideoReceiver::onStartComplete, this, &VideoManager::_onStartComplete);
+
+    if (status) {
+        connect(_videoReceiver, &VideoReceiver::timeout, this, &VideoManager::_restartVideo);
+        connect(_videoReceiver, &VideoReceiver::streamingChanged, this, &VideoManager::_streamingChanged);
+    } else {
+        QTimer::singleShot(1000, [this](){
+            _restartVideo();
+        });
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 VideoManager::_restartVideo()
 {
 #if defined(QGC_GST_STREAMING)
@@ -644,7 +684,7 @@ VideoManager::_restartVideo()
     stopVideo();
     _updateSettings();
     startVideo();
-    emit aspectRatioChanged();
+//    emit aspectRatioChanged();
 #endif
 }
 
@@ -690,7 +730,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
     if(_activeVehicle) {
         connect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
         if(_activeVehicle->dynamicCameras()) {
-            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
+            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_streamChanged);
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
                 pCamera->resumeStream();
