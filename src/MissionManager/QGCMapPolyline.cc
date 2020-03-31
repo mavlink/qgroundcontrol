@@ -431,3 +431,11 @@ void QGCMapPolyline::_endResetIfNotActive(void)
         endReset();
     }
 }
+
+void QGCMapPolyline::setTraceMode(bool traceMode)
+{
+    if (traceMode != _traceMode) {
+        _traceMode = traceMode;
+        emit traceModeChanged(traceMode);
+    }
+}

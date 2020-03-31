@@ -69,15 +69,19 @@ Rectangle {
                 text:               qsTr("Use the Polygon Tools to create the polygon which outlines the structure.")
             }
 
+            /*
+              Trial of new "done" model so leaving for now in case it comes back
             QGCButton {
                 text:               qsTr("Done With Polygon")
                 Layout.fillWidth:   true
                 enabled:            missionItem.structurePolygon.isValid && !missionItem.structurePolygon.traceMode
                 onClicked: {
                     missionItem.wizardMode = false
-                    editorRoot.selectNextNotReadyItem()
+                    // Trial of no auto select next item
+                    //editorRoot.selectNextNotReadyItem()
                 }
             }
+            */
         }
 
         Column {

@@ -71,6 +71,8 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
     connect(&_structurePolygon, &QGCMapPolygon::isValidChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
+    connect(&_structurePolygon, &QGCMapPolygon::isValidChanged,     this, &StructureScanComplexItem::_updateWizardMode);
+    connect(&_structurePolygon, &QGCMapPolygon::traceModeChanged,   this, &StructureScanComplexItem::_updateWizardMode);
 
     connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
     connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
@@ -625,4 +627,11 @@ void StructureScanComplexItem::_recalcScanDistance()
 StructureScanComplexItem::ReadyForSaveState StructureScanComplexItem::readyForSaveState(void) const
 {
     return _structurePolygon.isValid() && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
+}
+
+void StructureScanComplexItem::_updateWizardMode(void)
+{
+    if (_structurePolygon.isValid() && !_structurePolygon.traceMode()) {
+        setWizardMode(false);
+    }
 }

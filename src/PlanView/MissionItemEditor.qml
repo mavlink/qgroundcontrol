@@ -20,7 +20,7 @@ Rectangle {
     color:          _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius:         _radius
     opacity:        _currentItem ? 1.0 : 0.7
-    border.width:   _readyForSave ? 0 : 1
+    border.width:   _readyForSave ? 0 : 2
     border.color:   qgcPal.warningText
 
     property var    map                 ///< Map control
@@ -87,7 +87,7 @@ Rectangle {
         Rectangle {
             id:                     notReadyForSaveIndicator
             anchors.verticalCenter: parent.verticalCenter
-            width:                  readyForSaveLabel.contentHeight
+            width:                  _hamburgerSize
             height:                 width
             border.width:           1
             border.color:           qgcPal.warningText
