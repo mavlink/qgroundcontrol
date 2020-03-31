@@ -651,8 +651,15 @@ VideoManager::_restartVideo()
 
     qCDebug(VideoManagerLog) << "Restart video streaming";
 
-    _stopReceiver(1);
-    _stopReceiver(0);
+    if (!_enableVideoRestart) {
+        _enableVideoRestart = true;
+        _startReceiver(0);
+        _startReceiver(1);
+    } else {
+        _stopReceiver(1);
+        _stopReceiver(0);
+    }
+
 //    emit aspectRatioChanged();
 #endif
 }
