@@ -729,6 +729,8 @@ GstVideoReceiver::_makeSource(const QString& uri)
             break;
         }
 
+        g_signal_connect(parser, "autoplug-query", G_CALLBACK(_filterParserCaps), nullptr);
+
         gst_bin_add_many(GST_BIN(bin), source, parser, nullptr);
 
         // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
@@ -1430,6 +1432,58 @@ GstVideoReceiver::_padProbe(GstElement* element, GstPad* pad, gpointer user_data
         gst_caps_unref(filter);
         filter = nullptr;
     }
+
+    return TRUE;
+}
+
+gboolean
+GstVideoReceiver::_filterParserCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
+{
+    Q_UNUSED(bin)
+    Q_UNUSED(pad)
+    Q_UNUSED(element)
+    Q_UNUSED(data)
+
+    if (GST_QUERY_TYPE(query) != GST_QUERY_CAPS) {
+        return FALSE;
+    }
+
+    GstCaps* srcCaps;
+
+    gst_query_parse_caps(query, &srcCaps);
+
+    if (srcCaps == nullptr || gst_caps_is_any(srcCaps)) {
+        return FALSE;
+    }
+
+    GstCaps* sinkCaps = nullptr;
+
+    GstCaps* filter;
+
+    if (sinkCaps == nullptr && (filter = gst_caps_from_string("video/x-h264")) != nullptr) {
+        if (gst_caps_can_intersect(srcCaps, filter)) {
+            sinkCaps = gst_caps_from_string("video/x-h264,stream-format=avc");
+        }
+
+        gst_caps_unref(filter);
+        filter = nullptr;
+    } else if (sinkCaps == nullptr && (filter = gst_caps_from_string("video/x-h265")) != nullptr) {
+        if (gst_caps_can_intersect(srcCaps, filter)) {
+            sinkCaps = gst_caps_from_string("video/x-h265,stream-format=hvc1");
+        }
+
+        gst_caps_unref(filter);
+        filter = nullptr;
+    }
+
+    if (sinkCaps == nullptr) {
+        return FALSE;
+    }
+
+    gst_query_set_caps_result(query, sinkCaps);
+
+    gst_caps_unref(sinkCaps);
+    sinkCaps = nullptr;
 
     return TRUE;
 }
