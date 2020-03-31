@@ -113,7 +113,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     connect(_videoReceiver, &VideoReceiver::streamingChanged, this, &VideoManager::_streamingChanged);
     connect(_videoReceiver, &VideoReceiver::recordingStarted, this,  &VideoManager::_recordingStarted);
     connect(_videoReceiver, &VideoReceiver::recordingChanged, this,  &VideoManager::_recordingChanged);
-    connect(_videoReceiver, &VideoReceiver::screenshotComplete, this,  &VideoManager::_screenshotComplete);
+    connect(_videoReceiver, &VideoReceiver::onTakeScreenshotComplete, this,  &VideoManager::_onTakeScreenshotComplete);
 
     // FIXME: AV: I believe _thermalVideoReceiver should be handled just like _videoReceiver in terms of event
     // and I expect that it will be changed during multiple video stream activity
@@ -661,11 +661,11 @@ VideoManager::_streamChanged()
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::_onStartComplete(bool status)
+VideoManager::_onStartComplete(VideoReceiver::STATUS status)
 {
     disconnect(_videoReceiver, &VideoReceiver::onStartComplete, this, &VideoManager::_onStartComplete);
 
-    if (status) {
+    if (status == VideoReceiver::STATUS_OK) {
         connect(_videoReceiver, &VideoReceiver::timeout, this, &VideoManager::_restartVideo);
         connect(_videoReceiver, &VideoReceiver::streamingChanged, this, &VideoManager::_streamingChanged);
     } else {
@@ -708,7 +708,7 @@ VideoManager::_recordingChanged()
 
 //----------------------------------------------------------------------------------------
 void
-VideoManager::_screenshotComplete()
+VideoManager::_onTakeScreenshotComplete(VideoReceiver::STATUS status)
 {
 }
 

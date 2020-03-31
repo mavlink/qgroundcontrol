@@ -118,7 +118,7 @@ protected:
     virtual void _noteTeeFrame(void);
     virtual void _noteVideoSinkFrame(void);
     virtual void _noteEndOfStream(void);
-    virtual void _unlinkBranch(GstElement* from);
+    virtual bool _unlinkBranch(GstElement* from);
     virtual void _shutdownDecodingBranch (void);
     virtual void _shutdownRecordingBranch(void);
 

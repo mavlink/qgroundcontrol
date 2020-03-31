@@ -79,7 +79,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
     if(_pipeline) {
         qCDebug(VideoReceiverLog) << "Already running!";
         _notificationHandler.dispatch([this](){
-            emit onStartComplete(false);
+            emit onStartComplete(STATUS_INVALID_STATE);
         });
         return;
     }
@@ -87,7 +87,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
     if (uri.isEmpty()) {
         qCDebug(VideoReceiverLog) << "Failed because URI is not specified";
         _notificationHandler.dispatch([this](){
-            emit onStartComplete(false);
+            emit onStartComplete(STATUS_INVALID_URL);
         });
         return;
     }
@@ -232,14 +232,14 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
         }
 
         _notificationHandler.dispatch([this](){
-            emit onStartComplete(false);
+            emit onStartComplete(STATUS_FAIL);
         });
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
         qCDebug(VideoReceiverLog) << "Started";
 
         _notificationHandler.dispatch([this](){
-            emit onStartComplete(true);
+            emit onStartComplete(STATUS_OK);
         });
     }
 }
@@ -331,6 +331,10 @@ GstVideoReceiver::stop(void)
     }
 
     qCDebug(VideoReceiverLog) << "Stopped";
+
+    _notificationHandler.dispatch([this](){
+        emit onStopComplete(STATUS_OK);
+    });
 }
 
 void
@@ -364,6 +368,9 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if(_videoSink != nullptr || _decoding) {
         qCDebug(VideoReceiverLog) << "Already decoding!";
+        _notificationHandler.dispatch([this](){
+            emit onStartDecodingComplete(STATUS_INVALID_STATE);
+        });
         return;
     }
 
@@ -371,6 +378,9 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if ((pad = gst_element_get_static_pad(videoSink, "sink")) == nullptr) {
         qCCritical(VideoReceiverLog) << "Unable to find sink pad of video sink";
+        _notificationHandler.dispatch([this](){
+            emit onStartDecodingComplete(STATUS_FAIL);
+        });
         return;
     }
 
@@ -387,17 +397,27 @@ GstVideoReceiver::startDecoding(void* sink)
     _removingDecoder = false;
 
     if (!_streaming) {
+        _notificationHandler.dispatch([this](){
+            emit onStartDecodingComplete(STATUS_OK);
+        });
         return;
     }
 
     if (!_addDecoder(_decoderValve)) {
         qCCritical(VideoReceiverLog) << "_addDecoder() failed";
+        _notificationHandler.dispatch([this](){
+            emit onStartDecodingComplete(STATUS_FAIL);
+        });
         return;
     }
 
     g_object_set(_decoderValve, "drop", FALSE, nullptr);
 
     qCDebug(VideoReceiverLog) << "Decoding started";
+
+    _notificationHandler.dispatch([this](){
+        emit onStartDecodingComplete(STATUS_OK);
+    });
 }
 
 void
@@ -415,6 +435,9 @@ GstVideoReceiver::stopDecoding(void)
     // exit immediately if we are not decoding
     if (_pipeline == nullptr || !_decoding) {
         qCDebug(VideoReceiverLog) << "Not decoding!";
+        _notificationHandler.dispatch([this](){
+            emit onStopDecodingComplete(STATUS_INVALID_STATE);
+        });
         return;
     }
 
@@ -422,15 +445,22 @@ GstVideoReceiver::stopDecoding(void)
 
     _removingDecoder = true;
 
-    _unlinkBranch(_decoderValve);
+    bool ret = _unlinkBranch(_decoderValve);
+
+    // FIXME: AV: it is much better to emit onStopDecodingComplete() after decoding is really stopped
+    // (which happens later due to async design) but as for now it is also not so bad...
+    _notificationHandler.dispatch([this, ret](){
+        emit onStopDecodingComplete(ret ? STATUS_OK : STATUS_FAIL);
+    });
 }
 
 void
 GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 {
     if (_apiHandler.needDispatch()) {
-        _apiHandler.dispatch([this, videoFile, format]() {
-            startRecording(videoFile, format);
+        QString cachedVideoFile = videoFile;
+        _apiHandler.dispatch([this, cachedVideoFile, format]() {
+            startRecording(cachedVideoFile, format);
         });
         return;
     }
@@ -439,11 +469,17 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if (_pipeline == nullptr) {
         qCDebug(VideoReceiverLog) << "Streaming is not active!";
+        _notificationHandler.dispatch([this](){
+            emit onStartRecordingComplete(STATUS_INVALID_STATE);
+        });
         return;
     }
 
     if (_recording) {
         qCDebug(VideoReceiverLog) << "Already recording!";
+        _notificationHandler.dispatch([this](){
+            emit onStartRecordingComplete(STATUS_INVALID_STATE);
+        });
         return;
     }
 
@@ -451,6 +487,9 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if ((_fileSink = _makeFileSink(videoFile, format)) == nullptr) {
         qCCritical(VideoReceiverLog) << "_makeFileSink() failed";
+        _notificationHandler.dispatch([this](){
+            emit onStartRecordingComplete(STATUS_FAIL);
+        });
         return;
     }
 
@@ -462,6 +501,9 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if (!gst_element_link(_recorderValve, _fileSink)) {
         qCCritical(VideoReceiverLog) << "Failed to link valve and file sink";
+        _notificationHandler.dispatch([this](){
+            emit onStartRecordingComplete(STATUS_FAIL);
+        });
         return;
     }
 
@@ -476,6 +518,9 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if ((probepad  = gst_element_get_static_pad(_recorderValve, "src")) == nullptr) {
         qCCritical(VideoReceiverLog) << "gst_element_get_static_pad() failed";
+        _notificationHandler.dispatch([this](){
+            emit onStartRecordingComplete(STATUS_FAIL);
+        });
         return;
     }
 
@@ -488,6 +533,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
     _recording = true;
     qCDebug(VideoReceiverLog) << "Recording started";
     _notificationHandler.dispatch([this](){
+        emit onStartRecordingComplete(STATUS_OK);
         emit recordingChanged();
     });
 }
@@ -508,6 +554,9 @@ GstVideoReceiver::stopRecording(void)
     // exit immediately if we are not recording
     if (_pipeline == nullptr || !_recording) {
         qCDebug(VideoReceiverLog) << "Not recording!";
+        _notificationHandler.dispatch([this](){
+            emit onStopRecordingComplete(STATUS_INVALID_STATE);
+        });
         return;
     }
 
@@ -515,22 +564,29 @@ GstVideoReceiver::stopRecording(void)
 
     _removingRecorder = true;
 
-    _unlinkBranch(_recorderValve);
+    bool ret = _unlinkBranch(_recorderValve);
+
+    // FIXME: AV: it is much better to emit onStopRecordingComplete() after recording is really stopped
+    // (which happens later due to async design) but as for now it is also not so bad...
+    _notificationHandler.dispatch([this, ret](){
+        emit onStopRecordingComplete(ret ? STATUS_OK : STATUS_FAIL);
+    });
 }
 
 void
 GstVideoReceiver::takeScreenshot(const QString& imageFile)
 {
     if (_apiHandler.needDispatch()) {
-        _apiHandler.dispatch([this, imageFile]() {
-            takeScreenshot(imageFile);
+        QString cachedImageFile = imageFile;
+        _apiHandler.dispatch([this, cachedImageFile]() {
+            takeScreenshot(cachedImageFile);
         });
         return;
     }
 
     // FIXME: AV: record screenshot here
     _notificationHandler.dispatch([this](){
-        emit screenshotComplete();
+        emit onTakeScreenshotComplete(STATUS_NOT_IMPLEMENTED);
     });
 }
 
@@ -1030,14 +1086,14 @@ GstVideoReceiver::_noteEndOfStream(void)
 
 // -Unlink the branch from the src pad
 // -Send an EOS event at the beginning of that branch
-void
+bool
 GstVideoReceiver::_unlinkBranch(GstElement* from)
 {
     GstPad* src;
 
     if ((src = gst_element_get_static_pad(from, "src")) == nullptr) {
         qCCritical(VideoReceiverLog) << "gst_element_get_static_pad() failed";
-        return;
+        return false;
     }
 
     GstPad* sink;
@@ -1046,7 +1102,7 @@ GstVideoReceiver::_unlinkBranch(GstElement* from)
         gst_object_unref(src);
         src = nullptr;
         qCCritical(VideoReceiverLog) << "gst_pad_get_peer() failed";
-        return;
+        return false;
     }
 
     if (!gst_pad_unlink(src, sink)) {
@@ -1055,7 +1111,7 @@ GstVideoReceiver::_unlinkBranch(GstElement* from)
         gst_object_unref(sink);
         sink = nullptr;
         qCCritical(VideoReceiverLog) << "gst_pad_unlink() failed";
-        return;
+        return false;
     }
 
     gst_object_unref(src);
@@ -1067,11 +1123,14 @@ GstVideoReceiver::_unlinkBranch(GstElement* from)
     gst_object_unref(sink);
     sink = nullptr;
 
-    if (ret) {
-        qCDebug(VideoReceiverLog) << "Branch EOS was sent";
-    } else {
+    if (!ret) {
         qCCritical(VideoReceiverLog) << "Branch EOS was NOT sent";
+        return false;
     }
+
+    qCDebug(VideoReceiverLog) << "Branch EOS was sent";
+
+    return true;
 }
 
 void
@@ -1175,10 +1234,10 @@ GstVideoReceiver::_onBusMessage(GstBus* bus, GstMessage* msg, gpointer data)
                 error = nullptr;
             }
 
-        //    pThis->_apiHandler.dispatch([pThis](){
-        //        qCDebug(VideoReceiverLog) << "Stoppping because of error";
-        //        pThis->stop();
-        //    });
+            pThis->_apiHandler.dispatch([pThis](){
+                qCDebug(VideoReceiverLog) << "Stoppping because of error";
+                pThis->stop();
+            });
         } while(0);
         break;
     case GST_MESSAGE_EOS:
