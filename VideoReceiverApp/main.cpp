@@ -155,6 +155,9 @@ private:
     unsigned int _fileFormat = VideoReceiver::FILE_FORMAT_MIN;
     unsigned _stopRecordingAfter = 15;
     bool _useFakeSink = false;
+    bool _streaming = false;
+    bool _decoding = false;
+    bool _recording = false;
 };
 
 void
@@ -303,7 +306,7 @@ VideoReceiverApp::exec()
         qCDebug(AppLog) << "Streaming timeout";
 
         _dispatch([this](){
-            if (_receiver->streaming()) {
+            if (_streaming) {
                 _receiver->stop();
             } else {
                 if (--_connect > 0) {
@@ -320,8 +323,9 @@ VideoReceiverApp::exec()
         });
      });
 
-    QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](){
-        if (_receiver->streaming()) {
+    QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](bool active){
+        _streaming = active;
+        if (_streaming) {
             qCDebug(AppLog) << "Streaming started";
         } else {
             qCDebug(AppLog) << "Streaming stopped";
@@ -338,13 +342,14 @@ VideoReceiverApp::exec()
         }
      });
 
-    QObject::connect(_receiver, &VideoReceiver::decodingChanged, [this](){
-        if (_receiver->decoding()) {
+    QObject::connect(_receiver, &VideoReceiver::decodingChanged, [this](bool active){
+        _decoding = active;
+        if (_decoding) {
             qCDebug(AppLog) << "Decoding started";
         } else {
             qCDebug(AppLog) << "Decoding stopped";
-            if (_receiver->streaming()) {
-                if (!_receiver->recording()) {
+            if (_streaming) {
+                if (!_recording) {
                     _dispatch([this](){
                         _receiver->stop();
                     });
@@ -353,13 +358,14 @@ VideoReceiverApp::exec()
         }
      });
 
-    QObject::connect(_receiver, &VideoReceiver::recordingChanged, [this](){
-        if (_receiver->recording()) {
+    QObject::connect(_receiver, &VideoReceiver::recordingChanged, [this](bool active){
+        _recording = active;
+        if (_recording) {
             qCDebug(AppLog) << "Recording started";
         } else {
             qCDebug(AppLog) << "Recording stopped";
-            if (_receiver->streaming()) {
-                if (!_receiver->decoding()) {
+            if (_streaming) {
+                if (!_decoding) {
                     _dispatch([this](){
                         _receiver->stop();
                     });

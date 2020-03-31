@@ -35,6 +35,9 @@ QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
 GstVideoReceiver::GstVideoReceiver(QObject* parent)
     : VideoReceiver(parent)
+    , _streaming(false)
+    , _decoding(false)
+    , _recording(false)
     , _removingDecoder(false)
     , _removingRecorder(false)
     , _source(nullptr)
@@ -319,7 +322,7 @@ GstVideoReceiver::stop(void)
             _streaming = false;
             qCDebug(VideoReceiverLog) << "Streaming stopped";
             _dispatchSignal([this](){
-                emit streamingChanged();
+                emit streamingChanged(_streaming);
             });
         } else {
             qCDebug(VideoReceiverLog) << "Streaming did not start";
@@ -533,7 +536,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
     qCDebug(VideoReceiverLog) << "Recording started";
     _dispatchSignal([this](){
         emit onStartRecordingComplete(STATUS_OK);
-        emit recordingChanged();
+        emit recordingChanged(_recording);
     });
 }
 
@@ -934,7 +937,7 @@ GstVideoReceiver::_onNewSourcePad(GstPad* pad)
         _streaming = true;
         qCDebug(VideoReceiverLog) << "Streaming started";
         _dispatchSignal([this](){
-            emit streamingChanged();
+            emit streamingChanged(_streaming);
         });
     }
 
@@ -1049,19 +1052,23 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
             gint width, height;
             gst_structure_get_int(s, "width", &width);
             gst_structure_get_int(s, "height", &height);
-            _setVideoSize(QSize(width, height));
+            _dispatchSignal([this, width, height](){
+                emit videoSizeChanged(QSize(width, height));
+            });
         }
 
         gst_caps_unref(caps);
         caps = nullptr;
     } else {
-        _setVideoSize(QSize(0, 0));
+        _dispatchSignal([this](){
+            emit videoSizeChanged(QSize(0, 0));
+        });
     }
 
     _decoding = true;
     qCDebug(VideoReceiverLog) << "Decoding started";
     _dispatchSignal([this](){
-        emit decodingChanged();
+        emit decodingChanged(_decoding);
     });
 
     return true;
@@ -1181,7 +1188,7 @@ GstVideoReceiver::_shutdownDecodingBranch(void)
         _decoding = false;
         qCDebug(VideoReceiverLog) << "Decoding stopped";
         _dispatchSignal([this](){
-            emit decodingChanged();
+            emit decodingChanged(_decoding);
         });
     }
 
@@ -1202,7 +1209,7 @@ GstVideoReceiver::_shutdownRecordingBranch(void)
         _recording = false;
         qCDebug(VideoReceiverLog) << "Recording stopped";
         _dispatchSignal([this](){
-            emit recordingChanged();
+            emit recordingChanged(_recording);
         });
     }
 

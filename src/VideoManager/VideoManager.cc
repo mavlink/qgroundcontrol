@@ -114,14 +114,39 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
         _startReceiver(0);
     });
 
-    connect(_videoReceiver, &VideoReceiver::streamingChanged, this, [this](){
-        if (!_enableVideoRestart || _videoReceiver->streaming())  return;
+    connect(_videoReceiver, &VideoReceiver::streamingChanged, this, [this](bool active){
+        _streaming = active;
+        emit streamingChanged();
+        if (!_enableVideoRestart || active)  return;
         _startReceiver(0);
     });
 
-    connect(_videoReceiver, &VideoReceiver::recordingStarted, this,  &VideoManager::_recordingStarted);
-    connect(_videoReceiver, &VideoReceiver::recordingChanged, this,  &VideoManager::_recordingChanged);
-    connect(_videoReceiver, &VideoReceiver::onTakeScreenshotComplete, this,  &VideoManager::_onTakeScreenshotComplete);
+    connect(_videoReceiver, &VideoReceiver::decodingChanged, this, [this](bool active){
+        _decoding = active;
+        emit decodingChanged();
+    });
+
+    connect(_videoReceiver, &VideoReceiver::recordingChanged, this, [this](bool active){
+        _recording = active;
+        if (!active) {
+            _subtitleWriter.stopCapturingTelemetry();
+        }
+        emit recordingChanged();
+    });
+
+    connect(_videoReceiver, &VideoReceiver::recordingStarted, this, [this](){
+        _subtitleWriter.startCapturingTelemetry(_videoFile);
+    });
+
+    connect(_videoReceiver, &VideoReceiver::videoSizeChanged, this, [this](QSize size){
+        _videoSize = ((quint32)size.width() << 16) | (quint32)size.height();
+        emit videoSizeChanged();
+    });
+
+    connect(_videoReceiver, &VideoReceiver::onTakeScreenshotComplete, this, [this](VideoReceiver::STATUS status){
+        if (status == VideoReceiver::STATUS_OK) {
+        }
+    });
 
     // FIXME: AV: I believe _thermalVideoReceiver should be handled just like _videoReceiver in terms of event
     // and I expect that it will be changed during multiple video stream activity
@@ -131,8 +156,8 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
             _startReceiver(1);
         });
 
-        connect(_thermalVideoReceiver, &VideoReceiver::streamingChanged, this, [this](){
-            if (!_enableVideoRestart) return;
+        connect(_thermalVideoReceiver, &VideoReceiver::streamingChanged, this, [this](bool active){
+            if (!_enableVideoRestart || active) return;
             _startReceiver(1);
         });
     }
@@ -666,30 +691,6 @@ VideoManager::_restartVideo()
 
 //    emit aspectRatioChanged();
 #endif
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_recordingStarted()
-{
-    _subtitleWriter.startCapturingTelemetry(_videoFile);
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::_recordingChanged()
-{
-#if defined(QGC_GST_STREAMING)
-    if (_videoReceiver && !_videoReceiver->recording()) {
-        _subtitleWriter.stopCapturingTelemetry();
-    }
-#endif
-}
-
-//----------------------------------------------------------------------------------------
-void
-VideoManager::_onTakeScreenshotComplete(VideoReceiver::STATUS status)
-{
 }
 
 //----------------------------------------------------------------------------------------

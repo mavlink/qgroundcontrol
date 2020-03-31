@@ -17,9 +17,6 @@
 
 #include <QObject>
 #include <QSize>
-#include <QQuickItem>
-
-#include <atomic>
 
 class VideoReceiver : public QObject
 {
@@ -28,10 +25,6 @@ class VideoReceiver : public QObject
 public:
     explicit VideoReceiver(QObject* parent = nullptr)
         : QObject(parent)
-        , _streaming(false)
-        , _decoding(false)
-        , _recording(false)
-        , _videoSize(0)
     {}
 
     virtual ~VideoReceiver(void) {}
@@ -54,35 +47,13 @@ public:
 
     Q_ENUM(STATUS)
 
-    Q_PROPERTY(bool     streaming   READ    streaming   NOTIFY  streamingChanged)
-    Q_PROPERTY(bool     decoding    READ    decoding    NOTIFY  decodingChanged)
-    Q_PROPERTY(bool     recording   READ    recording   NOTIFY  recordingChanged)
-    Q_PROPERTY(QSize    videoSize   READ    videoSize   NOTIFY  videoSizeChanged)
-
-    bool streaming(void) {
-        return _streaming;
-    }
-
-    bool decoding(void) {
-        return _decoding;
-    }
-
-    bool recording(void) {
-        return _recording;
-    }
-
-    QSize videoSize(void) {
-        const quint32 size = _videoSize;
-        return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
-    }
-
 signals:
     void timeout(void);
-    void streamingChanged(void);
-    void decodingChanged(void);
-    void recordingChanged(void);
+    void streamingChanged(bool active);
+    void decodingChanged(bool active);
+    void recordingChanged(bool active);
     void recordingStarted(void);
-    void videoSizeChanged(void);
+    void videoSizeChanged(QSize size);
 
     void onStartComplete(STATUS status);
     void onStopComplete(STATUS status);
@@ -100,11 +71,4 @@ public slots:
     virtual void startRecording(const QString& videoFile, FILE_FORMAT format) = 0;
     virtual void stopRecording(void) = 0;
     virtual void takeScreenshot(const QString& imageFile) = 0;
-
-protected:
-    std::atomic<bool>   _streaming;
-    std::atomic<bool>   _decoding;
-    std::atomic<bool>   _recording;
-    std::atomic<quint32>_videoSize;
 };
-
