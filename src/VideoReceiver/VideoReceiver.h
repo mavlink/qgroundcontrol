@@ -44,6 +44,16 @@ public:
         FILE_FORMAT_MAX
     } FILE_FORMAT;
 
+    typedef enum {
+        STATUS_OK = 0,
+        STATUS_FAIL,
+        STATUS_INVALID_STATE,
+        STATUS_INVALID_URL,
+        STATUS_NOT_IMPLEMENTED
+    } STATUS;
+
+    Q_ENUM(STATUS)
+
     Q_PROPERTY(bool     streaming   READ    streaming   NOTIFY  streamingChanged)
     Q_PROPERTY(bool     decoding    READ    decoding    NOTIFY  decodingChanged)
     Q_PROPERTY(bool     recording   READ    recording   NOTIFY  recordingChanged)
@@ -73,17 +83,14 @@ signals:
     void recordingChanged(void);
     void recordingStarted(void);
     void videoSizeChanged(void);
-    void screenshotComplete(void);
 
-    // FIXME: AV: I see very big sense to convert 'bool status' into 'enum status' and clearly state what happend during operation
-    void onStartComplete(bool status);
-    // FIXME: AV: add these signals after completing onStartComplete()
-    // void onStopComplete(bool status);
-    // void onStartDecodingComplete(bool status);
-    // void onStopDecodingComplete(bool status);
-    // void onStartRecordingComplete(bool status);
-    // void onStopRecordingComplete(bool status);
-    // void onTakeScreenshotComplete(bool status);
+    void onStartComplete(STATUS status);
+    void onStopComplete(STATUS status);
+    void onStartDecodingComplete(STATUS status);
+    void onStopDecodingComplete(STATUS status);
+    void onStartRecordingComplete(STATUS status);
+    void onStopRecordingComplete(STATUS status);
+    void onTakeScreenshotComplete(STATUS status);
 
 public slots:
     virtual void start(const QString& uri, unsigned timeout) = 0;

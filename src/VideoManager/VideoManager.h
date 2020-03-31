@@ -120,12 +120,12 @@ protected:
     void _updateThermalVideoUri     (const QString& uri);
     void _cleanupOldVideos          ();
     void _streamChanged             ();
-    void _onStartComplete           (bool status);
+    void _onStartComplete           (VideoReceiver::STATUS status);
     void _restartVideo              ();
     void _streamingChanged          ();
     void _recordingStarted          ();
     void _recordingChanged          ();
-    void _screenshotComplete        ();
+    void _onTakeScreenshotComplete  (VideoReceiver::STATUS status);
 
 protected:
     QString         _videoFile;

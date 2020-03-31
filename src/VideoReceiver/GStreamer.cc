@@ -108,6 +108,8 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 void
 GStreamer::initialize(int argc, char* argv[], int debuglevel)
 {
+    qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
+
 #ifdef Q_OS_MAC
     #ifdef QGC_INSTALL_RELEASE
         QString currentDir = QCoreApplication::applicationDirPath();
