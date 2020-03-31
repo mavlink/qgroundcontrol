@@ -122,7 +122,8 @@ protected:
     virtual void _shutdownDecodingBranch (void);
     virtual void _shutdownRecordingBranch(void);
 
-    void _dispatchNotification(std::function<void()> notification);
+    bool _needDispatch(void);
+    void _dispatchSignal(std::function<void()> emitter);
 
 private:
     static gboolean _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
@@ -161,8 +162,8 @@ private:
 
     unsigned            _timeout;
 
-    Worker              _apiHandler;
-    Worker              _notificationHandler;
+    Worker              _slotHandler;
+    uint32_t            _signalDepth;
 
     bool                _endOfStream;
 
