@@ -91,12 +91,13 @@ Rectangle {
             }
 
             QGCButton {
-                text:               qsTr("Done Adjusting")
+                text:               qsTr("Done")
                 Layout.fillWidth:   true
                 visible:            !initialClickLabel.visible
                 onClicked: {
                     missionItem.wizardMode = false
-                    editorRoot.selectNextNotReadyItem()
+                    // Trial of no auto select next item
+                    //editorRoot.selectNextNotReadyItem()
                 }
             }
 

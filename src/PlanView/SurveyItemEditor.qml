@@ -29,7 +29,7 @@ Rectangle {
     property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
     property bool   _polygonDone:               false
-    property string _doneAdjusting:             qsTr("Done Adjusting")
+    property string _doneAdjusting:             qsTr("Done")
     property bool   _presetsAvailable:          missionItem.presetNames.length !== 0
 
     function polygonCaptureStarted() {
@@ -77,6 +77,8 @@ Rectangle {
                     text:                   qsTr("Use the Polygon Tools to create the polygon which outlines your survey area.")
                 }
 
+                /*
+                  Trial of new "done" model so leaving for now in case it comes back
                 QGCButton {
                     text:               qsTr("Done With Polygon")
                     Layout.fillWidth:   true
@@ -84,13 +86,17 @@ Rectangle {
                     onClicked: {
                         if (!_presetsAvailable) {
                             missionItem.wizardMode = false
-                            editorRoot.selectNextNotReadyItem()
+                            // Trial of no auto select next item
+                            //editorRoot.selectNextNotReadyItem()
                         }
                         _polygonDone = true
                     }
                 }
+                */
             }
 
+            /*
+            Trial of new "done" model so leaving for now in case it comes back
             ColumnLayout {
                 Layout.fillWidth:   true
                 spacing:            _margin
@@ -166,10 +172,12 @@ Rectangle {
                     enabled:            missionItem.surveyAreaPolygon.isValid
                     onClicked: {
                         missionItem.wizardMode = false
-                        editorRoot.selectNextNotReadyItem()
+                        // Trial of no auto select next item
+                        //editorRoot.selectNextNotReadyItem()
                     }
                 }
             }
+            */
         }
 
         Column {
