@@ -102,11 +102,6 @@ protected slots:
     virtual void _handleEOS(void);
 
 protected:
-    void _setVideoSize(const QSize& size) {
-        _videoSize = ((quint32)size.width() << 16) | (quint32)size.height();
-        emit videoSizeChanged();
-    }
-
     virtual GstElement* _makeSource(const QString& uri);
     virtual GstElement* _makeDecoder(GstCaps* caps, GstElement* videoSink);
     virtual GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format);
@@ -140,6 +135,9 @@ private:
     static GstPadProbeReturn _eosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
+    bool                _streaming;
+    bool                _decoding;
+    bool                _recording;
     bool                _removingDecoder;
     bool                _removingRecorder;
     GstElement*         _source;
