@@ -117,15 +117,14 @@ protected:
     void _initVideo                 ();
     bool _updateSettings            ();
     bool _updateVideoUri            (const QString& uri);
-    void _updateThermalVideoUri     (const QString& uri);
+    bool _updateThermalVideoUri     (const QString& uri);
     void _cleanupOldVideos          ();
-    void _streamChanged             ();
-    void _onStartComplete           (VideoReceiver::STATUS status);
     void _restartVideo              ();
-    void _streamingChanged          ();
     void _recordingStarted          ();
     void _recordingChanged          ();
     void _onTakeScreenshotComplete  (VideoReceiver::STATUS status);
+    void _startReceiver             (unsigned id);
+    void _stopReceiver              (unsigned id);
 
 protected:
     QString         _videoFile;
@@ -134,6 +133,7 @@ protected:
     bool            _isTaisync              = false;
     VideoReceiver*  _videoReceiver          = nullptr;
     VideoReceiver*  _thermalVideoReceiver   = nullptr;
+    bool            _enableVideoRestart     = false;
     void*           _videoSink              = nullptr;
     void*           _thermalVideoSink       = nullptr;
     VideoSettings*  _videoSettings          = nullptr;
