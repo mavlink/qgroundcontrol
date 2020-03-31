@@ -8630,6 +8630,11 @@ is less than 50% of this value</short_desc>
     </parameter>
   </group>
   <group name="Sensors">
+    <parameter default="1.0" name="BAT_C_MULT" type="FLOAT">
+      <short_desc>Capacity/current multiplier for high-current capable SMBUS battery</short_desc>
+      <decimal>1</decimal>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="CAL_AIR_CMODEL" type="INT32">
       <short_desc>Airspeed sensor compensation model for the SDP3x</short_desc>
       <long_desc>Model with Pitot CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Model without Pitot (1.5 mm tubes) CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Tube Pressure Drop CAL_AIR_TUBED_MM: Diameter in mm of the pitot and tubes, must have the same diameter. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor and the static + dynamic port length of the pitot.</long_desc>
