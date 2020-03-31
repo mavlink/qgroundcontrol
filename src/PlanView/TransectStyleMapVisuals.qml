@@ -24,6 +24,7 @@ Item {
 
     property var    map                                                 ///< Map control to place item in
     property bool   polygonInteractive: true
+    property bool   interactive: true
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
@@ -70,11 +71,11 @@ Item {
         id:                 mapPolygonVisuals
         mapControl:         map
         mapPolygon:         _mapPolygon
-        interactive:        polygonInteractive && _missionItem.isCurrentItem
+        interactive:        polygonInteractive && _missionItem.isCurrentItem && _root.interactive
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      QGroundControl.globalPalette.surveyPolygonInterior
-        interiorOpacity:    0.5
+        interiorOpacity:    0.5 * _root.opacity
     }
 
     // Full set of transects lines. Shown when item is selected.
@@ -86,6 +87,7 @@ Item {
             line.width: 2
             path:       _transectPoints
             visible:    _currentItem
+            opacity:    _root.opacity
         }
     }
 
@@ -98,6 +100,7 @@ Item {
             line.width: 2
             path:       _showPartialEntryExit ? [ _transectPoints[0], _transectPoints[1] ] : []
             visible:    _showPartialEntryExit
+            opacity:    _root.opacity
         }
     }
     Component {
@@ -108,6 +111,7 @@ Item {
             line.width: 2
             path:       _showPartialEntryExit ? [ _transectPoints[_lastPointIndex - 1], _transectPoints[_lastPointIndex] ] : []
             visible:    _showPartialEntryExit
+            opacity:    _root.opacity
         }
     }
 
@@ -121,11 +125,12 @@ Item {
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.coordinate
             visible:        _missionItem.exitCoordinate.isValid
+            opacity:        _root.opacity
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
                 checked:    _missionItem.isCurrentItem
-                onClicked:  _root.clicked(_missionItem.sequenceNumber)
+                onClicked:  if(_root.interactive) _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }
@@ -138,6 +143,7 @@ Item {
             toCoord:        _transectPoints[_firstTrueTransectIndex + 1]
             arrowPosition:  1
             visible:        _currentItem
+            opacity:        _root.opacity
         }
     }
 
@@ -149,6 +155,7 @@ Item {
             toCoord:        _transectPoints[nextTrueTransectIndex + 1]
             arrowPosition:  1
             visible:        _currentItem && _transectCount > 3
+            opacity:        _root.opacity
 
             property int nextTrueTransectIndex: _firstTrueTransectIndex + (_hasTurnaround ? 4 : 2)
         }
@@ -162,6 +169,7 @@ Item {
             toCoord:        _transectPoints[_lastTrueTransectIndex]
             arrowPosition:  3
             visible:        _currentItem
+            opacity:        _root.opacity
         }
     }
 
@@ -173,6 +181,7 @@ Item {
             toCoord:        _transectPoints[prevTrueTransectIndex]
             arrowPosition:  13
             visible:        _currentItem && _transectCount > 3
+            opacity:        _root.opacity
 
             property int prevTrueTransectIndex: _lastTrueTransectIndex - (_hasTurnaround ? 4 : 2)
         }
@@ -188,11 +197,12 @@ Item {
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.exitCoordinate
             visible:        _missionItem.exitCoordinate.isValid
+            opacity:        _root.opacity
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.lastSequenceNumber
                 checked:    _missionItem.isCurrentItem
-                onClicked:  _root.clicked(_missionItem.sequenceNumber)
+                onClicked:  if(_root.interactive) _root.clicked(_missionItem.sequenceNumber)
             }
         }
     }

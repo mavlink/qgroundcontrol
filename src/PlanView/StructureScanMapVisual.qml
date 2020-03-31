@@ -27,6 +27,7 @@ Item {
     property var _missionItem:      object
     property var _structurePolygon: object.structurePolygon
     property var _flightPolygon:    object.flightPolygon
+    property bool interactive:      parent.interactive
 
     signal clicked(int sequenceNumber)
 
@@ -43,11 +44,11 @@ Item {
     QGCMapPolygonVisuals {
         mapControl:         map
         mapPolygon:         _structurePolygon
-        interactive:        _missionItem.isCurrentItem
+        interactive:        _missionItem.isCurrentItem && _root.interactive
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      "green"
-        interiorOpacity:    0.25
+        interiorOpacity:    0.5 * _root.opacity
     }
 
     QGCMapPolygonVisuals {
@@ -56,6 +57,7 @@ Item {
         interactive:        false
         borderWidth:        2
         borderColor:        "white"
+        interiorOpacity:    _root.opacity
     }
 
     // Entry point
@@ -67,7 +69,7 @@ Item {
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.exitCoordinate.isValid
+            visible:        _missionItem.exitCoordinate.isValid && _root.interactive
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
@@ -87,7 +89,7 @@ Item {
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.exitCoordinate
-            visible:        _missionItem.exitCoordinate.isValid
+            visible:        _missionItem.exitCoordinate.isValid && _root.interactive
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.lastSequenceNumber

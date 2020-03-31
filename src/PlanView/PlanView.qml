@@ -390,6 +390,7 @@ Item {
 
             property real _leftToolWidth:       toolStrip.x + toolStrip.width
             property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
+            property real _nonInteractiveOpacity:  0.5
 
             // Initial map position duplicates Fly view position
             Component.onCompleted: editorMap.center = QGroundControl.flightMapPosition
@@ -436,18 +437,20 @@ Item {
 
             // Add the mission item visuals to the map
             Repeater {
-                model: _editingLayer == _layerMission ? _missionController.visualItems : undefined
+                model: _missionController.visualItems
                 delegate: MissionItemMapVisual {
                     map:        editorMap
                     onClicked:  _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
-                    visible:    _editingLayer == _layerMission
+                    opacity:    _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
+                    interactive: _editingLayer == _layerMission
                 }
             }
 
             // Add lines between waypoints
             MissionLineView {
                 showSpecialVisual:  _missionController.isROIBeginCurrentItem
-                model:              _editingLayer == _layerMission ? _missionController.waypointLines : undefined
+                model:              _missionController.waypointLines
+                opacity:            _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
             }
 
             // Direction arrows in waypoint lines
@@ -464,13 +467,14 @@ Item {
 
             // Incomplete segment lines
             MapItemView {
-                model: _editingLayer == _layerMission ? _missionController.incompleteComplexItemLines : undefined
+                model: _missionController.incompleteComplexItemLines
 
                 delegate: MapPolyline {
                     path:       [ object.coordinate1, object.coordinate2 ]
                     line.width: 1
                     line.color: "red"
                     z:          QGroundControl.zOrderWaypointLines
+                    opacity:    _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                 }
             }
 
@@ -513,8 +517,7 @@ Item {
             // Add the vehicles to the map
             MapItemView {
                 model: QGroundControl.multiVehicleManager.vehicles
-                delegate:
-                    VehicleMapItem {
+                delegate: VehicleMapItem {
                     vehicle:        object
                     coordinate:     object.coordinate
                     map:            editorMap
@@ -529,6 +532,7 @@ Item {
                 interactive:            _editingLayer == _layerGeoFence
                 homePosition:           _missionController.plannedHomePosition
                 planView:               true
+                opacity:                _editingLayer != _layerGeoFence ? editorMap._nonInteractiveOpacity : 1
             }
 
             RallyPointMapVisuals {
@@ -536,6 +540,7 @@ Item {
                 myRallyPointController: _rallyPointController
                 interactive:            _editingLayer == _layerRallyPoints
                 planView:               true
+                opacity:                _editingLayer != _layerRallyPoints ? editorMap._nonInteractiveOpacity : 1
             }
 
             // Airspace overlap support
@@ -851,6 +856,7 @@ Item {
                 flightMap:              editorMap
                 visible:                _editingLayer == _layerGeoFence
             }
+
             // Rally Point Editor
             RallyPointEditorHeader {
                 id:                     rallyPointHeader
