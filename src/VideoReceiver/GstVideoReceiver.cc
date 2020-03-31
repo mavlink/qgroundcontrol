@@ -78,7 +78,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
 
     if(_pipeline) {
         qCDebug(VideoReceiverLog) << "Already running!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -86,7 +86,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
 
     if (uri.isEmpty()) {
         qCDebug(VideoReceiverLog) << "Failed because URI is not specified";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartComplete(STATUS_INVALID_URL);
         });
         return;
@@ -231,14 +231,14 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
             }
         }
 
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartComplete(STATUS_FAIL);
         });
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
         qCDebug(VideoReceiverLog) << "Started";
 
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartComplete(STATUS_OK);
         });
     }
@@ -319,12 +319,12 @@ GstVideoReceiver::stop(void)
         if (_streaming) {
             _streaming = false;
             qCDebug(VideoReceiverLog) << "Streaming stopped";
-            _notificationHandler.dispatch([this](){
+            _dispatchNotification([this](){
                 emit streamingChanged();
             });
         } else {
             qCDebug(VideoReceiverLog) << "Streaming did not start";
-           _notificationHandler.dispatch([this](){
+           _dispatchNotification([this](){
                emit timeout();
            });
         }
@@ -332,7 +332,7 @@ GstVideoReceiver::stop(void)
 
     qCDebug(VideoReceiverLog) << "Stopped";
 
-    _notificationHandler.dispatch([this](){
+    _dispatchNotification([this](){
         emit onStopComplete(STATUS_OK);
     });
 }
@@ -368,7 +368,7 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if(_videoSink != nullptr || _decoding) {
         qCDebug(VideoReceiverLog) << "Already decoding!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartDecodingComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -378,7 +378,7 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if ((pad = gst_element_get_static_pad(videoSink, "sink")) == nullptr) {
         qCCritical(VideoReceiverLog) << "Unable to find sink pad of video sink";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartDecodingComplete(STATUS_FAIL);
         });
         return;
@@ -397,7 +397,7 @@ GstVideoReceiver::startDecoding(void* sink)
     _removingDecoder = false;
 
     if (!_streaming) {
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartDecodingComplete(STATUS_OK);
         });
         return;
@@ -405,7 +405,7 @@ GstVideoReceiver::startDecoding(void* sink)
 
     if (!_addDecoder(_decoderValve)) {
         qCCritical(VideoReceiverLog) << "_addDecoder() failed";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartDecodingComplete(STATUS_FAIL);
         });
         return;
@@ -415,7 +415,7 @@ GstVideoReceiver::startDecoding(void* sink)
 
     qCDebug(VideoReceiverLog) << "Decoding started";
 
-    _notificationHandler.dispatch([this](){
+    _dispatchNotification([this](){
         emit onStartDecodingComplete(STATUS_OK);
     });
 }
@@ -435,7 +435,7 @@ GstVideoReceiver::stopDecoding(void)
     // exit immediately if we are not decoding
     if (_pipeline == nullptr || !_decoding) {
         qCDebug(VideoReceiverLog) << "Not decoding!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStopDecodingComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -449,7 +449,7 @@ GstVideoReceiver::stopDecoding(void)
 
     // FIXME: AV: it is much better to emit onStopDecodingComplete() after decoding is really stopped
     // (which happens later due to async design) but as for now it is also not so bad...
-    _notificationHandler.dispatch([this, ret](){
+    _dispatchNotification([this, ret](){
         emit onStopDecodingComplete(ret ? STATUS_OK : STATUS_FAIL);
     });
 }
@@ -469,7 +469,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if (_pipeline == nullptr) {
         qCDebug(VideoReceiverLog) << "Streaming is not active!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartRecordingComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -477,7 +477,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if (_recording) {
         qCDebug(VideoReceiverLog) << "Already recording!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartRecordingComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -487,7 +487,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if ((_fileSink = _makeFileSink(videoFile, format)) == nullptr) {
         qCCritical(VideoReceiverLog) << "_makeFileSink() failed";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartRecordingComplete(STATUS_FAIL);
         });
         return;
@@ -501,7 +501,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if (!gst_element_link(_recorderValve, _fileSink)) {
         qCCritical(VideoReceiverLog) << "Failed to link valve and file sink";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartRecordingComplete(STATUS_FAIL);
         });
         return;
@@ -518,7 +518,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     if ((probepad  = gst_element_get_static_pad(_recorderValve, "src")) == nullptr) {
         qCCritical(VideoReceiverLog) << "gst_element_get_static_pad() failed";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStartRecordingComplete(STATUS_FAIL);
         });
         return;
@@ -532,7 +532,7 @@ GstVideoReceiver::startRecording(const QString& videoFile, FILE_FORMAT format)
 
     _recording = true;
     qCDebug(VideoReceiverLog) << "Recording started";
-    _notificationHandler.dispatch([this](){
+    _dispatchNotification([this](){
         emit onStartRecordingComplete(STATUS_OK);
         emit recordingChanged();
     });
@@ -554,7 +554,7 @@ GstVideoReceiver::stopRecording(void)
     // exit immediately if we are not recording
     if (_pipeline == nullptr || !_recording) {
         qCDebug(VideoReceiverLog) << "Not recording!";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit onStopRecordingComplete(STATUS_INVALID_STATE);
         });
         return;
@@ -568,7 +568,7 @@ GstVideoReceiver::stopRecording(void)
 
     // FIXME: AV: it is much better to emit onStopRecordingComplete() after recording is really stopped
     // (which happens later due to async design) but as for now it is also not so bad...
-    _notificationHandler.dispatch([this, ret](){
+    _dispatchNotification([this, ret](){
         emit onStopRecordingComplete(ret ? STATUS_OK : STATUS_FAIL);
     });
 }
@@ -585,7 +585,7 @@ GstVideoReceiver::takeScreenshot(const QString& imageFile)
     }
 
     // FIXME: AV: record screenshot here
-    _notificationHandler.dispatch([this](){
+    _dispatchNotification([this](){
         emit onTakeScreenshotComplete(STATUS_NOT_IMPLEMENTED);
     });
 }
@@ -612,7 +612,7 @@ GstVideoReceiver::_watchdog(void)
 
         if (now - _lastSourceFrameTime > _timeout) {
             qCDebug(VideoReceiverLog) << "Stream timeout, no frames for " << now - _lastSourceFrameTime;
-            _notificationHandler.dispatch([this](){
+            _dispatchNotification([this](){
                 emit timeout();
             });
         }
@@ -624,7 +624,7 @@ GstVideoReceiver::_watchdog(void)
 
             if (now - _lastVideoFrameTime > _timeout * 2) {
                 qCDebug(VideoReceiverLog) << "Video decoder timeout, no frames for " << now - _lastVideoFrameTime;
-                _notificationHandler.dispatch([this](){
+                _dispatchNotification([this](){
                     emit timeout();
                 });
             }
@@ -932,7 +932,7 @@ GstVideoReceiver::_onNewSourcePad(GstPad* pad)
     if (!_streaming) {
         _streaming = true;
         qCDebug(VideoReceiverLog) << "Streaming started";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit streamingChanged();
         });
     }
@@ -1059,7 +1059,7 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
 
     _decoding = true;
     qCDebug(VideoReceiverLog) << "Decoding started";
-    _notificationHandler.dispatch([this](){
+    _dispatchNotification([this](){
         emit decodingChanged();
     });
 
@@ -1179,7 +1179,7 @@ GstVideoReceiver::_shutdownDecodingBranch(void)
     if (_decoding) {
         _decoding = false;
         qCDebug(VideoReceiverLog) << "Decoding stopped";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit decodingChanged();
         });
     }
@@ -1200,12 +1200,18 @@ GstVideoReceiver::_shutdownRecordingBranch(void)
     if (_recording) {
         _recording = false;
         qCDebug(VideoReceiverLog) << "Recording stopped";
-        _notificationHandler.dispatch([this](){
+        _dispatchNotification([this](){
             emit recordingChanged();
         });
     }
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-recording-stopped");
+}
+
+void
+GstVideoReceiver::_dispatchNotification(std::function<void()> notification)
+{
+    _notificationHandler.dispatch(notification);
 }
 
 gboolean

@@ -122,6 +122,8 @@ protected:
     virtual void _shutdownDecodingBranch (void);
     virtual void _shutdownRecordingBranch(void);
 
+    void _dispatchNotification(std::function<void()> notification);
+
 private:
     static gboolean _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
     static void _onNewPad(GstElement* element, GstPad* pad, gpointer data);
