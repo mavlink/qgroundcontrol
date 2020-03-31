@@ -607,7 +607,7 @@ VideoManager::_updateVideoUri(const QString& uri)
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
     //-- Taisync on iOS or Android sends a raw h.264 stream
     if (isTaisync()) {
-        uri = QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
+        return _updateVideoUri(QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT));
     }
 #endif
     if (uri == _videoUri) {
@@ -626,8 +626,12 @@ VideoManager::_updateThermalVideoUri(const QString& uri)
     //-- Taisync on iOS or Android sends a raw h.264 stream
     if (isTaisync()) {
         // FIXME: AV: TAISYNC_VIDEO_UDP_PORT is used by video stream, thermal stream should go via its own proxy
-        _thermalVideoUri = QString("tsusb://0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
-        return;
+        if (!_thermalVideoUri.isEmpty()) {
+            _thermalVideoUri.clear();
+            return true;
+        } else {
+            return false;
+        }
     }
 #endif
     if (uri == _thermalVideoUri) {
