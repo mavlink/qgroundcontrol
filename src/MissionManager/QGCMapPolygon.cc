@@ -598,3 +598,11 @@ QDomElement QGCMapPolygon::kmlPolygonElement(KMLDomDocument& domDocument)
 
     return polygonElement;
 }
+
+void QGCMapPolygon::setTraceMode(bool traceMode)
+{
+    if (traceMode != _traceMode) {
+        _traceMode = traceMode;
+        emit traceModeChanged(traceMode);
+    }
+}
