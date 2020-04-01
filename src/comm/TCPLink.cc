@@ -57,7 +57,7 @@ void TCPLink::_writeDebugBytes(const QByteArray data)
     for (int i=0, size = data.size(); i<size; i++)
     {
         unsigned char v = data[i];
-        bytes.append(QString().sprintf("%02x ", v));
+        bytes.append(QString::asprintf("%02x ", v));
         if (data[i] > 31 && data[i] < 127)
         {
             ascii.append(data[i]);
