@@ -58,8 +58,9 @@ public:
     static const char* corridorWidthName;
 
 private slots:
-    void _polylineDirtyChanged      (bool dirty);
-    void _rebuildCorridorPolygon    (void);
+    void _polylineDirtyChanged          (bool dirty);
+    void _rebuildCorridorPolygon        (void);
+    void _updateWizardMode              (void);
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
