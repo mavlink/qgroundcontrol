@@ -553,7 +553,7 @@ QGCMapEngineManager::getUniqueName()
     int count = 1;
     while (true) {
         name = test;
-        name += QString().sprintf("%03d", count++);
+        name += QString::asprintf("%03d", count++);
         if(!findName(name))
             return name;
     }

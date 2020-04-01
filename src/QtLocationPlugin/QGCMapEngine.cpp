@@ -222,7 +222,7 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 QString
 QGCMapEngine::getTileHash(QString type, int x, int y, int z)
 {
-    return QString().sprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
+    return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
 
 //-----------------------------------------------------------------------------
