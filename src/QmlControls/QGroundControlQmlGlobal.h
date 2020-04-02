@@ -28,6 +28,9 @@
 #else
 class TaisyncManager;
 #endif
+#ifdef __android__
+#include "MCUManager.h"
+#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -68,6 +71,9 @@ public:
     Q_PROPERTY(bool                 airmapSupported     READ airmapSupported        CONSTANT)
     Q_PROPERTY(TaisyncManager*      taisyncManager      READ taisyncManager         CONSTANT)
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
+#ifdef __android__
+    Q_PROPERTY(MCUManager*          mcuManager          READ mcuManager             CONSTANT)
+#endif
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
 
@@ -169,6 +175,10 @@ public:
     bool                    taisyncSupported    () { return false; }
 #endif
 
+#ifdef __android__
+    MCUManager*             mcuManager          () { return _mcuManager; }
+#endif
+
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -227,6 +237,9 @@ private:
     FactGroup*              _gpsRtkFactGroup        = nullptr;
     AirspaceManager*        _airspaceManager        = nullptr;
     TaisyncManager*         _taisyncManager         = nullptr;
+#ifdef __android__
+    MCUManager*             _mcuManager             = nullptr;
+#endif
 
     bool                    _skipSetupPage          = false;
 

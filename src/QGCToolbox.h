@@ -36,6 +36,9 @@ class AirspaceManager;
 #if defined(QGC_GST_TAISYNC_ENABLED)
 class TaisyncManager;
 #endif
+#ifdef __android__
+class MCUManager;
+#endif
 
 /// This is used to manage all of our top level services/tools
 class QGCToolbox : public QObject {
@@ -67,6 +70,9 @@ public:
 #if defined(QGC_GST_TAISYNC_ENABLED)
     TaisyncManager*             taisyncManager          () { return _taisyncManager; }
 #endif
+#ifdef __android__
+    MCUManager*                 mcuManager              () { return _mcuManager; }
+#endif
 
 private:
     void setChildToolboxes(void);
@@ -96,6 +102,9 @@ private:
     AirspaceManager*            _airspaceManager        = nullptr;
 #if defined(QGC_GST_TAISYNC_ENABLED)
     TaisyncManager*             _taisyncManager         = nullptr;
+#endif
+#ifdef __android__
+    MCUManager*                 _mcuManager             = nullptr;
 #endif
     friend class QGCApplication;
 };

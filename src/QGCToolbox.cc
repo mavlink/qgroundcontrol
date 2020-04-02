@@ -38,6 +38,9 @@
 #if defined(QGC_GST_TAISYNC_ENABLED)
 #include "TaisyncManager.h"
 #endif
+#ifdef __android__
+#include "MCUManager.h"
+#endif
 
 #if defined(QGC_CUSTOM_BUILD)
 #include CUSTOMHEADER
@@ -78,6 +81,9 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager         = new TaisyncManager            (app, this);
 #endif
+#ifdef __android__
+    _mcuManager             = new MCUManager                (app, this);
+#endif
 }
 
 void QGCToolbox::setChildToolboxes(void)
@@ -106,6 +112,9 @@ void QGCToolbox::setChildToolboxes(void)
     _airspaceManager->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager->setToolbox(this);
+#endif
+#ifdef __android__
+    _mcuManager->setToolbox(this);
 #endif
 }
 

@@ -1253,6 +1253,19 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 }
 
 #-------------------------------------------------------------------------------------
+# MCU connected on serialport of android mainboard
+AndroidBuild {
+    INCLUDEPATH += \
+        src/MCU
+
+    HEADERS += \
+        src/MCU/MCUManager.h \
+
+    SOURCES += \
+        src/MCU/MCUManager.cc \
+}
+
+#-------------------------------------------------------------------------------------
 # Android
 
 AndroidBuild {

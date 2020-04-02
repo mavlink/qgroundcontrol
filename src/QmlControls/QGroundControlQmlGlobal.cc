@@ -69,6 +69,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager         = toolbox->taisyncManager();
 #endif
+#ifdef __android__
+    _mcuManager             = toolbox->mcuManager();
+#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
