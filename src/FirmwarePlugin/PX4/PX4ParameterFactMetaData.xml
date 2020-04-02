@@ -10726,14 +10726,30 @@ How often the sensor is readout</short_desc>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter default="0.12" name="VT_B_DEC_FF" type="FLOAT">
+      <short_desc>Backtransition deceleration setpoint to pitch feedforward gain</short_desc>
+      <min>0</min>
+      <max>0.2</max>
+      <unit>rad*s*s/m</unit>
+      <decimal>1</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter default="0.1" name="VT_B_DEC_I" type="FLOAT">
+      <short_desc>Backtransition deceleration setpoint to pitch I gain</short_desc>
+      <min>0</min>
+      <max>0.3</max>
+      <unit>rad*s/m</unit>
+      <decimal>1</decimal>
+      <increment>0.05</increment>
+    </parameter>
     <parameter default="2.0" name="VT_B_DEC_MSS" type="FLOAT">
       <short_desc>Approximate deceleration during back transition</short_desc>
-      <long_desc>The approximate deceleration during a back transition in m/s/s Used to calculate back transition distance in mission mode. A lower value will make the VTOL transition further from the destination waypoint.</long_desc>
-      <min>0.00</min>
-      <max>20.00</max>
+      <long_desc>The approximate deceleration during a back transition in m/s/s Used to calculate back transition distance in mission mode. A lower value will make the VTOL transition further from the destination waypoint. For standard vtol and tiltrotors a controller is used to track this value during the transition.</long_desc>
+      <min>0.5</min>
+      <max>10</max>
       <unit>m/s/s</unit>
       <decimal>2</decimal>
-      <increment>1</increment>
+      <increment>0.1</increment>
     </parameter>
     <parameter default="0.0" name="VT_B_REV_DEL" type="FLOAT">
       <short_desc>Delay in seconds before applying back transition throttle
