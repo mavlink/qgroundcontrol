@@ -507,3 +507,9 @@ QString QGCCorePlugin::stableVersionCheckFileUrl() const
     return QString("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt");
 #endif
 }
+
+QStringList
+QGCCorePlugin::startupPages()
+{
+    return { "/qml/QGroundControl/Specific/UnitsWizardPage.qml" };
+}

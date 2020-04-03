@@ -56,6 +56,8 @@ public:
     Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                               CONSTANT)
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
+    Q_PROPERTY(QStringList          startupPages            READ startupPages                                   NOTIFY startupPagesChanged)
+
 
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
@@ -158,6 +160,13 @@ public:
     /// @return Complex items to be made available to user
     virtual QStringList complexMissionItemNames(Vehicle* /*vehicle*/, const QStringList& complexMissionItemNames) { return complexMissionItemNames; }
 
+    /// Use it to customize the pages that are shown on startup. This will be queried
+    /// only if AppSettings::firstTimeStart Fact is true, that is reset to false when the user
+    /// goes for the fist time through all the pages.
+    /// Insert pages only if they are required to be displayed at start for a good user experience.
+    /// @return QML files paths that will be loaded using the StartupWizard control
+    virtual QStringList startupPages();
+
     bool showTouchAreas() const { return _showTouchAreas; }
     bool showAdvancedUI() const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
@@ -172,6 +181,7 @@ signals:
     void instrumentPagesChanged ();
     void showTouchAreasChanged  (bool showTouchAreas);
     void showAdvancedUIChanged  (bool showAdvancedUI);
+    void startupPagesChanged    ();
 
 protected slots:
     void _activeVehicleChanged  (Vehicle* activeVehicle);
