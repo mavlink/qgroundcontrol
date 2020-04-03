@@ -161,11 +161,34 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout)
             break;
         }
 
-        g_signal_connect(_source, "pad-added", G_CALLBACK(_onNewPad), this);
-
         gst_bin_add_many(GST_BIN(_pipeline), _source, _tee, decoderQueue, _decoderValve, recorderQueue, _recorderValve, nullptr);
 
         pipelineUp = true;
+
+        GstPad* srcPad = nullptr;
+
+        GstIterator* it;
+
+        if ((it = gst_element_iterate_src_pads(_source)) != nullptr) {
+            GValue vpad = G_VALUE_INIT;
+
+            if (gst_iterator_next(it, &vpad) == GST_ITERATOR_OK) {
+                srcPad = GST_PAD(g_value_get_object(&vpad));
+                gst_object_ref(srcPad);
+                g_value_reset(&vpad);
+            }
+
+            gst_iterator_free(it);
+            it = nullptr;
+        }
+
+        if (srcPad != nullptr) {
+            _onNewSourcePad(srcPad);
+            gst_object_unref(srcPad);
+            srcPad = nullptr;
+        } else {
+            g_signal_connect(_source, "pad-added", G_CALLBACK(_onNewPad), this);
+        }
 
         if(!gst_element_link_many(_tee, decoderQueue, _decoderValve, nullptr)) {
             qCCritical(VideoReceiverLog) << "Unable to link decoder queue";
@@ -1003,11 +1026,6 @@ GstVideoReceiver::_addDecoder(GstElement* src)
     gst_caps_unref(caps);
     caps = nullptr;
 
-    // FIXME: AV: check if srcpad exists - if it does then no need to wait for new pad
-    //    int probeRes = 0;
-    //    gst_element_foreach_src_pad(source, _padProbe, &probeRes);
-    g_signal_connect(_decoder, "pad-added", G_CALLBACK(_onNewPad), this);
-
     gst_bin_add(GST_BIN(_pipeline), _decoder);
 
     gst_element_sync_state_with_parent(_decoder);
@@ -1017,6 +1035,31 @@ GstVideoReceiver::_addDecoder(GstElement* src)
     if (!gst_element_link(src, _decoder)) {
         qCCritical(VideoReceiverLog) << "Unable to link decoder";
         return false;
+    }
+
+    GstPad* srcPad = nullptr;
+
+    GstIterator* it;
+
+    if ((it = gst_element_iterate_src_pads(_decoder)) != nullptr) {
+        GValue vpad = G_VALUE_INIT;
+
+        if (gst_iterator_next(it, &vpad) == GST_ITERATOR_OK) {
+            srcPad = GST_PAD(g_value_get_object(&vpad));
+            gst_object_ref(srcPad);
+            g_value_reset(&vpad);
+        }
+
+        gst_iterator_free(it);
+        it = nullptr;
+    }
+
+    if (srcPad != nullptr) {
+        _onNewDecoderPad(srcPad);
+        gst_object_unref(srcPad);
+        srcPad = nullptr;
+    } else {
+        g_signal_connect(_decoder, "pad-added", G_CALLBACK(_onNewPad), this);
     }
 
     return true;
