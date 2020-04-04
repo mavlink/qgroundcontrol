@@ -203,7 +203,12 @@ Item {
         }
         _outputState()
     }
-    // End of hack
+    onShowChangeAltChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showChangeAlt", showChangeAlt)
+        }
+        _outputState()
+    }
 
     on_VehicleFlyingChanged: {
         _outputState()

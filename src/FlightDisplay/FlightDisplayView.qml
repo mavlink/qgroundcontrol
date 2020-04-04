@@ -639,8 +639,7 @@ Item {
                 {
                     name:               qsTr("Action"),
                     iconSource:         "/res/action.svg",
-                    buttonVisible:      !_guidedController.showPause,
-                    buttonEnabled:      _anyActionAvailable,
+                    buttonVisible:      _anyActionAvailable,
                     action:             -1
                 }
             ]
