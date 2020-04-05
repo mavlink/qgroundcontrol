@@ -39,6 +39,11 @@ public:
     Q_INVOKABLE void deleteFile(const QString& filename);
 
     Q_INVOKABLE QString urlToLocalFile(QUrl url) { return url.toLocalFile(); }
+
+    /// Important: Should only be used in mobile builds where default save location cannot be changed.
+    /// Returns the standard QGC location portion of a fully qualified folder path.
+    /// Example: "/Users/Don/Document/QGroundControl/Missions" returns "QGroundControl/Missions"
+    Q_INVOKABLE QString fullFolderPathToShortMobilePath(const QString& fullFolderPath);
 };
 
 #endif
