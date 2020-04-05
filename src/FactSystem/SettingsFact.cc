@@ -77,3 +77,8 @@ void SettingsFact::_rawValueChanged(QVariant value)
 
     settings.setValue(_name, value);
 }
+
+void SettingsFact::setNoUpdate(void)
+{
+    disconnect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);
+}

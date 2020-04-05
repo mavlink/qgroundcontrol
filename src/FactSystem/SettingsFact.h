@@ -26,6 +26,10 @@ public:
     Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
 
     // Must be called before any references to fact
+    // Specifies that this fact will not update it's QSettings value when it changes
+    void setNoUpdate(void);
+
+    // Must be called before any references to fact
     void setVisible(bool visible) { _visible = visible; }
 
 private slots:

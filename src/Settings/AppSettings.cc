@@ -42,6 +42,12 @@ DECLARE_SETTINGGROUP(App, "")
     // Instantiate savePath so we can check for override and setup default path if needed
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
+#ifdef __mobile__
+    // For mobile builds the default save path is invariant, sort of. For example on iOS it includes a UID for the app
+    // which can change. If we allow that to be saved back to settings, then subsequent installs of new version may cause
+    // the path to be invalid.
+    savePathFact->setNoUpdate();
+#endif
     QString appName = qgcApp()->applicationName();
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
