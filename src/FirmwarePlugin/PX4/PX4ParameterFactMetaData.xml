@@ -422,12 +422,12 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="0" name="BAT1_SOURCE" type="INT32">
       <short_desc>Battery 1 monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
-      <unit>mAh</unit>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
       <reboot_required>True</reboot_required>
       <values>
         <value code="0">Power Module</value>
         <value code="1">External</value>
+        <value code="2">ESCs</value>
       </values>
     </parameter>
     <parameter default="-1" name="BAT1_V_CHANNEL" type="INT32">
@@ -522,12 +522,12 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="0" name="BAT2_SOURCE" type="INT32">
       <short_desc>Battery 2 monitoring source</short_desc>
-      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.</long_desc>
-      <unit>mAh</unit>
+      <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
       <reboot_required>True</reboot_required>
       <values>
         <value code="0">Power Module</value>
         <value code="1">External</value>
+        <value code="2">ESCs</value>
       </values>
     </parameter>
     <parameter default="-1" name="BAT2_V_CHANNEL" type="INT32">
