@@ -26,11 +26,20 @@ Item {
     property real   _margins:       ScreenTools.defaultFontPixelHeight / 2
     property bool   _mobileDlg:     QGroundControl.corePlugin.options.useMobileFileDialog
     property var    _rgExtensions
+    property string _mobileShortPath
 
-    Component.onCompleted: setupFileExtensions()
+    Component.onCompleted: {
+        setupFileExtensions()
+        _updateMobileShortPath()
+    }
 
-    onFileExtensionChanged: setupFileExtensions()
-    onFileExtension2Changed: setupFileExtensions()
+    onFileExtensionChanged:     setupFileExtensions()
+    onFileExtension2Changed:    setupFileExtensions()
+    onFolderChanged:            _updateMobileShortPath()
+
+    function _updateMobileShortPath() {
+        _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
+    }
 
     function setupFileExtensions() {
         if (fileExtension2 == "") {
@@ -104,6 +113,8 @@ Item {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+                    QGCLabel { text: qsTr("Path: %1").arg(_mobileShortPath) }
 
                     Repeater {
                         id:     fileRepeater
