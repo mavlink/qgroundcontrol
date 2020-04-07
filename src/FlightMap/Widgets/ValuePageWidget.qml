@@ -10,6 +10,8 @@
 import QtQuick          2.3
 import QtQuick.Dialogs  1.2
 import QtQuick.Layouts  1.2
+import QtQuick.Controls 2.5
+import QtQml            2.12
 
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
@@ -21,23 +23,32 @@ import QGroundControl               1.0
 
 /// Value page for InstrumentPanel PageView
 Column {
-    id:         _largeColumn
+    id:         _root
     width:      pageWidth
-    spacing:    _margins
+    spacing:    ScreenTools.defaultFontPixelHeight / 2
 
     property bool showSettingsIcon: true
+    property bool showLockIcon:     true
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
+    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
+    property int    _colMax:                        4
+    property bool   _settingsUnlocked:              false
+    property var    _valuePickerInstrumentValue:    null
+    property int    _valuePickerRowIndex:           0
+    property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
+    property real   _blankEntryHeight:              ScreenTools.defaultFontPixelHeight * 2
+    property real   _columnButtonWidth:             ScreenTools.minTouchPixels / 2
+    property real   _columnButtonHeight:            ScreenTools.minTouchPixels
+    property real   _columnButtonSpacing:           2
+    property real   _columnButtonsTotalHeight:      (_columnButtonHeight * 2) + _columnButtonSpacing
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
-    ValuesWidgetController {
-        id: controller
-    }
+    ValuesWidgetController { id: controller }
 
-    function showSettings() {
-        mainWindow.showComponentDialog(propertyPicker, qsTr("Value Widget Setup"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
+    function showSettings(settingsUnlocked) {
+        _settingsUnlocked = settingsUnlocked
     }
 
     function listContains(list, value) {
@@ -49,88 +60,166 @@ Column {
         return false
     }
 
+    ButtonGroup { id: factRadioGroup }
+
+    Component {
+        id: valueItemMouseAreaComponent
+
+        MouseArea {
+            anchors.centerIn:   parent
+            width:              parent.width
+            height:             _columnButtonsTotalHeight
+            visible:            _settingsUnlocked
+
+            property var instrumentValue
+            property int rowIndex
+
+            onClicked: {
+                _valuePickerInstrumentValue = instrumentValue
+                _valuePickerRowIndex = rowIndex
+                mainWindow.showComponentDialog(valuePickerDialog, qsTr("Select Value"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
+            }
+        }
+    }
+
     Repeater {
-        model: _activeVehicle ? controller.largeValues : 0
-        Loader {
-            sourceComponent: fact ? largeValue : undefined
-            property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
-        }
-    } // Repeater - Large
-
-    Flow {
-        id:                 _smallFlow
-        width:              parent.width
-        layoutDirection:    Qt.LeftToRight
-        spacing:            _margins
-
-        Repeater {
-            model: _activeVehicle ? controller.smallValues : 0
-            Loader {
-                sourceComponent: fact ? smallValue : undefined
-                property Fact fact: _activeVehicle.getFact(modelData.replace("Vehicle.", ""))
-            }
-        } // Repeater - Small
-    } // Flow
-
-    Component {
-        id: largeValue
+        id:     rowRepeater
+        model:  controller.valuesModel
 
         Column {
-            width:  _largeColumn.width
-            property bool largeValue: listContains(controller.altitudeProperties, fact.name)
+            id:             rowRepeaterLayout
+            spacing:        1
 
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                wrapMode:               Text.WordWrap
-                text:                   fact.shortDescription + (fact.units ? " (" + fact.units + ")" : "")
-            }
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.mediumFontPointSize * (largeValue ? 1.3 : 1.0)
-                font.family:            largeValue ? ScreenTools.demiboldFontFamily : ScreenTools.normalFontFamily
-                fontSizeMode:           Text.HorizontalFit
-                text:                   fact.enumOrValueString
+            property int rowIndex: index
+
+            Row {
+                id:         columnRow
+                spacing:    1
+
+                Repeater {
+                    id:     columnRepeater
+                    model:  object
+
+                    property real _interColumnSpacing:  (columnRepeater.count - (_settingsUnlocked ? 0 : 1)) * columnRow.spacing
+                    property real columnWidth:          (pageWidth - (_settingsUnlocked ? _columnButtonWidth : 0) - _interColumnSpacing) / columnRepeater.count
+
+                    onItemAdded: valueItemMouseAreaComponent.createObject(item, { "instrumentValue": object.get(index), "rowIndex": index })
+
+                    Item {
+                        width:                  columnRepeater.columnWidth
+                        height:                 value.y + value.height
+                        anchors.verticalCenter: _settingsUnlocked ? parent.verticalCenter : undefined
+                        anchors.bottom:         _settingsUnlocked ? undefined : parent.bottom
+
+                        QGCLabel {
+                            width:                  columnRepeater.columnWidth
+                            height:                 _columnButtonsTotalHeight
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            text:                   _settingsUnlocked ? qsTr("BLANK") : ""
+                            horizontalAlignment:    Text.AlignHCenter
+                            verticalAlignment:      Text.AlignVCenter
+                            visible:                !object.fact
+                        }
+
+                        QGCLabel {
+                            id:                     label
+                            width:                  columnRepeater.columnWidth
+                            font.pointSize:         ScreenTools.smallFontPointSize
+                            text:                   object.label.toUpperCase()
+                            horizontalAlignment:    Text.AlignHCenter
+                            visible:                object.fact && object.label
+                        }
+
+                        QGCLabel {
+                            id:                     value
+                            anchors.topMargin:      label.visible ? 2 : 0
+                            anchors.top:            label.visible ? label.bottom : parent.top
+                            width:                  columnRepeater.columnWidth
+                            font.pointSize:         _rgFontSizes[object.fontSize]
+                            text:                   visible ? (object.fact.enumOrValueString + (object.showUnits ? object.fact.units : "")) : ""
+                            horizontalAlignment:    Text.AlignHCenter
+                            visible:                object.fact
+                        }
+                    }
+                } // Repeater - columns
+
+                ColumnLayout {
+                    id:                 columnsButtonsLayout
+                    width:              _columnButtonWidth
+                    spacing:            _columnButtonSpacing
+                    visible:            _settingsUnlocked
+
+                    QGCButton {
+                        Layout.fillHeight:      true
+                        Layout.minimumHeight:   ScreenTools.minTouchPixels
+                        Layout.preferredWidth:  parent.width
+                        text:                   qsTr("+")
+                        onClicked:              controller.appendColumn(rowRepeaterLayout.rowIndex)
+                    }
+
+                    QGCButton {
+                        Layout.fillHeight:      true
+                        Layout.minimumHeight:   ScreenTools.minTouchPixels
+                        Layout.preferredWidth:  parent.width
+                        text:                   qsTr("-")
+                        enabled:                index !== 0 || columnRepeater.count !== 1
+                        onClicked:              controller.deleteLastColumn(rowRepeaterLayout.rowIndex)
+                    }
+                }
+            } // RowLayout
+
+            RowLayout {
+                width:      parent.width
+                height:             ScreenTools.defaultFontPixelWidth * 2
+                spacing:            1
+                visible:            _settingsUnlocked
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelWidth * 2
+                    text:               qsTr("+")
+                    onClicked:          controller.insertRow(index)
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelWidth * 2
+                    text:               qsTr("-")
+                    enabled:            index !== 0
+                    onClicked:          controller.deleteRow(index)
+                }
             }
         }
+    } // Repeater - rows
+
+    QGCButton {
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        text:           qsTr("Reset To Defaults")
+        visible:        _settingsUnlocked
+        onClicked:      controller.resetToDefaults()
     }
 
     Component {
-        id: smallValue
-
-        Column {
-            width:  (pageWidth / 2) - (_margins / 2) - 0.1
-            clip:   true
-
-            QGCLabel {
-                width:                  parent.width
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
-                text:                   fact.shortDescription
-            }
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                fontSizeMode:           Text.HorizontalFit
-                text:                   fact.enumOrValueString
-            }
-            QGCLabel {
-                width:                  parent.width
-                horizontalAlignment:    Text.AlignHCenter
-                font.pointSize:         ScreenTools.isTinyScreen ? ScreenTools.smallFontPointSize * 0.75 : ScreenTools.smallFontPointSize
-                fontSizeMode:           Text.HorizontalFit
-                text:                   fact.units
-            }
-        }
-    }
-
-    Component {
-        id: propertyPicker
+        id: valuePickerDialog
 
         QGCViewDialog {
-            id: _propertyPickerDialog
+            function accept() {
+                if (factRadioGroup.checkedButton) {
+                    _valuePickerInstrumentValue.setFact(factRadioGroup.checkedButton.radioFactGroupName, factRadioGroup.checkedButton.radioFact.name, labelTextField.text, fontSizeCombo.currentIndex)
+                } else {
+                    _valuePickerInstrumentValue.clearFact()
+                }
+
+                hideDialog()
+            }
+
+            Connections {
+                target: factRadioGroup
+                onCheckedButtonChanged: labelTextField.text = factRadioGroup.checkedButton.radioFact.shortDescription
+            }
+
+            ButtonGroup { id: fontRadioGroup }
 
             QGCFlickable {
                 anchors.fill:       parent
@@ -138,39 +227,50 @@ Column {
                 flickableDirection: Flickable.VerticalFlick
                 clip:               true
 
-                Column {
+                ColumnLayout {
                     id:             column
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        _margins
 
-                    /*
-                      Leaving this here for now just in case
-                    FactCheckBox {
-                        text:       qsTr("Show large compass")
-                        fact:       _showLargeCompass
-                        visible:    _showLargeCompass.visible
+                    RowLayout {
+                        Layout.fillWidth:   true
+                        spacing:            ScreenTools.defaultFontPixelWidth
 
-                        property Fact _showLargeCompass: QGroundControl.settingsManager.appSettings.showLargeCompass
-                    }
-                    */
-
-                    Item {
-                        width:  1
-                        height: _margins
+                        QGCLabel { text: qsTr("Label") }
+                        QGCTextField {
+                            id:                 labelTextField
+                            Layout.fillWidth:   true
+                            text:               _valuePickerInstrumentValue.label
+                        }
                     }
 
-                    QGCLabel {
-                        id:     _label
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:   qsTr("Select the values you want to display:")
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel { text: qsTr("Font Size (for whole row)") }
+                        QGCComboBox {
+                            id:             fontSizeCombo
+                            model:          [ qsTr("Default"), qsTr("Small"), qsTr("Medium"), qsTr("Large") ]
+                            currentIndex:   _valuePickerInstrumentValue.fontSize
+                            sizeToContents: true
+                            onActivated:    _valuePickerInstrumentValue.fontSize = index
+                        }
+                    }
+
+                    QGCCheckBox {
+                        text:       qsTr("Show Units")
+                        checked:    _valuePickerInstrumentValue.showUnits
+                        onClicked:  _valuePickerInstrumentValue.showUnits = checked
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Blank Entry")
+                        onClicked:  { _valuePickerInstrumentValue.clearFact(); hideDialog() }
                     }
 
                     Loader {
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
+                        Layout.fillWidth:   true
                         sourceComponent:    factGroupList
 
                         property var    factGroup:     _activeVehicle
@@ -181,14 +281,12 @@ Column {
                         model: _activeVehicle.factGroupNames
 
                         Loader {
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
+                            Layout.fillWidth:   true
                             sourceComponent:    factGroupList
 
                             property var    factGroup:     _activeVehicle.getFactGroup(modelData)
                             property string factGroupName: modelData
                         }
-
                     }
                 }
             }
@@ -203,8 +301,6 @@ Column {
         // property string factGroupName
 
         Column {
-            spacing:    _margins
-
             SectionHeader {
                 id:             header
                 anchors.left:   parent.left
@@ -214,78 +310,23 @@ Column {
             }
 
             Column {
-                spacing:    _margins
-                visible:    header.checked
+                visible: header.checked
 
                 Repeater {
                     model: factGroup ? factGroup.factNames : 0
 
-                    RowLayout {
-                        spacing: _margins
-                        visible: factGroup.getFact(modelData).shortDescription !== ""
+                    QGCRadioButton {
+                        text:               radioFact.shortDescription
+                        ButtonGroup.group:  factRadioGroup
+                        checked:            radioFactGroupName == _valuePickerInstrumentValue.factGroupName && radioFact == _valuePickerInstrumentValue.fact
 
-                        property string propertyName: factGroupName + "." + modelData
+                        property string radioFactGroupName: factGroupName
+                        property var    radioFact:          factGroup.getFact(modelData)
 
-                        function removeFromList(list, value) {
-                            var newList = []
-                            for (var i=0; i<list.length; i++) {
-                                if (list[i] !== value) {
-                                    newList.push(list[i])
-                                }
+                        Component.onCompleted: {
+                            if (checked) {
+                                header.checked = true
                             }
-                            return newList
-                        }
-
-                        function addToList(list, value) {
-                            var found = false
-                            for (var i=0; i<list.length; i++) {
-                                if (list[i] === value) {
-                                    found = true
-                                    break
-                                }
-                            }
-                            if (!found) {
-                                list.push(value)
-                            }
-                            return list
-                        }
-
-                        function updateValues() {
-                            if (_addCheckBox.checked) {
-                                if (_largeCheckBox.checked) {
-                                    controller.largeValues = addToList(controller.largeValues, propertyName)
-                                    controller.smallValues = removeFromList(controller.smallValues, propertyName)
-                                } else {
-                                    controller.smallValues = addToList(controller.smallValues, propertyName)
-                                    controller.largeValues = removeFromList(controller.largeValues, propertyName)
-                                }
-                            } else {
-                                controller.largeValues = removeFromList(controller.largeValues, propertyName)
-                                controller.smallValues = removeFromList(controller.smallValues, propertyName)
-                            }
-                        }
-
-                        QGCCheckBox {
-                            id:                     _addCheckBox
-                            text:                   factGroup.getFact(modelData).shortDescription
-                            checked:                listContains(controller.smallValues, propertyName) || _largeCheckBox.checked
-                            onClicked:              updateValues()
-                            Layout.fillWidth:       true
-                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 20
-
-                            Component.onCompleted: {
-                                if (checked) {
-                                    header.checked = true
-                                }
-                            }
-                        }
-
-                        QGCCheckBox {
-                            id:                     _largeCheckBox
-                            text:                   qsTr("Large")
-                            checked:                listContains(controller.largeValues, propertyName)
-                            enabled:                _addCheckBox.checked
-                            onClicked:              updateValues()
                         }
                     }
                 }

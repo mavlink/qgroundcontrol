@@ -105,8 +105,9 @@ public:
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
 
-    /// Allows the plugin to override the default settings for the Values Widget large and small values
-    virtual void valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues);
+    /// Return the default Intrument Value model for the Values Widget. The returned model will be
+    /// re-parented to valuesModelParent for ownership.
+    virtual QmlObjectListModel* valuesWidgetDefaultSettings(QObject* valuesModelParent);
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);

@@ -22,6 +22,7 @@
 #endif
 #include "QGCLoggingCategory.h"
 #include "QGCCameraManager.h"
+#include "ValuesWidgetController.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -406,10 +407,40 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
               "Are you sure you want to enable Advanced Mode?");
 }
 
-void QGCCorePlugin::valuesWidgetDefaultSettings(QStringList& largeValues, QStringList& smallValues)
+QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(QObject* valuesModelParent)
 {
-    Q_UNUSED(smallValues);
-    largeValues << "Vehicle.altitudeRelative" << "Vehicle.groundSpeed" << "Vehicle.flightTime";
+    ValuesWidgetController controller(true /* forDefaultSettingsCreation */);
+
+    // We don't want these to get written out to settings. This way if the user doesn't modify them
+    // they will get new changes to default settings from newer builds automatically on next run.
+    controller.setPreventSaveSettings(true);
+
+    QmlObjectListModel* columnModel = controller.appendRow();
+    InstrumentValue* colValue = columnModel->value<InstrumentValue*>(0);
+    colValue->setFact("Vehicle", "altitudeRelative", QString());
+    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setShowUnits(true);
+    colValue->setFontSize(InstrumentValue::LargeFontSize);
+
+    columnModel = controller.appendRow();
+    colValue = columnModel->value<InstrumentValue*>(0);
+    colValue->setFact("Vehicle", "groundSpeed", QString());
+    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setShowUnits(true);
+    colValue->setFontSize(InstrumentValue::DefaultFontSize);
+
+    columnModel = controller.appendRow();
+    colValue = columnModel->value<InstrumentValue*>(0);
+    colValue->setFact("Vehicle", "flightTime", QString());
+    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setShowUnits(false);
+    colValue->setFontSize(InstrumentValue::DefaultFontSize);
+
+    controller.setPreventSaveSettings(false);
+
+    controller.valuesModel()->setParent(valuesModelParent);
+
+    return controller.valuesModel();
 }
 
 QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
