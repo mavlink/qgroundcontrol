@@ -280,7 +280,8 @@ VideoManager::grabImage(const QString& imageFile)
 
     emit imageFileChanged();
 
-    _videoReceiver->takeScreenshot(_imageFile);
+    //TODO: Fix me.
+    _videoReceiver->takeScreenshot("",_imageFile);
 #else
     Q_UNUSED(imageFile)
 #endif

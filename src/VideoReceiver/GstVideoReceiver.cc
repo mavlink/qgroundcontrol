@@ -20,6 +20,8 @@
 #include <QUrl>
 #include <QDateTime>
 #include <QSysInfo>
+#include <QStandardPaths>
+#include <QImage>
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "VideoReceiverLog")
 
@@ -557,10 +559,7 @@ GstVideoReceiver::takeScreenshot(const QString& path, const QString& imageFile)
 
     QString savePath = path;
     bool appendDatetime = false;
-    if (savePath.isEmpty()) {
-        savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
-        appendDatetime = true;
-    }
+
     if(savePath.isEmpty()) {
         savePath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
         appendDatetime = true;

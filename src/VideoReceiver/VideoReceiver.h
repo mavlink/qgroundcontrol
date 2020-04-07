@@ -82,7 +82,7 @@ public slots:
     virtual void stopDecoding(void) = 0;
     virtual void startRecording(const QString& videoFile, FILE_FORMAT format) = 0;
     virtual void stopRecording(void) = 0;
-    virtual void takeScreenshot(const QString& imageFile) = 0;
+    virtual void takeScreenshot(const QString& path, const QString& imageFile) = 0;
 
 protected:
     std::atomic<bool>   _streaming;
