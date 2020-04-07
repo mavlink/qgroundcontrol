@@ -38,7 +38,9 @@ Item {
     onFolderChanged:            _updateMobileShortPath()
 
     function _updateMobileShortPath() {
-        _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
+        if (ScreenTools.isMobile) {
+            _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
+        }
     }
 
     function setupFileExtensions() {
