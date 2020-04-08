@@ -5,6 +5,8 @@ Note: This file only contains high level features or important fixes.
 ## 4.1 - Daily build
 
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
+* Fly: New instrument values display/editing support
+* Plan: Added new VTOL Landing Pattern support
 
 ## 4.0
 

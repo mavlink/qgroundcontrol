@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "MissionCommandUIInfo.h"
 #include "MissionController.h"
 #include "MultiVehicleManager.h"
@@ -18,6 +17,7 @@
 #include "SimpleMissionItem.h"
 #include "SurveyComplexItem.h"
 #include "FixedWingLandingComplexItem.h"
+#include "VTOLLandingComplexItem.h"
 #include "StructureScanComplexItem.h"
 #include "CorridorScanComplexItem.h"
 #include "JsonHelper.h"
@@ -55,6 +55,7 @@ const int   MissionController::_missionFileVersion =            2;
 
 const QString MissionController::patternSurveyName          (QT_TRANSLATE_NOOP("MissionController", "Survey"));
 const QString MissionController::patternFWLandingName       (QT_TRANSLATE_NOOP("MissionController", "Fixed Wing Landing"));
+const QString MissionController::patternVTOLLandingName     (QT_TRANSLATE_NOOP("MissionController", "VTOL Landing"));
 const QString MissionController::patternStructureScanName   (QT_TRANSLATE_NOOP("MissionController", "Structure Scan"));
 const QString MissionController::patternCorridorScanName    (QT_TRANSLATE_NOOP("MissionController", "Corridor Scan"));
 
@@ -387,6 +388,9 @@ VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, 
     if (_managerVehicle->fixedWing()) {
         FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(MissionController::patternFWLandingName, coordinate, visualItemIndex, makeCurrentItem));
         return fwLanding;
+    } else if (_managerVehicle->vtol()) {
+        VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(MissionController::patternVTOLLandingName, coordinate, visualItemIndex, makeCurrentItem));
+        return vtolLanding;
     } else {
         return _insertSimpleMissionItemWorker(coordinate, _managerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
     }
@@ -425,6 +429,8 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
         newItem->setCoordinate(mapCenterCoordinate);
     } else if (itemName == patternFWLandingName) {
         newItem = new FixedWingLandingComplexItem(_masterController, _flyView, _visualItems /* parent */);
+    } else if (itemName == patternVTOLLandingName) {
+        newItem = new VTOLLandingComplexItem(_masterController, _flyView, _visualItems /* parent */);
     } else if (itemName == patternStructureScanName) {
         newItem = new StructureScanComplexItem(_masterController, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else if (itemName == patternCorridorScanName) {
@@ -790,6 +796,15 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 }
                 nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
                 qCDebug(MissionControllerLog) << "FW Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
+                visualItems->append(landingItem);
+            } else if (complexItemType == VTOLLandingComplexItem::jsonComplexItemTypeValue) {
+                qCDebug(MissionControllerLog) << "Loading VTOL Landing Pattern: nextSequenceNumber" << nextSequenceNumber;
+                VTOLLandingComplexItem* landingItem = new VTOLLandingComplexItem(_masterController, _flyView, visualItems);
+                if (!landingItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                    return false;
+                }
+                nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
+                qCDebug(MissionControllerLog) << "VTOL Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
                 visualItems->append(landingItem);
             } else if (complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Structure Scan: nextSequenceNumber" << nextSequenceNumber;
