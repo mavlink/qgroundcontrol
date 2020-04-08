@@ -158,6 +158,7 @@ protected:
     //-- RTSP UDP reconnect timeout
     uint64_t            _udpReconnect_us;
 
+    QString             _uri;
     unsigned            _timeout;
 
     Worker              _slotHandler;
