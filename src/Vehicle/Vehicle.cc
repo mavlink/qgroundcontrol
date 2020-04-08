@@ -28,6 +28,7 @@
 #include "RallyPointManager.h"
 #include "CoordinateVector.h"
 #include "ParameterManager.h"
+#include "ComponentManager.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
 #include "MissionCommandTree.h"
@@ -468,6 +469,8 @@ void Vehicle::_commonInit()
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
+
+    _componentManager = new ComponentManager(this);
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 

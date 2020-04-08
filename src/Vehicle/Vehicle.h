@@ -34,6 +34,7 @@ class MissionManager;
 class GeoFenceManager;
 class RallyPointManager;
 class ParameterManager;
+class ComponentManager;
 class JoystickManager;
 class UASMessage;
 class SettingsManager;
@@ -1006,6 +1007,8 @@ public:
     ParameterManager*       parameterManager() { return _parameterManager; }
     ParameterManager*       parameterManager() const { return _parameterManager; }
     VehicleObjectAvoidance* objectAvoidance()  { return _objectAvoidance; }
+    ComponentManager*       componentManager() { return _componentManager; }
+    ComponentManager*       componentManager() const { return _componentManager; }
 
     static const int cMaxRcChannels = 18;
 
@@ -1460,6 +1463,7 @@ private:
 
     ParameterManager*       _parameterManager   = nullptr;
     VehicleObjectAvoidance* _objectAvoidance    = nullptr;
+    ComponentManager*       _componentManager   = nullptr;
 
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceVehicleManager* _airspaceVehicleManager;

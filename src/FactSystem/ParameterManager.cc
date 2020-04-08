@@ -15,6 +15,8 @@
 #include "FirmwarePlugin.h"
 #include "UAS.h"
 #include "JsonHelper.h"
+#include "Vehicle.h"
+#include "ComponentManager.h"
 
 #include <QEasingCurve>
 #include <QFile>
@@ -667,6 +669,10 @@ void ParameterManager::_setupDefaultComponentCategoryMap(void)
 QString ParameterManager::getComponentCategory(int componentId)
 {
     if (_mavlinkCompIdHash.contains(componentId)) {
+        if (_vehicle->componentManager()->componentInfoAvailable(componentId)) {
+            return tr("Component %1  (%2)\n%3").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId)
+                                               .arg(_vehicle->componentManager()->getComponentInfoMap(componentId).modelName);
+        }
         return tr("Component %1  (%2)").arg(_mavlinkCompIdHash.value(componentId)).arg(componentId);
     }
     QString componentCategoryPrefix = tr("Component ");
@@ -1302,6 +1308,11 @@ void ParameterManager::_checkInitialLoadComplete(void)
         }
     }
 
+    // Now let's see if we have some ComponentInformation
+    // TODO: we should provide the method so this can be done also after the initial load is completed, but for the moment we check it here
+    _vehicle->componentManager()->stoptRequestComponentInfo(); //we don't continue trying
+    _updateAllComponentCategoryMaps();
+
     // Signal load complete
     _parametersReady = true;
     _vehicle->autopilotPlugin()->parametersReadyPreChecks();
@@ -1750,4 +1761,71 @@ bool ParameterManager::pendingWrites(void)
     }
 
     return false;
+}
+
+// ComponentInfo handling
+
+void ParameterManager::_updateAllComponentCategoryMaps(void)
+{
+    // go through all components for which we have a categroy map
+    for (int compId: _componentCategoryMaps.keys()) {
+        if (_vehicle->componentManager()->componentInfoAvailable(compId)) {
+            qCDebug(ParameterManagerLog) << "ZZZZ we do have component info for copmponent ID:" << compId;
+
+            // let's build a new ComponentCategoryMap
+            QString category = _componentCategoryMaps[compId].keys()[0];
+            QMap<QString, QStringList>& curGroupMap = _componentCategoryMaps[compId][category];
+
+            // first get a list of all facts in the current map
+            QStringList factNames;
+            for (QString groupName: curGroupMap.keys()) {
+                for (int i = 0; i < curGroupMap[groupName].size(); i++) {
+                factNames.append(curGroupMap[groupName].at(i));
+                }
+            }
+
+            // now regroup them by going through all cur parameters
+            QMap<QString, QStringList> newGroupMap;
+            for (int i = 0; i < factNames.size(); i++) {
+                QString factName = factNames[i];
+                if (!_vehicle->componentManager()->getComponentInfoParameterMap(compId).contains(factName)) {
+                    newGroupMap[tr("Misc")] += factName;
+                } else {
+                    ComponentControl::ComponentParameterElement_t& p = _vehicle->componentManager()->getComponentInfoParameterMap(compId)[factName];
+                    if (p.hide) continue;
+
+                    newGroupMap[p.group ] += factName;
+
+                    // modify fact's meta data
+                    Fact* fact = _mapParameterName2Variant[compId][factName].value<Fact*>();
+                    FactMetaData* factMetaData = fact->metaData();
+
+                    factMetaData->setDisplayName(p.displayName);
+                    if (p.shortDescription.length()) factMetaData->setShortDescription(p.shortDescription);
+                    if (p.longDescription.length()) factMetaData->setLongDescription(p.longDescription);
+                    if (p.unit.length()) factMetaData->setRawUnits(p.unit);
+                    factMetaData->setVehicleRebootRequired(p.rebootRequired);
+                    factMetaData->setReadOnly(p.readOnly);
+                    factMetaData->setRawMin(p.minValue);
+                    factMetaData->setRawMax(p.maxValue);
+                    if (p.defaultValueAvailable) factMetaData->setRawDefaultValue(p.defaultValue); //must come after setRawMin/Max
+                    factMetaData->setRawIncrement(p.increment);
+                    factMetaData->setDecimalPlaces(p.decimal);
+
+                    if (p.valuesMap.size()) {
+                        QStringList strings;
+                        QVariantList values;
+                        for (int index: p.valuesMap.keys()) {
+                            strings.append(p.valuesMap[index]);
+                            values.append(QVariant(index));
+                        }
+                        factMetaData->setEnumInfo(strings, values);
+                    }
+                }
+            }
+
+            // take new group map
+            _componentCategoryMaps[compId][category] = newGroupMap;
+        }
+    }
 }

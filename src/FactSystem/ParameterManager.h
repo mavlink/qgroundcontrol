@@ -134,6 +134,9 @@ protected:
     void _tryCacheLookup(void);
     void _initialRequestTimeout(void);
 
+    // ComponentInfo handling
+    void _updateAllComponentCategoryMaps(void);
+
 private:
     static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);

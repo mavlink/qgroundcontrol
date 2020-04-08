@@ -77,6 +77,7 @@ public:
     Q_PROPERTY(bool         readOnly                READ readOnly                                           CONSTANT)
     Q_PROPERTY(bool         writeOnly               READ writeOnly                                          CONSTANT)
     Q_PROPERTY(bool         volatileValue           READ volatileValue                                      CONSTANT)
+    Q_PROPERTY(QString      displayName             READ displayName                                        CONSTANT)
 
     /// @brief Convert and validate value
     /// @param cookedValue: Value to convert and validate
@@ -129,6 +130,7 @@ public:
     bool            readOnly                (void) const;
     bool            writeOnly               (void) const;
     bool            volatileValue           (void) const;
+    QString         displayName             (void) const;
 
     // Internal hack to allow changes to fact which do not signal reboot. Currently used by font point size
     // code in ScreenTools.qml to set initial sizing at first boot.
