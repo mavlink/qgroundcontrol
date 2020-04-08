@@ -9,4 +9,6 @@ Text {
     font.family:    ScreenTools.normalFontFamily
     color:          qgcPal.text
     antialiasing:   true
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 }
