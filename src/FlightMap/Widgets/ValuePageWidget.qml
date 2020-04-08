@@ -112,33 +112,32 @@ Column {
                         anchors.bottom:         _settingsUnlocked ? undefined : parent.bottom
 
                         QGCLabel {
-                            width:                  columnRepeater.columnWidth
-                            height:                 _columnButtonsTotalHeight
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            text:                   _settingsUnlocked ? qsTr("BLANK") : ""
-                            horizontalAlignment:    Text.AlignHCenter
-                            verticalAlignment:      Text.AlignVCenter
-                            visible:                !object.fact
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            height:                     _columnButtonsTotalHeight
+                            font.pointSize:             ScreenTools.smallFontPointSize
+                            text:                       _settingsUnlocked ? qsTr("BLANK") : ""
+                            horizontalAlignment:        Text.AlignHCenter
+                            verticalAlignment:          Text.AlignVCenter
+                            visible:                    !object.fact
                         }
 
                         QGCLabel {
-                            id:                     label
-                            width:                  columnRepeater.columnWidth
-                            font.pointSize:         ScreenTools.smallFontPointSize
-                            text:                   object.label.toUpperCase()
-                            horizontalAlignment:    Text.AlignHCenter
-                            visible:                object.fact && object.label
+                            id:                         label
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            font.pointSize:             ScreenTools.smallFontPointSize
+                            text:                       object.label.toUpperCase()
+                            horizontalAlignment:        Text.AlignHCenter
+                            visible:                    object.fact && object.label
                         }
 
                         QGCLabel {
-                            id:                     value
-                            anchors.topMargin:      label.visible ? 2 : 0
-                            anchors.top:            label.visible ? label.bottom : parent.top
-                            width:                  columnRepeater.columnWidth
-                            font.pointSize:         _rgFontSizes[object.fontSize]
-                            text:                   visible ? (object.fact.enumOrValueString + (object.showUnits ? object.fact.units : "")) : ""
-                            horizontalAlignment:    Text.AlignHCenter
-                            visible:                object.fact
+                            id:                         value
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            anchors.topMargin:          label.visible ? 2 : 0
+                            anchors.top:                label.visible ? label.bottom : parent.top
+                            font.pointSize:             _rgFontSizes[object.fontSize]
+                            text:                       visible ? (object.fact.enumOrValueString + (object.showUnits ? object.fact.units : "")) : ""
+                            visible:                    object.fact
                         }
                     }
                 } // Repeater - columns
