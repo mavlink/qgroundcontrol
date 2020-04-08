@@ -283,10 +283,13 @@ Vehicle::Vehicle(LinkInterface*             link,
                        MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
                        false,                                   // No error shown if fails
                        1);                                      // Request firmware version
-        sendMavCommand(MAV_COMP_ID_ALL,
-                       MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                       false,                                   // No error shown if fails
-                       1);                                      // Request protocol version
+
+        if (!apmFirmware()) {
+            sendMavCommand(MAV_COMP_ID_ALL,
+                           MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                           false,                                   // No error shown if fails
+                           1);                                      // Request protocol version
+        }
     }
 
     _firmwarePlugin->initializeVehicle(this);
@@ -2870,10 +2873,12 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
                 _setMaxProtoVersion(100);
             } else {
                 // Re-negotiate protocol version for the link
-                sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
-                               MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                               false,                                   // No error shown if fails
-                               1);                                     // Request protocol version
+                if (!apmFirmware()) {
+                    sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                                   MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                                   false,                                   // No error shown if fails
+                                   1);                                     // Request protocol version
+                }
             }
         } else if (!active && !_connectionLost) {
             _updatePriorityLink(false /* updateActive */, false /* sendCommand */);
