@@ -233,8 +233,9 @@ public:
     bool isEmpty                    (void) const;
 
     // These are the names shown in the UI for the pattern items. They are public so custom builds can remove the ones
-    // they don't want through the QGCCorePlugin::
+    // they don't want through the QGCCorePlugin.
     static const QString patternFWLandingName;
+    static const QString patternVTOLLandingName;
     static const QString patternStructureScanName;
     static const QString patternCorridorScanName;
     static const QString patternSurveyName;

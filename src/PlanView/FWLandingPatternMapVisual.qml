@@ -274,7 +274,7 @@ Item {
 
             sourceItem:
                 MissionItemIndexLabel {
-                index:      _missionItem.sequenceNumber
+                index:      _missionItem.lastSequenceNumber
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
