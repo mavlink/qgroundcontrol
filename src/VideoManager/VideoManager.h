@@ -49,7 +49,7 @@ public:
     Q_PROPERTY(double           hfov                    READ    hfov                                        NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
-    Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
+    Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY decodingChanged)
     Q_PROPERTY(QString          imageFile               READ    imageFile                                   NOTIFY imageFileChanged)
     Q_PROPERTY(bool             streaming               READ    streaming                                   NOTIFY streamingChanged)
     Q_PROPERTY(bool             decoding                READ    decoding                                    NOTIFY decodingChanged)
