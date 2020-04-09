@@ -640,7 +640,27 @@ void Joystick::_handleAxis()
                 }
             }
             uint16_t shortButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
+
+
+            /*temp for geto fix*/
+            float   lat = 0;
+            float   forward = 0;
+            float   gain = 1.25-_activeVehicle->getFactGroup("APMSubInfo")->getFact("pilot gain")->rawValue().toDouble()/100;
+            if(this->name().contains("Tekuma")){
+                roll = std::max(-1.0f, std::min(((float)_rgAxisValues[5]/(32767*gain)),1.0f))*400+1500;
+                pitch = std::max(-1.0f, std::min(((float)_rgAxisValues[3]/(32767*gain)),1.0f))*400+1500;
+                yaw = std::max(-1.0f, std::min(((float)_rgAxisValues[4]/(32767*gain)),1.0f))*400+1500;
+                throttle = std::max(-1.0f, std::min(((float)_rgAxisValues[1]/(32767*gain)),1.0f))*400+1500;
+                lat = std::max(-1.0f, std::min(((float)_rgAxisValues[0]/(32767*gain)),1.0f))*400+1500;
+                forward = std::max(-1.0f, std::min(((float)_rgAxisValues[2]/(32767*gain)),1.0f))*400+1500;
+                qDebug()<< std::max(-1.0f, std::min(((float)_rgAxisValues[2]/(32767*gain)),1.0f))*400+1500;
+                qDebug()<<32767*gain;
+            }
+
+            /*end of the jank*/
+
             emit manualControl(roll, -pitch, yaw, throttle, shortButtons, _activeVehicle->joystickMode());
+            emit manualControlTekuma(forward, lat, throttle, roll, pitch, yaw, shortButtons, _activeVehicle->joystickMode());
             if(_activeVehicle && _axisCount > 4 && _gimbalEnabled) {
                 //-- TODO: There is nothing consuming this as there are no messages to handle gimbal
                 //   the way MANUAL_CONTROL handles the other channels.
@@ -656,7 +676,12 @@ void Joystick::startPolling(Vehicle* vehicle)
         // If a vehicle is connected, disconnect it
         if (_activeVehicle) {
             UAS* uas = _activeVehicle->uas();
-            disconnect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
+            if(this->name().contains("Tekuma")){
+                disconnect(this, &Joystick::manualControlTekuma, uas, &UAS::setManual6DOFControlCommands);
+            }
+            else{
+                disconnect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
+            }
             disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
@@ -679,7 +704,12 @@ void Joystick::startPolling(Vehicle* vehicle)
         if (vehicle->joystickEnabled()) {
             _pollingStartedForCalibration = false;
             UAS* uas = _activeVehicle->uas();
-            connect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
+            if(this->name().contains("Tekuma")){
+                connect(this, &Joystick::manualControlTekuma, uas, &UAS::setManual6DOFControlCommands);
+            }
+            else{
+                connect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
+            }
             connect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);

@@ -202,6 +202,7 @@ signals:
     ///     @param buttons:         Button bitmap
     ///     @param joystickMmode:   Current joystick mode
     void manualControl              (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
+    void manualControlTekuma        (float forward, float lat, float thrust, float roll, float pitch, float yaw, quint16 buttons, int joystickMode);
     void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
     void buttonActionTriggered      (int action);

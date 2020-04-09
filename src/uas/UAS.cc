@@ -945,15 +945,63 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
 }
 
-#ifndef __mobile__
-void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw)
+void UAS::setManual6DOFControlCommands(float forward, float lat, float thrust, float roll, float pitch, float yaw, quint16 buttons, int joystickMode)
 {
     if (!_vehicle) {
         return;
     }
     const uint8_t base_mode = _vehicle->baseMode();
 
-   // If system has manual inputs enabled and is armed
+    float newPitchCommand = pitch;
+    float newRollCommand = roll;
+    float newThrustCommand = thrust;
+    float newYawCommand = yaw;
+    float newForwardCommand = forward;
+    float newLatCommand = lat;
+
+    mavlink_message_t message2;
+
+   mavlink_msg_manual_control_pack_chan(
+       static_cast<uint8_t>(mavlink->getSystemId()),
+       static_cast<uint8_t>(mavlink->getComponentId()),
+       _vehicle->priorityLink()->mavlinkChannel(),
+       &message2,
+       static_cast<uint8_t>(this->uasId),
+       INT16_MAX,
+       INT16_MAX,
+       INT16_MAX,
+       INT16_MAX,
+       buttons);
+  _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message2);
+
+    mavlink_message_t message;
+
+    mavlink_msg_rc_channels_override_pack_chan(mavlink->getSystemId(),
+                                                           mavlink->getComponentId(),
+                                                           _vehicle->priorityLink()->mavlinkChannel(),
+                                                           &message,
+                                                           this->uasId,
+                                                           MAV_COMP_ID_ALL,
+                                                           newPitchCommand,newRollCommand,newThrustCommand,newYawCommand,newForwardCommand,newLatCommand,
+                                                           UINT16_MAX/*Camera Pan*/,
+                                                           UINT16_MAX/*Camera Tilt*/,
+                                                           UINT16_MAX/*Lights 1*/,
+                                                           UINT16_MAX/*lights 2*/,
+                                                           UINT16_MAX/*Video Switch*/,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX,
+                                                           UINT16_MAX);
+
+     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+
+
+    //The code bellow makes me sad
+    /*
+    // If system has manual inputs enabled and is armed
     if(((base_mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (base_mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
@@ -984,9 +1032,9 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
     else
     {
         qDebug() << "3DMOUSE/MANUAL CONTROL: IGNORING COMMANDS: Set mode to MANUAL to send 3DMouse commands first";
-    }
+    }*/
 }
-#endif
+
 
 /**
 * Order the robot to start receiver pairing

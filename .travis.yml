@@ -223,59 +223,12 @@ before_deploy:
     fi
 
 deploy:
-  # deploy installers to s3 builds/ if on a branch
-  - provider: s3
-    edge: true # Use V2 provider to work around V1 bug
-    access_key_id: AKIAIVORNALE7NHD3T6Q
-    secret_access_key:
-      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
-    bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/release/package
-    upload-dir: builds/${TRAVIS_BRANCH}
-    acl: public_read
-    region: us-west-2
-    skip_cleanup: true
-    on:
-      all_branches: true
-      condition: $CONFIG = installer
-
-  # deploy tagged installers to s3 latest/
-  - provider: s3
-    edge: true # Use V2 provider to work around V1 bug
-    access_key_id: AKIAIVORNALE7NHD3T6Q
-    secret_access_key:
-      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
-    bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/release/package
-    upload-dir: latest
-    acl: public_read
-    region: us-west-2
-    skip_cleanup: true
-    on:
-      tags: true
-      condition: $CONFIG = installer
-
-  # deploy tagged installers to s3 version folder
-  - provider: s3
-    edge: true # Use V2 provider to work around V1 bug
-    access_key_id: AKIAIVORNALE7NHD3T6Q
-    secret_access_key:
-      secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
-    bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/release/package
-    upload-dir: ${TRAVIS_BRANCH}
-    acl: public_read
-    region: us-west-2
-    skip_cleanup: true
-    on:
-      tags: true
-      condition: $CONFIG = installer
+ 
 
   # deploy installers to Github releases if on a tag
   - provider: releases
     edge: true # Use V2 provider to work around V1 bug
-    api-key:
-      secure: K/Zqr/FCC7QvzFxYvBtCinPkacQq2ubJ2qm982+38Zf/KjibVOF1dEbVdrGZmII6Tg5DaQzNXGYkg5PvYmJgT9xRsqeQjeYIUYqYZpAt+HYWA38AVfMU8jip/1P1wmwqD469nzJOBBa8yfsMs6Ca7tBaNl/zTxCRGnAgEzqtkdQ=
+    api-key:${botKey} 
     file_glob: true
     file:
       - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
@@ -286,10 +239,3 @@ deploy:
       condition: $CONFIG = installer
       condition: $SPEC != macx-clang # GitHub OSX deploy broken due to travis problem
 
-notifications:
-  webhooks:
-    urls:
-      - https://webhooks.gitter.im/e/60b033428ae9dc715662
-    on_success: change
-    on_failure: always
-    on_start: never

@@ -258,9 +258,8 @@ public slots:
     void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
 
     /** @brief Set the values for the 6dof manual control of the vehicle */
-#ifndef __mobile__
-    void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
-#endif
+    void setManual6DOFControlCommands(float forward, float lat, float thrust, float roll, float pitch, float yaw, quint16 buttons, int joystickMode);
+
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
