@@ -10923,6 +10923,14 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter default="0.0" name="VT_TILT_SPINUP" type="FLOAT">
+      <short_desc>Tilt actuator control value commanded when disarmed and during the first second after arming</short_desc>
+      <long_desc>This specific tilt during spin-up is necessary for some systems whose motors otherwise don't spin-up freely.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter default="0.3" name="VT_TILT_TRANS" type="FLOAT">
       <short_desc>Position of tilt servo in transition mode</short_desc>
       <min>0.0</min>
