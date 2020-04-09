@@ -654,7 +654,6 @@ void Joystick::_handleAxis()
                 lat = std::max(-1.0f, std::min(((float)_rgAxisValues[0]/(32767*gain)),1.0f))*400+1500;
                 forward = std::max(-1.0f, std::min(((float)_rgAxisValues[2]/(32767*gain)),1.0f))*400+1500;
                 qDebug()<< std::max(-1.0f, std::min(((float)_rgAxisValues[2]/(32767*gain)),1.0f))*400+1500;
-                qDebug()<<32767*gain;
             }
 
             /*end of the jank*/
