@@ -7172,13 +7172,13 @@ default 1.5 turns per second</short_desc>
     </parameter>
   </group>
   <group name="Radio Switches">
-    <parameter default="0.5" name="RC_ACRO_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_ACRO_TH" type="FLOAT">
       <short_desc>Threshold for selecting acro mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.25" name="RC_ARMSWITCH_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_ARMSWITCH_TH" type="FLOAT">
       <short_desc>Threshold for the arm switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
@@ -7196,25 +7196,25 @@ default 1.5 turns per second</short_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.25" name="RC_GEAR_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_GEAR_TH" type="FLOAT">
       <short_desc>Threshold for the landing gear switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.25" name="RC_KILLSWITCH_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_KILLSWITCH_TH" type="FLOAT">
       <short_desc>Threshold for the kill switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.5" name="RC_LOITER_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_LOITER_TH" type="FLOAT">
       <short_desc>Threshold for selecting loiter mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.5" name="RC_MAN_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_MAN_TH" type="FLOAT">
       <short_desc>Threshold for the manual switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
@@ -7613,25 +7613,25 @@ default 1.5 turns per second</short_desc>
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter default="0.5" name="RC_OFFB_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_OFFB_TH" type="FLOAT">
       <short_desc>Threshold for selecting offboard mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.5" name="RC_POSCTL_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_POSCTL_TH" type="FLOAT">
       <short_desc>Threshold for selecting posctl mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.5" name="RC_RATT_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_RATT_TH" type="FLOAT">
       <short_desc>Threshold for selecting rattitude mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.5" name="RC_RETURN_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_RETURN_TH" type="FLOAT">
       <short_desc>Threshold for selecting return to launch mode</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
@@ -7643,7 +7643,7 @@ default 1.5 turns per second</short_desc>
       <min>-1</min>
       <max>1</max>
     </parameter>
-    <parameter default="0.25" name="RC_TRANS_TH" type="FLOAT">
+    <parameter default="0.75" name="RC_TRANS_TH" type="FLOAT">
       <short_desc>Threshold for the VTOL transition switch</short_desc>
       <long_desc>0-1 indicate where in the full channel range the threshold sits 0 : min 1 : max sign indicates polarity of comparison positive : true when channel&gt;th negative : true when channel&lt;th</long_desc>
       <min>-1</min>
