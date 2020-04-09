@@ -295,22 +295,31 @@ VideoManager::startRecording(const QString& videoFile)
         qgcApp()->showAppMessage(tr("Invalid video format defined."));
         return;
     }
+    QString ext = kFileExtension[fileFormat - VideoReceiver::FILE_FORMAT_MIN];
 
     //-- Disk usage maintenance
     _cleanupOldVideos();
 
     QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
 
-    if(savePath.isEmpty()) {
+    if (savePath.isEmpty()) {
         qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
 
     _videoFile = savePath + "/"
             + (videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile)
-            + "." + kFileExtension[fileFormat - VideoReceiver::FILE_FORMAT_MIN];
+            + ".";
+    QString videoFile2 = _videoFile + "2." + ext;
+    _videoFile += ext;
 
-    _videoReceiver[0]->startRecording(_videoFile, fileFormat);
+    if (_videoReceiver[0] && _videoStarted[0]) {
+        _videoReceiver[0]->startRecording(_videoFile, fileFormat);
+    }
+    if (_videoReceiver[1] && _videoStarted[1]) {
+        _videoReceiver[1]->startRecording(videoFile2, fileFormat);
+    }
+
 #else
     Q_UNUSED(videoFile)
 #endif
@@ -323,11 +332,12 @@ VideoManager::stopRecording()
         return;
     }
 #if defined(QGC_GST_STREAMING)
-    if (!_videoReceiver[0]) {
-        return;
-    }
 
-    _videoReceiver[0]->stopRecording();
+    for (int i = 0; i < 2; i++) {
+        if (_videoReceiver[i]) {
+            _videoReceiver[i]->stopRecording();
+        }
+    }
 #endif
 }
 
