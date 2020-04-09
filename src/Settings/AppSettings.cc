@@ -43,7 +43,13 @@ DECLARE_SETTINGGROUP(App, "")
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = qgcApp()->applicationName();
+#ifdef __mobile__
+    // Mobile builds always use the runtime generated location for savePath. The reason is that for example on iOS the save path includes
+    // a UID for the app in it. When you then update the app that UID could change which in turn makes any saved value invalid.
+    if (true) {
+#else
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
+#endif
 #ifdef __mobile__
 #ifdef __ios__
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
