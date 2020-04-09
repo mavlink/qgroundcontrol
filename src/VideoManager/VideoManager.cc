@@ -282,11 +282,6 @@ VideoManager::startRecording(const QString& videoFile)
         return;
     }
 #if defined(QGC_GST_STREAMING)
-    if (!_videoReceiver[0]) {
-        qgcApp()->showAppMessage(tr("Video receiver is not ready."));
-        return;
-    }
-
     const VideoReceiver::FILE_FORMAT fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(_videoSettings->recordingFormat()->rawValue().toInt());
 
     if(fileFormat < VideoReceiver::FILE_FORMAT_MIN || fileFormat >= VideoReceiver::FILE_FORMAT_MAX) {
