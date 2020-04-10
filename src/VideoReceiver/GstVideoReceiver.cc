@@ -810,7 +810,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
                 }
             }
         } else {
-            g_signal_connect(source, "pad-added", G_CALLBACK(_linkPadWithOptionalBuffer), parser);
+            g_signal_connect(source, "pad-added", G_CALLBACK(_linkPad), parser);
         }
 
         g_signal_connect(parser, "pad-added", G_CALLBACK(_wrapWithGhostPad), nullptr);
@@ -1401,57 +1401,8 @@ GstVideoReceiver::_wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer d
 }
 
 void
-GstVideoReceiver::_linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data)
+GstVideoReceiver::_linkPad(GstElement* element, GstPad* pad, gpointer data)
 {
-    bool isRtpPad = false;
-
-    GstCaps* filter;
-
-    if ((filter = gst_caps_from_string("application/x-rtp")) != nullptr) {
-        GstCaps* caps = gst_pad_query_caps(pad, nullptr);
-
-        if (caps != nullptr) {
-            if (!gst_caps_is_any(caps) && gst_caps_can_intersect(caps, filter)) {
-                isRtpPad = true;
-            }
-            gst_caps_unref(caps);
-            caps = nullptr;
-        }
-
-        gst_caps_unref(filter);
-        filter = nullptr;
-    }
-
-    if (isRtpPad) {
-        GstElement* buffer;
-
-        if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) != nullptr) {
-            gst_bin_add(GST_BIN(GST_ELEMENT_PARENT(element)), buffer);
-
-            gst_element_sync_state_with_parent(buffer);
-
-            GstPad* sinkpad = gst_element_get_static_pad(buffer, "sink");
-
-            if (sinkpad != nullptr) {
-                const GstPadLinkReturn ret = gst_pad_link(pad, sinkpad);
-
-                gst_object_unref(sinkpad);
-                sinkpad = nullptr;
-
-                if (ret == GST_PAD_LINK_OK) {
-                    pad = gst_element_get_static_pad(buffer, "src");
-                    element = buffer;
-                } else {
-                    qCDebug(VideoReceiverLog) << "Partially failed - gst_pad_link()";
-                }
-            } else {
-                qCDebug(VideoReceiverLog) << "Partially failed - gst_element_get_static_pad()";
-            }
-        } else {
-            qCDebug(VideoReceiverLog) << "Partially failed - gst_element_factory_make('rtpjitterbuffer')";
-        }
-    }
-
     gchar* name;
 
     if ((name = gst_pad_get_name(pad)) != nullptr) {
