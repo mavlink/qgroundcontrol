@@ -494,6 +494,15 @@ void* QGCCorePlugin::createVideoSink(QObject* parent, QQuickItem* widget)
 #endif
 }
 
+void QGCCorePlugin::releaseVideoSink(void* sink)
+{
+#if defined(QGC_GST_STREAMING)
+    GStreamer::releaseVideoSink(sink);
+#else
+    Q_UNUSED(sink)
+#endif
+}
+
 bool QGCCorePlugin::guidedActionsControllerLogging() const
 {
     return GuidedActionsControllerLog().isDebugEnabled();
