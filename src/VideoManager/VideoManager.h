@@ -88,8 +88,8 @@ public:
 
 // FIXME: AV: they should be removed after finishing multiple video stream support
 // new arcitecture does not assume direct access to video receiver from QML side, even if it works for now
-    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
-    virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
+    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver[0]; }
+    virtual VideoReceiver*  thermalVideoReceiver    () { return _videoReceiver[1]; }
 
 #if defined(QGC_DISABLE_UVC)
     virtual bool        uvcEnabled          () { return false; }
@@ -142,11 +142,11 @@ protected:
     friend class FinishVideoInitialization;
 
     void _initVideo                 ();
-    bool _updateSettings            ();
-    bool _updateVideoUri            (const QString& uri);
-    bool _updateThermalVideoUri     (const QString& uri);
+    bool _updateSettings            (unsigned id);
+    bool _updateVideoUri            (unsigned id, const QString& uri);
     void _cleanupOldVideos          ();
-    void _restartVideo              ();
+    void _restartAllVideos          ();
+    void _restartVideo              (unsigned id);
     void _startReceiver             (unsigned id);
     void _stopReceiver              (unsigned id);
 
@@ -155,18 +155,15 @@ protected:
     QString                 _imageFile;
     SubtitleWriter          _subtitleWriter;
     bool                    _isTaisync              = false;
-    VideoReceiver*          _videoReceiver          = nullptr;
+    VideoReceiver*          _videoReceiver[2]       = { nullptr, nullptr };
+    void*                   _videoSink[2]           = { nullptr, nullptr };
+    QString                 _videoUri[2];
+    bool                    _videoStarted[2]        = { false, false };
     QAtomicInteger<bool>    _streaming              = false;
     QAtomicInteger<bool>    _decoding               = false;
     QAtomicInteger<bool>    _recording              = false;
     QAtomicInteger<quint32> _videoSize              = 0;
-    VideoReceiver*          _thermalVideoReceiver   = nullptr;
-    bool                    _enableVideoRestart     = false;
-    void*                   _videoSink              = nullptr;
-    void*                   _thermalVideoSink       = nullptr;
     VideoSettings*          _videoSettings          = nullptr;
-    QString                 _videoUri;
-    QString                 _thermalVideoUri;
     QString                 _videoSourceID;
     bool                    _fullScreen             = false;
     Vehicle*                _activeVehicle          = nullptr;
