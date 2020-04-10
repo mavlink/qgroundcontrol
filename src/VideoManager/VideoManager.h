@@ -158,6 +158,11 @@ protected:
     VideoReceiver*          _videoReceiver[2]       = { nullptr, nullptr };
     void*                   _videoSink[2]           = { nullptr, nullptr };
     QString                 _videoUri[2];
+    // FIXME: AV: _videoStarted seems to be access from 3 different threads, from time to time
+    // 1) Video Receiver thread
+    // 2) Video Manager/main app thread
+    // 3) Qt rendering thread (during video sink creation process which should happen in this thread)
+    // It works for now but...
     bool                    _videoStarted[2]        = { false, false };
     QAtomicInteger<bool>    _streaming              = false;
     QAtomicInteger<bool>    _decoding               = false;
