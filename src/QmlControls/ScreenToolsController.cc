@@ -73,3 +73,8 @@ ScreenToolsController::boldFontFamily() const
         return QString("opensans-demibold");
     }
 }
+
+double ScreenToolsController::defaultFontDescent(int pointSize) const
+{
+    return QFontMetrics(QFont(normalFontFamily(), pointSize)).descent();
+}
