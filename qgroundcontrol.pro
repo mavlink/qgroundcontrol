@@ -356,7 +356,8 @@ CustomBuild {
     RESOURCES += \
         $$PWD/qgroundcontrol.qrc \
         $$PWD/qgcresources.qrc \
-        $$PWD/qgcimages.qrc
+        $$PWD/qgcimages.qrc \
+        $$PWD/InstrumentValueIcons.qrc \
 }
 
 # On Qt 5.9 android versions there is the following bug: https://bugreports.qt.io/browse/QTBUG-61424
