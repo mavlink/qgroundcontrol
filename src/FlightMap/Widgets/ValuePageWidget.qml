@@ -37,6 +37,10 @@ Column {
     property var    _valuePickerInstrumentValue:    null
     property int    _valuePickerRowIndex:           0
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
+    property var    _rgFontSizeRatios:              [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
+    property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
+    property real   _tightDefaultFontHeight:        ScreenTools.defaultFontPixelHeight - _doubleDescent
+    property var    _rgFontSizeTightHeights:        [ _tightDefaultFontHeight * _rgFontSizeRatios[0] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[1] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[2] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[3] + 2 ]
     property real   _blankEntryHeight:              ScreenTools.defaultFontPixelHeight * 2
     property real   _columnButtonWidth:             ScreenTools.minTouchPixels / 2
     property real   _columnButtonHeight:            ScreenTools.minTouchPixels
@@ -102,16 +106,80 @@ Column {
 
                     property real _interColumnSpacing:  (columnRepeater.count - (_settingsUnlocked ? 0 : 1)) * columnRow.spacing
                     property real columnWidth:          (pageWidth - (_settingsUnlocked ? _columnButtonWidth : 0) - _interColumnSpacing) / columnRepeater.count
+                    property bool componentCompleted:   false
 
+                    Component.onCompleted: componentCompleted = true
                     onItemAdded: valueItemMouseAreaComponent.createObject(item, { "instrumentValue": object.get(index), "rowIndex": index })
 
                     Item {
+                        id:                     columnItem
+                        anchors.verticalCenter: parent.verticalCenter
                         width:                  columnRepeater.columnWidth
                         height:                 value.y + value.height
-                        anchors.verticalCenter: _settingsUnlocked ? parent.verticalCenter : undefined
-                        anchors.bottom:         _settingsUnlocked ? undefined : parent.bottom
+
+                        property real columnWidth:                  columnRepeater.columnWidth
+                        property bool repeaterComponentCompleted:   columnRepeater.componentCompleted
+
+                        // After fighting with using layout and/or anchors I gave up and just do a manual recalc to position items which ends up being much simpler
+                        function recalcPositions() {
+                            if (!repeaterComponentCompleted) {
+                                return
+                            }
+                            var smallSpacing = 2
+                            if (object.icon) {
+                                if (object.iconPosition === InstrumentValue.IconAbove) {
+                                    valueIcon.x = (width - valueIcon.width) / 2
+                                    valueIcon.y = 0
+                                    value.x = (width - value.width) / 2
+                                    value.y = valueIcon.height + smallSpacing
+                                } else {
+                                    var iconPlusValueWidth = valueIcon.width + value.width + ScreenTools.defaultFontPixelWidth
+                                    valueIcon.x = (width - iconPlusValueWidth) / 2
+                                    valueIcon.y = (value.height - valueIcon.height) / 2
+                                    value.x = valueIcon.x + valueIcon.width + (ScreenTools.defaultFontPixelWidth / 2)
+                                    value.y = 0
+                                }
+                                label.x = label.y = 0
+                            } else {
+                                // label above value
+                                if (label) {
+                                    label.x = (width - label.width) / 2
+                                    label.y = 0
+                                    value.y = label.height + smallSpacing
+                                } else {
+                                    value.y = 0
+                                }
+                                value.x = (width - value.width) / 2
+                                valueIcon.x = valueIcon.y = 0
+                            }
+                        }
+
+                        onRepeaterComponentCompletedChanged:    recalcPositions()
+                        onColumnWidthChanged:                   recalcPositions()
+
+                        Connections {
+                            target:                 object
+                            onIconChanged:          recalcPositions()
+                            onIconPositionChanged:  recalcPositions()
+                        }
+
+                        QGCColoredImage {
+                            id:                         valueIcon
+                            height:                     _rgFontSizeTightHeights[object.fontSize]
+                            width:                      height
+                            source:                     object.icon ? "/InstrumentValueIcons/" + object.icon : ""
+                            sourceSize.height:          height
+                            fillMode:                   Image.PreserveAspectFit
+                            mipmap:                     true
+                            smooth:                     true
+                            color:                      qgcPal.text
+                            visible:                    object.icon
+                            onWidthChanged:             columnItem.recalcPositions()
+                            onHeightChanged:            columnItem.recalcPositions()
+                        }
 
                         QGCLabel {
+                            id:                         blank
                             anchors.horizontalCenter:   parent.horizontalCenter
                             height:                     _columnButtonsTotalHeight
                             font.pointSize:             ScreenTools.smallFontPointSize
@@ -119,25 +187,29 @@ Column {
                             horizontalAlignment:        Text.AlignHCenter
                             verticalAlignment:          Text.AlignVCenter
                             visible:                    !object.fact
+                            onWidthChanged:             columnItem.recalcPositions()
+                            onHeightChanged:            columnItem.recalcPositions()
                         }
 
                         QGCLabel {
                             id:                         label
-                            anchors.horizontalCenter:   parent.horizontalCenter
+                            height:                     _rgFontSizeTightHeights[InstrumentValue.SmallFontSize]
                             font.pointSize:             ScreenTools.smallFontPointSize
                             text:                       object.label.toUpperCase()
-                            horizontalAlignment:        Text.AlignHCenter
-                            visible:                    object.fact && object.label
+                            verticalAlignment:          Text.AlignVCenter
+                            visible:                    object.fact && object.label && !object.icon
+                            onWidthChanged:             columnItem.recalcPositions()
+                            onHeightChanged:            columnItem.recalcPositions()
                         }
 
                         QGCLabel {
                             id:                         value
-                            anchors.horizontalCenter:   parent.horizontalCenter
-                            anchors.topMargin:          label.visible ? 2 : 0
-                            anchors.top:                label.visible ? label.bottom : parent.top
                             font.pointSize:             _rgFontSizes[object.fontSize]
                             text:                       visible ? (object.fact.enumOrValueString + (object.showUnits ? object.fact.units : "")) : ""
+                            verticalAlignment:          Text.AlignVCenter
                             visible:                    object.fact
+                            onWidthChanged:             columnItem.recalcPositions()
+                            onHeightChanged:            columnItem.recalcPositions()
                         }
                     }
                 } // Repeater - columns
@@ -177,7 +249,7 @@ Column {
                     Layout.fillWidth:   true
                     Layout.preferredHeight: ScreenTools.defaultFontPixelWidth * 2
                     text:               qsTr("+")
-                    onClicked:          controller.insertRow(index)
+                    onClicked:          controller.insertRow(index + 1)
                 }
 
                 QGCButton {
@@ -250,10 +322,40 @@ Column {
                         QGCLabel { text: qsTr("Font Size (for whole row)") }
                         QGCComboBox {
                             id:             fontSizeCombo
-                            model:          [ qsTr("Default"), qsTr("Small"), qsTr("Medium"), qsTr("Large") ]
+                            model:          _valuePickerInstrumentValue.fontSizeNames
                             currentIndex:   _valuePickerInstrumentValue.fontSize
                             sizeToContents: true
                             onActivated:    _valuePickerInstrumentValue.fontSize = index
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel { text: qsTr("Icon") }
+                        QGCComboBox {
+                            model:          _valuePickerInstrumentValue.iconNames
+                            sizeToContents: true
+                            onActivated:    _valuePickerInstrumentValue.icon = currentText
+
+                            Component.onCompleted: {
+                                currentIndex = find(_valuePickerInstrumentValue.icon)
+                                if (currentIndex == -1) {
+                                    currentIndex = 0
+                                }
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelWidth
+
+                        QGCLabel { text: qsTr("Icon Position") }
+                        QGCComboBox {
+                            model:          _valuePickerInstrumentValue.iconPositionNames
+                            currentIndex:   _valuePickerInstrumentValue.iconPosition
+                            sizeToContents: true
+                            onActivated:    _valuePickerInstrumentValue.iconPosition = index
                         }
                     }
 

@@ -37,6 +37,7 @@ class PlanMasterController;
 class QGCCameraManager;
 class QGCCameraControl;
 class QQuickItem;
+class ValuesWidgetController;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -106,8 +107,8 @@ public:
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
 
     /// Return the default Intrument Value model for the Values Widget. The returned model will be
-    /// re-parented to valuesModelParent for ownership.
-    virtual QmlObjectListModel* valuesWidgetDefaultSettings(QObject* valuesModelParent);
+    /// re-parented to parentController for ownership.
+    virtual QmlObjectListModel* valuesWidgetDefaultSettings(ValuesWidgetController* newParentController);
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
