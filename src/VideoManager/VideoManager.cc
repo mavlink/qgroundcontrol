@@ -71,7 +71,7 @@ VideoManager::~VideoManager()
         }
 #if defined(QGC_GST_STREAMING)
         if (_videoSink[i] != nullptr) {
-            GStreamer::releaseVideoSink(_videoSink[i]);
+            qgcApp()->toolbox()->corePlugin()->releaseVideoSink(_videoSink[i]);
             _videoSink[i] = nullptr;
         }
 #endif
