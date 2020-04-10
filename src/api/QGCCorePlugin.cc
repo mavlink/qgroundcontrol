@@ -407,7 +407,7 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
               "Are you sure you want to enable Advanced Mode?");
 }
 
-QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(QObject* valuesModelParent)
+QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(ValuesWidgetController* newParentController)
 {
     ValuesWidgetController controller(true /* forDefaultSettingsCreation */);
 
@@ -438,7 +438,8 @@ QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(QObject* valuesMo
 
     controller.setPreventSaveSettings(false);
 
-    controller.valuesModel()->setParent(valuesModelParent);
+    // Caller takes ownership
+    controller.setValuesModelParentController(newParentController);
 
     return controller.valuesModel();
 }

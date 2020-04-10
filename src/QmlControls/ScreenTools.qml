@@ -1,8 +1,8 @@
 pragma Singleton
 
-import QtQuick 2.3
+import QtQuick          2.12
 import QtQuick.Controls 1.2
-import QtQuick.Window 2.2
+import QtQuick.Window   2.2
 
 import QGroundControl                       1.0
 import QGroundControl.ScreenToolsController 1.0
@@ -42,6 +42,9 @@ Item {
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelWidth:    10
+
+    /// QFontMetrics::descent for default font at default point size
+    property real defaultFontDescent:       0
 
     property real smallFontPointSize:       10
     property real mediumFontPointSize:      10
@@ -134,6 +137,7 @@ Item {
         defaultFontPointSize    = pointSize
         defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
         defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
+        defaultFontDescent      = ScreenToolsController.defaultFontDescent(defaultFontPointSize)
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
