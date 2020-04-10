@@ -28,55 +28,86 @@ public:
         MediumFontSize,
         LargeFontSize
     };
+    Q_ENUMS(FontSize)
 
-    InstrumentValue(Vehicle* activeVehicle, int fontSize, QmlObjectListModel* rowModel);
+    enum IconPosition {
+        IconAbove = 0,
+        IconLeft
+    };
+    Q_ENUMS(IconPosition)
 
-    Q_PROPERTY(QString  factGroupName   MEMBER  _factGroupName                      NOTIFY factGroupNameChanged)
-    Q_PROPERTY(Fact*    fact            READ    fact                                NOTIFY factChanged)
-    Q_PROPERTY(QString  label           READ    label           WRITE setLabel      NOTIFY labelChanged)
-    Q_PROPERTY(int      fontSize        READ    fontSize        WRITE setFontSize   NOTIFY fontSizeChanged)
-    Q_PROPERTY(bool     showUnits       READ    showUnits       WRITE setShowUnits  NOTIFY showUnitsChanged)
+    InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlObjectListModel* rowModel);
+
+    Q_PROPERTY(QString      factGroupName       MEMBER  _factGroupName                              NOTIFY factGroupNameChanged)
+    Q_PROPERTY(Fact*        fact                READ    fact                                        NOTIFY factChanged)
+    Q_PROPERTY(QString      label               READ    label               WRITE setLabel          NOTIFY labelChanged)
+    Q_PROPERTY(QString      icon                READ    icon                WRITE setIcon           NOTIFY iconChanged)             ///< If !isEmpty icon will be show instead of label
+    Q_PROPERTY(IconPosition iconPosition        READ    iconPosition        WRITE setIconPosition   NOTIFY iconPositionChanged)
+    Q_PROPERTY(QStringList  iconPositionNames   MEMBER _iconPositionNames                           CONSTANT)
+    Q_PROPERTY(QStringList  iconNames           MEMBER _iconNames                                   CONSTANT)
+    Q_PROPERTY(FontSize     fontSize            READ    fontSize            WRITE setFontSize       NOTIFY fontSizeChanged)
+    Q_PROPERTY(QStringList  fontSizeNames       MEMBER _fontSizeNames                               CONSTANT)
+    Q_PROPERTY(bool         showUnits           READ    showUnits           WRITE setShowUnits      NOTIFY showUnitsChanged)
 
     Q_INVOKABLE void setFact(QString factGroupName, QString factName, QString label);
     Q_INVOKABLE void clearFact(void);
 
-    Fact*   fact                    (void) { return _fact; }
-    int     fontSize                (void) const { return _fontSize; }
-    QString label                   (void) const { return _label; }
-    bool    showUnits               (void) const { return _showUnits; }
-    void    setFontSize             (int fontSize);
-    void    setLabel                (const QString& label);
-    void    setShowUnits            (bool showUnits);
-    void    activeVehicleChanged    (Vehicle* activeVehicle);
-    void    saveToSettings          (QSettings& settings) const;
-    void    readFromSettings        (const QSettings& settings);
+    Fact*           fact                    (void) { return _fact; }
+    FontSize        fontSize                (void) const { return _fontSize; }
+    QString         label                   (void) const { return _label; }
+    bool            showUnits               (void) const { return _showUnits; }
+    QString         icon                    (void) const { return _icon; }
+    IconPosition    iconPosition            (void) const { return _iconPosition; }
+    void            setFontSize             (FontSize fontSize);
+    void            setLabel                (const QString& label);
+    void            setShowUnits            (bool showUnits);
+    void            setIcon                 (const QString& icon);
+    void            setIconPosition         (IconPosition iconPosition);
+    void            activeVehicleChanged    (Vehicle* activeVehicle);
+    void            saveToSettings          (QSettings& settings) const;
+    void            readFromSettings        (const QSettings& settings);
 
 signals:
     void factChanged            (Fact* fact);
-    void factGroupNameChanged   (QString factGroup);
+    void factNameChanged        (const QString& factName);
+    void factGroupNameChanged   (const QString& factGroup);
     void labelChanged           (QString label);
-    void fontSizeChanged        (int fontSize);
+    void fontSizeChanged        (FontSize fontSize);
     void showUnitsChanged       (bool showUnits);
-
-private slots:
+    void iconChanged            (const QString& icon);
+    void iconPositionChanged    (IconPosition iconPosition);
 
 private:
-    void _setFontSize(int fontSize);
+    void _setFontSize           (FontSize fontSize);
 
     Vehicle*            _activeVehicle =    nullptr;
     QmlObjectListModel* _rowModel =         nullptr;
     Fact*               _fact =             nullptr;
+    QString             _factName;
     QString             _factGroupName;
     QString             _label;
     bool                _showUnits =        true;
-    int                 _fontSize =         DefaultFontSize;
+    FontSize            _fontSize =         DefaultFontSize;
+    QString             _icon;
+    IconPosition        _iconPosition =     IconLeft;
+
+    static const QStringList _iconPositionNames;
+    static       QStringList _iconNames;
+    static const QStringList _fontSizeNames;
 
     static const char*  _factGroupNameKey;
     static const char*  _factNameKey;
     static const char*  _labelKey;
     static const char*  _fontSizeKey;
     static const char*  _showUnitsKey;
+    static const char*  _iconKey;
+    static const char*  _iconPositionKey;
+
+    static const QString _noIconName;
 };
+
+Q_DECLARE_METATYPE(InstrumentValue::FontSize)
+Q_DECLARE_METATYPE(InstrumentValue::IconPosition)
 
 class ValuesWidgetController : public QObject
 {
@@ -101,6 +132,9 @@ public:
     /// Turn on/off saving changes to QSettings
     void setPreventSaveSettings(bool preventSaveSettings);
 
+    /// Allows the ownership of the _valuesModel to be re-parented to a different controller
+    void setValuesModelParentController(ValuesWidgetController* newParentController);
+
 signals:
     void valuesModelChanged(QmlObjectListModel* valuesModel);
 
@@ -111,8 +145,10 @@ private slots:
 
 private:
     bool                _validRowIndex                      (int rowIndex);
-    InstrumentValue*    _createNewInstrumentValueWorker     (Vehicle* activeVehicle, int fontSize, QmlObjectListModel* rowModel);
+    InstrumentValue*    _createNewInstrumentValueWorker     (Vehicle* activeVehicle, InstrumentValue::FontSize fontSize, QmlObjectListModel* rowModel);
     void                _loadSettings                       (void);
+    void                _connectSignalsToController         (InstrumentValue* value, ValuesWidgetController* controller);
+
 
     MultiVehicleManager*    _multiVehicleMgr =      nullptr;
     QmlObjectListModel*     _valuesModel =          nullptr;
