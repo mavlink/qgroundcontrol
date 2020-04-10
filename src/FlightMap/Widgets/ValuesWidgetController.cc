@@ -27,6 +27,26 @@ const char*  InstrumentValue::_factNameKey =             "factName";
 const char*  InstrumentValue::_labelKey =               "label";
 const char*  InstrumentValue::_fontSizeKey =            "fontSize";
 const char*  InstrumentValue::_showUnitsKey =           "showUnits";
+const char*  InstrumentValue::_iconKey =                "icon";
+const char*  InstrumentValue::_iconPositionKey =        "iconPosition";
+
+QStringList InstrumentValue::_iconNames;
+
+const QString InstrumentValue::_noIconName = QT_TRANSLATE_NOOP("InstrumentValue", "No Icon");
+
+// Important: The indices of these strings must match the InstrumentValue::IconPosition enumconst QStringList InstrumentValue::_iconPositionNames = {
+const QStringList InstrumentValue::_iconPositionNames = {
+    QT_TRANSLATE_NOOP("InstrumentValue", "Above"),
+    QT_TRANSLATE_NOOP("InstrumentValue", "Left"),
+};
+
+// Important: The indices of these strings must match the InstrumentValue::FontSize enum
+const QStringList InstrumentValue::_fontSizeNames = {
+    QT_TRANSLATE_NOOP("InstrumentValue", "Default"),
+    QT_TRANSLATE_NOOP("InstrumentValue", "Small"),
+    QT_TRANSLATE_NOOP("InstrumentValue", "Medium"),
+    QT_TRANSLATE_NOOP("InstrumentValue", "Large"),
+};
 
 ValuesWidgetController::ValuesWidgetController(bool forDefaultSettingsCreation)
     : _valuesModel(new QmlObjectListModel(this))
@@ -43,19 +63,23 @@ ValuesWidgetController::ValuesWidgetController(bool forDefaultSettingsCreation)
     }
 }
 
-InstrumentValue* ValuesWidgetController::_createNewInstrumentValueWorker(Vehicle* activeVehicle, int fontSize, QmlObjectListModel* rowModel)
+void ValuesWidgetController::_connectSignalsToController(InstrumentValue* value, ValuesWidgetController* controller)
 {
-    InstrumentValue* newValue = new InstrumentValue(activeVehicle, fontSize, rowModel);
-
-    connect(newValue, &InstrumentValue::factChanged,            this, &ValuesWidgetController::_saveSettings);
-    connect(newValue, &InstrumentValue::factGroupNameChanged,   this, &ValuesWidgetController::_saveSettings);
-    connect(newValue, &InstrumentValue::labelChanged,           this, &ValuesWidgetController::_saveSettings);
-    connect(newValue, &InstrumentValue::fontSizeChanged,        this, &ValuesWidgetController::_saveSettings);
-    connect(newValue, &InstrumentValue::showUnitsChanged,       this, &ValuesWidgetController::_saveSettings);
-
-    return newValue;
+    connect(value, &InstrumentValue::factNameChanged,        controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::factGroupNameChanged,   controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::labelChanged,           controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::fontSizeChanged,        controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::showUnitsChanged,       controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::iconChanged,            controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::iconPositionChanged,    controller, &ValuesWidgetController::_saveSettings);
 }
 
+InstrumentValue* ValuesWidgetController::_createNewInstrumentValueWorker(Vehicle* activeVehicle, InstrumentValue::FontSize fontSize, QmlObjectListModel* rowModel)
+{
+    InstrumentValue* newValue = new InstrumentValue(activeVehicle, fontSize, rowModel);
+    _connectSignalsToController(newValue, this);
+    return newValue;
+}
 
 InstrumentValue* ValuesWidgetController::appendColumn(int rowIndex)
 {
@@ -63,7 +87,7 @@ InstrumentValue* ValuesWidgetController::appendColumn(int rowIndex)
 
     if (rowIndex >= 0 && rowIndex < _valuesModel->count()) {
         QmlObjectListModel* row = _valuesModel->value<QmlObjectListModel*>(rowIndex);
-        int fontSize = InstrumentValue::DefaultFontSize;
+        InstrumentValue::FontSize fontSize = InstrumentValue::DefaultFontSize;
         if (row->count()) {
             fontSize = row->value<InstrumentValue*>(0)->fontSize();
         }
@@ -297,13 +321,30 @@ void ValuesWidgetController::setPreventSaveSettings(bool preventSaveSettings)
     _preventSaveSettings = preventSaveSettings;
 }
 
-InstrumentValue::InstrumentValue(Vehicle* activeVehicle, int fontSize, QmlObjectListModel* rowModel)
+void ValuesWidgetController::setValuesModelParentController(ValuesWidgetController* newParentController)
+{
+    _valuesModel->setParent(newParentController);
+
+    // Signalling must be reconnected to new controller as well
+    for (int rowIndex=0; rowIndex<_valuesModel->count(); rowIndex++) {
+        QmlObjectListModel* rowModel = _valuesModel->value<QmlObjectListModel*>(rowIndex);
+        for (int colIndex=0; colIndex<rowModel->count(); colIndex++) {
+            _connectSignalsToController(rowModel->value<InstrumentValue*>(colIndex), newParentController);
+        }
+    }
+}
+
+InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlObjectListModel* rowModel)
     : QObject       (rowModel)
     , _activeVehicle(activeVehicle)
     , _rowModel     (rowModel)
     , _fontSize     (fontSize)
 {
-
+    if (_iconNames.isEmpty()) {
+        QDir iconDir(":/InstrumentValueIcons/");
+        _iconNames = iconDir.entryList();
+        _iconNames.prepend(_noIconName);
+    }
 }
 
 void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
@@ -314,7 +355,6 @@ void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
         _fact = nullptr;
 
         FactGroup* factGroup = nullptr;
-        QString factName;
         if (_factGroupName == QStringLiteral("Vehicle")) {
             factGroup = _activeVehicle;
         } else {
@@ -322,7 +362,7 @@ void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
         }
 
         if (factGroup) {
-            _fact = factGroup->getFact(factName);
+            _fact = factGroup->getFact(_factName);
         }
         emit factChanged(_fact);
     }
@@ -346,19 +386,22 @@ void InstrumentValue::setFact(QString factGroupName, QString factName, QString l
     }
 
     if (_fact) {
+        _factName = factName;
         _factGroupName = factGroupName;
         _label = label;
     } else {
+        _factName.clear();
         _factGroupName.clear();
         _label.clear();
     }
 
     emit labelChanged(_label);
     emit factChanged(_fact);
+    emit factNameChanged(_factName);
     emit factGroupNameChanged(_factGroupName);
 }
 
-void InstrumentValue::_setFontSize(int fontSize)
+void InstrumentValue::_setFontSize(FontSize fontSize)
 {
     if (fontSize != _fontSize) {
         _fontSize = fontSize;
@@ -366,7 +409,7 @@ void InstrumentValue::_setFontSize(int fontSize)
     }
 }
 
-void InstrumentValue::setFontSize(int fontSize)
+void InstrumentValue::setFontSize(FontSize fontSize)
 {
     _setFontSize(fontSize);
 
@@ -391,14 +434,18 @@ void InstrumentValue::saveToSettings(QSettings& settings) const
     settings.setValue(_labelKey,        _label);
     settings.setValue(_fontSizeKey,     _fontSize);
     settings.setValue(_showUnitsKey,    _showUnits);
+    settings.setValue(_iconKey,         _icon);
+    settings.setValue(_iconPositionKey, _iconPosition);
 }
 
 void InstrumentValue::readFromSettings(const QSettings& settings)
 {
     _factGroupName =    settings.value(_factGroupNameKey).toString();
     _label =            settings.value(_labelKey).toString();
-    _fontSize =         settings.value(_fontSizeKey).toInt();
-    _showUnits =        settings.value(_showUnitsKey).toBool();
+    _fontSize =         settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
+    _showUnits =        settings.value(_showUnitsKey, true).toBool();
+    _icon =             settings.value(_iconKey).toString();
+    _iconPosition =     settings.value(_iconPositionKey, IconLeft).value<IconPosition>();
 
     QString factName = settings.value(_factNameKey).toString();
     if (!factName.isEmpty()) {
@@ -410,6 +457,8 @@ void InstrumentValue::readFromSettings(const QSettings& settings)
     emit labelChanged           (_label);
     emit fontSizeChanged        (_fontSize);
     emit showUnitsChanged       (_showUnits);
+    emit iconChanged            (_icon);
+    emit iconPositionChanged    (_iconPosition);
 }
 
 void InstrumentValue::setLabel(const QString& label)
@@ -439,4 +488,24 @@ void InstrumentValue::clearFact(void)
     emit factGroupNameChanged   (_factGroupName);
     emit labelChanged           (_label);
     emit showUnitsChanged       (_showUnits);
+}
+
+void InstrumentValue::setIcon(const QString& icon)
+{
+    if (icon != _icon) {
+        if (icon == _noIconName) {
+            _icon.clear();
+        } else {
+            _icon = icon;
+        }
+        emit iconChanged(_icon);
+    }
+}
+
+void InstrumentValue::setIconPosition(IconPosition iconPosition)
+{
+    if (iconPosition != _iconPosition) {
+        _iconPosition = iconPosition;
+        emit iconPositionChanged(iconPosition);
+    }
 }
