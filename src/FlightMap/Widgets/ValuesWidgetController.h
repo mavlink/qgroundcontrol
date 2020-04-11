@@ -102,8 +102,6 @@ private:
     static const char*  _showUnitsKey;
     static const char*  _iconKey;
     static const char*  _iconPositionKey;
-
-    static const QString _noIconName;
 };
 
 Q_DECLARE_METATYPE(InstrumentValue::FontSize)
