@@ -32,8 +32,6 @@ const char*  InstrumentValue::_iconPositionKey =        "iconPosition";
 
 QStringList InstrumentValue::_iconNames;
 
-const QString InstrumentValue::_noIconName = QT_TRANSLATE_NOOP("InstrumentValue", "No Icon");
-
 // Important: The indices of these strings must match the InstrumentValue::IconPosition enumconst QStringList InstrumentValue::_iconPositionNames = {
 const QStringList InstrumentValue::_iconPositionNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "Above"),
@@ -343,7 +341,6 @@ InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlO
     if (_iconNames.isEmpty()) {
         QDir iconDir(":/InstrumentValueIcons/");
         _iconNames = iconDir.entryList();
-        _iconNames.prepend(_noIconName);
     }
 }
 
@@ -482,22 +479,20 @@ void InstrumentValue::clearFact(void)
     _fact = nullptr;
     _factGroupName.clear();
     _label.clear();
+    _icon.clear();
     _showUnits = true;
 
     emit factChanged            (_fact);
     emit factGroupNameChanged   (_factGroupName);
     emit labelChanged           (_label);
+    emit iconChanged            (_icon);
     emit showUnitsChanged       (_showUnits);
 }
 
 void InstrumentValue::setIcon(const QString& icon)
 {
     if (icon != _icon) {
-        if (icon == _noIconName) {
-            _icon.clear();
-        } else {
-            _icon = icon;
-        }
+        _icon = icon;
         emit iconChanged(_icon);
     }
 }
