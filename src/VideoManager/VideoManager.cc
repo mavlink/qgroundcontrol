@@ -71,7 +71,11 @@ VideoManager::~VideoManager()
         }
 #if defined(QGC_GST_STREAMING)
         if (_videoSink[i] != nullptr) {
-            qgcApp()->toolbox()->corePlugin()->releaseVideoSink(_videoSink[i]);
+            // FIXME: AV: we need some interaface for video sink with .release() call
+            // Currently VideoManager is destroyed after corePlugin() and we are crashing on app exit
+            // calling qgcApp()->toolbox()->corePlugin()->releaseVideoSink(_videoSink[i]);
+            // As for now let's call GStreamer::releaseVideoSink() directly
+            GStreamer::releaseVideoSink(_videoSink[i]);
             _videoSink[i] = nullptr;
         }
 #endif
