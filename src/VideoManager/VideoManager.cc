@@ -726,6 +726,10 @@ VideoManager::_updateVideoUri(unsigned id, const QString& uri)
 void
 VideoManager::_restartVideo(unsigned id)
 {
+    if (qgcApp()->runningUnitTests()) {
+        return;
+    }
+
 #if defined(QGC_GST_STREAMING)
     bool oldLowLatencyStreaming = _lowLatencyStreaming[id];
     QString oldUri = _videoUri[id];
