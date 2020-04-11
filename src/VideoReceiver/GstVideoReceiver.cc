@@ -356,9 +356,6 @@ GstVideoReceiver::stop(void)
             });
         } else {
             qCDebug(VideoReceiverLog) << "Streaming did not start" << _uri;
-           _dispatchSignal([this](){
-               emit timeout();
-           });
         }
     }
 
