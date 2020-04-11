@@ -116,7 +116,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     _videoReceiver[1] = toolbox->corePlugin()->createVideoReceiver(this);
 
     connect(_videoReceiver[0], &VideoReceiver::timeout, this, [this](){
-        _restartVideo(0);
+        _stopReceiver(0);
     });
 
     connect(_videoReceiver[0], &VideoReceiver::streamingChanged, this, [this](bool active){
@@ -179,7 +179,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     // and I expect that it will be changed during multiple video stream activity
     if (_videoReceiver[1] != nullptr) {
         connect(_videoReceiver[1], &VideoReceiver::timeout, this, [this](){
-            _restartVideo(1);
+            _stopReceiver(1);
         });
 
         connect(_videoReceiver[1], &VideoReceiver::streamingChanged, this, [this](bool active){
