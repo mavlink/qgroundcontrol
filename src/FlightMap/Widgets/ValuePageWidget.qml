@@ -34,8 +34,7 @@ Column {
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property int    _colMax:                        4
     property bool   _settingsUnlocked:              false
-    property var    _valuePickerInstrumentValue:    null
-    property int    _valuePickerRowIndex:           0
+    property var    _valueDialogInstrumentValue:    null
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
     property var    _rgFontSizeRatios:              [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
     property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
@@ -48,6 +47,7 @@ Column {
     property real   _columnButtonsTotalHeight:      (_columnButtonHeight * 2) + _columnButtonSpacing
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
+    QGCPalette { id:qgcPalDisabled; colorGroupEnabled: false }
 
     ValuesWidgetController { id: controller }
 
@@ -79,9 +79,8 @@ Column {
             property int rowIndex
 
             onClicked: {
-                _valuePickerInstrumentValue = instrumentValue
-                _valuePickerRowIndex = rowIndex
-                mainWindow.showComponentDialog(valuePickerDialog, qsTr("Select Value"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
+                _valueDialogInstrumentValue = instrumentValue
+                mainWindow.showPopupDialog(valueDialog, qsTr("Value Display"), StandardButton.Close)
             }
         }
     }
@@ -142,7 +141,7 @@ Column {
                                 label.x = label.y = 0
                             } else {
                                 // label above value
-                                if (label) {
+                                if (object.label) {
                                     label.x = (width - label.width) / 2
                                     label.y = 0
                                     value.y = label.height + smallSpacing
@@ -272,242 +271,166 @@ Column {
     }
 
     Component {
-        id: valuePickerDialog
+        id: valueDialog
 
-        QGCViewDialog {
-            function accept() {
-                if (factRadioGroup.checkedButton) {
-                    _valuePickerInstrumentValue.setFact(factRadioGroup.checkedButton.radioFactGroupName, factRadioGroup.checkedButton.radioFact.name, labelTextField.text, fontSizeCombo.currentIndex)
-                } else {
-                    _valuePickerInstrumentValue.clearFact()
+        QGCPopupDialog {
+            GridLayout {
+                rowSpacing:     _margins
+                columnSpacing:  _margins
+                columns:        3
+
+                QGCCheckBox {
+                    id:         valueCheckBox
+                    text:       qsTr("Value")
+                    checked:    _valueDialogInstrumentValue.fact
+                    onClicked: {
+                        if (checked) {
+                            _valueDialogInstrumentValue.setFact(_valueDialogInstrumentValue.factGroupNames[0], _valueDialogInstrumentValue.factValueNames[0])
+                        } else {
+                            _valueDialogInstrumentValue.clearFact()
+                        }
+                    }
                 }
 
-                hideDialog()
+                QGCComboBox {
+                    model:                  _valueDialogInstrumentValue.factGroupNames
+                    sizeToContents:         true
+                    enabled:                valueCheckBox.enabled
+                    onModelChanged:         currentIndex = find(_valueDialogInstrumentValue.factGroupName)
+                    Component.onCompleted:  currentIndex = find(_valueDialogInstrumentValue.factGroupName)
+                    onActivated: {
+                        _valueDialogInstrumentValue.setFact(currentText, "")
+                        _valueDialogInstrumentValue.icon = ""
+                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact.shortDescription
+                    }
+                }
+
+                QGCComboBox {
+                    model:                  _valueDialogInstrumentValue.factValueNames
+                    sizeToContents:         true
+                    enabled:                valueCheckBox.enabled
+                    onModelChanged:         currentIndex = _valueDialogInstrumentValue.fact ? find(_valueDialogInstrumentValue.factName) : -1
+                    Component.onCompleted:  currentIndex = _valueDialogInstrumentValue.fact ? find(_valueDialogInstrumentValue.factName) : -1
+                    onActivated: {
+                        _valueDialogInstrumentValue.setFact(_valueDialogInstrumentValue.factGroupName, currentText)
+                        _valueDialogInstrumentValue.icon = ""
+                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact.shortDescription
+                    }
+                }
+
+                QGCRadioButton {
+                    id:                     iconCheckBox
+                    text:                   qsTr("Icon")
+                    Component.onCompleted:  checked = _valueDialogInstrumentValue.icon != ""
+                    onClicked: {
+                        _valueDialogInstrumentValue.label = ""
+                        _valueDialogInstrumentValue.icon = _valueDialogInstrumentValue.iconNames[0]
+                        mainWindow.showPopupDialog(iconDialog, qsTr("Select Icon"), StandardButton.Close)
+                    }
+                }
+
+                QGCColoredImage {
+                    Layout.alignment:   Qt.AlignHCenter
+                    height:             iconPositionCombo.height
+                    width:              height
+                    source:             "/InstrumentValueIcons/" + (_valueDialogInstrumentValue.icon ? _valueDialogInstrumentValue.icon : _valueDialogInstrumentValue.iconNames[0])
+                    sourceSize.height:  height
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              enabled ? qgcPal.text : qgcPalDisabled.text
+                    enabled:            iconCheckBox.checked
+
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked:      mainWindow.showPopupDialog(iconDialog, qsTr("Select Icon"), StandardButton.Close)
+                    }
+                }
+
+                QGCComboBox {
+                    id:             iconPositionCombo
+                    model:          _valueDialogInstrumentValue.iconPositionNames
+                    currentIndex:   _valueDialogInstrumentValue.iconPosition
+                    sizeToContents: true
+                    onActivated:    _valueDialogInstrumentValue.iconPosition = index
+                    enabled:        iconCheckBox.checked
+                }
+
+                QGCRadioButton {
+                    id:                     labelCheckBox
+                    text:                   qsTr("Label")
+                    Component.onCompleted:  checked = _valueDialogInstrumentValue.label != ""
+                    onClicked: {
+                        _valueDialogInstrumentValue.icon = ""
+                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact ? _valueDialogInstrumentValue.fact.shortDescription : qsTr("Label")
+                    }
+                }
+
+                QGCTextField {
+                    id:                 labelTextField
+                    Layout.fillWidth:   true
+                    Layout.columnSpan:  2
+                    text:               _valueDialogInstrumentValue.label
+                    enabled:            labelCheckBox.checked
+                }
+
+                QGCLabel { text: qsTr("Size") }
+
+                QGCComboBox {
+                    id:                 fontSizeCombo
+                    Layout.columnSpan:  2
+                    model:              _valueDialogInstrumentValue.fontSizeNames
+                    currentIndex:       _valueDialogInstrumentValue.fontSize
+                    sizeToContents:     true
+                    onActivated:        _valueDialogInstrumentValue.fontSize = index
+                }
+
+                QGCCheckBox {
+                    Layout.columnSpan:  3
+                    text:               qsTr("Show Units")
+                    checked:            _valueDialogInstrumentValue.showUnits
+                    onClicked:          _valueDialogInstrumentValue.showUnits = checked
+                }
             }
+        }
+    }
 
-            Connections {
-                target: factRadioGroup
-                onCheckedButtonChanged: labelTextField.text = factRadioGroup.checkedButton.radioFact.shortDescription
-            }
+    Component {
+        id: iconDialog
 
-            ButtonGroup { id: fontRadioGroup }
+        QGCPopupDialog {
+            GridLayout {
+                columns:        10
+                columnSpacing:  0
+                rowSpacing:     0
 
-            QGCFlickable {
-                anchors.fill:       parent
-                contentHeight:      column.height
-                flickableDirection: Flickable.VerticalFlick
-                clip:               true
+                Repeater {
+                    model: _valueDialogInstrumentValue.iconNames
 
-                ColumnLayout {
-                    id:             column
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        _margins
+                    Rectangle {
+                        height: ScreenTools.minTouchPixels
+                        width:  height
+                        color:  currentSelection ? qgcPal.text  : qgcPal.window
 
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        text:               qsTr("Blank Entry")
-                        onClicked:          { _valuePickerInstrumentValue.clearFact(); hideDialog() }
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth:   true
-                        spacing:            ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel { text: qsTr("Label") }
-                        QGCTextField {
-                            id:                 labelTextField
-                            Layout.fillWidth:   true
-                            text:               _valuePickerInstrumentValue.label
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel { text: qsTr("Font Size") }
-                        QGCComboBox {
-                            id:             fontSizeCombo
-                            model:          _valuePickerInstrumentValue.fontSizeNames
-                            currentIndex:   _valuePickerInstrumentValue.fontSize
-                            sizeToContents: true
-                            onActivated:    _valuePickerInstrumentValue.fontSize = index
-                        }
-                        QGCCheckBox {
-                            text:       qsTr("Show Units")
-                            checked:    _valuePickerInstrumentValue.showUnits
-                            onClicked:  _valuePickerInstrumentValue.showUnits = checked
-                        }
-                    }
-
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCLabel { text: qsTr("Icon") }
-
-                        Rectangle {
-                            height:         iconPositionCombo.height
-                            width:          noIconLabel.width + ScreenTools.defaultFontPixelWidth * 2
-                            color:          qgcPal.window
-                            border.color:   qgcPal.text
-                            visible:        !_valuePickerInstrumentValue.icon
-
-                            QGCLabel {
-                                id:                 noIconLabel
-                                anchors.centerIn:   parent
-                                text:               qsTr("No Icon")
-                            }
-                        }
+                        property bool currentSelection: _valueDialogInstrumentValue.icon == modelData
 
                         QGCColoredImage {
-                            height:             iconPositionCombo.height
+                            anchors.centerIn:   parent
+                            height:             parent.height * 0.75
                             width:              height
-                            source:             _valuePickerInstrumentValue.icon ? "/InstrumentValueIcons/" + _valuePickerInstrumentValue.icon : ""
+                            source:             "/InstrumentValueIcons/" + modelData
                             sourceSize.height:  height
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              qgcPal.text
-                            visible:            _valuePickerInstrumentValue.icon
-                        }
+                            color:              currentSelection ? qgcPal.window : qgcPal.text
 
-                        QGCComboBox {
-                            id:             iconPositionCombo
-                            model:          _valuePickerInstrumentValue.iconPositionNames
-                            currentIndex:   _valuePickerInstrumentValue.iconPosition
-                            sizeToContents: true
-                            onActivated:    _valuePickerInstrumentValue.iconPosition = index
-                        }
-                    }
-
-                    SectionHeader {
-                        id:                 iconListHeader
-                        Layout.fillWidth:   true
-                        text:               qsTr("Icons")
-                        checked:            false
-                    }
-
-                    Item { width: 1; height: 1 }
-
-                    Loader {
-                        Layout.fillWidth:   true
-                        sourceComponent:    iconListHeader.checked ? iconList : undefined
-                        visible:            iconListHeader.checked
-                    }
-
-                    Loader {
-                        Layout.fillWidth:   true
-                        sourceComponent:    factGroupList
-
-                        property var    factGroup:     _activeVehicle
-                        property string factGroupName: "Vehicle"
-                    }
-
-                    Repeater {
-                        model: _activeVehicle.factGroupNames
-
-                        Loader {
-                            Layout.fillWidth:   true
-                            sourceComponent:    factGroupList
-
-                            property var    factGroup:     _activeVehicle.getFactGroup(modelData)
-                            property string factGroupName: modelData
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: iconList
-
-        Flow {
-            Rectangle {
-                height:         ScreenTools.minTouchPixels
-                width:          noIconLabel.width + ScreenTools.defaultFontPixelWidth * 2
-                color:          isNoIcon ? qgcPal.text : qgcPal.window
-                border.color:   isNoIcon ? qgcPal.window : qgcPal.text
-
-                property bool isNoIcon: _valuePickerInstrumentValue.icon === ""
-
-                QGCLabel {
-                    id:                 noIconLabel
-                    anchors.centerIn:   parent
-                    color:              parent.isNoIcon ? qgcPal.window : qgcPal.text
-                    text:               qsTr("No Icon")
-                }
-
-                MouseArea {
-                    anchors.fill:   parent
-                    onClicked:      _valuePickerInstrumentValue.icon = ""
-                }
-            }
-
-            Repeater {
-                model: _valuePickerInstrumentValue.iconNames
-
-                Rectangle {
-                    height: ScreenTools.minTouchPixels
-                    width:  height
-                    color:  currentSelection ? qgcPal.text  : qgcPal.window
-
-                    property bool currentSelection: _valuePickerInstrumentValue.icon == modelData
-
-                    QGCColoredImage {
-                        anchors.centerIn:   parent
-                        height:             parent.height * 0.75
-                        width:              height
-                        source:             "/InstrumentValueIcons/" + modelData
-                        sourceSize.height:  height
-                        fillMode:           Image.PreserveAspectFit
-                        mipmap:             true
-                        smooth:             true
-                        color:              currentSelection ? qgcPal.window : qgcPal.text
-
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      _valuePickerInstrumentValue.icon = modelData
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    Component {
-        id: factGroupList
-
-        // You must push in the following properties from the Loader
-        // property var factGroup
-        // property string factGroupName
-
-        Column {
-            SectionHeader {
-                id:             header
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                text:           factGroupName.charAt(0).toUpperCase() + factGroupName.slice(1)
-                checked:        false
-            }
-
-            Column {
-                visible: header.checked
-
-                Repeater {
-                    model: factGroup ? factGroup.factNames : 0
-
-                    QGCRadioButton {
-                        text:               radioFact.shortDescription
-                        ButtonGroup.group:  factRadioGroup
-                        checked:            radioFactGroupName == _valuePickerInstrumentValue.factGroupName && radioFact == _valuePickerInstrumentValue.fact
-
-                        property string radioFactGroupName: factGroupName
-                        property var    radioFact:          factGroup.getFact(modelData)
-
-                        Component.onCompleted: {
-                            if (checked) {
-                                header.checked = true
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:  {
+                                    _valueDialogInstrumentValue.icon = modelData
+                                    hideDialog()
+                                }
                             }
                         }
                     }

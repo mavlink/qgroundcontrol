@@ -223,6 +223,16 @@ ApplicationWindow {
         }
     }
 
+    function showPopupDialog(component, title, buttons) {
+        var popup = popupDialogContainterComponent.createObject(mainWindow, { "title": title, "buttons": buttons, "dialogComponent": component})
+        popup.open()
+    }
+
+    Component {
+        id: popupDialogContainterComponent
+        QGCPopupDialogContainer { }
+    }
+
     property bool _forceClose: false
 
     function finishCloseProcess() {

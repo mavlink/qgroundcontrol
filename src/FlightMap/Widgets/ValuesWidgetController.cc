@@ -29,6 +29,7 @@ const char*  InstrumentValue::_fontSizeKey =            "fontSize";
 const char*  InstrumentValue::_showUnitsKey =           "showUnits";
 const char*  InstrumentValue::_iconKey =                "icon";
 const char*  InstrumentValue::_iconPositionKey =        "iconPosition";
+const char*  InstrumentValue::_vehicleFactGroupName =   "Vehicle";
 
 QStringList InstrumentValue::_iconNames;
 
@@ -234,28 +235,32 @@ void ValuesWidgetController::_loadSettings(void)
 
         QStringList largeValues = settings.value(_deprecatedLargeValuesKey).toStringList();
         QStringList smallValues = settings.value(_deprecatedSmallValuesKey).toStringList();
-        QStringList altitudeProperties = { "altitudeRelative" , "altitudeAMSL" };
+        QStringList altitudeProperties = { "AltitudeRelative" , "AltitudeAMSL" };
 
         int rowIndex = -1;
         int valueCount = 0;
         QmlObjectListModel* rowModel = nullptr;
         for (const QString& largeValue: largeValues) {
-            QStringList parts = largeValue.split(".");
+            QStringList parts =     largeValue.split(".");
+            QString factGroupName = _pascalCase(parts[0]);
+            QString factName =      _pascalCase(parts[1]);
 
             rowModel = appendRow(false /* addBlankColumn */);
             rowIndex++;
 
             InstrumentValue* colValue = appendColumn(rowIndex);
-            colValue->setFact(parts[0], parts[1], QString());
+            colValue->setFact(factGroupName, factName);
             colValue->setLabel(colValue->fact()->shortDescription());
             colValue->setShowUnits(true);
-            colValue->setFontSize(altitudeProperties.contains(parts[1]) ? InstrumentValue::LargeFontSize : InstrumentValue::DefaultFontSize);
+            colValue->setFontSize(altitudeProperties.contains(factName) ? InstrumentValue::LargeFontSize : InstrumentValue::DefaultFontSize);
         }
 
         valueCount = 0;
         rowModel = nullptr;
         for (const QString& smallValue: smallValues) {
-            QStringList parts = smallValue.split(".");
+            QStringList parts =     smallValue.split(".");
+            QString factGroupName = _pascalCase(parts[0]);
+            QString factName =      _pascalCase(parts[1]);
 
             if (!(valueCount++ & 1)) {
                 rowModel = appendRow(false /* addBlankColumn */);
@@ -263,7 +268,7 @@ void ValuesWidgetController::_loadSettings(void)
             }
 
             InstrumentValue* colValue = appendColumn(rowIndex);
-            colValue->setFact(parts[0], parts[1], QString());
+            colValue->setFact(factGroupName, factName);
             colValue->setLabel(colValue->fact()->shortDescription());
             colValue->setShowUnits(true);
             colValue->setFontSize(InstrumentValue::SmallFontSize);
@@ -332,6 +337,11 @@ void ValuesWidgetController::setValuesModelParentController(ValuesWidgetControll
     }
 }
 
+QString ValuesWidgetController::_pascalCase(const QString& text)
+{
+    return text[0].toUpper() + text.right(text.length() - 1);
+}
+
 InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlObjectListModel* rowModel)
     : QObject       (rowModel)
     , _activeVehicle(activeVehicle)
@@ -342,17 +352,27 @@ InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlO
         QDir iconDir(":/InstrumentValueIcons/");
         _iconNames = iconDir.entryList();
     }
+
+    activeVehicleChanged(_activeVehicle);
 }
 
 void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
 {
     _activeVehicle = activeVehicle;
 
+    _factGroupNames.clear();
+    _factGroupNames = _activeVehicle->factGroupNames();
+    for (QString& name: _factGroupNames) {
+        name[0] = name[0].toUpper();
+    }
+    _factGroupNames.prepend(_vehicleFactGroupName);
+    emit factGroupNamesChanged(_factGroupNames);
+
     if (_fact) {
         _fact = nullptr;
 
         FactGroup* factGroup = nullptr;
-        if (_factGroupName == QStringLiteral("Vehicle")) {
+        if (_factGroupName == _vehicleFactGroupName) {
             factGroup = _activeVehicle;
         } else {
             factGroup = _activeVehicle->getFactGroup(_factGroupName);
@@ -365,37 +385,47 @@ void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
     }
 }
 
-void InstrumentValue::setFact(QString factGroupName, QString factName, QString label)
+void InstrumentValue::setFact(const QString& factGroupName, const QString& factName)
 {
     if (_fact) {
         _fact = nullptr;
     }
 
     FactGroup* factGroup = nullptr;
-    if (factGroupName == QStringLiteral("Vehicle")) {
+    if (factGroupName == _vehicleFactGroupName) {
         factGroup = _activeVehicle;
     } else {
         factGroup = _activeVehicle->getFactGroup(factGroupName);
     }
 
+    _factValueNames.clear();
+    _factValueNames = factGroup->factNames();
+    for (QString& name: _factValueNames) {
+        name[0] = name[0].toUpper();
+    }
+
+    QString nonEmptyFactName;
     if (factGroup) {
-        _fact = factGroup->getFact(factName);
+        if (factName.isEmpty()) {
+            nonEmptyFactName = _factValueNames[0];
+        } else {
+            nonEmptyFactName = factName;
+        }
+        _fact = factGroup->getFact(nonEmptyFactName);
     }
 
     if (_fact) {
-        _factName = factName;
         _factGroupName = factGroupName;
-        _label = label;
+        _factName =      nonEmptyFactName;
     } else {
         _factName.clear();
         _factGroupName.clear();
-        _label.clear();
     }
 
-    emit labelChanged(_label);
-    emit factChanged(_fact);
-    emit factNameChanged(_factName);
-    emit factGroupNameChanged(_factGroupName);
+    emit factChanged            (_fact);
+    emit factNameChanged        (_factName);
+    emit factGroupNameChanged   (_factGroupName);
+    emit factValueNamesChanged  (_factValueNames);
 }
 
 void InstrumentValue::_setFontSize(FontSize fontSize)
@@ -423,7 +453,7 @@ void InstrumentValue::saveToSettings(QSettings& settings) const
 {
     if (_fact) {
         settings.setValue(_factGroupNameKey,    _factGroupName);
-        settings.setValue(_factNameKey,         _fact->name());
+        settings.setValue(_factNameKey,         _factName);
     } else {
         settings.setValue(_factGroupNameKey,    "");
         settings.setValue(_factNameKey,         "");
@@ -446,7 +476,7 @@ void InstrumentValue::readFromSettings(const QSettings& settings)
 
     QString factName = settings.value(_factNameKey).toString();
     if (!factName.isEmpty()) {
-        setFact(_factGroupName, factName, _label);
+        setFact(_factGroupName, factName);
     }
 
     emit factChanged            (_fact);
