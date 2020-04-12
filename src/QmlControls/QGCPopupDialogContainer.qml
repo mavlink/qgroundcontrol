@@ -156,9 +156,9 @@ Popup {
             }
 
             Item {
-                id: item
-                width:  dialogComponentLoader.width + (_contentMargin * 2)
-                height: dialogComponentLoader.height + _contentMargin
+                id:                     item
+                Layout.preferredWidth:  dialogComponentLoader.width + (_contentMargin * 2)
+                Layout.preferredHeight: dialogComponentLoader.height + _contentMargin
 
                 Loader {
                     id:                 dialogComponentLoader
