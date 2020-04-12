@@ -65,11 +65,21 @@ InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlO
     }
 
     activeVehicleChanged(_activeVehicle);
-    connect(this, &InstrumentValue::rangeTypeChanged, this, &InstrumentValue::_resetRangeInfo);
+
+    connect(this, &InstrumentValue::rangeTypeChanged,       this, &InstrumentValue::_resetRangeInfo);
+    connect(this, &InstrumentValue::rangeTypeChanged,       this, &InstrumentValue::_updateRanges);
+    connect(this, &InstrumentValue::rangeValuesChanged,     this, &InstrumentValue::_updateRanges);
+    connect(this, &InstrumentValue::rangeColorsChanged,     this, &InstrumentValue::_updateRanges);
+    connect(this, &InstrumentValue::rangeOpacitiesChanged,  this, &InstrumentValue::_updateRanges);
+    connect(this, &InstrumentValue::rangeIconsChanged,      this, &InstrumentValue::_updateRanges);
 }
 
 void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
 {
+    if (_fact) {
+        disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValue::_updateColor);
+    }
+
     _activeVehicle = activeVehicle;
 
     _factGroupNames.clear();
@@ -94,12 +104,17 @@ void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
             _fact = factGroup->getFact(_factName);
         }
         emit factChanged(_fact);
+
+        connect(_fact, &Fact::rawValueChanged, this, &InstrumentValue::_updateRanges);
     }
+
+    _updateRanges();
 }
 
 void InstrumentValue::setFact(const QString& factGroupName, const QString& factName)
 {
     if (_fact) {
+        disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValue::_updateRanges);
         _fact = nullptr;
     }
 
@@ -129,6 +144,8 @@ void InstrumentValue::setFact(const QString& factGroupName, const QString& factN
     if (_fact) {
         _factGroupName = factGroupName;
         _factName =      nonEmptyFactName;
+
+        connect(_fact, &Fact::rawValueChanged, this, &InstrumentValue::_updateRanges);
     } else {
         _factName.clear();
         _factGroupName.clear();
@@ -138,6 +155,8 @@ void InstrumentValue::setFact(const QString& factGroupName, const QString& factN
     emit factNameChanged        (_factName);
     emit factGroupNameChanged   (_factGroupName);
     emit factValueNamesChanged  (_factValueNames);
+
+    _updateRanges();
 }
 
 void InstrumentValue::_setFontSize(FontSize fontSize)
@@ -411,4 +430,81 @@ void InstrumentValue::removeRangeValue(int index)
     emit rangeColorsChanged     (_rangeColors);
     emit rangeOpacitiesChanged  (_rangeOpacities);
     emit rangeIconsChanged      (_rangeIcons);
+}
+
+void InstrumentValue::_updateRanges(void)
+{
+    _updateColor();
+    _updateIcon();
+    _updateOpacity();
+}
+
+void InstrumentValue::_updateColor(void)
+{
+    QColor newColor;
+
+    int rangeIndex = -1;
+
+    if (_rangeType == ColorRange && _fact) {
+        rangeIndex =_currentRangeIndex(_fact->rawValue().toDouble());
+    }
+    if (rangeIndex != -1) {
+        newColor = _rangeColors[rangeIndex].value<QColor>();
+    }
+
+    if (newColor != _currentColor) {
+        _currentColor = newColor;
+        emit currentColorChanged(_currentColor);
+    }
+}
+
+void InstrumentValue::_updateOpacity(void)
+{
+    double newOpacity = 1.0;
+
+    int rangeIndex = -1;
+
+    if (_rangeType == OpacityRange && _fact) {
+        rangeIndex =_currentRangeIndex(_fact->rawValue().toDouble());
+    }
+    if (rangeIndex != -1) {
+        newOpacity = _rangeOpacities[rangeIndex].toDouble();
+    }
+
+    if (!qFuzzyCompare(newOpacity, _currentOpacity)) {
+        _currentOpacity = newOpacity;
+        emit currentOpacityChanged(newOpacity);
+    }
+}
+
+void InstrumentValue::_updateIcon(void)
+{
+    QString newIcon;
+
+    int rangeIndex = -1;
+
+    if (_rangeType == IconSelectRange && _fact) {
+        rangeIndex =_currentRangeIndex(_fact->rawValue().toDouble());
+    }
+    if (rangeIndex != -1) {
+        newIcon = _rangeIcons[rangeIndex].toString();
+    }
+
+    if (newIcon != _currentIcon) {
+        _currentIcon = newIcon;
+        emit currentIconChanged(newIcon);
+    }
+}
+
+int InstrumentValue::_currentRangeIndex(const QVariant& value)
+{
+    if (qIsNaN(value.toDouble())) {
+        return 0;
+    }
+    for (int i=0; i<_rangeValues.count(); i++) {
+        if (value.toDouble() <= _rangeValues[i].toDouble()) {
+            return i;
+        }
+    }
+    return _rangeValues.count();
 }
