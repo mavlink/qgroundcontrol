@@ -166,15 +166,37 @@ Column {
                             id:                         valueIcon
                             height:                     _rgFontSizeTightHeights[object.fontSize]
                             width:                      height
-                            source:                     object.icon ? "/InstrumentValueIcons/" + object.icon : ""
+                            source:                     icon
                             sourceSize.height:          height
                             fillMode:                   Image.PreserveAspectFit
                             mipmap:                     true
                             smooth:                     true
-                            color:                      qgcPal.text
+                            color:                      object.isValidColor(object.currentColor) ? object.currentColor : qgcPal.text
+                            opacity:                    object.currentOpacity
                             visible:                    object.icon
                             onWidthChanged:             columnItem.recalcPositions()
                             onHeightChanged:            columnItem.recalcPositions()
+
+                            property string icon
+                            readonly property string iconPrefix: "/InstrumentValueIcons/"
+
+                            function updateIcon() {
+                                if (object.rangeType == InstrumentValue.IconSelectRange) {
+                                    icon = iconPrefix + object.currentIcon
+                                } else if (object.icon) {
+                                    icon = iconPrefix + object.icon
+                                } else {
+                                    icon = ""
+                                }
+                            }
+
+                            Connections {
+                                target:                 object
+                                onRangeTypeChanged:     valueIcon.updateIcon()
+                                onCurrentIconChanged:   valueIcon.updateIcon()
+                                onIconChanged:          valueIcon.updateIcon()
+                            }
+                            Component.onCompleted:      updateIcon();
                         }
 
                         QGCLabel {

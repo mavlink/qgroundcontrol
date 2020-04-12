@@ -63,6 +63,9 @@ public:
     Q_PROPERTY(QVariantList rangeColors         READ    rangeColors         WRITE setRangeColors    NOTIFY rangeColorsChanged)
     Q_PROPERTY(QVariantList rangeIcons          READ    rangeIcons          WRITE setRangeIcons     NOTIFY rangeIconsChanged)
     Q_PROPERTY(QVariantList rangeOpacities      READ    rangeOpacities      WRITE setRangeOpacities NOTIFY rangeOpacitiesChanged)
+    Q_PROPERTY(QColor       currentColor        MEMBER _currentColor                                NOTIFY currentColorChanged)
+    Q_PROPERTY(double       currentOpacity      MEMBER _currentOpacity                              NOTIFY currentOpacityChanged)
+    Q_PROPERTY(QString      currentIcon         MEMBER _currentIcon                                 NOTIFY currentIconChanged)
 
     Q_INVOKABLE void    setFact         (const QString& factGroupName, const QString& factName);
     Q_INVOKABLE void    clearFact       (void);
@@ -112,12 +115,20 @@ signals:
     void rangeColorsChanged     (const QVariantList& rangeColors);
     void rangeIconsChanged      (const QVariantList& rangeIcons);
     void rangeOpacitiesChanged  (const QVariantList& rangeOpacities);
+    void currentColorChanged    (const QColor& currentColor);
+    void currentOpacityChanged  (double currentOpacity);
+    void currentIconChanged     (const QString& currentIcon);
 
 private slots:
     void _resetRangeInfo        (void);
+    void _updateRanges          (void);
 
 private:
     void _setFontSize           (FontSize fontSize);
+    int  _currentRangeIndex     (const QVariant& value);
+    void _updateColor           (void);
+    void _updateIcon            (void);
+    void _updateOpacity         (void);
 
     Vehicle*            _activeVehicle =    nullptr;
     QmlObjectListModel* _rowModel =         nullptr;
@@ -131,6 +142,9 @@ private:
     IconPosition        _iconPosition =     IconLeft;
     QStringList         _factGroupNames;
     QStringList         _factValueNames;
+    QColor              _currentColor;
+    double              _currentOpacity =   1.0;
+    QString             _currentIcon;
 
     // Ranges allow you to specifiy semantics to apply when a value is within a certain range.
     // The limits for each section of the range are specified in _rangeValues. With the first
