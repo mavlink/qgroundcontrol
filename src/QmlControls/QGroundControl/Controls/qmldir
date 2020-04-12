@@ -64,6 +64,8 @@ QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCOptionsComboBox      1.0 QGCOptionsComboBox.qml
 QGCPipable              1.0 QGCPipable.qml
+QGCPopupDialog          1.0 QGCPopupDialog.qml
+QGCPopupDialogContainer 1.0 QGCPopupDialogContainer.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
 QGCSlider               1.0 QGCSlider.qml
 QGCSwitch               1.0 QGCSwitch.qml

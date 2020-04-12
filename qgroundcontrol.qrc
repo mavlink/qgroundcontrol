@@ -142,6 +142,8 @@
         <file alias="QGroundControl/Controls/QGCMenuSeparator.qml">src/QmlControls/QGCMenuSeparator.qml</file>
         <file alias="QGroundControl/Controls/QGCMouseArea.qml">src/QmlControls/QGCMouseArea.qml</file>
         <file alias="QGroundControl/Controls/QGCMovableItem.qml">src/QmlControls/QGCMovableItem.qml</file>
+        <file alias="QGroundControl/Controls/QGCPopupDialog.qml">src/QmlControls/QGCPopupDialog.qml</file>
+        <file alias="QGroundControl/Controls/QGCPopupDialogContainer.qml">src/QmlControls/QGCPopupDialogContainer.qml</file>
         <file alias="QGroundControl/Controls/QGCPipable.qml">src/QmlControls/QGCPipable.qml</file>
         <file alias="QGroundControl/Controls/QGCRadioButton.qml">src/QmlControls/QGCRadioButton.qml</file>
         <file alias="QGroundControl/Controls/QGCSlider.qml">src/QmlControls/QGCSlider.qml</file>

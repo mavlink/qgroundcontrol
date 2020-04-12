@@ -38,7 +38,10 @@ public:
 
     InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlObjectListModel* rowModel);
 
+    Q_PROPERTY(QStringList  factGroupNames      MEMBER  _factGroupNames                             NOTIFY factGroupNamesChanged)
+    Q_PROPERTY(QStringList  factValueNames      MEMBER  _factValueNames                             NOTIFY factValueNamesChanged)
     Q_PROPERTY(QString      factGroupName       MEMBER  _factGroupName                              NOTIFY factGroupNameChanged)
+    Q_PROPERTY(QString      factName            MEMBER  _factName                                   NOTIFY factNameChanged)
     Q_PROPERTY(Fact*        fact                READ    fact                                        NOTIFY factChanged)
     Q_PROPERTY(QString      label               READ    label               WRITE setLabel          NOTIFY labelChanged)
     Q_PROPERTY(QString      icon                READ    icon                WRITE setIcon           NOTIFY iconChanged)             ///< If !isEmpty icon will be show instead of label
@@ -49,8 +52,8 @@ public:
     Q_PROPERTY(QStringList  fontSizeNames       MEMBER _fontSizeNames                               CONSTANT)
     Q_PROPERTY(bool         showUnits           READ    showUnits           WRITE setShowUnits      NOTIFY showUnitsChanged)
 
-    Q_INVOKABLE void setFact(QString factGroupName, QString factName, QString label);
-    Q_INVOKABLE void clearFact(void);
+    Q_INVOKABLE void    setFact(const QString& factGroupName, const QString& factName);
+    Q_INVOKABLE void    clearFact(void);
 
     Fact*           fact                    (void) { return _fact; }
     FontSize        fontSize                (void) const { return _fontSize; }
@@ -76,6 +79,8 @@ signals:
     void showUnitsChanged       (bool showUnits);
     void iconChanged            (const QString& icon);
     void iconPositionChanged    (IconPosition iconPosition);
+    void factGroupNamesChanged  (const QStringList& factGroupNames);
+    void factValueNamesChanged  (const QStringList& factValueNames);
 
 private:
     void _setFontSize           (FontSize fontSize);
@@ -90,6 +95,8 @@ private:
     FontSize            _fontSize =         DefaultFontSize;
     QString             _icon;
     IconPosition        _iconPosition =     IconLeft;
+    QStringList         _factGroupNames;
+    QStringList         _factValueNames;
 
     static const QStringList _iconPositionNames;
     static       QStringList _iconNames;
@@ -102,6 +109,7 @@ private:
     static const char*  _showUnitsKey;
     static const char*  _iconKey;
     static const char*  _iconPositionKey;
+    static const char*  _vehicleFactGroupName;
 };
 
 Q_DECLARE_METATYPE(InstrumentValue::FontSize)
@@ -146,7 +154,7 @@ private:
     InstrumentValue*    _createNewInstrumentValueWorker     (Vehicle* activeVehicle, InstrumentValue::FontSize fontSize, QmlObjectListModel* rowModel);
     void                _loadSettings                       (void);
     void                _connectSignalsToController         (InstrumentValue* value, ValuesWidgetController* controller);
-
+    QString             _pascalCase                         (const QString& text);
 
     MultiVehicleManager*    _multiVehicleMgr =      nullptr;
     QmlObjectListModel*     _valuesModel =          nullptr;
