@@ -115,14 +115,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     _videoReceiver[0] = toolbox->corePlugin()->createVideoReceiver(this);
     _videoReceiver[1] = toolbox->corePlugin()->createVideoReceiver(this);
 
-    connect(_videoReceiver[0], &VideoReceiver::timeout, this, [this](){
-        _stopReceiver(0);
-    });
-
     connect(_videoReceiver[0], &VideoReceiver::streamingChanged, this, [this](bool active){
         _streaming = active;
         emit streamingChanged();
-        _restartVideo(0);
     });
 
     connect(_videoReceiver[0], &VideoReceiver::onStartComplete, this, [this](VideoReceiver::STATUS status) {
@@ -178,14 +173,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     // FIXME: AV: I believe _thermalVideoReceiver should be handled just like _videoReceiver in terms of event
     // and I expect that it will be changed during multiple video stream activity
     if (_videoReceiver[1] != nullptr) {
-        connect(_videoReceiver[1], &VideoReceiver::timeout, this, [this](){
-            _stopReceiver(1);
-        });
-
-        connect(_videoReceiver[1], &VideoReceiver::streamingChanged, this, [this](bool active){
-            _restartVideo(1);
-        });
-
         connect(_videoReceiver[1], &VideoReceiver::onStartComplete, this, [this](VideoReceiver::STATUS status) {
             if (status == VideoReceiver::STATUS_OK) {
                 _videoStarted[1] = true;
