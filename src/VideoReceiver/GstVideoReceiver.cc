@@ -644,6 +644,7 @@ GstVideoReceiver::_watchdog(void)
             _dispatchSignal([this](){
                 emit timeout();
             });
+            stop();
         }
 
         if (_decoding && !_removingDecoder) {
@@ -656,6 +657,7 @@ GstVideoReceiver::_watchdog(void)
                 _dispatchSignal([this](){
                     emit timeout();
                 });
+                stop();
             }
         }
     });

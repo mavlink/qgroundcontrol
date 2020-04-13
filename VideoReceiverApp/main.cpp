@@ -302,25 +302,8 @@ VideoReceiverApp::exec()
 
     startStreaming();
 
-    QObject::connect(_receiver, &VideoReceiver::timeout, [this](){
+    QObject::connect(_receiver, &VideoReceiver::timeout, [](){
         qCDebug(AppLog) << "Streaming timeout";
-
-        _dispatch([this](){
-            if (_streaming) {
-                _receiver->stop();
-            } else {
-                if (--_connect > 0) {
-                    qCDebug(AppLog) << "Restarting streaming";
-                    _dispatch([this](){
-                        startStreaming();
-                    });
-                } else {
-                    qCDebug(AppLog) << "Closing...";
-                    delete _receiver;
-                    _app.exit();
-                }
-            }
-        });
      });
 
     QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](bool active){
@@ -329,16 +312,6 @@ VideoReceiverApp::exec()
             qCDebug(AppLog) << "Streaming started";
         } else {
             qCDebug(AppLog) << "Streaming stopped";
-            _dispatch([this](){
-                if (--_connect > 0) {
-                    qCDebug(AppLog) << "Restarting streaming";
-                    startStreaming();
-                } else {
-                    qCDebug(AppLog) << "Closing...";
-                    delete _receiver;
-                    _app.exit();
-                }
-            });
         }
      });
 
@@ -373,6 +346,44 @@ VideoReceiverApp::exec()
             }
         }
      });
+
+    QObject::connect(_receiver, &VideoReceiver::onStartComplete, [this](VideoReceiver::STATUS status){
+        if (status != VideoReceiver::STATUS_OK) {
+            qCDebug(AppLog) << "Video receiver start failed";
+            _dispatch([this](){
+                if (--_connect > 0) {
+                    qCDebug(AppLog) << "Restarting ...";
+                    _dispatch([this](){
+                        startStreaming();
+                    });
+                } else {
+                    qCDebug(AppLog) << "Closing...";
+                    delete _receiver;
+                    _app.exit();
+                }
+            });
+        } else {
+            qCDebug(AppLog) << "Video receiver started";
+        }
+     });
+
+    QObject::connect(_receiver, &VideoReceiver::onStopComplete, [this](VideoReceiver::STATUS ){
+        qCDebug(AppLog) << "Video receiver stopped";
+
+        _dispatch([this](){
+            if (--_connect > 0) {
+                qCDebug(AppLog) << "Restarting ...";
+                _dispatch([this](){
+                    startStreaming();
+                });
+            } else {
+                qCDebug(AppLog) << "Closing...";
+                delete _receiver;
+                _app.exit();
+            }
+        });
+     });
+
 
     return _app.exec();
 }
