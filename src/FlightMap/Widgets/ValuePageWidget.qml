@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 import QtQuick          2.12
-import QtQuick.Dialogs  1.2
+import QtQuick.Dialogs  1.3
 import QtQuick.Layouts  1.2
 import QtQuick.Controls 2.5
 import QtQml            2.12
@@ -166,15 +166,37 @@ Column {
                             id:                         valueIcon
                             height:                     _rgFontSizeTightHeights[object.fontSize]
                             width:                      height
-                            source:                     object.icon ? "/InstrumentValueIcons/" + object.icon : ""
+                            source:                     icon
                             sourceSize.height:          height
                             fillMode:                   Image.PreserveAspectFit
                             mipmap:                     true
                             smooth:                     true
-                            color:                      qgcPal.text
+                            color:                      object.isValidColor(object.currentColor) ? object.currentColor : qgcPal.text
+                            opacity:                    object.currentOpacity
                             visible:                    object.icon
                             onWidthChanged:             columnItem.recalcPositions()
                             onHeightChanged:            columnItem.recalcPositions()
+
+                            property string icon
+                            readonly property string iconPrefix: "/InstrumentValueIcons/"
+
+                            function updateIcon() {
+                                if (object.rangeType == InstrumentValue.IconSelectRange) {
+                                    icon = iconPrefix + object.currentIcon
+                                } else if (object.icon) {
+                                    icon = iconPrefix + object.icon
+                                } else {
+                                    icon = ""
+                                }
+                            }
+
+                            Connections {
+                                target:                 object
+                                onRangeTypeChanged:     valueIcon.updateIcon()
+                                onCurrentIconChanged:   valueIcon.updateIcon()
+                                onIconChanged:          valueIcon.updateIcon()
+                            }
+                            Component.onCompleted:      updateIcon();
                         }
 
                         QGCLabel {
@@ -325,7 +347,9 @@ Column {
                     onClicked: {
                         _valueDialogInstrumentValue.label = ""
                         _valueDialogInstrumentValue.icon = _valueDialogInstrumentValue.iconNames[0]
-                        mainWindow.showPopupDialog(iconDialog, qsTr("Select Icon"), StandardButton.Close)
+                        iconPickerDialogIcon = _valueDialogInstrumentValue.icon
+                        iconPickerDialogUpdateIconFunction = function(icon){ _valueDialogInstrumentValue.icon = icon }
+                        mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
                     }
                 }
 
@@ -343,7 +367,11 @@ Column {
 
                     MouseArea {
                         anchors.fill:   parent
-                        onClicked:      mainWindow.showPopupDialog(iconDialog, qsTr("Select Icon"), StandardButton.Close)
+                        onClicked: {
+                            iconPickerDialogIcon = _valueDialogInstrumentValue.icon
+                            iconPickerDialogUpdateIconFunction = function(icon){ _valueDialogInstrumentValue.icon = icon }
+                            mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
+                        }
                     }
                 }
 
@@ -378,7 +406,6 @@ Column {
 
                 QGCComboBox {
                     id:                 fontSizeCombo
-                    Layout.columnSpan:  2
                     model:              _valueDialogInstrumentValue.fontSizeNames
                     currentIndex:       _valueDialogInstrumentValue.fontSize
                     sizeToContents:     true
@@ -386,19 +413,65 @@ Column {
                 }
 
                 QGCCheckBox {
-                    Layout.columnSpan:  3
                     text:               qsTr("Show Units")
                     checked:            _valueDialogInstrumentValue.showUnits
                     onClicked:          _valueDialogInstrumentValue.showUnits = checked
+                }
+
+                QGCLabel { text: qsTr("Range") }
+
+                QGCComboBox {
+                    id:                 rangeTypeCombo
+                    Layout.columnSpan:  2
+                    model:              _valueDialogInstrumentValue.rangeTypeNames
+                    currentIndex:       _valueDialogInstrumentValue.rangeType
+                    sizeToContents:     true
+                    onActivated:        _valueDialogInstrumentValue.rangeType = index
+                }
+
+                Loader {
+                    id:                     rangeLoader
+                    Layout.columnSpan:      3
+                    Layout.fillWidth:       true
+                    Layout.preferredWidth:  item ? item.width : 0
+                    Layout.preferredHeight: item ? item.height : 0
+
+                    function updateSourceComponent() {
+                        switch (_valueDialogInstrumentValue.rangeType) {
+                        case InstrumentValue.NoRangeInfo:
+                            sourceComponent = undefined
+                            break
+                        case InstrumentValue.ColorRange:
+                            sourceComponent = colorRangeDialog
+                            break
+                        case InstrumentValue.OpacityRange:
+                            sourceComponent = opacityRangeDialog
+                            break
+                        case InstrumentValue.IconSelectRange:
+                            sourceComponent = iconRangeDialog
+                            break
+                        }
+                    }
+
+                    Component.onCompleted: updateSourceComponent()
+
+                    Connections {
+                        target:             _valueDialogInstrumentValue
+                        onRangeTypeChanged: rangeLoader.updateSourceComponent()
+                    }
+
                 }
             }
         }
     }
 
+    property string iconPickerDialogIcon
+    property var    iconPickerDialogUpdateIconFunction
     Component {
-        id: iconDialog
+        id: iconPickerDialog
 
         QGCPopupDialog {
+
             GridLayout {
                 columns:        10
                 columnSpacing:  0
@@ -412,7 +485,7 @@ Column {
                         width:  height
                         color:  currentSelection ? qgcPal.text  : qgcPal.window
 
-                        property bool currentSelection: _valueDialogInstrumentValue.icon == modelData
+                        property bool currentSelection: iconPickerDialogIcon == modelData
 
                         QGCColoredImage {
                             anchors.centerIn:   parent
@@ -428,12 +501,314 @@ Column {
                             MouseArea {
                                 anchors.fill:   parent
                                 onClicked:  {
-                                    _valueDialogInstrumentValue.icon = modelData
+                                    iconPickerDialogIcon = modelData
+                                    iconPickerDialogUpdateIconFunction(modelData)
                                     hideDialog()
                                 }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: colorRangeDialog
+
+        Item {
+            width:  childrenRect.width
+            height: childrenRect.height
+
+            function updateRangeValue(index, text) {
+                var newValues = _valueDialogInstrumentValue.rangeValues
+                newValues[index] = parseFloat(text)
+                _valueDialogInstrumentValue.rangeValues = newValues
+            }
+
+            function updateColorValue(index, color) {
+                var newColors = _valueDialogInstrumentValue.rangeColors
+                newColors[index] = color
+                _valueDialogInstrumentValue.rangeColors = newColors
+            }
+
+            ColorDialog {
+                id:             colorPickerDialog
+                modality:       Qt.ApplicationModal
+                currentColor:   _valueDialogInstrumentValue.rangeColors[colorIndex]
+                onAccepted:     updateColorValue(colorIndex, color)
+
+                property int colorIndex: 0
+            }
+
+            Column {
+                id:         mainColumn
+                spacing:    ScreenTools.defaultFontPixelHeight / 2
+
+                QGCLabel {
+                    width:      rowLayout.width
+                    text:       qsTr("Specify the color you want to apply based on value ranges. The color will be applied to the icon if available, otherwise to the value itself.")
+                    wrapMode:   Text.WordWrap
+                }
+
+                Row {
+                    id:         rowLayout
+                    spacing:    _margins
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues.length
+
+                            QGCButton {
+                                width:      ScreenTools.implicitTextFieldHeight
+                                height:     width
+                                text:       qsTr("-")
+                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                            }
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues.length
+
+                            QGCTextField {
+                                text:               _valueDialogInstrumentValue.rangeValues[index]
+                                onEditingFinished:  updateRangeValue(index, text)
+                            }
+                        }
+                    }
+
+                    Column {
+                        spacing: _margins
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeColors
+
+                            QGCCheckBox {
+                                height:     ScreenTools.implicitTextFieldHeight
+                                checked:    _valueDialogInstrumentValue.isValidColor(_valueDialogInstrumentValue.rangeColors[index])
+                                onClicked:  updateColorValue(index, checked ? "green" : _valueDialogInstrumentValue.invalidColor())
+                            }
+                        }
+                    }
+
+                    Column {
+                        spacing: _margins
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeColors
+
+                            Rectangle {
+                                width:          ScreenTools.implicitTextFieldHeight
+                                height:         width
+                                border.color:   qgcPal.text
+                                color:          _valueDialogInstrumentValue.isValidColor(modelData) ? modelData : qgcPal.text
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        colorPickerDialog.colorIndex = index
+                                        colorPickerDialog.open()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Add Row")
+                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
+                }
+            }
+        }
+    }
+
+    Component {
+        id: iconRangeDialog
+
+        Item {
+            width:  childrenRect.width
+            height: childrenRect.height
+
+            function updateRangeValue(index, text) {
+                var newValues = _valueDialogInstrumentValue.rangeValues
+                newValues[index] = parseFloat(text)
+                _valueDialogInstrumentValue.rangeValues = newValues
+            }
+
+            function updateIconValue(index, icon) {
+                var newIcons = _valueDialogInstrumentValue.rangeIcons
+                newIcons[index] = icon
+                _valueDialogInstrumentValue.rangeIcons = newIcons
+            }
+
+            Column {
+                id:         mainColumn
+                spacing:    ScreenTools.defaultFontPixelHeight / 2
+
+                QGCLabel {
+                    width:      rowLayout.width
+                    text:       qsTr("Specify the icon you want to display based on value ranges.")
+                    wrapMode:   Text.WordWrap
+                }
+
+                Row {
+                    id:         rowLayout
+                    spacing:    _margins
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues.length
+
+                            QGCButton {
+                                width:      ScreenTools.implicitTextFieldHeight
+                                height:     width
+                                text:       qsTr("-")
+                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                            }
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues.length
+
+                            QGCTextField {
+                                text:               _valueDialogInstrumentValue.rangeValues[index]
+                                onEditingFinished:  updateRangeValue(index, text)
+                            }
+                        }
+                    }
+
+                    Column {
+                        spacing: _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeIcons
+
+                            QGCColoredImage {
+                                height:             ScreenTools.implicitTextFieldHeight
+                                width:              height
+                                source:             "/InstrumentValueIcons/" + modelData
+                                sourceSize.height:  height
+                                fillMode:           Image.PreserveAspectFit
+                                mipmap:             true
+                                smooth:             true
+                                color:              qgcPal.text
+
+                                MouseArea {
+                                    anchors.fill:   parent
+                                    onClicked: {
+                                        iconPickerDialogIcon = modelData
+                                        iconPickerDialogUpdateIconFunction = function(icon){ updateIconValue(index, icon) }
+                                        mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Add Row")
+                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
+                }
+            }
+        }
+    }
+
+    Component {
+        id: opacityRangeDialog
+
+        Item {
+            width:  childrenRect.width
+            height: childrenRect.height
+
+            function updateRangeValue(index, text) {
+                var newValues = _valueDialogInstrumentValue.rangeValues
+                newValues[index] = parseFloat(text)
+                _valueDialogInstrumentValue.rangeValues = newValues
+            }
+
+            function updateOpacityValue(index, opacity) {
+                var newOpacities = _valueDialogInstrumentValue.rangeOpacities
+                newOpacities[index] = opacity
+                _valueDialogInstrumentValue.rangeOpacities = newOpacities
+            }
+
+            Column {
+                id:         mainColumn
+                spacing:    ScreenTools.defaultFontPixelHeight / 2
+
+                QGCLabel {
+                    width:      rowLayout.width
+                    text:       qsTr("Specify the icon opacity you want based on value ranges.")
+                    wrapMode:   Text.WordWrap
+                }
+
+                Row {
+                    id:         rowLayout
+                    spacing:    _margins
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues.length
+
+                            QGCButton {
+                                width:      ScreenTools.implicitTextFieldHeight
+                                height:     width
+                                text:       qsTr("-")
+                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                            }
+                        }
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing:                _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeValues
+
+                            QGCTextField {
+                                text:               modelData
+                                onEditingFinished:  updateRangeValue(index, text)
+                            }
+                        }
+                    }
+
+                    Column {
+                        spacing: _margins
+
+                        Repeater {
+                            model: _valueDialogInstrumentValue.rangeOpacities
+
+                            QGCTextField {
+                                text:               modelData
+                                onEditingFinished:  updateOpacityValue(index, text)
+                            }
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:       qsTr("Add Row")
+                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
                 }
             }
         }

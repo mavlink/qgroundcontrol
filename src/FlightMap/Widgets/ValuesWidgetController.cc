@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "ValuesWidgetController.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
@@ -21,31 +20,6 @@ const char* ValuesWidgetController::_columnsKey =       "columns";
 const char* ValuesWidgetController::_deprecatedGroupKey =         "ValuesWidget";
 const char* ValuesWidgetController::_deprecatedLargeValuesKey =   "large";
 const char* ValuesWidgetController::_deprecatedSmallValuesKey =   "small";
-
-const char*  InstrumentValue::_factGroupNameKey =       "groupName";
-const char*  InstrumentValue::_factNameKey =             "factName";
-const char*  InstrumentValue::_labelKey =               "label";
-const char*  InstrumentValue::_fontSizeKey =            "fontSize";
-const char*  InstrumentValue::_showUnitsKey =           "showUnits";
-const char*  InstrumentValue::_iconKey =                "icon";
-const char*  InstrumentValue::_iconPositionKey =        "iconPosition";
-const char*  InstrumentValue::_vehicleFactGroupName =   "Vehicle";
-
-QStringList InstrumentValue::_iconNames;
-
-// Important: The indices of these strings must match the InstrumentValue::IconPosition enumconst QStringList InstrumentValue::_iconPositionNames = {
-const QStringList InstrumentValue::_iconPositionNames = {
-    QT_TRANSLATE_NOOP("InstrumentValue", "Above"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Left"),
-};
-
-// Important: The indices of these strings must match the InstrumentValue::FontSize enum
-const QStringList InstrumentValue::_fontSizeNames = {
-    QT_TRANSLATE_NOOP("InstrumentValue", "Default"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Small"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Medium"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Large"),
-};
 
 ValuesWidgetController::ValuesWidgetController(bool forDefaultSettingsCreation)
     : _valuesModel(new QmlObjectListModel(this))
@@ -64,13 +38,18 @@ ValuesWidgetController::ValuesWidgetController(bool forDefaultSettingsCreation)
 
 void ValuesWidgetController::_connectSignalsToController(InstrumentValue* value, ValuesWidgetController* controller)
 {
-    connect(value, &InstrumentValue::factNameChanged,        controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::factGroupNameChanged,   controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::labelChanged,           controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::fontSizeChanged,        controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::showUnitsChanged,       controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::iconChanged,            controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::iconPositionChanged,    controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::factNameChanged,       controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::factGroupNameChanged,  controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::labelChanged,          controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::fontSizeChanged,       controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::showUnitsChanged,      controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::iconChanged,           controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::iconPositionChanged,   controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::rangeTypeChanged,      controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::rangeValuesChanged,    controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::rangeColorsChanged,    controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::rangeOpacitiesChanged, controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::rangeIconsChanged,     controller, &ValuesWidgetController::_saveSettings);
 }
 
 InstrumentValue* ValuesWidgetController::_createNewInstrumentValueWorker(Vehicle* activeVehicle, InstrumentValue::FontSize fontSize, QmlObjectListModel* rowModel)
@@ -340,197 +319,4 @@ void ValuesWidgetController::setValuesModelParentController(ValuesWidgetControll
 QString ValuesWidgetController::_pascalCase(const QString& text)
 {
     return text[0].toUpper() + text.right(text.length() - 1);
-}
-
-InstrumentValue::InstrumentValue(Vehicle* activeVehicle, FontSize fontSize, QmlObjectListModel* rowModel)
-    : QObject       (rowModel)
-    , _activeVehicle(activeVehicle)
-    , _rowModel     (rowModel)
-    , _fontSize     (fontSize)
-{
-    if (_iconNames.isEmpty()) {
-        QDir iconDir(":/InstrumentValueIcons/");
-        _iconNames = iconDir.entryList();
-    }
-
-    activeVehicleChanged(_activeVehicle);
-}
-
-void InstrumentValue::activeVehicleChanged(Vehicle* activeVehicle)
-{
-    _activeVehicle = activeVehicle;
-
-    _factGroupNames.clear();
-    _factGroupNames = _activeVehicle->factGroupNames();
-    for (QString& name: _factGroupNames) {
-        name[0] = name[0].toUpper();
-    }
-    _factGroupNames.prepend(_vehicleFactGroupName);
-    emit factGroupNamesChanged(_factGroupNames);
-
-    if (_fact) {
-        _fact = nullptr;
-
-        FactGroup* factGroup = nullptr;
-        if (_factGroupName == _vehicleFactGroupName) {
-            factGroup = _activeVehicle;
-        } else {
-            factGroup = _activeVehicle->getFactGroup(_factGroupName);
-        }
-
-        if (factGroup) {
-            _fact = factGroup->getFact(_factName);
-        }
-        emit factChanged(_fact);
-    }
-}
-
-void InstrumentValue::setFact(const QString& factGroupName, const QString& factName)
-{
-    if (_fact) {
-        _fact = nullptr;
-    }
-
-    FactGroup* factGroup = nullptr;
-    if (factGroupName == _vehicleFactGroupName) {
-        factGroup = _activeVehicle;
-    } else {
-        factGroup = _activeVehicle->getFactGroup(factGroupName);
-    }
-
-    _factValueNames.clear();
-    _factValueNames = factGroup->factNames();
-    for (QString& name: _factValueNames) {
-        name[0] = name[0].toUpper();
-    }
-
-    QString nonEmptyFactName;
-    if (factGroup) {
-        if (factName.isEmpty()) {
-            nonEmptyFactName = _factValueNames[0];
-        } else {
-            nonEmptyFactName = factName;
-        }
-        _fact = factGroup->getFact(nonEmptyFactName);
-    }
-
-    if (_fact) {
-        _factGroupName = factGroupName;
-        _factName =      nonEmptyFactName;
-    } else {
-        _factName.clear();
-        _factGroupName.clear();
-    }
-
-    emit factChanged            (_fact);
-    emit factNameChanged        (_factName);
-    emit factGroupNameChanged   (_factGroupName);
-    emit factValueNamesChanged  (_factValueNames);
-}
-
-void InstrumentValue::_setFontSize(FontSize fontSize)
-{
-    if (fontSize != _fontSize) {
-        _fontSize = fontSize;
-        emit fontSizeChanged(fontSize);
-    }
-}
-
-void InstrumentValue::setFontSize(FontSize fontSize)
-{
-    _setFontSize(fontSize);
-
-    // All other items in row must change to match
-    for (int i=0; i<_rowModel->count(); i++) {
-        InstrumentValue* instrumentValue = _rowModel->value<InstrumentValue*>(i);
-        if (instrumentValue != this) {
-            instrumentValue->_setFontSize(fontSize);
-        }
-    }
-}
-
-void InstrumentValue::saveToSettings(QSettings& settings) const
-{
-    if (_fact) {
-        settings.setValue(_factGroupNameKey,    _factGroupName);
-        settings.setValue(_factNameKey,         _factName);
-    } else {
-        settings.setValue(_factGroupNameKey,    "");
-        settings.setValue(_factNameKey,         "");
-    }
-    settings.setValue(_labelKey,        _label);
-    settings.setValue(_fontSizeKey,     _fontSize);
-    settings.setValue(_showUnitsKey,    _showUnits);
-    settings.setValue(_iconKey,         _icon);
-    settings.setValue(_iconPositionKey, _iconPosition);
-}
-
-void InstrumentValue::readFromSettings(const QSettings& settings)
-{
-    _factGroupName =    settings.value(_factGroupNameKey).toString();
-    _label =            settings.value(_labelKey).toString();
-    _fontSize =         settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
-    _showUnits =        settings.value(_showUnitsKey, true).toBool();
-    _icon =             settings.value(_iconKey).toString();
-    _iconPosition =     settings.value(_iconPositionKey, IconLeft).value<IconPosition>();
-
-    QString factName = settings.value(_factNameKey).toString();
-    if (!factName.isEmpty()) {
-        setFact(_factGroupName, factName);
-    }
-
-    emit factChanged            (_fact);
-    emit factGroupNameChanged   (_factGroupName);
-    emit labelChanged           (_label);
-    emit fontSizeChanged        (_fontSize);
-    emit showUnitsChanged       (_showUnits);
-    emit iconChanged            (_icon);
-    emit iconPositionChanged    (_iconPosition);
-}
-
-void InstrumentValue::setLabel(const QString& label)
-{
-    if (label != _label) {
-        _label = label;
-        emit labelChanged(label);
-    }
-}
-
-void InstrumentValue::setShowUnits(bool showUnits)
-{
-    if (showUnits != _showUnits) {
-        _showUnits = showUnits;
-        emit showUnitsChanged(showUnits);
-    }
-}
-
-void InstrumentValue::clearFact(void)
-{
-    _fact = nullptr;
-    _factGroupName.clear();
-    _label.clear();
-    _icon.clear();
-    _showUnits = true;
-
-    emit factChanged            (_fact);
-    emit factGroupNameChanged   (_factGroupName);
-    emit labelChanged           (_label);
-    emit iconChanged            (_icon);
-    emit showUnitsChanged       (_showUnits);
-}
-
-void InstrumentValue::setIcon(const QString& icon)
-{
-    if (icon != _icon) {
-        _icon = icon;
-        emit iconChanged(_icon);
-    }
-}
-
-void InstrumentValue::setIconPosition(IconPosition iconPosition)
-{
-    if (iconPosition != _iconPosition) {
-        _iconPosition = iconPosition;
-        emit iconPositionChanged(iconPosition);
-    }
 }
