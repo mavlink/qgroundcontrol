@@ -159,6 +159,7 @@
         <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">src/PlanView/RallyPointItemEditor.qml</file>
         <file alias="QGroundControl/Controls/RallyPointMapVisuals.qml">src/PlanView/RallyPointMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/RCChannelMonitor.qml">src/QmlControls/RCChannelMonitor.qml</file>
+        <file alias="QGroundControl/Controls/RCToParamDialog.qml">src/QmlControls/RCToParamDialog.qml</file>
         <file alias="QGroundControl/Controls/RoundButton.qml">src/QmlControls/RoundButton.qml</file>
         <file alias="QGroundControl/Controls/SectionHeader.qml">src/QmlControls/SectionHeader.qml</file>
         <file alias="QGroundControl/Controls/SetupPage.qml">src/AutoPilotPlugins/Common/SetupPage.qml</file>
@@ -278,6 +279,7 @@
         <file alias="PlanView.SettingsGroup.json">src/Settings/PlanView.SettingsGroup.json</file>
         <file alias="QGCMapCircle.Facts.json">src/MissionManager/QGCMapCircle.Facts.json</file>
         <file alias="RallyPoint.FactMetaData.json">src/MissionManager/RallyPoint.FactMetaData.json</file>
+        <file alias="RCToParamDialog.FactMetaData.json">src/QmlControls/RCToParamDialog.FactMetaData.json</file>
         <file alias="RTK.SettingsGroup.json">src/Settings/RTK.SettingsGroup.json</file>
         <file alias="SpeedSection.FactMetaData.json">src/MissionManager/SpeedSection.FactMetaData.json</file>
         <file alias="StructureScan.SettingsGroup.json">src/MissionManager/StructureScan.SettingsGroup.json</file>

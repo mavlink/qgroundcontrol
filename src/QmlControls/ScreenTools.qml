@@ -46,6 +46,9 @@ Item {
     /// QFontMetrics::descent for default font at default point size
     property real defaultFontDescent:       0
 
+    /// The default amount of space in between controls in a dialog
+    property real defaultDialogControlSpacing: defaultFontPixelHeight / 2
+
     property real smallFontPointSize:       10
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10

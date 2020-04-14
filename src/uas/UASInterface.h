@@ -82,12 +82,6 @@ public slots:
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
 
-    /** @brief Send command to map a RC channel to a parameter */
-    virtual void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax) = 0;
-
-    /** @brief Send command to disable all bindings/maps between RC and parameters */
-    virtual void unsetRCToParameterMap() = 0;
-
 signals:
     /** @brief The robot is connected **/
     void connected();

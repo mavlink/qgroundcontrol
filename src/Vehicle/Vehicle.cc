@@ -4337,6 +4337,54 @@ void Vehicle::updateFlightDistance(double distance)
     _flightDistanceFact.setRawValue(_flightDistanceFact.rawValue().toDouble() + distance);
 }
 
+void Vehicle::sendParamMapRC(const QString& paramName, double scale, double centerValue, int tuningID, double minValue, double maxValue)
+{
+    mavlink_message_t message;
+
+    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
+    // Copy string into buffer, ensuring not to exceed the buffer size
+    for (unsigned int i = 0; i < sizeof(param_id_cstr); i++) {
+        if ((int)i < paramName.length()) {
+            param_id_cstr[i] = paramName.toLatin1()[i];
+        }
+    }
+
+    mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
+                                       static_cast<uint8_t>(_mavlink->getComponentId()),
+                                       priorityLink()->mavlinkChannel(),
+                                       &message,
+                                       _id,
+                                       MAV_COMP_ID_AUTOPILOT1,
+                                       param_id_cstr,
+                                       -1,                                                  // parameter name specified as string in previous argument
+                                       static_cast<uint8_t>(tuningID),
+                                       static_cast<float>(scale),
+                                       static_cast<float>(centerValue),
+                                       static_cast<float>(minValue),
+                                       static_cast<float>(maxValue));
+    sendMessageOnLink(priorityLink(), message);
+}
+
+void Vehicle::clearAllParamMapRC(void)
+{
+    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
+
+    for (int i = 0; i < 3; i++) {
+        mavlink_message_t message;
+        mavlink_msg_param_map_rc_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
+                                           static_cast<uint8_t>(_mavlink->getComponentId()),
+                                           priorityLink()->mavlinkChannel(),
+                                           &message,
+                                           _id,
+                                           MAV_COMP_ID_AUTOPILOT1,
+                                           param_id_cstr,
+                                           -2,                                                  // Disable map for specified tuning id
+                                           i,                                                   // tuning id
+                                           0, 0, 0, 0);                                         // unused
+        sendMessageOnLink(priorityLink(), message);
+    }
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
