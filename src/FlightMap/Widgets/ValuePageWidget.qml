@@ -34,7 +34,7 @@ Column {
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property int    _colMax:                        4
     property bool   _settingsUnlocked:              false
-    property var    _valueDialogInstrumentValue:    null
+    property var    instrumentValue:    null
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
     property var    _rgFontSizeRatios:              [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
     property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
@@ -79,8 +79,8 @@ Column {
             property int rowIndex
 
             onClicked: {
-                _valueDialogInstrumentValue = instrumentValue
-                mainWindow.showPopupDialog(valueDialog, qsTr("Value Display"), StandardButton.Close)
+                instrumentValue = instrumentValue
+                mainWindow.showPopupDialog(valueDialogComponent, { instrumentValue: instrumentValue })
             }
         }
     }
@@ -243,7 +243,7 @@ Column {
 
                     QGCButton {
                         Layout.fillHeight:      true
-                        Layout.minimumHeight:   ScreenTools.minTouchPixels
+                        Layout.preferredHeight: ScreenTools.minTouchPixels
                         Layout.preferredWidth:  parent.width
                         text:                   qsTr("+")
                         onClicked:              controller.appendColumn(rowRepeaterLayout.rowIndex)
@@ -251,7 +251,7 @@ Column {
 
                     QGCButton {
                         Layout.fillHeight:      true
-                        Layout.minimumHeight:   ScreenTools.minTouchPixels
+                        Layout.preferredHeight: ScreenTools.minTouchPixels
                         Layout.preferredWidth:  parent.width
                         text:                   qsTr("-")
                         enabled:                index !== 0 || columnRepeater.count !== 1
@@ -262,9 +262,9 @@ Column {
 
             RowLayout {
                 width:      parent.width
-                height:             ScreenTools.defaultFontPixelWidth * 2
-                spacing:            1
-                visible:            _settingsUnlocked
+                height:     ScreenTools.defaultFontPixelWidth * 2
+                spacing:    1
+                visible:    _settingsUnlocked
 
                 QGCButton {
                     Layout.fillWidth:   true
@@ -293,9 +293,15 @@ Column {
     }
 
     Component {
-        id: valueDialog
+        id: valueDialogComponent
 
         QGCPopupDialog {
+            id:         valueDisplayDialog
+            title:      qsTr("Value Display")
+            buttons:    StandardButton.Close
+
+            property var instrumentValue: dialogProperties.instrumentValue
+
             GridLayout {
                 rowSpacing:     _margins
                 columnSpacing:  _margins
@@ -304,52 +310,51 @@ Column {
                 QGCCheckBox {
                     id:         valueCheckBox
                     text:       qsTr("Value")
-                    checked:    _valueDialogInstrumentValue.fact
+                    checked:    instrumentValue.fact
                     onClicked: {
                         if (checked) {
-                            _valueDialogInstrumentValue.setFact(_valueDialogInstrumentValue.factGroupNames[0], _valueDialogInstrumentValue.factValueNames[0])
+                            instrumentValue.setFact(instrumentValue.factGroupNames[0], instrumentValue.factValueNames[0])
                         } else {
-                            _valueDialogInstrumentValue.clearFact()
+                            instrumentValue.clearFact()
                         }
                     }
                 }
 
                 QGCComboBox {
-                    model:                  _valueDialogInstrumentValue.factGroupNames
+                    model:                  instrumentValue.factGroupNames
                     sizeToContents:         true
                     enabled:                valueCheckBox.enabled
-                    onModelChanged:         currentIndex = find(_valueDialogInstrumentValue.factGroupName)
-                    Component.onCompleted:  currentIndex = find(_valueDialogInstrumentValue.factGroupName)
+                    onModelChanged:         currentIndex = find(instrumentValue.factGroupName)
+                    Component.onCompleted:  currentIndex = find(instrumentValue.factGroupName)
                     onActivated: {
-                        _valueDialogInstrumentValue.setFact(currentText, "")
-                        _valueDialogInstrumentValue.icon = ""
-                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact.shortDescription
+                        instrumentValue.setFact(currentText, "")
+                        instrumentValue.icon = ""
+                        instrumentValue.label = instrumentValue.fact.shortDescription
                     }
                 }
 
                 QGCComboBox {
-                    model:                  _valueDialogInstrumentValue.factValueNames
+                    model:                  instrumentValue.factValueNames
                     sizeToContents:         true
                     enabled:                valueCheckBox.enabled
-                    onModelChanged:         currentIndex = _valueDialogInstrumentValue.fact ? find(_valueDialogInstrumentValue.factName) : -1
-                    Component.onCompleted:  currentIndex = _valueDialogInstrumentValue.fact ? find(_valueDialogInstrumentValue.factName) : -1
+                    onModelChanged:         currentIndex = instrumentValue.fact ? find(instrumentValue.factName) : -1
+                    Component.onCompleted:  currentIndex = instrumentValue.fact ? find(instrumentValue.factName) : -1
                     onActivated: {
-                        _valueDialogInstrumentValue.setFact(_valueDialogInstrumentValue.factGroupName, currentText)
-                        _valueDialogInstrumentValue.icon = ""
-                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact.shortDescription
+                        instrumentValue.setFact(instrumentValue.factGroupName, currentText)
+                        instrumentValue.icon = ""
+                        instrumentValue.label = instrumentValue.fact.shortDescription
                     }
                 }
 
                 QGCRadioButton {
                     id:                     iconCheckBox
                     text:                   qsTr("Icon")
-                    Component.onCompleted:  checked = _valueDialogInstrumentValue.icon != ""
+                    Component.onCompleted:  checked = instrumentValue.icon != ""
                     onClicked: {
-                        _valueDialogInstrumentValue.label = ""
-                        _valueDialogInstrumentValue.icon = _valueDialogInstrumentValue.iconNames[0]
-                        iconPickerDialogIcon = _valueDialogInstrumentValue.icon
-                        iconPickerDialogUpdateIconFunction = function(icon){ _valueDialogInstrumentValue.icon = icon }
-                        mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
+                        instrumentValue.label = ""
+                        instrumentValue.icon = instrumentValue.iconNames[0]
+                        var updateFunction = function(icon){ instrumentValue.icon = icon }
+                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: instrumentValue.icon, updateIconFunction: updateFunction })
                     }
                 }
 
@@ -357,7 +362,7 @@ Column {
                     Layout.alignment:   Qt.AlignHCenter
                     height:             iconPositionCombo.height
                     width:              height
-                    source:             "/InstrumentValueIcons/" + (_valueDialogInstrumentValue.icon ? _valueDialogInstrumentValue.icon : _valueDialogInstrumentValue.iconNames[0])
+                    source:             "/InstrumentValueIcons/" + (instrumentValue.icon ? instrumentValue.icon : instrumentValue.iconNames[0])
                     sourceSize.height:  height
                     fillMode:           Image.PreserveAspectFit
                     mipmap:             true
@@ -368,29 +373,28 @@ Column {
                     MouseArea {
                         anchors.fill:   parent
                         onClicked: {
-                            iconPickerDialogIcon = _valueDialogInstrumentValue.icon
-                            iconPickerDialogUpdateIconFunction = function(icon){ _valueDialogInstrumentValue.icon = icon }
-                            mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
+                            var updateFunction = function(icon){ instrumentValue.icon = icon }
+                            mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: instrumentValue.icon, updateIconFunction: updateFunction })
                         }
                     }
                 }
 
                 QGCComboBox {
                     id:             iconPositionCombo
-                    model:          _valueDialogInstrumentValue.iconPositionNames
-                    currentIndex:   _valueDialogInstrumentValue.iconPosition
+                    model:          instrumentValue.iconPositionNames
+                    currentIndex:   instrumentValue.iconPosition
                     sizeToContents: true
-                    onActivated:    _valueDialogInstrumentValue.iconPosition = index
+                    onActivated:    instrumentValue.iconPosition = index
                     enabled:        iconCheckBox.checked
                 }
 
                 QGCRadioButton {
                     id:                     labelCheckBox
                     text:                   qsTr("Label")
-                    Component.onCompleted:  checked = _valueDialogInstrumentValue.label != ""
+                    Component.onCompleted:  checked = instrumentValue.label != ""
                     onClicked: {
-                        _valueDialogInstrumentValue.icon = ""
-                        _valueDialogInstrumentValue.label = _valueDialogInstrumentValue.fact ? _valueDialogInstrumentValue.fact.shortDescription : qsTr("Label")
+                        instrumentValue.icon = ""
+                        instrumentValue.label = instrumentValue.fact ? instrumentValue.fact.shortDescription : qsTr("Label")
                     }
                 }
 
@@ -398,7 +402,7 @@ Column {
                     id:                 labelTextField
                     Layout.fillWidth:   true
                     Layout.columnSpan:  2
-                    text:               _valueDialogInstrumentValue.label
+                    text:               instrumentValue.label
                     enabled:            labelCheckBox.checked
                 }
 
@@ -406,16 +410,16 @@ Column {
 
                 QGCComboBox {
                     id:                 fontSizeCombo
-                    model:              _valueDialogInstrumentValue.fontSizeNames
-                    currentIndex:       _valueDialogInstrumentValue.fontSize
+                    model:              instrumentValue.fontSizeNames
+                    currentIndex:       instrumentValue.fontSize
                     sizeToContents:     true
-                    onActivated:        _valueDialogInstrumentValue.fontSize = index
+                    onActivated:        instrumentValue.fontSize = index
                 }
 
                 QGCCheckBox {
                     text:               qsTr("Show Units")
-                    checked:            _valueDialogInstrumentValue.showUnits
-                    onClicked:          _valueDialogInstrumentValue.showUnits = checked
+                    checked:            instrumentValue.showUnits
+                    onClicked:          instrumentValue.showUnits = checked
                 }
 
                 QGCLabel { text: qsTr("Range") }
@@ -423,10 +427,10 @@ Column {
                 QGCComboBox {
                     id:                 rangeTypeCombo
                     Layout.columnSpan:  2
-                    model:              _valueDialogInstrumentValue.rangeTypeNames
-                    currentIndex:       _valueDialogInstrumentValue.rangeType
+                    model:              instrumentValue.rangeTypeNames
+                    currentIndex:       instrumentValue.rangeType
                     sizeToContents:     true
-                    onActivated:        _valueDialogInstrumentValue.rangeType = index
+                    onActivated:        instrumentValue.rangeType = index
                 }
 
                 Loader {
@@ -436,8 +440,10 @@ Column {
                     Layout.preferredWidth:  item ? item.width : 0
                     Layout.preferredHeight: item ? item.height : 0
 
+                    property var instrumentValue: valueDisplayDialog.instrumentValue
+
                     function updateSourceComponent() {
-                        switch (_valueDialogInstrumentValue.rangeType) {
+                        switch (instrumentValue.rangeType) {
                         case InstrumentValue.NoRangeInfo:
                             sourceComponent = undefined
                             break
@@ -456,7 +462,7 @@ Column {
                     Component.onCompleted: updateSourceComponent()
 
                     Connections {
-                        target:             _valueDialogInstrumentValue
+                        target:             instrumentValue
                         onRangeTypeChanged: rangeLoader.updateSourceComponent()
                     }
 
@@ -465,12 +471,16 @@ Column {
         }
     }
 
-    property string iconPickerDialogIcon
-    property var    iconPickerDialogUpdateIconFunction
     Component {
         id: iconPickerDialog
 
         QGCPopupDialog {
+            property var     iconNames:             dialogProperties.iconNames
+            property string  icon:                  dialogProperties.icon
+            property var     updateIconFunction:    dialogProperties.updateIconFunction
+
+            title:      qsTr("Select Icon")
+            buttons:    StandardButton.Close
 
             GridLayout {
                 columns:        10
@@ -478,14 +488,14 @@ Column {
                 rowSpacing:     0
 
                 Repeater {
-                    model: _valueDialogInstrumentValue.iconNames
+                    model: iconNames
 
                     Rectangle {
                         height: ScreenTools.minTouchPixels
                         width:  height
                         color:  currentSelection ? qgcPal.text  : qgcPal.window
 
-                        property bool currentSelection: iconPickerDialogIcon == modelData
+                        property bool currentSelection: icon == modelData
 
                         QGCColoredImage {
                             anchors.centerIn:   parent
@@ -501,8 +511,8 @@ Column {
                             MouseArea {
                                 anchors.fill:   parent
                                 onClicked:  {
-                                    iconPickerDialogIcon = modelData
-                                    iconPickerDialogUpdateIconFunction(modelData)
+                                    icon = modelData
+                                    updateIconFunction(modelData)
                                     hideDialog()
                                 }
                             }
@@ -521,21 +531,21 @@ Column {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = _valueDialogInstrumentValue.rangeValues
+                var newValues = instrumentValue.rangeValues
                 newValues[index] = parseFloat(text)
-                _valueDialogInstrumentValue.rangeValues = newValues
+                instrumentValue.rangeValues = newValues
             }
 
             function updateColorValue(index, color) {
-                var newColors = _valueDialogInstrumentValue.rangeColors
+                var newColors = instrumentValue.rangeColors
                 newColors[index] = color
-                _valueDialogInstrumentValue.rangeColors = newColors
+                instrumentValue.rangeColors = newColors
             }
 
             ColorDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
-                currentColor:   _valueDialogInstrumentValue.rangeColors[colorIndex]
+                currentColor:   instrumentValue.rangeColors[colorIndex]
                 onAccepted:     updateColorValue(colorIndex, color)
 
                 property int colorIndex: 0
@@ -560,13 +570,13 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues.length
+                            model: instrumentValue.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValue.removeRangeValue(index)
                             }
                         }
                     }
@@ -576,10 +586,10 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues.length
+                            model: instrumentValue.rangeValues.length
 
                             QGCTextField {
-                                text:               _valueDialogInstrumentValue.rangeValues[index]
+                                text:               instrumentValue.rangeValues[index]
                                 onEditingFinished:  updateRangeValue(index, text)
                             }
                         }
@@ -588,12 +598,12 @@ Column {
                     Column {
                         spacing: _margins
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeColors
+                            model: instrumentValue.rangeColors
 
                             QGCCheckBox {
                                 height:     ScreenTools.implicitTextFieldHeight
-                                checked:    _valueDialogInstrumentValue.isValidColor(_valueDialogInstrumentValue.rangeColors[index])
-                                onClicked:  updateColorValue(index, checked ? "green" : _valueDialogInstrumentValue.invalidColor())
+                                checked:    instrumentValue.isValidColor(instrumentValue.rangeColors[index])
+                                onClicked:  updateColorValue(index, checked ? "green" : instrumentValue.invalidColor())
                             }
                         }
                     }
@@ -601,13 +611,13 @@ Column {
                     Column {
                         spacing: _margins
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeColors
+                            model: instrumentValue.rangeColors
 
                             Rectangle {
                                 width:          ScreenTools.implicitTextFieldHeight
                                 height:         width
                                 border.color:   qgcPal.text
-                                color:          _valueDialogInstrumentValue.isValidColor(modelData) ? modelData : qgcPal.text
+                                color:          instrumentValue.isValidColor(modelData) ? modelData : qgcPal.text
 
                                 MouseArea {
                                     anchors.fill: parent
@@ -623,7 +633,7 @@ Column {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
+                    onClicked:  instrumentValue.addRangeValue()
                 }
             }
         }
@@ -637,15 +647,15 @@ Column {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = _valueDialogInstrumentValue.rangeValues
+                var newValues = instrumentValue.rangeValues
                 newValues[index] = parseFloat(text)
-                _valueDialogInstrumentValue.rangeValues = newValues
+                instrumentValue.rangeValues = newValues
             }
 
             function updateIconValue(index, icon) {
-                var newIcons = _valueDialogInstrumentValue.rangeIcons
+                var newIcons = instrumentValue.rangeIcons
                 newIcons[index] = icon
-                _valueDialogInstrumentValue.rangeIcons = newIcons
+                instrumentValue.rangeIcons = newIcons
             }
 
             Column {
@@ -667,13 +677,13 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues.length
+                            model: instrumentValue.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValue.removeRangeValue(index)
                             }
                         }
                     }
@@ -683,10 +693,10 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues.length
+                            model: instrumentValue.rangeValues.length
 
                             QGCTextField {
-                                text:               _valueDialogInstrumentValue.rangeValues[index]
+                                text:               instrumentValue.rangeValues[index]
                                 onEditingFinished:  updateRangeValue(index, text)
                             }
                         }
@@ -696,7 +706,7 @@ Column {
                         spacing: _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeIcons
+                            model: instrumentValue.rangeIcons
 
                             QGCColoredImage {
                                 height:             ScreenTools.implicitTextFieldHeight
@@ -711,9 +721,8 @@ Column {
                                 MouseArea {
                                     anchors.fill:   parent
                                     onClicked: {
-                                        iconPickerDialogIcon = modelData
-                                        iconPickerDialogUpdateIconFunction = function(icon){ updateIconValue(index, icon) }
-                                        mainWindow.showPopupDialog(iconPickerDialog, qsTr("Select Icon"), StandardButton.Close)
+                                        var updateFunction = function(icon){ updateIconValue(index, icon) }
+                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: modelData, updateIconFunction = updateFunction })
                                     }
                                 }
                             }
@@ -723,7 +732,7 @@ Column {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
+                    onClicked:  instrumentValue.addRangeValue()
                 }
             }
         }
@@ -737,15 +746,15 @@ Column {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = _valueDialogInstrumentValue.rangeValues
+                var newValues = instrumentValue.rangeValues
                 newValues[index] = parseFloat(text)
-                _valueDialogInstrumentValue.rangeValues = newValues
+                instrumentValue.rangeValues = newValues
             }
 
             function updateOpacityValue(index, opacity) {
-                var newOpacities = _valueDialogInstrumentValue.rangeOpacities
+                var newOpacities = instrumentValue.rangeOpacities
                 newOpacities[index] = opacity
-                _valueDialogInstrumentValue.rangeOpacities = newOpacities
+                instrumentValue.rangeOpacities = newOpacities
             }
 
             Column {
@@ -767,13 +776,13 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues.length
+                            model: instrumentValue.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  _valueDialogInstrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValue.removeRangeValue(index)
                             }
                         }
                     }
@@ -783,7 +792,7 @@ Column {
                         spacing:                _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeValues
+                            model: instrumentValue.rangeValues
 
                             QGCTextField {
                                 text:               modelData
@@ -796,7 +805,7 @@ Column {
                         spacing: _margins
 
                         Repeater {
-                            model: _valueDialogInstrumentValue.rangeOpacities
+                            model: instrumentValue.rangeOpacities
 
                             QGCTextField {
                                 text:               modelData
@@ -808,7 +817,7 @@ Column {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  _valueDialogInstrumentValue.addRangeValue()
+                    onClicked:  instrumentValue.addRangeValue()
                 }
             }
         }
