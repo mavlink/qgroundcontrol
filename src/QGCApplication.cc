@@ -101,6 +101,7 @@
 #include "VehicleObjectAvoidance.h"
 #include "TrajectoryPoints.h"
 #include "ValuesWidgetController.h"
+#include "RCToParamDialogController.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -540,6 +541,7 @@ void QGCApplication::_initCommon()
     qmlRegisterType<LogDownloadController>          (kQGCControllers,                       1, 0, "LogDownloadController");
     qmlRegisterType<SyslinkComponentController>     (kQGCControllers,                       1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
+    qmlRegisterType<RCToParamDialogController>      (kQGCControllers,                       1, 0, "RCToParamDialogController");
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK

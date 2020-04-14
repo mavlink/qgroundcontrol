@@ -10,6 +10,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
+import QtQuick.Dialogs  1.3
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -125,8 +126,8 @@ QGCViewDialog {
                     Layout.fillWidth:   true
                     focus:              setFocus
                     inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ?
-                                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
-                                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
+                                            Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
+                                            Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
                 }
 
                 QGCButton {
@@ -286,11 +287,19 @@ QGCViewDialog {
             }
 
             QGCButton {
-                text:           qsTr("Set RC to Param...")
-                width:          _editFieldWidth
-                visible:        _advanced.checked && !validate && showRCToParam
-                onClicked:      controller.setRCToParam(fact.name)
+                text:       qsTr("Set RC to Param")
+                width:      _editFieldWidth
+                visible:    _advanced.checked && !validate && showRCToParam
+                onClicked:  mainWindow.showPopupDialog(rcToParamDialog)
             }
         } // Column
+    }
+
+    Component {
+        id: rcToParamDialog
+
+        RCToParamDialog {
+            tuningFact: fact
+        }
     }
 } // QGCViewDialog

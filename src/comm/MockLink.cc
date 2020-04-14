@@ -505,6 +505,10 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
             _handleLogRequestData(msg);
             break;
 
+        case MAVLINK_MSG_ID_PARAM_MAP_RC:
+            _handleParamMapRC(msg);
+            break;
+
         default:
             break;
         }
@@ -515,6 +519,22 @@ void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
 {
     Q_UNUSED(msg);
     qCDebug(MockLinkLog) << "Heartbeat";
+}
+
+void MockLink::_handleParamMapRC(const mavlink_message_t& msg)
+{
+    mavlink_param_map_rc_t paramMapRC;
+    mavlink_msg_param_map_rc_decode(&msg, &paramMapRC);
+
+    const QString paramName(QString::fromLocal8Bit(paramMapRC.param_id, static_cast<int>(strnlen(paramMapRC.param_id, MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN))));
+
+    if (paramMapRC.param_index == -1) {
+        qDebug() << QStringLiteral("MockLink - PARAM_MAP_RC: param(%1) tuningID(%2) centerValue(%3) scale(%4) min(%5) max(%6)").arg(paramName).arg(paramMapRC.parameter_rc_channel_index).arg(paramMapRC.param_value0).arg(paramMapRC.scale).arg(paramMapRC.param_value_min).arg(paramMapRC.param_value_max);
+    } else if (paramMapRC.param_index == -2) {
+        qDebug() << QStringLiteral("MockLink - PARAM_MAP_RC: Clear tuningID(%1)").arg(paramMapRC.parameter_rc_channel_index);
+    } else {
+        qWarning() << QStringLiteral("MockLink - PARAM_MAP_RC: Unsupported param_index(%1)").arg(paramMapRC.param_index);
+    }
 }
 
 void MockLink::_handleSetMode(const mavlink_message_t& msg)

@@ -210,11 +210,6 @@ public slots:
     void startBusConfig(StartBusConfigType calType);
     void stopBusConfig(void);
 
-    /** @brief Send command to map a RC channel to a parameter */
-    void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax);
-
-    /** @brief Send command to disable all bindings/maps between RC and parameters */
-    void unsetRCToParameterMap();
 signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
