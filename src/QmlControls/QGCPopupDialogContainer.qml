@@ -18,15 +18,60 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Popup {
+    id:                 root
     anchors.centerIn:   parent
-    width:              mainFlickable.width
-    height:             mainFlickable.height
-    padding:            0
+    width:              mainFlickable.width + (padding * 2)
+    height:             mainFlickable.height + (padding * 2)
+    padding:            2
     modal:              true
     focus:              true
 
-    background: Rectangle {
-        color: QGroundControl.globalPalette.window
+    property var pal:           QGroundControl.globalPalette
+    property real frameSize:    ScreenTools.defaultFontPixelWidth
+
+    background: Item {
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.top:    parent.top
+            width:          frameSize
+            height:         frameSize
+            color:          pal.text
+            visible:        enabled
+        }
+
+        Rectangle {
+            anchors.right:  parent.right
+            anchors.top:    parent.top
+            width:          frameSize
+            height:         frameSize
+            color:          pal.text
+            visible:        enabled
+        }
+
+        Rectangle {
+            anchors.left:   parent.left
+            anchors.bottom: parent.bottom
+            width:          frameSize
+            height:         frameSize
+            color:          pal.text
+            visible:        enabled
+        }
+
+        Rectangle {
+            anchors.right:  parent.right
+            anchors.bottom: parent.bottom
+            width:          frameSize
+            height:         frameSize
+            color:          pal.text
+            visible:        enabled
+        }
+
+        Rectangle {
+            anchors.margins:    root.padding
+            anchors.fill:       parent
+            color:              pal.window
+        }
     }
 
     property string title
