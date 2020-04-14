@@ -1119,12 +1119,6 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
         });
     }
 
-    _decoding = true;
-    qCDebug(VideoReceiverLog) << "Decoding started";
-    _dispatchSignal([this](){
-        emit decodingChanged(_decoding);
-    });
-
     return true;
 }
 
@@ -1138,6 +1132,13 @@ void
 GstVideoReceiver::_noteVideoSinkFrame(void)
 {
     _lastVideoFrameTime = QDateTime::currentSecsSinceEpoch();
+    if (!_decoding) {
+        _decoding = true;
+        qCDebug(VideoReceiverLog) << "Decoding started";
+        _dispatchSignal([this](){
+            emit decodingChanged(_decoding);
+        });
+    }
 }
 
 void
@@ -1674,7 +1675,9 @@ GstVideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer us
 
     qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
 
-    pThis->recordingStarted();
+    pThis->_dispatchSignal([pThis]() {
+        pThis->recordingStarted();
+    });
 
     return GST_PAD_PROBE_REMOVE;
 }
