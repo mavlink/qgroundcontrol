@@ -86,13 +86,6 @@ QStringList ParameterEditorController::searchParameters(const QString& searchTex
     return list;
 }
 
-void ParameterEditorController::clearRCToParam(void)
-{
-    if (_uas) {
-        _uas->unsetRCToParameterMap();
-    }
-}
-
 void ParameterEditorController::saveToFile(const QString& filename)
 {
     if (!filename.isEmpty()) {

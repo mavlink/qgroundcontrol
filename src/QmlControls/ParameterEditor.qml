@@ -28,7 +28,8 @@ Item {
     property int    _rowWidth:          10 // Dynamic adjusted at runtime
     property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
     property var    _searchResults      ///< List of parameter names from search results
-    property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _showRCToParam:     _activeVehicle.px4Firmware
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
 
     ParameterEditorController {
@@ -133,8 +134,8 @@ Item {
         }
         QGCMenuSeparator { visible: _showRCToParam }
         QGCMenuItem {
-            text:           qsTr("Clear RC to Param")
-            onTriggered:	controller.clearRCToParam()
+            text:           qsTr("Clear all RC to Param")
+            onTriggered:	_activeVehicle.clearAllParamMapRC()
             visible:        _showRCToParam
         }
         QGCMenuSeparator { }

@@ -986,68 +986,6 @@ void UAS::pairRX(int rxType, int rxSubType)
     }
 }
 
-void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax)
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    mavlink_message_t message;
-
-    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
-    // Copy string into buffer, ensuring not to exceed the buffer size
-    for (unsigned int i = 0; i < sizeof(param_id_cstr); i++)
-    {
-        if ((int)i < param_id.length())
-        {
-            param_id_cstr[i] = param_id.toLatin1()[i];
-        }
-    }
-
-    mavlink_msg_param_map_rc_pack_chan(mavlink->getSystemId(),
-                                       mavlink->getComponentId(),
-                                       _vehicle->priorityLink()->mavlinkChannel(),
-                                       &message,
-                                       this->uasId,
-                                       _vehicle->defaultComponentId(),
-                                       param_id_cstr,
-                                       -1,
-                                       param_rc_channel_index,
-                                       value0,
-                                       scale,
-                                       valueMin,
-                                       valueMax);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
-    //qDebug() << "Mavlink message sent";
-}
-
-void UAS::unsetRCToParameterMap()
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
-
-    for (int i = 0; i < 3; i++) {
-        mavlink_message_t message;
-        mavlink_msg_param_map_rc_pack_chan(mavlink->getSystemId(),
-                                           mavlink->getComponentId(),
-                                           _vehicle->priorityLink()->mavlinkChannel(),
-                                           &message,
-                                           this->uasId,
-                                           _vehicle->defaultComponentId(),
-                                           param_id_cstr,
-                                           -2,
-                                           i,
-                                           0.0f,
-                                           0.0f,
-                                           0.0f,
-                                           0.0f);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
-    }
-}
-
 void UAS::shutdownVehicle(void)
 {
     _vehicle = nullptr;

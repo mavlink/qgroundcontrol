@@ -781,6 +781,13 @@ public:
     Q_INVOKABLE void gimbalYawStep      (int direction);
     Q_INVOKABLE void centerGimbal       ();
 
+    /// Sends PARAM_MAP_RC message to vehicle
+    Q_INVOKABLE void sendParamMapRC(const QString& paramName, double scale, double centerValue, int tuningID, double minValue, double maxValue);
+
+    /// Clears all PARAM_MAP_RC settings from vehicle
+    Q_INVOKABLE void clearAllParamMapRC(void);
+
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
