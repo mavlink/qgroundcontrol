@@ -276,5 +276,12 @@
     "longDescription":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "firstTimeStart",
+    "shortDescription": "True if we should popup first time wizard",
+    "longDescription":  "If this option is enabled, the first time startup wizard will prompt the user at first application start on a new system.",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]

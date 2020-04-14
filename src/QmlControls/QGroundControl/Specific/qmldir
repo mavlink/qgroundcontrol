@@ -1,0 +1,5 @@
+module QGroundControl.Specific
+
+BaseStartupWizardPage       1.0     BaseStartupWizardPage.qml
+StartupWizard               1.0     StartupWizard.qml
+UnitsWizardPage             1.0     UnitsWizardPage.qml
