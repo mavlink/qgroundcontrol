@@ -246,6 +246,10 @@
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="QGroundControl/Controls/VTOLLandingPatternMapVisual.qml">src/PlanView/VTOLLandingPatternMapVisual.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
+        <file alias="QGroundControl/Specific/qmldir">src/QmlControls/QGroundControl/Specific/qmldir</file>
+        <file alias="QGroundControl/Specific/StartupWizard.qml">src/QmlControls/QGroundControl/Specific/StartupWizard.qml</file>
+        <file alias="QGroundControl/Specific/BaseStartupWizardPage.qml">src/QmlControls/QGroundControl/Specific/BaseStartupWizardPage.qml</file>
+        <file alias="QGroundControl/Specific/UnitsWizardPage.qml">src/QmlControls/QGroundControl/Specific/UnitsWizardPage.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="ADSBVehicleManager.SettingsGroup.json">src/Settings/ADSBVehicleManager.SettingsGroup.json</file>
