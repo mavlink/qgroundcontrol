@@ -229,13 +229,13 @@ ApplicationWindow {
         }
     }
 
-    function showPopupDialog(component, title, buttons) {
-        var popup = popupDialogContainterComponent.createObject(mainWindow, { "title": title, "buttons": buttons, "dialogComponent": component})
-        popup.open()
+    function showPopupDialog(component, properties) {
+        var dialog = popupDialogContainerComponent.createObject(mainWindow, { dialogComponent: component, dialogProperties: properties })
+        dialog.open()
     }
 
     Component {
-        id: popupDialogContainterComponent
+        id: popupDialogContainerComponent
         QGCPopupDialogContainer { }
     }
 
