@@ -18,7 +18,10 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Popup {
-    id:                 root
+    property var dialogComponent
+    property var dialogProperties
+
+    id:                 popupRoot
     anchors.centerIn:   parent
     width:              mainFlickable.width + (padding * 2)
     height:             mainFlickable.height + (padding * 2)
@@ -26,68 +29,66 @@ Popup {
     modal:              true
     focus:              true
 
-    property var pal:           QGroundControl.globalPalette
-    property real frameSize:    ScreenTools.defaultFontPixelWidth
+    property var    _pal:                   QGroundControl.globalPalette
+    property real   _frameSize:             ScreenTools.defaultFontPixelWidth
+    property string _dialogTitle
+    property real   _contentMargin:         ScreenTools.defaultFontPixelHeight / 2
+    property real   _popupDoubleInset:      ScreenTools.defaultFontPixelHeight * 2
+    property real   _maxAvailableWidth:     parent.width - _popupDoubleInset
+    property real   _maxAvailableHeight:    parent.height - _popupDoubleInset
 
     background: Item {
-
         Rectangle {
             anchors.left:   parent.left
             anchors.top:    parent.top
-            width:          frameSize
-            height:         frameSize
-            color:          pal.text
+            width:          _frameSize
+            height:         _frameSize
+            color:          _pal.text
             visible:        enabled
         }
 
         Rectangle {
             anchors.right:  parent.right
             anchors.top:    parent.top
-            width:          frameSize
-            height:         frameSize
-            color:          pal.text
+            width:          _frameSize
+            height:         _frameSize
+            color:          _pal.text
             visible:        enabled
         }
 
         Rectangle {
             anchors.left:   parent.left
             anchors.bottom: parent.bottom
-            width:          frameSize
-            height:         frameSize
-            color:          pal.text
+            width:          _frameSize
+            height:         _frameSize
+            color:          _pal.text
             visible:        enabled
         }
 
         Rectangle {
             anchors.right:  parent.right
             anchors.bottom: parent.bottom
-            width:          frameSize
-            height:         frameSize
-            color:          pal.text
+            width:          _frameSize
+            height:         _frameSize
+            color:          _pal.text
             visible:        enabled
         }
 
         Rectangle {
-            anchors.margins:    root.padding
+            anchors.margins:    popupRoot.padding
             anchors.fill:       parent
-            color:              pal.window
+            color:              _pal.window
         }
     }
 
-    property string title
-    property var    buttons
-    property var    dialogComponent
-
-    property real _contentMargin:       ScreenTools.defaultFontPixelHeight / 2
-    property real _popupDoubleInset:    ScreenTools.defaultFontPixelHeight * 2
-    property real _maxAvailableWidth:   parent.width - _popupDoubleInset
-    property real _maxAvailableHeight:  parent.height - _popupDoubleInset
-
-    Component.onCompleted: setupDialogButtons()
+    Component.onCompleted: {
+        _dialogTitle = dialogComponentLoader.item.title
+        setupDialogButtons(dialogComponentLoader.item.buttons)
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: parent.enabled }
 
-    function setupDialogButtons() {
+    function setupDialogButtons(buttons) {
         acceptButton.visible = false
         rejectButton.visible = false
         // Accept role buttons
@@ -210,8 +211,10 @@ Popup {
                     x:                  _contentMargin
                     sourceComponent:    dialogComponent
                     focus:              true
-                    property bool acceptAllowed: acceptButton.visible
-                    property bool rejectAllowed: rejectButton.visible
+
+                    property var dialogProperties:  popupRoot.dialogProperties
+                    property bool acceptAllowed:    acceptButton.visible
+                    property bool rejectAllowed:    rejectButton.visible
                 }
             }
         }
