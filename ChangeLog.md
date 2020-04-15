@@ -8,6 +8,7 @@ Note: This file only contains high level features or important fixes.
 
 * Analyze/Log Download - Fix download on mobile versions of QGC
 * Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
+* PX4 Flow: Fix video display problem
 
 ### 4.0.5 - Stable
 
