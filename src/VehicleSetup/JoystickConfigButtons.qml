@@ -22,7 +22,7 @@ import QGroundControl.FactControls  1.0
 
 Item {
     width:                  availableWidth
-    height:                 (activeVehicle.supportsJSButton ? buttonCol.height : buttonFlow.height) + (ScreenTools.defaultFontPixelHeight * 2)
+    height:                 (activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
     Connections {
         target: _activeJoystick
         onRawButtonPressedChanged: {
@@ -34,66 +34,76 @@ Item {
             }
         }
     }
-    Flow {
-        id:                 buttonFlow
-        width:              parent.width
-        spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            !activeVehicle.supportsJSButton
-        anchors.centerIn:   parent
-        Repeater {
-            id:             buttonActionRepeater
-            model:          _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : []
-            Row {
-                spacing:    ScreenTools.defaultFontPixelWidth
-                property bool pressed
-                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
-                Rectangle {
-                    anchors.verticalCenter:     parent.verticalCenter
-                    width:                      ScreenTools.defaultFontPixelHeight * 1.5
-                    height:                     width
-                    border.width:               1
-                    border.color:               qgcPal.text
-                    color:                      pressed ? qgcPal.buttonHighlight : qgcPal.button
-                    QGCLabel {
-                        anchors.fill:           parent
-                        color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                        horizontalAlignment:    Text.AlignHCenter
-                        verticalAlignment:      Text.AlignVCenter
-                        text:                   modelData
-                    }
-                }
-                QGCComboBox {
-                    id:                         buttonActionCombo
-                    width:                      ScreenTools.defaultFontPixelWidth * 26
-                    model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
-                    onActivated: {
-                        _activeJoystick.setButtonAction(modelData, textAt(index))
-                    }
-                    Component.onCompleted: {
-                        if(_activeJoystick) {
-                            var i = find(_activeJoystick.buttonActions[modelData])
-                            if(i < 0) i = 0
-                            currentIndex = i
+    ColumnLayout {
+        id:         flowColumn
+        y:          ScreenTools.defaultFontPixelHeight / 2
+        width:      parent.width
+        spacing:    ScreenTools.defaultFontPixelHeight / 2
+        QGCLabel {
+            Layout.preferredWidth:  parent.width
+            wrapMode:               Text.WordWrap
+            text:                   qsTr("Assigning the same action to multiple buttons requires the press of all those buttons for the action to be taken. This is useful to prevent accidental button presses for critical actions like Arm or Emergency Stop.")
+        }
+        Flow {
+            id:                     buttonFlow
+            Layout.preferredWidth:  parent.width
+            spacing:                ScreenTools.defaultFontPixelWidth
+            visible:                !activeVehicle.supportsJSButton
+            Repeater {
+                id:             buttonActionRepeater
+                model:          _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : []
+                Row {
+                    spacing:    ScreenTools.defaultFontPixelWidth
+                    property bool pressed
+                    property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
+                    Rectangle {
+                        anchors.verticalCenter:     parent.verticalCenter
+                        width:                      ScreenTools.defaultFontPixelHeight * 1.5
+                        height:                     width
+                        border.width:               1
+                        border.color:               qgcPal.text
+                        color:                      pressed ? qgcPal.buttonHighlight : qgcPal.button
+                        QGCLabel {
+                            anchors.fill:           parent
+                            color:                  pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            horizontalAlignment:    Text.AlignHCenter
+                            verticalAlignment:      Text.AlignVCenter
+                            text:                   modelData
                         }
                     }
-                }
-                QGCCheckBox {
-                    id:                         repeatCheck
-                    text:                       qsTr("Repeat")
-                    enabled:                    currentAssignableAction && _activeJoystick.calibrated && currentAssignableAction.canRepeat
-                    onClicked: {
-                        _activeJoystick.setButtonRepeat(modelData, checked)
-                    }
-                    Component.onCompleted: {
-                        if(_activeJoystick) {
-                            checked = _activeJoystick.getButtonRepeat(modelData)
+                    QGCComboBox {
+                        id:                         buttonActionCombo
+                        width:                      ScreenTools.defaultFontPixelWidth * 26
+                        model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
+                        onActivated: {
+                            _activeJoystick.setButtonAction(modelData, textAt(index))
+                        }
+                        Component.onCompleted: {
+                            if(_activeJoystick) {
+                                var i = find(_activeJoystick.buttonActions[modelData])
+                                if(i < 0) i = 0
+                                currentIndex = i
+                            }
                         }
                     }
-                    anchors.verticalCenter:     parent.verticalCenter
-                }
-                Item {
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     1
+                    QGCCheckBox {
+                        id:                         repeatCheck
+                        text:                       qsTr("Repeat")
+                        enabled:                    currentAssignableAction && _activeJoystick.calibrated && currentAssignableAction.canRepeat
+                        onClicked: {
+                            _activeJoystick.setButtonRepeat(modelData, checked)
+                        }
+                        Component.onCompleted: {
+                            if(_activeJoystick) {
+                                checked = _activeJoystick.getButtonRepeat(modelData)
+                            }
+                        }
+                        anchors.verticalCenter:     parent.verticalCenter
+                    }
+                    Item {
+                        width:                      ScreenTools.defaultFontPixelWidth * 2
+                        height:                     1
+                    }
                 }
             }
         }
