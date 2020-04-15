@@ -545,7 +545,7 @@ Column {
             ColorDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
-                currentColor:   instrumentValue.rangeColors[colorIndex]
+                currentColor:   instrumentValue.rangeColors.length ? instrumentValue.rangeColors[colorIndex] : "white"
                 onAccepted:     updateColorValue(colorIndex, color)
 
                 property int colorIndex: 0
