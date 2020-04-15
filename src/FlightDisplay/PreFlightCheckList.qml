@@ -31,6 +31,11 @@ Rectangle {
     }
 
     property bool allChecksPassed:  false
+    property var  vehicleCopy:       activeVehicle
+
+    onVehicleCopyChanged: {
+        checkListRepeater.model.reset()
+    }
 
     onAllChecksPassedChanged: {
         if (allChecksPassed) {

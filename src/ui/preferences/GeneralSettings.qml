@@ -1033,6 +1033,16 @@ Rectangle {
                                 fact:                   QGroundControl.settingsManager.videoSettings.disableWhenDisarmed
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }
+
+                            QGCLabel {
+                                text:                   qsTr("Low Latency Mode")
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.lowLatencyMode.visible
+                            }
+                            FactCheckBox {
+                                text:                   ""
+                                fact:                   QGroundControl.settingsManager.videoSettings.lowLatencyMode
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.lowLatencyMode.visible
+                            }
                         }
                     }
 
