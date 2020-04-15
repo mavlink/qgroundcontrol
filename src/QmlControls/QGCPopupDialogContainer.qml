@@ -23,19 +23,19 @@ Popup {
 
     id:                 popupRoot
     anchors.centerIn:   parent
-    width:              mainFlickable.width + (padding * 2)
-    height:             mainFlickable.height + (padding * 2)
+    width:              mainColumnLayout.width + (padding * 2)
+    height:             mainColumnLayout.y + mainColumnLayout.height + padding
     padding:            2
     modal:              true
     focus:              true
 
-    property var    _pal:                   QGroundControl.globalPalette
-    property real   _frameSize:             ScreenTools.defaultFontPixelWidth
+    property var    _pal:               QGroundControl.globalPalette
+    property real   _frameSize:         ScreenTools.defaultFontPixelWidth
     property string _dialogTitle
-    property real   _contentMargin:         ScreenTools.defaultFontPixelHeight / 2
-    property real   _popupDoubleInset:      ScreenTools.defaultFontPixelHeight * 2
-    property real   _maxAvailableWidth:     parent.width - _popupDoubleInset
-    property real   _maxAvailableHeight:    parent.height - _popupDoubleInset
+    property real   _contentMargin:     ScreenTools.defaultFontPixelHeight / 2
+    property real   _popupDoubleInset:  ScreenTools.defaultFontPixelHeight * 2
+    property real   _maxContentWidth:   parent.width - _popupDoubleInset
+    property real   _maxContentHeight:  parent.height - titleRowLayout.height - _popupDoubleInset
 
     background: Item {
         Rectangle {
@@ -160,51 +160,51 @@ Popup {
         onHideDialog:   close()
     }
 
-    QGCFlickable {
-        id:             mainFlickable
-        width:          Math.min(mainColumnLayout.width, _maxAvailableWidth)
-        height:         Math.min(mainColumnLayout.height, _maxAvailableHeight)
-        contentWidth:   mainColumnLayout.width
-        contentHeight:  mainColumnLayout.height
+    Rectangle {
+        width:  titleRowLayout.width
+        height: titleRowLayout.height
+        color:  qgcPal.windowShade
+    }
 
-        Rectangle {
-            width:  titleRowLayout.width
-            height: titleRowLayout.height
-            color:  qgcPal.windowShade
-        }
+    ColumnLayout {
+        id:         mainColumnLayout
+        spacing:    _contentMargin
 
-        ColumnLayout {
-            id:         mainColumnLayout
-            spacing:    _contentMargin
+        RowLayout {
+            id:                 titleRowLayout
+            Layout.fillWidth:   true
 
-            RowLayout {
-                id:                 titleRowLayout
+            QGCLabel {
+                Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
                 Layout.fillWidth:   true
-
-                QGCLabel {
-                    Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
-                    Layout.fillWidth:   true
-                    text:               title
-                    height:             parent.height
-                    verticalAlignment:	Text.AlignVCenter
-                }
-
-                QGCButton {
-                    id:         rejectButton
-                    onClicked:  dialogComponentLoader.item.reject()
-                }
-
-                QGCButton {
-                    id:         acceptButton
-                    primary:    true
-                    onClicked:  dialogComponentLoader.item.accept()
-                }
+                text:               _dialogTitle
+                height:             parent.height
+                verticalAlignment:	Text.AlignVCenter
             }
 
+            QGCButton {
+                id:         rejectButton
+                onClicked:  dialogComponentLoader.item.reject()
+            }
+
+            QGCButton {
+                id:         acceptButton
+                primary:    true
+                onClicked:  dialogComponentLoader.item.accept()
+            }
+        }
+
+        QGCFlickable {
+            id:                     mainFlickable
+            Layout.preferredWidth:  Math.min(marginItem.width, _maxContentWidth)
+            Layout.preferredHeight: Math.min(marginItem.height, _maxContentHeight)
+            contentWidth:           marginItem.width
+            contentHeight:          marginItem.height
+
             Item {
-                id:                     item
-                Layout.preferredWidth:  dialogComponentLoader.width + (_contentMargin * 2)
-                Layout.preferredHeight: dialogComponentLoader.height + _contentMargin
+                id:     marginItem
+                width:  dialogComponentLoader.width + (_contentMargin * 2)
+                height: dialogComponentLoader.height + _contentMargin
 
                 Loader {
                     id:                 dialogComponentLoader
