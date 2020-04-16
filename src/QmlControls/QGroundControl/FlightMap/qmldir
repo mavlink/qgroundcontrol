@@ -5,18 +5,20 @@ FlightMap           1.0 FlightMap.qml
 QGCVideoBackground  1.0 QGCVideoBackground.qml
 
 # Widgets
-CenterMapDropButton     1.0 CenterMapDropButton.qml
-CenterMapDropPanel      1.0 CenterMapDropPanel.qml
-CompassRing             1.0 CompassRing.qml
-InstrumentSwipeView     1.0 InstrumentSwipeView.qml
-MapFitFunctions         1.0 MapFitFunctions.qml
-MapLineArrow            1.0 MapLineArrow.qml
-MapScale                1.0 MapScale.qml
-QGCArtificialHorizon    1.0 QGCArtificialHorizon.qml
-QGCAttitudeHUD          1.0 QGCAttitudeHUD.qml
-QGCAttitudeWidget       1.0 QGCAttitudeWidget.qml
-QGCCompassWidget        1.0 QGCCompassWidget.qml
-QGCPitchIndicator       1.0 QGCPitchIndicator.qml
+CenterMapDropButton         1.0 CenterMapDropButton.qml
+CenterMapDropPanel          1.0 CenterMapDropPanel.qml
+CompassRing                 1.0 CompassRing.qml
+InstrumentSwipeView         1.0 InstrumentSwipeView.qml
+InstrumentValue             1.0 InstrumentValue.qml
+InstrumentValueEditDialog   1.0 InstrumentValueEditDialog.qml
+MapFitFunctions             1.0 MapFitFunctions.qml
+MapLineArrow                1.0 MapLineArrow.qml
+MapScale                    1.0 MapScale.qml
+QGCArtificialHorizon        1.0 QGCArtificialHorizon.qml
+QGCAttitudeHUD              1.0 QGCAttitudeHUD.qml
+QGCAttitudeWidget           1.0 QGCAttitudeWidget.qml
+QGCCompassWidget            1.0 QGCCompassWidget.qml
+QGCPitchIndicator           1.0 QGCPitchIndicator.qml
 
 # Map items
 CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml
