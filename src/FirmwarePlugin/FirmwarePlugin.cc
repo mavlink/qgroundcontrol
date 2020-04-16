@@ -224,14 +224,14 @@ void FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode)
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(guidedMode);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
@@ -239,14 +239,14 @@ void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(smartRTL);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)
@@ -254,7 +254,7 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel)
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(takeoffAltRel);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -262,19 +262,19 @@ void FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordina
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
     Q_UNUSED(gotoCoord);
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double)
 {
     // Not supported by generic vehicle
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::startMission(Vehicle*)
 {
     // Not supported by generic vehicle
-    qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 const FirmwarePlugin::remapParamNameMajorVersionMap_t& FirmwarePlugin::paramNameRemapMajorVersionMap(void) const
@@ -862,7 +862,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
         QString currentVersionNumber = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                 .arg(vehicle->firmwareMinorVersion())
                 .arg(vehicle->firmwarePatchVersion());
-        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+        qgcApp()->showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
 }
 

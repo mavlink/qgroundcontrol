@@ -288,7 +288,7 @@ void RadioComponentController::nextButtonClicked(void)
             if (_unitTestMode) {
                 emit nextButtonMessageBoxDisplayed();
             } else {
-                qgcApp()->showMessage(QString("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+                qgcApp()->showAppMessage(QString("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
             }
             return;
         }

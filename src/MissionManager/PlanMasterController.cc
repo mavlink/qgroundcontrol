@@ -206,7 +206,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 void PlanMasterController::loadFromVehicle(void)
 {
     if (_managerVehicle->highLatencyLink()) {
-        qgcApp()->showMessage(tr("Download not supported on high latency links."));
+        qgcApp()->showAppMessage(tr("Download not supported on high latency links."));
         return;
     }
 
@@ -313,7 +313,7 @@ void PlanMasterController::_startFlightPlanning(void) {
 void PlanMasterController::sendToVehicle(void)
 {
     if (_managerVehicle->highLatencyLink()) {
-        qgcApp()->showMessage(tr("Upload not supported on high latency links."));
+        qgcApp()->showAppMessage(tr("Upload not supported on high latency links."));
         return;
     }
 
@@ -343,7 +343,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         errorString = file.errorString() + QStringLiteral(" ") + filename;
-        qgcApp()->showMessage(errorMessage.arg(errorString));
+        qgcApp()->showAppMessage(errorMessage.arg(errorString));
         return;
     }
 
@@ -353,7 +353,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         QByteArray      bytes = file.readAll();
 
         if (!JsonHelper::isJsonFile(bytes, jsonDoc, errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
             return;
         }
 
@@ -363,7 +363,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
 
         int version;
         if (!JsonHelper::validateQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
             return;
         }
 
@@ -373,14 +373,14 @@ void PlanMasterController::loadFromFile(const QString& filename)
             { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
         };
         if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
             return;
         }
 
         if (!_missionController.load(json[kJsonMissionObjectKey].toObject(), errorString) ||
                 !_geoFenceController.load(json[kJsonGeoFenceObjectKey].toObject(), errorString) ||
                 !_rallyPointController.load(json[kJsonRallyPointsObjectKey].toObject(), errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
         } else {
             //-- Allow plugins to post process the load
             qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
@@ -388,13 +388,13 @@ void PlanMasterController::loadFromFile(const QString& filename)
         }
     } else if (fileInfo.suffix() == AppSettings::missionFileExtension) {
         if (!_missionController.loadJsonFile(file, errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
         } else {
             success = true;
         }
     } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
         if (!_missionController.loadTextFile(file, errorString)) {
-            qgcApp()->showMessage(errorMessage.arg(errorString));
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
         } else {
             success = true;
         }
@@ -458,7 +458,7 @@ void PlanMasterController::saveToFile(const QString& filename)
     QFile file(planFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
+        qgcApp()->showAppMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
         _currentPlanFile.clear();
         emit currentPlanFileChanged();
     } else {
@@ -490,7 +490,7 @@ void PlanMasterController::saveToKml(const QString& filename)
     QFile file(kmlFilename);
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qgcApp()->showMessage(tr("KML save error %1 : %2").arg(filename).arg(file.errorString()));
+        qgcApp()->showAppMessage(tr("KML save error %1 : %2").arg(filename).arg(file.errorString()));
     } else {
         KMLPlanDomDocument planKML;
         _missionController.addMissionToKML(planKML);

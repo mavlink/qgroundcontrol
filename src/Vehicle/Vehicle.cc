@@ -731,7 +731,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
                 _capabilitiesRetryElapsed.start();
             } else if (_capabilitiesRetryElapsed.elapsed() > 10000){
                 qCDebug(VehicleLog) << "Giving up on getting AUTOPILOT_VERSION after 10 seconds";
-                qgcApp()->showMessage(QStringLiteral("Vehicle failed to send AUTOPILOT_VERSION after waiting/retrying for 10 seconds"));
+                qgcApp()->showAppMessage(QStringLiteral("Vehicle failed to send AUTOPILOT_VERSION after waiting/retrying for 10 seconds"));
                 _handleUnsupportedRequestAutopilotCapabilities();
             } else {
                 // Vehicle never sent us AUTOPILOT_VERSION response. Try again.
@@ -2174,7 +2174,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
 
     if (_priorityLink.data() != newPriorityLink) {
         if (_priorityLink) {
-            qgcApp()->showMessage((tr("switch to %2 as priority link")).arg(newPriorityLink->getName()));
+            qgcApp()->showAppMessage((tr("switch to %2 as priority link")).arg(newPriorityLink->getName()));
         }
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
 
@@ -2629,19 +2629,19 @@ void Vehicle::sendMessageMultiple(mavlink_message_t message)
 void Vehicle::_missionManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showMessage(tr("Mission transfer failed. Error: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("Mission transfer failed. Error: %1").arg(errorMsg));
 }
 
 void Vehicle::_geoFenceManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showMessage(tr("GeoFence transfer failed. Error: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("GeoFence transfer failed. Error: %1").arg(errorMsg));
 }
 
 void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
 {
     Q_UNUSED(errorCode);
-    qgcApp()->showMessage(tr("Rally Point transfer failed. Error: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("Rally Point transfer failed. Error: %1").arg(errorMsg));
 }
 
 void Vehicle::_clearCameraTriggerPoints()
@@ -2897,7 +2897,7 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
             }
         }
     } else {
-        qgcApp()->showMessage((tr("%1 communication to auxiliary link %2 %3")).arg(_vehicleIdSpeech()).arg(link->getName()).arg(active ? "regained" : "lost"));
+        qgcApp()->showAppMessage((tr("%1 communication to auxiliary link %2 %3")).arg(_vehicleIdSpeech()).arg(link->getName()).arg(active ? "regained" : "lost"));
         _updatePriorityLink(false /* updateActive */, true /* sendCommand */);
     }
 
@@ -2906,17 +2906,17 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
     if (communicationRegained) {
         commSpeech = tr("Communication regained");
         if (_links.count() > 1) {
-            qgcApp()->showMessage(tr("Communication regained to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
+            qgcApp()->showAppMessage(tr("Communication regained to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
         } else if (multiVehicle) {
-            qgcApp()->showMessage(tr("Communication regained to vehicle %1").arg(_id));
+            qgcApp()->showAppMessage(tr("Communication regained to vehicle %1").arg(_id));
         }
     }
     if (communicationLost) {
         commSpeech = tr("Communication lost");
         if (_links.count() > 1) {
-            qgcApp()->showMessage(tr("Communication lost to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
+            qgcApp()->showAppMessage(tr("Communication lost to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
         } else if (multiVehicle) {
-            qgcApp()->showMessage(tr("Communication lost to vehicle %1").arg(_id));
+            qgcApp()->showAppMessage(tr("Communication lost to vehicle %1").arg(_id));
         }
     }
     if (multiVehicle && (communicationLost || communicationRegained)) {
@@ -3096,7 +3096,7 @@ QString Vehicle::gotoFlightMode() const
 void Vehicle::guidedModeRTL(bool smartRTL)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeRTL(this, smartRTL);
@@ -3105,7 +3105,7 @@ void Vehicle::guidedModeRTL(bool smartRTL)
 void Vehicle::guidedModeLand()
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeLand(this);
@@ -3114,7 +3114,7 @@ void Vehicle::guidedModeLand()
 void Vehicle::guidedModeTakeoff(double altitudeRelative)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
@@ -3133,7 +3133,7 @@ void Vehicle::startMission()
 void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     if (!coordinate().isValid()) {
@@ -3141,7 +3141,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     }
     double maxDistance = _settingsManager->flyViewSettings()->maxGoToLocationDistance()->rawValue().toDouble();
     if (coordinate().distanceTo(gotoCoord) > maxDistance) {
-        qgcApp()->showMessage(QString("New location is too far. Must be less than %1 %2.").arg(qRound(FactMetaData::metersToAppSettingsDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsDistanceUnitsString()));
+        qgcApp()->showAppMessage(QString("New location is too far. Must be less than %1 %2.").arg(qRound(FactMetaData::metersToAppSettingsDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsDistanceUnitsString()));
         return;
     }
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
@@ -3150,7 +3150,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
 void Vehicle::guidedModeChangeAltitude(double altitudeChange)
 {
     if (!guidedModeSupported()) {
-        qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
+        qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange);
@@ -3159,7 +3159,7 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange)
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
 {
     if (!orbitModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
+        qgcApp()->showAppMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -3191,7 +3191,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
 void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 {
     if (!roiModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -3225,7 +3225,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
 void Vehicle::stopGuidedModeROI()
 {
     if (!roiModeSupported()) {
-        qgcApp()->showMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        qgcApp()->showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
         return;
     }
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -3259,7 +3259,7 @@ void Vehicle::stopGuidedModeROI()
 void Vehicle::pauseVehicle()
 {
     if (!pauseVehicleSupported()) {
-        qgcApp()->showMessage(QStringLiteral("Pause not supported by vehicle."));
+        qgcApp()->showAppMessage(QStringLiteral("Pause not supported by vehicle."));
         return;
     }
     _firmwarePlugin->pauseVehicle(this);
@@ -3383,7 +3383,7 @@ void Vehicle::_sendMavCommandAgain()
 
         emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
         if (queuedCommand.showError) {
-            qgcApp()->showMessage(tr("Vehicle did not respond to command: %1").arg(_toolbox->missionCommandTree()->friendlyName(queuedCommand.command)));
+            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(_toolbox->missionCommandTree()->friendlyName(queuedCommand.command)));
         }
         _mavCommandQueue.removeFirst();
         _sendNextQueuedMavCommand();
@@ -3535,7 +3535,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
 #if !defined(NO_ARDUPILOT_DIALECT)
     if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
-        qgcApp()->showMessage(tr("Bootloader flash succeeded"));
+        qgcApp()->showAppMessage(tr("Bootloader flash succeeded"));
     }
 #endif
 
@@ -3552,16 +3552,16 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         QString commandName = _toolbox->missionCommandTree()->friendlyName(static_cast<MAV_CMD>(ack.command));
         switch (ack.result) {
         case MAV_RESULT_TEMPORARILY_REJECTED:
-            qgcApp()->showMessage(tr("%1 command temporarily rejected").arg(commandName));
+            qgcApp()->showAppMessage(tr("%1 command temporarily rejected").arg(commandName));
             break;
         case MAV_RESULT_DENIED:
-            qgcApp()->showMessage(tr("%1 command denied").arg(commandName));
+            qgcApp()->showAppMessage(tr("%1 command denied").arg(commandName));
             break;
         case MAV_RESULT_UNSUPPORTED:
-            qgcApp()->showMessage(tr("%1 command not supported").arg(commandName));
+            qgcApp()->showAppMessage(tr("%1 command not supported").arg(commandName));
             break;
         case MAV_RESULT_FAILED:
-            qgcApp()->showMessage(tr("%1 command failed").arg(commandName));
+            qgcApp()->showAppMessage(tr("%1 command failed").arg(commandName));
             break;
         default:
             // Do nothing

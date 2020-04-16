@@ -97,7 +97,7 @@ void ParameterEditorController::saveToFile(const QString& filename)
         QFile file(parameterFilename);
 
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qgcApp()->showMessage(tr("Unable to create file: %1").arg(parameterFilename));
+            qgcApp()->showAppMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
 
@@ -115,7 +115,7 @@ void ParameterEditorController::loadFromFile(const QString& filename)
         QFile file(filename);
 
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qgcApp()->showMessage(tr("Unable to open file: %1").arg(filename));
+            qgcApp()->showAppMessage(tr("Unable to open file: %1").arg(filename));
             return;
         }
 

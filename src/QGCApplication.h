@@ -70,8 +70,11 @@ public:
     /// multiple times.
     void reportMissingParameter(int componentId, const QString& name);
 
-    /// Show a non-modal message to the user
-    Q_SLOT void showMessage(const QString& message);
+    /// Show non-modal vehicle message to the user
+    Q_SLOT void showVehicleMessage(const QString& message);
+
+    /// Show modal application message to the user
+    Q_SLOT void showAppMessage(const QString& message, const QString& title = QString());
 
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) const { return _fakeMobile; }

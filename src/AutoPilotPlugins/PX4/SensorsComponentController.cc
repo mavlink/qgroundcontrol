@@ -179,7 +179,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showMessage(tr("Calibration failed. Calibration log will be displayed."));
+            qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
             break;
     }
     

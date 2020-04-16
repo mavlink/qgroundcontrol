@@ -85,7 +85,7 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (qgcApp()->toolbox()->multiVehicleManager()->vehicles()->count() > 1) {
-        qgcApp()->showMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
+        qgcApp()->showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
 		return;
 	}
 	
