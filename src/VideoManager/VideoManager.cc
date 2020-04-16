@@ -427,7 +427,7 @@ VideoManager::_tcpUrlChanged()
 void
 VideoManager::_lowLatencyModeChanged()
 {
-    restartVideo();
+    //restartVideo();
 }
 
 //-----------------------------------------------------------------------------
