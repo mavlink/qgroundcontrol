@@ -220,14 +220,14 @@ VideoManager::startRecording(const QString& videoFile)
     }
 #if defined(QGC_GST_STREAMING)
     if (!_videoReceiver) {
-        qgcApp()->showMessage(tr("Video receiver is not ready."));
+        qgcApp()->showAppMessage(tr("Video receiver is not ready."));
         return;
     }
 
     const VideoReceiver::FILE_FORMAT fileFormat = static_cast<VideoReceiver::FILE_FORMAT>(_videoSettings->recordingFormat()->rawValue().toInt());
 
     if(fileFormat < VideoReceiver::FILE_FORMAT_MIN || fileFormat >= VideoReceiver::FILE_FORMAT_MAX) {
-        qgcApp()->showMessage(tr("Invalid video format defined."));
+        qgcApp()->showAppMessage(tr("Invalid video format defined."));
         return;
     }
 
@@ -237,7 +237,7 @@ VideoManager::startRecording(const QString& videoFile)
     QString savePath = qgcApp()->toolbox()->settingsManager()->appSettings()->videoSavePath();
 
     if(savePath.isEmpty()) {
-        qgcApp()->showMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        qgcApp()->showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
         return;
     }
 

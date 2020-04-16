@@ -66,7 +66,7 @@ void ADSBVehicleManager::adsbVehicleUpdate(const ADSBVehicle::VehicleInfo_t vehi
 
 void ADSBVehicleManager::_tcpError(const QString errorMsg)
 {
-    qgcApp()->showMessage(tr("ADSB Server Error: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("ADSB Server Error: %1").arg(errorMsg));
 }
 
 

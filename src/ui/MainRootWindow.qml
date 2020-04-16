@@ -151,24 +151,23 @@ ApplicationWindow {
     //-- Global simple message dialog
 
     function showMessageDialog(title, text) {
-        if(simpleMessageDialog.visible) {
-            simpleMessageDialog.close()
+        var dialog = simpleMessageDialog.createObject(mainWindow, { title: title, text: text })
+        dialog.open()
+    }
+
+    Component {
+        id: simpleMessageDialog
+
+        MessageDialog {
+            standardButtons:    StandardButton.Ok
+            modality:           Qt.ApplicationModal
+            visible:            false
         }
-        simpleMessageDialog.title = title
-        simpleMessageDialog.text  = text
-        simpleMessageDialog.open()
     }
 
     /// Saves main window position and size
     MainWindowSavedState {
         window: mainWindow
-    }
-
-    MessageDialog {
-        id:                 simpleMessageDialog
-        standardButtons:    StandardButton.Ok
-        modality:           Qt.ApplicationModal
-        visible:            false
     }
 
     //-------------------------------------------------------------------------
@@ -524,7 +523,7 @@ ApplicationWindow {
     property var    _messageQueue:      []
     property string _systemMessage:     ""
 
-    function showMessage(message) {
+    function showVehicleMessage(message) {
         vehicleMessageArea.close()
         if(systemMessageArea.visible || QGroundControl.videoManager.fullScreen) {
             _messageQueue.push(message)

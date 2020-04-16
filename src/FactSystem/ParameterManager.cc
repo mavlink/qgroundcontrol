@@ -782,7 +782,7 @@ void ParameterManager::_waitingParamTimeout(void)
                     _waitingWriteParamNameMap[componentId].remove(paramName);
                     QString errorMsg = tr("Parameter write failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(componentId).arg(paramName);
                     qCDebug(ParameterManagerLog) << errorMsg;
-                    qgcApp()->showMessage(errorMsg);
+                    qgcApp()->showAppMessage(errorMsg);
                 }
             }
         }
@@ -804,7 +804,7 @@ void ParameterManager::_waitingParamTimeout(void)
                     _waitingReadParamNameMap[componentId].remove(paramName);
                     QString errorMsg = tr("Parameter read failed: veh:%1 comp:%2 param:%3").arg(_vehicle->id()).arg(componentId).arg(paramName);
                     qCDebug(ParameterManagerLog) << errorMsg;
-                    qgcApp()->showMessage(errorMsg);
+                    qgcApp()->showAppMessage(errorMsg);
                 }
             }
         }
@@ -1029,7 +1029,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
             for (const QString& name: cacheMap.keys()) {
                 _debugCacheParamSeen[componentId][name] = false;
             }
-            qgcApp()->showMessage(tr("Parameter cache CRC match failed"));
+            qgcApp()->showAppMessage(tr("Parameter cache CRC match failed"));
         }
     }
 }
@@ -1296,7 +1296,7 @@ void ParameterManager::_checkInitialLoadComplete(void)
                               "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
                               "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(qgcApp()->applicationName()).arg(_vehicle->id());
         qCDebug(ParameterManagerLog) << errorMsg;
-        qgcApp()->showMessage(errorMsg);
+        qgcApp()->showAppMessage(errorMsg);
         if (!qgcApp()->runningUnitTests()) {
             qCWarning(ParameterManagerLog) << _logVehiclePrefix(-1) << "The following parameter indices could not be loaded after the maximum number of retries: " << indexList;
         }
@@ -1320,7 +1320,7 @@ void ParameterManager::_initialRequestTimeout(void)
             QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
                                   "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(qgcApp()->applicationName());
             qCDebug(ParameterManagerLog) << errorMsg;
-            qgcApp()->showMessage(errorMsg);
+            qgcApp()->showAppMessage(errorMsg);
         }
     }
 }
