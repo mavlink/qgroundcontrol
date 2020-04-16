@@ -912,6 +912,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         return;
     }
 
+    if (abs(altitudeChange) < 0.01) {
+        // This prevents unecessary changes to Guided mode when the users selects pause and doesn't really touch the altitude slider
+        return;
+    }
+
     setGuidedMode(vehicle, true);
 
     mavlink_message_t msg;

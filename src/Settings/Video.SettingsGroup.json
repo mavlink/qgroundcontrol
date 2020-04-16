@@ -117,5 +117,12 @@
     "longDescription":  "Disable Video Stream when disarmed.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "lowLatencyMode",
+    "shortDescription": "Tweaks video for lower latency",
+    "longDescription":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
