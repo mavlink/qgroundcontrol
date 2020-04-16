@@ -418,21 +418,21 @@ QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(ValuesWidgetContr
     QmlObjectListModel* columnModel = controller.appendRow();
     InstrumentValue* colValue = columnModel->value<InstrumentValue*>(0);
     colValue->setFact("Vehicle", "AltitudeRelative");
-    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setText(colValue->fact()->shortDescription());
     colValue->setShowUnits(true);
     colValue->setFontSize(InstrumentValue::LargeFontSize);
 
     columnModel = controller.appendRow();
     colValue = columnModel->value<InstrumentValue*>(0);
     colValue->setFact("Vehicle", "GroundSpeed");
-    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setText(colValue->fact()->shortDescription());
     colValue->setShowUnits(true);
     colValue->setFontSize(InstrumentValue::DefaultFontSize);
 
     columnModel = controller.appendRow();
     colValue = columnModel->value<InstrumentValue*>(0);
     colValue->setFact("Vehicle", "FlightTime");
-    colValue->setLabel(colValue->fact()->shortDescription());
+    colValue->setText(colValue->fact()->shortDescription());
     colValue->setShowUnits(false);
     colValue->setFontSize(InstrumentValue::DefaultFontSize);
 

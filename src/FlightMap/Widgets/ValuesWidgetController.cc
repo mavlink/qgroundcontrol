@@ -40,11 +40,11 @@ void ValuesWidgetController::_connectSignalsToController(InstrumentValue* value,
 {
     connect(value, &InstrumentValue::factNameChanged,       controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::factGroupNameChanged,  controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::labelChanged,          controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::textChanged,           controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::fontSizeChanged,       controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::showUnitsChanged,      controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::iconChanged,           controller, &ValuesWidgetController::_saveSettings);
-    connect(value, &InstrumentValue::iconPositionChanged,   controller, &ValuesWidgetController::_saveSettings);
+    connect(value, &InstrumentValue::labelPositionChanged,   controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::rangeTypeChanged,      controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::rangeValuesChanged,    controller, &ValuesWidgetController::_saveSettings);
     connect(value, &InstrumentValue::rangeColorsChanged,    controller, &ValuesWidgetController::_saveSettings);
@@ -229,7 +229,7 @@ void ValuesWidgetController::_loadSettings(void)
 
             InstrumentValue* colValue = appendColumn(rowIndex);
             colValue->setFact(factGroupName, factName);
-            colValue->setLabel(colValue->fact()->shortDescription());
+            colValue->setText(colValue->fact()->shortDescription());
             colValue->setShowUnits(true);
             colValue->setFontSize(altitudeProperties.contains(factName) ? InstrumentValue::LargeFontSize : InstrumentValue::DefaultFontSize);
         }
@@ -248,7 +248,7 @@ void ValuesWidgetController::_loadSettings(void)
 
             InstrumentValue* colValue = appendColumn(rowIndex);
             colValue->setFact(factGroupName, factName);
-            colValue->setLabel(colValue->fact()->shortDescription());
+            colValue->setText(colValue->fact()->shortDescription());
             colValue->setShowUnits(true);
             colValue->setFontSize(InstrumentValue::SmallFontSize);
         }
