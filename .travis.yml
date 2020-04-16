@@ -190,7 +190,7 @@ before_script:
 script:
   # run qmake
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
-  - if [[ "${TRAVIS_BRANCH}" =~ "^Prefix" ]]; then
+  - if [[ ${TRAVIS_BRANCH} =~ ^Prefix ]]; then
         echo "Prefix match";
     else
         echo "No prefix match";
