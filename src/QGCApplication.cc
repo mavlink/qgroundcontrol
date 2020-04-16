@@ -27,6 +27,7 @@
 #include <QRegularExpression>
 #include <QFontDatabase>
 #include <QQuickWindow>
+#include <QQuickImageProvider>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -102,6 +103,7 @@
 #include "TrajectoryPoints.h"
 #include "ValuesWidgetController.h"
 #include "RCToParamDialogController.h"
+#include "QGCImageProvider.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -572,6 +574,10 @@ bool QGCApplication::_initForNormalAppBoot()
     QSettings settings;
 
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
+
+    // Image provider for PX4 Flow
+    QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
+    _qmlAppEngine->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
 
     QQuickWindow* rootWindow = (QQuickWindow*)qgcApp()->mainRootWindow();
 

@@ -7,13 +7,15 @@ Note: This file only contains high level features or important fixes.
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
 * Fly: New instrument values display/editing support
 * Plan: Added new VTOL Landing Pattern support
+* Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
 
 ## 4.0
 
 ### 4.0.6 - Not yet released
 
-* Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
 * Analyze/Log Download - Fix download on mobile versions of QGC
+* Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
+* PX4 Flow: Fix video display problem
 
 ### 4.0.5 - Stable
 
