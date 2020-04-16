@@ -16,12 +16,12 @@
 
 const char*  InstrumentValue::_versionKey =             "version";
 const char*  InstrumentValue::_factGroupNameKey =       "groupName";
-const char*  InstrumentValue::_factNameKey =             "factName";
-const char*  InstrumentValue::_labelKey =               "label";
+const char*  InstrumentValue::_factNameKey =            "factName";
+const char*  InstrumentValue::_textKey =                "text";
 const char*  InstrumentValue::_fontSizeKey =            "fontSize";
 const char*  InstrumentValue::_showUnitsKey =           "showUnits";
 const char*  InstrumentValue::_iconKey =                "icon";
-const char*  InstrumentValue::_iconPositionKey =        "iconPosition";
+const char*  InstrumentValue::_labelPositionKey =       "labelPosition";
 const char*  InstrumentValue::_rangeTypeKey =           "rangeType";
 const char*  InstrumentValue::_rangeValuesKey =         "rangeValues";
 const char*  InstrumentValue::_rangeColorsKey =         "rangeColors";
@@ -31,8 +31,8 @@ const char*  InstrumentValue::_vehicleFactGroupName =   "Vehicle";
 
 QStringList InstrumentValue::_iconNames;
 
-// Important: The indices of these strings must match the InstrumentValue::IconPosition enumconst QStringList InstrumentValue::_iconPositionNames
-const QStringList InstrumentValue::_iconPositionNames = {
+// Important: The indices of these strings must match the InstrumentValue::LabelPosition enumconst QStringList InstrumentValue::_labelPositionNames
+const QStringList InstrumentValue::_labelPositionNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "Above"),
     QT_TRANSLATE_NOOP("InstrumentValue", "Left"),
 };
@@ -182,13 +182,13 @@ void InstrumentValue::setFontSize(FontSize fontSize)
 
 void InstrumentValue::saveToSettings(QSettings& settings) const
 {
-    settings.setValue(_versionKey,      1);
-    settings.setValue(_labelKey,        _label);
-    settings.setValue(_fontSizeKey,     _fontSize);
-    settings.setValue(_showUnitsKey,    _showUnits);
-    settings.setValue(_iconKey,         _icon);
-    settings.setValue(_iconPositionKey, _iconPosition);
-    settings.setValue(_rangeTypeKey,    _rangeType);
+    settings.setValue(_versionKey,          1);
+    settings.setValue(_textKey,             _text);
+    settings.setValue(_fontSizeKey,         _fontSize);
+    settings.setValue(_showUnitsKey,        _showUnits);
+    settings.setValue(_iconKey,             _icon);
+    settings.setValue(_labelPositionKey,    _labelPosition);
+    settings.setValue(_rangeTypeKey,        _rangeType);
 
     if (_rangeType != NoRangeInfo) {
         settings.setValue(_rangeValuesKey, _rangeValues);
@@ -198,13 +198,13 @@ void InstrumentValue::saveToSettings(QSettings& settings) const
     case NoRangeInfo:
         break;
     case ColorRange:
-        settings.setValue(_rangeColorsKey, _rangeColors);
+        settings.setValue(_rangeColorsKey,      _rangeColors);
         break;
     case OpacityRange:
-        settings.setValue(_rangeOpacitiesKey, _rangeOpacities);
+        settings.setValue(_rangeOpacitiesKey,   _rangeOpacities);
         break;
     case IconSelectRange:
-        settings.setValue(_rangeIconsKey, _rangeIcons);
+        settings.setValue(_rangeIconsKey,       _rangeIcons);
         break;
     }
 
@@ -220,11 +220,11 @@ void InstrumentValue::saveToSettings(QSettings& settings) const
 void InstrumentValue::readFromSettings(const QSettings& settings)
 {
     _factGroupName =    settings.value(_factGroupNameKey,   QString()).toString();
-    _label =            settings.value(_labelKey,           QString()).toString();
+    _text =             settings.value(_textKey,            QString()).toString();
     _fontSize =         settings.value(_fontSizeKey,        DefaultFontSize).value<FontSize>();
     _showUnits =        settings.value(_showUnitsKey,       true).toBool();
     _icon =             settings.value(_iconKey,            QString()).toString();
-    _iconPosition =     settings.value(_iconPositionKey,    IconLeft).value<IconPosition>();
+    _labelPosition =     settings.value(_labelPositionKey,  LabelLeft).value<LabelPosition>();
     _rangeType =        settings.value(_rangeTypeKey,       NoRangeInfo).value<RangeType>();
 
     // Do this now, since the signal will cause _resetRangeInfo to be called trashing values
@@ -258,22 +258,22 @@ void InstrumentValue::readFromSettings(const QSettings& settings)
 
     emit factChanged            (_fact);
     emit factGroupNameChanged   (_factGroupName);
-    emit labelChanged           (_label);
+    emit textChanged            (_text);
     emit fontSizeChanged        (_fontSize);
     emit showUnitsChanged       (_showUnits);
     emit iconChanged            (_icon);
-    emit iconPositionChanged    (_iconPosition);
+    emit labelPositionChanged   (_labelPosition);
     emit rangeValuesChanged     (_rangeValues);
     emit rangeColorsChanged     (_rangeColors);
     emit rangeOpacitiesChanged  (_rangeOpacities);
     emit rangeIconsChanged      (_rangeIcons);
 }
 
-void InstrumentValue::setLabel(const QString& label)
+void InstrumentValue::setText(const QString& text)
 {
-    if (label != _label) {
-        _label = label;
-        emit labelChanged(label);
+    if (text != _text) {
+        _text = text;
+        emit textChanged(text);
     }
 }
 
@@ -289,13 +289,13 @@ void InstrumentValue::clearFact(void)
 {
     _fact = nullptr;
     _factGroupName.clear();
-    _label.clear();
+    _text.clear();
     _icon.clear();
     _showUnits = true;
 
     emit factChanged            (_fact);
     emit factGroupNameChanged   (_factGroupName);
-    emit labelChanged           (_label);
+    emit textChanged            (_text);
     emit iconChanged            (_icon);
     emit showUnitsChanged       (_showUnits);
 }
@@ -308,11 +308,11 @@ void InstrumentValue::setIcon(const QString& icon)
     }
 }
 
-void InstrumentValue::setIconPosition(IconPosition iconPosition)
+void InstrumentValue::setLabelPosition(LabelPosition labelPosition)
 {
-    if (iconPosition != _iconPosition) {
-        _iconPosition = iconPosition;
-        emit iconPositionChanged(iconPosition);
+    if (labelPosition != _labelPosition) {
+        _labelPosition = labelPosition;
+        emit labelPositionChanged(labelPosition);
     }
 }
 
