@@ -4,13 +4,15 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.6 - Not yet released
+## 4.0.7 - Not yet releases
+
+### 4.0.6 - Stable
 
 * Analyze/Log Download - Fix download on mobile versions of QGC
 * Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
 * PX4 Flow: Fix video display problem
 
-### 4.0.5 - Stable
+### 4.0.5
 
 * Solo: Fix mission upload failures
 * Plan: Fix crash when using Create Plan - Survey for fixed wing vehicle
