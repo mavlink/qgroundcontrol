@@ -295,7 +295,7 @@ SharedLinkInterfacePointer LinkManager::sharedLinkInterfacePointerForLink(LinkIn
 bool LinkManager::_connectionsSuspendedMsg(void)
 {
     if (_connectionsSuspended) {
-        qgcApp()->showMessage(tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        qgcApp()->showAppMessage(tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     } else {
         return false;
@@ -932,7 +932,7 @@ void LinkManager::_activeLinkCheck(void)
                 foundNSHPrompt = true;
             }
         }
-        qgcApp()->showMessage(
+        qgcApp()->showAppMessage(
             foundNSHPrompt ?
                 tr("Please check to make sure you have an SD Card inserted in your Vehicle and try again.") :
                 tr("Your Vehicle is not responding. If this continues, shutdown %1, restart the Vehicle letting it boot completely, then start %1.").arg(qgcApp()->applicationName()));

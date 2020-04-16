@@ -603,7 +603,7 @@ bool QGCApplication::_initForNormalAppBoot()
     toolbox()->joystickManager()->init();
 
     if (_settingsUpgraded) {
-        showMessage(QString(tr("The format for %1 saved settings has been modified. "
+        showAppMessage(QString(tr("The format for %1 saved settings has been modified. "
                     "Your saved settings have been reset to defaults.")).arg(applicationName()));
     }
 
@@ -611,9 +611,12 @@ bool QGCApplication::_initForNormalAppBoot()
     toolbox()->linkManager()->startAutoConnectedLinks();
 
     if (getQGCMapEngine()->wasCacheReset()) {
-        showMessage(tr("The Offline Map Cache database has been upgraded. "
+        showAppMessage(tr("The Offline Map Cache database has been upgraded. "
                     "Your old map cache sets have been reset."));
     }
+
+    showAppMessage("Foo");
+    showAppMessage("Bar");
 
     settings.sync();
     return true;
@@ -644,17 +647,17 @@ QGCApplication* qgcApp(void)
 
 void QGCApplication::informationMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    showMessage(msg);
+    showAppMessage(msg);
 }
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    showMessage(msg);
+    showAppMessage(msg);
 }
 
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& /*title*/, const QString& msg)
 {
-    showMessage(msg);
+    showAppMessage(msg);
 }
 
 void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
@@ -680,7 +683,7 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
         QFile tempFile(tempLogfile);
         if (!tempFile.copy(saveFilePath)) {
             QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString());
-            showMessage(error);
+            showAppMessage(error);
         }
     }
     QFile::remove(tempLogfile);
@@ -697,14 +700,14 @@ bool QGCApplication::_checkTelemetrySavePath(bool /*useMessageBox*/)
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        showMessage(error);
+        showAppMessage(error);
         return false;
     }
 
     QDir saveDir(saveDirPath);
     if (!saveDir.exists()) {
         QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
-        showMessage(error);
+        showAppMessage(error);
         return false;
     }
 
@@ -737,7 +740,7 @@ void QGCApplication::_missingParamsDisplay(void)
         }
         _missingParams.clear();
 
-        showMessage(tr("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
+        showAppMessage(tr("Parameters are missing from firmware. You may be running a version of firmware QGC does not work correctly with or your firmware has a bug in it. Missing params: %1").arg(params));
     }
 }
 
@@ -748,8 +751,7 @@ QObject* QGCApplication::_rootQmlObject()
     return nullptr;
 }
 
-
-void QGCApplication::showMessage(const QString& message)
+void QGCApplication::showVehicleMessage(const QString& message)
 {
     // PreArm messages are handled by Vehicle and shown in Map
     if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
@@ -759,10 +761,27 @@ void QGCApplication::showMessage(const QString& message)
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
-        QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+        QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
     } else if (runningUnitTests()) {
         // Unit tests can run without UI
-        qDebug() << "QGCApplication::showMessage unittest" << message;
+        qDebug() << "QGCApplication::showVehicleMessage unittest" << message;
+    } else {
+        qWarning() << "Internal error";
+    }
+}
+
+void QGCApplication::showAppMessage(const QString& message, const QString& title)
+{
+    QString dialogTitle = title.isEmpty() ? applicationName() : title;
+
+    QObject* rootQmlObject = _rootQmlObject();
+    if (rootQmlObject) {
+        QVariant varReturn;
+        QVariant varMessage = QVariant::fromValue(message);
+        QMetaObject::invokeMethod(_rootQmlObject(), "showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle) /* No title */, Q_ARG(QVariant, varMessage));
+    } else if (runningUnitTests()) {
+        // Unit tests can run without UI
+        qDebug() << "QGCApplication::showAppMessage unittest" << message << dialogTitle;
     } else {
         qWarning() << "Internal error";
     }

@@ -89,7 +89,7 @@ void
 AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
     qCDebug(AirMapManagerLog) << "Error: "<<what<<", msg: "<<airmapdMessage<<", details: "<<airmapdDetails;
-    qgcApp()->showMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
+    qgcApp()->showAppMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
 //-----------------------------------------------------------------------------

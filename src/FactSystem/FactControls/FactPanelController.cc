@@ -120,7 +120,7 @@ void FactPanelController::_showInternalError(const QString& errorMsg)
 {
     _notifyPanelErrorMsg(tr("Internal Error: %1").arg(errorMsg));
     qCWarning(FactPanelControllerLog) << "Internal Error" << errorMsg;
-    qgcApp()->showMessage(errorMsg);
+    qgcApp()->showAppMessage(errorMsg);
 }
 
 void FactPanelController::getMissingParameters(QStringList rgNames)

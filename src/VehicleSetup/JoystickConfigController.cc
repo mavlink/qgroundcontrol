@@ -253,7 +253,7 @@ void JoystickConfigController::nextButtonClicked()
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_axisCount < _axisMinimum) {
-            qgcApp()->showMessage(tr("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
+            qgcApp()->showAppMessage(tr("Detected %1 joystick axes. To operate PX4, you need at least %2 axes.").arg(_axisCount).arg(_axisMinimum));
             return;
         }
         _startCalibration();
