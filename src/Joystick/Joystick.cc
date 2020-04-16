@@ -515,12 +515,32 @@ void Joystick::_handleButtons()
                 QString buttonAction = _buttonActionArray[buttonIndex]->action;
                 if(buttonAction.isEmpty() || buttonAction == _buttonActionNone)
                     continue;
-                //-- Process single button
                 if(!_buttonActionArray[buttonIndex]->repeat) {
                     //-- This button just went down
                     if(_rgButtonValues[buttonIndex] == BUTTON_DOWN) {
-                        qCDebug(JoystickLog) << "Single button triggered" << buttonIndex << buttonAction;
-                        _executeButtonAction(buttonAction, true);
+                        // Check for a multi-button action
+                        QList<int> rgButtons = { buttonIndex };
+                        bool executeButtonAction = true;
+                        for (int multiIndex = 0; multiIndex < _totalButtonCount; multiIndex++) {
+                            if (multiIndex != buttonIndex) {
+                                if (_buttonActionArray[multiIndex] && _buttonActionArray[multiIndex]->action == buttonAction) {
+                                    // We found a multi-button action
+                                    if (_rgButtonValues[multiIndex] == BUTTON_DOWN || _rgButtonValues[multiIndex] == BUTTON_REPEAT) {
+                                        // So far so good
+                                        rgButtons.append(multiIndex);
+                                        continue;
+                                    } else {
+                                        // We are missing a press we need
+                                        executeButtonAction = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (executeButtonAction) {
+                            qCDebug(JoystickLog) << "Action triggered" << rgButtons << buttonAction;
+                            _executeButtonAction(buttonAction, true);
+                        }
                     }
                 } else {
                     //-- Process repeat buttons
