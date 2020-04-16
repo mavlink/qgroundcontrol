@@ -132,7 +132,7 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     QString hitlParam("SYS_HITL");
     if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam) &&
             _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
-        qgcApp()->showMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
+        qgcApp()->showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }
 

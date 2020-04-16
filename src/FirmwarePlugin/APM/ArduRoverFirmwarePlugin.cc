@@ -76,7 +76,7 @@ void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double 
     Q_UNUSED(vehicle);
     Q_UNUSED(altitudeChange);
 
-    qgcApp()->showMessage(QStringLiteral("Change altitude not supported."));
+    qgcApp()->showAppMessage(QStringLiteral("Change altitude not supported."));
 }
 
 bool ArduRoverFirmwarePlugin::supportsNegativeThrust(Vehicle* /*vehicle*/)

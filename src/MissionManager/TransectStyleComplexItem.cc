@@ -520,7 +520,7 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
     if (_followTerrain) {
         if (readyForSaveState() != ReadyForSave) {
             qCWarning(TransectStyleComplexItemLog) << "_adjustTransectPointsForTerrain called when terrain data not ready";
-            qgcApp()->showMessage(tr("INTERNAL ERROR: TransectStyleComplexItem::_adjustTransectPointsForTerrain called when terrain data not ready. Plan will be incorrect."));
+            qgcApp()->showAppMessage(tr("INTERNAL ERROR: TransectStyleComplexItem::_adjustTransectPointsForTerrain called when terrain data not ready. Plan will be incorrect."));
             return;
         }
 

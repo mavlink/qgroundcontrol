@@ -467,7 +467,7 @@ bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     if (!ShapeFileHelper::loadPolygonFromFile(file, rgCoords, errorString)) {
-        qgcApp()->showMessage(errorString);
+        qgcApp()->showAppMessage(errorString);
         return false;
     }
 

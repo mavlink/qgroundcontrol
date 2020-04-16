@@ -353,7 +353,7 @@ bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
     if (!KMLHelper::loadPolylineFromFile(kmlFile, rgCoords, errorString)) {
-        qgcApp()->showMessage(errorString);
+        qgcApp()->showAppMessage(errorString);
         return false;
     }
 
