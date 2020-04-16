@@ -997,6 +997,14 @@ Set -1 to disable the check</short_desc>
       <short_desc>Allow arming without GPS</short_desc>
       <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
     </parameter>
+    <parameter default="90.0" name="COM_CPU_MAX" type="FLOAT">
+      <short_desc>Maximum allowed CPU load to still allow arming</short_desc>
+      <long_desc>A negative value disables the check.</long_desc>
+      <min>-1</min>
+      <max>100</max>
+      <unit>%</unit>
+      <increment>1</increment>
+    </parameter>
     <parameter default="2.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A zero or negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
