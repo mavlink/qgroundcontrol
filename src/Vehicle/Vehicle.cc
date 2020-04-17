@@ -1003,7 +1003,7 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
     bool readAloud = false;
 
     if (messageText.startsWith("#")) {
-        messageText.remove("#");
+        messageText.remove(0, 1);
         readAloud = true;
     }
     else if (severity <= MAV_SEVERITY_NOTICE) {
