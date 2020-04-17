@@ -7831,7 +7831,7 @@ At a control output of 1, the steering wheels are at GND_MAX_ANG radians</short_
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.0" name="GND_SPEED_D" type="FLOAT">
+    <parameter default="0.001" name="GND_SPEED_D" type="FLOAT">
       <short_desc>Speed proportional gain</short_desc>
       <long_desc>This is the derivative gain for the speed closed loop controller</long_desc>
       <min>0.00</min>
@@ -7840,7 +7840,7 @@ At a control output of 1, the steering wheels are at GND_MAX_ANG radians</short_
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter default="0.1" name="GND_SPEED_I" type="FLOAT">
+    <parameter default="3.0" name="GND_SPEED_I" type="FLOAT">
       <short_desc>Speed Integral gain</short_desc>
       <long_desc>This is the integral gain for the speed closed loop controller</long_desc>
       <min>0.00</min>
