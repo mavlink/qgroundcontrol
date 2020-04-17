@@ -998,7 +998,7 @@ Set -1 to disable the check</short_desc>
       <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
     </parameter>
     <parameter default="90.0" name="COM_CPU_MAX" type="FLOAT">
-      <short_desc>Maximum allowed CPU load to still allow arming</short_desc>
+      <short_desc>Maximum allowed CPU load to still arm</short_desc>
       <long_desc>A negative value disables the check.</long_desc>
       <min>-1</min>
       <max>100</max>
