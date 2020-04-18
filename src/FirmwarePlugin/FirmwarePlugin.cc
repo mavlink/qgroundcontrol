@@ -671,6 +671,19 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
             this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
+        metaData = new CameraMetaData(
+            tr("Flir Duo R"),
+            160,                // sensorWidth
+            120,                // sensorHeight
+            1920,               // imageWidth
+            1080,               // imageHeight
+            1.9,                // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            0,                  // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
     }
 
     return _cameraList;
