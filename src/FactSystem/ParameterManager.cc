@@ -1448,9 +1448,9 @@ void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPI
         cacheNewFile = true;
     } else if (cacheMajorVersion == newMajorVersion) {
         // Direct hit on major version in cache:
-        //      Cache new file if newer minor version
-        //      Also delete older cache file
-        if (newMinorVersion > cacheMinorVersion) {
+        //      Cache new file if newer/equal minor version. We cache if equal to allow flashing test builds with new parameter metadata.
+        //      Also delete older cache file.
+        if (newMinorVersion >= cacheMinorVersion) {
             cacheNewFile = true;
             QFile::remove(cacheHit);
         }
