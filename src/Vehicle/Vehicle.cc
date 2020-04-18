@@ -1001,8 +1001,17 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
 
     // If the message is NOTIFY or higher severity, or starts with a '#',
     // then read it aloud.
-    if (messageText.startsWith("#") || severity <= MAV_SEVERITY_NOTICE) {
-        messageText.remove("#");
+    bool readAloud = false;
+
+    if (messageText.startsWith("#")) {
+        messageText.remove(0, 1);
+        readAloud = true;
+    }
+    else if (severity <= MAV_SEVERITY_NOTICE) {
+        readAloud = true;
+    }
+
+    if (readAloud) {
         if (!skipSpoken) {
             qgcApp()->toolbox()->audioOutput()->say(messageText);
         }
