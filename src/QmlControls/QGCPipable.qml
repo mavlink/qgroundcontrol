@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick                      2.3
-import QtQuick.Controls             1.2
+import QtQuick                      2.12
+import QtQuick.Controls             2.12
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -34,14 +34,8 @@ Item {
     signal  newWidth(real newWidth)
     signal  popup()
 
-    MouseArea {
-        id: pipMouseArea
-        anchors.fill: parent
-        enabled:      !isHidden
-        hoverEnabled: true
-        onClicked: {
-            pip.activated()
-        }
+    HoverHandler {
+        id: hoverHandler
     }
 
     // MouseArea to drag in order to resize the PiP area
@@ -91,10 +85,30 @@ Item {
         mipmap: true
         anchors.right:  parent.right
         anchors.top:    parent.top
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse) && !inPopup
+        visible:        !isHidden && (ScreenTools.isMobile || hoverHandler.hovered) && !inPopup
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
+    }
+
+    // Resize icon
+    Image {
+        source:         "/qmlimages/PiP.svg"
+        fillMode:       Image.PreserveAspectFit
+        mipmap: true
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top:    parent.top
+        visible:        !isHidden && (ScreenTools.isMobile || hoverHandler.hovered) && !inPopup
+        height:         ScreenTools.defaultFontPixelHeight * 2.5
+        width:          ScreenTools.defaultFontPixelHeight * 2.5
+        sourceSize.height:  height
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                activated()
+            }
+        }
     }
 
     // Resize pip window if necessary when main window is resized
@@ -128,7 +142,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.top:    parent.top
-        visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup && pipMouseArea.containsMouse
+        visible:        !isHidden && !inPopup && !ScreenTools.isMobile && enablePopup && hoverHandler.hovered
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -149,7 +163,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.bottom: parent.bottom
-        visible:        !isHidden && (ScreenTools.isMobile || pipMouseArea.containsMouse)
+        visible:        !isHidden && (ScreenTools.isMobile || hoverHandler.hovered)
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
