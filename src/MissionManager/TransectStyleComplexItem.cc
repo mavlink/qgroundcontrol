@@ -9,7 +9,7 @@
 
 #include "TransectStyleComplexItem.h"
 #include "JsonHelper.h"
-#include "MissionController.h"
+#include "PlanMasterController.h"
 #include "QGCGeo.h"
 #include "QGCQGeoCoordinate.h"
 #include "SettingsManager.h"
@@ -71,6 +71,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(masterController->missionController(),      &MissionController::plannedHomePositionChanged, this, &TransectStyleComplexItem::_rebuildTransects);
 
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
@@ -355,24 +356,7 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     }
 
     _rebuildTransectsPhase1();
-
-    if (_followTerrain) {
-        // Query the terrain data. Once available terrain heights will be calculated
-        _queryTransectsPathHeightInfo();
-    } else {
-        // Not following terrain, just add requested altitude to coords
-        double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
-
-        for (int i=0; i<_transects.count(); i++) {
-            QList<CoordInfo_t>& transect = _transects[i];
-
-            for (int j=0; j<transect.count(); j++) {
-                QGeoCoordinate& coord = transect[j].coord;
-
-                coord.setAltitude(requestedAltitude);
-            }
-        }
-    }
+    _queryTransectsPathHeightInfo();
 
     // Calc bounding cube
     double north = 0.0;
@@ -538,6 +522,36 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
         }
 
         emit lastSequenceNumberChanged(lastSequenceNumber());
+    } else {
+        double requestedAltitude = std::numeric_limits<double>::min();
+        for (const auto& transect : _transectsPathHeightInfo) {
+            for (const auto& path : transect) {
+                for (const auto& height : path.heights) {
+                    requestedAltitude = std::max(height, requestedAltitude);
+                }
+            }
+        }
+        requestedAltitude += _cameraCalc.distanceToSurface()->rawValue().toDouble();
+        if (coordinateHasRelativeAltitude()) {
+            requestedAltitude -= masterController()->missionController()->plannedHomePosition().altitude();
+        }
+        for (int i=0; i<_transects.count(); i++) {
+            QList<CoordInfo_t>& transect = _transects[i];
+            for (int j=0; j<transect.count(); j++) {
+                QGeoCoordinate& coord = transect[j].coord;
+                coord.setAltitude(requestedAltitude);
+            }
+        }
+    }
+    if (_transects.count()) {
+        if (_transects.first().count()) {
+            _coordinate.setAltitude(_transects.first().first().coord.altitude());
+            emit coordinateChanged(coordinate());
+        }
+        if (_transects.last().count()) {
+            _coordinate.setAltitude(_transects.last().last().coord.altitude());
+            emit exitCoordinateChanged(exitCoordinate());
+        }
     }
 }
 
