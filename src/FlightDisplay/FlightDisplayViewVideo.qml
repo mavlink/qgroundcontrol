@@ -206,6 +206,11 @@ Item {
         }
     }
 
+    VideoSettings {
+        id: videoSettings
+        visible: false
+    }
+
     // TODO: Move this to own Qml File.
     RowLayout {
         id: videoTools
@@ -229,7 +234,7 @@ Item {
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    console.log("Test")
+                    videoSettings.open()
                 }
             }
         }

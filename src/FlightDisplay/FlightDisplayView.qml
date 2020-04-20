@@ -463,6 +463,7 @@ Item {
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
             enablePopup:        mainIsMap
+
             onActivated: {
                 mainIsMap = !mainIsMap
                 setStates()
