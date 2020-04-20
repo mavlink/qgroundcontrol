@@ -9,7 +9,8 @@
 
 
 import QtQuick                          2.11
-import QtQuick.Controls                 2.4
+import QtQuick.Controls 2.11 as QQC2
+import QtQuick.Layouts 1.11
 
 import QGroundControl                   1.0
 import QGroundControl.FlightDisplay     1.0
@@ -202,6 +203,35 @@ Item {
                 }
             }
             property int zoom: 0
+        }
+    }
+
+    // TODO: Move this to own Qml File.
+    RowLayout {
+        id: videoTools
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        spacing: 5
+        height: childrenRect.height
+
+        Item {
+            Layout.fillWidth: true
+        }
+
+        Image {
+            source:         "/qmlimages/subMenuButtonImage.png"
+            fillMode:       Image.PreserveAspectFit
+            mipmap: true
+            height:         ScreenTools.defaultFontPixelHeight * 2.0
+            width:          ScreenTools.defaultFontPixelHeight * 2.0
+            sourceSize.height:  height
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    console.log("Test")
+                }
+            }
         }
     }
 }
