@@ -615,9 +615,6 @@ bool QGCApplication::_initForNormalAppBoot()
                     "Your old map cache sets have been reset."));
     }
 
-    showAppMessage("Foo");
-    showAppMessage("Bar");
-
     settings.sync();
     return true;
 }
