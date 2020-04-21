@@ -28,7 +28,7 @@ class AssignedButtonAction : public QObject {
 public:
     AssignedButtonAction(QObject* parent, const QString name);
     QString action;
-    QTime   buttonTime;
+    QElapsedTimer buttonTime;
     bool    repeat = false;
 };
 
@@ -299,7 +299,7 @@ protected:
 
     static int          _transmitterMode;
     int                 _rgFunctionAxis[maxFunction] = {};
-    QTime               _axisTime;
+    QElapsedTimer       _axisTime;
 
     QmlObjectListModel              _assignableButtonActions;
     QList<AssignedButtonAction*>    _buttonActionArray;
