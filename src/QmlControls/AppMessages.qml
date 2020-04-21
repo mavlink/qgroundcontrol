@@ -36,21 +36,32 @@ Item {
                     id:         categoryColumn
                     spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                    QGCButton {
-                        text: qsTr("Clear All")
-                        onClicked: {
-                            var logCats = QGroundControl.loggingCategories()
-                            for (var i=0; i<logCats.length; i++) {
-                                QGroundControl.setCategoryLoggingOn(logCats[i], false)
-                            }
-                            QGroundControl.updateLoggingFilterRules()
-                            categoryRepeater.model = undefined
-                            categoryRepeater.model = QGroundControl.loggingCategories()
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelHeight / 2
+
+                        QGCButton {
+                            text: qsTr("Set All")
+                            onClicked: categoryRepeater.setAllLogs(true)
+                        }
+                        QGCButton {
+                            text: qsTr("Clear All")
+                            onClicked: categoryRepeater.setAllLogs(false)
                         }
                     }
                     Repeater {
                         id:     categoryRepeater
                         model:  QGroundControl.loggingCategories()
+
+                        function setAllLogs(value) {
+                            var logCategories = QGroundControl.loggingCategories()
+                            for (var category of logCategories) {
+                                QGroundControl.setCategoryLoggingOn(category, value)
+                            }
+                            QGroundControl.updateLoggingFilterRules()
+                            // Update model for repeater
+                            categoryRepeater.model = undefined
+                            categoryRepeater.model = QGroundControl.loggingCategories()
+                        }
 
                         QGCCheckBox {
                             text:       modelData
