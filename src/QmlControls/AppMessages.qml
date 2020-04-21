@@ -11,6 +11,7 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.12
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -28,47 +29,78 @@ Item {
     Component {
         id: filtersDialogComponent
         QGCViewDialog {
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  categoryColumn.height
-                clip:           true
-                Column {
-                    id:         categoryColumn
+            ColumnLayout {
+                anchors.fill: parent
+                RowLayout {
+                    spacing: ScreenTools.defaultFontPixelHeight / 2
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+
+                    QGCLabel {
+                        text: qsTr("Search:")
+                    }
+
+                    QGCTextField {
+                        id: searchText
+                        text: ""
+                        Layout.fillWidth: true
+                        enabled: true
+                    }
+
+                    QGCButton {
+                        text: qsTr("Clear")
+                        onClicked: searchText.text = ""
+                    }
+                }
+
+                Row {
                     spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                    Row {
+                    QGCButton {
+                        text: qsTr("Set All")
+                        onClicked: categoryRepeater.setAllLogs(true)
+                    }
+                    QGCButton {
+                        text: qsTr("Clear All")
+                        onClicked: categoryRepeater.setAllLogs(false)
+                    }
+                }
+
+                QGCFlickable {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+
+                    contentHeight:  categoryColumn.height
+                    clip:           true
+
+                    Column {
+                        id:         categoryColumn
                         spacing:    ScreenTools.defaultFontPixelHeight / 2
 
-                        QGCButton {
-                            text: qsTr("Set All")
-                            onClicked: categoryRepeater.setAllLogs(true)
-                        }
-                        QGCButton {
-                            text: qsTr("Clear All")
-                            onClicked: categoryRepeater.setAllLogs(false)
-                        }
-                    }
-                    Repeater {
-                        id:     categoryRepeater
-                        model:  QGroundControl.loggingCategories()
+                        Repeater {
+                            id:     categoryRepeater
+                            model:  QGroundControl.loggingCategories()
 
-                        function setAllLogs(value) {
-                            var logCategories = QGroundControl.loggingCategories()
-                            for (var category of logCategories) {
-                                QGroundControl.setCategoryLoggingOn(category, value)
-                            }
-                            QGroundControl.updateLoggingFilterRules()
-                            // Update model for repeater
-                            categoryRepeater.model = undefined
-                            categoryRepeater.model = QGroundControl.loggingCategories()
-                        }
-
-                        QGCCheckBox {
-                            text:       modelData
-                            checked:    QGroundControl.categoryLoggingOn(modelData)
-                            onClicked:  {
-                                QGroundControl.setCategoryLoggingOn(modelData, checked)
+                            function setAllLogs(value) {
+                                var logCategories = QGroundControl.loggingCategories()
+                                for (var category of logCategories) {
+                                    QGroundControl.setCategoryLoggingOn(category, value)
+                                }
                                 QGroundControl.updateLoggingFilterRules()
+                                // Update model for repeater
+                                categoryRepeater.model = undefined
+                                categoryRepeater.model = QGroundControl.loggingCategories()
+                            }
+
+                            QGCCheckBox {
+                                text:       modelData
+                                visible:    searchText.text ? text.match(`(${searchText.text})`, "i") : true
+                                checked:    QGroundControl.categoryLoggingOn(modelData)
+                                onClicked:  {
+                                    QGroundControl.setCategoryLoggingOn(modelData, checked)
+                                    QGroundControl.updateLoggingFilterRules()
+                                }
                             }
                         }
                     }
