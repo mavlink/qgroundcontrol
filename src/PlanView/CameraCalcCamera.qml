@@ -16,8 +16,6 @@ Column {
 
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
-    property string distanceToSurfaceLabel
-    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
 

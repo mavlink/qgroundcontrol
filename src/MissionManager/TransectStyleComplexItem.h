@@ -49,7 +49,8 @@ public:
     Q_PROPERTY(Fact*            terrainAdjustMaxClimbRate   READ terrainAdjustMaxClimbRate                          CONSTANT)
 
     Q_PROPERTY(Fact*            altitude                    READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeMode. Not necessarily true mission item altitude
-    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode WRITE setAltitudeMode           NOTIFY altitudeModeChanged)
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode   WRITE setAltitudeMode         NOTIFY altitudeModeChanged)
+    Q_PROPERTY(bool             altitudeModeRelative        READ altitudeModeRelative WRITE setAltitudeModeRelative NOTIFY altitudeModeChanged)
 
     QGCMapPolygon*  surveyAreaPolygon   (void) { return &_surveyAreaPolygon; }
     CameraCalc*     cameraCalc          (void) { return &_cameraCalc; }
@@ -116,6 +117,8 @@ public:
     QGroundControlQmlGlobal::AltitudeMode altitudeMode(void) const { return _altitudeMode; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     void            setAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altitudeMode);
+    bool            altitudeModeRelative(void) const { return _altitudeMode == QGroundControlQmlGlobal::AltitudeMode::AltitudeModeRelative;}
+    void            setAltitudeModeRelative(bool relative);
 
     bool coordinateHasRelativeAltitude      (void) const final;
     bool exitCoordinateHasRelativeAltitude  (void) const final;
@@ -217,6 +220,7 @@ protected:
 
     QGroundControlQmlGlobal::AltitudeMode   _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
     Fact                                    _altitudeFact;
+    static FactMetaData*                    _altitudeMetaData;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonTransectStyleComplexItemKey;

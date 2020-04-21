@@ -37,6 +37,8 @@ const char* TransectStyleComplexItem::_jsonItemsKey =                       "Ite
 const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "FollowTerrain";
 const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "CameraShots";
 
+FactMetaData* TransectStyleComplexItem::_altitudeMetaData =        nullptr;
+
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup, QObject* parent)
     : ComplexMissionItem                (masterController, flyView, parent)
     , _sequenceNumber                   (0)
@@ -55,9 +57,20 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     , _terrainAdjustToleranceFact       (settingsGroup, _metaDataMap[terrainAdjustToleranceName])
     , _terrainAdjustMaxClimbRateFact    (settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
     , _terrainAdjustMaxDescentRateFact  (settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
+    , _altitudeFact                     (0, "Altitude", FactMetaData::valueTypeDouble)
 {
     _terrainQueryTimer.setInterval(_terrainQueryTimeoutMsecs);
     _terrainQueryTimer.setSingleShot(true);
+    if (!_altitudeMetaData) {
+        _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
+        _altitudeMetaData->setRawUnits("m");
+        _altitudeMetaData->setRawIncrement(1);
+        _altitudeMetaData->setDecimalPlaces(2);
+    }
+    _altitudeFact.setMetaData(_altitudeMetaData);
+    double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+
+    _altitudeFact.setRawValue(defaultAlt);
     connect(&_terrainQueryTimer, &QTimer::timeout, this, &TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo);
 
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
@@ -802,6 +815,14 @@ void TransectStyleComplexItem::setAltitudeMode(QGroundControlQmlGlobal::Altitude
     }
 }
 
+void TransectStyleComplexItem::setAltitudeModeRelative(bool relative) {
+    setAltitudeMode(
+        relative ?
+            QGroundControlQmlGlobal::AltitudeMode::AltitudeModeRelative :
+            QGroundControlQmlGlobal::AltitudeMode::AltitudeModeAbsolute
+    );
+}
+
 void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
 {
     if (followTerrain) {
@@ -917,7 +938,12 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
                                         triggerCamera() &&
                                         !hoverAndCaptureEnabled();
 
-    MAV_FRAME mavFrame = coordinateHasRelativeAltitude() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL;
+    MAV_FRAME mavFrame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    if (_altitudeMode == QGroundControlQmlGlobal::AltitudeMode::AltitudeModeAbsolute) {
+        mavFrame = MAV_FRAME_GLOBAL;
+    } else {
+        assert(_altitudeMode == QGroundControlQmlGlobal::AltitudeMode::AltitudeModeRelative);
+    }
 
     // Note: The code below is written to be understable as oppose to being compact and/or remove duplicate code
     int transectIndex = 0;

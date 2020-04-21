@@ -14,10 +14,10 @@ Column {
     anchors.right:  parent.right
     spacing:        _margin
 
-    property var    cameraCalc
-    property bool   vehicleFlightIsFrontal:         true
-    property string distanceToSurfaceLabel
-    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
+    property var    gridMissionItem
+    property var    cameraCalc:             gridMissionItem.cameraCalc
+    property bool   vehicleFlightIsFrontal: true
+    property string altitudeLabel: qsTr("Altitude")
     property string frontalDistanceLabel
     property string sideDistanceLabel
 
@@ -87,14 +87,14 @@ Column {
 
             QGCRadioButton {
                 id:                     fixedDistanceRadio
-                text:                   distanceToSurfaceLabel
+                text:                   "check me"
                 checked:                !!cameraCalc.valueSetIsDistance.value
                 onClicked:              cameraCalc.valueSetIsDistance.value = 1
             }
 
             AltitudeFactTextField {
-                fact:                   cameraCalc.distanceToSurface
-                altitudeMode:           distanceToSurfaceAltitudeMode
+                fact:                   gridMissionItem.altitude
+                altitudeMode:           gridMissionItem.altitudeMode
                 enabled:                fixedDistanceRadio.checked
                 Layout.fillWidth:       true
             }
@@ -123,10 +123,10 @@ Column {
         columns:        2
         visible:        cameraCalc.isManualCamera
 
-        QGCLabel { text: distanceToSurfaceLabel }
+        QGCLabel { text: altitudeLabel }
         AltitudeFactTextField {
-            fact:               cameraCalc.distanceToSurface
-            altitudeMode:       distanceToSurfaceAltitudeMode
+            fact:               gridMissionItem.altitude
+            altitudeMode:       gridMissionItem.altitudeMode
             Layout.fillWidth:   true
         }
 

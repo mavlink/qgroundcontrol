@@ -214,14 +214,10 @@ Rectangle {
                 }
 
                 CameraCalcGrid {
-                    cameraCalc:                     missionItem.cameraCalc
-                    vehicleFlightIsFrontal:         true
-                    distanceToSurfaceLabel:         qsTr("Altitude")
-                    distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
-                                                        QGroundControl.AltitudeModeAboveTerrain :
-                                                        (missionItem.cameraCalc.distanceToSurfaceRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute)
-                    frontalDistanceLabel:           qsTr("Trigger Dist")
-                    sideDistanceLabel:              qsTr("Spacing")
+                    gridMissionItem:        missionItem
+                    vehicleFlightIsFrontal: true
+                    frontalDistanceLabel:   qsTr("Trigger Dist")
+                    sideDistanceLabel:      qsTr("Spacing")
                 }
 
                 SectionHeader {
@@ -320,16 +316,15 @@ Rectangle {
                             },
                             {
                                 text:       qsTr("Relative altitude"),
-                                enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
-                                visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
-                                checked:    missionItem.cameraCalc.distanceToSurfaceRelative
+                                enabled:    missionItem.cameraCalc.isManualCamera,
+                                visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude,
+                                checked:    missionItem.altitudeModeRelative
                             }
                         ]
 
                         onItemClicked: {
                             if (index == 4) {
-                                missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
-                                console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
+                                missionItem.altitudeModeRelative = !missionItem.altitudeModeRelative
                             }
                         }
                     }
@@ -407,10 +402,6 @@ Rectangle {
                 CameraCalcCamera {
                     cameraCalc:                     missionItem.cameraCalc
                     vehicleFlightIsFrontal:         true
-                    distanceToSurfaceLabel:         qsTr("Altitude")
-                    distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
-                                                        QGroundControl.AltitudeModeAboveTerrain :
-                                                        missionItem.cameraCalc.distanceToSurfaceRelative
                     frontalDistanceLabel:           qsTr("Trigger Dist")
                     sideDistanceLabel:              qsTr("Spacing")
                 }
