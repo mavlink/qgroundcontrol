@@ -250,6 +250,7 @@ QT += \
     positioning \
     qml \
     quick \
+    quickcontrols2 \
     quickwidgets \
     sql \
     svg \
