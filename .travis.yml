@@ -191,10 +191,10 @@ script:
   # run qmake
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
   - if [ "${TRAVIS_TAG}" ]; then
-        echo "Stable build"
+        echo "Stable build" &&
         export STABLE_OR_DAILY=StableBuild;
     else
-        echo "Daily build"
+        echo "Daily build" &&
         export STABLE_OR_DAILY=DailyBuild;
     fi
   # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
