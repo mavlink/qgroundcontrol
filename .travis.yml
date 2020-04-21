@@ -190,11 +190,18 @@ before_script:
 script:
   # run qmake
   - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
+  - if [ "${TRAVIS_TAG}" ]; then
+        echo "Stable build"
+        export STABLE_OR_DAILY=StableBuild;
+    else
+        echo "Daily build"
+        export STABLE_OR_DAILY=DailyBuild;
+    fi
   # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
   - if [ "${SPEC}" = "macx-clang" ]; then
-        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC};
+        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} CONFIG+=WarningsAsErrorsOn -spec ${SPEC};
     else
-        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC};
+        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} -spec ${SPEC};
     fi
 
   # compile
