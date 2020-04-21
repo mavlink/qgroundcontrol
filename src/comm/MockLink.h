@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <QElapsedTimer>
 #include <QMap>
 #include <QLoggingCategory>
 #include <QGeoCoordinate>
@@ -230,7 +231,7 @@ private:
     uint32_t    _mavCustomMode;
     uint8_t     _mavState;
 
-    QTime       _runningTime;
+    QElapsedTimer _runningTime;
     int8_t      _batteryRemaining = 100;
 
     MAV_AUTOPILOT       _firmwareType;
