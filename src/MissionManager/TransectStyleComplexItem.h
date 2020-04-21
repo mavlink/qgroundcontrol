@@ -13,6 +13,7 @@
 #include "MissionItem.h"
 #include "SettingsFact.h"
 #include "QGCLoggingCategory.h"
+#include "QGroundControlQmlGlobal.h"
 #include "QGCMapPolyline.h"
 #include "QGCMapPolygon.h"
 #include "CameraCalc.h"
@@ -46,6 +47,9 @@ public:
     Q_PROPERTY(Fact*            terrainAdjustTolerance      READ terrainAdjustTolerance                             CONSTANT)
     Q_PROPERTY(Fact*            terrainAdjustMaxDescentRate READ terrainAdjustMaxDescentRate                        CONSTANT)
     Q_PROPERTY(Fact*            terrainAdjustMaxClimbRate   READ terrainAdjustMaxClimbRate                          CONSTANT)
+
+    Q_PROPERTY(Fact*            altitude                    READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeMode. Not necessarily true mission item altitude
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode WRITE setAltitudeMode           NOTIFY altitudeModeChanged)
 
     QGCMapPolygon*  surveyAreaPolygon   (void) { return &_surveyAreaPolygon; }
     CameraCalc*     cameraCalc          (void) { return &_cameraCalc; }
@@ -109,6 +113,10 @@ public:
     QString         commandName             (void) const override { return tr("Transect"); }
     QString         abbreviation            (void) const override { return tr("T"); }
 
+    QGroundControlQmlGlobal::AltitudeMode altitudeMode(void) const { return _altitudeMode; }
+    Fact*           altitude            (void) { return &_altitudeFact; }
+    void            setAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altitudeMode);
+
     bool coordinateHasRelativeAltitude      (void) const final;
     bool exitCoordinateHasRelativeAltitude  (void) const final;
     bool exitCoordinateSameAsEntry          (void) const final { return false; }
@@ -132,6 +140,7 @@ signals:
     void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
     void followTerrainChanged           (bool followTerrain);
+    void altitudeModeChanged            (void);
 
 protected slots:
     void _setDirty                          (void);
@@ -205,6 +214,9 @@ protected:
     SettingsFact _terrainAdjustToleranceFact;
     SettingsFact _terrainAdjustMaxClimbRateFact;
     SettingsFact _terrainAdjustMaxDescentRateFact;
+
+    QGroundControlQmlGlobal::AltitudeMode   _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
+    Fact                                    _altitudeFact;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonTransectStyleComplexItemKey;

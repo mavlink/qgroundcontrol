@@ -96,10 +96,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(&_cameraCalc,                               &CameraCalc::dirtyChanged,      this, &TransectStyleComplexItem::_setIfDirty);
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::coveredAreaChanged);
-
-    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
-
     connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_handleHoverAndCaptureEnabled);
 
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
@@ -788,7 +784,7 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
 
 bool TransectStyleComplexItem::coordinateHasRelativeAltitude(void) const
 {
-    return _cameraCalc.distanceToSurfaceRelative();
+    return _altitudeMode == QGroundControlQmlGlobal::AltitudeMode::AltitudeModeRelative;
 }
 
 bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
@@ -796,9 +792,18 @@ bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
     return coordinateHasRelativeAltitude();
 }
 
+void TransectStyleComplexItem::setAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altitudeMode)
+{
+    if (altitudeMode != _altitudeMode) {
+        _altitudeMode = altitudeMode;
+        emit altitudeModeChanged();
+        emit coordinateHasRelativeAltitudeChanged(coordinateHasRelativeAltitude());
+        emit exitCoordinateHasRelativeAltitudeChanged(exitCoordinateHasRelativeAltitude());
+    }
+}
+
 void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
 {
-    _cameraCalc.setDistanceToSurfaceRelative(!followTerrain);
     if (followTerrain) {
         _refly90DegreesFact.setRawValue(false);
         _hoverAndCaptureFact.setRawValue(false);
@@ -912,7 +917,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
                                         triggerCamera() &&
                                         !hoverAndCaptureEnabled();
 
-    MAV_FRAME mavFrame = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
+    MAV_FRAME mavFrame = coordinateHasRelativeAltitude() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL;
 
     // Note: The code below is written to be understable as oppose to being compact and/or remove duplicate code
     int transectIndex = 0;

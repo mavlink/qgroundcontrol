@@ -44,9 +44,6 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_setDirty);
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_setDirty);
 
-    connect(&_cameraCalc,           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CorridorScanComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(&_cameraCalc,           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CorridorScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
-
     connect(&_corridorPolyline,     &QGCMapPolyline::dirtyChanged,                  this, &CorridorScanComplexItem::_polylineDirtyChanged);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
@@ -153,8 +150,7 @@ int CorridorScanComplexItem::_calcTransectCount(void) const
 void CorridorScanComplexItem::applyNewAltitude(double newAltitude)
 {
     _cameraCalc.valueSetIsDistance()->setRawValue(true);
-    _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
-    _cameraCalc.setDistanceToSurfaceRelative(true);
+    _cameraCalc.distanceToSurface()->setRawValue(newAltitude); //TODO set the Transect::altitude
 }
 
 void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)

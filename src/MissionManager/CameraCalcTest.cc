@@ -82,11 +82,6 @@ void CameraCalcTest::_testDirty(void)
     }
     rgFacts.clear();
 
-
-    _cameraCalc->setDistanceToSurfaceRelative(!_cameraCalc->distanceToSurfaceRelative());
-    QVERIFY(_cameraCalc->dirty());
-    _multiSpy->clearAllSignals();
-
     _cameraCalc->cameraName()->setRawValue(_cameraCalc->manualCameraName());
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();

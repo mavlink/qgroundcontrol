@@ -102,10 +102,6 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::isValidChanged,             this, &SurveyComplexItem::_updateWizardMode);
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::traceModeChanged,           this, &SurveyComplexItem::_updateWizardMode);
 
-    // FIXME: Shouldn't these be in TransectStyleComplexItem? They are also in CorridorScanComplexItem constructur
-    connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::exitCoordinateHasRelativeAltitudeChanged);
-
     if (!kmlOrShpFile.isEmpty()) {
         _surveyAreaPolygon.loadKMLOrSHPFile(kmlOrShpFile);
         _surveyAreaPolygon.setDirty(false);
@@ -294,7 +290,6 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraTriggerInTurnAroundFact.setRawValue  (complexObject[_jsonV3CameraTriggerInTurnaroundKey].toBool(true));
 
     _cameraCalc.valueSetIsDistance()->setRawValue   (complexObject[_jsonV3FixedValueIsAltitudeKey].toBool(true));
-    _cameraCalc.setDistanceToSurfaceRelative        (complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true));
 
     bool manualGrid = complexObject[_jsonV3ManualGridKey].toBool(true);
 
@@ -1392,8 +1387,7 @@ void SurveyComplexItem::_recalcCameraShots(void)
 void SurveyComplexItem::applyNewAltitude(double newAltitude)
 {
     _cameraCalc.valueSetIsDistance()->setRawValue(true);
-    _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
-    _cameraCalc.setDistanceToSurfaceRelative(true);
+    _cameraCalc.distanceToSurface()->setRawValue(newAltitude); //TODO set Transect::altitude
 }
 
 SurveyComplexItem::ReadyForSaveState SurveyComplexItem::readyForSaveState(void) const

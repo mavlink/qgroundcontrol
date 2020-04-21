@@ -33,7 +33,6 @@ public:
     Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                                                    CONSTANT)
     Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                                          CONSTANT)                                   ///< Side footprint adjusted down for overlap
     Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                                   ///< Frontal footprint adjusted down for overlap
-    Q_PROPERTY(bool             distanceToSurfaceRelative   READ distanceToSurfaceRelative WRITE setDistanceToSurfaceRelative   NOTIFY distanceToSurfaceRelativeChanged)
 
     // The following values are calculated from the camera properties
     Q_PROPERTY(double imageFootprintSide    READ imageFootprintSide     NOTIFY imageFootprintSideChanged)       ///< Size of image size side in meters
@@ -64,10 +63,8 @@ public:
     bool    isCustomCamera              (void) const { return _cameraNameFact.rawValue().toString() == customCameraName(); }
     double  imageFootprintSide          (void) const { return _imageFootprintSide; }
     double  imageFootprintFrontal       (void) const { return _imageFootprintFrontal; }
-    bool    distanceToSurfaceRelative   (void) const { return _distanceToSurfaceRelative; }
 
     void setDirty                       (bool dirty);
-    void setDistanceToSurfaceRelative   (bool distanceToSurfaceRelative);
 
     void save(QJsonObject& json) const;
     bool load(const QJsonObject& json, QString& errorString);
@@ -75,7 +72,6 @@ public:
     static const char* cameraNameName;
     static const char* valueSetIsDistanceName;
     static const char* distanceToSurfaceName;
-    static const char* distanceToSurfaceRelativeName;
     static const char* imageDensityName;
     static const char* frontalOverlapName;
     static const char* sideOverlapName;
@@ -86,20 +82,17 @@ signals:
     void dirtyChanged                       (bool dirty);
     void imageFootprintSideChanged          (double imageFootprintSide);
     void imageFootprintFrontalChanged       (double imageFootprintFrontal);
-    void distanceToSurfaceRelativeChanged   (bool distanceToSurfaceRelative);
     void isManualCameraChanged              (void);
     void isCustomCameraChanged              (void);
 
 private slots:
     void _recalcTriggerDistance             (void);
-    void _adjustDistanceToSurfaceRelative   (void);
     void _setDirty                          (void);
     void _cameraNameChanged                 (void);
 
 private:
     bool            _dirty;
     bool            _disableRecalc;
-    bool            _distanceToSurfaceRelative;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

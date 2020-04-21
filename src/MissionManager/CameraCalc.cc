@@ -18,7 +18,6 @@
 const char* CameraCalc::cameraNameName =                    "CameraName";
 const char* CameraCalc::valueSetIsDistanceName =            "ValueSetIsDistance";
 const char* CameraCalc::distanceToSurfaceName =             "DistanceToSurface";
-const char* CameraCalc::distanceToSurfaceRelativeName =     "DistanceToSurfaceRelative";
 const char* CameraCalc::imageDensityName =                  "ImageDensity";
 const char* CameraCalc::frontalOverlapName =                "FrontalOverlap";
 const char* CameraCalc::sideOverlapName =                   "SideOverlap";
@@ -31,7 +30,6 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
     : CameraSpec                    (settingsGroup, parent)
     , _dirty                        (masterController)
     , _disableRecalc                (false)
-    , _distanceToSurfaceRelative    (true)
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))
     , _cameraNameFact               (settingsGroup, _metaDataMap[cameraNameName])
     , _valueSetIsDistanceFact       (settingsGroup, _metaDataMap[valueSetIsDistanceName])
@@ -55,7 +53,6 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
     connect(&_adjustedFootprintSideFact,    &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_adjustedFootprintFrontalFact, &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
-    connect(this,                           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CameraCalc::_setDirty);
 
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::_cameraNameChanged);
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::isManualCameraChanged);
@@ -137,7 +134,6 @@ void CameraCalc::_cameraNameChanged(void)
     _disableRecalc = false;
 
     _recalcTriggerDistance();
-    _adjustDistanceToSurfaceRelative();
 }
 
 void CameraCalc::_recalcTriggerDistance(void)
@@ -189,7 +185,6 @@ void CameraCalc::save(QJsonObject& json) const
     json[adjustedFootprintSideName] =       _adjustedFootprintSideFact.rawValue().toDouble();
     json[adjustedFootprintFrontalName] =    _adjustedFootprintFrontalFact.rawValue().toDouble();
     json[distanceToSurfaceName] =           _distanceToSurfaceFact.rawValue().toDouble();
-    json[distanceToSurfaceRelativeName] =   _distanceToSurfaceRelative;
     json[cameraNameName] =                  _cameraNameFact.rawValue().toString();
 
     if (!isManualCamera()) {
@@ -231,15 +226,12 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         { adjustedFootprintSideName,        QJsonValue::Double, true },
         { adjustedFootprintFrontalName,     QJsonValue::Double, true },
         { distanceToSurfaceName,            QJsonValue::Double, true },
-        { distanceToSurfaceRelativeName,    QJsonValue::Bool,   true },
     };
     if (!JsonHelper::validateKeys(v1Json, keyInfoList1, errorString)) {
         return false;
     }
 
     _disableRecalc = true;
-
-    _distanceToSurfaceRelative = v1Json[distanceToSurfaceRelativeName].toBool();
 
     _cameraNameFact.setRawValue                 (v1Json[cameraNameName].toString());
     _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
@@ -282,21 +274,6 @@ QString CameraCalc::customCameraName(void)
 QString CameraCalc::manualCameraName(void)
 {
     return tr("Manual (no camera specs)");
-}
-
-void CameraCalc::_adjustDistanceToSurfaceRelative(void)
-{
-    if (!isManualCamera()) {
-        setDistanceToSurfaceRelative(true);
-    }
-}
-
-void CameraCalc::setDistanceToSurfaceRelative(bool distanceToSurfaceRelative)
-{
-    if (distanceToSurfaceRelative != _distanceToSurfaceRelative) {
-        _distanceToSurfaceRelative = distanceToSurfaceRelative;
-        emit distanceToSurfaceRelativeChanged(distanceToSurfaceRelative);
-    }
 }
 
 void CameraCalc::_setDirty(void)
