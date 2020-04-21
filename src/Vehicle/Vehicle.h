@@ -1441,7 +1441,7 @@ private:
     QTimer                          _mavCommandAckTimer;
     int                             _mavCommandRetryCount;
     int                             _capabilitiesRetryCount =               0;
-    QTime                           _capabilitiesRetryElapsed;
+    QElapsedTimer                   _capabilitiesRetryElapsed;
     static const int                _mavCommandMaxRetryCount =              3;
     static const int                _mavCommandAckTimeoutMSecs =            3000;
     static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
@@ -1490,7 +1490,7 @@ private:
     QTimer  _sendMultipleTimer;
     int     _nextSendMessageMultipleIndex;
 
-    QTime                           _flightTimer;
+    QElapsedTimer                   _flightTimer;
     QTimer                          _flightTimeUpdater;
     TrajectoryPoints*               _trajectoryPoints;
     QmlObjectListModel              _cameraTriggerPoints;
