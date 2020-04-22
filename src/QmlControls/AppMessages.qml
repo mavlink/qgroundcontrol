@@ -56,11 +56,6 @@ Item {
 
                 Row {
                     spacing:    ScreenTools.defaultFontPixelHeight / 2
-
-                    QGCButton {
-                        text: qsTr("Set All")
-                        onClicked: categoryRepeater.setAllLogs(true)
-                    }
                     QGCButton {
                         text: qsTr("Clear All")
                         onClicked: categoryRepeater.setAllLogs(false)
