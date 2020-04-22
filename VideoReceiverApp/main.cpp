@@ -350,7 +350,8 @@ VideoReceiverApp::exec()
                     });
                 } else {
                     qCDebug(AppLog) << "Closing...";
-                    delete _receiver;
+                    _receiver->deleteLater();
+                    _receiver = nullptr;
                     _app.exit();
                 }
             });
