@@ -139,6 +139,13 @@ MobileBuild {
     DEFINES += __mobile__
 }
 
+StableBuild {
+    message("Stable Build")
+} else {
+    message("Daily Build")
+    DEFINES += DAILY_BUILD
+}
+
 # set the QGC version from git
 
 exists ($$PWD/.git) {
