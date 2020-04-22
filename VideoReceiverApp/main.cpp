@@ -125,7 +125,23 @@ public:
     VideoReceiverApp(QCoreApplication& app, bool qmlAllowed)
         : _app(app)
         , _qmlAllowed(qmlAllowed)
-    {}
+    {
+        // easier to use a lambda then a method pointer.
+        _tryReconnectOrDie = [this] {
+            _connect -= 1;
+            if (_connect > 0) {
+                qCDebug(AppLog) << "Restarting ...";
+                _dispatch([this](){
+                    startStreaming();
+                });
+            } else {
+                qCDebug(AppLog) << "Closing...";
+                _receiver->deleteLater();
+                _receiver = nullptr;
+                _app.exit();
+            }
+        };
+    }
 
     void run();
 
@@ -158,6 +174,8 @@ private:
     bool _streaming = false;
     bool _decoding = false;
     bool _recording = false;
+    std::function<void()> _tryReconnectOrDie;
+
 };
 
 void
@@ -346,39 +364,12 @@ VideoReceiverApp::exec()
         }
 
         qCDebug(AppLog) << "Video receiver start failed";
-        auto tryRecoonectOrDie = [this] {
-            _connect -= 1;
-            if (_connect > 0) {
-                qCDebug(AppLog) << "Restarting ...";
-                _dispatch([this](){
-                    startStreaming();
-                });
-            } else {
-                qCDebug(AppLog) << "Closing...";
-                _receiver->deleteLater();
-                _receiver = nullptr;
-                _app.exit();
-            }
-        };
-        _dispatch(tryRecoonectOrDie);
-
+        _dispatch(_tryReconnectOrDie);
      });
 
     QObject::connect(_receiver, &VideoReceiver::onStopComplete, [this](VideoReceiver::STATUS ){
         qCDebug(AppLog) << "Video receiver stopped";
-
-        _dispatch([this](){
-            if (--_connect > 0) {
-                qCDebug(AppLog) << "Restarting ...";
-                _dispatch([this](){
-                    startStreaming();
-                });
-            } else {
-                qCDebug(AppLog) << "Closing...";
-                delete _receiver;
-                _app.exit();
-            }
-        });
+        _dispatch(_tryReconnectOrDie);
      });
 
 
