@@ -308,11 +308,7 @@ VideoReceiverApp::exec()
 
     QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](bool active){
         _streaming = active;
-        if (_streaming) {
-            qCDebug(AppLog) << "Streaming started";
-        } else {
-            qCDebug(AppLog) << "Streaming stopped";
-        }
+        qCDebug(AppLog) << "Streaming" << (active? "started" : "stopped");
      });
 
     QObject::connect(_receiver, &VideoReceiver::decodingChanged, [this](bool active){
