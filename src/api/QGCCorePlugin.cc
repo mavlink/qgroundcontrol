@@ -22,7 +22,8 @@
 #endif
 #include "QGCLoggingCategory.h"
 #include "QGCCameraManager.h"
-#include "ValuesWidgetController.h"
+#include "InstrumentValueArea.h"
+#include "InstrumentValueData.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -407,41 +408,31 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
               "Are you sure you want to enable Advanced Mode?");
 }
 
-QmlObjectListModel* QGCCorePlugin::valuesWidgetDefaultSettings(ValuesWidgetController* newParentController)
+void QGCCorePlugin::instrumentValueAreaCreateDefaultSettings(const QString& defaultSettingsGroup)
 {
-    ValuesWidgetController controller(true /* forDefaultSettingsCreation */);
+    if (defaultSettingsGroup == InstrumentValueArea::valuePageDefaultSettingsGroup) {
+        InstrumentValueArea instrumentValueArea(defaultSettingsGroup);
 
-    // We don't want these to get written out to settings. This way if the user doesn't modify them
-    // they will get new changes to default settings from newer builds automatically on next run.
-    controller.setPreventSaveSettings(true);
+        instrumentValueArea.setFontSize(InstrumentValueArea::LargeFontSize);
 
-    QmlObjectListModel* columnModel = controller.appendRow();
-    InstrumentValue* colValue = columnModel->value<InstrumentValue*>(0);
-    colValue->setFact("Vehicle", "AltitudeRelative");
-    colValue->setText(colValue->fact()->shortDescription());
-    colValue->setShowUnits(true);
-    colValue->setFontSize(InstrumentValue::LargeFontSize);
+        QmlObjectListModel* columnModel = instrumentValueArea.appendRow();
+        InstrumentValueData* colValue = columnModel->value<InstrumentValueData*>(0);
+        colValue->setFact("Vehicle", "AltitudeRelative");
+        colValue->setText(colValue->fact()->shortDescription());
+        colValue->setShowUnits(true);
 
-    columnModel = controller.appendRow();
-    colValue = columnModel->value<InstrumentValue*>(0);
-    colValue->setFact("Vehicle", "GroundSpeed");
-    colValue->setText(colValue->fact()->shortDescription());
-    colValue->setShowUnits(true);
-    colValue->setFontSize(InstrumentValue::DefaultFontSize);
+        columnModel = instrumentValueArea.appendRow();
+        colValue = columnModel->value<InstrumentValueData*>(0);
+        colValue->setFact("Vehicle", "GroundSpeed");
+        colValue->setText(colValue->fact()->shortDescription());
+        colValue->setShowUnits(true);
 
-    columnModel = controller.appendRow();
-    colValue = columnModel->value<InstrumentValue*>(0);
-    colValue->setFact("Vehicle", "FlightTime");
-    colValue->setText(colValue->fact()->shortDescription());
-    colValue->setShowUnits(false);
-    colValue->setFontSize(InstrumentValue::DefaultFontSize);
-
-    controller.setPreventSaveSettings(false);
-
-    // Caller takes ownership
-    controller.setValuesModelParentController(newParentController);
-
-    return controller.valuesModel();
+        columnModel = instrumentValueArea.appendRow();
+        colValue = columnModel->value<InstrumentValueData*>(0);
+        colValue->setFact("Vehicle", "FlightTime");
+        colValue->setText(colValue->fact()->shortDescription());
+        colValue->setShowUnits(false);
+    }
 }
 
 QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)

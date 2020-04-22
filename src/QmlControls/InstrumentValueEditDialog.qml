@@ -12,6 +12,7 @@ import QtQuick.Dialogs  1.3
 import QtQuick.Layouts  1.2
 import QtQuick.Controls 2.5
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FactSystem    1.0
@@ -24,7 +25,10 @@ QGCPopupDialog {
     title:      qsTr("Value Display")
     buttons:    StandardButton.Close
 
-    property var instrumentValue: dialogProperties.instrumentValue
+    property var instrumentValueData: dialogProperties.instrumentValueData
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: parent.enabled }
+    QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
 
     GridLayout {
         rowSpacing:     _margins
@@ -34,116 +38,122 @@ QGCPopupDialog {
         QGCCheckBox {
             id:         valueCheckBox
             text:       qsTr("Value")
-            checked:    instrumentValue.fact
+            checked:    instrumentValueData.fact
             onClicked: {
                 if (checked) {
-                    instrumentValue.setFact(instrumentValue.factGroupNames[0], instrumentValue.factValueNames[0])
+                    instrumentValueData.setFact(instrumentValueData.factGroupNames[0], instrumentValueData.factValueNames[0])
                 } else {
-                    instrumentValue.clearFact()
+                    instrumentValueData.clearFact()
                 }
             }
         }
 
         QGCComboBox {
-            model:                  instrumentValue.factGroupNames
+            id:                     factGroupCombo
+            Layout.fillWidth:       true
+            model:                  instrumentValueData.factGroupNames
             sizeToContents:         true
-            enabled:                valueCheckBox.enabled
-            onModelChanged:         currentIndex = find(instrumentValue.factGroupName)
-            Component.onCompleted:  currentIndex = find(instrumentValue.factGroupName)
+            enabled:                valueCheckBox.checked
+            Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
             onActivated: {
-                instrumentValue.setFact(currentText, "")
-                instrumentValue.icon = ""
-                instrumentValue.text = instrumentValue.fact.shortDescription
+                instrumentValueData.setFact(currentText, "")
+                instrumentValueData.icon = ""
+                instrumentValueData.text = instrumentValueData.fact.shortDescription
+            }
+            Connections {
+                target: instrumentValueData
+                onFactGroupNameChanged: factGroupCombo.currentIndex = factGroupCombo.find(instrumentValueData.factGroupName)
             }
         }
 
         QGCComboBox {
-            model:                  instrumentValue.factValueNames
+            id:                     factNamesCombo
+            Layout.fillWidth:       true
+            model:                  instrumentValueData.factValueNames
             sizeToContents:         true
-            enabled:                valueCheckBox.enabled
-            onModelChanged:         currentIndex = instrumentValue.fact ? find(instrumentValue.factName) : -1
-            Component.onCompleted:  currentIndex = instrumentValue.fact ? find(instrumentValue.factName) : -1
+            enabled:                valueCheckBox.checked
+            Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
             onActivated: {
-                instrumentValue.setFact(instrumentValue.factGroupName, currentText)
-                instrumentValue.icon = ""
-                instrumentValue.text = instrumentValue.fact.shortDescription
+                instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
+                instrumentValueData.icon = ""
+                instrumentValueData.text = instrumentValueData.fact.shortDescription
+            }
+            Connections {
+                target: instrumentValueData
+                onFactNameChanged: factNamesCombo.currentIndex = factNamesCombo.find(instrumentValueData.factName)
             }
         }
 
         QGCRadioButton {
-            id:                     iconCheckBox
+            id:                     iconRadio
             text:                   qsTr("Icon")
-            Component.onCompleted:  checked = instrumentValue.icon != ""
+            Component.onCompleted:  checked = instrumentValueData.icon != ""
             onClicked: {
-                instrumentValue.text = ""
-                instrumentValue.icon = instrumentValue.iconNames[0]
-                var updateFunction = function(icon){ instrumentValue.icon = icon }
-                mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: instrumentValue.icon, updateIconFunction: updateFunction })
+                instrumentValueData.text = ""
+                instrumentValueData.icon = instrumentValueData.iconNames[0]
+                var updateFunction = function(icon){ instrumentValueData.icon = icon }
+                mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
             }
         }
 
         QGCColoredImage {
             Layout.alignment:   Qt.AlignHCenter
-            height:             labelPositionCombo.height
+            height:             ScreenTools.implicitComboBoxHeight
             width:              height
-            source:             "/InstrumentValueIcons/" + (instrumentValue.icon ? instrumentValue.icon : instrumentValue.iconNames[0])
+            source:             "/InstrumentValueIcons/" + (instrumentValueData.icon ? instrumentValueData.icon : instrumentValueData.instrumentValueArea.iconNames[0])
             sourceSize.height:  height
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
             smooth:             true
             color:              enabled ? qgcPal.text : qgcPalDisabled.text
-            enabled:            iconCheckBox.checked
+            enabled:            iconRadio.checked
 
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    var updateFunction = function(icon){ instrumentValue.icon = icon }
-                    mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: instrumentValue.icon, updateIconFunction: updateFunction })
+                    var updateFunction = function(icon){ instrumentValueData.icon = icon }
+                    mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
                 }
             }
         }
 
-        QGCComboBox {
-            id:             labelPositionCombo
-            model:          instrumentValue.labelPositionNames
-            currentIndex:   instrumentValue.labelPosition
-            sizeToContents: true
-            onActivated:    instrumentValue.lanelPosition = index
-            enabled:        iconCheckBox.checked
-        }
+        Item { height: 1; width: 1 }
 
         QGCRadioButton {
-            id:                     labelCheckBox
+            id:                     textRadio
             text:                   qsTr("Text")
-            Component.onCompleted:  checked = instrumentValue.text != ""
+            Component.onCompleted:  checked = instrumentValueData.icon == ""
             onClicked: {
-                instrumentValue.icon = ""
-                instrumentValue.text = instrumentValue.fact ? instrumentValue.fact.shortDescription : qsTr("Label")
+                instrumentValueData.icon = ""
+                instrumentValueData.text = instrumentValueData.fact ? instrumentValueData.fact.shortDescription : qsTr("Label")
             }
         }
 
         QGCTextField {
-            id:                 labelTextField
-            Layout.fillWidth:   true
-            Layout.columnSpan:  2
-            text:               instrumentValue.text
-            enabled:            labelCheckBox.checked
+            id:                     labelTextField
+            Layout.fillWidth:       true
+            Layout.columnSpan:      2
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
+            text:                   instrumentValueData.text
+            enabled:                textRadio.checked
+            onEditingFinished:      instrumentValueData.text = text
         }
 
         QGCLabel { text: qsTr("Size") }
 
         QGCComboBox {
             id:                 fontSizeCombo
-            model:              instrumentValue.fontSizeNames
-            currentIndex:       instrumentValue.fontSize
+            Layout.fillWidth:   true
+            model:              instrumentValueData.instrumentValueArea.fontSizeNames
+            currentIndex:       instrumentValueData.instrumentValueArea.fontSize
             sizeToContents:     true
-            onActivated:        instrumentValue.fontSize = index
+            onActivated:        instrumentValueData.instrumentValueArea.fontSize = index
         }
 
         QGCCheckBox {
             text:               qsTr("Show Units")
-            checked:            instrumentValue.showUnits
-            onClicked:          instrumentValue.showUnits = checked
+            checked:            instrumentValueData.showUnits
+            onClicked:          instrumentValueData.showUnits = checked
         }
 
         QGCLabel { text: qsTr("Range") }
@@ -151,10 +161,11 @@ QGCPopupDialog {
         QGCComboBox {
             id:                 rangeTypeCombo
             Layout.columnSpan:  2
-            model:              instrumentValue.rangeTypeNames
-            currentIndex:       instrumentValue.rangeType
+            Layout.fillWidth:   true
+            model:              instrumentValueData.rangeTypeNames
+            currentIndex:       instrumentValueData.rangeType
             sizeToContents:     true
-            onActivated:        instrumentValue.rangeType = index
+            onActivated:        instrumentValueData.rangeType = index
         }
 
         Loader {
@@ -164,20 +175,20 @@ QGCPopupDialog {
             Layout.preferredWidth:  item ? item.width : 0
             Layout.preferredHeight: item ? item.height : 0
 
-            property var instrumentValue: root.instrumentValue
+            property var instrumentValueData: root.instrumentValueData
 
             function updateSourceComponent() {
-                switch (instrumentValue.rangeType) {
-                case InstrumentValue.NoRangeInfo:
+                switch (instrumentValueData.rangeType) {
+                case InstrumentValueData.NoRangeInfo:
                     sourceComponent = undefined
                     break
-                case InstrumentValue.ColorRange:
+                case InstrumentValueData.ColorRange:
                     sourceComponent = colorRangeDialog
                     break
-                case InstrumentValue.OpacityRange:
+                case InstrumentValueData.OpacityRange:
                     sourceComponent = opacityRangeDialog
                     break
-                case InstrumentValue.IconSelectRange:
+                case InstrumentValueData.IconSelectRange:
                     sourceComponent = iconRangeDialog
                     break
                 }
@@ -186,7 +197,7 @@ QGCPopupDialog {
             Component.onCompleted: updateSourceComponent()
 
             Connections {
-                target:             instrumentValue
+                target:             instrumentValueData
                 onRangeTypeChanged: rangeLoader.updateSourceComponent()
             }
 
@@ -201,21 +212,21 @@ QGCPopupDialog {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = instrumentValue.rangeValues
+                var newValues = instrumentValueData.rangeValues
                 newValues[index] = parseFloat(text)
-                instrumentValue.rangeValues = newValues
+                instrumentValueData.rangeValues = newValues
             }
 
             function updateColorValue(index, color) {
-                var newColors = instrumentValue.rangeColors
+                var newColors = instrumentValueData.rangeColors
                 newColors[index] = color
-                instrumentValue.rangeColors = newColors
+                instrumentValueData.rangeColors = newColors
             }
 
             ColorDialog {
                 id:             colorPickerDialog
                 modality:       Qt.ApplicationModal
-                currentColor:   instrumentValue.rangeColors.length ? instrumentValue.rangeColors[colorIndex] : "white"
+                currentColor:   instrumentValueData.rangeColors.length ? instrumentValueData.rangeColors[colorIndex] : "white"
                 onAccepted:     updateColorValue(colorIndex, color)
 
                 property int colorIndex: 0
@@ -240,13 +251,13 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues.length
+                            model: instrumentValueData.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  instrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValueData.removeRangeValue(index)
                             }
                         }
                     }
@@ -256,10 +267,10 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues.length
+                            model: instrumentValueData.rangeValues.length
 
                             QGCTextField {
-                                text:               instrumentValue.rangeValues[index]
+                                text:               instrumentValueData.rangeValues[index]
                                 onEditingFinished:  updateRangeValue(index, text)
                             }
                         }
@@ -268,12 +279,12 @@ QGCPopupDialog {
                     Column {
                         spacing: _margins
                         Repeater {
-                            model: instrumentValue.rangeColors
+                            model: instrumentValueData.rangeColors
 
                             QGCCheckBox {
                                 height:     ScreenTools.implicitTextFieldHeight
-                                checked:    instrumentValue.isValidColor(instrumentValue.rangeColors[index])
-                                onClicked:  updateColorValue(index, checked ? "green" : instrumentValue.invalidColor())
+                                checked:    instrumentValueData.isValidColor(instrumentValueData.rangeColors[index])
+                                onClicked:  updateColorValue(index, checked ? "green" : instrumentValueData.invalidColor())
                             }
                         }
                     }
@@ -281,13 +292,13 @@ QGCPopupDialog {
                     Column {
                         spacing: _margins
                         Repeater {
-                            model: instrumentValue.rangeColors
+                            model: instrumentValueData.rangeColors
 
                             Rectangle {
                                 width:          ScreenTools.implicitTextFieldHeight
                                 height:         width
                                 border.color:   qgcPal.text
-                                color:          instrumentValue.isValidColor(modelData) ? modelData : qgcPal.text
+                                color:          instrumentValueData.isValidColor(modelData) ? modelData : qgcPal.text
 
                                 MouseArea {
                                     anchors.fill: parent
@@ -303,7 +314,7 @@ QGCPopupDialog {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  instrumentValue.addRangeValue()
+                    onClicked:  instrumentValueData.addRangeValue()
                 }
             }
         }
@@ -317,15 +328,15 @@ QGCPopupDialog {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = instrumentValue.rangeValues
+                var newValues = instrumentValueData.rangeValues
                 newValues[index] = parseFloat(text)
-                instrumentValue.rangeValues = newValues
+                instrumentValueData.rangeValues = newValues
             }
 
             function updateIconValue(index, icon) {
-                var newIcons = instrumentValue.rangeIcons
+                var newIcons = instrumentValueData.rangeIcons
                 newIcons[index] = icon
-                instrumentValue.rangeIcons = newIcons
+                instrumentValueData.rangeIcons = newIcons
             }
 
             Column {
@@ -347,13 +358,13 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues.length
+                            model: instrumentValueData.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  instrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValueData.removeRangeValue(index)
                             }
                         }
                     }
@@ -363,10 +374,10 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues.length
+                            model: instrumentValueData.rangeValues.length
 
                             QGCTextField {
-                                text:               instrumentValue.rangeValues[index]
+                                text:               instrumentValueData.rangeValues[index]
                                 onEditingFinished:  updateRangeValue(index, text)
                             }
                         }
@@ -376,7 +387,7 @@ QGCPopupDialog {
                         spacing: _margins
 
                         Repeater {
-                            model: instrumentValue.rangeIcons
+                            model: instrumentValueData.rangeIcons
 
                             QGCColoredImage {
                                 height:             ScreenTools.implicitTextFieldHeight
@@ -392,7 +403,7 @@ QGCPopupDialog {
                                     anchors.fill:   parent
                                     onClicked: {
                                         var updateFunction = function(icon){ updateIconValue(index, icon) }
-                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValue.iconNames, icon: modelData, updateIconFunction: updateFunction })
+                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: modelData, updateIconFunction: updateFunction })
                                     }
                                 }
                             }
@@ -402,7 +413,7 @@ QGCPopupDialog {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  instrumentValue.addRangeValue()
+                    onClicked:  instrumentValueData.addRangeValue()
                 }
             }
         }
@@ -416,15 +427,15 @@ QGCPopupDialog {
             height: childrenRect.height
 
             function updateRangeValue(index, text) {
-                var newValues = instrumentValue.rangeValues
+                var newValues = instrumentValueData.rangeValues
                 newValues[index] = parseFloat(text)
-                instrumentValue.rangeValues = newValues
+                instrumentValueData.rangeValues = newValues
             }
 
             function updateOpacityValue(index, opacity) {
-                var newOpacities = instrumentValue.rangeOpacities
+                var newOpacities = instrumentValueData.rangeOpacities
                 newOpacities[index] = opacity
-                instrumentValue.rangeOpacities = newOpacities
+                instrumentValueData.rangeOpacities = newOpacities
             }
 
             Column {
@@ -446,13 +457,13 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues.length
+                            model: instrumentValueData.rangeValues.length
 
                             QGCButton {
                                 width:      ScreenTools.implicitTextFieldHeight
                                 height:     width
                                 text:       qsTr("-")
-                                onClicked:  instrumentValue.removeRangeValue(index)
+                                onClicked:  instrumentValueData.removeRangeValue(index)
                             }
                         }
                     }
@@ -462,7 +473,7 @@ QGCPopupDialog {
                         spacing:                _margins
 
                         Repeater {
-                            model: instrumentValue.rangeValues
+                            model: instrumentValueData.rangeValues
 
                             QGCTextField {
                                 text:               modelData
@@ -475,7 +486,7 @@ QGCPopupDialog {
                         spacing: _margins
 
                         Repeater {
-                            model: instrumentValue.rangeOpacities
+                            model: instrumentValueData.rangeOpacities
 
                             QGCTextField {
                                 text:               modelData
@@ -487,7 +498,7 @@ QGCPopupDialog {
 
                 QGCButton {
                     text:       qsTr("Add Row")
-                    onClicked:  instrumentValue.addRangeValue()
+                    onClicked:  instrumentValueData.addRangeValue()
                 }
             }
         }

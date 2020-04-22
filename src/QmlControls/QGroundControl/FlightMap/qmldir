@@ -9,8 +9,6 @@ CenterMapDropButton         1.0 CenterMapDropButton.qml
 CenterMapDropPanel          1.0 CenterMapDropPanel.qml
 CompassRing                 1.0 CompassRing.qml
 InstrumentSwipeView         1.0 InstrumentSwipeView.qml
-InstrumentValue             1.0 InstrumentValue.qml
-InstrumentValueEditDialog   1.0 InstrumentValueEditDialog.qml
 MapFitFunctions             1.0 MapFitFunctions.qml
 MapLineArrow                1.0 MapLineArrow.qml
 MapScale                    1.0 MapScale.qml

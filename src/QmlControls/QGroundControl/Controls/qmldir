@@ -22,6 +22,9 @@ GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
 HackFileDialog          1.0 HackFileDialog.qml
 HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
+InstrumentValue         1.0 InstrumentValue.qml
+InstrumentValueArea     1.0 InstrumentValueArea.qml
+InstrumentValueEditDialog   1.0 InstrumentValueEditDialog.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 KMLOrSHPFileDialog      1.0 KMLOrSHPFileDialog.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
