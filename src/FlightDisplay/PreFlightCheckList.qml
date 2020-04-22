@@ -31,17 +31,19 @@ Rectangle {
     }
 
     property bool allChecksPassed:  false
-    property var  vehicleCopy:       activeVehicle
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    onVehicleCopyChanged: {
-        checkListRepeater.model.reset()
+    on_ActiveVehicleChanged: {
+        if (checkListRepeater.model) {
+            checkListRepeater.model.reset()
+        }
     }
 
     onAllChecksPassedChanged: {
         if (allChecksPassed) {
-            activeVehicle.checkListState = Vehicle.CheckListPassed
+            _activeVehicle.checkListState = Vehicle.CheckListPassed
         } else {
-            activeVehicle.checkListState = Vehicle.CheckListFailed
+            _activeVehicle.checkListState = Vehicle.CheckListFailed
         }
     }
 
@@ -71,7 +73,7 @@ Rectangle {
 
     //-- Pick a checklist model that matches the current airframe type (if any)
     function _updateModel() {
-        var vehicle = activeVehicle
+        var vehicle = _activeVehicle
         if (!vehicle) {
            vehicle = QGroundControl.multiVehicleManager.offlineEditingVehicle
         }
@@ -97,7 +99,7 @@ Rectangle {
     }
 
     onVisibleChanged: {
-        if(activeVehicle) {
+        if(_activeVehicle) {
             if(visible) {
                 _updateModel()
             }
