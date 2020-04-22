@@ -340,24 +340,28 @@ VideoReceiverApp::exec()
      });
 
     QObject::connect(_receiver, &VideoReceiver::onStartComplete, [this](VideoReceiver::STATUS status){
-        if (status != VideoReceiver::STATUS_OK) {
-            qCDebug(AppLog) << "Video receiver start failed";
-            _dispatch([this](){
-                if (--_connect > 0) {
-                    qCDebug(AppLog) << "Restarting ...";
-                    _dispatch([this](){
-                        startStreaming();
-                    });
-                } else {
-                    qCDebug(AppLog) << "Closing...";
-                    _receiver->deleteLater();
-                    _receiver = nullptr;
-                    _app.exit();
-                }
-            });
-        } else {
+        if (status == VideoReceiver::STATUS_OK) {
             qCDebug(AppLog) << "Video receiver started";
+            return;
         }
+
+        qCDebug(AppLog) << "Video receiver start failed";
+        auto tryRecoonectOrDie = [this] {
+            _connect -= 1;
+            if (_connect > 0) {
+                qCDebug(AppLog) << "Restarting ...";
+                _dispatch([this](){
+                    startStreaming();
+                });
+            } else {
+                qCDebug(AppLog) << "Closing...";
+                _receiver->deleteLater();
+                _receiver = nullptr;
+                _app.exit();
+            }
+        };
+        _dispatch(tryRecoonectOrDie);
+
      });
 
     QObject::connect(_receiver, &VideoReceiver::onStopComplete, [this](VideoReceiver::STATUS ){
