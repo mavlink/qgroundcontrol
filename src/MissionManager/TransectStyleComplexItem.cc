@@ -71,7 +71,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
-    connect(masterController->missionController(),      &MissionController::plannedHomePositionChanged, this, &TransectStyleComplexItem::_rebuildTransects);
 
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
@@ -109,6 +108,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::isValidChanged, this, &TransectStyleComplexItem::readyForSaveStateChanged);
+    connect(masterController->missionController(),      &MissionController::plannedHomePositionChanged, this, &TransectStyleComplexItem::_adjustTransectsForTerrain);
 
     setDirty(false);
 }
@@ -523,23 +523,38 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
 
         emit lastSequenceNumberChanged(lastSequenceNumber());
     } else {
-        double requestedAltitude = std::numeric_limits<double>::min();
+        //We're not following terrain - this means that all the transects are on the same altitude
+        //(relative or absolute). Nominally, this altitude should position the vehicle at
+        //cameraCalc.distanceToSurface() from the ground, but the ground is uneven and we have
+        //to pick a representative spot/reference. We could pick:
+        //(1) The higest hill under the survey polygon for safety;
+        //(2) Average/median height under the polygon to minimise the extent where we
+        //    inevitably disobey distanceToSurface.
+        //(3) Choose the survey's centroid as reference, though it's unclear why that would
+        //    be better than any other option.
+        //We pick (2).
+        size_t noOfSamples = 0;
+        double avgAltitude = 0;
         for (const auto& transect : _transectsPathHeightInfo) {
             for (const auto& path : transect) {
                 for (const auto& height : path.heights) {
-                    requestedAltitude = std::max(height, requestedAltitude);
+                    avgAltitude += height;
+                    noOfSamples++;
                 }
             }
         }
-        requestedAltitude += _cameraCalc.distanceToSurface()->rawValue().toDouble();
-        if (coordinateHasRelativeAltitude()) {
-            requestedAltitude -= masterController()->missionController()->plannedHomePosition().altitude();
-        }
-        for (int i=0; i<_transects.count(); i++) {
-            QList<CoordInfo_t>& transect = _transects[i];
-            for (int j=0; j<transect.count(); j++) {
-                QGeoCoordinate& coord = transect[j].coord;
-                coord.setAltitude(requestedAltitude);
+        if (noOfSamples) {
+            avgAltitude /= noOfSamples;
+            avgAltitude += _cameraCalc.distanceToSurface()->rawValue().toDouble();
+            if (coordinateHasRelativeAltitude()) {
+                avgAltitude -= masterController()->missionController()->plannedHomePosition().altitude();
+            }
+            for (int i=0; i<_transects.count(); i++) {
+                QList<CoordInfo_t>& transect = _transects[i];
+                for (int j=0; j<transect.count(); j++) {
+                    QGeoCoordinate& coord = transect[j].coord;
+                    coord.setAltitude(avgAltitude);
+                }
             }
         }
     }
