@@ -10903,6 +10903,10 @@ tailsitter, tiltrotor: main throttle</short_desc>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
+    <parameter default="0" name="VT_MC_ON_FMU" type="INT32">
+      <short_desc>Enable the usage of AUX outputs for hover motors</short_desc>
+      <long_desc>Set this parameter to true if the vehicle's hover motors are connected to the FMU (AUX) port. Not required for boards that only have a FMU, and no IO. Only applies for standard VTOL and tiltrotor.</long_desc>
+    </parameter>
     <parameter default="0" name="VT_MOT_ID" type="INT32">
       <short_desc>The channel number of motors which provide lift during hover</short_desc>
       <min>0</min>
