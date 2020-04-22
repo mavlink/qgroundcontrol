@@ -11,6 +11,7 @@ import QtQuick          2.12
 import QtQuick.Layouts  1.2
 import QtQuick.Controls 2.5
 
+import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -19,7 +20,7 @@ Item {
     id:     root
     height: value.y + value.height
 
-    property var    instrumentValue:                null
+    property var    instrumentValueData:            null
     property bool   recalcOk:                       false
 
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
@@ -27,63 +28,74 @@ Item {
     property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
     property real   _tightDefaultFontHeight:        ScreenTools.defaultFontPixelHeight - _doubleDescent
     property var    _rgFontSizeTightHeights:        [ _tightDefaultFontHeight * _rgFontSizeRatios[0] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[1] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[2] + 2, _tightDefaultFontHeight * _rgFontSizeRatios[3] + 2 ]
+    property real   _tightHeight:                   _rgFontSizeTightHeights[instrumentValueData.instrumentValueArea.fontSize]
+    property real   _fontSize:                      _rgFontSizes[instrumentValueData.instrumentValueArea.fontSize]
+    property real   _horizontalLabelSpacing:        ScreenTools.defaultFontPixelWidth
     property real   _blankEntryHeight:              ScreenTools.defaultFontPixelHeight * 2
+    property bool   _showIcon:                      instrumentValueData.icon || instrumentValueData.rangeType === InstrumentValueData.IconSelectRange
 
     // After fighting with using layout and/or anchors I gave up and just do a manual recalc to position items which ends up being much simpler
     function recalcPositions() {
         if (!recalcOk) {
             return
         }
-        var smallSpacing = 2
-        if (instrumentValue.icon) {
-            if (instrumentValue.labelPosition === InstrumentValue.LabelAbove) {
+        var smallVerticalSpacing = 2
+        var halfWidth = width / 2
+        var halfHorizontalSpacing = _horizontalLabelSpacing / 2
+        if (_showIcon) {
+            if (instrumentValueData.instrumentValueArea.orientation === InstrumentValueArea.VerticalOrientation) {
                 valueIcon.x = (width - valueIcon.width) / 2
                 valueIcon.y = 0
                 value.x = (width - value.width) / 2
-                value.y = valueIcon.height + smallSpacing
+                value.y = valueIcon.height + smallVerticalSpacing
             } else {
-                var iconPlusValueWidth = valueIcon.width + value.width + ScreenTools.defaultFontPixelWidth
-                valueIcon.x = (width - iconPlusValueWidth) / 2
+                value.y = 0 // value assumed to be taller
                 valueIcon.y = (value.height - valueIcon.height) / 2
-                value.x = valueIcon.x + valueIcon.width + (ScreenTools.defaultFontPixelWidth / 2)
-                value.y = 0
+                value.x = halfWidth + halfHorizontalSpacing
+                valueIcon.x = halfWidth - halfHorizontalSpacing - valueIcon.width
             }
             label.x = label.y = 0
         } else {
-            // label above value
-            if (instrumentValue.text) {
-                label.x = (width - label.width) / 2
-                label.y = 0
-                value.y = label.height + smallSpacing
+            if (instrumentValueData.text) {
+                if (instrumentValueData.instrumentValueArea.orientation === InstrumentValueArea.VerticalOrientation) {
+                    label.x = (width - label.width) / 2
+                    label.y = 0
+                    value.x = (width - value.width) / 2
+                    value.y = label.height + smallVerticalSpacing
+                } else {
+                    value.y = 0 // value assumed to be taller
+                    label.y = (value.height - label.height) / 2
+                    value.x = halfWidth + halfHorizontalSpacing
+                    label.x = halfWidth - halfHorizontalSpacing - label.width
+                }
             } else {
-                value.y = 0
+                value.x = (width - value.width) / 2
+                value.y = (height - value.height) / 2
             }
-            value.x = (width - value.width) / 2
             valueIcon.x = valueIcon.y = 0
         }
     }
 
     onRecalcOkChanged:    recalcPositions()
-    onWidthChanged:                         recalcPositions()
+    onWidthChanged:       recalcPositions()
 
     Connections {
-        target:                 instrumentValue
-        onIconChanged:          recalcPositions()
-        onLabelPositionChanged: recalcPositions()
+        target:         instrumentValueData
+        onIconChanged:  recalcPositions()
     }
 
     QGCColoredImage {
         id:                         valueIcon
-        height:                     _rgFontSizeTightHeights[instrumentValue.fontSize]
+        height:                     _tightHeight
         width:                      height
         source:                     icon
         sourceSize.height:          height
         fillMode:                   Image.PreserveAspectFit
         mipmap:                     true
         smooth:                     true
-        color:                      instrumentValue.isValidColor(instrumentValue.currentColor) ? instrumentValue.currentColor : qgcPal.text
-        opacity:                    instrumentValue.currentOpacity
-        visible:                    instrumentValue.icon
+        color:                      instrumentValueData.isValidColor(instrumentValueData.currentColor) ? instrumentValueData.currentColor : qgcPal.text
+        opacity:                    instrumentValueData.currentOpacity
+        visible:                    _showIcon
         onWidthChanged:             root.recalcPositions()
         onHeightChanged:            root.recalcPositions()
 
@@ -91,17 +103,17 @@ Item {
         readonly property string iconPrefix: "/InstrumentValueIcons/"
 
         function updateIcon() {
-            if (instrumentValue.rangeType == InstrumentValue.IconSelectRange) {
-                icon = iconPrefix + instrumentValue.currentIcon
-            } else if (instrumentValue.icon) {
-                icon = iconPrefix + instrumentValue.icon
+            if (instrumentValueData.rangeType === InstrumentValueData.IconSelectRange) {
+                icon = iconPrefix + instrumentValueData.currentIcon
+            } else if (instrumentValueData.icon) {
+                icon = iconPrefix + instrumentValueData.icon
             } else {
                 icon = ""
             }
         }
 
         Connections {
-            target:                 instrumentValue
+            target:                 instrumentValueData
             onRangeTypeChanged:     valueIcon.updateIcon()
             onCurrentIconChanged:   valueIcon.updateIcon()
             onIconChanged:          valueIcon.updateIcon()
@@ -117,28 +129,27 @@ Item {
         text:                       _settingsUnlocked ? qsTr("BLANK") : ""
         horizontalAlignment:        Text.AlignHCenter
         verticalAlignment:          Text.AlignVCenter
-        visible:                    !instrumentValue.fact
+        visible:                    !instrumentValueData.fact
         onWidthChanged:             root.recalcPositions()
         onHeightChanged:            root.recalcPositions()
     }
 
     QGCLabel {
         id:                         label
-        height:                     _rgFontSizeTightHeights[InstrumentValue.SmallFontSize]
-        font.pointSize:             ScreenTools.smallFontPointSize
-        text:                       instrumentValue.text.toUpperCase()
+        height:                     _tightHeight
+        text:                       instrumentValueData.text
         verticalAlignment:          Text.AlignVCenter
-        visible:                    instrumentValue.fact && instrumentValue.text && !instrumentValue.icon
+        visible:                    !_showIcon
         onWidthChanged:             root.recalcPositions()
         onHeightChanged:            root.recalcPositions()
     }
 
     QGCLabel {
         id:                         value
-        font.pointSize:             _rgFontSizes[instrumentValue.fontSize]
-        text:                       visible ? (instrumentValue.fact.enumOrValueString + (instrumentValue.showUnits ? instrumentValue.fact.units : "")) : ""
+        font.pointSize:             _fontSize
+        text:                       visible ? (instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? instrumentValueData.fact.units : "")) : ""
         verticalAlignment:          Text.AlignVCenter
-        visible:                    instrumentValue.fact
+        visible:                    instrumentValueData.fact
         onWidthChanged:             root.recalcPositions()
         onHeightChanged:            root.recalcPositions()
     }
