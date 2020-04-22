@@ -319,12 +319,10 @@ VideoReceiverApp::exec()
         }
 
         qCDebug(AppLog) << "Decoding stopped";
-        if (_streaming) {
-            if (!_recording) {
-                _dispatch([this](){
-                    _receiver->stop();
-                });
-            }
+        if (_streaming && !_recording) {
+            _dispatch([this](){
+                _receiver->stop();
+            });
         }
      });
 
@@ -336,12 +334,10 @@ VideoReceiverApp::exec()
         }
 
         qCDebug(AppLog) << "Recording stopped";
-        if (_streaming) {
-            if (!_decoding) {
-                _dispatch([this](){
-                    _receiver->stop();
-                });
-            }
+        if (_streaming && !_decoding) {
+            _dispatch([this](){
+                _receiver->stop();
+            });
         }
      });
 
