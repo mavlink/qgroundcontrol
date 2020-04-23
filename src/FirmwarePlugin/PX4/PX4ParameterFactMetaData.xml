@@ -4358,7 +4358,7 @@ Does not affect MAVLINK_ROI input</short_desc>
     <parameter default="0" name="MNT_MAN_PITCH" type="INT32">
       <short_desc>Auxiliary channel to control pitch (in AUX input or manual mode)</short_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <values>
         <value code="0">Disable</value>
         <value code="1">AUX1</value>
@@ -4372,7 +4372,7 @@ Does not affect MAVLINK_ROI input</short_desc>
     <parameter default="0" name="MNT_MAN_ROLL" type="INT32">
       <short_desc>Auxiliary channel to control roll (in AUX input or manual mode)</short_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <values>
         <value code="0">Disable</value>
         <value code="1">AUX1</value>
@@ -4386,7 +4386,7 @@ Does not affect MAVLINK_ROI input</short_desc>
     <parameter default="0" name="MNT_MAN_YAW" type="INT32">
       <short_desc>Auxiliary channel to control yaw (in AUX input or manual mode)</short_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <values>
         <value code="0">Disable</value>
         <value code="1">AUX1</value>
