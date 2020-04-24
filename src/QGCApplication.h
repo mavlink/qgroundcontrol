@@ -156,14 +156,15 @@ public:
     bool _checkTelemetrySavePath(bool useMessageBox);
 
 private slots:
-    void _missingParamsDisplay(void);
+    void _missingParamsDisplay          (void);
     void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
-    void _currentVersionDownloadError(QString errorMsg);
-    bool _parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
-    void _onGPSConnect();
-    void _onGPSDisconnect();
-    void _gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
-    void _gpsNumSatellites(int numSatellites);
+    void _currentVersionDownloadError   (QString errorMsg);
+    bool _parseVersionText              (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect                  (void);
+    void _onGPSDisconnect               (void);
+    void _gpsSurveyInStatus             (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites              (int numSatellites);
+    void _showDelayedAppMessages        (void);
 
 private:
     QObject*    _rootQmlObject          ();
@@ -193,6 +194,8 @@ private:
     QLocale             _locale;
     bool                _error                  = false;
     QElapsedTimer       _msecsElapsedTime;
+
+    QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
