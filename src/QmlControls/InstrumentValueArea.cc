@@ -176,7 +176,7 @@ void InstrumentValueArea::_checkForDeprecatedSettings(void)
 
     if (settings.childGroups().contains(_deprecatedGroupKey)) {
         settings.remove(_deprecatedGroupKey);
-        qgcApp()->showAppMessage(tr("Instrument Values"), tr("The support for custom instrument values display has changed. Because of this the display will be reset to the new default setup. You will need to modify it again to suit your needs."));
+        qgcApp()->showAppMessage(tr("The support for custom instrument value display has changed. The display will be reset to the new default setup. You will need to modify it again to suit your needs."), tr("Instrument Values"));
     }
 }
 
