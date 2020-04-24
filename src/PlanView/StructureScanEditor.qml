@@ -247,12 +247,7 @@ Rectangle {
                 visible:            tabBar.currentIndex == 1
 
                 CameraCalcCamera {
-                    cameraCalc:                     missionItem.cameraCalc
-                    vehicleFlightIsFrontal:         false
-                    distanceToSurfaceLabel:         qsTr("Scan Distance")
-                    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
-                    frontalDistanceLabel:           qsTr("Layer Height")
-                    sideDistanceLabel:              qsTr("Trigger Distance")
+                    cameraCalc: missionItem.cameraCalc
                 }
             }
         }

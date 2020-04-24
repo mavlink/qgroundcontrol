@@ -280,16 +280,6 @@ Rectangle {
                     spacing:        _margin
                     visible:        transectsHeader.checked
 
-                    /*
-              Temporarily removed due to bug https://github.com/mavlink/qgroundcontrol/issues/7005
-            FactCheckBox {
-                text:       qsTr("Split concave polygons")
-                fact:       _splitConcave
-                visible:    _splitConcave.visible
-                property Fact _splitConcave: missionItem.splitConcavePolygons
-            }
-            */
-
                     QGCOptionsComboBox {
                         Layout.fillWidth: true
 
@@ -405,14 +395,7 @@ Rectangle {
                 visible:            tabBar.currentIndex == 1
 
                 CameraCalcCamera {
-                    cameraCalc:                     missionItem.cameraCalc
-                    vehicleFlightIsFrontal:         true
-                    distanceToSurfaceLabel:         qsTr("Altitude")
-                    distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
-                                                        QGroundControl.AltitudeModeAboveTerrain :
-                                                        missionItem.cameraCalc.distanceToSurfaceRelative
-                    frontalDistanceLabel:           qsTr("Trigger Dist")
-                    sideDistanceLabel:              qsTr("Spacing")
+                    cameraCalc: missionItem.cameraCalc
                 }
             } // Camera Column
 

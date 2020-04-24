@@ -16,12 +16,13 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
 FactTextField {
-    unitsLabel:         fact ? fact.units : ""
-    extraUnitsLabel:    fact ? _altitudeModeExtraUnits : ""
-    showUnits:          true
-    showHelp:           true
+    unitsLabel:                 fact ? fact.units : ""
+    extraUnitsLabel:            fact ? _altitudeModeExtraUnits : ""
+    showUnits:                  true
+    showHelp:                   true
 
-    property int altitudeMode: QGroundControl.AltitudeModeNone
+    property int  altitudeMode:             QGroundControl.AltitudeModeNone
+    property bool showAboveTerrainWarning:  true
 
     readonly property string _altModeNoneExtraUnits:            ""
     readonly property string _altModeRelativeExtraUnits:        qsTr("(Rel)")
@@ -44,7 +45,7 @@ FactTextField {
             _altitudeModeExtraUnits = _altModeAbsoluteExtraUnits
         } else if (altitudeMode === QGroundControl.AltitudeModeAboveTerrain) {
             _altitudeModeExtraUnits = _altModeAboveTerrainExtraUnits
-            if (!_aboveTerrainWarning.rawValue) {
+            if (!_aboveTerrainWarning.rawValue && showAboveTerrainWarning) {
                 mainWindow.showComponentDialog(aboveTerrainWarning, qsTr("Warning"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
             }
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {

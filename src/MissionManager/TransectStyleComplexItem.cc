@@ -538,6 +538,18 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
         }
 
         emit lastSequenceNumberChanged(lastSequenceNumber());
+
+        // Update entry/exit coordinates
+        if (_transects.count()) {
+            if (_transects.first().count()) {
+                _coordinate.setAltitude(_transects.first().first().coord.altitude());
+                emit coordinateChanged(coordinate());
+            }
+            if (_transects.last().count()) {
+                _exitCoordinate.setAltitude(_transects.last().last().coord.altitude());
+                emit exitCoordinateChanged(exitCoordinate());
+            }
+        }
     }
 }
 
@@ -653,31 +665,24 @@ void TransectStyleComplexItem::_adjustForTolerance(QList<CoordInfo_t>& transect)
 {
     QList<CoordInfo_t> adjustedPoints;
 
-    double tolerance = _terrainAdjustToleranceFact.rawValue().toDouble();
+    if (transect.count()) {
+        double          tolerance =     _terrainAdjustToleranceFact.rawValue().toDouble();
+        CoordInfo_t&    lastCoordInfo = transect.first();
 
-    int coordIndex = 0;
-    while (coordIndex < transect.count()) {
-        const CoordInfo_t& fromCoordInfo = transect[coordIndex];
+        adjustedPoints.append(lastCoordInfo);
 
-        adjustedPoints.append(fromCoordInfo);
-
-        // Walk forward until we fall out of tolerence or find a fixed point
-        while (++coordIndex < transect.count()) {
-            const CoordInfo_t& toCoordInfo = transect[coordIndex];
-            if (toCoordInfo.coordType != CoordTypeInteriorTerrainAdded || qAbs(fromCoordInfo.coord.altitude() - toCoordInfo.coord.altitude()) > tolerance) {
-                adjustedPoints.append(toCoordInfo);
-                coordIndex++;
-                break;
+        int coordIndex = 1;
+        while (coordIndex < transect.count()) {
+            // Walk forward until we fall out of tolerence. When we fall out of tolerance add that point.
+            // We always add non-interstitial points no matter what.
+            const CoordInfo_t& nextCoordInfo = transect[coordIndex];
+            if (nextCoordInfo.coordType != CoordTypeInteriorTerrainAdded || qAbs(lastCoordInfo.coord.altitude() - nextCoordInfo.coord.altitude()) > tolerance) {
+                adjustedPoints.append(nextCoordInfo);
+                lastCoordInfo = nextCoordInfo;
             }
+            coordIndex++;
         }
     }
-
-#if 0
-    qDebug() << "_adjustForTolerance";
-    for (const TransectStyleComplexItem::CoordInfo_t& coordInfo: adjustedPoints) {
-        qDebug() << coordInfo.coordType;
-    }
-#endif
 
     transect = adjustedPoints;
 }
@@ -686,7 +691,7 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 {
     QList<CoordInfo_t> adjustedTransect;
 
-    double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
+    double distanceToSurface = _cameraCalc.distanceToSurface()->rawValue().toDouble();
 
     for (int i=0; i<transect.count() - 1; i++) {
         CoordInfo_t fromCoordInfo = transect[i];
@@ -697,8 +702,8 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 
         const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo = transectPathHeightInfo[i];
 
-        fromCoordInfo.coord.setAltitude(pathHeightInfo.heights.first() + requestedAltitude);
-        toCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + requestedAltitude);
+        fromCoordInfo.coord.setAltitude(pathHeightInfo.heights.first() + distanceToSurface);
+        toCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + distanceToSurface);
 
         if (i == 0) {
             adjustedTransect.append(fromCoordInfo);
@@ -712,7 +717,7 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
             CoordInfo_t interstitialCoordInfo;
             interstitialCoordInfo.coordType = CoordTypeInteriorTerrainAdded;
             interstitialCoordInfo.coord = fromCoordInfo.coord.atDistanceAndAzimuth(distance * percentTowardsTo, azimuth);
-            interstitialCoordInfo.coord.setAltitude(interstitialTerrainHeight + requestedAltitude);
+            interstitialCoordInfo.coord.setAltitude(interstitialTerrainHeight + distanceToSurface);
 
             adjustedTransect.append(interstitialCoordInfo);
         }
@@ -722,7 +727,7 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 
     CoordInfo_t lastCoordInfo = transect.last();
     const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo = transectPathHeightInfo.last();
-    lastCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + requestedAltitude);
+    lastCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + distanceToSurface);
     adjustedTransect.append(lastCoordInfo);
 
 #if 0
