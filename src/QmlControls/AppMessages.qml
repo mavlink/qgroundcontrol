@@ -29,45 +29,44 @@ Item {
     Component {
         id: filtersDialogComponent
         QGCViewDialog {
-            ColumnLayout {
+            QGCFlickable {
                 anchors.fill: parent
-                RowLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 2
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
 
-                    QGCLabel {
-                        text: qsTr("Search:")
-                    }
+                contentHeight:  categoryColumn.height
+                clip:           true
 
-                    QGCTextField {
-                        id: searchText
-                        text: ""
+                ColumnLayout {
+                    anchors.fill: parent
+                    RowLayout {
+                        spacing: ScreenTools.defaultFontPixelHeight / 2
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.fillHeight: true
                         Layout.fillWidth: true
-                        enabled: true
+
+                        QGCLabel {
+                            text: qsTr("Search:")
+                        }
+
+                        QGCTextField {
+                            id: searchText
+                            text: ""
+                            Layout.fillWidth: true
+                            enabled: true
+                        }
+
+                        QGCButton {
+                            text: qsTr("Clear")
+                            onClicked: searchText.text = ""
+                        }
                     }
 
-                    QGCButton {
-                        text: qsTr("Clear")
-                        onClicked: searchText.text = ""
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelHeight / 2
+                        QGCButton {
+                            text: qsTr("Clear All")
+                            onClicked: categoryRepeater.setAllLogs(false)
+                        }
                     }
-                }
-
-                Row {
-                    spacing:    ScreenTools.defaultFontPixelHeight / 2
-                    QGCButton {
-                        text: qsTr("Clear All")
-                        onClicked: categoryRepeater.setAllLogs(false)
-                    }
-                }
-
-                QGCFlickable {
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-
-                    contentHeight:  categoryColumn.height
-                    clip:           true
 
                     Column {
                         id:         categoryColumn
