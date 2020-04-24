@@ -190,7 +190,9 @@ void MissionSettingsItem::_setCoordinateWorker(const QGeoCoordinate& coordinate)
         _plannedHomePositionCoordinate = coordinate;
         emit coordinateChanged(coordinate);
         emit exitCoordinateChanged(coordinate);
-        _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        if (_plannedHomePositionFromVehicle) {
+            _plannedHomePositionAltitudeFact.setRawValue(coordinate.altitude());
+        }
     }
 }
 

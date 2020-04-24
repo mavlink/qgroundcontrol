@@ -29,7 +29,7 @@ const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
 
 CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
-    , _dirty                        (masterController)
+    , _dirty                        (false)
     , _disableRecalc                (false)
     , _distanceToSurfaceRelative    (true)
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))

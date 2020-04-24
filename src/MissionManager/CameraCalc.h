@@ -33,6 +33,13 @@ public:
     Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                                                    CONSTANT)
     Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                                          CONSTANT)                                   ///< Side footprint adjusted down for overlap
     Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                                   ///< Frontal footprint adjusted down for overlap
+
+    // When we are creating a manual grid we still use CameraCalc to store the manual grid information. It's a bastardization of what
+    // CameraCalc is meant for but it greatly simplifies code and persistance of manual grids.
+    //  grid altitude -         distanceToSurface
+    //  grid altitude mode -    distanceToSurfaceRelative
+    //  trigger distance -      adjustedFootprintFrontal
+    //  transect spacing -      adjustedFootprintSide
     Q_PROPERTY(bool             distanceToSurfaceRelative   READ distanceToSurfaceRelative WRITE setDistanceToSurfaceRelative   NOTIFY distanceToSurfaceRelativeChanged)
 
     // The following values are calculated from the camera properties
