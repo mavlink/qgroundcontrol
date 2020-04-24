@@ -15,11 +15,6 @@ Column {
     spacing:        _margin
 
     property var    cameraCalc
-    property bool   vehicleFlightIsFrontal:         true
-    property string distanceToSurfaceLabel
-    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
-    property string frontalDistanceLabel
-    property string sideDistanceLabel
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property string _cameraName:        cameraCalc.cameraName.value
