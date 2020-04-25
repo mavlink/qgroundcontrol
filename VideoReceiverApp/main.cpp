@@ -155,6 +155,9 @@ private:
     unsigned int _fileFormat = VideoReceiver::FILE_FORMAT_MIN;
     unsigned _stopRecordingAfter = 15;
     bool _useFakeSink = false;
+    bool _streaming = false;
+    bool _decoding = false;
+    bool _recording = false;
 };
 
 void
@@ -299,15 +302,57 @@ VideoReceiverApp::exec()
 
     startStreaming();
 
-    QObject::connect(_receiver, &VideoReceiver::timeout, [this](){
+    QObject::connect(_receiver, &VideoReceiver::timeout, [](){
         qCDebug(AppLog) << "Streaming timeout";
+     });
 
-        _dispatch([this](){
-            if (_receiver->streaming()) {
-                _receiver->stop();
-            } else {
+    QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](bool active){
+        _streaming = active;
+        if (_streaming) {
+            qCDebug(AppLog) << "Streaming started";
+        } else {
+            qCDebug(AppLog) << "Streaming stopped";
+        }
+     });
+
+    QObject::connect(_receiver, &VideoReceiver::decodingChanged, [this](bool active){
+        _decoding = active;
+        if (_decoding) {
+            qCDebug(AppLog) << "Decoding started";
+        } else {
+            qCDebug(AppLog) << "Decoding stopped";
+            if (_streaming) {
+                if (!_recording) {
+                    _dispatch([this](){
+                        _receiver->stop();
+                    });
+                }
+            }
+        }
+     });
+
+    QObject::connect(_receiver, &VideoReceiver::recordingChanged, [this](bool active){
+        _recording = active;
+        if (_recording) {
+            qCDebug(AppLog) << "Recording started";
+        } else {
+            qCDebug(AppLog) << "Recording stopped";
+            if (_streaming) {
+                if (!_decoding) {
+                    _dispatch([this](){
+                        _receiver->stop();
+                    });
+                }
+            }
+        }
+     });
+
+    QObject::connect(_receiver, &VideoReceiver::onStartComplete, [this](VideoReceiver::STATUS status){
+        if (status != VideoReceiver::STATUS_OK) {
+            qCDebug(AppLog) << "Video receiver start failed";
+            _dispatch([this](){
                 if (--_connect > 0) {
-                    qCDebug(AppLog) << "Restarting streaming";
+                    qCDebug(AppLog) << "Restarting ...";
                     _dispatch([this](){
                         startStreaming();
                     });
@@ -316,57 +361,29 @@ VideoReceiverApp::exec()
                     delete _receiver;
                     _app.exit();
                 }
+            });
+        } else {
+            qCDebug(AppLog) << "Video receiver started";
+        }
+     });
+
+    QObject::connect(_receiver, &VideoReceiver::onStopComplete, [this](VideoReceiver::STATUS ){
+        qCDebug(AppLog) << "Video receiver stopped";
+
+        _dispatch([this](){
+            if (--_connect > 0) {
+                qCDebug(AppLog) << "Restarting ...";
+                _dispatch([this](){
+                    startStreaming();
+                });
+            } else {
+                qCDebug(AppLog) << "Closing...";
+                delete _receiver;
+                _app.exit();
             }
         });
      });
 
-    QObject::connect(_receiver, &VideoReceiver::streamingChanged, [this](){
-        if (_receiver->streaming()) {
-            qCDebug(AppLog) << "Streaming started";
-        } else {
-            qCDebug(AppLog) << "Streaming stopped";
-            _dispatch([this](){
-                if (--_connect > 0) {
-                    qCDebug(AppLog) << "Restarting streaming";
-                    startStreaming();
-                } else {
-                    qCDebug(AppLog) << "Closing...";
-                    delete _receiver;
-                    _app.exit();
-                }
-            });
-        }
-     });
-
-    QObject::connect(_receiver, &VideoReceiver::decodingChanged, [this](){
-        if (_receiver->decoding()) {
-            qCDebug(AppLog) << "Decoding started";
-        } else {
-            qCDebug(AppLog) << "Decoding stopped";
-            if (_receiver->streaming()) {
-                if (!_receiver->recording()) {
-                    _dispatch([this](){
-                        _receiver->stop();
-                    });
-                }
-            }
-        }
-     });
-
-    QObject::connect(_receiver, &VideoReceiver::recordingChanged, [this](){
-        if (_receiver->recording()) {
-            qCDebug(AppLog) << "Recording started";
-        } else {
-            qCDebug(AppLog) << "Recording stopped";
-            if (_receiver->streaming()) {
-                if (!_receiver->decoding()) {
-                    _dispatch([this](){
-                        _receiver->stop();
-                    });
-                }
-            }
-        }
-     });
 
     return _app.exec();
 }

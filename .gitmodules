@@ -7,6 +7,6 @@
 [submodule "libs/OpenSSL/android_openssl"]
 	path = libs/OpenSSL/android_openssl
 	url = https://github.com/Auterion/android_openssl
-[submodule "libs/gst-plugins-good"]
+[submodule "libs/qmlglsink/gst-plugins-good"]
 	path = libs/qmlglsink/gst-plugins-good
 	url = https://github.com/mavlink/gst-plugins-good.git
