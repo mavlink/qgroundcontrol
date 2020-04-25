@@ -63,7 +63,6 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
 
 GstVideoReceiver::~GstVideoReceiver(void)
 {
-    stop();
     _slotHandler.shutdown();
 }
 
@@ -282,7 +281,7 @@ GstVideoReceiver::stop(void)
     }
 
     if (_uri.isEmpty()) {
-        qCWarning(VideoReceiverLog) << "We should not be here";
+        qCWarning(VideoReceiverLog) << "Stop called on empty URI";
         return;
     }
 
@@ -667,8 +666,6 @@ void
 GstVideoReceiver::_handleEOS(void)
 {
     if(_pipeline == nullptr) {
-        qCWarning(VideoReceiverLog) << "We should not be here";
-        stop();
         return;
     }
 
