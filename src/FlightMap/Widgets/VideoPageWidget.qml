@@ -31,9 +31,8 @@ Item {
     anchors.centerIn:   parent
 
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
-    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
-    property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
-    property bool   _decodingVideo:         _videoReceiver && _videoReceiver.decoding
+    property bool   _recordingVideo:        QGroundControl.videoManager.recording
+    property bool   _decodingVideo:         QGroundControl.videoManager.decoding
     property bool   _streamingEnabled:      QGroundControl.settingsManager.videoSettings.streamConfigured
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -70,10 +69,10 @@ Item {
             onClicked: {
                 if(checked) {
                     QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 1
-                    _videoReceiver.start()
+                    QGroundControl.videoManager.startVideo()
                 } else {
                     QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 0
-                    _videoReceiver.stop()
+                    QGroundControl.videoManager.stopVideo()
                 }
             }
         }

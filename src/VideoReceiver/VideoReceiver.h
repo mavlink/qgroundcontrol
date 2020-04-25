@@ -17,9 +17,6 @@
 
 #include <QObject>
 #include <QSize>
-#include <QQuickItem>
-
-#include <atomic>
 
 class VideoReceiver : public QObject
 {
@@ -28,10 +25,6 @@ class VideoReceiver : public QObject
 public:
     explicit VideoReceiver(QObject* parent = nullptr)
         : QObject(parent)
-        , _streaming(false)
-        , _decoding(false)
-        , _recording(false)
-        , _videoSize(0)
     {}
 
     virtual ~VideoReceiver(void) {}
@@ -44,50 +37,42 @@ public:
         FILE_FORMAT_MAX
     } FILE_FORMAT;
 
-    Q_PROPERTY(bool     streaming   READ    streaming   NOTIFY  streamingChanged)
-    Q_PROPERTY(bool     decoding    READ    decoding    NOTIFY  decodingChanged)
-    Q_PROPERTY(bool     recording   READ    recording   NOTIFY  recordingChanged)
-    Q_PROPERTY(QSize    videoSize   READ    videoSize   NOTIFY  videoSizeChanged)
+    typedef enum {
+        STATUS_OK = 0,
+        STATUS_FAIL,
+        STATUS_INVALID_STATE,
+        STATUS_INVALID_URL,
+        STATUS_NOT_IMPLEMENTED
+    } STATUS;
 
-    bool streaming(void) {
-        return _streaming;
-    }
-
-    bool decoding(void) {
-        return _decoding;
-    }
-
-    bool recording(void) {
-        return _recording;
-    }
-
-    QSize videoSize(void) {
-        const quint32 size = _videoSize;
-        return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
-    }
+    Q_ENUM(STATUS)
 
 signals:
     void timeout(void);
-    void streamingChanged(void);
-    void decodingChanged(void);
-    void recordingChanged(void);
+    void streamingChanged(bool active);
+    void decodingChanged(bool active);
+    void recordingChanged(bool active);
     void recordingStarted(void);
-    void videoSizeChanged(void);
-    void screenshotComplete(void);
+    void videoSizeChanged(QSize size);
+
+    void onStartComplete(STATUS status);
+    void onStopComplete(STATUS status);
+    void onStartDecodingComplete(STATUS status);
+    void onStopDecodingComplete(STATUS status);
+    void onStartRecordingComplete(STATUS status);
+    void onStopRecordingComplete(STATUS status);
+    void onTakeScreenshotComplete(STATUS status);
 
 public slots:
-    virtual void start(const QString& uri, unsigned timeout) = 0;
+    // buffer:
+    //      -1 - disable buffer and video sync
+    //      0 - default buffer length
+    //      N - buffer length, ms
+    virtual void start(const QString& uri, unsigned timeout, int buffer = 0) = 0;
     virtual void stop(void) = 0;
     virtual void startDecoding(void* sink) = 0;
     virtual void stopDecoding(void) = 0;
     virtual void startRecording(const QString& videoFile, FILE_FORMAT format) = 0;
     virtual void stopRecording(void) = 0;
     virtual void takeScreenshot(const QString& imageFile) = 0;
-
-protected:
-    std::atomic<bool>   _streaming;
-    std::atomic<bool>   _decoding;
-    std::atomic<bool>   _recording;
-    std::atomic<quint32>_videoSize;
 };
-
