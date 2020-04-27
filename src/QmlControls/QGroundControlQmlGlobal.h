@@ -145,6 +145,22 @@ public:
 
     QString appSettingsDistanceUnitsString(void) const { return FactMetaData::appSettingsDistanceUnitsString(); }
 
+    /// Converts from meters to the user specified distance unit
+    Q_INVOKABLE QVariant metersToAppSettingsAltitudeUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsAltitudeUnits(meters); }
+
+    /// Converts from user specified distance unit to meters
+    Q_INVOKABLE QVariant appSettingsAltitudeUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsAltitudeUnitsToMeters(distance); }
+
+    QString appSettingsAltitudeUnitsString(void) const { return FactMetaData::appSettingsAltitudeUnitsString(); }
+
+    /// Converts from grams to the user specified weight unit
+    Q_INVOKABLE QVariant gramsToAppSettingsWeightUnits(const QVariant& meters) const { return FactMetaData::gramsToAppSettingsWeightUnits(meters); }
+
+    /// Converts from user specified weight unit to grams
+    Q_INVOKABLE QVariant appSettingsWeightUnitsToGrams(const QVariant& distance) const { return FactMetaData::appSettingsWeightUnitsToGrams(distance); }
+
+    QString appSettingsWeightUnitsString(void) const { return FactMetaData::appSettingsWeightUnitsString(); }
+
     /// Converts from square meters to the user specified area unit
     Q_INVOKABLE QVariant squareMetersToAppSettingsAreaUnits(const QVariant& meters) const { return FactMetaData::squareMetersToAppSettingsAreaUnits(meters); }
 
