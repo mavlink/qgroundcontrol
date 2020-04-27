@@ -69,6 +69,24 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsDistanceUnitsString(void);
 
+    /// Converts from meters to the user specified altitude unit
+    static QVariant metersToAppSettingsAltitudeUnits(const QVariant& meters);
+
+    /// Converts from user specified altitude unit to meters
+    static QVariant appSettingsAltitudeUnitsToMeters(const QVariant& distance);
+
+    /// Returns the string for altitude units which has configued by user
+    static QString appSettingsAltitudeUnitsString(void);
+
+    /// Converts from grams to the user specified weight unit
+    static QVariant gramsToAppSettingsWeightUnits(const QVariant& meters);
+
+    /// Converts from user specified weight unit to grams
+    static QVariant appSettingsWeightUnitsToGrams(const QVariant& distance);
+
+    /// Returns the string for weight units which has configued by user
+    static QString appSettingsWeightUnitsString(void);
+
     /// Converts from meters to the user specified distance unit
     static QVariant squareMetersToAppSettingsAreaUnits(const QVariant& squareMeters);
 
@@ -209,12 +227,21 @@ private:
     static QVariant _inchesToCentimeters(const QVariant& inches);
     static QVariant _celsiusToFarenheit(const QVariant& celsius);
     static QVariant _farenheitToCelsius(const QVariant& farenheit);
+    static QVariant _kilogramsToGrams(const QVariant& kg);
+    static QVariant _ouncesToGrams(const QVariant& oz);
+    static QVariant _poundsToGrams(const QVariant& lbs);
+    static QVariant _gramsToKilograms(const QVariant& g);
+    static QVariant _gramsToOunces(const QVariant& g);
+    static QVariant _gramsToPunds(const QVariant& g);
+
 
     enum UnitTypes {
         UnitDistance = 0,
+        UnitAltitude,
         UnitArea,
         UnitSpeed,
-        UnitTemperature
+        UnitTemperature,
+        UnitWeight
     };
 
     struct AppSettingsTranslation_s {
@@ -227,7 +254,9 @@ private:
     };
 
     static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsAltitudeUnitsTranslation(const QString& rawUnits);
     static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsWeightUnitsTranslation(const QString& rawUnits);
 
     static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
 
@@ -267,6 +296,8 @@ private:
         static const qreal milesToMeters;
         static const qreal feetToMeters;
         static const qreal inchesToCentimeters;
+        static const qreal ouncesToGrams;
+        static const qreal poundsToGrams;
     } constants;
 
     struct BuiltInTranslation_s {

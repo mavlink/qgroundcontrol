@@ -47,6 +47,35 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, distanceUnits)
     return _distanceUnitsFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, altitudeUnits)
+{
+    if (!_altitudeUnitsFact) {
+        // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+        enumStrings << "Feet" << "Meters";
+        enumValues << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsFeet)) << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsMeters));
+        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
+        metaData->setName(altitudeUnitsName);
+        metaData->setShortDescription("Altitude units");
+        metaData->setEnumInfo(enumStrings, enumValues);
+        AltitudeUnits defaultAltitudeUnit = AltitudeUnitsMeters;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem: {
+                defaultAltitudeUnit = AltitudeUnitsMeters;
+            } break;
+            case QLocale::ImperialUSSystem:
+            case QLocale::ImperialUKSystem:
+                defaultAltitudeUnit = AltitudeUnitsFeet;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultAltitudeUnit);
+        metaData->setQGCRebootRequired(true);
+        _altitudeUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
+    }
+    return _altitudeUnitsFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
 {
     if (!_areaUnitsFact) {
@@ -146,4 +175,37 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         _temperatureUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
     return _temperatureUnitsFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, weightUnits)
+{
+    if (!_weightUnitsFact) {
+        // Units settings can't be loaded from json since it creates an infinite loop of meta data loading.
+        QStringList     enumStrings;
+        QVariantList    enumValues;
+        enumStrings << "Grams" << "Kilograms" << "Ounces" << "Pounds";
+        enumValues
+            << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsGrams))
+            << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsKg))
+            << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsOz))
+            << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsLbs));
+        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
+        metaData->setName(weightUnitsName);
+        metaData->setShortDescription(tr("Weight units"));
+        metaData->setEnumInfo(enumStrings, enumValues);
+        WeightUnits defaultWeightUnit = WeightUnitsGrams;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem:
+            case QLocale::ImperialUKSystem: {
+                defaultWeightUnit = WeightUnitsGrams;
+            } break;
+            case QLocale::ImperialUSSystem:
+                defaultWeightUnit = WeightUnitsOz;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultWeightUnit);
+        metaData->setQGCRebootRequired(true);
+        _weightUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
+    }
+    return _weightUnitsFact;
 }
