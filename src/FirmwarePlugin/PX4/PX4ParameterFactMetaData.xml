@@ -10348,8 +10348,7 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter default="0" name="TC_A_ENABLE" type="INT32">
       <short_desc>Thermal compensation for accelerometer sensors</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter category="System" default="0" name="TC_B0_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
@@ -10452,8 +10451,7 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter default="0" name="TC_B_ENABLE" type="INT32">
       <short_desc>Thermal compensation for barometric pressure sensors</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter category="System" default="0" name="TC_G0_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
@@ -10628,8 +10626,7 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter default="0" name="TC_G_ENABLE" type="INT32">
       <short_desc>Thermal compensation for rate gyro sensors</short_desc>
-      <min>0</min>
-      <max>1</max>
+      <reboot_required>true</reboot_required>
     </parameter>
   </group>
   <group name="UAVCAN">
