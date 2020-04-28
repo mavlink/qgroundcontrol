@@ -14,7 +14,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCLoggingCategory.h"
-#include "VideoReceiver.h"
+#include "GstVideoReceiver.h"
 #include "SettingsManager.h"
 
 #include <QTranslator>
@@ -25,7 +25,7 @@ class CustomSettings;
 Q_DECLARE_LOGGING_CATEGORY(CustomLog)
 
 //-- Our own, custom video receiver
-class CustomVideoReceiver : public VideoReceiver
+class CustomVideoReceiver : public GstVideoReceiver
 {
     Q_OBJECT
 public:

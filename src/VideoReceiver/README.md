@@ -39,7 +39,7 @@ gst-launch-1.0 videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! 
 
 On the receiving end, if you want to test it from the command line, you can use something like:
 ```
-gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
+gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
 ```
 
 ### Additional Protocols
