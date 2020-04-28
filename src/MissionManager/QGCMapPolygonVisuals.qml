@@ -303,7 +303,7 @@ Item {
 
             sourceItem: SplitIndicator {
                 z:          _zorderSplitHandle
-                onClicked:  mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
+                onClicked:  if(_root.interactive) mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
             }
         }
     }
@@ -368,7 +368,7 @@ Item {
                 }
             }
 
-            onClicked: menu.popupVertex(polygonVertex)
+            onClicked: if(_root.interactive) menu.popupVertex(polygonVertex)
         }
     }
 
@@ -577,7 +577,7 @@ Item {
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
             onClicked: {
-                if (mouse.button === Qt.LeftButton) {
+                if (mouse.button === Qt.LeftButton && _root.interactive) {
                     mapPolygon.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }
             }
@@ -599,7 +599,7 @@ Item {
                 height:     width
                 radius:     width / 2
                 color:      "white"
-                opacity:    .90
+                opacity:    interiorOpacity * .90
             }
         }
     }
