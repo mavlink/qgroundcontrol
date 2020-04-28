@@ -255,7 +255,8 @@ QT += \
     svg \
     widgets \
     xml \
-    texttospeech
+    texttospeech \
+    core-private
 
 # Multimedia only used if QVC is enabled
 !contains (DEFINES, QGC_DISABLE_UVC) {
@@ -641,8 +642,8 @@ HEADERS += \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
     src/QmlControls/AppMessages.h \
-    src/QmlControls/CoordinateVector.h \
     src/QmlControls/EditPositionDialogController.h \
+    src/QmlControls/FlightPathSegment.h \
     src/QmlControls/InstrumentValueData.h \
     src/QmlControls/InstrumentValueArea.h \
     src/QmlControls/ParameterEditorController.h \
@@ -654,6 +655,7 @@ HEADERS += \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/RCToParamDialogController.h \
     src/QmlControls/ScreenToolsController.h \
+    src/QmlControls/TerrainProfile.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/Settings/ADSBVehicleManagerSettings.h \
     src/Settings/AppSettings.h \
@@ -847,8 +849,8 @@ SOURCES += \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QmlControls/AppMessages.cc \
-    src/QmlControls/CoordinateVector.cc \
     src/QmlControls/EditPositionDialogController.cc \
+    src/QmlControls/FlightPathSegment.cc \
     src/QmlControls/InstrumentValueData.cc \
     src/QmlControls/InstrumentValueArea.cc \
     src/QmlControls/ParameterEditorController.cc \
@@ -860,6 +862,7 @@ SOURCES += \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/RCToParamDialogController.cc \
     src/QmlControls/ScreenToolsController.cc \
+    src/QmlControls/TerrainProfile.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/Settings/ADSBVehicleManagerSettings.cc \
     src/Settings/AppSettings.cc \

@@ -179,7 +179,7 @@ void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordin
             if (_controllerVehicle->fixedWing()) {
                 double altitude = this->altitude()->rawValue().toDouble();
 
-                if (coordinateHasRelativeAltitude()) {
+                if (altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) {
                     // Offset for fixed wing climb out of 30 degrees
                     if (altitude != 0.0) {
                         distance = altitude / tan(qDegreesToRadians(30.0));

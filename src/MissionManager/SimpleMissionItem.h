@@ -97,32 +97,31 @@ public:
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-    bool            dirty                   (void) const override { return _dirty; }
-    bool            isSimpleItem            (void) const final { return true; }
-    bool            isStandaloneCoordinate  (void) const final;
-    bool            isLandCommand           (void) const final;
-    bool            specifiesCoordinate     (void) const final;
-    bool            specifiesAltitudeOnly   (void) const final;
-    QString         commandDescription      (void) const final;
-    QString         commandName             (void) const final;
-    QString         abbreviation            (void) const final;
-    QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
-    QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
-    int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
-    double          specifiedFlightSpeed    (void) override;
-    double          specifiedGimbalYaw      (void) override;
-    double          specifiedGimbalPitch    (void) override;
-    double          specifiedVehicleYaw     (void) override;
-    QString         mapVisualQML            (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double newAltitude) final;
-    void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
-    ReadyForSaveState readyForSaveState     (void) const final;
-    double          additionalTimeDelay     (void) const final;
-
-    bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
-    bool exitCoordinateSameAsEntry          (void) const final { return true; }
+    bool            dirty                       (void) const override { return _dirty; }
+    bool            isSimpleItem                (void) const final { return true; }
+    bool            isStandaloneCoordinate      (void) const final;
+    bool            isLandCommand               (void) const final;
+    bool            specifiesCoordinate         (void) const final;
+    bool            specifiesAltitudeOnly       (void) const final;
+    QString         commandDescription          (void) const final;
+    QString         commandName                 (void) const final;
+    QString         abbreviation                (void) const final;
+    QGeoCoordinate  coordinate                  (void) const final;
+    QGeoCoordinate  exitCoordinate              (void) const final { return coordinate(); }
+    double          amslEntryAlt                (void) const final;
+    double          amslExitAlt                 (void) const final { return amslEntryAlt(); }
+    int             sequenceNumber              (void) const final { return _missionItem.sequenceNumber(); }
+    double          specifiedFlightSpeed        (void) override;
+    double          specifiedGimbalYaw          (void) override;
+    double          specifiedGimbalPitch        (void) override;
+    double          specifiedVehicleYaw         (void) override;
+    QString         mapVisualQML                (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude            (double newAltitude) final;
+    void            setMissionFlightStatus      (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
+    ReadyForSaveState readyForSaveState         (void) const final;
+    double          additionalTimeDelay         (void) const final;
+    bool            exitCoordinateSameAsEntry   (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
     void setCoordinate      (const QGeoCoordinate& coordinate) override;

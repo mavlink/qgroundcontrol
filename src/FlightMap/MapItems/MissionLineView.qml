@@ -19,8 +19,13 @@ MapItemView {
     property bool showSpecialVisual: false
     delegate: MapPolyline {
         line.width: 3
-        line.color: object && showSpecialVisual && object.specialVisual ? "green" : QGroundControl.globalPalette.mapMissionTrajectory
+        line.color: _terrainCollision ?
+                        "red" :
+                        (showSpecialVisual ? "green" : QGroundControl.globalPalette.mapMissionTrajectory)
         z:          QGroundControl.zOrderWaypointLines
         path:       object && object.coordinate1.isValid && object.coordinate2.isValid ? [ object.coordinate1, object.coordinate2 ] : []
+
+        property bool _terrainCollision:    object && object.terrainCollision
+        property bool _showSpecialVisual:   object && showSpecialVisual && object.specialVisual
     }
 }

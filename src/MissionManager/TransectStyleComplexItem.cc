@@ -16,6 +16,8 @@
 #include "AppSettings.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
+#include "PlanMasterController.h"
+#include "FlightPathSegment.h"
 
 #include <QPolygonF>
 
@@ -39,14 +41,7 @@ const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "Cam
 
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup, QObject* parent)
     : ComplexMissionItem                (masterController, flyView, parent)
-    , _sequenceNumber                   (0)
-    , _terrainPolyPathQuery             (nullptr)
-    , _ignoreRecalc                     (false)
-    , _complexDistance                  (0)
-    , _cameraShots                      (0)
     , _cameraCalc                       (masterController, settingsGroup)
-    , _followTerrain                    (false)
-    , _loadedMissionItemsParent         (nullptr)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
     , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_controllerVehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
     , _cameraTriggerInTurnAroundFact    (settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
@@ -60,6 +55,10 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     _terrainQueryTimer.setSingleShot(true);
     connect(&_terrainQueryTimer, &QTimer::timeout, this, &TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo);
 
+    // The follow is used to compress multiple recalc calls in a row to into a single call.
+    connect(this, &TransectStyleComplexItem::_updateFlightPathSegmentsSignal, this, &TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly,   Qt::QueuedConnection);
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&TransectStyleComplexItem::_updateFlightPathSegmentsSignal));
+
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
@@ -71,6 +70,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(&_cameraTriggerInTurnAroundFact,            &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintSide(),        &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(_cameraCalc.adjustedFootprintFrontal(),     &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
+    connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_rebuildTransects);
 
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::complexDistanceChanged);
@@ -97,8 +97,13 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::coveredAreaChanged);
 
-    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+    connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                         this, &TransectStyleComplexItem::_amslEntryAltChanged);
+    connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                         this, &TransectStyleComplexItem::_amslExitAltChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,  this, &TransectStyleComplexItem::_amslEntryAltChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,  this, &TransectStyleComplexItem::_amslExitAltChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,  this, &TransectStyleComplexItem::_updateFlightPathSegmentsSignal);
+
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,  _missionController, &MissionController::recalcTerrainProfile);
 
     connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_handleHoverAndCaptureEnabled);
 
@@ -106,6 +111,9 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
     connect(this,                                       &TransectStyleComplexItem::followTerrainChanged,        this, &TransectStyleComplexItem::_followTerrainChanged);
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
+
+    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslEntryAltChanged);
+    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslExitAltChanged);
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::isValidChanged, this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
@@ -275,6 +283,28 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         _terrainAdjustToleranceFact.setRawValue         (innerObject[terrainAdjustToleranceName].toDouble());
         _terrainAdjustMaxClimbRateFact.setRawValue      (innerObject[terrainAdjustMaxClimbRateName].toDouble());
         _terrainAdjustMaxDescentRateFact.setRawValue    (innerObject[terrainAdjustMaxDescentRateName].toDouble());
+
+        if (!forPresets) {
+            // We have to grovel through mission items to determine min/max alt
+            _minAMSLAltitude = 0;
+            _maxAMSLAltitude = 0;
+            for (const MissionItem* missionItem: _loadedMissionItems) {
+                if (missionItem->command() == MAV_CMD_NAV_WAYPOINT || missionItem->command() == MAV_CMD_CONDITION_GATE) {
+                    _minAMSLAltitude = qMin(_minAMSLAltitude, missionItem->param7());
+                    _maxAMSLAltitude = qMax(_maxAMSLAltitude, missionItem->param7());
+                }
+            }
+        }
+    } else if (!forPresets) {
+        _minAMSLAltitude = _maxAMSLAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
+    }
+
+    if (!forPresets) {
+        emit minAMSLAltitudeChanged(_minAMSLAltitude);
+        emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
+        _amslEntryAltChanged();
+        _amslExitAltChanged();
+        emit _updateFlightPathSegmentsSignal();
     }
 
     return true;
@@ -315,13 +345,6 @@ void TransectStyleComplexItem::_setIfDirty(bool dirty)
     }
 }
 
-void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
-{
-    Q_UNUSED(newAltitude);
-    // FIXME: NYI
-    //_altitudeFact.setRawValue(newAltitude);
-}
-
 void TransectStyleComplexItem::_updateCoordinateAltitudes(void)
 {
     emit coordinateChanged(coordinate());
@@ -359,6 +382,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     if (_followTerrain) {
         // Query the terrain data. Once available terrain heights will be calculated
         _queryTransectsPathHeightInfo();
+        // We won't know min/max till were done
+        _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
     } else {
         // Not following terrain, just add requested altitude to coords
         double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
@@ -372,6 +397,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
                 coord.setAltitude(requestedAltitude);
             }
         }
+
+        _minAMSLAltitude = _maxAMSLAltitude = requestedAltitude + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
     }
 
     // Calc bounding cube
@@ -398,8 +425,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     }
     //-- Update bounding cube for airspace management control
     _setBoundingCube(QGCGeoBoundingCube(
-        QGeoCoordinate(north - 90.0, west - 180.0, bottom),
-        QGeoCoordinate(south - 90.0, east - 180.0, top)));
+                         QGeoCoordinate(north - 90.0, west - 180.0, bottom),
+                         QGeoCoordinate(south - 90.0, east - 180.0, top)));
     emit visualTransectPointsChanged();
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -418,6 +445,97 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
     emit timeBetweenShotsChanged();
     emit additionalTimeDelayChanged();
+
+    emit minAMSLAltitudeChanged(_minAMSLAltitude);
+    emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
+
+    emit _updateFlightPathSegmentsSignal();
+    _amslEntryAltChanged();
+    _amslExitAltChanged();
+}
+
+void TransectStyleComplexItem::_segmentTerrainCollisionChanged(bool terrainCollision)
+{
+    ComplexMissionItem::_segmentTerrainCollisionChanged(terrainCollision);
+    _surveyAreaPolygon.setShowAltColor(_cTerrainCollisionSegments != 0);
+}
+
+// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
+void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
+{
+    if (_cTerrainCollisionSegments != 0) {
+        _cTerrainCollisionSegments = 0;
+        emit terrainCollisionChanged(false);
+        _surveyAreaPolygon.setShowAltColor(false);
+    }
+
+    _flightPathSegments.beginReset();
+    _flightPathSegments.clearAndDeleteContents();
+
+    QGeoCoordinate lastTransectExit = QGeoCoordinate();
+    if (_followTerrain) {
+        if (_loadedMissionItems.count()) {
+            // We are working from loaded mission items from a plan. We have to grovel through the mission items
+            // building up segments from waypoints.
+            QGeoCoordinate prevCoord = QGeoCoordinate();
+            double prevAlt = 0;
+            for (const MissionItem* missionItem: _loadedMissionItems) {
+                if (missionItem->command() == MAV_CMD_NAV_WAYPOINT || missionItem->command() == MAV_CMD_CONDITION_GATE) {
+                    if (prevCoord.isValid()) {
+                        _appendFlightPathSegment(prevCoord, prevAlt, missionItem->coordinate(), missionItem->param7());
+                    }
+                    prevCoord = missionItem->coordinate();
+                    prevAlt = missionItem->param7();
+                }
+            }
+        } else {
+            // We are working for live transect data. We don't show flight path segments until terrain data is back and recalced
+            if (_transectsPathHeightInfo.count()) {
+                // The altitudes of the flight path segments for follow terrain can all occur at different altitudes. Because of that we
+                // need to to add FlightPathSegment's for every section in order to get good terrain collision data and flight path profile.
+                for (const QList<CoordInfo_t>& transect: _transects) {
+                    // Turnaround segment
+                    if (lastTransectExit.isValid()) {
+                        const QGeoCoordinate& coord2 = transect.first().coord;
+                        _appendFlightPathSegment(lastTransectExit, lastTransectExit.altitude(), coord2, coord2.altitude());
+                    }
+
+                    QGeoCoordinate prevCoordInTransect = QGeoCoordinate();
+                    for (const CoordInfo_t& coordInfo: transect) {
+                        if (prevCoordInTransect.isValid()) {
+                            const QGeoCoordinate& coord2 = coordInfo.coord;
+                            _appendFlightPathSegment(prevCoordInTransect, prevCoordInTransect.altitude(), coord2, coord2.altitude());
+                        }
+                        prevCoordInTransect = coordInfo.coord;
+                    }
+
+                    lastTransectExit = transect.last().coord;
+                }
+            }
+        }
+    } else {
+        // Since we aren't following terrain all the transects are at the same height. We can use _visualTransectPoints to build the
+        // flight path segments. The benefit of _visualTransectPoints is that it is also available when a Plan is loaded from a file
+        // and we are working from  stored mission items. In that case we don't have _transects set up for use.
+        QGeoCoordinate prevCoord;
+        double surveyAlt = amslEntryAlt();
+        for (const QVariant& varCoord: _visualTransectPoints) {
+            QGeoCoordinate thisCoord = varCoord.value<QGeoCoordinate>();
+            if (prevCoord.isValid()) {
+                _appendFlightPathSegment(prevCoord,  surveyAlt, thisCoord,  surveyAlt);
+            }
+            prevCoord = thisCoord;
+        }
+    }
+
+    _flightPathSegments.endReset();
+
+    if (_cTerrainCollisionSegments != 0) {
+        emit terrainCollisionChanged(true);
+        _surveyAreaPolygon.setShowAltColor(true);
+    }
+
+    _masterController->missionController()->recalcTerrainProfile();
 }
 
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
@@ -435,23 +553,14 @@ void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 {
     // Clear any previous query
-    if (_terrainPolyPathQuery) {
-        // FIXME: We should really be blowing away any previous query here. But internally that is difficult to implement so instead we let
-        // it complete and drop the results.
-#if 0
-        // Toss previous query
-        _terrainPolyPathQuery->deleteLater();
-#else
-        // Let the signal fall on the floor
-        disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
-#endif
-        _terrainPolyPathQuery = nullptr;
+    if (_currentTerrainFollowQuery) {
+        // We are already waiting on another query. We don't care about those results any more.
+        disconnect(_currentTerrainFollowQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+        _currentTerrainFollowQuery = nullptr;
     }
 
     // Append all transects into a single PolyPath query
-
     QList<QGeoCoordinate> transectPoints;
-
     for (const QList<CoordInfo_t>& transect: _transects) {
         for (const CoordInfo_t& coordInfo: transect) {
             transectPoints.append(coordInfo.coord);
@@ -459,9 +568,9 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
     }
 
     if (transectPoints.count() > 1) {
-        _terrainPolyPathQuery = new TerrainPolyPathQuery(this);
-        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
-        _terrainPolyPathQuery->requestData(transectPoints);
+        _currentTerrainFollowQuery = new TerrainPolyPathQuery(true /* autoDelete */);
+        connect(_currentTerrainFollowQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+        _currentTerrainFollowQuery->requestData(transectPoints);
     }
 }
 
@@ -487,11 +596,12 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
         _adjustTransectsForTerrain();
     }
 
-    if (_terrainPolyPathQuery != sender()) {
-        qWarning() << "TransectStyleComplexItem::_polyPathTerrainData _terrainPolyPathQuery != sender()";
+
+    QObject* object = qobject_cast<QObject*>(sender());
+    if (object) {
+        object->deleteLater();
     }
-    disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
-    _terrainPolyPathQuery = nullptr;
+    _currentTerrainFollowQuery = nullptr;
 }
 
 TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSaveState(void) const
@@ -538,18 +648,21 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
         }
 
         emit lastSequenceNumberChanged(lastSequenceNumber());
+        emit _updateFlightPathSegmentsSignal();
 
-        // Update entry/exit coordinates
-        if (_transects.count()) {
-            if (_transects.first().count()) {
-                _coordinate.setAltitude(_transects.first().first().coord.altitude());
-                emit coordinateChanged(coordinate());
-            }
-            if (_transects.last().count()) {
-                _exitCoordinate.setAltitude(_transects.last().last().coord.altitude());
-                emit exitCoordinateChanged(exitCoordinate());
+        _amslEntryAltChanged();
+        _amslExitAltChanged();
+
+        _minAMSLAltitude = 0;
+        _maxAMSLAltitude = 0;
+        for (const QList<CoordInfo_t>& transect: _transects) {
+            for (const CoordInfo_t& coordInfo: transect) {
+                _minAMSLAltitude = qMin(_minAMSLAltitude, coordInfo.coord.altitude());
+                _maxAMSLAltitude = qMax(_maxAMSLAltitude, coordInfo.coord.altitude());
             }
         }
+        emit minAMSLAltitudeChanged(_minAMSLAltitude);
+        emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
     }
 }
 
@@ -791,16 +904,6 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
     }
 }
 
-bool TransectStyleComplexItem::coordinateHasRelativeAltitude(void) const
-{
-    return _cameraCalc.distanceToSurfaceRelative();
-}
-
-bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
-{
-    return coordinateHasRelativeAltitude();
-}
-
 void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
 {
     _cameraCalc.setDistanceToSurfaceRelative(!followTerrain);
@@ -914,8 +1017,8 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
     bool hasTurnarounds =           _turnAroundDistance() != 0;
     bool addTriggerAtBeginningEnd = !hoverAndCaptureEnabled() && imagesInTurnaround && triggerCamera();
     bool useConditionGate =         _controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_CONDITION_GATE) &&
-                                        triggerCamera() &&
-                                        !hoverAndCaptureEnabled();
+            triggerCamera() &&
+            !hoverAndCaptureEnabled();
 
     MAV_FRAME mavFrame = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
@@ -1005,4 +1108,58 @@ void TransectStyleComplexItem::addKMLVisuals(KMLPlanDomDocument& domDocument)
     placemarkElement.appendChild(polygonElement);
     domDocument.addTextElement(placemarkElement, "styleUrl", QStringLiteral("#%1").arg(domDocument.surveyPolygonStyleName));
     domDocument.appendChildToRoot(placemarkElement);
+}
+
+void TransectStyleComplexItem::_recalcComplexDistance(void)
+{
+    _complexDistance = 0;
+    for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
+        _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
+    }
+    emit complexDistanceChanged();
+}
+
+double TransectStyleComplexItem::amslEntryAlt(void) const
+{
+    if (_followTerrain) {
+        if (_loadedMissionItems.count()) {
+            return _loadedMissionItems.first()->param7();
+        } else {
+            if (_transectCount() == 0) {
+                return qQNaN();
+            } else {
+                bool addHomeAlt = !followTerrain() && _cameraCalc.distanceToSurfaceRelative();
+
+                return _transects.first().first().coord.altitude() + (addHomeAlt ?  _missionController->plannedHomePosition().altitude() : 0);
+            }
+        }
+    } else {
+        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
+    }
+}
+
+double TransectStyleComplexItem::amslExitAlt(void) const
+{
+    if (_followTerrain) {
+        if (_loadedMissionItems.count()) {
+            return _loadedMissionItems.last()->param7();
+        } else {
+            if (_transectCount() == 0) {
+                return qQNaN();
+            } else {
+                bool addHomeAlt = !followTerrain() && _cameraCalc.distanceToSurfaceRelative();
+
+                return _transects.last().last().coord.altitude() + (addHomeAlt ?  _missionController->plannedHomePosition().altitude() : 0);
+            }
+        }
+    } else {
+        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
+    }
+}
+
+void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
+{
+    _cameraCalc.valueSetIsDistance()->setRawValue(true);
+    _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
+    _cameraCalc.setDistanceToSurfaceRelative(true);
 }

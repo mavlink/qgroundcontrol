@@ -425,7 +425,7 @@ Item {
             z:              QGroundControl.zOrderMapItems
             border.width:   1
             border.color:   "black"
-            color:          "orange"
+            color:          _missionItem.terrainCollision ? "red" : "orange"
             opacity:        0.5
 
             readonly property real angleRadians:    Math.atan((_landingWidthMeters / 2) / (_landingLengthMeters / 2))

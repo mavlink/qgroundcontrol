@@ -36,9 +36,9 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from TransectStyleComplexItem
+    QString patternName         (void) const final { return name; }
     void    save                (QJsonArray&  planItems) final;
     bool    specifiesCoordinate (void) const final;
-    void    applyNewAltitude    (double newAltitude) final;
     double  timeBetweenShots    (void) final;
 
     // Overrides from ComplexMissionItem
@@ -52,6 +52,8 @@ public:
     ReadyForSaveState   readyForSaveState   (void) const final;
     double              additionalTimeDelay (void) const final { return 0; }
 
+    static const QString name;
+
     static const char* jsonComplexItemTypeValue;
 
     static const char* settingsGroup;
@@ -64,7 +66,6 @@ private slots:
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
-    void _recalcComplexDistance     (void) final;
     void _recalcCameraShots         (void) final;
 
 private:

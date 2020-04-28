@@ -386,7 +386,7 @@ Item {
             center:                     QGroundControl.flightMapPosition
 
             // This is the center rectangle of the map which is not obscured by tools
-            property rect centerViewport:   Qt.rect(_leftToolWidth + _margin, _toolsMargin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), mapScale.y - _margin - _toolsMargin)
+            property rect centerViewport:   Qt.rect(_leftToolWidth + _margin,  _margin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (terrainStatus.visible ? terrainStatus.y : height - _margin) - _margin)
 
             property real _leftToolWidth:       toolStrip.x + toolStrip.width
             property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
@@ -449,7 +449,7 @@ Item {
             // Add lines between waypoints
             MissionLineView {
                 showSpecialVisual:  _missionController.isROIBeginCurrentItem
-                model:              _missionController.waypointLines
+                model:              _missionController.simpleFlightPathSegments
                 opacity:            _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
             }
 
@@ -836,7 +836,7 @@ Item {
                         onClicked:      _missionController.setCurrentPlanViewSeqNum(object.sequenceNumber, false)
                         onRemove: {
                             var removeVIIndex = index
-                            _missionController.removeMissionItem(removeVIIndex)
+                            _missionController.removeVisualItem(removeVIIndex)
                             if (removeVIIndex >= _missionController.visualItems.count) {
                                 removeVIIndex--
                             }
@@ -879,14 +879,35 @@ Item {
             }
         }
 
-        MissionItemStatus {
+        /*MissionItemStatus {
             id:                 waypointValuesDisplay
             anchors.margins:    _toolsMargin
             anchors.left:       toolStrip.right
             anchors.bottom:     mapScale.top
             height:             ScreenTools.defaultFontPixelHeight * 7
             maxWidth:           rightPanel.x - x - anchors.margins
-            missionItems:       _missionController.visualItems
+            missionController:  _missionController
+            visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
+
+            onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
+
+            property bool _internalVisible: _planViewSettings.showMissionItemStatus.rawValue
+
+            function toggleVisible() {
+                _internalVisible = !_internalVisible
+                _planViewSettings.showMissionItemStatus.rawValue = _internalVisible
+            }
+        }*/
+
+        TerrainStatus {
+            id:                 terrainStatus
+            anchors.margins:    _toolsMargin
+            anchors.leftMargin: 0
+            anchors.left:       mapScale.left
+            anchors.right:      rightPanel.left
+            anchors.bottom:     parent.bottom
+            height:             ScreenTools.defaultFontPixelHeight * 7
+            missionController:  _missionController
             visible:            _internalVisible && _editingLayer === _layerMission && QGroundControl.corePlugin.options.showMissionStatus
 
             onSetCurrentSeqNum: _missionController.setCurrentPlanViewSeqNum(seqNum, true)
@@ -899,17 +920,17 @@ Item {
             }
         }
 
-
         MapScale {
             id:                     mapScale
             anchors.margins:        _toolsMargin
-            anchors.bottom:         parent.bottom
-            anchors.left:           toolStrip.right
+            anchors.bottom:         terrainStatus.visible ? terrainStatus.top : parent.bottom
+            anchors.left:           toolStrip.y + toolStrip.height + _toolsMargin > mapScale.y ? toolStrip.right: parent.left
             mapControl:             editorMap
             buttonsOnLeft:          true
             terrainButtonVisible:   _editingLayer === _layerMission
-            terrainButtonChecked:   waypointValuesDisplay.visible
-            onTerrainButtonClicked: waypointValuesDisplay.toggleVisible()
+            terrainButtonChecked:   terrainStatus.visible
+            //z:                      QGroundControl.zOrderMapItems
+            onTerrainButtonClicked: terrainStatus.toggleVisible()
         }
     }
 

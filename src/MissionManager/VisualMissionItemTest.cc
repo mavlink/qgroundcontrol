@@ -46,8 +46,6 @@ void VisualMissionItemTest::init(void)
     rgVisualItemSignals[lastSequenceNumberChangedIndex] =                   SIGNAL(lastSequenceNumberChanged(int));
     rgVisualItemSignals[missionGimbalYawChangedIndex] =                     SIGNAL(missionGimbalYawChanged(double));
     rgVisualItemSignals[missionVehicleYawChangedIndex] =                    SIGNAL(missionVehicleYawChanged(double));
-    rgVisualItemSignals[coordinateHasRelativeAltitudeChangedIndex] =        SIGNAL(coordinateHasRelativeAltitudeChanged(bool));
-    rgVisualItemSignals[exitCoordinateHasRelativeAltitudeChangedIndex] =    SIGNAL(exitCoordinateHasRelativeAltitudeChanged(bool));
     rgVisualItemSignals[exitCoordinateSameAsEntryChangedIndex] =            SIGNAL(exitCoordinateSameAsEntryChanged(bool));
 }
 
