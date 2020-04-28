@@ -8595,7 +8595,8 @@ for current-based compensation [G/kA]</short_desc>
       <values>
         <value code="0">Disabled</value>
         <value code="1">Throttle-based compensation</value>
-        <value code="2">Current-based compensation</value>
+        <value code="2">Current-based compensation (battery_status instance 0)</value>
+        <value code="3">Current-based compensation (battery_status instance 1)</value>
       </values>
     </parameter>
     <parameter category="System" default="0" name="CAL_MAG_PRIME" type="INT32">
