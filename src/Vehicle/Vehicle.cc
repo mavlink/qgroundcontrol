@@ -26,8 +26,7 @@
 #include "PlanMasterController.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
-#include "CoordinateVector.h"
-#include "ParameterManager.h"
+#include "FlightPathSegment.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
 #include "MissionCommandTree.h"
@@ -45,6 +44,7 @@
 #include "TrajectoryPoints.h"
 #include "QGCGeo.h"
 #include "TerrainProtocolHandler.h"
+#include "ParameterManager.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"

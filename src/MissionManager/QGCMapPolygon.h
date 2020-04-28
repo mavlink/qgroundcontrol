@@ -30,21 +30,24 @@ public:
 
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
-    Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)
-    Q_PROPERTY(QVariantList         path        READ path                                   NOTIFY pathChanged)
-    Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                           CONSTANT)
-    Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
-    Q_PROPERTY(QGeoCoordinate       center      READ center         WRITE setCenter         NOTIFY centerChanged)
-    Q_PROPERTY(bool                 centerDrag  READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
-    Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
-    Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
-    Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
-    Q_PROPERTY(bool                 traceMode   READ traceMode      WRITE setTraceMode      NOTIFY traceModeChanged)
+    Q_PROPERTY(int                  count           READ count                                  NOTIFY countChanged)
+    Q_PROPERTY(QVariantList         path            READ path                                   NOTIFY pathChanged)
+    Q_PROPERTY(QmlObjectListModel*  pathModel       READ qmlPathModel                           CONSTANT)
+    Q_PROPERTY(bool                 dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
+    Q_PROPERTY(QGeoCoordinate       center          READ center         WRITE setCenter         NOTIFY centerChanged)
+    Q_PROPERTY(bool                 centerDrag      READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
+    Q_PROPERTY(bool                 interactive     READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
+    Q_PROPERTY(bool                 isValid         READ isValid                                NOTIFY isValidChanged)
+    Q_PROPERTY(bool                 empty           READ empty                                  NOTIFY isEmptyChanged)
+    Q_PROPERTY(bool                 traceMode       READ traceMode      WRITE setTraceMode      NOTIFY traceModeChanged)
+    Q_PROPERTY(bool                 showAltColor    READ showAltColor   WRITE setShowAltColor   NOTIFY showAltColorChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
     Q_INVOKABLE void removeVertex(int vertexIndex);
-    Q_INVOKABLE void appendVertices(const QList<QGeoCoordinate>& coordinates);
+    Q_INVOKABLE void appendVertices(const QVariantList& varCoords);
+
+    void appendVertices(const QList<QGeoCoordinate>& coordinates);
 
     /// Adjust the value for the specified coordinate
     ///     @param vertexIndex Polygon point index to modify (0-based)
@@ -106,6 +109,7 @@ public:
     bool            isValid     (void) const { return _polygonModel.count() >= 3; }
     bool            empty       (void) const { return _polygonModel.count() == 0; }
     bool            traceMode   (void) const { return _traceMode; }
+    bool            showAltColor(void) const { return _showAltColor; }
 
     QVariantList        path        (void) const { return _polygonPath; }
     QmlObjectListModel* qmlPathModel(void) { return &_polygonModel; }
@@ -117,6 +121,7 @@ public:
     void setCenterDrag  (bool centerDrag);
     void setInteractive (bool interactive);
     void setTraceMode   (bool traceMode);
+    void setShowAltColor(bool showAltColor);
 
     static const char* jsonPolygonKey;
 
@@ -131,6 +136,7 @@ signals:
     bool isValidChanged     (void);
     bool isEmptyChanged     (void);
     void traceModeChanged   (bool traceMode);
+    void showAltColorChanged(bool showAltColor);
 
 private slots:
     void _polygonModelCountChanged(int count);
@@ -147,13 +153,14 @@ private:
 
     QVariantList        _polygonPath;
     QmlObjectListModel  _polygonModel;
-    bool                _dirty;
+    bool                _dirty =                false;
     QGeoCoordinate      _center;
-    bool                _centerDrag;
-    bool                _ignoreCenterUpdates;
-    bool                _interactive;
-    bool                _resetActive;
-    bool                _traceMode = false;
+    bool                _centerDrag =           false;
+    bool                _ignoreCenterUpdates =  false;
+    bool                _interactive =          false;
+    bool                _resetActive =          false;
+    bool                _traceMode =            false;
+    bool                _showAltColor =         false;
 };
 
 #endif

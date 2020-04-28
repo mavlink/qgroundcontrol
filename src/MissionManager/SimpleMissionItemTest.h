@@ -42,7 +42,6 @@ private:
         rawEditChangedIndex,
         cameraSectionChangedIndex,
         speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedIndex,
         maxSignalIndex,
     };
 
@@ -54,7 +53,6 @@ private:
         rawEditChangedMask =                        1 << rawEditChangedIndex,
         cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
         speedSectionChangedMask =                   1 << speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedMask =  1 << coordinateHasRelativeAltitudeChangedIndex,
     };
 
     static const size_t cSimpleItemSignals = maxSignalIndex;

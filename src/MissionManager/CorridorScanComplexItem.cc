@@ -22,6 +22,8 @@
 
 QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 
+const QString CorridorScanComplexItem::name(tr("Corridor Scan"));
+
 const char* CorridorScanComplexItem::settingsGroup =            "CorridorScan";
 const char* CorridorScanComplexItem::corridorWidthName =        "CorridorWidth";
 const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
@@ -43,9 +45,6 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
 
     connect(&_corridorWidthFact,    &Fact::valueChanged,                            this, &CorridorScanComplexItem::_setDirty);
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,                   this, &CorridorScanComplexItem::_setDirty);
-
-    connect(&_cameraCalc,           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CorridorScanComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(&_cameraCalc,           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CorridorScanComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
     connect(&_corridorPolyline,     &QGCMapPolyline::dirtyChanged,                  this, &CorridorScanComplexItem::_polylineDirtyChanged);
 
@@ -148,13 +147,6 @@ int CorridorScanComplexItem::_calcTransectCount(void) const
 {
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
     return fullWidth > 0.0 ? qCeil(fullWidth / _calcTransectSpacing()) : 1;
-}
-
-void CorridorScanComplexItem::applyNewAltitude(double newAltitude)
-{
-    _cameraCalc.valueSetIsDistance()->setRawValue(true);
-    _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
-    _cameraCalc.setDistanceToSurfaceRelative(true);
 }
 
 void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
@@ -336,15 +328,6 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
             _transects[i] = transectVertices;
         }
     }
-}
-
-void CorridorScanComplexItem::_recalcComplexDistance(void)
-{
-    _complexDistance = 0;
-    for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
-        _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
-    }
-    emit complexDistanceChanged();
 }
 
 void CorridorScanComplexItem::_recalcCameraShots(void)

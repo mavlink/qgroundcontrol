@@ -75,6 +75,7 @@ Item {
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      QGroundControl.globalPalette.surveyPolygonInterior
+        altColor:           QGroundControl.globalPalette.surveyPolygonTerrainCollision
         interiorOpacity:    0.5 * _root.opacity
     }
 
