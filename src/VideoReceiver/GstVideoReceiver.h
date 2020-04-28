@@ -89,7 +89,7 @@ public:
     ~GstVideoReceiver(void);
 
 public slots:
-    virtual void start(const QString& uri, unsigned timeout);
+    virtual void start(const QString& uri, unsigned timeout, int buffer = 0);
     virtual void stop(void);
     virtual void startDecoding(void* sink);
     virtual void stopDecoding(void);
@@ -102,11 +102,6 @@ protected slots:
     virtual void _handleEOS(void);
 
 protected:
-    void _setVideoSize(const QSize& size) {
-        _videoSize = ((quint32)size.width() << 16) | (quint32)size.height();
-        emit videoSizeChanged();
-    }
-
     virtual GstElement* _makeSource(const QString& uri);
     virtual GstElement* _makeDecoder(GstCaps* caps, GstElement* videoSink);
     virtual GstElement* _makeFileSink(const QString& videoFile, FILE_FORMAT format);
@@ -118,16 +113,19 @@ protected:
     virtual void _noteTeeFrame(void);
     virtual void _noteVideoSinkFrame(void);
     virtual void _noteEndOfStream(void);
-    virtual void _unlinkBranch(GstElement* from);
+    virtual bool _unlinkBranch(GstElement* from);
     virtual void _shutdownDecodingBranch (void);
     virtual void _shutdownRecordingBranch(void);
 
-private:
+    bool _needDispatch(void);
+    void _dispatchSignal(std::function<void()> emitter);
+
     static gboolean _onBusMessage(GstBus* bus, GstMessage* message, gpointer user_data);
     static void _onNewPad(GstElement* element, GstPad* pad, gpointer data);
     static void _wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer data);
-    static void _linkPadWithOptionalBuffer(GstElement* element, GstPad* pad, gpointer data);
+    static void _linkPad(GstElement* element, GstPad* pad, gpointer data);
     static gboolean _padProbe(GstElement* element, GstPad* pad, gpointer user_data);
+    static gboolean _filterParserCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
     static gboolean _autoplugQueryCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
     static gboolean _autoplugQueryContext(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
     static gboolean _autoplugQuery(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data);
@@ -136,6 +134,9 @@ private:
     static GstPadProbeReturn _eosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn _keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
+    bool                _streaming;
+    bool                _decoding;
+    bool                _recording;
     bool                _removingDecoder;
     bool                _removingRecorder;
     GstElement*         _source;
@@ -157,10 +158,12 @@ private:
     //-- RTSP UDP reconnect timeout
     uint64_t            _udpReconnect_us;
 
+    QString             _uri;
     unsigned            _timeout;
+    int                 _buffer;
 
-    Worker              _apiHandler;
-    Worker              _notificationHandler;
+    Worker              _slotHandler;
+    uint32_t            _signalDepth;
 
     bool                _endOfStream;
 

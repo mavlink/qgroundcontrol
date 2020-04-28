@@ -23,6 +23,6 @@ public:
     CustomVideoManager      (QGCApplication* app, QGCToolbox* toolbox);
 
 protected:
-    void _updateSettings    ();
+    void _updateSettings    (unsigned id);
 
 };

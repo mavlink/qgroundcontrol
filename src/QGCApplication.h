@@ -11,7 +11,6 @@
 
 #include <QApplication>
 #include <QTimer>
-#include <QQmlApplicationEngine>
 #include <QElapsedTimer>
 #include <QMap>
 #include <QSet>
@@ -38,6 +37,7 @@
 #endif
 
 // Work around circular header includes
+class QQmlApplicationEngine;
 class QGCSingleton;
 class QGCToolbox;
 class QGCFileDownload;
