@@ -20,10 +20,10 @@ CustomVideoManager::CustomVideoManager(QGCApplication* app, QGCToolbox* toolbox)
 
 //-----------------------------------------------------------------------------
 void
-CustomVideoManager::_updateSettings()
+CustomVideoManager::_updateSettings(unsigned id)
 {
     if(!_videoSettings || !_videoReceiver)
         return;
-    VideoManager::_updateSettings();
+    VideoManager::_updateSettings(id);
 }
 

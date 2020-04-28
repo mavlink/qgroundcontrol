@@ -105,9 +105,28 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 }
 #endif
 
+static void
+blacklist()
+{
+    GstRegistry* reg;
+
+    if ((reg = gst_registry_get()) == nullptr) {
+        return;
+    }
+
+    GstPluginFeature* plugin;
+
+    if ((plugin = gst_registry_lookup_feature(reg, "bcmdec")) != nullptr) {
+        qCCritical(GStreamerLog) << "Disable bcmdec";
+        gst_plugin_feature_set_rank(plugin, GST_RANK_NONE);
+    }
+}
+
 void
 GStreamer::initialize(int argc, char* argv[], int debuglevel)
 {
+    qRegisterMetaType<VideoReceiver::STATUS>("STATUS");
+
 #ifdef Q_OS_MAC
     #ifdef QGC_INSTALL_RELEASE
         QString currentDir = QCoreApplication::applicationDirPath();
@@ -170,6 +189,8 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
 #if defined(__ios__)
     gst_ios_post_init();
 #endif
+
+    blacklist();
 
     /* the plugin must be loaded before loading the qml file to register the
      * GstGLVideoItem qml item

@@ -40,6 +40,8 @@ if(BUILD_TESTING)
 		SurveyComplexItemTest.h
 		TransectStyleComplexItemTest.cc
 		TransectStyleComplexItemTest.h
+		TransectStyleComplexItemTestBase.cc
+		TransectStyleComplexItemTestBase.h
 		VisualMissionItemTest.cc
 		VisualMissionItemTest.h
 	)

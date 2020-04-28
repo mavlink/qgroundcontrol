@@ -24,6 +24,7 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property bool interactive: true
 
     signal clicked(int sequenceNumber)
 
@@ -178,6 +179,7 @@ Item {
         MouseArea {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
+            visible:        _root.interactive
 
             readonly property int   _decimalPlaces:             8
 
@@ -199,6 +201,7 @@ Item {
             mapControl:     _root.map
             itemIndicator:  _loiterPointObject
             itemCoordinate: _missionItem.loiterCoordinate
+            visible:        _root.interactive
 
             property bool _preventReentrancy: false
 
@@ -224,6 +227,7 @@ Item {
             mapControl:     _root.map
             itemIndicator:  _landingPointObject
             itemCoordinate: _missionItem.landingCoordinate
+            visible:        _root.interactive
 
             onItemCoordinateChanged: _missionItem.moveLandingPosition(itemCoordinate)
         }
