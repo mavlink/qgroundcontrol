@@ -11,7 +11,7 @@
 #include "MissionController.h"
 #include "MultiVehicleManager.h"
 #include "MissionManager.h"
-#include "CoordinateVector.h"
+#include "FlightPathSegment.h"
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "SimpleMissionItem.h"
@@ -53,19 +53,14 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
 const int   MissionController::_missionFileVersion =            2;
 
-const QString MissionController::patternSurveyName          (QT_TRANSLATE_NOOP("MissionController", "Survey"));
-const QString MissionController::patternFWLandingName       (QT_TRANSLATE_NOOP("MissionController", "Fixed Wing Landing"));
-const QString MissionController::patternVTOLLandingName     (QT_TRANSLATE_NOOP("MissionController", "VTOL Landing"));
-const QString MissionController::patternStructureScanName   (QT_TRANSLATE_NOOP("MissionController", "Structure Scan"));
-const QString MissionController::patternCorridorScanName    (QT_TRANSLATE_NOOP("MissionController", "Corridor Scan"));
-
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
-    : PlanElementController     (masterController, parent)
-    , _controllerVehicle        (masterController->controllerVehicle())
-    , _managerVehicle           (masterController->managerVehicle())
-    , _missionManager           (masterController->managerVehicle()->missionManager())
-    , _planViewSettings         (qgcApp()->toolbox()->settingsManager()->planViewSettings())
-    , _appSettings              (qgcApp()->toolbox()->settingsManager()->appSettings())
+    : PlanElementController (masterController, parent)
+    , _controllerVehicle    (masterController->controllerVehicle())
+    , _managerVehicle       (masterController->managerVehicle())
+    , _missionManager       (masterController->managerVehicle()->missionManager())
+    , _visualItems          (new QmlObjectListModel(this))
+    , _planViewSettings     (qgcApp()->toolbox()->settingsManager()->planViewSettings())
+    , _appSettings          (qgcApp()->toolbox()->settingsManager()->appSettings())
 {
     _resetMissionFlightStatus();
 
@@ -73,6 +68,15 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     connect(&_updateTimer, &QTimer::timeout, this, &MissionController::_updateTimeout);
 
     connect(_planViewSettings->takeoffItemNotRequired(), &Fact::rawValueChanged, this, &MissionController::_takeoffItemNotRequiredChanged);
+
+    connect(this, &MissionController::missionDistanceChanged,  this, &MissionController::recalcTerrainProfile);
+
+    // The follow is used to compress multiple recalc calls in a row to into a single call.
+    connect(this, &MissionController::_recalcMissionFlightStatusSignal, this, &MissionController::_recalcMissionFlightStatus,   Qt::QueuedConnection);
+    connect(this, &MissionController::_recalcFlightPathSegmentsSignal,  this, &MissionController::_recalcFlightPathSegments,    Qt::QueuedConnection);
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::_recalcMissionFlightStatusSignal));
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::_recalcFlightPathSegmentsSignal));
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&MissionController::recalcTerrainProfile));
 }
 
 MissionController::~MissionController()
@@ -139,7 +143,6 @@ void MissionController::start(bool flyView)
 void MissionController::_init(void)
 {
     // We start with an empty mission
-    _visualItems = new QmlObjectListModel(this);
     _addMissionSettings(_visualItems);
     _initAllVisualItems();
 }
@@ -386,10 +389,10 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
 VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
     if (_managerVehicle->fixedWing()) {
-        FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(MissionController::patternFWLandingName, coordinate, visualItemIndex, makeCurrentItem));
+        FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(FixedWingLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
         return fwLanding;
     } else if (_managerVehicle->vtol()) {
-        VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(MissionController::patternVTOLLandingName, coordinate, visualItemIndex, makeCurrentItem));
+        VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(VTOLLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
         return vtolLanding;
     } else {
         return _insertSimpleMissionItemWorker(coordinate, _managerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
@@ -424,16 +427,16 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
 {
     ComplexMissionItem* newItem = nullptr;
 
-    if (itemName == patternSurveyName) {
+    if (itemName == SurveyComplexItem::name) {
         newItem = new SurveyComplexItem(_masterController, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
-    } else if (itemName == patternFWLandingName) {
+    } else if (itemName == FixedWingLandingComplexItem::name) {
         newItem = new FixedWingLandingComplexItem(_masterController, _flyView, _visualItems /* parent */);
-    } else if (itemName == patternVTOLLandingName) {
+    } else if (itemName == VTOLLandingComplexItem::name) {
         newItem = new VTOLLandingComplexItem(_masterController, _flyView, _visualItems /* parent */);
-    } else if (itemName == patternStructureScanName) {
+    } else if (itemName == StructureScanComplexItem::name) {
         newItem = new StructureScanComplexItem(_masterController, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
-    } else if (itemName == patternCorridorScanName) {
+    } else if (itemName == CorridorScanComplexItem::name) {
         newItem = new CorridorScanComplexItem(_masterController, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -449,11 +452,11 @@ VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QStri
 {
     ComplexMissionItem* newItem = nullptr;
 
-    if (itemName == patternSurveyName) {
+    if (itemName == SurveyComplexItem::name) {
         newItem = new SurveyComplexItem(_masterController, _flyView, file, _visualItems);
-    } else if (itemName == patternStructureScanName) {
+    } else if (itemName == StructureScanComplexItem::name) {
         newItem = new StructureScanComplexItem(_masterController, _flyView, file, _visualItems);
-    } else if (itemName == patternCorridorScanName) {
+    } else if (itemName == CorridorScanComplexItem::name) {
         newItem = new CorridorScanComplexItem(_masterController, _flyView, file, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -519,10 +522,10 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     }
 }
 
-void MissionController::removeMissionItem(int viIndex)
+void MissionController::removeVisualItem(int viIndex)
 {
     if (viIndex <= 0 || viIndex >= _visualItems->count()) {
-        qWarning() << "MissionController::removeMissionItem called with bad index - count:index" << _visualItems->count() << viIndex;
+        qWarning() << "MissionController::removeVisualItem called with bad index - count:index" << _visualItems->count() << viIndex;
         return;
     }
 
@@ -1082,31 +1085,16 @@ void MissionController::save(QJsonObject& json)
     json[_jsonItemsKey] = rgJsonMissionItems;
 }
 
-void MissionController::_calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
+void MissionController::_calcPrevWaypointValues(VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference)
 {
     QGeoCoordinate  currentCoord =  currentItem->coordinate();
     QGeoCoordinate  prevCoord =     prevItem->exitCoordinate();
-    bool            distanceOk =    false;
 
     // Convert to fixed altitudes
 
-    distanceOk = true;
-    if (currentItem != _settingsItem && currentItem->coordinateHasRelativeAltitude()) {
-        currentCoord.setAltitude(homeAlt + currentCoord.altitude());
-    }
-    if (prevItem != _settingsItem && prevItem->exitCoordinateHasRelativeAltitude()) {
-        prevCoord.setAltitude(homeAlt + prevCoord.altitude());
-    }
-
-    if (distanceOk) {
-        *altDifference = currentCoord.altitude() - prevCoord.altitude();
-        *distance = prevCoord.distanceTo(currentCoord);
-        *azimuth = prevCoord.azimuthTo(currentCoord);
-    } else {
-        *altDifference = 0.0;
-        *azimuth = 0.0;
-        *distance = 0.0;
-    }
+    *altDifference = currentItem->amslEntryAlt() - prevItem->amslExitAlt();
+    *distance = prevCoord.distanceTo(currentCoord);
+    *azimuth = prevCoord.azimuthTo(currentCoord);
 }
 
 double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem)
@@ -1120,39 +1108,51 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
-CoordinateVector* MissionController::_createCoordinateVectorWorker(VisualItemPair& pair)
+FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemPair& pair)
 {
-    CoordinateVector* coordVector = nullptr;
+    QGeoCoordinate      coord1 =            pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate();
+    QGeoCoordinate      coord2 =            pair.second->coordinate();
+    double              coord1Alt =         pair.first->isSimpleItem() ? pair.first->amslEntryAlt() : pair.first->amslExitAlt();
+    double              coord2Alt =         pair.second->amslEntryAlt();
 
-    // Create a new segment and wire update notifiers
-    coordVector         = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
-    auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
-    auto endNotifier    = &VisualMissionItem::coordinateChanged;
+    FlightPathSegment*  segment =           new FlightPathSegment(coord1, coord1Alt, coord2, coord2Alt, !_flyView /* queryTerrainData */,  this);
 
-    // Use signals/slots to update the coordinate endpoints
-    connect(pair.first,     originNotifier, coordVector, &CoordinateVector::setCoordinate1);
-    connect(pair.second,    endNotifier,    coordVector, &CoordinateVector::setCoordinate2);
+    auto                coord1Notifier =    pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
+    auto                coord2Notifier =    &VisualMissionItem::coordinateChanged;
+    auto                coord1AltNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::amslEntryAltChanged : &VisualMissionItem::amslExitAltChanged;
+    auto                coord2AltNotifier = &VisualMissionItem::amslEntryAltChanged;
 
-    // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
-    // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
-    connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
+    connect(pair.first,  coord1Notifier,                                segment,    &FlightPathSegment::setCoordinate1);
+    connect(pair.second, coord2Notifier,                                segment,    &FlightPathSegment::setCoordinate2);
+    connect(pair.first,  coord1AltNotifier,                             segment,    &FlightPathSegment::setCoord1AMSLAlt);
+    connect(pair.second, coord2AltNotifier,                             segment,    &FlightPathSegment::setCoord2AMSLAlt);
 
-    return coordVector;
+    connect(pair.second, &VisualMissionItem::coordinateChanged,         this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+
+    connect(segment,    &FlightPathSegment::totalDistanceChanged,       this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
+    connect(segment,    &FlightPathSegment::coord1AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(segment,    &FlightPathSegment::coord2AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(segment,    &FlightPathSegment::amslTerrainHeightsChanged,  this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
+    connect(segment,    &FlightPathSegment::terrainCollisionChanged,    this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
+
+    return segment;
 }
 
-CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
+FlightPathSegment* MissionController::_addFlightPathSegment(FlightPathSegmentHashTable& prevItemPairHashTable, VisualItemPair& pair)
 {
-    CoordinateVector* coordVector = nullptr;
+    FlightPathSegment* segment = nullptr;
 
     if (prevItemPairHashTable.contains(pair)) {
         // Pair already exists and connected, just re-use
-        _linesTable[pair] = coordVector = prevItemPairHashTable.take(pair);
+        _flightPathSegmentHashTable[pair] = segment = prevItemPairHashTable.take(pair);
     } else {
-        coordVector = _createCoordinateVectorWorker(pair);
-        _linesTable[pair] = coordVector;
+        segment = _createFlightPathSegmentWorker(pair);
+        _flightPathSegmentHashTable[pair] = segment;
     }
 
-    return coordVector;
+    _simpleFlightPathSegments.append(segment);
+
+    return segment;
 }
 
 void MissionController::_recalcROISpecialVisuals(void)
@@ -1180,43 +1180,43 @@ void MissionController::_recalcROISpecialVisuals(void)
 
         if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
             viPair = VisualItemPair(lastCoordinateItem, visualItem);
-            if (_linesTable.contains(viPair)) {
-                _linesTable[viPair]->setSpecialVisual(roiActive);
+            if (_flightPathSegmentHashTable.contains(viPair)) {
+                _flightPathSegmentHashTable[viPair]->setSpecialVisual(roiActive);
             }
             lastCoordinateItem = visualItem;
         }
     }
 }
 
-void MissionController::_recalcWaypointLines(void)
+void MissionController::_recalcFlightPathSegments(void)
 {
     VisualItemPair      lastSegmentVisualItemPair;
-    int                 segmentCount =                  0;
-    bool                firstCoordinateNotFound =       true;
-    VisualMissionItem*  lastCoordinateItemBeforeRTL =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
-    bool                linkEndToHome =                 false;
-    bool                linkStartToHome =               _managerVehicle->rover() ? true : false;
-    bool                foundRTL =                      false;
-    bool                homePositionValid =             _settingsItem->coordinate().isValid();
-    bool                roiActive =                     false;
-    bool                previousItemIsIncomplete =      false;
+    int                 segmentCount =              0;
+    bool                firstCoordinateNotFound =   true;
+    VisualMissionItem*  lastFlyThroughVI =          qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+    bool                linkEndToHome =             false;
+    bool                linkStartToHome =           _managerVehicle->rover() ? true : false;
+    bool                foundRTL =                  false;
+    bool                homePositionValid =         _settingsItem->coordinate().isValid();
+    bool                roiActive =                 false;
+    bool                previousItemIsIncomplete =  false;
 
-    qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
+    qCDebug(MissionControllerLog) << "_recalcFlightPathSegments homePositionValid" << homePositionValid;
 
-    CoordVectHashTable old_table = _linesTable;
+    FlightPathSegmentHashTable oldSegmentTable = _flightPathSegmentHashTable;
 
-    _linesTable.clear();
+    _flightPathSegmentHashTable.clear();
     _waypointPath.clear();
 
     // Note: Although visual support _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
     // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
     // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
 
-    _waypointLines.beginReset();
+    _simpleFlightPathSegments.beginReset();
     _directionArrows.beginReset();
     _incompleteComplexItemLines.beginReset();
 
-    _waypointLines.clear();
+    _simpleFlightPathSegments.clear();
     _directionArrows.clear();
     _incompleteComplexItemLines.clearAndDeleteContents();
 
@@ -1226,6 +1226,8 @@ void MissionController::_recalcWaypointLines(void)
         VisualMissionItem*  visualItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         SimpleMissionItem*  simpleItem =    qobject_cast<SimpleMissionItem*>(visualItem);
         ComplexMissionItem* complexItem =   qobject_cast<ComplexMissionItem*>(visualItem);
+
+        visualItem->setSimpleFlighPathSegment(nullptr);
 
         if (simpleItem) {
             if (roiActive) {
@@ -1275,15 +1277,15 @@ void MissionController::_recalcWaypointLines(void)
                 // We also don't link lines from an incomplete item to a valid item.
                 previousItemIsIncomplete = false;
                 firstCoordinateNotFound = false;
-                lastCoordinateItemBeforeRTL = visualItem;
+                lastFlyThroughVI = visualItem;
             } else {
-                if (lastCoordinateItemBeforeRTL != _settingsItem || (homePositionValid && linkStartToHome)) {
+                if (lastFlyThroughVI != _settingsItem || (homePositionValid && linkStartToHome)) {
                     bool addDirectionArrow = false;
                     if (i != 1) {
                         // Direction arrows are added to the second segment and every 5 segments thereafter.
                         // The reason for start with second segment is to prevent an arrow being added in between the home position
                         // and a takeoff item which may be right over each other. In that case the arrow points in a random direction.
-                        if (firstCoordinateNotFound || !lastCoordinateItemBeforeRTL->isSimpleItem() || !visualItem->isSimpleItem()) {
+                        if (firstCoordinateNotFound || !lastFlyThroughVI->isSimpleItem() || !visualItem->isSimpleItem()) {
                             addDirectionArrow = true;
                         } else if (segmentCount > 5) {
                             segmentCount = 0;
@@ -1292,18 +1294,19 @@ void MissionController::_recalcWaypointLines(void)
                         segmentCount++;
                     }
 
-                    lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, visualItem);
+                    lastSegmentVisualItemPair =  VisualItemPair(lastFlyThroughVI, visualItem);
                     if (!_flyView || addDirectionArrow) {
-                        CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
-                        coordVector->setSpecialVisual(roiActive);
+                        FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair);
+                        segment->setSpecialVisual(roiActive);
                         if (addDirectionArrow) {
-                            _directionArrows.append(coordVector);
+                            _directionArrows.append(segment);
                         }
+                        lastFlyThroughVI->setSimpleFlighPathSegment(segment);
                     }
                 }
                 firstCoordinateNotFound = false;
                 _waypointPath.append(QVariant::fromValue(visualItem->coordinate()));
-                lastCoordinateItemBeforeRTL = visualItem;
+                lastFlyThroughVI = visualItem;
             }
         }
     }
@@ -1312,57 +1315,51 @@ void MissionController::_recalcWaypointLines(void)
         _waypointPath.prepend(QVariant::fromValue(_settingsItem->coordinate()));
     }
 
-    if (linkEndToHome && lastCoordinateItemBeforeRTL != _settingsItem && homePositionValid) {
-        lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItemBeforeRTL, _settingsItem);
+    if (linkEndToHome && lastFlyThroughVI != _settingsItem && homePositionValid) {
+        lastSegmentVisualItemPair = VisualItemPair(lastFlyThroughVI, _settingsItem);
         if (_flyView) {
             _waypointPath.append(QVariant::fromValue(_settingsItem->coordinate()));
         }
-        CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
-        coordVector->setSpecialVisual(roiActive);
+        FlightPathSegment* segment = _addFlightPathSegment(oldSegmentTable, lastSegmentVisualItemPair);
+        segment->setSpecialVisual(roiActive);
+        lastFlyThroughVI->setSimpleFlighPathSegment(segment);
     }
 
     // Add direction arrow to last segment
     if (lastSegmentVisualItemPair.first) {
-        CoordinateVector* coordVector = nullptr;
+        FlightPathSegment* coordVector = nullptr;
 
-        // The pair may not be in the hash, this can happen in the fly view where only segments with arrows on them are added to ahsh.
+        // The pair may not be in the hash, this can happen in the fly view where only segments with arrows on them are added to hash.
         // check for that first and add if needed
 
-        if (_linesTable.contains(lastSegmentVisualItemPair)) {
+        if (_flightPathSegmentHashTable.contains(lastSegmentVisualItemPair)) {
             // Pair exists in the new table already just reuse it
-            coordVector = _linesTable[lastSegmentVisualItemPair];
-        } else if (old_table.contains(lastSegmentVisualItemPair)) {
+            coordVector = _flightPathSegmentHashTable[lastSegmentVisualItemPair];
+        } else if (oldSegmentTable.contains(lastSegmentVisualItemPair)) {
             // Pair already exists in old table, pull from old to new and reuse
-            _linesTable[lastSegmentVisualItemPair] = coordVector = old_table.take(lastSegmentVisualItemPair);
+            _flightPathSegmentHashTable[lastSegmentVisualItemPair] = coordVector = oldSegmentTable.take(lastSegmentVisualItemPair);
         } else {
             // Create a new segment. Since this is the fly view there is no need to wire change signals.
-            coordVector = new CoordinateVector(lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(), lastSegmentVisualItemPair.second->coordinate(), this);
-            _linesTable[lastSegmentVisualItemPair] = coordVector;
+            coordVector = new FlightPathSegment(lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
+                                                lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->amslEntryAlt() : lastSegmentVisualItemPair.first->amslExitAlt(),
+                                                lastSegmentVisualItemPair.second->coordinate(),
+                                                lastSegmentVisualItemPair.second->amslEntryAlt(),
+                                                !_flyView /* queryTerrainData */,
+                                                this);
+            _flightPathSegmentHashTable[lastSegmentVisualItemPair] = coordVector;
         }
 
         _directionArrows.append(coordVector);
     }
 
-    if (!_flyView) {
-        // Create a temporary QObjectList and replace the model data
-        QObjectList objs;
-        objs.reserve(_linesTable.count());
-        for(CoordinateVector *vect: _linesTable.values()) {
-            objs.append(vect);
-        }
-
-        // We don't delete here because many links may still be valid
-        _waypointLines.swapObjectList(objs);
-    }
-
-    _waypointLines.endReset();
+    _simpleFlightPathSegments.endReset();
     _directionArrows.endReset();
     _incompleteComplexItemLines.endReset();
 
     // Anything left in the old table is an obsolete line object that can go
-    qDeleteAll(old_table);
+    qDeleteAll(oldSegmentTable);
 
-    _recalcMissionFlightStatus();
+    emit _recalcMissionFlightStatusSignal();
 
     if (_waypointPath.count() == 0) {
         // MapPolyLine has a bug where if you change from a path which has elements to an empty path the line drawn
@@ -1373,6 +1370,7 @@ void MissionController::_recalcWaypointLines(void)
     }
 
     emit waypointPathChanged();
+    emit recalcTerrainProfile();
 }
 
 void MissionController::_updateBatteryInfo(int waypointIndex)
@@ -1442,7 +1440,7 @@ void MissionController::_recalcMissionFlightStatus()
     }
 
     bool                firstCoordinateItem =           true;
-    VisualMissionItem*  lastCoordinateItemBeforeRTL =   qobject_cast<VisualMissionItem*>(_visualItems->get(0));
+    VisualMissionItem*  lastFlyThroughVI =   qobject_cast<VisualMissionItem*>(_visualItems->get(0));
 
     bool homePositionValid = _settingsItem->coordinate().isValid();
 
@@ -1453,21 +1451,19 @@ void MissionController::_recalcMissionFlightStatus()
     // both relative altitude.
 
     // No values for first item
-    lastCoordinateItemBeforeRTL->setAltDifference(0.0);
-    lastCoordinateItemBeforeRTL->setAzimuth(0.0);
-    lastCoordinateItemBeforeRTL->setDistance(0.0);
+    lastFlyThroughVI->setAltDifference(0.0);
+    lastFlyThroughVI->setAzimuth(0.0);
+    lastFlyThroughVI->setDistance(0.0);
 
-    double minAltSeen = 0.0;
-    double maxAltSeen = 0.0;
-    const double homePositionAltitude = _settingsItem->coordinate().altitude();
-    minAltSeen = maxAltSeen = _settingsItem->coordinate().altitude();
+    _minAMSLAltitude = _maxAMSLAltitude = _settingsItem->coordinate().altitude();
 
     _resetMissionFlightStatus();
 
-    bool vtolInHover = true;
-    bool linkStartToHome = false;
-    bool foundRTL = false;
-    bool vehicleYawSpecificallySet = false;
+    bool   vtolInHover =                true;
+    bool   linkStartToHome =            false;
+    bool   foundRTL =                   false;
+    bool   vehicleYawSpecificallySet =  false;
+    double totalHorizontalDistance =    0;
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem*  item =          qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1540,7 +1536,7 @@ void MissionController::_recalcMissionFlightStatus()
                 if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
                     // We have to special case takeoff, assuming vehicle takes off straight up to specified altitude
                     double azimuth, distance, altDifference;
-                    _calcPrevWaypointValues(homePositionAltitude, _settingsItem, simpleItem, &azimuth, &distance, &altDifference);
+                    _calcPrevWaypointValues(_settingsItem, simpleItem, &azimuth, &distance, &altDifference);
                     double takeoffTime = qAbs(altDifference) / _appSettings->offlineEditingAscentSpeed()->rawValue().toDouble();
                     _addHoverTime(takeoffTime, 0, -1);
                 }
@@ -1580,43 +1576,44 @@ void MissionController::_recalcMissionFlightStatus()
         _addTimeDistance(vtolInHover, 0, 0, item->additionalTimeDelay(), 0, -1);
 
         if (item->specifiesCoordinate()) {
-            // Keep track of the min/max altitude for all waypoints so we can show altitudes as a percentage
 
-            double absoluteAltitude = item->coordinate().altitude();
-            if (item->coordinateHasRelativeAltitude()) {
-                absoluteAltitude += homePositionAltitude;
-            }
-            minAltSeen = std::min(minAltSeen, absoluteAltitude);
-            maxAltSeen = std::max(maxAltSeen, absoluteAltitude);
-
-            double terrainAltitude = item->terrainAltitude();
-            if (!qIsNaN(terrainAltitude)) {
-                minAltSeen = std::min(minAltSeen, terrainAltitude);
-                maxAltSeen = std::max(maxAltSeen, terrainAltitude);
+            // Keep track of the min/max AMSL altitude for entire mission so we can calculate altitude percentages in terrain status display
+            if (simpleItem) {
+                double amslAltitude = item->amslEntryAlt();
+                _minAMSLAltitude = std::min(_minAMSLAltitude, amslAltitude);
+                _maxAMSLAltitude = std::max(_maxAMSLAltitude, amslAltitude);
+            } else {
+                // Complex item
+                double complexMinAMSLAltitude = complexItem->minAMSLAltitude();
+                double complexMaxAMSLAltitude = complexItem->maxAMSLAltitude();
+                _minAMSLAltitude = std::min(_minAMSLAltitude, complexMinAMSLAltitude);
+                _maxAMSLAltitude = std::max(_maxAMSLAltitude, complexMaxAMSLAltitude);
             }
 
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
 
                 // Update vehicle yaw assuming direction to next waypoint and/or mission item change
-                if (item != lastCoordinateItemBeforeRTL) {
+                if (item != lastFlyThroughVI) {
                     if (simpleItem && !qIsNaN(simpleItem->specifiedVehicleYaw())) {
                         vehicleYawSpecificallySet = true;
                         _missionFlightStatus.vehicleYaw = simpleItem->specifiedVehicleYaw();
                     } else if (!vehicleYawSpecificallySet) {
-                        _missionFlightStatus.vehicleYaw = lastCoordinateItemBeforeRTL->exitCoordinate().azimuthTo(item->coordinate());
+                        _missionFlightStatus.vehicleYaw = lastFlyThroughVI->exitCoordinate().azimuthTo(item->coordinate());
                     }
-                    lastCoordinateItemBeforeRTL->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
+                    lastFlyThroughVI->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
                 }
 
-                if (lastCoordinateItemBeforeRTL != _settingsItem || linkStartToHome) {
+                if (lastFlyThroughVI != _settingsItem || linkStartToHome) {
                     // This is a subsequent waypoint or we are forcing the first waypoint back to home
                     double azimuth, distance, altDifference;
 
-                    _calcPrevWaypointValues(homePositionAltitude, item, lastCoordinateItemBeforeRTL, &azimuth, &distance, &altDifference);
+                    _calcPrevWaypointValues(item, lastFlyThroughVI, &azimuth, &distance, &altDifference);
+                    totalHorizontalDistance += distance;
                     item->setAltDifference(altDifference);
                     item->setAzimuth(azimuth);
                     item->setDistance(distance);
+                    item->setDistanceFromStart(totalHorizontalDistance);
 
                     _missionFlightStatus.maxTelemetryDistance = qMax(_missionFlightStatus.maxTelemetryDistance, _calcDistanceToHome(item, _settingsItem));
 
@@ -1634,20 +1631,22 @@ void MissionController::_recalcMissionFlightStatus()
                     double hoverTime = distance / _missionFlightStatus.hoverSpeed;
                     double cruiseTime = distance / _missionFlightStatus.cruiseSpeed;
                     _addTimeDistance(vtolInHover, hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
+
+                    totalHorizontalDistance += distance;
                 }
 
                 item->setMissionFlightStatus(_missionFlightStatus);
 
-                lastCoordinateItemBeforeRTL = item;
+                lastFlyThroughVI = item;
             }
         }
     }
-    lastCoordinateItemBeforeRTL->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
+    lastFlyThroughVI->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
 
     // Add the information for the final segment back to home
-    if (foundRTL && lastCoordinateItemBeforeRTL != _settingsItem && homePositionValid) {
+    if (foundRTL && lastFlyThroughVI != _settingsItem && homePositionValid) {
         double azimuth, distance, altDifference;
-        _calcPrevWaypointValues(homePositionAltitude, lastCoordinateItemBeforeRTL, _settingsItem, &azimuth, &distance, &altDifference);
+        _calcPrevWaypointValues(lastFlyThroughVI, _settingsItem, &azimuth, &distance, &altDifference);
 
         // Calculate time/distance
         double hoverTime = distance / _missionFlightStatus.hoverSpeed;
@@ -1660,45 +1659,46 @@ void MissionController::_recalcMissionFlightStatus()
         _missionFlightStatus.batteryChangePoint = 0;
     }
 
-    emit missionMaxTelemetryChanged(_missionFlightStatus.maxTelemetryDistance);
-    emit missionDistanceChanged(_missionFlightStatus.totalDistance);
-    emit missionHoverDistanceChanged(_missionFlightStatus.hoverDistance);
-    emit missionCruiseDistanceChanged(_missionFlightStatus.cruiseDistance);
-    emit missionTimeChanged();
-    emit missionHoverTimeChanged();
-    emit missionCruiseTimeChanged();
-    emit batteryChangePointChanged(_missionFlightStatus.batteryChangePoint);
-    emit batteriesRequiredChanged(_missionFlightStatus.batteriesRequired);
+    emit missionMaxTelemetryChanged     (_missionFlightStatus.maxTelemetryDistance);
+    emit missionDistanceChanged         (_missionFlightStatus.totalDistance);
+    emit missionHoverDistanceChanged    (_missionFlightStatus.hoverDistance);
+    emit missionCruiseDistanceChanged   (_missionFlightStatus.cruiseDistance);
+    emit missionTimeChanged             ();
+    emit missionHoverTimeChanged        ();
+    emit missionCruiseTimeChanged       ();
+    emit batteryChangePointChanged      (_missionFlightStatus.batteryChangePoint);
+    emit batteriesRequiredChanged       (_missionFlightStatus.batteriesRequired);
+    emit minAMSLAltitudeChanged         (_minAMSLAltitude);
+    emit maxAMSLAltitudeChanged         (_maxAMSLAltitude);
 
     // Walk the list again calculating altitude percentages
-    double altRange = maxAltSeen - minAltSeen;
+    double altRange = _maxAMSLAltitude - _minAMSLAltitude;
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
 
         if (item->specifiesCoordinate()) {
-            double absoluteAltitude = item->coordinate().altitude();
-            if (item->coordinateHasRelativeAltitude()) {
-                absoluteAltitude += homePositionAltitude;
-            }
+            double amslAlt = item->amslEntryAlt();
             if (altRange == 0.0) {
                 item->setAltPercent(0.0);
                 item->setTerrainPercent(qQNaN());
                 item->setTerrainCollision(false);
             } else {
-                item->setAltPercent((absoluteAltitude - minAltSeen) / altRange);
+                item->setAltPercent((amslAlt - _minAMSLAltitude) / altRange);
                 double terrainAltitude = item->terrainAltitude();
                 if (qIsNaN(terrainAltitude)) {
                     item->setTerrainPercent(qQNaN());
                     item->setTerrainCollision(false);
                 } else {
-                    item->setTerrainPercent((terrainAltitude - minAltSeen) / altRange);
-                    item->setTerrainCollision(absoluteAltitude < terrainAltitude);
+                    item->setTerrainPercent((terrainAltitude - _minAMSLAltitude) / altRange);
+                    item->setTerrainCollision(amslAlt < terrainAltitude);
                 }
             }
         }
     }
 
     _updateTimer.start(UPDATE_TIMEOUT);
+
+    emit recalcTerrainProfile();
 }
 
 // This will update the sequence numbers to be sequential starting from 0
@@ -1787,7 +1787,7 @@ void MissionController::_recalcAllWithCoordinate(const QGeoCoordinate& coordinat
     }
     _recalcSequence();
     _recalcChildItems();
-    _recalcWaypointLines();
+    emit _recalcFlightPathSegmentsSignal();
     _updateTimer.start(UPDATE_TIMEOUT);
 }
 
@@ -1851,15 +1851,14 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
 {
     setDirty(false);
 
-    connect(visualItem, &VisualMissionItem::specifiesCoordinateChanged,                 this, &MissionController::_recalcWaypointLines);
-    connect(visualItem, &VisualMissionItem::coordinateHasRelativeAltitudeChanged,       this, &MissionController::_recalcWaypointLines);
-    connect(visualItem, &VisualMissionItem::exitCoordinateHasRelativeAltitudeChanged,   this, &MissionController::_recalcWaypointLines);
-    connect(visualItem, &VisualMissionItem::specifiedFlightSpeedChanged,                this, &MissionController::_recalcMissionFlightStatus);
-    connect(visualItem, &VisualMissionItem::specifiedGimbalYawChanged,                  this, &MissionController::_recalcMissionFlightStatus);
-    connect(visualItem, &VisualMissionItem::specifiedGimbalPitchChanged,                this, &MissionController::_recalcMissionFlightStatus);
-    connect(visualItem, &VisualMissionItem::specifiedVehicleYawChanged,                 this, &MissionController::_recalcMissionFlightStatus);
-    connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatus);
-    connect(visualItem, &VisualMissionItem::additionalTimeDelayChanged,                 this, &MissionController::_recalcMissionFlightStatus);
+    connect(visualItem, &VisualMissionItem::specifiesCoordinateChanged,                 this, &MissionController::_recalcFlightPathSegmentsSignal,  Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::specifiedFlightSpeedChanged,                this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::specifiedGimbalYawChanged,                  this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::specifiedGimbalPitchChanged,                this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::specifiedVehicleYawChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(visualItem, &VisualMissionItem::additionalTimeDelayChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+
     connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
     if (visualItem->isSimpleItem()) {
@@ -1873,9 +1872,11 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     } else {
         ComplexMissionItem* complexItem = qobject_cast<ComplexMissionItem*>(visualItem);
         if (complexItem) {
-            connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatus);
-            connect(complexItem, &ComplexMissionItem::greatestDistanceToChanged,    this, &MissionController::_recalcMissionFlightStatus);
-            connect(complexItem, &ComplexMissionItem::isIncompleteChanged,          this, &MissionController::_recalcWaypointLines);
+            connect(complexItem, &ComplexMissionItem::complexDistanceChanged,       this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+            connect(complexItem, &ComplexMissionItem::greatestDistanceToChanged,    this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+            connect(complexItem, &ComplexMissionItem::minAMSLAltitudeChanged,       this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+            connect(complexItem, &ComplexMissionItem::maxAMSLAltitudeChanged,       this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+            connect(complexItem, &ComplexMissionItem::isIncompleteChanged,          this, &MissionController::_recalcFlightPathSegmentsSignal,  Qt::QueuedConnection);
         } else {
             qWarning() << "ComplexMissionItem not found";
         }
@@ -1891,7 +1892,7 @@ void MissionController::_deinitVisualItem(VisualMissionItem* visualItem)
 void MissionController::_itemCommandChanged(void)
 {
     _recalcChildItems();
-    _recalcWaypointLines();
+    emit _recalcFlightPathSegmentsSignal();
 }
 
 void MissionController::_managerVehicleChanged(Vehicle* managerVehicle)
@@ -1919,8 +1920,8 @@ void MissionController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::lastCurrentIndexChanged,  this, &MissionController::resumeMissionIndexChanged);
     connect(_missionManager, &MissionManager::resumeMissionReady,       this, &MissionController::resumeMissionReady);
     connect(_missionManager, &MissionManager::resumeMissionUploadFail,  this, &MissionController::resumeMissionUploadFail);
-    connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatus);
-    connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatus);
+    connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
+    connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(_managerVehicle, &Vehicle::vehicleTypeChanged,              this, &MissionController::complexMissionItemNamesChanged);
 
     emit complexMissionItemNamesChanged();
@@ -2152,11 +2153,13 @@ QStringList MissionController::complexMissionItemNames(void) const
 {
     QStringList complexItems;
 
-    complexItems.append(patternSurveyName);
-    complexItems.append(patternCorridorScanName);
+    complexItems.append(SurveyComplexItem::name);
+    complexItems.append(CorridorScanComplexItem::name);
     if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
-        complexItems.append(patternStructureScanName);
+        complexItems.append(StructureScanComplexItem::name);
     }
+
+    // Note: The landing pattern items are not added here since they have there own button which adds them
 
     return qgcApp()->toolbox()->corePlugin()->complexMissionItemNames(_controllerVehicle, complexItems);
 }
@@ -2360,8 +2363,8 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                             VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
                             if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
                                 VisualItemPair splitPair(pPrev, pVI);
-                                if (_linesTable.contains(splitPair)) {
-                                    _splitSegment = _linesTable[splitPair];
+                                if (_flightPathSegmentHashTable.contains(splitPair)) {
+                                    _splitSegment = _flightPathSegmentHashTable[splitPair];
                                 }
                             }
                         }
@@ -2511,4 +2514,19 @@ void MissionController::_takeoffItemNotRequiredChanged(void)
 {
     // Force a recalc of allowed bits
     setCurrentPlanViewSeqNum(_currentPlanViewSeqNum, true /* force */);
+}
+
+QString MissionController::surveyComplexItemName(void) const
+{
+    return SurveyComplexItem::name;
+}
+
+QString MissionController::corridorScanComplexItemName(void) const
+{
+    return CorridorScanComplexItem::name;
+}
+
+QString MissionController::structureScanComplexItemName(void) const
+{
+    return StructureScanComplexItem::name;
 }

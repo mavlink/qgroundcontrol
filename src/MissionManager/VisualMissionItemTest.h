@@ -55,8 +55,6 @@ protected:
         lastSequenceNumberChangedIndex,
         missionGimbalYawChangedIndex,
         missionVehicleYawChangedIndex,
-        coordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateHasRelativeAltitudeChangedIndex,
         exitCoordinateSameAsEntryChangedIndex,
         maxSignalIndex,
     };
@@ -84,8 +82,6 @@ protected:
         lastSequenceNumberChangedMask =                 1 << lastSequenceNumberChangedIndex,
         missionGimbalYawChangedMask =                   1 << missionGimbalYawChangedIndex,
         missionVehicleYawChangedMask =                  1 << missionVehicleYawChangedIndex,
-        coordinateHasRelativeAltitudeChangedMask =      1 << coordinateHasRelativeAltitudeChangedIndex,
-        exitCoordinateHasRelativeAltitudeChangedMask =  1 << exitCoordinateHasRelativeAltitudeChangedIndex,
         exitCoordinateSameAsEntryChangedMask =          1 << exitCoordinateSameAsEntryChangedIndex,
     };
 

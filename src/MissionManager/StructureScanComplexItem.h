@@ -53,8 +53,8 @@ public:
     Fact* gimbalPitch       (void) { return &_gimbalPitchFact; }
     Fact* startFromTop      (void) { return &_startFromTopFact; }
 
-    double          bottomFlightAlt         (void);
-    double          topFlightAlt            (void);
+    double          bottomFlightAlt         (void) const;
+    double          topFlightAlt            (void) const;
     int             cameraShots             (void) const;
     double          timeBetweenShots        (void);
     QGCMapPolygon*  structurePolygon        (void) { return &_structurePolygon; }
@@ -63,42 +63,44 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-
-    double          complexDistance     (void) const final { return _scanDistance; }
-    int             lastSequenceNumber  (void) const final;
-    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    double          greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    QString         mapVisualQML        (void) const final { return QStringLiteral("StructureScanMapVisual.qml"); }
+    QString patternName         (void) const final { return name; }
+    double  complexDistance     (void) const final { return _scanDistance; }
+    int     lastSequenceNumber  (void) const final;
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("StructureScanMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    bool            dirty                   (void) const final { return _dirty; }
-    bool            isSimpleItem            (void) const final { return false; }
-    bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final { return true; }
-    bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QString         commandDescription      (void) const final { return tr("Structure Scan"); }
-    QString         commandName             (void) const final { return tr("Structure Scan"); }
-    QString         abbreviation            (void) const final { return "S"; }
-    QGeoCoordinate  coordinate              (void) const final;
-    QGeoCoordinate  exitCoordinate          (void) const final;
-    int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
-    void            applyNewAltitude        (double newAltitude) final;
-    double          additionalTimeDelay     (void) const final { return 0; }
-    ReadyForSaveState readyForSaveState     (void) const final;
+    bool                dirty                       (void) const final { return _dirty; }
+    bool                isSimpleItem                (void) const final { return false; }
+    bool                isStandaloneCoordinate      (void) const final { return false; }
+    bool                specifiesCoordinate         (void) const final { return true; }
+    bool                specifiesAltitudeOnly       (void) const final { return false; }
+    QString             commandDescription          (void) const final { return tr("Structure Scan"); }
+    QString             commandName                 (void) const final { return tr("Structure Scan"); }
+    QString             abbreviation                (void) const final { return "S"; }
+    QGeoCoordinate      coordinate                  (void) const final;
+    QGeoCoordinate      exitCoordinate              (void) const final { return coordinate(); }
+    int                 sequenceNumber              (void) const final { return _sequenceNumber; }
+    double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalYaw          (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalPitch        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void                setMissionFlightStatus      (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
+    void                applyNewAltitude            (double newAltitude) final;
+    double              additionalTimeDelay         (void) const final { return 0; }
+    ReadyForSaveState   readyForSaveState           (void) const final;
+    bool                exitCoordinateSameAsEntry   (void) const final { return true; }
+    void                setDirty                    (bool dirty) final;
+    void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
+    void                setSequenceNumber           (int sequenceNumber) final;
+    void                save                        (QJsonArray&  missionItems) final;
+    double              amslEntryAlt                (void) const final;
+    double              amslExitAlt                 (void) const final { return amslEntryAlt(); };
+    double              minAMSLAltitude             (void) const final;
+    double              maxAMSLAltitude             (void) const final;
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
-    bool exitCoordinateSameAsEntry          (void) const final { return true; }
-
-    void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
-    void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonArray&  missionItems) final;
+    static const QString name;
 
     static const char* jsonComplexItemTypeValue;
 
@@ -114,33 +116,37 @@ signals:
     void timeBetweenShotsChanged        (void);
     void bottomFlightAltChanged         (void);
     void topFlightAltChanged            (void);
+    void _updateFlightPathSegmentsSignal(void);
 
 private slots:
-    void _setDirty(void);
-    void _polygonDirtyChanged           (bool dirty);
-    void _flightPathChanged             (void);
-    void _clearInternal                 (void);
-    void _updateCoordinateAltitudes     (void);
-    void _rebuildFlightPolygon          (void);
-    void _recalcCameraShots             (void);
-    void _recalcLayerInfo               (void);
-    void _updateLastSequenceNumber      (void);
-    void _updateGimbalPitch             (void);
-    void _signalTopBottomAltChanged     (void);
-    void _recalcScanDistance            (void);
-    void _updateWizardMode              (void);
+    void _segmentTerrainCollisionChanged            (bool terrainCollision) final;
+    void _setDirty                                  (void);
+    void _polygonDirtyChanged                       (bool dirty);
+    void _flightPathChanged                         (void);
+    void _clearInternal                             (void);
+    void _updateCoordinateAltitudes                 (void);
+    void _rebuildFlightPolygon                      (void);
+    void _recalcCameraShots                         (void);
+    void _recalcLayerInfo                           (void);
+    void _updateLastSequenceNumber                  (void);
+    void _updateGimbalPitch                         (void);
+    void _signalTopBottomAltChanged                 (void);
+    void _recalcScanDistance                        (void);
+    void _updateWizardMode                          (void);
+    void _updateFlightPathSegmentsDontCallDirectly  (void);
+    void _minAMSLAltChanged                         (void);
+    void _maxAMSLAltChanged                         (void);
 
 private:
-    void _setCameraShots(int cameraShots);
-    double _triggerDistance(void) const;
+    void    _setCameraShots                 (int cameraShots);
+    double  _triggerDistance                (void) const;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
     int             _sequenceNumber;
     QGCMapPolygon   _structurePolygon;
     QGCMapPolygon   _flightPolygon;
-    int             _entryVertex;       // Polygon vertext which is used as the mission entry point
-
+    int             _entryVertex;       // Polygon vertex which is used as the mission entry point
     bool            _ignoreRecalc;
     double          _scanDistance;
     int             _cameraShots;

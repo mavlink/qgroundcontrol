@@ -79,7 +79,6 @@ void SimpleMissionItemTest::init(void)
     rgSimpleItemSignals[rawEditChangedIndex] =                          SIGNAL(rawEditChanged(bool));
     rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(cameraSectionChanged(QObject*));
     rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(speedSectionChanged(QObject*));
-    rgSimpleItemSignals[coordinateHasRelativeAltitudeChangedIndex] =    SIGNAL(coordinateHasRelativeAltitudeChanged(bool));
 
     MissionItem missionItem(1,              // sequence number
                             MAV_CMD_NAV_WAYPOINT,
@@ -225,7 +224,7 @@ void SimpleMissionItemTest::_testSignals(void)
     _spyVisualItem->clearAllSignals();
 
     _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative ? QGroundControlQmlGlobal::AltitudeModeAbsolute : QGroundControlQmlGlobal::AltitudeModeRelative);
-    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask | coordinateHasRelativeAltitudeChangedMask));
+    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
 
@@ -241,7 +240,7 @@ void SimpleMissionItemTest::_testSignals(void)
 
     _simpleItem->setCommand(MAV_CMD_NAV_LOITER_TIME);
     QVERIFY(_spySimpleItem->checkSignalsByMask(commandChangedMask));
-    QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
+    QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask));
 }
 
 void SimpleMissionItemTest::_testCameraSectionDirty(void)

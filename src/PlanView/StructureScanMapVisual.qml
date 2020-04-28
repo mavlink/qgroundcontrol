@@ -47,6 +47,7 @@ Item {
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      "green"
+        altColor:           "red"
         interiorOpacity:    0.25
     }
 

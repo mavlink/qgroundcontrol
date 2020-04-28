@@ -78,44 +78,41 @@ public:
     int _transectCount(void) const { return _transects.count(); }
 
     // Overrides from ComplexMissionItem
-    int             lastSequenceNumber  (void) const final;
-    QString         mapVisualQML        (void) const override = 0;
-    bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
-    void            addKMLVisuals       (KMLPlanDomDocument& domDocument) final;
-
-    double          complexDistance     (void) const final { return _complexDistance; }
-    double          greatestDistanceTo  (const QGeoCoordinate &other) const final;
+    int     lastSequenceNumber  (void) const final;
+    QString mapVisualQML        (void) const override = 0;
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
+    void    addKMLVisuals       (KMLPlanDomDocument& domDocument) final;
+    double  complexDistance     (void) const final { return _complexDistance; }
+    double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
 
     // Overrides from VisualMissionItem
-
-    void            save                    (QJsonArray&  planItems) override = 0;
-    bool            specifiesCoordinate     (void) const override = 0;
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double newAltitude) override = 0;
-
-    bool            dirty                   (void) const final { return _dirty; }
-    bool            isSimpleItem            (void) const final { return false; }
-    bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
-    QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
-    int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
-    ReadyForSaveState readyForSaveState     (void) const override;
-    QString         commandDescription      (void) const override { return tr("Transect"); }
-    QString         commandName             (void) const override { return tr("Transect"); }
-    QString         abbreviation            (void) const override { return tr("T"); }
-
-    bool coordinateHasRelativeAltitude      (void) const final;
-    bool exitCoordinateHasRelativeAltitude  (void) const final;
-    bool exitCoordinateSameAsEntry          (void) const final { return false; }
-
-    void            setDirty                (bool dirty) final;
-    void            setCoordinate           (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
-    void            setSequenceNumber       (int sequenceNumber) final;
+    void                save                        (QJsonArray&  planItems) override = 0;
+    bool                specifiesCoordinate         (void) const override = 0;
+    void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void                applyNewAltitude            (double newAltitude) final;
+    bool                dirty                       (void) const final { return _dirty; }
+    bool                isSimpleItem                (void) const final { return false; }
+    bool                isStandaloneCoordinate      (void) const final { return false; }
+    bool                specifiesAltitudeOnly       (void) const final { return false; }
+    QGeoCoordinate      coordinate                  (void) const final { return _coordinate; }
+    QGeoCoordinate      exitCoordinate              (void) const final { return _exitCoordinate; }
+    int                 sequenceNumber              (void) const final { return _sequenceNumber; }
+    double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalYaw          (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalPitch        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    void                setMissionFlightStatus      (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
+    ReadyForSaveState   readyForSaveState         (void) const override;
+    QString             commandDescription          (void) const override { return tr("Transect"); }
+    QString             commandName                 (void) const override { return tr("Transect"); }
+    QString             abbreviation                (void) const override { return tr("T"); }
+    bool                exitCoordinateSameAsEntry   (void) const final { return false; }
+    void                setDirty                    (bool dirty) final;
+    void                setCoordinate               (const QGeoCoordinate& coordinate) final { Q_UNUSED(coordinate); }
+    void                setSequenceNumber           (int sequenceNumber) final;
+    double              amslEntryAlt                (void) const final;
+    double              amslExitAlt                 (void) const final;
+    double              minAMSLAltitude             (void) const final { return _minAMSLAltitude; }
+    double              maxAMSLAltitude             (void) const final { return _maxAMSLAltitude; }
 
     static const char* turnAroundDistanceName;
     static const char* turnAroundDistanceMultiRotorName;
@@ -132,6 +129,7 @@ signals:
     void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
     void followTerrainChanged           (bool followTerrain);
+    void _updateFlightPathSegmentsSignal(void);
 
 protected slots:
     void _setDirty                          (void);
@@ -142,7 +140,6 @@ protected slots:
 
 protected:
     virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
-    virtual void _recalcComplexDistance     (void) = 0;
     virtual void _recalcCameraShots         (void) = 0;
 
     void    _save                           (QJsonObject& saveObject);
@@ -159,8 +156,9 @@ protected:
     void    _appendCameraTriggerDistanceUpdatePoint(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, MAV_FRAME mavFrame, const QGeoCoordinate& coordinate, bool useConditionGate, float triggerDistance);
     void    _buildAndAppendMissionItems     (QList<MissionItem*>& items, QObject* missionItemParent);
     void    _appendLoadedMissionItems       (QList<MissionItem*>& items, QObject* missionItemParent);
+    void    _recalcComplexDistance          (void);
 
-    int                 _sequenceNumber;
+    int                 _sequenceNumber = 0;
     QGeoCoordinate      _coordinate;
     QGeoCoordinate      _exitCoordinate;
     QGCMapPolygon       _surveyAreaPolygon;
@@ -182,19 +180,19 @@ protected:
     QVariantList                                        _visualTransectPoints;
     QList<QList<CoordInfo_t>>                           _transects;
     QList<QList<TerrainPathQuery::PathHeightInfo_t>>    _transectsPathHeightInfo;
-    TerrainPolyPathQuery*                               _terrainPolyPathQuery;
-    QTimer                                              _terrainQueryTimer;
 
-    bool            _ignoreRecalc;
-    double          _complexDistance;
-    int             _cameraShots;
-    double          _timeBetweenShots;
-    double          _cruiseSpeed;
+    bool            _ignoreRecalc =     false;
+    double          _complexDistance =  qQNaN();
+    int             _cameraShots =      0;
+    double          _timeBetweenShots = 0;
+    double          _cruiseSpeed =      0;
     CameraCalc      _cameraCalc;
-    bool            _followTerrain;
+    bool            _followTerrain =    false;
+    double          _minAMSLAltitude =  qQNaN();
+    double          _maxAMSLAltitude =  qQNaN();
 
-    QObject*            _loadedMissionItemsParent;	///< Parent for all items in _loadedMissionItems for simpler delete
-    QList<MissionItem*> _loadedMissionItems;		///< Mission items loaded from plan file
+    QObject*            _loadedMissionItemsParent = nullptr;	///< Parent for all items in _loadedMissionItems for simpler delete
+    QList<MissionItem*> _loadedMissionItems;                    ///< Mission items loaded from plan file
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -217,9 +215,11 @@ protected:
     static const int _hoverAndCaptureDelaySeconds = 4;
 
 private slots:
-    void _reallyQueryTransectsPathHeightInfo(void);
-    void _followTerrainChanged              (bool followTerrain);
-    void _handleHoverAndCaptureEnabled      (QVariant enabled);
+    void _reallyQueryTransectsPathHeightInfo        (void);
+    void _followTerrainChanged                      (bool followTerrain);
+    void _handleHoverAndCaptureEnabled              (QVariant enabled);
+    void _updateFlightPathSegmentsDontCallDirectly  (void);
+    void _segmentTerrainCollisionChanged            (bool terrainCollision) final;
 
 private:
     void    _queryTransectsPathHeightInfo   (void);
@@ -229,4 +229,7 @@ private:
     void    _adjustForTolerance             (QList<CoordInfo_t>& transect);
     double  _altitudeBetweenCoords          (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
     int     _maxPathHeight                  (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
+
+    TerrainPolyPathQuery*       _currentTerrainFollowQuery =            nullptr;
+    QTimer                      _terrainQueryTimer;
 };

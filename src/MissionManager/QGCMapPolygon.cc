@@ -281,6 +281,15 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
     emit pathChanged();
 }
 
+void QGCMapPolygon::appendVertices(const QVariantList& varCoords)
+{
+    QList<QGeoCoordinate> rgCoords;
+    for (const QVariant& varCoord: varCoords) {
+        rgCoords.append(varCoord.value<QGeoCoordinate>());
+    }
+    appendVertices(rgCoords);
+}
+
 void QGCMapPolygon::_polygonModelDirtyChanged(bool dirty)
 {
     if (dirty) {
@@ -604,5 +613,12 @@ void QGCMapPolygon::setTraceMode(bool traceMode)
     if (traceMode != _traceMode) {
         _traceMode = traceMode;
         emit traceModeChanged(traceMode);
+    }
+}
+
+void QGCMapPolygon::setShowAltColor(bool showAltColor){
+    if (showAltColor != _showAltColor) {
+        _showAltColor = showAltColor;
+        emit showAltColorChanged(showAltColor);
     }
 }
