@@ -29,12 +29,8 @@
 QGC_LOGGING_CATEGORY(CustomLog, "CustomLog")
 
 CustomVideoReceiver::CustomVideoReceiver(QObject* parent)
-    : VideoReceiver(parent)
+    : GstVideoReceiver(parent)
 {
-#if defined(QGC_GST_STREAMING)
-    //-- Shorter RTSP test interval
-    _restart_time_ms = 1000;
-#endif
 }
 
 CustomVideoReceiver::~CustomVideoReceiver()
