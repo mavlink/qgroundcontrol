@@ -69,40 +69,43 @@ public:
     static MissionItem* createLandItem          (int seqNum, bool altRel, double lat, double lon, double alt, QObject* parent);
 
     // Overrides from ComplexMissionItem
-    double              complexDistance     (void) const final;
-    int                 lastSequenceNumber  (void) const final;
-    bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    QString             mapVisualQML        (void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
+    QString patternName         (void) const final { return name; }
+    double  complexDistance     (void) const final;
+    int     lastSequenceNumber  (void) const final;
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    bool            dirty                   (void) const final { return _dirty; }
-    bool            isSimpleItem            (void) const final { return false; }
-    bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final;
-    bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QString         commandDescription      (void) const final { return "Landing Pattern"; }
-    QString         commandName             (void) const final { return "Landing Pattern"; }
-    QString         abbreviation            (void) const final { return "L"; }
-    QGeoCoordinate  coordinate              (void) const final { return _loiterCoordinate; }
-    QGeoCoordinate  exitCoordinate          (void) const final { return _landingCoordinate; }
-    int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double newAltitude) final;
-    double          additionalTimeDelay     (void) const final { return 0; }
-    ReadyForSaveState readyForSaveState     (void) const final;
+    bool                dirty                       (void) const final { return _dirty; }
+    bool                isSimpleItem                (void) const final { return false; }
+    bool                isStandaloneCoordinate      (void) const final { return false; }
+    bool                specifiesCoordinate         (void) const final;
+    bool                specifiesAltitudeOnly       (void) const final { return false; }
+    QString             commandDescription          (void) const final { return "Landing Pattern"; }
+    QString             commandName                 (void) const final { return "Landing Pattern"; }
+    QString             abbreviation                (void) const final { return "L"; }
+    QGeoCoordinate      coordinate                  (void) const final { return _loiterCoordinate; }
+    QGeoCoordinate      exitCoordinate              (void) const final { return _landingCoordinate; }
+    int                 sequenceNumber              (void) const final { return _sequenceNumber; }
+    double              specifiedFlightSpeed        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalYaw          (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double              specifiedGimbalPitch        (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    void                appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void                applyNewAltitude            (double newAltitude) final;
+    double              additionalTimeDelay         (void) const final { return 0; }
+    ReadyForSaveState   readyForSaveState           (void) const final;
+    bool                exitCoordinateSameAsEntry   (void) const final { return false; }
+    void                setDirty                    (bool dirty) final;
+    void                setCoordinate               (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }
+    void                setSequenceNumber           (int sequenceNumber) final;
+    void                save                        (QJsonArray&  missionItems) final;
+    double              amslEntryAlt                (void) const final;
+    double              amslExitAlt                 (void) const final;
+    double              minAMSLAltitude             (void) const final { return amslExitAlt(); }
+    double              maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
 
-    bool coordinateHasRelativeAltitude      (void) const final { return _altitudesAreRelative; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return _altitudesAreRelative; }
-    bool exitCoordinateSameAsEntry          (void) const final { return false; }
-
-    void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final { setLoiterCoordinate(coordinate); }
-    void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonArray&  missionItems) final;
+    static const QString name;
 
     static const char* jsonComplexItemTypeValue;
 
@@ -125,30 +128,34 @@ signals:
     void loiterClockwiseChanged         (bool loiterClockwise);
     void altitudesAreRelativeChanged    (bool altitudesAreRelative);
     void valueSetIsDistanceChanged      (bool valueSetIsDistance);
+    void _updateFlightPathSegmentsSignal(void);
 
 private slots:
-    void    _recalcFromHeadingAndDistanceChange     (void);
-    void    _recalcFromCoordinateChange             (void);
-    void    _recalcFromRadiusChange                 (void);
-    void    _updateLoiterCoodinateAltitudeFromFact  (void);
-    void    _updateLandingCoodinateAltitudeFromFact (void);
-    double  _mathematicAngleToHeading               (double angle);
-    double  _headingToMathematicAngle               (double heading);
-    void    _setDirty                               (void);
-    void    _glideSlopeChanged                      (void);
-    void    _signalLastSequenceNumberChanged        (void);
+    void    _recalcFromHeadingAndDistanceChange         (void);
+    void    _recalcFromCoordinateChange                 (void);
+    void    _recalcFromRadiusChange                     (void);
+    void    _updateLoiterCoodinateAltitudeFromFact      (void);
+    void    _updateLandingCoodinateAltitudeFromFact     (void);
+    double  _mathematicAngleToHeading                   (double angle);
+    double  _headingToMathematicAngle                   (double heading);
+    void    _setDirty                                   (void);
+    void    _glideSlopeChanged                          (void);
+    void    _signalLastSequenceNumberChanged            (void);
+    void    _updateFlightPathSegmentsDontCallDirectly   (void);
 
 private:
-    QPointF _rotatePoint    (const QPointF& point, const QPointF& origin, double angle);
-    void    _calcGlideSlope (void);
+    QPointF _rotatePoint                    (const QPointF& point, const QPointF& origin, double angle);
+    void    _calcGlideSlope                 (void);
 
-    int             _sequenceNumber;
-    bool            _dirty;
+    int             _sequenceNumber =               0;
+    bool            _dirty =                        false;
     QGeoCoordinate  _loiterCoordinate;
     QGeoCoordinate  _loiterTangentCoordinate;
     QGeoCoordinate  _landingCoordinate;
-    bool            _landingCoordSet;
-    bool            _ignoreRecalcSignals;
+    bool            _landingCoordSet =              false;
+    bool            _ignoreRecalcSignals =          false;
+    bool            _loiterClockwise =              true;
+    bool            _altitudesAreRelative =         true;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -162,8 +169,6 @@ private:
     Fact            _stopTakingVideoFact;
     Fact            _valueSetIsDistanceFact;
 
-    bool            _loiterClockwise;
-    bool            _altitudesAreRelative;
 
     static const char* _jsonLoiterCoordinateKey;
     static const char* _jsonLoiterRadiusKey;

@@ -13,10 +13,13 @@
 #include "QGCGeo.h"
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
+#include "FlightPathSegment.h"
 
 #include <QPolygonF>
 
 QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexItemLog")
+
+const QString FixedWingLandingComplexItem::name(tr("Fixed Wing Landing"));
 
 const char* FixedWingLandingComplexItem::settingsGroup =            "FixedWingLanding";
 const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue = "fwLandingPattern";
@@ -47,10 +50,6 @@ const char* FixedWingLandingComplexItem::_jsonLoiterAltitudeRelativeKey =   "loi
 
 FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent)
     : ComplexMissionItem        (masterController, flyView, parent)
-    , _sequenceNumber           (0)
-    , _dirty                    (false)
-    , _landingCoordSet          (false)
-    , _ignoreRecalcSignals      (false)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
     , _landingDistanceFact      (settingsGroup, _metaDataMap[loiterToLandDistanceName])
     , _loiterAltitudeFact       (settingsGroup, _metaDataMap[loiterAltitudeName])
@@ -61,8 +60,6 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
     , _stopTakingPhotosFact     (settingsGroup, _metaDataMap[stopTakingPhotosName])
     , _stopTakingVideoFact      (settingsGroup, _metaDataMap[stopTakingVideoName])
     , _valueSetIsDistanceFact   (settingsGroup, _metaDataMap[valueSetIsDistanceName])
-    , _loiterClockwise          (true)
-    , _altitudesAreRelative     (true)
 {
     _editorQml = "qrc:/qml/FWLandingPatternEditor.qml";
     _isIncomplete = false;
@@ -98,11 +95,28 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::valueSetIsDistanceChanged,        this, &FixedWingLandingComplexItem::_setDirty);
 
-    connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
-    connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+    connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::_amslEntryAltChanged);
+    connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::_amslExitAltChanged);
+    connect(_missionController,         &MissionController::plannedHomePositionChanged,                 this, &FixedWingLandingComplexItem::_amslEntryAltChanged);
+    connect(_missionController,         &MissionController::plannedHomePositionChanged,                 this, &FixedWingLandingComplexItem::_amslExitAltChanged);
+    connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_amslEntryAltChanged);
+    connect(&_landingAltitudeFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_amslExitAltChanged);
+    connect(this,                       &FixedWingLandingComplexItem::amslEntryAltChanged,              this, &FixedWingLandingComplexItem::maxAMSLAltitudeChanged);
+    connect(this,                       &FixedWingLandingComplexItem::amslExitAltChanged,               this, &FixedWingLandingComplexItem::minAMSLAltitudeChanged);
 
     connect(this,                       &FixedWingLandingComplexItem::landingCoordSetChanged,           this, &FixedWingLandingComplexItem::readyForSaveStateChanged);
     connect(this,                       &FixedWingLandingComplexItem::wizardModeChanged,                this, &FixedWingLandingComplexItem::readyForSaveStateChanged);
+
+    connect(this,                       &FixedWingLandingComplexItem::loiterTangentCoordinateChanged,   this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged,         this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(&_landingAltitudeFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+    connect(_missionController,         &MissionController::plannedHomePositionChanged,                 this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal);
+
+    // The follow is used to compress multiple recalc calls in a row to into a single call.
+    connect(this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal, this, &FixedWingLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly,   Qt::QueuedConnection);
+    qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&FixedWingLandingComplexItem::_updateFlightPathSegmentsSignal));
 
     if (_masterController->controllerVehicle()->apmFirmware()) {
         // ArduPilot does not support camera commands
@@ -217,8 +231,8 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
         bool landingAltitudeRelative = complexObject[_jsonLandingAltitudeRelativeKey].toBool();
         if (loiterAltitudeRelative != landingAltitudeRelative) {
             qgcApp()->showAppMessage(tr("Fixed Wing Landing Pattern: "
-                                     "Setting the loiter and landing altitudes with different settings for altitude relative is no longer supported. "
-                                     "Both have been set to altitude relative. Be sure to adjust/check your plan prior to flight."));
+                                        "Setting the loiter and landing altitudes with different settings for altitude relative is no longer supported. "
+                                        "Both have been set to altitude relative. Be sure to adjust/check your plan prior to flight."));
             _altitudesAreRelative = true;
         } else {
             _altitudesAreRelative = loiterAltitudeRelative;
@@ -726,4 +740,36 @@ void FixedWingLandingComplexItem::moveLandingPosition(const QGeoCoordinate& coor
     setLandingCoordinate(coordinate);
     landingHeading()->setRawValue(savedHeading);
     landingDistance()->setRawValue(savedDistance);
+}
+
+double FixedWingLandingComplexItem::amslEntryAlt(void) const
+{
+    return _loiterAltitudeFact.rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);
+}
+
+double FixedWingLandingComplexItem::amslExitAlt(void) const
+{
+    return _landingAltitudeFact.rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);
+
+}
+
+// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
+void FixedWingLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
+{
+    if (_cTerrainCollisionSegments != 0) {
+        _cTerrainCollisionSegments = 0;
+        emit terrainCollisionChanged(false);
+    }
+
+    _flightPathSegments.beginReset();
+    _flightPathSegments.clearAndDeleteContents();
+    _appendFlightPathSegment(_loiterTangentCoordinate, amslEntryAlt(), _landingCoordinate, amslExitAlt());  // Loiter to land
+    _appendFlightPathSegment(_landingCoordinate, amslEntryAlt(), _landingCoordinate, amslExitAlt());        // Land to ground
+    _flightPathSegments.endReset();
+
+    if (_cTerrainCollisionSegments != 0) {
+        emit terrainCollisionChanged(true);
+    }
+
+    _masterController->missionController()->recalcTerrainProfile();
 }

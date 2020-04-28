@@ -86,13 +86,13 @@ public:
     TransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
 
     // Overrides from ComplexMissionItem
+    QString patternName         (void) const final { return QString(); }
     QString mapVisualQML        (void) const final { return QString(); }
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final { Q_UNUSED(complexObject); Q_UNUSED(sequenceNumber); Q_UNUSED(errorString); return false; }
 
     // Overrides from VisualMissionItem
     void    save                (QJsonArray&  missionItems) final { Q_UNUSED(missionItems); }
     bool    specifiesCoordinate (void) const final { return true; }
-    void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
     double  additionalTimeDelay (void) const final { return 0; }
 
     bool rebuildTransectsPhase1Called;
@@ -102,6 +102,5 @@ public:
 private slots:
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
-    void _recalcComplexDistance     (void) final;
     void _recalcCameraShots         (void) final;
 };

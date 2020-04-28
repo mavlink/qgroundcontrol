@@ -87,10 +87,11 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_NONTHEMED_COLOR(brandingBlue,   "#48D6FF", "#6045c5")
 
     // Colors not affecting by theming or enable/disable
-    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,  "#ffffff")
-    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderDark,   "#000000")
-    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,  "#be781c")
-    DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior, "green")
+    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderLight,          "#ffffff")
+    DECLARE_QGC_SINGLE_COLOR(mapWidgetBorderDark,           "#000000")
+    DECLARE_QGC_SINGLE_COLOR(mapMissionTrajectory,          "#be781c")
+    DECLARE_QGC_SINGLE_COLOR(surveyPolygonInterior,         "green")
+    DECLARE_QGC_SINGLE_COLOR(surveyPolygonTerrainCollision, "red")
 }
 
 void QGCPalette::setColorGroupEnabled(bool enabled)

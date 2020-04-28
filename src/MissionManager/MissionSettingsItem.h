@@ -56,41 +56,42 @@ public:
     void setInitialHomePositionFromUser(const QGeoCoordinate& coordinate);
 
     // Overrides from ComplexMissionItem
-
-    double              complexDistance     (void) const final;
-    int                 lastSequenceNumber  (void) const final;
-    bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    double              greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    QString             mapVisualQML        (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    QString patternName         (void) const final { return QString(); }
+    double  complexDistance     (void) const final;
+    int     lastSequenceNumber  (void) const final;
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    bool    isSingleItem        (void) const final { return true; }
+    bool    terrainCollision    (void) const final { return false; }
 
     // Overrides from VisualMissionItem
-
-    bool            dirty                   (void) const final { return _dirty; }
-    bool            isSimpleItem            (void) const final { return false; }
-    bool            isStandaloneCoordinate  (void) const final { return false; }
-    bool            specifiesCoordinate     (void) const final;
-    bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QString         commandDescription      (void) const final { return "Mission Start"; }
-    QString         commandName             (void) const final { return "Mission Start"; }
-    QString         abbreviation            (void) const final;
-    QGeoCoordinate  coordinate              (void) const final { return _plannedHomePositionCoordinate; }
-    QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
-    int             sequenceNumber          (void) const final { return _sequenceNumber; }
-    double          specifiedGimbalYaw      (void) final;
-    double          specifiedGimbalPitch    (void) final;
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double /*newAltitude*/) final { /* no action */ }
-    double          specifiedFlightSpeed    (void) final;
-    double          additionalTimeDelay     (void) const final { return 0; }
-
-    bool coordinateHasRelativeAltitude      (void) const final { return false; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return false; }
-    bool exitCoordinateSameAsEntry          (void) const final { return true; }
-
-    void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final;   // Should only be called if the end user is moving
-    void setSequenceNumber  (int sequenceNumber) final;
-    void save               (QJsonArray&  missionItems) final;
+    bool            dirty                       (void) const final { return _dirty; }
+    bool            isSimpleItem                (void) const final { return false; }
+    bool            isStandaloneCoordinate      (void) const final { return false; }
+    bool            specifiesCoordinate         (void) const final;
+    bool            specifiesAltitudeOnly       (void) const final { return false; }
+    QString         commandDescription          (void) const final { return "Mission Start"; }
+    QString         commandName                 (void) const final { return "Mission Start"; }
+    QString         abbreviation                (void) const final;
+    QGeoCoordinate  coordinate                  (void) const final { return _plannedHomePositionCoordinate; } // Includes altitude
+    QGeoCoordinate  exitCoordinate              (void) const final { return _plannedHomePositionCoordinate; }
+    int             sequenceNumber              (void) const final { return _sequenceNumber; }
+    double          specifiedGimbalYaw          (void) final;
+    double          specifiedGimbalPitch        (void) final;
+    void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude            (double /*newAltitude*/) final { /* no action */ }
+    double          specifiedFlightSpeed        (void) final;
+    double          additionalTimeDelay         (void) const final { return 0; }
+    bool            exitCoordinateSameAsEntry   (void) const final { return true; }
+    void            setDirty                    (bool dirty) final;
+    void            setCoordinate               (const QGeoCoordinate& coordinate) final;   // Should only be called if the end user is moving
+    void            setSequenceNumber           (int sequenceNumber) final;
+    void            save                        (QJsonArray&  missionItems) final;
+    double          amslEntryAlt                (void) const final { return _plannedHomePositionCoordinate.altitude(); }
+    double          amslExitAlt                 (void) const final { return amslEntryAlt(); }
+    double          minAMSLAltitude             (void) const final { return amslEntryAlt(); }
+    double          maxAMSLAltitude             (void) const final { return amslEntryAlt(); }
 
 signals:
     void specifyMissionFlightSpeedChanged   (bool specifyMissionFlightSpeed);

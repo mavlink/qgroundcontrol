@@ -38,6 +38,7 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
+    QString patternName         (void) const final { return name; }
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
     QString presetsSettingsGroup(void) { return settingsGroup; }
@@ -47,7 +48,6 @@ public:
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
     bool    specifiesCoordinate (void) const final { return true; }
-    void    applyNewAltitude    (double newAltitude) final;
     double  timeBetweenShots    (void) final;
 
     // Overrides from VisualMissionionItem
@@ -67,6 +67,8 @@ public:
         EntryLocationLast = EntryLocationBottomRight
     };
 
+    static const QString name;
+
     static const char* jsonComplexItemTypeValue;
     static const char* settingsGroup;
     static const char* gridAngleName;
@@ -84,7 +86,6 @@ private slots:
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1        (void) final;
-    void _recalcComplexDistance         (void) final;
     void _recalcCameraShots             (void) final;
 
 private:

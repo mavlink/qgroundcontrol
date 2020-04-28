@@ -27,6 +27,8 @@
 
 class MissionItem;
 class PlanMasterController;
+class MissionController;
+class TerrainAtCoordinateQuery;
 
 // Abstract base class for all Simple and Complex visual mission objects.
 class VisualMissionItem : public QObject
@@ -49,11 +51,11 @@ public:
     Q_ENUM(ReadyForSaveState)
 
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                       CONSTANT)                                           ///< true: This item is being used as a home position indicator
-    Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
+    Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate             NOTIFY coordinateChanged)                           ///< Does not include altitude
+    Q_PROPERTY(double           amslEntryAlt                        READ amslEntryAlt                                                       NOTIFY amslEntryAltChanged)
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                    NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
-    Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                      NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
-    Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                     NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
-    Q_PROPERTY(bool             exitCoordinateHasRelativeAltitude   READ exitCoordinateHasRelativeAltitude                                  NOTIFY exitCoordinateHasRelativeAltitudeChanged)    ///< true: coordinate.latitude is relative to home altitude
+    Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                     NOTIFY exitCoordinateChanged)                       ///< Does not include altitude
+    Q_PROPERTY(double           amslExitAlt                         READ amslExitAlt                                                        NOTIFY amslExitAltChanged)
     Q_PROPERTY(bool             exitCoordinateSameAsEntry           READ exitCoordinateSameAsEntry                                          NOTIFY exitCoordinateSameAsEntryChanged)            ///< true: exitCoordinate and coordinate are the same value
     Q_PROPERTY(QString          commandDescription                  READ commandDescription                                                 NOTIFY commandDescriptionChanged)
     Q_PROPERTY(QString          commandName                         READ commandName                                                        NOTIFY commandNameChanged)
@@ -78,7 +80,7 @@ public:
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                                   NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                                  NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
     Q_PROPERTY(bool             flyView                             READ flyView                                                            CONSTANT)
-    Q_PROPERTY(bool             wizardMode                          READ wizardMode                        WRITE setWizardMode              NOTIFY wizardModeChanged)
+    Q_PROPERTY(bool             wizardMode                          READ wizardMode                         WRITE setWizardMode             NOTIFY wizardModeChanged)
 
     Q_PROPERTY(PlanMasterController*    masterController    READ masterController                                                   CONSTANT)
     Q_PROPERTY(ReadyForSaveState        readyForSaveState   READ readyForSaveState                                                  NOTIFY readyForSaveStateChanged)
@@ -88,12 +90,13 @@ public:
 
     // The following properties are calculated/set by the MissionController recalc methods
 
-    Q_PROPERTY(double altDifference     READ altDifference      WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
-    Q_PROPERTY(double altPercent        READ altPercent         WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
-    Q_PROPERTY(double terrainPercent    READ terrainPercent     WRITE setTerrainPercent     NOTIFY terrainPercentChanged)       ///< Percent of terrain altitude in mission altitude
-    Q_PROPERTY(bool   terrainCollision  READ terrainCollision   WRITE setTerrainCollision   NOTIFY terrainCollisionChanged)     ///< true: Item collides with terrain
-    Q_PROPERTY(double azimuth           READ azimuth            WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
-    Q_PROPERTY(double distance          READ distance           WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
+    Q_PROPERTY(double altDifference     READ altDifference          WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
+    Q_PROPERTY(double altPercent        READ altPercent             WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
+    Q_PROPERTY(double terrainPercent    READ terrainPercent         WRITE setTerrainPercent     NOTIFY terrainPercentChanged)       ///< Percent of terrain altitude in mission altitude
+    Q_PROPERTY(bool   terrainCollision  READ terrainCollision       WRITE setTerrainCollision   NOTIFY terrainCollisionChanged)     ///< true: Item collides with terrain
+    Q_PROPERTY(double azimuth           READ azimuth                WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
+    Q_PROPERTY(double distance          READ distance               WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
+    Q_PROPERTY(double distanceFromStart READ distanceFromStart      WRITE setDistanceFromStart  NOTIFY distanceFromStartChanged)    ///< Flight path cumalative horizontal distance from home point to this item
 
     // Property accesors
     bool    homePosition        (void) const { return _homePositionSpecialCase; }
@@ -103,6 +106,7 @@ public:
     bool    terrainCollision    (void) const { return _terrainCollision; }
     double  azimuth             (void) const { return _azimuth; }
     double  distance            (void) const { return _distance; }
+    double  distanceFromStart   (void) const { return _distanceFromStart; }
     bool    isCurrentItem       (void) const { return _isCurrentItem; }
     bool    hasCurrentChildItem (void) const { return _hasCurrentChildItem; }
     double  terrainAltitude     (void) const { return _terrainAltitude; }
@@ -120,10 +124,14 @@ public:
     void setTerrainCollision        (bool terrainCollision);
     void setAzimuth                 (double azimuth);
     void setDistance                (double distance);
+    void setDistanceFromStart       (double distanceFromStart);
     void setWizardMode              (bool wizardMode);
     void setParentItem              (VisualMissionItem* parentItem);
 
     void setHomePositionSpecialCase (bool homePositionSpecialCase) { _homePositionSpecialCase = homePositionSpecialCase; }
+
+    FlightPathSegment* simpleFlightPathSegment(void) { return _simpleFlightPathSegment; }
+    void setSimpleFlighPathSegment  (FlightPathSegment* segment) { _simpleFlightPathSegment = segment; }
 
     PlanMasterController* masterController(void) { return _masterController; }
 
@@ -141,6 +149,8 @@ public:
     virtual QString         abbreviation            (void) const = 0;
     virtual QGeoCoordinate  coordinate              (void) const = 0;
     virtual QGeoCoordinate  exitCoordinate          (void) const = 0;
+    virtual double          amslEntryAlt            (void) const = 0;
+    virtual double          amslExitAlt             (void) const = 0;
     virtual int             sequenceNumber          (void) const = 0;
     virtual double          specifiedFlightSpeed    (void) = 0;
     virtual double          specifiedGimbalYaw      (void) = 0;
@@ -154,8 +164,6 @@ public:
     /// IMPORTANT: Overrides must call base class implementation
     virtual void setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus);
 
-    virtual bool coordinateHasRelativeAltitude      (void) const = 0;
-    virtual bool exitCoordinateHasRelativeAltitude  (void) const = 0;
     virtual bool exitCoordinateSameAsEntry          (void) const = 0;
 
     virtual void setDirty           (bool dirty) = 0;
@@ -205,6 +213,7 @@ signals:
     void exitCoordinateChanged          (const QGeoCoordinate& exitCoordinate);
     void dirtyChanged                   (bool dirty);
     void distanceChanged                (double distance);
+    void distanceFromStartChanged       (double distanceFromStart);
     void isCurrentItemChanged           (bool isCurrentItem);
     void hasCurrentChildItemChanged     (bool hasCurrentChildItem);
     void sequenceNumberChanged          (int sequenceNumber);
@@ -227,10 +236,14 @@ signals:
     void readyForSaveStateChanged       (void);
     void wizardModeChanged              (bool wizardMode);
     void parentItemChanged              (VisualMissionItem* parentItem);
+    void amslEntryAltChanged            (double alt);
+    void amslExitAltChanged             (double alt);
 
-    void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
-    void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
     void exitCoordinateSameAsEntryChanged           (bool exitCoordinateSameAsEntry);
+
+protected slots:
+    void _amslEntryAltChanged(void);    // signals new amslEntryAlt value
+    void _amslExitAltChanged(void);     // signals new amslExitAlt value
 
 protected:
     bool     _flyView    =               false;
@@ -246,15 +259,17 @@ protected:
     bool    _terrainCollision =         false;      ///< true: item collides with terrain
     double  _azimuth =                  0;          ///< Azimuth to previous waypoint
     double  _distance =                 0;          ///< Distance to previous waypoint
+    double  _distanceFromStart =        0;          ///< Flight path cumalative horizontal distance from home point to this item
     QString _editorQml;                             ///< Qml resource for editing item
     double  _missionGimbalYaw =         qQNaN();
     double  _missionVehicleYaw =        qQNaN();
 
-    PlanMasterController*   _masterController = nullptr;
-    Vehicle*                _controllerVehicle = nullptr;
-
-    VisualMissionItem*  _parentItem = nullptr;
-    QGCGeoBoundingCube  _boundingCube;          ///< The bounding "cube" of this element.
+    PlanMasterController*   _masterController =         nullptr;
+    MissionController*      _missionController =        nullptr;
+    Vehicle*                _controllerVehicle =        nullptr;
+    FlightPathSegment *     _simpleFlightPathSegment =  nullptr;    ///< The simple item flight segment (if any) which starts with this visual item.
+    VisualMissionItem*      _parentItem =               nullptr;
+    QGCGeoBoundingCube      _boundingCube;                          ///< The bounding "cube" of this element.
 
     MissionController::MissionFlightStatus_t    _missionFlightStatus;
 
@@ -272,7 +287,9 @@ private slots:
 private:
     void _commonInit(void);
 
-    QTimer _updateTerrainTimer;
+    QTimer                      _updateTerrainTimer;
+    TerrainAtCoordinateQuery*   _currentTerrainAtCoordinateQuery = nullptr;
+
     double _lastLatTerrainQuery = 0;
     double _lastLonTerrainQuery = 0;
 };
