@@ -49,7 +49,7 @@ const char* FixedWingLandingComplexItem::_jsonLandingAltitudeRelativeKey =  "lan
 const char* FixedWingLandingComplexItem::_jsonLoiterAltitudeRelativeKey =   "loiterAltitudeRelative";
 
 FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent)
-    : ComplexMissionItem        (masterController, flyView, parent)
+    : LandingComplexItem        (masterController, flyView, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
     , _landingDistanceFact      (settingsGroup, _metaDataMap[loiterToLandDistanceName])
     , _loiterAltitudeFact       (settingsGroup, _metaDataMap[loiterAltitudeName])
@@ -498,39 +498,6 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
     return true;
 }
 
-double FixedWingLandingComplexItem::complexDistance(void) const
-{
-    return _loiterCoordinate.distanceTo(_landingCoordinate);
-}
-
-void FixedWingLandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
-{
-    if (coordinate != _landingCoordinate) {
-        _landingCoordinate = coordinate;
-        if (_landingCoordSet) {
-            emit exitCoordinateChanged(coordinate);
-            emit landingCoordinateChanged(coordinate);
-        } else {
-            _ignoreRecalcSignals = true;
-            emit exitCoordinateChanged(coordinate);
-            emit landingCoordinateChanged(coordinate);
-            _ignoreRecalcSignals = false;
-            _landingCoordSet = true;
-            _recalcFromHeadingAndDistanceChange();
-            emit landingCoordSetChanged(true);
-        }
-    }
-}
-
-void FixedWingLandingComplexItem::setLoiterCoordinate(const QGeoCoordinate& coordinate)
-{
-    if (coordinate != _loiterCoordinate) {
-        _loiterCoordinate = coordinate;
-        emit coordinateChanged(coordinate);
-        emit loiterCoordinateChanged(coordinate);
-    }
-}
-
 double FixedWingLandingComplexItem::_mathematicAngleToHeading(double angle)
 {
     double heading = (angle - 90) * -1;
@@ -627,17 +594,6 @@ void FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         _calcGlideSlope();
         _ignoreRecalcSignals = false;
     }
-}
-
-QPointF FixedWingLandingComplexItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
-{
-    QPointF rotated;
-    double radians = (M_PI / 180.0) * angle;
-
-    rotated.setX(((point.x() - origin.x()) * cos(radians)) - ((point.y() - origin.y()) * sin(radians)) + origin.x());
-    rotated.setY(((point.x() - origin.x()) * sin(radians)) + ((point.y() - origin.y()) * cos(radians)) + origin.y());
-
-    return rotated;
 }
 
 void FixedWingLandingComplexItem::_recalcFromCoordinateChange(void)
@@ -751,25 +707,4 @@ double FixedWingLandingComplexItem::amslExitAlt(void) const
 {
     return _landingAltitudeFact.rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);
 
-}
-
-// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
-void FixedWingLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
-{
-    if (_cTerrainCollisionSegments != 0) {
-        _cTerrainCollisionSegments = 0;
-        emit terrainCollisionChanged(false);
-    }
-
-    _flightPathSegments.beginReset();
-    _flightPathSegments.clearAndDeleteContents();
-    _appendFlightPathSegment(_loiterTangentCoordinate, amslEntryAlt(), _landingCoordinate, amslExitAlt());  // Loiter to land
-    _appendFlightPathSegment(_landingCoordinate, amslEntryAlt(), _landingCoordinate, amslExitAlt());        // Land to ground
-    _flightPathSegments.endReset();
-
-    if (_cTerrainCollisionSegments != 0) {
-        emit terrainCollisionChanged(true);
-    }
-
-    _masterController->missionController()->recalcTerrainProfile();
 }

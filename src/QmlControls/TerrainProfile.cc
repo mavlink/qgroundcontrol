@@ -76,7 +76,7 @@ void TerrainProfile::_createGeometry(QSGGeometryNode*& geometryNode, QSGGeometry
 
 void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cTerrainPoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& maxTerrainHeight)
 {
-    if (segment->amslTerrainHeights().count() == 0) {
+    if (segment->amslTerrainHeights().count() == 0 || qIsNaN(segment->coord1AMSLAlt()) || qIsNaN(segment->coord2AMSLAlt())) {
         cMissingTerrainSegments += 1;
     } else {
         cTerrainPoints += segment->amslTerrainHeights().count();
@@ -150,6 +150,10 @@ void TerrainProfile::_addFlightProfileSegment(FlightPathSegment* segment, double
     double amslCoord2Height =       segment->coord2AMSLAlt();
     double coord1HeightPercent =    qMax(((amslCoord1Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
     double coord2HeightPercent =    qMax(((amslCoord2Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
+
+    if (qIsNaN(amslCoord1Height) || qIsNaN(amslCoord2Height)) {
+        return;
+    }
 
     float x = currentDistance * _pixelsPerMeter;
     float y = _availableHeight() - (coord1HeightPercent * _availableHeight());
