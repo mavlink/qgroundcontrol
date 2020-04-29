@@ -18,13 +18,13 @@
 #include "QGCApplication.h"
 #include "LinkManager.h"
 #include "SettingsFact.h"
-#include "FactMetaData.h"
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "AirspaceManager.h"
 #include "ADSBVehicleManager.h"
 #include "QGCPalette.h"
+#include "QmlUnitsConversion.h"
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
 #endif
@@ -83,6 +83,7 @@ public:
     Q_PROPERTY(bool                 microhardSupported  READ microhardSupported     CONSTANT)
     Q_PROPERTY(bool                 supportsPairing     READ supportsPairing        CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette       MEMBER _globalPalette       CONSTANT)   // This palette will always return enabled colors
+    Q_PROPERTY(QmlUnitsConversion*  unitsConversion     READ unitsConversion        CONSTANT)
 #if defined(QGC_ENABLE_PAIRING)
     Q_PROPERTY(PairingManager*      pairingManager      READ pairingManager         CONSTANT)
 #endif
@@ -114,10 +115,6 @@ public:
     Q_PROPERTY(QString  missionFileExtension    READ missionFileExtension   CONSTANT)
     Q_PROPERTY(QString  telemetryFileExtension  READ telemetryFileExtension CONSTANT)
 
-    /// Returns the string for distance units which has configued by user
-    Q_PROPERTY(QString appSettingsDistanceUnitsString READ appSettingsDistanceUnitsString CONSTANT)
-    Q_PROPERTY(QString appSettingsAreaUnitsString READ appSettingsAreaUnitsString CONSTANT)
-
     Q_PROPERTY(QString qgcVersion       READ qgcVersion         CONSTANT)
     Q_PROPERTY(bool    skipSetupPage    READ skipSetupPage      WRITE setSkipSetupPage NOTIFY skipSetupPageChanged)
 
@@ -137,38 +134,6 @@ public:
     Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
-    /// Converts from meters to the user specified distance unit
-    Q_INVOKABLE QVariant metersToAppSettingsDistanceUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsDistanceUnits(meters); }
-
-    /// Converts from user specified distance unit to meters
-    Q_INVOKABLE QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsDistanceUnitsToMeters(distance); }
-
-    QString appSettingsDistanceUnitsString(void) const { return FactMetaData::appSettingsDistanceUnitsString(); }
-
-    /// Converts from meters to the user specified distance unit
-    Q_INVOKABLE QVariant metersToAppSettingsAltitudeUnits(const QVariant& meters) const { return FactMetaData::metersToAppSettingsAltitudeUnits(meters); }
-
-    /// Converts from user specified distance unit to meters
-    Q_INVOKABLE QVariant appSettingsAltitudeUnitsToMeters(const QVariant& distance) const { return FactMetaData::appSettingsAltitudeUnitsToMeters(distance); }
-
-    QString appSettingsAltitudeUnitsString(void) const { return FactMetaData::appSettingsAltitudeUnitsString(); }
-
-    /// Converts from grams to the user specified weight unit
-    Q_INVOKABLE QVariant gramsToAppSettingsWeightUnits(const QVariant& meters) const { return FactMetaData::gramsToAppSettingsWeightUnits(meters); }
-
-    /// Converts from user specified weight unit to grams
-    Q_INVOKABLE QVariant appSettingsWeightUnitsToGrams(const QVariant& distance) const { return FactMetaData::appSettingsWeightUnitsToGrams(distance); }
-
-    QString appSettingsWeightUnitsString(void) const { return FactMetaData::appSettingsWeightUnitsString(); }
-
-    /// Converts from square meters to the user specified area unit
-    Q_INVOKABLE QVariant squareMetersToAppSettingsAreaUnits(const QVariant& meters) const { return FactMetaData::squareMetersToAppSettingsAreaUnits(meters); }
-
-    /// Converts from user specified area unit to square meters
-    Q_INVOKABLE QVariant appSettingsAreaUnitsToSquareMeters(const QVariant& area) const { return FactMetaData::appSettingsAreaUnitsToSquareMeters(area); }
-
-    QString appSettingsAreaUnitsString(void) const { return FactMetaData::appSettingsAreaUnitsString(); }
-
     /// Returns the list of available logging category names.
     Q_INVOKABLE QStringList loggingCategories(void) const { return QGCLoggingCategoryRegister::instance()->registeredCategories(); }
 
@@ -182,9 +147,6 @@ public:
     Q_INVOKABLE void updateLoggingFilterRules(void) { QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(QString()); }
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
-
-    Q_INVOKABLE double degreesToRadians(double degrees) { return qDegreesToRadians(degrees); }
-    Q_INVOKABLE double radiansToDegrees(double radians) { return qRadiansToDegrees(radians); }
 
     // Property accesors
 
@@ -201,6 +163,7 @@ public:
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
     AirspaceManager*        airspaceManager     ()  { return _airspaceManager; }
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
+    QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
 #if defined(QGC_ENABLE_PAIRING)
     bool                    supportsPairing     ()  { return true; }
     PairingManager*         pairingManager      ()  { return _pairingManager; }
@@ -299,6 +262,7 @@ private:
     MicrohardManager*       _microhardManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
+    QmlUnitsConversion      _unitsConversion;
 #if defined(QGC_ENABLE_PAIRING)
     PairingManager*         _pairingManager         = nullptr;
 #endif

@@ -151,7 +151,7 @@ SetupPage {
             }
 
             function _radiansToHeading(radians) {
-                var geometricAngle = QGroundControl.radiansToDegrees(radians)
+                var geometricAngle = QGroundControl.unitsConversion.radiansToDegrees(radians)
                 var headingAngle = 90 - geometricAngle
                 if (headingAngle < 0) {
                     headingAngle += 360
@@ -163,7 +163,7 @@ SetupPage {
 
             function _headingToRadians(heading) {
                 var geometricAngle = -(heading - 90)
-                return QGroundControl.degreesToRadians(geometricAngle)
+                return QGroundControl.unitsConversion.degreesToRadians(geometricAngle)
             }
 
             APMFollowComponentController {
@@ -419,7 +419,7 @@ SetupPage {
                         QGCLabel {
                             id:                 distanceLabel
                             anchors.centerIn:   distanceLine
-                            text:               controller.distance.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
+                            text:               controller.distance.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
 
                             transform: Rotation {
                                 origin.x:       distanceLabel.width  / 2
@@ -497,7 +497,7 @@ SetupPage {
                         QGCLabel {
                             id:                 heightValueLabel
                             anchors.centerIn:   parent
-                            text:               controller.height.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
+                            text:               controller.height.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
                         }
                     }
 

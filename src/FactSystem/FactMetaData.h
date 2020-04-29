@@ -60,29 +60,29 @@ public:
 
     const FactMetaData& operator=(const FactMetaData& other);
 
-    /// Converts from meters to the user specified distance unit
-    static QVariant metersToAppSettingsDistanceUnits(const QVariant& meters);
+    /// Converts from meters to the user specified horizontal distance unit
+    static QVariant metersToAppSettingsHorizontalDistanceUnits(const QVariant& meters);
 
-    /// Converts from user specified distance unit to meters
-    static QVariant appSettingsDistanceUnitsToMeters(const QVariant& distance);
+    /// Converts from user specified horizontal distance unit to meters
+    static QVariant appSettingsHorizontalDistanceUnitsToMeters(const QVariant& distance);
 
-    /// Returns the string for distance units which has configued by user
-    static QString appSettingsDistanceUnitsString(void);
+    /// Returns the string for horizontal distance units which has configued by user
+    static QString appSettingsHorizontalDistanceUnitsString(void);
 
-    /// Converts from meters to the user specified altitude unit
-    static QVariant metersToAppSettingsAltitudeUnits(const QVariant& meters);
+    /// Converts from meters to the user specified vertical distance unit
+    static QVariant metersToAppSettingsVerticalDistanceUnits(const QVariant& meters);
 
-    /// Converts from user specified altitude unit to meters
-    static QVariant appSettingsAltitudeUnitsToMeters(const QVariant& distance);
+    /// Converts from user specified vertical distance unit to meters
+    static QVariant appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance);
 
-    /// Returns the string for altitude units which has configued by user
-    static QString appSettingsAltitudeUnitsString(void);
+    /// Returns the string for vertical distance units which has configued by user
+    static QString appSettingsVerticalDistanceUnitsString(void);
 
     /// Converts from grams to the user specified weight unit
-    static QVariant gramsToAppSettingsWeightUnits(const QVariant& meters);
+    static QVariant gramsToAppSettingsWeightUnits(const QVariant& grams);
 
     /// Converts from user specified weight unit to grams
-    static QVariant appSettingsWeightUnitsToGrams(const QVariant& distance);
+    static QVariant appSettingsWeightUnitsToGrams(const QVariant& weight);
 
     /// Returns the string for weight units which has configued by user
     static QString appSettingsWeightUnitsString(void);
@@ -236,8 +236,8 @@ private:
 
 
     enum UnitTypes {
-        UnitDistance = 0,
-        UnitAltitude,
+        UnitHorizontalDistance = 0,
+        UnitVerticalDistance,
         UnitArea,
         UnitSpeed,
         UnitTemperature,
@@ -245,16 +245,16 @@ private:
     };
 
     struct AppSettingsTranslation_s {
-        QString     rawUnits;
-        const char*     cookedUnits;
-        UnitTypes       unitType;
-        uint32_t        unitOption;
-        Translator      rawTranslator;
-        Translator      cookedTranslator;
+        QString       rawUnits;
+        const char*   cookedUnits;
+        UnitTypes     unitType;
+        uint32_t      unitOption;
+        Translator    rawTranslator;
+        Translator    cookedTranslator;
     };
 
-    static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsAltitudeUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsHorizontalDistanceUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsVerticalDistanceUnitsTranslation(const QString& rawUnits);
     static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
     static const AppSettingsTranslation_s* _findAppSettingsWeightUnitsTranslation(const QString& rawUnits);
 
