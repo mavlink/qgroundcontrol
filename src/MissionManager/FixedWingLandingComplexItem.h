@@ -10,7 +10,7 @@
 #ifndef FixedWingLandingComplexItem_H
 #define FixedWingLandingComplexItem_H
 
-#include "ComplexMissionItem.h"
+#include "LandingComplexItem.h"
 #include "MissionItem.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
@@ -20,46 +20,27 @@ Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 class FWLandingPatternTest;
 class PlanMasterController;
 
-class FixedWingLandingComplexItem : public ComplexMissionItem
+class FixedWingLandingComplexItem : public LandingComplexItem
 {
     Q_OBJECT
 
 public:
     FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView, QObject* parent);
 
-    Q_PROPERTY(Fact*            loiterAltitude          READ    loiterAltitude                                              CONSTANT)
-    Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                                CONSTANT)
-    Q_PROPERTY(Fact*            landingAltitude         READ    landingAltitude                                             CONSTANT)
-    Q_PROPERTY(Fact*            landingHeading          READ    landingHeading                                              CONSTANT)
     Q_PROPERTY(Fact*            valueSetIsDistance      READ    valueSetIsDistance                                          CONSTANT)
-    Q_PROPERTY(Fact*            landingDistance         READ    landingDistance                                             CONSTANT)
     Q_PROPERTY(Fact*            glideSlope              READ    glideSlope                                                  CONSTANT)
-    Q_PROPERTY(bool             loiterClockwise         MEMBER  _loiterClockwise                                            NOTIFY loiterClockwiseChanged)
-    Q_PROPERTY(bool             altitudesAreRelative    MEMBER  _altitudesAreRelative                                       NOTIFY altitudesAreRelativeChanged)
-    Q_PROPERTY(Fact*            stopTakingPhotos        READ    stopTakingPhotos                                            CONSTANT)
-    Q_PROPERTY(Fact*            stopTakingVideo         READ    stopTakingVideo                                             CONSTANT)
-    Q_PROPERTY(QGeoCoordinate   loiterCoordinate        READ    loiterCoordinate            WRITE setLoiterCoordinate       NOTIFY loiterCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate   loiterTangentCoordinate READ    loiterTangentCoordinate                                     NOTIFY loiterTangentCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate   landingCoordinate       READ    landingCoordinate           WRITE setLandingCoordinate      NOTIFY landingCoordinateChanged)
-    Q_PROPERTY(bool             landingCoordSet         MEMBER _landingCoordSet                                             NOTIFY landingCoordSetChanged)
 
     Q_INVOKABLE void moveLandingPosition(const QGeoCoordinate& coordinate); // Maintains the current landing distance and heading
 
-    Fact*           loiterAltitude          (void) { return &_loiterAltitudeFact; }
-    Fact*           loiterRadius            (void) { return &_loiterRadiusFact; }
-    Fact*           landingAltitude         (void) { return &_landingAltitudeFact; }
-    Fact*           landingDistance         (void) { return &_landingDistanceFact; }
-    Fact*           landingHeading          (void) { return &_landingHeadingFact; }
+    Fact*           loiterAltitude          (void) final { return &_loiterAltitudeFact; }
+    Fact*           loiterRadius            (void) final { return &_loiterRadiusFact; }
+    Fact*           landingAltitude         (void) final { return &_landingAltitudeFact; }
+    Fact*           landingDistance         (void) final { return &_landingDistanceFact; }
+    Fact*           landingHeading          (void) final { return &_landingHeadingFact; }
+    Fact*           stopTakingPhotos        (void) final { return &_stopTakingPhotosFact; }
+    Fact*           stopTakingVideo         (void) final { return &_stopTakingVideoFact; }
     Fact*           glideSlope              (void) { return &_glideSlopeFact; }
-    Fact*           stopTakingPhotos        (void) { return &_stopTakingPhotosFact; }
-    Fact*           stopTakingVideo         (void) { return &_stopTakingVideoFact; }
     Fact*           valueSetIsDistance      (void) { return &_valueSetIsDistanceFact; }
-    QGeoCoordinate  landingCoordinate       (void) const { return _landingCoordinate; }
-    QGeoCoordinate  loiterCoordinate        (void) const { return _loiterCoordinate; }
-    QGeoCoordinate  loiterTangentCoordinate (void) const { return _loiterTangentCoordinate; }
-
-    void setLandingCoordinate       (const QGeoCoordinate& coordinate);
-    void setLoiterCoordinate        (const QGeoCoordinate& coordinate);
 
     /// Scans the loaded items for a landing pattern complex item
     static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, PlanMasterController* masterController);
@@ -70,7 +51,6 @@ public:
 
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return name; }
-    double  complexDistance     (void) const final;
     int     lastSequenceNumber  (void) const final;
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
@@ -121,14 +101,7 @@ public:
     static const char* valueSetIsDistanceName;
 
 signals:
-    void loiterCoordinateChanged        (QGeoCoordinate coordinate);
-    void loiterTangentCoordinateChanged (QGeoCoordinate coordinate);
-    void landingCoordinateChanged       (QGeoCoordinate coordinate);
-    void landingCoordSetChanged         (bool landingCoordSet);
-    void loiterClockwiseChanged         (bool loiterClockwise);
-    void altitudesAreRelativeChanged    (bool altitudesAreRelative);
     void valueSetIsDistanceChanged      (bool valueSetIsDistance);
-    void _updateFlightPathSegmentsSignal(void);
 
 private slots:
     void    _recalcFromHeadingAndDistanceChange         (void);
@@ -141,21 +114,9 @@ private slots:
     void    _setDirty                                   (void);
     void    _glideSlopeChanged                          (void);
     void    _signalLastSequenceNumberChanged            (void);
-    void    _updateFlightPathSegmentsDontCallDirectly   (void);
 
 private:
-    QPointF _rotatePoint                    (const QPointF& point, const QPointF& origin, double angle);
     void    _calcGlideSlope                 (void);
-
-    int             _sequenceNumber =               0;
-    bool            _dirty =                        false;
-    QGeoCoordinate  _loiterCoordinate;
-    QGeoCoordinate  _loiterTangentCoordinate;
-    QGeoCoordinate  _landingCoordinate;
-    bool            _landingCoordSet =              false;
-    bool            _ignoreRecalcSignals =          false;
-    bool            _loiterClockwise =              true;
-    bool            _altitudesAreRelative =         true;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
@@ -168,7 +129,6 @@ private:
     Fact            _stopTakingPhotosFact;
     Fact            _stopTakingVideoFact;
     Fact            _valueSetIsDistanceFact;
-
 
     static const char* _jsonLoiterCoordinateKey;
     static const char* _jsonLoiterRadiusKey;
