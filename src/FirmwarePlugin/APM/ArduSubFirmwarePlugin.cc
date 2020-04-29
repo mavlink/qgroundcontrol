@@ -241,19 +241,19 @@ void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t* message)
     QString name = QString(value.name);
 
     if (name == "CamTilt") {
-        _infoFactGroup.getFact("camera tilt")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("cameraTilt")->setRawValue(value.value * 100);
     } else if (name == "TetherTrn") {
-        _infoFactGroup.getFact("tether turns")->setRawValue(value.value);
+        _infoFactGroup.getFact("tetherTurns")->setRawValue(value.value);
     } else if (name == "Lights1") {
-        _infoFactGroup.getFact("lights 1")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("lights1")->setRawValue(value.value * 100);
     } else if (name == "Lights2") {
-        _infoFactGroup.getFact("lights 2")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("lights2")->setRawValue(value.value * 100);
     } else if (name == "PilotGain") {
-        _infoFactGroup.getFact("pilot gain")->setRawValue(value.value * 100);
+        _infoFactGroup.getFact("pilotGain")->setRawValue(value.value * 100);
     } else if (name == "InputHold") {
-        _infoFactGroup.getFact("input hold")->setRawValue(value.value);
+        _infoFactGroup.getFact("inputHold")->setRawValue(value.value);
     } else if (name == "RollPitch") {
-        _infoFactGroup.getFact("roll pitch toggle")->setRawValue(value.value);
+        _infoFactGroup.getFact("rollPitchToggle")->setRawValue(value.value);
     }
 }
 
@@ -267,7 +267,7 @@ void ArduSubFirmwarePlugin::_handleMavlinkMessage(mavlink_message_t* message)
     {
         mavlink_rangefinder_t msg;
         mavlink_msg_rangefinder_decode(message, &msg);
-        _infoFactGroup.getFact("rangefinder distance")->setRawValue(msg.distance);
+        _infoFactGroup.getFact("rangefinderDistance")->setRawValue(msg.distance);
         break;
     }
     }
@@ -283,14 +283,14 @@ QMap<QString, FactGroup*>* ArduSubFirmwarePlugin::factGroups(void) {
     return &_nameToFactGroupMap;
 }
 
-const char* APMSubmarineFactGroup::_camTiltFactName             = "camera tilt";
-const char* APMSubmarineFactGroup::_tetherTurnsFactName         = "tether turns";
-const char* APMSubmarineFactGroup::_lightsLevel1FactName        = "lights 1";
-const char* APMSubmarineFactGroup::_lightsLevel2FactName        = "lights 2";
-const char* APMSubmarineFactGroup::_pilotGainFactName           = "pilot gain";
-const char* APMSubmarineFactGroup::_inputHoldFactName           = "input hold";
-const char* APMSubmarineFactGroup::_rollPitchToggleFactName     = "roll pitch toggle";
-const char* APMSubmarineFactGroup::_rangefinderDistanceFactName = "rangefinder distance";
+const char* APMSubmarineFactGroup::_camTiltFactName             = "cameraTilt";
+const char* APMSubmarineFactGroup::_tetherTurnsFactName         = "tetherTurns";
+const char* APMSubmarineFactGroup::_lightsLevel1FactName        = "lights1";
+const char* APMSubmarineFactGroup::_lightsLevel2FactName        = "lights2";
+const char* APMSubmarineFactGroup::_pilotGainFactName           = "pilotGain";
+const char* APMSubmarineFactGroup::_inputHoldFactName           = "inputHold";
+const char* APMSubmarineFactGroup::_rollPitchToggleFactName     = "rollPitchToggle";
+const char* APMSubmarineFactGroup::_rangefinderDistanceFactName = "rangefinderDistance";
 
 APMSubmarineFactGroup::APMSubmarineFactGroup(QObject* parent)
     : FactGroup(300, ":/json/Vehicle/SubmarineFact.json", parent)
