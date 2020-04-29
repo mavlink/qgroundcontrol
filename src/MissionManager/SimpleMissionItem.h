@@ -152,7 +152,7 @@ private slots:
     void _rebuildTextFieldFacts             (void);
     void _possibleAdditionalTimeDelayChanged(void);
     void _setDefaultsForCommand             (void);
-    void _possibleVehicleYawChanged   (void);
+    void _possibleVehicleYawChanged         (void);
 
 private:
     void _connectSignals        (void);
