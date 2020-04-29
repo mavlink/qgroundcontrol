@@ -125,6 +125,22 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     return true;
 }
 
+void QmlObjectListModel::move(int from, int to)
+{
+    if(0 <= from && from < count() && 0 <= to && to < count() && from != to) {
+        // Workaround to allow move item to the bottom. Done according to
+        // beginMoveRows() documentation and implementation specificity:
+        // https://doc.qt.io/qt-5/qabstractitemmodel.html#beginMoveRows
+        // (see 3rd picture explanation there)
+        if(from == to - 1) {
+            to = from++;
+        }
+        beginMoveRows(QModelIndex(), from, from, QModelIndex(), to);
+        _objectList.move(from, to);
+        endMoveRows();
+    }
+}
+
 QObject* QmlObjectListModel::operator[](int index)
 {
     if (index < 0 || index >= _objectList.count()) {

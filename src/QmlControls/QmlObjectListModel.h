@@ -46,6 +46,9 @@ public:
     bool        contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
     int         indexOf             (QObject* object) { return _objectList.indexOf(object); }
 
+    /// Moves an item to a new position
+    void move(int from, int to);
+
     QObject*    operator[]          (int i);
     const QObject* operator[]       (int i) const;
     template<class T> T value       (int index) { return qobject_cast<T>(_objectList[index]); }
