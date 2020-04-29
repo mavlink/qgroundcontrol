@@ -17,63 +17,65 @@ DECLARE_SETTINGGROUP(Units, "Units")
     qmlRegisterUncreatableType<UnitsSettings>("QGroundControl.SettingsManager", 1, 0, "UnitsSettings", "Reference only");
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, distanceUnits)
+DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, horizontalDistanceUnits)
 {
-    if (!_distanceUnitsFact) {
+    if (!_horizontalDistanceUnitsFact) {
         // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
         enumStrings << "Feet" << "Meters";
-        enumValues << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsFeet)) << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsMeters));
+        enumValues << QVariant::fromValue(static_cast<uint32_t>(HorizontalDistanceUnitsFeet))
+                   << QVariant::fromValue(static_cast<uint32_t>(HorizontalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
-        metaData->setName(distanceUnitsName);
+        metaData->setName(horizontalDistanceUnitsName);
         metaData->setShortDescription("Distance units");
         metaData->setEnumInfo(enumStrings, enumValues);
 
-        DistanceUnits defaultDistanceUnit = DistanceUnitsMeters;
+        HorizontalDistanceUnits defaultHorizontalDistanceUnit = HorizontalDistanceUnitsMeters;
         switch(QLocale::system().measurementSystem()) {
             case QLocale::MetricSystem: {
-                defaultDistanceUnit = DistanceUnitsMeters;
+                defaultHorizontalDistanceUnit = HorizontalDistanceUnitsMeters;
             } break;
             case QLocale::ImperialUSSystem:
             case QLocale::ImperialUKSystem:
-                defaultDistanceUnit = DistanceUnitsFeet;
+                defaultHorizontalDistanceUnit = HorizontalDistanceUnitsFeet;
                 break;
         }
-        metaData->setRawDefaultValue(defaultDistanceUnit);
+        metaData->setRawDefaultValue(defaultHorizontalDistanceUnit);
         metaData->setQGCRebootRequired(true);
-        _distanceUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
+        _horizontalDistanceUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
-    return _distanceUnitsFact;
+    return _horizontalDistanceUnitsFact;
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, altitudeUnits)
+DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, verticalDistanceUnits)
 {
-    if (!_altitudeUnitsFact) {
+    if (!_verticalDistanceUnitsFact) {
         // Distance/Area/Speed units settings can't be loaded from json since it creates an infinite loop of meta data loading.
         QStringList     enumStrings;
         QVariantList    enumValues;
         enumStrings << "Feet" << "Meters";
-        enumValues << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsFeet)) << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsMeters));
+        enumValues << QVariant::fromValue(static_cast<uint32_t>(VerticalDistanceUnitsFeet))
+                   << QVariant::fromValue(static_cast<uint32_t>(VerticalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
-        metaData->setName(altitudeUnitsName);
+        metaData->setName(verticalDistanceUnitsName);
         metaData->setShortDescription("Altitude units");
         metaData->setEnumInfo(enumStrings, enumValues);
-        AltitudeUnits defaultAltitudeUnit = AltitudeUnitsMeters;
+        VerticalDistanceUnits defaultVerticalAltitudeUnit = VerticalDistanceUnitsMeters;
         switch(QLocale::system().measurementSystem()) {
             case QLocale::MetricSystem: {
-                defaultAltitudeUnit = AltitudeUnitsMeters;
+                defaultVerticalAltitudeUnit = VerticalDistanceUnitsMeters;
             } break;
             case QLocale::ImperialUSSystem:
             case QLocale::ImperialUKSystem:
-                defaultAltitudeUnit = AltitudeUnitsFeet;
+                defaultVerticalAltitudeUnit = VerticalDistanceUnitsFeet;
                 break;
         }
-        metaData->setRawDefaultValue(defaultAltitudeUnit);
+        metaData->setRawDefaultValue(defaultVerticalAltitudeUnit);
         metaData->setQGCRebootRequired(true);
-        _altitudeUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
+        _verticalDistanceUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
-    return _altitudeUnitsFact;
+    return _verticalDistanceUnitsFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)

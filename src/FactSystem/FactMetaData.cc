@@ -53,34 +53,34 @@ const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] 
 
 // Translations driven by app settings
 const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTranslations[] = {
-    { "m",      "m",        FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "meter",  "meter",    FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "meters", "meters",   FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    //NOTE: we've coined an artificial "raw unit" of "altitude metre" to separate it from the distance metre - a bit awkward but this is all the design permits
-    { "alt m",  "m",        FactMetaData::UnitAltitude,    UnitsSettings::AltitudeUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "cm/px",  "cm/px",    FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "m/s",    "m/s",      FactMetaData::UnitSpeed,       UnitsSettings::SpeedUnitsMetersPerSecond,   FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "C",      "C",        FactMetaData::UnitTemperature, UnitsSettings::TemperatureUnitsCelsius,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "m^2",    "m\u00B2",  FactMetaData::UnitArea,        UnitsSettings::AreaUnitsSquareMeters,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "m",      "ft",       FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "meter",  "ft",       FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "meters", "ft",       FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "alt m",  "ft",       FactMetaData::UnitAltitude,    UnitsSettings::AltitudeUnitsFeet,           FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "cm/px",  "in/px",    FactMetaData::UnitDistance,    UnitsSettings::DistanceUnitsFeet,           FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
-    { "m^2",    "km\u00B2", FactMetaData::UnitArea,        UnitsSettings::AreaUnitsSquareKilometers,   FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
-    { "m^2",    "ha",       FactMetaData::UnitArea,        UnitsSettings::AreaUnitsHectares,           FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
-    { "m^2",    "ft\u00B2", FactMetaData::UnitArea,        UnitsSettings::AreaUnitsSquareFeet,         FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
-    { "m^2",    "ac",       FactMetaData::UnitArea,        UnitsSettings::AreaUnitsAcres,              FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
-    { "m^2",    "mi\u00B2", FactMetaData::UnitArea,        UnitsSettings::AreaUnitsSquareMiles,        FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
-    { "m/s",    "ft/s",     FactMetaData::UnitSpeed,       UnitsSettings::SpeedUnitsFeetPerSecond,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "m/s",    "mph",      FactMetaData::UnitSpeed,       UnitsSettings::SpeedUnitsMilesPerHour,      FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
-    { "m/s",    "km/h",     FactMetaData::UnitSpeed,       UnitsSettings::SpeedUnitsKilometersPerHour, FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
-    { "m/s",    "kn",       FactMetaData::UnitSpeed,       UnitsSettings::SpeedUnitsKnots,             FactMetaData::_metersPerSecondToKnots,              FactMetaData::_knotsToMetersPerSecond },
-    { "C",      "F",        FactMetaData::UnitTemperature, UnitsSettings::TemperatureUnitsFarenheit,   FactMetaData::_celsiusToFarenheit,                  FactMetaData::_farenheitToCelsius },
-    { "g",      "g",        FactMetaData::UnitWeight,      UnitsSettings::WeightUnitsGrams,            FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "g",      "kg",       FactMetaData::UnitWeight,      UnitsSettings::WeightUnitsKg,               FactMetaData::_gramsToKilograms,                    FactMetaData::_kilogramsToGrams },
-    { "g",      "oz",       FactMetaData::UnitWeight,      UnitsSettings::WeightUnitsOz,               FactMetaData::_gramsToOunces,                       FactMetaData::_ouncesToGrams },
-    { "g",      "lbs",      FactMetaData::UnitWeight,      UnitsSettings::WeightUnitsLbs,              FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
+    { "m",      "m",        FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "meter",  "meter",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "meters", "meters",   FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    //NOTE: we've coined an artificial "raw unit" of "vertical metre" to separate it from the horizontal metre - a bit awkward but this is all the design permits
+    { "vertical m",  "m",   FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsMeters,   FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "cm/px",  "cm/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m/s",    "m/s",      FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsMetersPerSecond,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "C",      "C",        FactMetaData::UnitTemperature,           UnitsSettings::TemperatureUnitsCelsius,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m^2",    "m\u00B2",  FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m",      "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "meter",  "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "meters", "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "alt m",  "ft",       FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "cm/px",  "in/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
+    { "m^2",    "km\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
+    { "m^2",    "ha",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
+    { "m^2",    "ft\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareFeet,           FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
+    { "m^2",    "ac",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsAcres,                FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
+    { "m^2",    "mi\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMiles,          FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
+    { "m/s",    "ft/s",     FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "m/s",    "mph",      FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
+    { "m/s",    "km/h",     FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
+    { "m/s",    "kn",       FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsKnots,               FactMetaData::_metersPerSecondToKnots,              FactMetaData::_knotsToMetersPerSecond },
+    { "C",      "F",        FactMetaData::UnitTemperature,           UnitsSettings::TemperatureUnitsFarenheit,     FactMetaData::_celsiusToFarenheit,                  FactMetaData::_farenheitToCelsius },
+    { "g",      "g",        FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsGrams,              FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "g",      "kg",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsKg,                 FactMetaData::_gramsToKilograms,                    FactMetaData::_kilogramsToGrams },
+    { "g",      "oz",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsOz,                 FactMetaData::_gramsToOunces,                       FactMetaData::_ouncesToGrams },
+    { "g",      "lbs",      FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsLbs,                FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
 };
 
 const char* FactMetaData::_decimalPlacesJsonKey =       "decimalPlaces";
@@ -928,11 +928,11 @@ void FactMetaData::_setAppSettingsTranslators(void)
             uint settingsUnits = 0;
 
             switch (pAppSettingsTranslation->unitType) {
-            case UnitDistance:
-                settingsUnits = settings->distanceUnits()->rawValue().toUInt();
+            case UnitHorizontalDistance:
+                settingsUnits = settings->horizontalDistanceUnits()->rawValue().toUInt();
                 break;
-            case UnitAltitude:
-                settingsUnits = settings->altitudeUnits()->rawValue().toUInt();
+            case UnitVerticalDistance:
+                settingsUnits = settings->verticalDistanceUnits()->rawValue().toUInt();
                 break;
             case UnitSpeed:
                 settingsUnits = settings->speedUnits()->rawValue().toUInt();
@@ -959,7 +959,7 @@ void FactMetaData::_setAppSettingsTranslators(void)
     }
 }
 
-const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDistanceUnitsTranslation(const QString& rawUnits)
+const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsHorizontalDistanceUnitsTranslation(const QString& rawUnits)
 {
     for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
         const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
@@ -968,9 +968,9 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
             continue;
         }
 
-        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->distanceUnits()->rawValue().toUInt();
+        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->horizontalDistanceUnits()->rawValue().toUInt();
 
-        if (pAppSettingsTranslation->unitType == UnitDistance
+        if (pAppSettingsTranslation->unitType == UnitHorizontalDistance
                 && pAppSettingsTranslation->unitOption == settingsUnits) {
             return pAppSettingsTranslation;
         }
@@ -978,7 +978,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
     return nullptr;
 }
 
-const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsAltitudeUnitsTranslation(const QString& rawUnits)
+const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsVerticalDistanceUnitsTranslation(const QString& rawUnits)
 {
     for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
         const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
@@ -987,9 +987,9 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsAlti
             continue;
         }
 
-        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->altitudeUnits()->rawValue().toUInt();
+        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->verticalDistanceUnits()->rawValue().toUInt();
 
-        if (pAppSettingsTranslation->unitType == UnitAltitude
+        if (pAppSettingsTranslation->unitType == UnitVerticalDistance
                 && pAppSettingsTranslation->unitOption == settingsUnits) {
             return pAppSettingsTranslation;
         }
@@ -1036,9 +1036,9 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsArea
     return nullptr;
 }
 
-QVariant FactMetaData::metersToAppSettingsDistanceUnits(const QVariant& meters)
+QVariant FactMetaData::metersToAppSettingsHorizontalDistanceUnits(const QVariant& meters)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->rawTranslator(meters);
     } else {
@@ -1046,9 +1046,9 @@ QVariant FactMetaData::metersToAppSettingsDistanceUnits(const QVariant& meters)
     }
 }
 
-QVariant FactMetaData::metersToAppSettingsAltitudeUnits(const QVariant& meters)
+QVariant FactMetaData::metersToAppSettingsVerticalDistanceUnits(const QVariant& meters)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsAltitudeUnitsTranslation("alt m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("vertical m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->rawTranslator(meters);
     } else {
@@ -1056,9 +1056,9 @@ QVariant FactMetaData::metersToAppSettingsAltitudeUnits(const QVariant& meters)
     }
 }
 
-QVariant FactMetaData::appSettingsDistanceUnitsToMeters(const QVariant& distance)
+QVariant FactMetaData::appSettingsHorizontalDistanceUnitsToMeters(const QVariant& distance)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedTranslator(distance);
     } else {
@@ -1066,9 +1066,9 @@ QVariant FactMetaData::appSettingsDistanceUnitsToMeters(const QVariant& distance
     }
 }
 
-QVariant FactMetaData::appSettingsAltitudeUnitsToMeters(const QVariant& distance)
+QVariant FactMetaData::appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsAltitudeUnitsTranslation("alt m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("alt m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedTranslator(distance);
     } else {
@@ -1076,9 +1076,9 @@ QVariant FactMetaData::appSettingsAltitudeUnitsToMeters(const QVariant& distance
     }
 }
 
-QString FactMetaData::appSettingsDistanceUnitsString(void)
+QString FactMetaData::appSettingsHorizontalDistanceUnitsString(void)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsDistanceUnitsTranslation("m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedUnits;
     } else {
@@ -1086,9 +1086,9 @@ QString FactMetaData::appSettingsDistanceUnitsString(void)
     }
 }
 
-QString FactMetaData::appSettingsAltitudeUnitsString(void)
+QString FactMetaData::appSettingsVerticalDistanceUnitsString(void)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsAltitudeUnitsTranslation("alt m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("alt m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedUnits;
     } else {

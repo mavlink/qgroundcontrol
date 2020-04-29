@@ -14,7 +14,7 @@ Grid {
     columnSpacing:  ScreenTools.defaultFontPixelWidth
 
     QGCLabel { text: qsTr("Survey Area") }
-    QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
+    QGCLabel { text: QGroundControl.unitsConversion.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.unitsConversion.appSettingsAreaUnitsString }
 
     QGCLabel { text: qsTr("Photo Count") }
     QGCLabel { text: missionItem.cameraShots }
