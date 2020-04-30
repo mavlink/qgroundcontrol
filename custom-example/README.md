@@ -2,27 +2,26 @@
 
 ## Custom Build Example
 
-To build this sample custom version, simply rename the directory from `custom-example` to `custom` before running `qmake` (or launching Qt Creator.) The build system will automatically find anything in `custom` and incorporate it into the build. If you had already run a build before renaming the directory, delete the build directory before running `qmake`. To restore the build to a stock QGroundControl one, rename the directory back to `custom-example` (making sure to clean the build directory again.)
+To build this sample custom version:
 
-### Custom Builds
+* Clean you build directory of any previous build
+* Rename the directory from `custom-example` to `custom`
+* Change to the `custom` directory
+* Run `python updateqrc.py`
+* Build QGC
 
-The root project file (`qgroundcontrol.pro`) will look and see if `custom/custom.pri` exists. If it does, it will load it before anything else is setup. This allows you to modify the build in any way necessary for a custom build. This example shows you how to:
+![Custom Build Screenshot](README.jpg)
 
-* Fully brand your build
-* Define a single flight stack to avoid carrying over unnecessary code
-* Implement your own, autopilot and firmware plugin overrides
-* Implement your own camera manager and plugin overrides
-* Implement your own QtQuick interface module
-* Implement your own toolbar, toolbar indicators and UI navigation
-* Implement your own Fly View overlay (and how to hide elements from QGC such as the flight widget)
-* Implement your own, custom QtQuick camera control
-* Implement your own, custom Pre-flight Checklist
-* Define your own resources for all of the above
+More details on what a custom build is and how to create your own can be found in the [QGC Dev Guide](https://dev.qgroundcontrol.com/en/custom_build/custom_build.html).
 
-Note that within `qgroundcontrol.pro`, most main build steps are surrounded by flags, which you can define to override them. For example, if you want to have your own Android build, done in some completely different way, you simply:
+The main features of this example:
 
-```
-DEFINES += DISABLE_BUILTIN_ANDROID
-```
+* Assumes an "Off The Shelf" purchased commercial vehicle. This means most vehicle setup is hidden from the user since they should mostly never need to adjust those things. They would be set up correctly by the vehicle producing company prior to sale.
+* The above assumption cause the QGC UI to adjust and not show various things. Providing an even simpler experience to the user.
+* The full experience continues to be available in "Advanced Mode".
+* Brands the build with various custom images and custom color palette which matches corporate branding of the theoretical commercial company this build is for.
+* Customizes portions of the interface such as you can see in the above screenshot which shows a custom instrument widget replacing the standard QGC ui.
+* It also overrides various QGC Application settings to hide some settings the users shouldn't modify as well as adjusting defaults for others.
+* The source code is fully commented to explain what and why it is doing things.
 
-With this defined within your `custom.pri` file, it is up to you to define how to do the Android build. You can either replace the entire process or prepare it before invoking QGC’s own Android project file on your own. You would do this if you want to have your own branding within the Android manifest. The same applies to iOS (`DISABLE_BUILTIN_IOS`).
+> Important Note: This custom build is not automatically built each time regular QGC code changes. This can mean that it may fall out of date with the latest changes in QGC code. This can show up as the `python updateqrc.py` steps failing due to upstream resource changes. Or possibly fail to compile because the plugin mechanism for custom builds has changed. If this happens please notify the QGC devs and they will bring it up to date. Or even better, submit a pull for the fix yourself!
