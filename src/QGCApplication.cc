@@ -584,7 +584,8 @@ bool QGCApplication::_initForNormalAppBoot()
 
     QSettings settings;
 
-    _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
+    _qmlAppEngine = toolbox()->corePlugin()->createQmlApplicationEngine(this);
+    toolbox()->corePlugin()->createRootWindow(_qmlAppEngine);
 
     // Image provider for PX4 Flow
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());

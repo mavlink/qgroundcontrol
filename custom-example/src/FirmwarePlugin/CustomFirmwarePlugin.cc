@@ -13,17 +13,15 @@
 
 #include "CustomFirmwarePlugin.h"
 #include "CustomAutoPilotPlugin.h"
-#include "CustomCameraManager.h"
-#include "CustomCameraControl.h"
 
 //-----------------------------------------------------------------------------
 CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
     for (int i = 0; i < _flightModeInfoList.count(); i++) {
         FlightModeInfo_t& info = _flightModeInfoList[i];
-        //-- Narrow the options to only these two
-        if (info.name != _altCtlFlightMode &&
-            info.name != _posCtlFlightMode) {
+        //-- Narrow the flight mode options to only these
+        if (info.name != _holdFlightMode && info.name != _rtlFlightMode && info.name != _missionFlightMode) {
+            // No other flight modes can be set
             info.canBeSet = false;
         }
     }
@@ -35,34 +33,23 @@ AutoPilotPlugin* CustomFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
     return new CustomAutoPilotPlugin(vehicle, vehicle);
 }
 
-//-----------------------------------------------------------------------------
-QGCCameraManager*
-CustomFirmwarePlugin::createCameraManager(Vehicle *vehicle)
+const QVariantList& CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
 {
-    return new CustomCameraManager(vehicle);
-}
-
-//-----------------------------------------------------------------------------
-QGCCameraControl*
-CustomFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* info, Vehicle *vehicle, int compID, QObject* parent)
-{
-    return new CustomCameraControl(info, vehicle, compID, parent);
-}
-
-//-----------------------------------------------------------------------------
-const QVariantList&
-CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
-{
-    Q_UNUSED(vehicle);
-    if(_toolBarIndicatorList.size() == 0) {
-#if defined(QGC_ENABLE_PAIRING)
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/custom/PairingIndicator.qml")));
-#endif
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
-        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
+    if (_toolBarIndicatorList.size() == 0) {
+        // First call the base class to get the standard QGC list. This way we are guaranteed to always get
+        // any new toolbar indicators which are added upstream in our custom build.
+        _toolBarIndicatorList = FirmwarePlugin::toolBarIndicators(vehicle);
+        // Then specifically remove the RC RSSI indicator.
+        _toolBarIndicatorList.removeOne(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
     }
     return _toolBarIndicatorList;
 }
 
+// Tells QGC that your vehicle has a gimbal on it. This will in turn cause thing like gimbal commands to point
+// the camera straight down for surveys to be automatically added to Plans.
+bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, bool& pitchSupported, bool& yawSupported)
+{
+    rollSupported = false;
+    pitchSupported = true;
+    yawSupported = true;
+}

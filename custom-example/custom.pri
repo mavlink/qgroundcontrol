@@ -35,36 +35,32 @@ CONFIG  += QGC_DISABLE_PX4_PLUGIN_FACTORY
 DEFINES += CUSTOMHEADER=\"\\\"CustomPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=CustomPlugin
 
-TARGET   = CustomQGC
-DEFINES += QGC_APPLICATION_NAME=\"\\\"CustomQGC\\\"\"
+TARGET   = MyGroundStation
+DEFINES += QGC_APPLICATION_NAME='"\\\"Custom QGroundControl\\\""'
 
 DEFINES += QGC_ORG_NAME=\"\\\"qgroundcontrol.org\\\"\"
 DEFINES += QGC_ORG_DOMAIN=\"\\\"org.qgroundcontrol\\\"\"
 
-QGC_APP_NAME        = "Custom GS"
-QGC_BINARY_NAME     = "CustomQGC"
+QGC_APP_NAME        = "Custom QGroundControl"
+QGC_BINARY_NAME     = "CustomQGroundControl"
 QGC_ORG_NAME        = "Custom"
-QGC_ORG_DOMAIN      = "org.qgroundcontrol"
-QGC_APP_DESCRIPTION = "Custom QGC Ground Station"
-QGC_APP_COPYRIGHT   = "Copyright (C) 2019 QGroundControl Development Team. All rights reserved."
+QGC_ORG_DOMAIN      = "org.custom"
+QGC_APP_DESCRIPTION = "Custom QGroundControl"
+QGC_APP_COPYRIGHT   = "Copyright (C) 2020 QGroundControl Development Team. All rights reserved."
 
 # Our own, custom resources
 RESOURCES += \
-    $$QGCROOT/custom/custom.qrc
+    $$PWD/custom.qrc
 
 QML_IMPORT_PATH += \
-    $$QGCROOT/custom/res
+   $$PWD/res
 
 # Our own, custom sources
 SOURCES += \
     $$PWD/src/CustomPlugin.cc \
-    $$PWD/src/CustomQuickInterface.cc \
-    $$PWD/src/CustomVideoManager.cc
 
 HEADERS += \
     $$PWD/src/CustomPlugin.h \
-    $$PWD/src/CustomQuickInterface.h \
-    $$PWD/src/CustomVideoManager.h
 
 INCLUDEPATH += \
     $$PWD/src \
@@ -73,20 +69,16 @@ INCLUDEPATH += \
 # Custom Firmware/AutoPilot Plugin
 
 INCLUDEPATH += \
-    $$QGCROOT/custom/src/FirmwarePlugin \
-    $$QGCROOT/custom/src/AutoPilotPlugin
+    $$PWD/src/FirmwarePlugin \
+    $$PWD/src/AutoPilotPlugin
 
 HEADERS+= \
-    $$QGCROOT/custom/src/AutoPilotPlugin/CustomAutoPilotPlugin.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraControl.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraManager.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePlugin.h \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePluginFactory.h \
+    $$PWD/src/AutoPilotPlugin/CustomAutoPilotPlugin.h \
+    $$PWD/src/FirmwarePlugin/CustomFirmwarePlugin.h \
+    $$PWD/src/FirmwarePlugin/CustomFirmwarePluginFactory.h \
 
 SOURCES += \
-    $$QGCROOT/custom/src/AutoPilotPlugin/CustomAutoPilotPlugin.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraControl.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraManager.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePlugin.cc \
-    $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc \
+    $$PWD/src/AutoPilotPlugin/CustomAutoPilotPlugin.cc \
+    $$PWD/src/FirmwarePlugin/CustomFirmwarePlugin.cc \
+    $$PWD/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc \
 
