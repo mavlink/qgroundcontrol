@@ -17,13 +17,19 @@
 
 class CustomFirmwarePlugin;
 
+/// This custom implementation of FirmwarePluginFactory creates a custom build which only supports
+/// PX4 Pro firmware running on a multi-rotor vehicle. This is turn removes portions of the QGC UI
+/// related to other firmware and vehicle types. This creating a more simplified UI for a specific
+/// type of vehicle.
 class CustomFirmwarePluginFactory : public FirmwarePluginFactory
 {
     Q_OBJECT
 public:
     CustomFirmwarePluginFactory();
-    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      () const override;
-    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) override;
+    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      () const final;
+    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
+    QList<MAV_TYPE>         supportedVehicleTypes       (void) const final;
+
 private:
     CustomFirmwarePlugin*   _pluginInstance;
 };

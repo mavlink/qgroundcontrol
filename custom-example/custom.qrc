@@ -1,47 +1,24 @@
 <RCC>
     <qresource prefix="/custom">
-        <file alias="CustomArmedIndicator.qml">res/MainToolbar/CustomArmedIndicator.qml</file>
-        <file alias="CustomBatteryIndicator.qml">res/MainToolbar/CustomBatteryIndicator.qml</file>
-        <file alias="CustomCameraControl.qml">res/CustomCameraControl.qml</file>
-        <file alias="CustomFlyView.qml">res/CustomFlyView.qml</file>
-        <file alias="CustomGPSIndicator.qml">res/MainToolbar/CustomGPSIndicator.qml</file>
-        <file alias="CustomMainToolBar.qml">res/MainToolbar/CustomMainToolBar.qml</file>
-        <file alias="CustomMainToolBarIndicators.qml">res/MainToolbar/CustomMainToolBarIndicators.qml</file>
-        <file alias="CustomModeIndicator.qml">res/MainToolbar/CustomModeIndicator.qml</file>
-        <file alias="CustomMultiVehicleSelector.qml">res/MainToolbar/CustomMultiVehicleSelector.qml</file>
-        <file alias="CustomRCRSSIIndicator.qml">res/MainToolbar/CustomRCRSSIIndicator.qml</file>
-        <file alias="PairingIndicator.qml">res/PairingIndicator.qml</file>
-        <file alias="PreFlightCheckList.qml">res/PreFlightCheckList.qml</file>
+        <file alias="CustomFlyViewOverlay.qml">res/CustomFlyViewOverlay.qml</file>
     </qresource>
     <qresource prefix="custom/img">
         <file alias="altitude.svg">res/Images/altitude.svg</file>
         <file alias="attitude_crosshair.svg">res/Images/attitude_crosshair.svg</file>
         <file alias="attitude_dial.svg">res/Images/attitude_dial.svg</file>
         <file alias="attitude_pointer.svg">res/Images/attitude_pointer.svg</file>
-        <file alias="camera_photo.svg">res/Images/camera_photo.svg</file>
-        <file alias="camera_settings.svg">res/Images/camera_settings.svg</file>
-        <file alias="camera_video.svg">res/Images/camera_video.svg</file>
         <file alias="chronometer.svg">res/Images/chronometer.svg</file>
         <file alias="compass_needle.svg">res/Images/compass_needle.svg</file>
         <file alias="compass_pointer.svg">res/Images/compass_pointer.svg</file>
         <file alias="distance.svg">res/Images/distance.svg</file>
-        <file alias="gimbal_icon.svg">res/Images/gimbal_icon.svg</file>
-        <file alias="gimbal_pitch_indoors.svg">res/Images/gimbal_pitch_indoors.svg</file>
-        <file alias="gimbal_pitch_outdoors.svg">res/Images/gimbal_pitch_outdoors.svg</file>
-        <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
-        <file alias="PairingButton.svg">res/Images/PairingButton.svg</file>
-        <file alias="PairingConnected.svg">res/Images/PairingConnected.svg</file>
-        <file alias="PairingError.svg">res/Images/PairingError.svg</file>
-        <file alias="PairingIcon.svg">res/Images/PairingIcon.svg</file>
-        <file alias="thermal-brightness.svg">res/Images/thermal-brightness.svg</file>
-        <file alias="thermal-palette.svg">res/Images/thermal-palette.svg</file>
-        <file alias="thermal-pip.svg">res/Images/thermal-pip.svg</file>
-        <file alias="thermal-standard.svg">res/Images/thermal-standard.svg</file>
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
-        <file alias="void.png">res/Images/void.png</file>
+        <file alias="CustomAppIcon.png">res/Images/CustomAppIcon.png</file>
+    </qresource>
+    <qresource prefix="/qmlimages">
+	<file alias="PaperPlane.svg">res/Images/CustomVehicleIcon.svg</file>
     </qresource>
     <qresource prefix="Custom/Widgets">
         <file alias="Custom/Widgets/CustomArtificialHorizon.qml">res/Custom/Widgets/CustomArtificialHorizon.qml</file>
@@ -53,9 +30,5 @@
         <file alias="Custom/Widgets/CustomToolBarButton.qml">res/Custom/Widgets/CustomToolBarButton.qml</file>
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
-    </qresource>
-    <qresource prefix="Custom/Camera">
-        <file alias="Custom/Camera/qmldir">res/Custom/Camera/qmldir</file>
-        <file alias="Custom/Camera/ZoomControl.qml">res/Custom/Camera/ZoomControl.qml</file>
     </qresource>
 </RCC>

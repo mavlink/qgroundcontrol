@@ -16,8 +16,6 @@
 #include "MAVLinkLogManager.h"
 
 #include "CustomPlugin.h"
-#include "CustomQuickInterface.h"
-#include "CustomVideoManager.h"
 
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -28,93 +26,72 @@
 
 QGC_LOGGING_CATEGORY(CustomLog, "CustomLog")
 
-CustomVideoReceiver::CustomVideoReceiver(QObject* parent)
-    : GstVideoReceiver(parent)
-{
-}
-
-CustomVideoReceiver::~CustomVideoReceiver()
-{
-}
-
-//-----------------------------------------------------------------------------
-static QObject*
-customQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
-{
-    qCDebug(CustomLog) << "Creating CustomQuickInterface instance";
-    CustomQuickInterface* pIFace = new CustomQuickInterface();
-    auto* pPlug = qobject_cast<CustomPlugin*>(qgcApp()->toolbox()->corePlugin());
-    if(pPlug) {
-        pIFace->init();
-    } else {
-        qCritical() << "Error obtaining instance of CustomPlugin";
-    }
-    return pIFace;
-}
-
-//-----------------------------------------------------------------------------
 CustomOptions::CustomOptions(CustomPlugin*, QObject* parent)
     : QGCOptions(parent)
 {
 }
 
-//-----------------------------------------------------------------------------
-bool
-CustomOptions::showFirmwareUpgrade() const
+// Firmware upgrade page is only shown in Advanced Mode.
+bool CustomOptions::showFirmwareUpgrade() const
 {
     return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
 }
 
-QColor
-CustomOptions::toolbarBackgroundLight() const
+// This custom build does not support conecting multiple vehicles to it. This in turn simplifies various parts of the QGC ui.
+bool CustomOptions::enableMultiVehicleList(void) const
 {
-    return CustomPlugin::_windowShadeEnabledLightColor;
+    return false;
 }
 
-QColor
-CustomOptions::toolbarBackgroundDark() const
+// This allows you to show a custom overlay on the fly screen.
+QUrl CustomOptions::flyViewOverlay(void) const
 {
-    return CustomPlugin::_windowShadeEnabledDarkColor;
+    return QUrl::fromUserInput("qrc:/custom/CustomFlyViewOverlay.qml");
 }
 
-//-----------------------------------------------------------------------------
+// The standard instrement widget is now show. Only the custom overlay is shown.
+CustomInstrumentWidget* CustomOptions::instrumentWidget(void)
+{
+    return nullptr;
+}
+
+// Normal QGC needs to work with an ESP8266 WiFi thing which is remarkably crappy. This in turns causes PX4 Pro calibration to fail
+// quite often. There is a warning in regular QGC about this. Overriding the and returning true means that your custom vehicle has
+// a reliable WiFi connection so don't show that warning.
+bool CustomOptions::wifiReliableForCalibration(void) const
+{
+    return true;
+}
+
+
 CustomPlugin::CustomPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
 {
-    _pOptions = new CustomOptions(this, this);
+
+    _options = new CustomOptions(this, this);
     _showAdvancedUI = false;
 }
 
-//-----------------------------------------------------------------------------
 CustomPlugin::~CustomPlugin()
 {
 }
 
-//-----------------------------------------------------------------------------
-void
-CustomPlugin::setToolbox(QGCToolbox* toolbox)
+void CustomPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
-    qmlRegisterSingletonType<CustomQuickInterface>("CustomQuickInterface", 1, 0, "CustomQuickInterface", customQuickInterfaceSingletonFactory);
-    //-- Disable automatic logging
-    toolbox->mavlinkLogManager()->setEnableAutoStart(false);
-    toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
+
+    // Allows us to be notified when the user goes in/out out advanced mode
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &CustomPlugin::_advancedChanged);
 }
 
-//-----------------------------------------------------------------------------
-void
-CustomPlugin::_advancedChanged(bool changed)
+void CustomPlugin::_advancedChanged(bool changed)
 {
-    //-- We are now in "Advanced Mode" (or not)
-    emit _pOptions->showFirmwareUpgradeChanged(changed);
+    // Firmware Upgrade page is only show in Advanced mode
+    emit _options->showFirmwareUpgradeChanged(changed);
 }
 
 //-----------------------------------------------------------------------------
-void
-CustomPlugin::addSettingsEntry(const QString& title,
-                               const char* qmlFile,
-                               const char* iconFile/*= nullptr*/)
+void CustomPlugin::_addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile)
 {
     Q_CHECK_PTR(qmlFile);
     // 'this' instance will take ownership on the QmlComponentInfo instance
@@ -130,118 +107,66 @@ QVariantList&
 CustomPlugin::settingsPages()
 {
     if(_customSettingsList.isEmpty()) {
-        addSettingsEntry(tr("General"),     "qrc:/qml/GeneralSettings.qml", "qrc:/res/gear-white.svg");
-        addSettingsEntry(tr("Comm Links"),  "qrc:/qml/LinkSettings.qml",    "qrc:/res/waves.svg");
-        addSettingsEntry(tr("Offline Maps"),"qrc:/qml/OfflineMap.qml",      "qrc:/res/waves.svg");
-#if defined(QGC_GST_MICROHARD_ENABLED)
-        addSettingsEntry(tr("Microhard"),   "qrc:/qml/MicrohardSettings.qml");
-#endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        addSettingsEntry(tr("Taisync"),     "qrc:/qml/TaisyncSettings.qml");
-#endif
-#if defined(QGC_AIRMAP_ENABLED)
-        addSettingsEntry(tr("AirMap"),      "qrc:/qml/AirmapSettings.qml");
-#endif
-        addSettingsEntry(tr("MAVLink"),     "qrc:/qml/MavlinkSettings.qml", "    qrc:/res/waves.svg");
-        addSettingsEntry(tr("Console"),     "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
-#if defined(QGC_ENABLE_QZXING)
-        addSettingsEntry(tr("Barcode Test"),"qrc:/custom/BarcodeReader.qml");
-#endif
+        _addSettingsEntry(tr("General"),     "qrc:/qml/GeneralSettings.qml",     "qrc:/res/gear-white.svg");
+        _addSettingsEntry(tr("Comm Links"),  "qrc:/qml/LinkSettings.qml",        "qrc:/res/waves.svg");
+        _addSettingsEntry(tr("Offline Maps"),"qrc:/qml/OfflineMap.qml",          "qrc:/res/waves.svg");
+        _addSettingsEntry(tr("MAVLink"),     "qrc:/qml/MavlinkSettings.qml",     "qrc:/res/waves.svg");
+        _addSettingsEntry(tr("Console"),     "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds
-        addSettingsEntry(tr("Mock Link"),   "qrc:/qml/MockLink.qml");
-        addSettingsEntry(tr("Debug"),       "qrc:/qml/DebugWindow.qml");
-        addSettingsEntry(tr("Palette Test"),"qrc:/qml/QmlTest.qml");
+        _addSettingsEntry(tr("Mock Link"),   "qrc:/qml/MockLink.qml");
 #endif
     }
     return _customSettingsList;
 }
 
-//-----------------------------------------------------------------------------
-QGCOptions*
-CustomPlugin::options()
+QGCOptions* CustomPlugin::options()
 {
-    return _pOptions;
+    return _options;
 }
 
-//-----------------------------------------------------------------------------
-QString
-CustomPlugin::brandImageIndoor(void) const
+QString CustomPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/custom/img/void.png");
+    return QStringLiteral("/custom/img/CustomAppIcon.png");
 }
 
-//-----------------------------------------------------------------------------
-QString
-CustomPlugin::brandImageOutdoor(void) const
+QString CustomPlugin::brandImageOutdoor(void) const
 {
-    return QStringLiteral("/custom/img/void.png");
+    return QStringLiteral("/custom/img/CustomAppIcon.png");
 }
 
-//-----------------------------------------------------------------------------
-bool
-CustomPlugin::overrideSettingsGroupVisibility(QString name)
+bool CustomPlugin::overrideSettingsGroupVisibility(QString name)
 {
+    // We have set up our own specific brand imaging. Hide the brand image settings such that the end user
+    // can't change it.
     if (name == BrandImageSettings::name) {
         return false;
     }
     return true;
 }
 
-//-----------------------------------------------------------------------------
-VideoManager*
-CustomPlugin::createVideoManager(QGCApplication *app, QGCToolbox *toolbox)
-{
-    return new CustomVideoManager(app, toolbox);
-}
-
-//-----------------------------------------------------------------------------
-VideoReceiver*
-CustomPlugin::createVideoReceiver(QObject* parent)
-{
-    return new CustomVideoReceiver(parent);
-}
-
-//-----------------------------------------------------------------------------
-QQmlApplicationEngine*
-CustomPlugin::createRootWindow(QObject *parent)
-{
-    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
-    pEngine->addImportPath("qrc:/qml");
-    pEngine->addImportPath("qrc:/Custom/Widgets");
-    pEngine->addImportPath("qrc:/Custom/Camera");
-    pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
-    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
-    return pEngine;
-}
-
-//-----------------------------------------------------------------------------
-bool
-CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
+// This allows you to override/hide QGC Application settings
+bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
     bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
+
     if (settingsGroup == AppSettings::settingsGroup) {
-        if (metaData.name() == AppSettings::appFontPointSizeName) {
-        #if defined(Q_OS_LINUX)
-            int defaultFontPointSize = 11;
-            metaData.setRawDefaultValue(defaultFontPointSize);
-        #endif
-        } else if (metaData.name() == AppSettings::indoorPaletteName) {
-            QVariant indoorPalette = 1;
-            metaData.setRawDefaultValue(indoorPalette);
-            parentResult = true;
+        // This tells QGC than when you are creating Plans while not connected to a vehicle
+        // the specific firmware/vehicle the plan is for.
+        if (metaData.name() == AppSettings::offlineEditingFirmwareTypeName) {
+            metaData.setRawDefaultValue(MAV_AUTOPILOT_PX4);
+            return false;
+        } else if (metaData.name() == AppSettings::offlineEditingVehicleTypeName) {
+            metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
+            return false;
         }
     }
+
     return parentResult;
 }
 
-const QColor     CustomPlugin::_windowShadeEnabledLightColor("#FFFFFF");
-const QColor     CustomPlugin::_windowShadeEnabledDarkColor("#212529");
-
-//-----------------------------------------------------------------------------
-void
-CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
+// This modifies QGC colors palette to match possible custom corporate branding
+void CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
 {
     if (colorName == QStringLiteral("window")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#212529");
@@ -429,4 +354,12 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#6045c5");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#48d6ff");
     }
+}
+
+// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
+QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
+{
+    QQmlApplicationEngine* qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
+    qmlEngine->addImportPath("qrc:/Custom/Widgets");
+    return qmlEngine;
 }

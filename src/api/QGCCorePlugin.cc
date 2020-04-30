@@ -435,14 +435,18 @@ void QGCCorePlugin::instrumentValueAreaCreateDefaultSettings(const QString& defa
     }
 }
 
-QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
+QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent)
 {
-    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
-    pEngine->addImportPath("qrc:/qml");
-    pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
-    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
-    return pEngine;
+    QQmlApplicationEngine* qmlEngine = new QQmlApplicationEngine(parent);
+    qmlEngine->addImportPath("qrc:/qml");
+    qmlEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
+    qmlEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    return qmlEngine;
+}
+
+void QGCCorePlugin::createRootWindow(QQmlApplicationEngine* qmlEngine)
+{
+    qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
 }
 
 bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlink_message_t message)
