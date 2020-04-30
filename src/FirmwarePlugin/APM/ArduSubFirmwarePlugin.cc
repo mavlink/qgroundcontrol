@@ -135,7 +135,7 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
         _remapParamNameIntialized = true;
     }
 
-    _nameToFactGroupMap.insert("APMSubInfo", &_infoFactGroup);
+    _nameToFactGroupMap.insert("apmSubInfo", &_infoFactGroup);
 
     _factRenameMap[QStringLiteral("altitudeRelative")] = QStringLiteral("Depth");
     _factRenameMap[QStringLiteral("flightTime")] = QStringLiteral("Dive Time");
