@@ -32,6 +32,7 @@ public:
 
     Q_PROPERTY(int                  count           READ count                                  NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path            READ path                                   NOTIFY pathChanged)
+    Q_PROPERTY(double               area            READ area                                   NOTIFY pathChanged)
     Q_PROPERTY(QmlObjectListModel*  pathModel       READ qmlPathModel                           CONSTANT)
     Q_PROPERTY(bool                 dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(QGeoCoordinate       center          READ center         WRITE setCenter         NOTIFY centerChanged)
