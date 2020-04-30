@@ -110,8 +110,12 @@ public:
 
     virtual void instrumentValueAreaCreateDefaultSettings(const QString& defaultSettingsGroup);
 
+    /// Allows the plugin to override or get access to the QmlApplicationEngine to do things like add import
+    /// path or stuff things into the context prior to window creation.
+    virtual QQmlApplicationEngine* createQmlApplicationEngine(QObject* parent);
+
     /// Allows the plugin to override the creation of the root (native) window.
-    virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+    virtual void createRootWindow(QQmlApplicationEngine* qmlEngine);
 
     /// Allows the plugin to override the creation of VideoManager.
     virtual VideoManager* createVideoManager(QGCApplication* app, QGCToolbox* toolbox);
