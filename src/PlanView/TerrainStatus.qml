@@ -48,7 +48,9 @@ Rectangle {
         anchors.top:            parent.bottom
         width:                  parent.height
         font.pointSize:         ScreenTools.smallFontPointSize
-        text:                   qsTr("Height AMSL (%1)").arg(QGroundControl.appSettingsDistanceUnitsString)
+        text:                   qsTr("Height AMSL (%1)").arg(
+                                    QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+                                )
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
         transformOrigin:        Item.TopLeft

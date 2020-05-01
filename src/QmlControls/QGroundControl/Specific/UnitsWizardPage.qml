@@ -57,18 +57,18 @@ BaseStartupWizardPage {
                     model: [qsTr("Metric System"), qsTr("Imperial System")]
                     Layout.preferredWidth:  _comboFieldWidth
 
-                    currentIndex: QGroundControl.settingsManager.unitsSettings.distanceUnits.value === UnitsSettings.DistanceUnitsMeters ? 0 : 1
+                    currentIndex: QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsMeters ? 0 : 1
 
                     onActivated: {
                         var metric = (currentIndex === 0);
-                        QGroundControl.settingsManager.unitsSettings.distanceUnits.value = metric ? UnitsSettings.DistanceUnitsMeters : UnitsSettings.DistanceUnitsFeet
+                        QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value = metric ? UnitsSettings.HorizontalDistanceUnitsMeters : UnitsSettings.HorizontalDistanceUnitsFeet
                         QGroundControl.settingsManager.unitsSettings.areaUnits.value = metric ? UnitsSettings.AreaUnitsSquareMeters : UnitsSettings.AreaUnitsSquareFeet
                         QGroundControl.settingsManager.unitsSettings.speedUnits.value = metric ? UnitsSettings.SpeedUnitsMetersPerSecond : UnitsSettings.SpeedUnitsFeetPerSecond
                         QGroundControl.settingsManager.unitsSettings.temperatureUnits.value = metric ? UnitsSettings.TemperatureUnitsCelsius : UnitsSettings.TemperatureUnitsFarenheit
                     }
                 }
                 Repeater {
-                    model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
+                    model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
                     FactComboBox {
                         Layout.preferredWidth:  _comboFieldWidth
                         fact:                   modelData
