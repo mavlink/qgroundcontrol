@@ -66,7 +66,7 @@ Item {
             if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
                 var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
                 var veh = activeVehicle.coordinate;
-                _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
+                _distance = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(gcs.distanceTo(veh));
                 //-- Ignore absurd values
                 if(_distance > 99999)
                     _distance = 0;
