@@ -136,9 +136,6 @@ void UnitTest::cleanup(void)
     _disconnectMockLink();
     _closeMainWindow();
 
-    // We add a slight delay here to allow for deleteLater and Qml cleanup
-    QTest::qWait(200);
-
     // Keep in mind that any code below these QCOMPARE may be skipped if the compare fails
     if (_expectMissedMessageBox) {
         QEXPECT_FAIL("", "Expecting failure due internal testing", Continue);

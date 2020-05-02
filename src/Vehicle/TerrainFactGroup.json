@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "blocksPending",
@@ -14,3 +18,4 @@
     "default":          0
 }
 ]
+}

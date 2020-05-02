@@ -33,12 +33,12 @@
         <file alias="QGroundControl/ArduPilot/qmldir">QGroundControl.ArduPilot.qmldir</file>
     </qresource>
     <qresource prefix="/json">
-        <file alias="APM/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>
-        <file alias="APM/MavCmdInfoFixedWing.json">MavCmdInfoFixedWing.json</file>
-        <file alias="APM/MavCmdInfoMultiRotor.json">MavCmdInfoMultiRotor.json</file>
-        <file alias="APM/MavCmdInfoRover.json">MavCmdInfoRover.json</file>
-        <file alias="APM/MavCmdInfoSub.json">MavCmdInfoSub.json</file>
-        <file alias="APM/MavCmdInfoVTOL.json">MavCmdInfoVTOL.json</file>
+        <file alias="APM-MavCmdInfoCommon.json">APM-MavCmdInfoCommon.json</file>
+        <file alias="APM-MavCmdInfoFixedWing.json">APM-MavCmdInfoFixedWing.json</file>
+        <file alias="APM-MavCmdInfoMultiRotor.json">APM-MavCmdInfoMultiRotor.json</file>
+        <file alias="APM-MavCmdInfoRover.json">APM-MavCmdInfoRover.json</file>
+        <file alias="APM-MavCmdInfoSub.json">APM-MavCmdInfoSub.json</file>
+        <file alias="APM-MavCmdInfoVTOL.json">APM-MavCmdInfoVTOL.json</file>
         <file alias="APMFollowComponent.FactMetaData.json">../../AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/APM">

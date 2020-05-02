@@ -1,7 +1,7 @@
 {
-    "comment":  "Any Firmware, Any Vehicle (unit test)",
-
-    "version": 1,
+    "comment":      "Any Firmware, Any Vehicle (unit test)",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
         {

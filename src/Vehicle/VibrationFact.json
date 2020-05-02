@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "xAxis",
@@ -33,3 +37,4 @@
     "type":             "uint32"
 }
 ]
+}

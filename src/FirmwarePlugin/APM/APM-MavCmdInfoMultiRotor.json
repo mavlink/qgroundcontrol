@@ -1,7 +1,7 @@
 {
-    "comment":  "ArduPilot, Multi Rotor",
-
-    "version": 1,
+    "comment":      "ArduPilot, Multi Rotor",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
         {

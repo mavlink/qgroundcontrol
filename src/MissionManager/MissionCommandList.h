@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef MissionCommandList_H
-#define MissionCommandList_H
+#pragma once
 
 #include "QGCToolbox.h"
 #include "QGCMAVLink.h"
@@ -40,6 +39,8 @@ public:
 
     const QList<MAV_CMD>& commandIds(void) const { return _ids; }
     
+    static const char* qgcFileType;
+
 private:
     void _loadMavCmdInfoJson(const QString& jsonFilename, bool baseCommandList);
 
@@ -50,5 +51,3 @@ private:
     static const char* _versionJsonKey;
     static const char* _mavCmdInfoJsonKey;
 };
-
-#endif

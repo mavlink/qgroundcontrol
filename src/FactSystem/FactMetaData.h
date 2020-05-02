@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef FactMetaData_H
-#define FactMetaData_H
+#pragma once
 
 #include <QObject>
 #include <QString>
@@ -190,6 +185,8 @@ public:
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static size_t typeToSize(ValueType_t type);
 
+    static const char* qgcFileType;
+
 private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
@@ -329,5 +326,3 @@ private:
     static const char* _jsonMetaDataDefinesName;
     static const char* _jsonMetaDataFactsName;
 };
-
-#endif

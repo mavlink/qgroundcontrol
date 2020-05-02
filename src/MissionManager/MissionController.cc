@@ -872,7 +872,7 @@ bool MissionController::_loadItemsFromJson(const QJsonObject& json, QmlObjectLis
     }
 
     int fileVersion;
-    JsonHelper::validateQGCJsonFile(json,
+    JsonHelper::validateExternalQGCJsonFile(json,
                                     _jsonFileTypeValue,    // expected file type
                                     1,                     // minimum supported version
                                     2,                     // maximum supported version
