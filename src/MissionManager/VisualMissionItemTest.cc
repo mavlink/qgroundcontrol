@@ -51,8 +51,8 @@ void VisualMissionItemTest::init(void)
 
 void VisualMissionItemTest::cleanup(void)
 {
-    _masterController->deleteLater();
     UnitTest::cleanup();
+    _masterController->deleteLater();
 }
 
 void VisualMissionItemTest::_createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy)
