@@ -98,6 +98,8 @@ public:
 
     FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
 
+    QTranslator& qgcTranslator(void) { return _QGCTranslator; }
+
     static QString cachedParameterMetaDataFile(void);
     static QString cachedAirframeMetaDataFile(void);
 

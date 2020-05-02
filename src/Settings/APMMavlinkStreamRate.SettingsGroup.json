@@ -1,4 +1,7 @@
 {
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "translateKeys": "StreamRateEnumStrings",
     "QGC.MetaData.Defines": {
         "StreamRateEnumStrings":    "Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz",
         "StreamRateEnumValues":     "-1,0,1,2,3,4,5,6,7,8,9,10,50,100"

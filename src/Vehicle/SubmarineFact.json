@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "camera tilt",
@@ -43,3 +47,4 @@
     "units":            "meters"
 }
 ]
+}

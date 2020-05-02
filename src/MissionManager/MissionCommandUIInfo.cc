@@ -417,7 +417,7 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
                 paramInfo->_enumValues << QVariant(value);
             }
             if (paramInfo->_enumValues.count() != paramInfo->_enumStrings.count()) {
-                internalError = QString("enum strings/values count mismatch: %1, %2").arg(paramInfo->_enumStrings.count()).arg(paramInfo->_enumValues.count());
+                internalError = QString("enum strings/values count mismatch, label:'%1' enumStrings:'%2'").arg(paramInfo->_label).arg(paramInfo->_enumStrings.join(","));
                 errorString = _loadErrorString(internalError);
                 return false;
             }

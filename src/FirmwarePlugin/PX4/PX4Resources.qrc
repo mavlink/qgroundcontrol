@@ -23,12 +23,12 @@
         <file alias="QGroundControl/PX4/qmldir">../../QmlControls/QGroundControl/PX4/qmldir</file>
     </qresource>
     <qresource prefix="/json">
-        <file alias="PX4/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>
-        <file alias="PX4/MavCmdInfoFixedWing.json">MavCmdInfoFixedWing.json</file>
-        <file alias="PX4/MavCmdInfoMultiRotor.json">MavCmdInfoMultiRotor.json</file>
-        <file alias="PX4/MavCmdInfoRover.json">MavCmdInfoRover.json</file>
-        <file alias="PX4/MavCmdInfoSub.json">MavCmdInfoSub.json</file>
-        <file alias="PX4/MavCmdInfoVTOL.json">MavCmdInfoVTOL.json</file>
+        <file alias="PX4-MavCmdInfoCommon.json">PX4-MavCmdInfoCommon.json</file>
+        <file alias="PX4-MavCmdInfoFixedWing.json">PX4-MavCmdInfoFixedWing.json</file>
+        <file alias="PX4-MavCmdInfoMultiRotor.json">PX4-MavCmdInfoMultiRotor.json</file>
+        <file alias="PX4-MavCmdInfoRover.json">PX4-MavCmdInfoRover.json</file>
+        <file alias="PX4-MavCmdInfoSub.json">PX4-MavCmdInfoSub.json</file>
+        <file alias="PX4-MavCmdInfoVTOL.json">PX4-MavCmdInfoVTOL.json</file>
     </qresource>
     <qresource prefix="/AutoPilotPlugins/PX4">
         <file alias="AirframeFactMetaData.xml">../../AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>

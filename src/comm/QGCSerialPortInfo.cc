@@ -80,12 +80,12 @@ void QGCSerialPortInfo::_loadJsonData(void)
 
     int fileVersion;
     QString errorString;
-    if (!JsonHelper::validateQGCJsonFile(json,
-                                         _jsonFileTypeValue,    // expected file type
-                                         1,                     // minimum supported version
-                                         1,                     // maximum supported version
-                                         fileVersion,
-                                         errorString)) {
+    if (!JsonHelper::validateInternalQGCJsonFile(json,
+                                                 _jsonFileTypeValue,    // expected file type
+                                                 1,                     // minimum supported version
+                                                 1,                     // maximum supported version
+                                                 fileVersion,
+                                                 errorString)) {
         qWarning() << errorString;
         return;
     }

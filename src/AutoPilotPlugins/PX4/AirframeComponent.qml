@@ -111,7 +111,7 @@ SetupPage {
                     QGCLabel {
                         anchors.fill:   parent
                         wrapMode:       Text.WordWrap
-                        text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration.<br><br>\
+                        text:           qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
 All vehicle parameters other than Radio Calibration will be reset.<br><br>\
 Your vehicle will also be restarted in order to complete the process.")
                     }
@@ -130,7 +130,7 @@ Your vehicle will also be restarted in order to complete the process.")
                     text:           (controller.currentVehicleName != "" ?
                                          qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
                                          qsTr("Airframe is not set.")) +
-                                    qsTr("To change this configuration, select the desired airframe below then click “Apply and Restart”.")
+                                    qsTr("To change this configuration, select the desired airframe below then click 'Apply and Restart'.")
                     font.family:    ScreenTools.demiboldFontFamily
                     wrapMode:       Text.WordWrap
                 }

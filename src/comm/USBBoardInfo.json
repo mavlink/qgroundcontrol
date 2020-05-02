@@ -1,9 +1,7 @@
 {
     "comment":  "AutoConnect usb board info",
-
-    "version":          1,
-    "fileType":         "USBBoardInfo",
-    "groundStation":    "QGroundControl",
+    "version":  1,
+    "fileType": "USBBoardInfo",
 
     "boardInfo": [
         { "vendorID": 9900, "productID": 16,        "boardClass": "Pixhawk",    "name": "PX4 FMU V1" },
