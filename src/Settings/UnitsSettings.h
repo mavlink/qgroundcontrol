@@ -19,9 +19,14 @@ class UnitsSettings : public SettingsGroup
 public:
     UnitsSettings(QObject* parent = nullptr);
 
-    enum DistanceUnits {
-        DistanceUnitsFeet = 0,
-        DistanceUnitsMeters
+    enum HorizontalDistanceUnits {
+        HorizontalDistanceUnitsFeet = 0,
+        HorizontalDistanceUnitsMeters
+    };
+
+    enum VerticalDistanceUnits {
+        VerticalDistanceUnitsFeet = 0,
+        VerticalDistanceUnitsMeters
     };
 
     enum AreaUnits {
@@ -46,17 +51,28 @@ public:
         TemperatureUnitsFarenheit,
     };
 
-    Q_ENUM(DistanceUnits)
+    enum WeightUnits {
+        WeightUnitsGrams = 0,
+        WeightUnitsKg,
+        WeightUnitsOz,
+        WeightUnitsLbs
+    };
+
+    Q_ENUM(HorizontalDistanceUnits)
+    Q_ENUM(VerticalDistanceUnits)
     Q_ENUM(AreaUnits)
     Q_ENUM(SpeedUnits)
     Q_ENUM(TemperatureUnits)
+    Q_ENUM(WeightUnits)
 
     DEFINE_SETTING_NAME_GROUP()
 
-    DEFINE_SETTINGFACT(distanceUnits)
+    DEFINE_SETTINGFACT(horizontalDistanceUnits)
+    DEFINE_SETTINGFACT(verticalDistanceUnits)
     DEFINE_SETTINGFACT(areaUnits)
     DEFINE_SETTINGFACT(speedUnits)
     DEFINE_SETTINGFACT(temperatureUnits)
+    DEFINE_SETTINGFACT(weightUnits)
 };
 
 #endif

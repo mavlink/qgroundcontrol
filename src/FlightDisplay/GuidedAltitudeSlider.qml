@@ -67,14 +67,14 @@ Rectangle {
         QGCLabel {
             id:                         altField
             anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       newAltitudeAppUnits + " " + QGroundControl.appSettingsDistanceUnitsString
+            text:                       newAltitudeAppUnits + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
 
             property real   altGainRange:           Math.max(_sliderMaxAlt - _vehicleAltitude, 0)
             property real   altLossRange:           Math.max(_vehicleAltitude - _sliderMinAlt, 0)
             property real   altExp:                 Math.pow(altSlider.value, 3)
             property real   altLossGain:            altExp * (altSlider.value > 0 ? altGainRange : altLossRange)
             property real   newAltitudeMeters:      _vehicleAltitude + altLossGain
-            property string newAltitudeAppUnits:    QGroundControl.metersToAppSettingsDistanceUnits(newAltitudeMeters).toFixed(1)
+            property string newAltitudeAppUnits:    QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newAltitudeMeters).toFixed(1)
 
             function setToMinimumTakeoff() {
                 altSlider.value = Math.pow(activeVehicle.minimumTakeoffAltitude() / altGainRange, 1.0/3.0)
