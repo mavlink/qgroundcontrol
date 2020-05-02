@@ -42,7 +42,7 @@ void SectionTest::init(void)
 
 void SectionTest::cleanup(void)
 {
-    delete _simpleItem;
+    _simpleItem->deleteLater();
     VisualMissionItemTest::cleanup();
 }
 
