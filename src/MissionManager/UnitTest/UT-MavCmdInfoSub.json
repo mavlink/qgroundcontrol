@@ -1,5 +1,5 @@
 {
-    "comment":      "Any Firmware, VTOL",
+    "comment":      "Any Firmware, Sub (unit test)",
     "version":      1,
     "fileType":  "MavCmdInfo",
 

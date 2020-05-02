@@ -356,7 +356,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
    }
 #endif /* __mobile__ */
 
-   setLanguage();
     _checkForNewVersion();
 }
 

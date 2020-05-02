@@ -266,7 +266,7 @@ SetupPage {
                                     QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }
                                     QGCLabel { text:   qsTr("- If using a flight controller with a safety button press it until it displays solid red") }
                                     QGCLabel { text:   qsTr("- You will hear a musical tone then two beeps") }
-                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you’re using)") }
+                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you're using)") }
                                     QGCLabel { text:   qsTr("- And finally a single long beep indicating the end points have been set and the ESC is calibrated") }
                                     QGCLabel { text:   qsTr("- Disconnect the battery and power up again normally") }
                                 }

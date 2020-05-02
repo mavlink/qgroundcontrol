@@ -35,6 +35,7 @@ const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 static const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
 static const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
 
+const char* FactMetaData::qgcFileType =                 "FactMetaData";
 const char* FactMetaData::_jsonMetaDataDefinesName =    "QGC.MetaData.Defines";
 const char* FactMetaData::_jsonMetaDataFactsName =      "QGC.MetaData.Facts";
 
@@ -1220,44 +1221,28 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
 {
     QMap<QString, FactMetaData*> metaDataMap;
 
-    QFile jsonFile(jsonFilename);
-    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Unable to open file" << jsonFilename << jsonFile.errorString();
-        return metaDataMap;
-    }
-
-    QByteArray bytes = jsonFile.readAll();
-    jsonFile.close();
-    QJsonParseError jsonParseError;
-    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        qWarning() <<  "Unable to parse json document filename:error:offset" << jsonFilename << jsonParseError.errorString() << jsonParseError.offset;
+    QString errorString;
+    int version;
+    QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(jsonFilename, qgcFileType, 1, 1, version, errorString);
+    if (!errorString.isEmpty()) {
+        qWarning() << "Internal Error: " << errorString;
         return metaDataMap;
     }
 
     QJsonArray factArray;
     QMap<QString /* define name */, QString /* define value */> defineMap;
 
-    if (doc.isObject()) {
-        // Check for Defines/Facts format
-        QString errorString;
-        QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-            { FactMetaData::_jsonMetaDataDefinesName,   QJsonValue::Object, true },
-            { FactMetaData::_jsonMetaDataFactsName,     QJsonValue::Array, true },
-        };
-        if (!JsonHelper::validateKeys(doc.object(), keyInfoList, errorString)) {
-            qWarning() << "Json document incorrect format:" << errorString;
-            return metaDataMap;
-        }
-
-        _loadJsonDefines(doc.object()[FactMetaData::_jsonMetaDataDefinesName].toObject(), defineMap);
-        factArray = doc.object()[FactMetaData::_jsonMetaDataFactsName].toArray();
-    } else if (doc.isArray()) {
-        factArray = doc.array();
-    } else {
-        qWarning() << "Json document is neither array nor object";
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { FactMetaData::_jsonMetaDataDefinesName,   QJsonValue::Object, false },
+        { FactMetaData::_jsonMetaDataFactsName,     QJsonValue::Array,  true },
+    };
+    if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
+        qWarning() << "Json document incorrect format:" << errorString;
         return metaDataMap;
     }
+
+    _loadJsonDefines(jsonObject[FactMetaData::_jsonMetaDataDefinesName].toObject(), defineMap);
+    factArray = jsonObject[FactMetaData::_jsonMetaDataFactsName].toArray();
 
     return createMapFromJsonArray(factArray, defineMap, metaDataParent);
 }
