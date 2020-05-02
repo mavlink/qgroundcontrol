@@ -99,7 +99,7 @@ Rectangle {
                                 QGCLabel { text: modelData }
                             }
                             Repeater {
-                                model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
+                                model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   modelData
@@ -162,7 +162,7 @@ Rectangle {
                                     text:       qsTr("Map Provider")
                                     width:      _labelWidth
                                 }
-                                
+
                                 QGCComboBox {
                                     id:             mapCombo
                                     model:          QGroundControl.mapEngineManager.mapProviderList
