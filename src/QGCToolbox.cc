@@ -98,6 +98,10 @@ void QGCToolbox::setChildToolboxes(void)
 {
     // SettingsManager must be first so settings are available to any subsequent tools
     _settingsManager->setToolbox(this);
+
+    // We now know the language setting to setup the translators. This makes the translators available to the subsequence tools.
+    qgcApp()->setLanguage();
+
     _corePlugin->setToolbox(this);
     _audioOutput->setToolbox(this);
     _factSystem->setToolbox(this);

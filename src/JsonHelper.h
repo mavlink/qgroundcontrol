@@ -7,12 +7,12 @@
  *
  ****************************************************************************/
 
-#ifndef JsonHelper_H
-#define JsonHelper_H
+#pragma once
 
 #include <QJsonObject>
 #include <QVariantList>
 #include <QGeoCoordinate>
+#include <QCoreApplication>
 
 /// @file
 /// @author Don Gagne <don@thegagnes.com>
@@ -23,6 +23,8 @@ class QmlObjectListModel;
 /// Primarily used for parsing and processing Fact metadata.
 class JsonHelper
 {
+    Q_DECLARE_TR_FUNCTIONS(JsonHelper)
+
 public:
     /// Determines is the specified data is a json file
     /// @return true: file is json, false: file is not json
@@ -35,17 +37,38 @@ public:
                                       const QString&    fileType,   ///< file type for file
                                       int               version);   ///< version number for file
 
-    /// Validates the standard parts of a QGC json file:
+    /// Validates the standard parts of an external QGC json file (Plan file, ...):
     ///     jsonFileTypeKey - Required and checked to be equal to expectedFileType
     ///     jsonVersionKey - Required and checked to be below supportedMajorVersion, supportedMinorVersion
     ///     jsonGroundStationKey - Required and checked to be string type
     /// @return false: validation failed, errorString set
-    static bool validateQGCJsonFile(const QJsonObject&  jsonObject,             ///< json object to validate
-                                    const QString&      expectedFileType,       ///< correct file type for file
-                                    int                 minSupportedVersion,    ///< minimum supported version
-                                    int                 maxSupportedVersion,    ///< maximum supported major version
-                                    int                 &version,               ///< returned file version
-                                    QString&            errorString);           ///< returned error string if validation fails
+    static bool validateExternalQGCJsonFile(const QJsonObject&  jsonObject,             ///< json object to validate
+                                            const QString&      expectedFileType,       ///< correct file type for file
+                                            int                 minSupportedVersion,    ///< minimum supported version
+                                            int                 maxSupportedVersion,    ///< maximum supported major version
+                                            int                 &version,               ///< returned file version
+                                            QString&            errorString);           ///< returned error string if validation fails
+
+    /// Validates the standard parts of a internal QGC json file (FactMetaData, ...):
+    ///     jsonFileTypeKey - Required and checked to be equal to expectedFileType
+    ///     jsonVersionKey - Required and checked to be below supportedMajorVersion, supportedMinorVersion
+    ///     jsonGroundStationKey - Required and checked to be string type
+    /// @return false: validation failed, errorString set
+    static bool validateInternalQGCJsonFile(const QJsonObject&  jsonObject,             ///< json object to validate
+                                            const QString&      expectedFileType,       ///< correct file type for file
+                                            int                 minSupportedVersion,    ///< minimum supported version
+                                            int                 maxSupportedVersion,    ///< maximum supported major version
+                                            int                 &version,               ///< returned file version
+                                            QString&            errorString);           ///< returned error string if validation fails
+
+    // Opens, validates and translates an internal QGC json file.
+    // @return Json root object for file. Empty QJsonObject if error.
+    static QJsonObject openInternalQGCJsonFile(const QString& jsonFilename,             ///< Json file to open
+                                               const QString&      expectedFileType,    ///< correct file type for file
+                                               int                 minSupportedVersion, ///< minimum supported version
+                                               int                 maxSupportedVersion, ///< maximum supported major version
+                                               int                 &version,            ///< returned file version
+                                               QString&            errorString);        ///< returned error string if validation fails
 
     /// Validates that the specified keys are in the object
     /// @return false: validation failed, errorString set
@@ -149,9 +172,13 @@ private:
                                    QJsonValue&              jsonValue,
                                    bool                     geoJsonFormat);
     static bool _parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName);
+    static QStringList _addDefaultLocKeys(QJsonObject& jsonObject);
+    static QJsonObject _translateRoot(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys);
+    static QJsonObject _translateObject(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys);
+    static QJsonArray _translateArray(QJsonArray& jsonArray, const QString& translateContext, const QStringList& translateKeys);
 
     static const char*  _enumStringsJsonKey;
     static const char*  _enumValuesJsonKey;
+    static const char*  _translateKeysKey;
+    static const char*  _arrayIDKeysKey;
 };
-
-#endif

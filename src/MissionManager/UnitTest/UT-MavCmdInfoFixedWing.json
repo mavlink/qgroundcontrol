@@ -1,7 +1,7 @@
 {
-    "comment":  "Any Firmware, Fixed Wing (unit test)",
-
-    "version": 1,
+    "comment":      "Any Firmware, Fixed Wing (unit test)",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
         {

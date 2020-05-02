@@ -312,17 +312,17 @@ QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
 {
     switch (vehicleType) {
     case MAV_TYPE_GENERIC:
-        return QStringLiteral(":/json/PX4/MavCmdInfoCommon.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoCommon.json");
     case MAV_TYPE_FIXED_WING:
-        return QStringLiteral(":/json/PX4/MavCmdInfoFixedWing.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoFixedWing.json");
     case MAV_TYPE_QUADROTOR:
-        return QStringLiteral(":/json/PX4/MavCmdInfoMultiRotor.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoMultiRotor.json");
     case MAV_TYPE_VTOL_QUADROTOR:
-        return QStringLiteral(":/json/PX4/MavCmdInfoVTOL.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoVTOL.json");
     case MAV_TYPE_SUBMARINE:
-        return QStringLiteral(":/json/PX4/MavCmdInfoSub.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoSub.json");
     case MAV_TYPE_GROUND_ROVER:
-        return QStringLiteral(":/json/PX4/MavCmdInfoRover.json");
+        return QStringLiteral(":/json/PX4-MavCmdInfoRover.json");
     default:
         qWarning() << "PX4FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
         return QString();
