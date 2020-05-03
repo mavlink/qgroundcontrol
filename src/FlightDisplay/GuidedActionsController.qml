@@ -190,12 +190,18 @@ Item {
             console.log("showStartMission", showStartMission)
         }
         _outputState()
+        if (showStartMission) {
+            confirmAction(actionStartMission)
+        }
     }
     onShowContinueMissionChanged: {
         if (_corePlugin.guidedActionsControllerLogging()) {
             console.log("showContinueMission", showContinueMission)
         }
         _outputState()
+        if (showContinueMission) {
+            confirmAction(actionContinueMission)
+        }
     }
     onShowRTLChanged: {
         if (_corePlugin.guidedActionsControllerLogging()) {
@@ -208,6 +214,11 @@ Item {
             console.log("showChangeAlt", showChangeAlt)
         }
         _outputState()
+    }
+    onShowLandAbortChanged: {
+        if (showLandAbort) {
+            confirmAction(actionLandAbort)
+        }
     }
 
     on_VehicleFlyingChanged: {
@@ -226,6 +237,12 @@ Item {
         _vehicleInRTLMode =     activeVehicle ? _flightMode === activeVehicle.rtlFlightMode || _flightMode === activeVehicle.smartRTLFlightMode : false
         _vehicleInLandMode =    activeVehicle ? _flightMode === activeVehicle.landFlightMode : false
         _vehicleInMissionMode = activeVehicle ? _flightMode === activeVehicle.missionFlightMode : false // Must be last to get correct signalling for showStartMission popups
+    }
+
+    function closeAll() {
+        confirmDialog.visible =     false
+        actionList.visible =        false
+        altitudeSlider.visible =    false
     }
 
     // Called when an action is about to be executed in order to confirm

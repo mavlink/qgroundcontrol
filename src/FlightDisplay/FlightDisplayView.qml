@@ -39,7 +39,6 @@ Item {
         }
     }
 
-    property alias  guidedController:              guidedActionsController
     property bool   activeVehicleJoystickEnabled:  activeVehicle ? activeVehicle.joystickEnabled : false
     property bool   mainIsMap:                     QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   isBackgroundDark:              mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
@@ -54,17 +53,12 @@ Item {
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
     property alias  _guidedController:              guidedActionsController
-    property alias  _altitudeSlider:                altitudeSlider
+    property alias  _guidedConfirm:                 guidedActionConfirm
+    property alias  _guidedList:                    guidedActionList
+    property alias  _guidedSlider:                  altitudeSlider
+    property real   _guidedZOrder:                  _flightVideoPipControl.z + 1
     property real   _toolsMargin:                   ScreenTools.defaultFontPixelWidth * 0.75
 
-    readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
-    readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    readonly property real      _defaultRoll:           0
-    readonly property real      _defaultPitch:          0
-    readonly property real      _defaultHeading:        0
-    readonly property real      _defaultAltitudeAMSL:   0
-    readonly property real      _defaultGroundSpeed:    0
-    readonly property real      _defaultAirSpeed:       0
     readonly property string    _mapName:               "FlightDisplayView"
     readonly property string    _showMapBackgroundKey:  "/showMapBackground"
     readonly property string    _mainIsMapKey:          "MainFlyWindowIsMap"
@@ -129,16 +123,16 @@ Item {
 
     Connections {
         target:                 mainWindow
-        onArmVehicle:           guidedController.confirmAction(guidedController.actionArm)
+        onArmVehicle:           _guidedController.confirmAction(_guidedController.actionArm)
         onDisarmVehicle: {
-            if (guidedController.showEmergenyStop) {
-                guidedController.confirmAction(guidedController.actionEmergencyStop)
+            if (_guidedController.showEmergenyStop) {
+                _guidedController.confirmAction(_guidedController.actionEmergencyStop)
             } else {
-                guidedController.confirmAction(guidedController.actionDisarm)
+                _guidedController.confirmAction(_guidedController.actionDisarm)
             }
         }
-        onVtolTransitionToFwdFlight:    guidedController.confirmAction(guidedController.actionVtolTransitionToFwdFlight)
-        onVtolTransitionToMRFlight:     guidedController.confirmAction(guidedController.actionVtolTransitionToMRFlight)
+        onVtolTransitionToFwdFlight:    _guidedController.confirmAction(_guidedController.actionVtolTransitionToFwdFlight)
+        onVtolTransitionToMRFlight:     _guidedController.confirmAction(_guidedController.actionVtolTransitionToMRFlight)
         onFlightDisplayMapChanged:      setStates()
     }
 
@@ -241,7 +235,7 @@ Item {
                             text:               qsTr("Resume Mission From Waypoint %1").arg(_guidedController._resumeMissionIndex)
 
                             onClicked: {
-                                guidedController.executeAction(_guidedController.actionResumeMission, null, null)
+                                _guidedController.executeAction(_guidedController.actionResumeMission, null, null)
                                 hideDialog()
                             }
                         }
@@ -559,141 +553,28 @@ Item {
             property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
         }
 
-        ToolStrip {
-            visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
-            id:                 toolStrip
-
-            anchors.leftMargin: isInstrumentRight() ? _toolsMargin : undefined
-            anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
-            anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
-            anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  _toolsMargin
-            anchors.top:        parent.top
-            z:                  _mapAndVideo.z + 4
-            maxHeight:          parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
-            title:              qsTr("Fly")
-
-            property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
-            property var _actionModel: [
-                {
-                    title:      _guidedController.startMissionTitle,
-                    text:       _guidedController.startMissionMessage,
-                    action:     _guidedController.actionStartMission,
-                    visible:    _guidedController.showStartMission
-                },
-                {
-                    title:      _guidedController.continueMissionTitle,
-                    text:       _guidedController.continueMissionMessage,
-                    action:     _guidedController.actionContinueMission,
-                    visible:    _guidedController.showContinueMission
-                },
-                {
-                    title:      _guidedController.changeAltTitle,
-                    text:       _guidedController.changeAltMessage,
-                    action:     _guidedController.actionChangeAlt,
-                    visible:    _guidedController.showChangeAlt
-                },
-                {
-                    title:      _guidedController.landAbortTitle,
-                    text:       _guidedController.landAbortMessage,
-                    action:     _guidedController.actionLandAbort,
-                    visible:    _guidedController.showLandAbort
-                }
-            ]
-
-            model: [
-                {
-                    name:               "Checklist",
-                    iconSource:         "/qmlimages/check.svg",
-                    buttonVisible:      _useChecklist,
-                    buttonEnabled:      _useChecklist && activeVehicle && !activeVehicle.armed,
-                },
-                {
-                    name:               _guidedController.takeoffTitle,
-                    iconSource:         "/res/takeoff.svg",
-                    buttonVisible:      _guidedController.showTakeoff || !_guidedController.showLand,
-                    buttonEnabled:      _guidedController.showTakeoff,
-                    action:             _guidedController.actionTakeoff
-                },
-                {
-                    name:               _guidedController.landTitle,
-                    iconSource:         "/res/land.svg",
-                    buttonVisible:      _guidedController.showLand && !_guidedController.showTakeoff,
-                    buttonEnabled:      _guidedController.showLand,
-                    action:             _guidedController.actionLand
-                },
-                {
-                    name:               _guidedController.rtlTitle,
-                    iconSource:         "/res/rtl.svg",
-                    buttonVisible:      true,
-                    buttonEnabled:      _guidedController.showRTL,
-                    action:             _guidedController.actionRTL
-                },
-                {
-                    name:               _guidedController.pauseTitle,
-                    iconSource:         "/res/pause-mission.svg",
-                    buttonVisible:      _guidedController.showPause,
-                    buttonEnabled:      _guidedController.showPause,
-                    action:             _guidedController.actionPause
-                },
-                {
-                    name:               qsTr("Action"),
-                    iconSource:         "/res/action.svg",
-                    buttonVisible:      _anyActionAvailable,
-                    buttonEnabled:      true,
-                    action:             -1
-                }
-            ]
-
-            onClicked: {
-                if(index === 0) {
-                    checklistDropPanel.open()
-                } else {
-                    guidedActionsController.closeAll()
-                    var action = model[index].action
-                    if (action === -1) {
-                        guidedActionList.model   = _actionModel
-                        guidedActionList.visible = true
-                    } else {
-                        _guidedController.confirmAction(action)
-                    }
-                }
-
-            }
+        FlyViewToolStrip {
+            id:                         toolStrip
+            anchors.leftMargin:         isInstrumentRight() ? _toolsMargin : undefined
+            anchors.left:               isInstrumentRight() ? _mapAndVideo.left : undefined
+            anchors.rightMargin:        isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
+            anchors.right:              isInstrumentRight() ? undefined : _mapAndVideo.right
+            anchors.topMargin:          _toolsMargin
+            anchors.top:                parent.top
+            z:                          _mapAndVideo.z + 4
+            maxHeight:                  parent.height - toolStrip.y + (_flightVideo.visible ? (_flightVideo.y - parent.height) : 0)
+            guidedActionsController:    _guidedController
+            guidedActionList:           _guidedList
+            preFlightCheckList:         checklistDropPanel
+            visible:                    (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
         }
 
         GuidedActionsController {
             id:                 guidedActionsController
             missionController:  _missionController
-            confirmDialog:      guidedActionConfirm
-            actionList:         guidedActionList
-            altitudeSlider:     _altitudeSlider
-            z:                  _flightVideoPipControl.z + 1
-
-            onShowStartMissionChanged: {
-                if (showStartMission) {
-                    confirmAction(actionStartMission)
-                }
-            }
-
-            onShowContinueMissionChanged: {
-                if (showContinueMission) {
-                    confirmAction(actionContinueMission)
-                }
-            }
-
-            onShowLandAbortChanged: {
-                if (showLandAbort) {
-                    confirmAction(actionLandAbort)
-                }
-            }
-
-            /// Close all dialogs
-            function closeAll() {
-                guidedActionConfirm.visible = false
-                guidedActionList.visible    = false
-                altitudeSlider.visible      = false
-            }
+            confirmDialog:      _guidedConfirm
+            actionList:         _guidedList
+            altitudeSlider:     _guidedSlider
         }
 
         GuidedActionConfirm {
@@ -701,8 +582,9 @@ Item {
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
+            z:                          _guidedZOrder
             guidedController:           _guidedController
-            altitudeSlider:             _altitudeSlider
+            altitudeSlider:             _guidedSlider
         }
 
         GuidedActionList {
@@ -710,6 +592,7 @@ Item {
             anchors.margins:            _margins
             anchors.bottom:             parent.bottom
             anchors.horizontalCenter:   parent.horizontalCenter
+            z:                          _guidedZOrder
             guidedController:           _guidedController
         }
 
@@ -721,7 +604,7 @@ Item {
             anchors.topMargin:  ScreenTools.toolbarHeight + _margins
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            z:                  _guidedController.z
+            z:                  _guidedZOrder
             radius:             ScreenTools.defaultFontPixelWidth / 2
             width:              ScreenTools.defaultFontPixelWidth * 10
             color:              qgcPal.window
