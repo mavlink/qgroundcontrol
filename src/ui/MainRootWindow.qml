@@ -32,7 +32,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         //-- Full screen on mobile or tiny screens
-        if(ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120) {
+        if (ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120) {
             mainWindow.showFullScreen()
         } else {
             width   = ScreenTools.isMobile ? Screen.width  : Math.min(250 * Screen.pixelDensity, Screen.width)
@@ -40,8 +40,10 @@ ApplicationWindow {
         }
 
         // Startup experience wizard and provide the source using QGCCorePlugin
-        if(QGroundControl.settingsManager.appSettings.firstTimeStart.value) {
+        if (QGroundControl.settingsManager.appSettings.firstTimeStart.value) {
             startupPopup.open()
+        } else {
+            showPreFlightChecklistIfNeeded()
         }
     }
 
@@ -78,10 +80,11 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Actions
 
-    signal armVehicle
-    signal disarmVehicle
-    signal vtolTransitionToFwdFlight
-    signal vtolTransitionToMRFlight
+    signal armVehicleRequest
+    signal disarmVehicleRequest
+    signal vtolTransitionToFwdFlightRequest
+    signal vtolTransitionToMRFlightRequest
+    signal showPreFlightChecklistIfNeeded
 
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
@@ -120,9 +123,8 @@ ApplicationWindow {
 
     function showFlyView() {
         if (!flightView.visible) {
-            flightView.showPreflightChecklistIfNeeded()
+            mainWindow.showPreFlightChecklistIfNeeded()
         }
-
         viewSwitch(false)
         flightView.visible = true
     }
@@ -694,32 +696,32 @@ ApplicationWindow {
 
     //-- Startup PopUp wizard
     Popup {
-        id:             startupPopup
-        anchors.centerIn: parent
+        id:                 startupPopup
+        anchors.centerIn:   parent
+        width:              Math.min(startupWizard.implicitWidth, mainWindow.width - 2 * startupPopup._horizontalSpacing)
+        height:             Math.min(startupWizard.implicitHeight, mainWindow.availableHeight - 2 * startupPopup._verticalSpacing)
+        modal:              true
+        focus:              true
+        closePolicy:        (startupWizard && startupWizard.forceKeepingOpen !== undefined && startupWizard.forceKeepingOpen) ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-        width:          Math.min(startupWizard.implicitWidth, mainWindow.width - 2 * startupPopup._horizontalSpacing)
-        height:         Math.min(startupWizard.implicitHeight, mainWindow.availableHeight - 2 * startupPopup._verticalSpacing)
+        onClosed: mainWindow.showPreFlightChecklistIfNeeded()
 
         property real _horizontalSpacing: ScreenTools.defaultFontPixelWidth * 5
         property real _verticalSpacing: ScreenTools.defaultFontPixelHeight * 2
 
-        modal:          true
-        focus:          true
-        closePolicy:    (startupWizard && startupWizard.forceKeepingOpen !== undefined && startupWizard.forceKeepingOpen) ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
         Connections {
-            target: startupWizard
-            onCloseView: startupPopup.close()
+            target:         startupWizard
+            onCloseView:    startupPopup.close()
         }
 
         background: Rectangle {
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color: qgcPal.window
+            color:  qgcPal.window
         }
 
         StartupWizard {
-            id: startupWizard
-            anchors.fill: parent
+            id:             startupWizard
+            anchors.fill:   parent
         }
     }
 }
