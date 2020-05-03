@@ -28,6 +28,7 @@
 #include <QFontDatabase>
 #include <QQuickWindow>
 #include <QQuickImageProvider>
+#include <QQuickStyle>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -218,6 +219,11 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                 }
             }
             permFile.close();
+        }
+
+        // Set default QtQuick style if not configured
+        if (QString(getenv("QT_QUICK_CONTROLS_STYLE")).isEmpty()) {
+            QQuickStyle::setStyle("Universal");
         }
     }
 #endif
