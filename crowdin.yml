@@ -1,0 +1,3 @@
+files:
+  - source: /translations/qgc.ts
+    translation: /translations/qgc_%locale_with_underscore%.ts
