@@ -239,6 +239,40 @@ Item {
         _vehicleInMissionMode = activeVehicle ? _flightMode === activeVehicle.missionFlightMode : false // Must be last to get correct signalling for showStartMission popups
     }
 
+    Connections {
+        target:                     missionController
+        onResumeMissionUploadFail:  confirmAction(actionResumeMissionUploadFail)
+    }
+
+    Connections {
+        target:                             mainWindow
+        onArmVehicleRequest:                armVehicleRequest()
+        onDisarmVehicleRequest:             disarmVehicleRequest()
+        onVtolTransitionToFwdFlightRequest: vtolTransitionToFwdFlightRequest()
+        onVtolTransitionToMRFlightRequest:  vtolTransitionToMRFlightRequest()
+    }
+
+    function armVehicleRequest() {
+        confirmAction(actionArm)
+    }
+
+    function disarmVehicleRequest() {
+        if (showEmergenyStop) {
+            confirmAction(actionEmergencyStop)
+        } else {
+            confirmAction(actionDisarm)
+        }
+
+    }
+
+    function vtolTransitionToFwdFlightRequest() {
+        confirmAction(actionVtolTransitionToFwdFlight)
+    }
+
+    function vtolTransitionToMRFlightRequest() {
+        confirmAction(actionVtolTransitionToMRFlight)
+    }
+
     function closeAll() {
         confirmDialog.visible =     false
         actionList.visible =        false

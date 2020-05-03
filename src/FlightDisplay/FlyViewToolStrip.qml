@@ -13,9 +13,11 @@ import QGroundControl.Controls  1.0
 ToolStrip {
     title: qsTr("Fly")
 
-    property var guidedActionsController
-    property var guidedActionList
-    property var preFlightCheckList
+    property var  guidedActionsController
+    property var  guidedActionList
+    property bool usePreFlightChecklist
+
+    signal displayPreFlightChecklist
 
     property bool _anyActionAvailable: guidedActionsController.showStartMission || guidedActionsController.showResumeMission || guidedActionsController.showChangeAlt || guidedActionsController.showLandAbort
     property var _actionModel: [
@@ -49,8 +51,8 @@ ToolStrip {
         {
             name:               "Checklist",
             iconSource:         "/qmlimages/check.svg",
-            buttonVisible:      _useChecklist,
-            buttonEnabled:      _useChecklist && activeVehicle && !activeVehicle.armed,
+            buttonVisible:      usePreFlightChecklist,
+            buttonEnabled:      usePreFlightChecklist && activeVehicle && !activeVehicle.armed,
         },
         {
             name:               guidedActionsController.takeoffTitle,
@@ -91,7 +93,7 @@ ToolStrip {
 
     onClicked: {
         if(index === 0) {
-            preFlightCheckList.open()
+            displayPreFlightChecklist()
         } else {
             guidedActionsController.closeAll()
             var action = model[index].action
