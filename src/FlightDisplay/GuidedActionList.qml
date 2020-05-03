@@ -24,7 +24,6 @@ Rectangle {
     radius:     _margins / 2
     color:      qgcPal.window
     opacity:    0.9
-    z:          guidedController.z
     visible:    false
 
     property var    guidedController
