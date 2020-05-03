@@ -20,10 +20,10 @@ import QGroundControl.FlightMap 1.0
 Item {
     id: _root
 
-    property var    map                 ///< Map control to show items on
-    property bool   largeMapView        ///< true: map takes up entire view, false: map is in small window
-    property var    masterController    ///< Reference to PlanMasterController for vehicle
-    property var    vehicle             ///< Vehicle associated with these items
+    property var    map                     ///< Map control to show items on
+    property bool   largeMapView            ///< true: map takes up entire view, false: map is in small window
+    property var    planMasterController    ///< Reference to PlanMasterController for vehicle
+    property var    vehicle                 ///< Vehicle associated with these items
 
     property var    _map:                       map
     property var    _vehicle:                   vehicle

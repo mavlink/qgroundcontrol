@@ -39,13 +39,13 @@ FlightMap {
     property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
-    property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
-    property var    missionController:          null
+    property var    planMasterController
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
-    property var    _geoFenceController:        missionController.geoFenceController
-    property var    _rallyPointController:      missionController.rallyPointController
+    property var    _planMasterController:      planMasterController
+    property var    _geoFenceController:        planMasterController.geoFenceController
+    property var    _rallyPointController:      planMasterController.rallyPointController
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
@@ -200,10 +200,10 @@ FlightMap {
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
-        target:                 missionController
+        target:                 _missionController
         ignoreUnknownSignals:   true
         onNewItemsFromVehicle: {
-            var visualItems = missionController.visualItems
+            var visualItems = _missionController.visualItems
             if (visualItems && visualItems.count !== 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
                 firstVehiclePositionReceived = true
@@ -215,7 +215,7 @@ FlightMap {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        mainWindow.flightDisplayMap
         usePlannedHomePosition:     false
-        planMasterController:       missionController
+        planMasterController:       _planMasterController
         property real leftToolWidth: toolStrip.x + toolStrip.width
     }
 
@@ -271,10 +271,10 @@ FlightMap {
         model: QGroundControl.multiVehicleManager.vehicles
 
         PlanMapItems {
-            map:                flightMap
-            largeMapView:       mainIsMap
-            masterController:   masterController
-            vehicle:            _vehicle
+            map:                    flightMap
+            largeMapView:           mainIsMap
+            planMasterController:   _planMasterController
+            vehicle:                _vehicle
 
             property var _vehicle: object
 
