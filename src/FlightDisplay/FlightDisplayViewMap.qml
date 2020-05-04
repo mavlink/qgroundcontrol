@@ -33,15 +33,13 @@ FlightMap {
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
-    property alias  scaleState: mapScale.state
-
-    // The following properties must be set by the consumer
     property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
     property var    planMasterController
-
+    property alias  scaleState:                 mapScale.state
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
+    property bool   mainWindowIsMap:            true
 
     property var    _planMasterController:      planMasterController
     property var    _geoFenceController:        planMasterController.geoFenceController
@@ -53,7 +51,7 @@ FlightMap {
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
     property bool   _disableVehicleTracking:    false
-    property bool   _keepVehicleCentered:       mainIsMap ? false : true
+    property bool   _keepVehicleCentered:       mainWindowIsMap ? false : true
     property bool   _pipping:                   false
 
     function updateAirspace(reset) {
@@ -81,7 +79,7 @@ FlightMap {
     }
 
     function adjustMapSize() {
-        if(mainIsMap)
+        if(mainWindowIsMap)
             pipOut()
         else
             pipIn()
@@ -213,7 +211,7 @@ FlightMap {
 
     MapFitFunctions {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
-        map:                        mainWindow.flightDisplayMap
+        map:                        flightMap
         usePlannedHomePosition:     false
         planMasterController:       _planMasterController
         property real leftToolWidth: toolStrip.x + toolStrip.width
@@ -225,7 +223,7 @@ FlightMap {
         line.width: 3
         line.color: "red"
         z:          QGroundControl.zOrderTrajectoryLines
-        visible:    mainIsMap
+        visible:    mainWindowIsMap
 
         Connections {
             target:                 QGroundControl.multiVehicleManager
@@ -247,7 +245,7 @@ FlightMap {
             vehicle:        object
             coordinate:     object.coordinate
             map:            flightMap
-            size:           mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
+            size:           mainWindowIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -272,7 +270,7 @@ FlightMap {
 
         PlanMapItems {
             map:                    flightMap
-            largeMapView:           mainIsMap
+            largeMapView:           mainWindowIsMap
             planMasterController:   _planMasterController
             vehicle:                _vehicle
 
@@ -286,7 +284,7 @@ FlightMap {
     }
 
     MapItemView {
-        model: mainIsMap ? _missionController.directionArrows : undefined
+        model: mainWindowIsMap ? _missionController.directionArrows : undefined
 
         delegate: MapLineArrow {
             fromCoord:      object ? object.coordinate1 : undefined
@@ -299,7 +297,7 @@ FlightMap {
     // Allow custom builds to add map items
     CustomMapItems {
         map:            flightMap
-        largeMapView:   mainIsMap
+        largeMapView:   mainWindowIsMap
     }
 
     GeoFenceMapVisuals {
@@ -556,7 +554,7 @@ FlightMap {
         anchors.topMargin:      _toolsMargin + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
         mapControl:             flightMap
         buttonsOnLeft:          false
-        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale && mainIsMap
+        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale && mainWindowIsMap
         state:                  "bottomMode"
         states: [
             State {

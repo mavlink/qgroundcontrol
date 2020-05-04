@@ -33,14 +33,11 @@ Item {
     property var    missionController
     property bool   showValues:             !QGroundControl.airspaceManager.airspaceVisible
 
-    property bool   _isSatellite:           mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
-    property bool   _lightWidgetBorders:    _isSatellite
+    property bool   _lightWidgetBorders:    true
     property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
     readonly property bool _useAlternateInstrumentPanel:        QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.value
-
-    QGCMapPalette { id: mapPal; lightColors: useLightColors }
 
     function getPreferredInstrumentWidth() {
         // Don't allow instrument panel to chew more than 1/4 of full window
