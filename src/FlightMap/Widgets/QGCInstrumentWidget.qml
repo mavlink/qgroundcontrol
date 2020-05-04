@@ -43,7 +43,7 @@ ColumnLayout {
         radius:             _outerRadius
         color:              qgcPal.window
         border.width:       1
-        border.color:       _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
+        border.color:       qgcPal.mapWidgetBorderLight
 
         DeadMouseArea { anchors.fill: parent }
 
