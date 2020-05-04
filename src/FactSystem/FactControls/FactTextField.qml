@@ -45,6 +45,7 @@ QGCTextField {
             validate:       true
             validateValue:  _validateString
             fact:           _textField.fact
+            validator:      _textField.validator
         }
     }
 
@@ -52,6 +53,7 @@ QGCTextField {
         id: helpDialogComponent
         ParameterEditorDialog {
             fact: _textField.fact
+            validator:      _textField.validator
         }
     }
 }

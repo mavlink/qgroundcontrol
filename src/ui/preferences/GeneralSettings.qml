@@ -1003,6 +1003,7 @@ Rectangle {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.rtspUrl
                                 visible:                _isRTSP && QGroundControl.settingsManager.videoSettings.rtspUrl.visible
+                                validator:              RegExpValidator { regExp: /^(?:rtsp?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/ }
                             }
 
                             QGCLabel {

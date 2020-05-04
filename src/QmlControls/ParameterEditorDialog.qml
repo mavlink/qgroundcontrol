@@ -29,6 +29,7 @@ QGCViewDialog {
     property bool   validate:       false
     property string validateValue
     property bool   setFocus:       true    ///< true: focus is set to text field on display, false: focus not set (works around strange virtual keyboard bug with FactValueSlider
+    property alias  validator:      valueField.validator
 
     signal valueChanged
 
