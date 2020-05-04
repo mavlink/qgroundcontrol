@@ -50,6 +50,7 @@ QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
 QGCComboBox             1.0 QGCComboBox.qml
+QGCControlDebug         1.0 QGCControlDebug.qml
 QGCDynamicObjectManager 1.0 QGCDynamicObjectManager.qml
 QGCFileDialog           1.0 QGCFileDialog.qml
 QGCFlickable            1.0 QGCFlickable.qml
@@ -66,7 +67,8 @@ QGCMenuSeparator        1.0 QGCMenuSeparator.qml
 QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCOptionsComboBox      1.0 QGCOptionsComboBox.qml
-QGCPipable              1.0 QGCPipable.qml
+QGCPipOverlay           1.0 QGCPipOverlay.qml
+QGCPipState             1.0 QGCPipState.qml
 QGCPopupDialog          1.0 QGCPopupDialog.qml
 QGCPopupDialogContainer 1.0 QGCPopupDialogContainer.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
