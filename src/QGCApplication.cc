@@ -321,7 +321,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Gstreamer debug settings
 #if defined(__ios__) || defined(__android__)
     // Initialize Video Streaming
-    initializeVideoStreaming(argc, argv, nullptr, nullptr);
+    initializeVideoStreaming(argc, argv, 0);
 #else
     QString savePath, gstDebugLevel;
     if (settings.contains(AppSettings::savePathName)) {
@@ -338,7 +338,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         gstDebugLevel = "*:" + settings.value(AppSettings::gstDebugLevelName).toString();
     }
     // Initialize Video Streaming
-    initializeVideoStreaming(argc, argv, savePath.toUtf8().data(), gstDebugLevel.toUtf8().data());
+    initializeVideoStreaming(argc, argv, 0);
 #endif
 
     _toolbox = new QGCToolbox(this);

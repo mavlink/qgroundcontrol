@@ -243,9 +243,9 @@ CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& 
         }
     } else if (settingsGroup == VideoSettings::settingsGroup) {
         //-- Set default to show video on second screen
-        if (metaData.name() == VideoSettings::showVideoOnSecondScreenName) {
-            metaData.setRawDefaultValue(true);
-        }
+        //if (metaData.name() == VideoSettings::showVideoOnSecondScreenName) {
+        //    metaData.setRawDefaultValue(true);
+        //}
     }
     return parentResult;
 }

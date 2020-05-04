@@ -15,7 +15,7 @@ LinuxBuild {
     QT += x11extras waylandclient
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
-        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0 gstreamer-gl-1.0
+        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0 gstreamer-gl-1.0 egl
         CONFIG      += VideoEnabled
     }
 } else:MacBuild {
@@ -87,10 +87,13 @@ LinuxBuild {
             -lgstsdpelem \
             -lgstvideoparsersbad \
             -lgstrtpmanager \
+            -lgstmpegtsdemux \
             -lgstisomp4 \
             -lgstmatroska \
+            -lgstmpegtsdemux \
             -lgstandroidmedia \
-            -lgstopengl
+            -lgstopengl \
+            -lgsttcp
 
         # Rest of GStreamer dependencies
         LIBS += -L$$GST_ROOT/lib \
@@ -102,7 +105,7 @@ LinuxBuild {
             -lgstreamer-1.0 -lgstrtp-1.0 -lgstpbutils-1.0 -lgstrtsp-1.0 -lgsttag-1.0 \
             -lgstvideo-1.0 -lavformat -lavcodec -lavutil -lx264 -lavfilter -lswresample \
             -lgstriff-1.0 -lgstcontroller-1.0 -lgstapp-1.0 \
-            -lgstsdp-1.0 -lbz2 -lgobject-2.0 \
+            -lgstsdp-1.0 -lbz2 -lgobject-2.0 -lgstmpegts-1.0 \
             -Wl,--export-dynamic -lgmodule-2.0 -pthread -lglib-2.0 -lorc-0.4 -liconv -lffi -lintl \
 
         INCLUDEPATH += \
@@ -127,6 +130,10 @@ VideoEnabled {
             $$PWD/iOS
     }
 
+    SOURCES += \
+        $$PWD/gstqgcvideosinkbin.c \
+        $$PWD/gstqgc.c
+
     include($$PWD/../../qmlglsink.pri)
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
@@ -135,10 +142,4 @@ VideoEnabled {
     } else {
         message("Skipping support for video streaming (Unsupported platform)")
     }
-
-    SOURCES += \
-        $$PWD/GLVideoItemStub.cc
-
-    HEADERS += \
-        $$PWD/GLVideoItemStub.h
 }

@@ -113,16 +113,16 @@
 },
 {
     "name":             "disableWhenDisarmed",
-    "shortDescription": "Video Stream Disabled When Armed",
+    "shortDescription": "Video Stream Disnabled When Armed",
     "longDescription":  "Disable Video Stream when disarmed.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "showVideoOnSecondScreen",
-    "shortDescription": "Show Video On Second Screen",
-    "longDescription":  "Show Video On Second Screen (if available)",
+    "name":             "lowLatencyMode",
+    "shortDescription": "Tweaks video for lower latency",
+    "longDescription":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 }
 ]

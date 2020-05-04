@@ -17,25 +17,57 @@
 #include <QtQml>
 #include <QDebug>
 
+#include "VideoReceiver.h"
+
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
-#if defined(__android__)
-#include <android/log.h>
 
-static void gst_android_log(GstDebugCategory * category,
-                            GstDebugLevel      level,
-                            const gchar      * file,
-                            const gchar      * function,
-                            gint               line,
-                            GObject          * object,
-                            GstDebugMessage  * message,
-                            gpointer           data)
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(GstreamerLog, "GstreamerLog")
+
+static void qt_gst_log(GstDebugCategory * category,
+                       GstDebugLevel      level,
+                       const gchar      * file,
+                       const gchar      * function,
+                       gint               line,
+                       GObject          * object,
+                       GstDebugMessage  * message,
+                       gpointer           data)
 {
-    if (level <= gst_debug_category_get_threshold (category)) {
-        __android_log_print(ANDROID_LOG_ERROR, "GST", "%s, %s: %s", file, function, gst_debug_message_get(message));
+    if (level > gst_debug_category_get_threshold(category)) {
+        return;
     }
+
+    QMessageLogger log(file, line, function);
+
+    char* object_info = gst_info_strdup_printf("%" GST_PTR_FORMAT, static_cast<void*>(object));
+
+    switch (level) {
+    default:
+    case GST_LEVEL_ERROR:
+        log.critical(GstreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        break;
+    case GST_LEVEL_WARNING:
+        log.warning(GstreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        break;
+    case GST_LEVEL_FIXME:
+    case GST_LEVEL_INFO:
+        log.info(GstreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        break;
+    case GST_LEVEL_DEBUG:
+    case GST_LEVEL_LOG:
+    case GST_LEVEL_TRACE:
+    case GST_LEVEL_MEMDUMP:
+        log.debug(GstreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        break;
+    }
+
+    g_free(object_info);
+    object_info = nullptr;
 }
-#elif defined(__ios__)
+
+#if defined(__ios__)
 #include "gst_ios_init.h"
 #endif
 #else
@@ -59,7 +91,9 @@ static void gst_android_log(GstDebugCategory * category,
     GST_PLUGIN_STATIC_DECLARE(rtpmanager);
     GST_PLUGIN_STATIC_DECLARE(isomp4);
     GST_PLUGIN_STATIC_DECLARE(matroska);
+    GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
     GST_PLUGIN_STATIC_DECLARE(opengl);
+    GST_PLUGIN_STATIC_DECLARE(tcp);
 #if defined(__android__)
     GST_PLUGIN_STATIC_DECLARE(androidmedia);
 #elif defined(__ios__)
@@ -67,6 +101,7 @@ static void gst_android_log(GstDebugCategory * category,
 #endif
 #endif
     GST_PLUGIN_STATIC_DECLARE(qmlgl);
+    GST_PLUGIN_STATIC_DECLARE(qgc);
     G_END_DECLS
 #endif
 
@@ -99,7 +134,7 @@ blacklist()
     }
 }
 
-void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debuglevel)
+void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
 {
 #if defined(QGC_GST_STREAMING)
     #ifdef Q_OS_MAC
@@ -118,29 +153,22 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
 
-    //-- Generic initialization
-    if (qgetenv("GST_DEBUG").isEmpty() && logpath) {
-        QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
-        qDebug() << "GStreamer debug output:" << gstDebugFile;
-        if (debuglevel) {
-            qputenv("GST_DEBUG", debuglevel);
-        }
-        qputenv("GST_DEBUG_NO_COLOR", "1");
-        qputenv("GST_DEBUG_FILE", gstDebugFile.toUtf8());
-        qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
+    //-- If gstreamer debugging is not configured via environment then use internal QT logging
+    if (qgetenv("GST_DEBUG").isEmpty()) {
+        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(gstDebuglevel));
+        gst_debug_remove_log_function(gst_debug_log_default);
+        gst_debug_add_log_function(qt_gst_log, nullptr, nullptr);
     }
 
     // Initialize GStreamer
-#if defined(__android__)
-    gst_debug_add_log_function(gst_android_log, nullptr, nullptr);
-#elif defined(__ios__)
+#if defined(__ios__)
     //-- iOS specific initialization
     gst_ios_pre_init();
 #endif
 
     GError* error = nullptr;
     if (!gst_init_check(&argc, &argv, &error)) {
-        qCritical() << "gst_init_check() failed: " << error->message;
+        qCCritical(VideoReceiverLog) << "gst_init_check() failed: " << error->message;
         g_error_free(error);
     }
 
@@ -157,7 +185,9 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     GST_PLUGIN_STATIC_REGISTER(rtpmanager);
     GST_PLUGIN_STATIC_REGISTER(isomp4);
     GST_PLUGIN_STATIC_REGISTER(matroska);
+    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
     GST_PLUGIN_STATIC_REGISTER(opengl);
+    GST_PLUGIN_STATIC_REGISTER(tcp);
 
 #if defined(__android__)
     GST_PLUGIN_STATIC_REGISTER(androidmedia);
@@ -187,13 +217,14 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         gst_object_unref(sink);
         sink = nullptr;
     } else {
-        qCritical() << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
+        qCCritical(VideoReceiverLog) << "unable to find qmlglsink - you need to build it yourself and add to GST_PLUGIN_PATH";
     }
+
+    GST_PLUGIN_STATIC_REGISTER(qgc);
 #else
     qmlRegisterType<GLVideoItemStub>("org.freedesktop.gstreamer.GLVideoItem", 1, 0, "GstGLVideoItem");
     Q_UNUSED(argc)
     Q_UNUSED(argv)
-    Q_UNUSED(logpath)
-    Q_UNUSED(debuglevel)
+    Q_UNUSED(gstDebuglevel)
 #endif
 }

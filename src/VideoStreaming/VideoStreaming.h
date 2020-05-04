@@ -16,4 +16,4 @@
 
 #pragma once
 
-extern void initializeVideoStreaming    (int &argc, char *argv[], char* filename, char* debuglevel);
+extern void initializeVideoStreaming    (int &argc, char *argv[], int gstDebuglevel);
