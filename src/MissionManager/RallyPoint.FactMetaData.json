@@ -16,7 +16,7 @@
     "decimalPlaces":    7
 },
 {
-    "name":             "Relative Altitude",
+    "name":             "RelativeAltitude",
     "shortDescription": "Altitude of rally point position (home relative)",
     "type":             "double",
     "decimalPlaces":    2,
