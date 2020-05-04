@@ -65,7 +65,7 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "m",      "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meter",  "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
-    { "alt m",  "ft",       FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
+    { "vertical m",  "ft",  FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "cm/px",  "in/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
     { "m^2",    "km\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
