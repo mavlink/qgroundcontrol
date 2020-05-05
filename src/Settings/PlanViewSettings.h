@@ -25,4 +25,5 @@ public:
     DEFINE_SETTINGFACT(showMissionItemStatus)
     DEFINE_SETTINGFACT(useConditionGate)
     DEFINE_SETTINGFACT(takeoffItemNotRequired)
+    DEFINE_SETTINGFACT(showGimbalWhen)
 };

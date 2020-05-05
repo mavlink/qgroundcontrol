@@ -24,9 +24,18 @@
     "defaultValue":     false
 },
 {
-    "name":                 "useConditionGate",
-    "shortDescription":     "Use MAV_CMD_CONDITION_GATE for pattern generation",
-    "type":                 "bool",
-    "defaultValue":         false
+    "name":             "useConditionGate",
+    "shortDescription": "Use MAV_CMD_CONDITION_GATE for pattern generation",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "showGimbalWhen",
+    "shortDescription": "Show gimbal yaw visual when yaw known/set",
+    "longDescription":  "Shows the gimbal yaw when the it's explcitly set by the user or simply when known (propagated from previous)",
+    "type":             "uint32",
+    "enumValues":       "0,1",
+    "enumStrings":      "Known,Set",
+    "defaultValue":     0
 }
 ]
