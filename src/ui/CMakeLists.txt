@@ -2,9 +2,6 @@ add_subdirectory(preferences)
 add_subdirectory(toolbar)
 
 add_library(ui
-
-	MAVLinkDecoder.cc
-	MAVLinkDecoder.h
 	QGCMapRCToParamDialog.h
 	QGCPluginHost.cc
 	QGCPluginHost.h

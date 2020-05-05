@@ -68,8 +68,10 @@ add_library(MissionManager
 	GeoFenceController.h
 	GeoFenceManager.cc
 	GeoFenceManager.h
-	KML.cc
-	KML.h
+	KMLPlanDomDocument.cc
+	KMLPlanDomDocument.h
+	LandingComplexItem.cc
+	LandingComplexItem.h
 	MissionCommandList.cc
 	MissionCommandList.h
 	MissionCommandTree.cc
@@ -103,12 +105,11 @@ add_library(MissionManager
 	QGCMapPolyline.cc
 	QGCMapPolyline.h
 	RallyPoint.cc
+	RallyPoint.h
 	RallyPointController.cc
 	RallyPointController.h
-	RallyPoint.h
 	RallyPointManager.cc
 	RallyPointManager.h
-	Section.h
 	SimpleMissionItem.cc
 	SimpleMissionItem.h
 	SpeedSection.cc
@@ -127,6 +128,8 @@ add_library(MissionManager
 	TransectStyleComplexItem.h
 	VisualMissionItem.cc
 	VisualMissionItem.h
+	VTOLLandingComplexItem.cc
+	VTOLLandingComplexItem.h
 
 	Section.h # shouldn't be listed here, but isn't named properly for AUTOMOC
 
@@ -134,10 +137,10 @@ add_library(MissionManager
 )
 
 add_custom_Target(MisionManagerQml
-SOURCES
-	QGCMapCircleVisuals.qml  
-	QGCMapPolygonVisuals.qml  
-	QGCMapPolylineVisuals.qml
+	SOURCES
+		QGCMapCircleVisuals.qml  
+		QGCMapPolygonVisuals.qml  
+		QGCMapPolylineVisuals.qml
 )
 
 target_link_libraries(MissionManager
@@ -149,3 +152,4 @@ target_link_libraries(MissionManager
 )
 
 target_include_directories(MissionManager INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
