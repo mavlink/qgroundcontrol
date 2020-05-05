@@ -3,7 +3,7 @@ add_subdirectory(MapItems)
 add_subdirectory(Widgets)
 
 add_library(FlightMap
-	Widgets/ValuesWidgetController.cc
+	#Widgets/ValuesWidgetController.cc
 )
 
 target_link_libraries(FlightMap

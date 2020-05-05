@@ -122,6 +122,7 @@ find_package(Qt5 ${QT_VERSION}
 		Network
 		Positioning
 		Quick
+		QuickControls2
 		QuickWidgets
 		OpenGL
 		Sql
