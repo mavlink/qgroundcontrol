@@ -1464,6 +1464,7 @@ void MissionController::_recalcMissionFlightStatus()
     bool   foundRTL =                   false;
     bool   vehicleYawSpecificallySet =  false;
     double totalHorizontalDistance =    0;
+    bool   showGimbalOnlyWhenSet =      _planViewSettings->showGimbalWhen()->enumStringValue() == "Set";
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem*  item =          qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1511,11 +1512,11 @@ void MissionController::_recalcMissionFlightStatus()
 
         // Look for specific gimbal changes
         double gimbalYaw = item->specifiedGimbalYaw();
-        if (!qIsNaN(gimbalYaw)) {
+        if (!qIsNaN(gimbalYaw) || showGimbalOnlyWhenSet) {
             _missionFlightStatus.gimbalYaw = gimbalYaw;
         }
         double gimbalPitch = item->specifiedGimbalPitch();
-        if (!qIsNaN(gimbalPitch)) {
+        if (!qIsNaN(gimbalPitch) || showGimbalOnlyWhenSet) {
             _missionFlightStatus.gimbalPitch = gimbalPitch;
         }
 
