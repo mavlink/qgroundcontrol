@@ -9,6 +9,7 @@ Note: This file only contains high level features or important fixes.
 * Plan: Added new VTOL Landing Pattern support
 * Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
 * Plan: New Terrain Profile display including terrain collision indications on profile and in patterns (Survey, CorridorScan, etc)
+* Fly: Rearchitect view and controls within for much better customization support in custom builds
 
 ## 4.0
 
