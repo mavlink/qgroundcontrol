@@ -13,7 +13,7 @@ import QGroundControl.Palette           1.0
 Item {
     anchors.fill:   parent
 
-    property var    _planMasterController:      mainWindow.planMasterControllerPlan
+    property var    _planMasterController:      mainWindow.planMasterControllerPlanView
     property var    _currentMissionItem:        mainWindow.currentPlanMissionItem          ///< Mission item to display status for
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined

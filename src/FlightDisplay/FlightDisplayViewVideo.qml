@@ -50,12 +50,6 @@ Item {
             font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
             anchors.centerIn:   parent
         }
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
-            }
-        }
     }
     Rectangle {
         anchors.fill:   parent
@@ -174,13 +168,6 @@ Item {
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
                 opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
-            }
-        }
-        //-- Full screen toggle
-        MouseArea {
-            anchors.fill: parent
-            onDoubleClicked: {
-                QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
         }
         //-- Zoom

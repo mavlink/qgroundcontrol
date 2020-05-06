@@ -20,13 +20,14 @@ Item {
     width:      _pipSize
     height:     _pipSize * (9/16)
     z:          pipZOrder + 1
-    visible:    item2 && item2.pipState !== item2.pipState.window
+    visible:    item2 && item2.pipState !== item2.pipState.window && show
 
     property var    item1:                  null    // Required
     property var    item2:                  null    // Optional, may come and go
     property string item1IsFullSettingsKey          // Settings key to save whether item1 was saved in full mode
     property real   fullZOrder:             0       // zOrder for items in full mode
     property real   pipZOrder:              1       // zOrder for items in pip mode
+    property bool   show:                   true
 
     readonly property string _pipExpandedSettingsKey: "IsPIPVisible"
 
@@ -42,6 +43,12 @@ Item {
     Component.onCompleted: {
         _initForItems()
         _componentComplete = true
+    }
+
+    onShowChanged: {
+        if (_pipOrWindowItem && _pipOrWindowItem.pipState.state !== _pipOrWindowItem.pipState.windowState) {
+            _pipOrWindowItem.visible = show
+        }
     }
 
     onItem2Changed: _initForItems()
@@ -101,6 +108,7 @@ Item {
             item.pipState.windowAboutToClose()
             item.pipState.state = item.pipState.windowClosingState
             item.pipState.state = item.pipState.pipState
+            item.visible = _root.show
         }
     }
 

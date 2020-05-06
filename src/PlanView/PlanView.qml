@@ -182,7 +182,7 @@ Item {
         Component.onCompleted: {
             _planMasterController.start(false /* flyView */)
             _missionController.setCurrentPlanViewSeqNum(0, true)
-            mainWindow.planMasterControllerPlan = _planMasterController
+            mainWindow.planMasterControllerPlanView = _planMasterController
         }
 
         function waitingOnIncompleteDataMessage(save) {

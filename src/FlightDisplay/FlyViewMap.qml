@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
 import QtLocation                   5.3
@@ -25,21 +24,25 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 FlightMap {
-    id:                         flightMap
-    mapName:                    _mapName
-    allowGCSLocationCenter:     !userPanned
+    id:                         _root
+    allowGCSLocationCenter:     true
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
 
+    property Item pipState: _pipState
+    QGCPipState {
+        id:         _pipState
+        pipOverlay: _pipOverlay
+        isDark:     _isFullWindowItemDark
+    }
+
     property var    guidedActionsController
-    property var    flightWidgets
     property var    rightPanelWidth
     property var    planMasterController
-    property alias  scaleState:                 mapScale.state
-    property rect   centerViewport:             Qt.rect(0, 0, width, height)
-    property bool   mainWindowIsMap:            true
+    property bool   pipMode:                    false                           // true: map is shown in a small pip mode
+    property var    toolInsets                                                  // Insets for the center viewport area
 
     property var    _planMasterController:      planMasterController
     property var    _geoFenceController:        planMasterController.geoFenceController
@@ -51,51 +54,42 @@ FlightMap {
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
 
     property bool   _disableVehicleTracking:    false
-    property bool   _keepVehicleCentered:       mainWindowIsMap ? false : true
-    property bool   _pipping:                   false
+    property bool   _keepVehicleCentered:       pipMode ? true : false
+    property bool   _saveZoomLevelSetting:      true
 
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
-            var coordinateNW = flightMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
-            var coordinateSE = flightMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
+            var coordinateNW = _root.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
+            var coordinateSE = _root.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
             if(coordinateNW.isValid && coordinateSE.isValid) {
                 QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, false /*planView*/, reset)
             }
         }
     }
 
-    function pipIn() {
-        if(QGroundControl.flightMapZoom > 3) {
-            _pipping = true;
-            zoomLevel = QGroundControl.flightMapZoom - 3
-            _pipping = false;
+    function _adjustMapZoomForPipMode() {
+        _saveZoomLevelSetting = false
+        if (pipMode) {
+            if (QGroundControl.flightMapZoom > 3) {
+                zoomLevel = QGroundControl.flightMapZoom - 3
+            }
+        } else {
+            zoomLevel = QGroundControl.flightMapZoom
         }
+        _saveZoomLevelSetting = true
     }
 
-    function pipOut() {
-        _pipping = true;
-        zoomLevel = QGroundControl.flightMapZoom
-        _pipping = false;
-    }
-
-    function adjustMapSize() {
-        if(mainWindowIsMap)
-            pipOut()
-        else
-            pipIn()
-    }
-
-    // Track last known map position and zoom from Fly view in settings
+    onPipModeChanged: _adjustMapZoomForPipMode()
 
     onVisibleChanged: {
-        if(visible) {
-            adjustMapSize()
-            center    = QGroundControl.flightMapPosition
+        if (visible) {
+            // Synchronize center position with Plan View
+            center = QGroundControl.flightMapPosition
         }
     }
 
     onZoomLevelChanged: {
-        if(!_pipping) {
+        if (_saveZoomLevelSetting) {
             QGroundControl.flightMapZoom = zoomLevel
             updateAirspace(false)
         }
@@ -105,17 +99,18 @@ FlightMap {
         updateAirspace(false)
     }
 
-    // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
-    onUserPannedChanged: {
-        if (userPanned) {
-            userPanned = false
-            _disableVehicleTracking = true
-            panRecenterTimer.restart()
-        }
-    }
-
     on_AirspaceEnabledChanged: {
         updateAirspace(true)
+    }
+
+    // We track whether the user has panned or not to correctly handle automatic map positioning
+    Connections {
+        target: gesture
+
+        onPanStarted:       _disableVehicleTracking = true
+        onFlickStarted:     _disableVehicleTracking = true
+        onPanFinished:      panRecenterTimer.restart()
+        onFlickFinished:    panRecenterTimer.restart()
     }
 
     function pointInRect(point, rect) {
@@ -132,8 +127,8 @@ FlightMap {
     property real animatedLatitude
     property real animatedLongitude
 
-    onAnimatedLatitudeChanged: flightMap.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
-    onAnimatedLongitudeChanged: flightMap.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
+    onAnimatedLatitudeChanged: _root.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
+    onAnimatedLongitudeChanged: _root.center = QtPositioning.coordinate(animatedLatitude, animatedLongitude)
 
     NumberAnimation on animatedLatitude { id: animateLat; from: _animatedLatitudeStart; to: _animatedLatitudeStop; duration: 1000 }
     NumberAnimation on animatedLongitude { id: animateLong; from: _animatedLongitudeStart; to: _animatedLongitudeStop; duration: 1000 }
@@ -147,26 +142,37 @@ FlightMap {
         animateLong.start()
     }
 
+    function _insetRect() {
+        return Qt.rect(toolInsets.leftEdgeCenterInset,
+                       toolInsets.topEdgeCenterInset,
+                       _root.width - toolInsets.leftEdgeCenterInset - toolInsets.rightEdgeCenterInset,
+                       _root.height - toolInsets.topEdgeCenterInset - toolInsets.bottomEdgeCenterInset)
+    }
+
     function recenterNeeded() {
-        var vehiclePoint = flightMap.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-        var toolStripRightEdge = mapFromItem(toolStrip, toolStrip.x, 0).x + toolStrip.width
-        var instrumentsWidth = 0
-        if (QGroundControl.corePlugin.options.instrumentWidget && QGroundControl.corePlugin.options.instrumentWidget.widgetPosition === CustomInstrumentWidget.POS_TOP_RIGHT) {
-            // Assume standard instruments
-            instrumentsWidth = flightDisplayViewWidgets.getPreferredInstrumentWidth()
-        }
-        var centerViewport = Qt.rect(toolStripRightEdge, 0, width - toolStripRightEdge - instrumentsWidth, height)
-        return !pointInRect(vehiclePoint, centerViewport)
+        var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
+        var insetRect = _insetRect()
+        return !pointInRect(vehiclePoint, insetRect)
     }
 
     function updateMapToVehiclePosition() {
+        if (animateLat.running || animateLong.running) {
+            return
+        }
         // We let FlightMap handle first vehicle position
         if (!_keepMapCenteredOnVehicle && firstVehiclePositionReceived && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
             if (_keepVehicleCentered) {
-                flightMap.center = _activeVehicleCoordinate
+                _root.center = _activeVehicleCoordinate
             } else {
                 if (firstVehiclePositionReceived && recenterNeeded()) {
-                    animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
+                    // Move the map such that the vehicle is centered within the inset area
+                    var vehiclePoint = _root.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
+                    var insetRect = _insetRect()
+                    var centerInsetPoint = Qt.point(insetRect.x + insetRect.width / 2, insetRect.y + insetRect.height / 2)
+                    var centerOffset = Qt.point((_root.width / 2) - centerInsetPoint.x, (_root.height / 2) - centerInsetPoint.y)
+                    var vehicleOffsetPoint = Qt.point(vehiclePoint.x + centerOffset.x, vehiclePoint.y + centerOffset.y)
+                    var vehicleOffsetCoord = _root.toCoordinate(vehicleOffsetPoint, false /* clipToViewport */)
+                    animatedMapRecenter(_root.center, vehicleOffsetCoord)
                 }
             }
         }
@@ -174,7 +180,7 @@ FlightMap {
 
     on_ActiveVehicleCoordinateChanged: {
         if (_keepMapCenteredOnVehicle && _activeVehicleCoordinate.isValid && !_disableVehicleTracking) {
-            flightMap.center = _activeVehicleCoordinate
+            _root.center = _activeVehicleCoordinate
         }
     }
 
@@ -211,10 +217,9 @@ FlightMap {
 
     MapFitFunctions {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
-        map:                        flightMap
+        map:                        _root
         usePlannedHomePosition:     false
         planMasterController:       _planMasterController
-        property real leftToolWidth: toolStrip.x + toolStrip.width
     }
 
     // Add trajectory lines to the map
@@ -223,7 +228,7 @@ FlightMap {
         line.width: 3
         line.color: "red"
         z:          QGroundControl.zOrderTrajectoryLines
-        visible:    mainWindowIsMap
+        visible:    !pipMode
 
         Connections {
             target:                 QGroundControl.multiVehicleManager
@@ -244,8 +249,8 @@ FlightMap {
         delegate: VehicleMapItem {
             vehicle:        object
             coordinate:     object.coordinate
-            map:            flightMap
-            size:           mainWindowIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
+            map:            _root
+            size:           pipMode ? ScreenTools.defaultFontPixelHeight : ScreenTools.defaultFontPixelHeight * 3
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -259,7 +264,7 @@ FlightMap {
             callsign:       object.callsign
             heading:        object.heading
             alert:          object.alert
-            map:            flightMap
+            map:            _root
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -269,8 +274,8 @@ FlightMap {
         model: QGroundControl.multiVehicleManager.vehicles
 
         PlanMapItems {
-            map:                    flightMap
-            largeMapView:           mainWindowIsMap
+            map:                    _root
+            largeMapView:           !pipMode
             planMasterController:   _planMasterController
             vehicle:                _vehicle
 
@@ -284,7 +289,7 @@ FlightMap {
     }
 
     MapItemView {
-        model: mainWindowIsMap ? _missionController.directionArrows : undefined
+        model: pipMode ? undefined : _missionController.directionArrows
 
         delegate: MapLineArrow {
             fromCoord:      object ? object.coordinate1 : undefined
@@ -296,12 +301,12 @@ FlightMap {
 
     // Allow custom builds to add map items
     CustomMapItems {
-        map:            flightMap
-        largeMapView:   mainWindowIsMap
+        map:            _root
+        largeMapView:   !pipMode
     }
 
     GeoFenceMapVisuals {
-        map:                    flightMap
+        map:                    _root
         myGeoFenceController:   _geoFenceController
         interactive:            false
         planView:               false
@@ -533,7 +538,7 @@ FlightMap {
             }
             orbitMapCircle.hide()
             gotoLocationItem.hide()
-            var clickCoord = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
             if (guidedActionsController.showGotoLocation && guidedActionsController.showOrbit) {
                 clickMenu.coord = clickCoord
                 clickMenu.popup()
@@ -545,35 +550,6 @@ FlightMap {
                 guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickCoord)
             }
         }
-    }
-
-    MapScale {
-        id:                     mapScale
-        anchors.right:          parent.right
-        anchors.margins:        _toolsMargin
-        anchors.topMargin:      _toolsMargin + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
-        mapControl:             flightMap
-        buttonsOnLeft:          false
-        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale && mainWindowIsMap
-        state:                  "bottomMode"
-        states: [
-            State {
-                name:   "topMode"
-                AnchorChanges {
-                    target:                 mapScale
-                    anchors.top:            parent.top
-                    anchors.bottom:         undefined
-                }
-            },
-            State {
-                name:   "bottomMode"
-                AnchorChanges {
-                    target:                 mapScale
-                    anchors.top:            undefined
-                    anchors.bottom:         parent.bottom
-                }
-            }
-        ]
     }
 
     // Airspace overlap support

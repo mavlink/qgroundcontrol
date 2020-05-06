@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "QGCOptions.h"
+
 #include <QtQml>
 
 /// @file
@@ -16,53 +17,46 @@
 
 QGCOptions::QGCOptions(QObject* parent)
     : QObject(parent)
-    , _defaultInstrumentWidget(nullptr)
 {
-    qmlRegisterUncreatableType<CustomInstrumentWidget>("QGroundControl", 1, 0, "CustomInstrumentWidget", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-CustomInstrumentWidget*
-QGCOptions::instrumentWidget()
-{
-    if(!_defaultInstrumentWidget) {
-        _defaultInstrumentWidget = new CustomInstrumentWidget(this);
-    }
-    return _defaultInstrumentWidget;
-}
-
-QUrl
-QGCOptions::mainToolbarUrl() const
+QUrl QGCOptions::mainToolbarUrl() const
 {
     return QUrl(QStringLiteral("qrc:/toolbar/MainToolBar.qml"));
 }
 
-QUrl
-QGCOptions::planToolbarUrl() const
+QUrl QGCOptions::planToolbarUrl() const
 {
     return QUrl(QStringLiteral("qrc:/qml/PlanToolBar.qml"));
 }
 
-QColor
-QGCOptions::toolbarBackgroundLight() const
+QColor QGCOptions::toolbarBackgroundLight() const
 {
     return QColor(255,255,255,204);
 }
 
-QColor
-QGCOptions::toolbarBackgroundDark() const
+QColor QGCOptions::toolbarBackgroundDark() const
 {
     return QColor(0,0,0,192);
 }
 
-QUrl
-QGCOptions::planToolbarIndicatorsUrl() const
+QUrl QGCOptions::planToolbarIndicatorsUrl() const
 {
     return QUrl(QStringLiteral("PlanToolBar.qml"));
 }
 
-
-CustomInstrumentWidget::CustomInstrumentWidget(QObject* parent)
-    : QObject(parent)
+QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
 {
+    if (!_defaultFlyViewOptions) {
+        _defaultFlyViewOptions = new QGCFlyViewOptions(this);
+    }
+    return _defaultFlyViewOptions;
 }
 
+QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions* options, QObject* parent)
+    : QObject   (parent)
+    , _options  (options)
+{
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+}
