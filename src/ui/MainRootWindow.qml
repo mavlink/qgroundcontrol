@@ -58,20 +58,20 @@ ApplicationWindow {
     //-- Global Scope Variables
 
     /// Current active Vehicle
-    property var                activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
+    property var                activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
     /// Indicates communication with vehicle is list (no heartbeats)
-    property bool               communicationLost:          activeVehicle ? activeVehicle.connectionLost : false
-    property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
+    property bool               communicationLost:              activeVehicle ? activeVehicle.connectionLost : false
+    property string             formatedMessage:                activeVehicle ? activeVehicle.formatedMessage : ""
     /// Indicates usable height between toolbar and footer
-    property real               availableHeight:            mainWindow.height - mainWindow.header.height - mainWindow.footer.height
+    property real               availableHeight:                mainWindow.height - mainWindow.header.height - mainWindow.footer.height
 
-    property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
-    property var                planMasterControllerPlan:   null
-    property var                planMasterControllerView:   null
+    property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
+    property var                planMasterControllerPlanView:   null
+    property var                planMasterControllerFlyView:    null
 
-    readonly property string    navButtonWidth:             ScreenTools.defaultFontPixelWidth * 24
-    readonly property real      defaultTextHeight:          ScreenTools.defaultFontPixelHeight
-    readonly property real      defaultTextWidth:           ScreenTools.defaultFontPixelWidth
+    readonly property string    navButtonWidth:                 ScreenTools.defaultFontPixelWidth * 24
+    readonly property real      defaultTextHeight:              ScreenTools.defaultFontPixelHeight
+    readonly property real      defaultTextWidth:               ScreenTools.defaultFontPixelWidth
 
     /// Default color palette used throughout the UI
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -268,7 +268,7 @@ ApplicationWindow {
         visible:            false
         onYes:              pendingParameterWritesCloseDialog.check()
         function check() {
-            if (planMasterControllerPlan && planMasterControllerPlan.dirty) {
+            if (planMasterControllerPlanView && planMasterControllerPlanView.dirty) {
                 unsavedMissionCloseDialog.open()
             } else {
                 pendingParameterWritesCloseDialog.check()
@@ -352,16 +352,9 @@ ApplicationWindow {
 
     //-------------------------------------------------------------------------
     /// Fly View
-    FlightDisplayView {
+    FlyView {
         id:             flightView
         anchors.fill:   parent
-        //-----------------------------------------------------------------
-        //-- Loader helper for any child, no matter how deep, to display
-        //   elements on top of the fly (video) window.
-        Loader {
-            id: rootVideoLoader
-            anchors.centerIn: parent
-        }
     }
 
     //-------------------------------------------------------------------------

@@ -122,15 +122,18 @@ QGCCorePlugin::QGCCorePlugin(QGCApplication *app, QGCToolbox* toolbox)
     , _showTouchAreas(false)
     , _showAdvancedUI(true)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     _p = new QGCCorePlugin_p;
 }
 
 void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl.QGCCorePlugin", 1, 0, "QGCCorePlugin", "Reference only");
-    qmlRegisterUncreatableType<QGCOptions>("QGroundControl.QGCOptions",       1, 0, "QGCOptions",    "Reference only");
+
+    qmlRegisterUncreatableType<QGCCorePlugin>       ("QGroundControl", 1, 0, "QGCCorePlugin",       "Reference only");
+    qmlRegisterUncreatableType<QGCOptions>          ("QGroundControl", 1, 0, "QGCOptions",          "Reference only");
+    qmlRegisterUncreatableType<QGCFlyViewOptions>   ("QGroundControl", 1, 0, "QGCFlyViewOptions",   "Reference only");
+
     //-- Handle Camera and Video Changes
     connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &QGCCorePlugin::_activeVehicleChanged);
 }
@@ -319,8 +322,8 @@ int QGCCorePlugin::defaultSettings()
 
 QGCOptions* QGCCorePlugin::options()
 {
-    if(!_p->defaultOptions) {
-        _p->defaultOptions = new QGCOptions();
+    if (!_p->defaultOptions) {
+        _p->defaultOptions = new QGCOptions(this);
     }
     return _p->defaultOptions;
 }

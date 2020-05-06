@@ -68,6 +68,7 @@ Rectangle {
         height:             parent.height
         contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
+        clip:               true
 
         Column {
             id:             toolStripColumn
@@ -113,7 +114,7 @@ Rectangle {
                             _root.clicked(index, checked)
                         } else if (checked) {
                             var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                            dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
+                            dropPanel.show(panelEdgeTopPoint, modelData.dropPanelComponent)
                             _root.dropped(index)
                         }
                         if(_root && buttonTemplate)

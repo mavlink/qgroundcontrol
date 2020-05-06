@@ -12,6 +12,8 @@ import QtQuick 2.12
 Item {
     property string name: "control"
 
+    Component.onCompleted: console.log("QGCControlDebug.onCompleted name,x,y,width,height,visible,z,parent", name, x, y, width, height, visible, z, parent)
+
     Connections {
         target:             parent
         onXChanged:         console.log(name, "xChanged",       parent.x)
