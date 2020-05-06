@@ -8733,6 +8733,14 @@ is less than 50% of this value</short_desc>
         <value code="2000">2000 Hz</value>
       </values>
     </parameter>
+    <parameter default="200" name="IMU_INTEG_RATE" type="INT32">
+      <short_desc>IMU integration rate</short_desc>
+      <long_desc>The rate at which raw IMU data is integrated to produce delta angles and delta velocities.</long_desc>
+      <min>100</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="18139" name="INA226_CONFIG" type="INT32">
       <short_desc>INA226 Power Monitor Config</short_desc>
       <min>0</min>
