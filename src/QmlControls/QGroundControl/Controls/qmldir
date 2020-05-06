@@ -5,6 +5,7 @@ AppMessages             1.0 AppMessages.qml
 AxisMonitor             1.0 AxisMonitor.qml
 CameraCalcCamera        1.0 CameraCalcCamera.qml
 CameraCalcGrid          1.0 CameraCalcGrid.qml
+ContentAreaCalc         1.0 ContentAreaCalc.qml
 APMSubMotorDisplay      1.0 APMSubMotorDisplay.qml
 CameraSection           1.0 CameraSection.qml
 ClickableColor          1.0 ClickableColor.qml
@@ -78,6 +79,7 @@ QGCTabBar               1.0 QGCTabBar.qml
 QGCTabButton            1.0 QGCTabButton.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
+QGCToolInsets           1.0 QGCToolInsets.qml
 QGCViewDialog           1.0 QGCViewDialog.qml
 QGCViewDialogContainer  1.0 QGCViewDialogContainer.qml
 QGCViewMessage          1.0 QGCViewMessage.qml

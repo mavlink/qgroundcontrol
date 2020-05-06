@@ -9,44 +9,38 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick                  2.11
-import QtQuick.Controls         2.4
-import QtQuick.Layouts          1.11
-import QtQuick.Dialogs          1.3
-import QtPositioning            5.2
+import QtQuick          2.12
+import QtQuick.Controls 2.4
+import QtQuick.Layouts  1.11
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.FlightMap             1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Vehicle               1.0
-import QGroundControl.QGCPositionManager    1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 
 import Custom.Widgets 1.0
 
 Item {
-    anchors.fill:                           parent
-    visible:                                !QGroundControl.videoManager.fullScreen
+    property var parentToolInsets                       // These insets tell you what screen real estate is available for positioning the controls in your overlay
+    property var totalToolInsets:   _totalToolInsets    // The insets updated for the custom overlay additions
+    property var mapControl
 
-    readonly property string scaleState:    "topMode"
     readonly property string noGPS:         qsTr("NO GPS")
     readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 7
 
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
     property real   _indicatorsHeight:      ScreenTools.defaultFontPixelHeight
     property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
     property color  _indicatorsColor:       qgcPal.text
-
-    property bool   _isVehicleGps:          activeVehicle && activeVehicle.gps && activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
-
-    property string _altitude:              activeVehicle ? (isNaN(activeVehicle.altitudeRelative.value) ? "0.0" : activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + activeVehicle.altitudeRelative.units : "0.0"
-    property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (activeVehicle ? activeVehicle.altitudeRelative.units : "")
-    property real   _heading:               activeVehicle   ? activeVehicle.heading.rawValue : 0
-
-    property real   _distance:              0.0
+    property bool   _isVehicleGps:          _activeVehicle ? _activeVehicle.gps.count.rawValue > 1 && _activeVehicle.gps.hdop.rawValue < 1.4 : false
+    property string _altitude:              _activeVehicle ? (isNaN(_activeVehicle.altitudeRelative.value) ? "0.0" : _activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + _activeVehicle.altitudeRelative.units : "0.0"
+    property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
+    property real   _heading:               _activeVehicle   ? _activeVehicle.heading.rawValue : 0
+    property real   _distance:              _activeVehicle ? _activeVehicle.distanceToHome.rawValue : 0
     property string _messageTitle:          ""
     property string _messageText:           ""
+    property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
 
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
@@ -59,41 +53,27 @@ Item {
         return hours+':'+minutes+':'+seconds;
     }
 
-    // FIXE: Isn't distance to home in factgroup
-    Connections {
-        target: QGroundControl.qgcPositionManger
-        onGcsPositionChanged: {
-            if (activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
-                var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
-                var veh = activeVehicle.coordinate;
-                _distance = QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(gcs.distanceTo(veh));
-                //-- Ignore absurd values
-                if(_distance > 99999)
-                    _distance = 0;
-                if(_distance < 0)
-                    _distance = 0;
-            } else {
-                _distance = 0;
-            }
-        }
+    QGCToolInsets {
+        id:                     _totalToolInsets
+        topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
+        bottomEdgeRightInset:   parent.height - vehicleIndicator.y
+        bottomEdgeCenterInset:  bottomEdgeRightInset
     }
 
     //-------------------------------------------------------------------------
     //-- Heading Indicator
     Rectangle {
-        id:             compassBar
-        height:         ScreenTools.defaultFontPixelHeight * 1.5
-        width:          ScreenTools.defaultFontPixelWidth  * 50
-        color:          "#DEDEDE"
-        radius:         2
-        clip:           true
-        anchors.top:    parent.top
-        anchors.topMargin: ScreenTools.defaultFontPixelHeight
-        anchors.horizontalCenter: parent.horizontalCenter
-        visible:        !mainIsMap
+        id:                         compassBar
+        height:                     ScreenTools.defaultFontPixelHeight * 1.5
+        width:                      ScreenTools.defaultFontPixelWidth  * 50
+        color:                      "#DEDEDE"
+        radius:                     2
+        clip:                       true
+        anchors.top:                headingIndicator.bottom
+        anchors.topMargin:          -headingIndicator.height / 2
+        anchors.horizontalCenter:   parent.horizontalCenter
         Repeater {
             model: 720
-            visible:    !mainIsMap
             QGCLabel {
                 function _normalize(degrees) {
                     var a = degrees % 360
@@ -128,9 +108,8 @@ Item {
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      ScreenTools.defaultFontPixelWidth * 4
         color:                      qgcPal.windowShadeDark
-        visible:                    !mainIsMap
-        anchors.bottom:             compassBar.top
-        anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * -0.1
+        anchors.top:                parent.top
+        anchors.topMargin:          _toolsMargin
         anchors.horizontalCenter:   parent.horizontalCenter
         QGCLabel {
             text:                   _heading
@@ -140,14 +119,14 @@ Item {
         }
     }
     Image {
+        id:                         compassArrowIndicator
         height:                     _indicatorsHeight
         width:                      height
         source:                     "/custom/img/compass_pointer.svg"
-        visible:                    !mainIsMap
         fillMode:                   Image.PreserveAspectFit
         sourceSize.height:          height
         anchors.top:                compassBar.bottom
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * -0.5
+        anchors.topMargin:          -height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
     }
     //-------------------------------------------------------------------------
@@ -158,10 +137,11 @@ Item {
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2
+        //anchors.bottomMargin:   parentToolInsets.bottomEdgeRightInset
         anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
-        anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
-        anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
+        anchors.bottomMargin:   _toolsMargin
+        anchors.right:          attitudeIndicator.left
+        anchors.rightMargin:    -ScreenTools.defaultFontPixelWidth
 
         GridLayout {
             id:                     vehicleStatusGrid
@@ -174,27 +154,25 @@ Item {
             Item {
                 Layout.rowSpan:         3
                 Layout.column:          6
-                Layout.minimumWidth:    mainIsMap ? parent.height * 1.25 : 0
+                Layout.minimumWidth:    parent.height * 1.25
                 Layout.fillHeight:      true
                 Layout.fillWidth:       true
                 //-- Large circle
                 Rectangle {
-                    height:             mainIsMap ? parent.height : 0
-                    width:              mainIsMap ? height : 0
+                    height:             parent.height
+                    width:              height
                     radius:             height * 0.5
                     border.color:       qgcPal.text
                     border.width:       1
                     color:              Qt.rgba(0,0,0,0)
                     anchors.centerIn:   parent
-                    visible:            mainIsMap
                 }
                 //-- North Label
                 Rectangle {
-                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
-                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 2 : 0
+                    height:             ScreenTools.defaultFontPixelHeight * 0.75
+                    width:              ScreenTools.defaultFontPixelWidth  * 2
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
                     color:              qgcPal.windowShade
-                    visible:            mainIsMap
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.25
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -209,11 +187,10 @@ Item {
                 Image {
                     id:                 compassNeedle
                     anchors.centerIn:   parent
-                    height:             mainIsMap ? parent.height * 0.75 : 0
+                    height:             parent.height * 0.75
                     width:              height
                     source:             "/custom/img/compass_needle.svg"
                     fillMode:           Image.PreserveAspectFit
-                    visible:            mainIsMap
                     sourceSize.height:  height
                     transform: [
                         Rotation {
@@ -224,11 +201,10 @@ Item {
                 }
                 //-- Heading
                 Rectangle {
-                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
-                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 3.5 : 0
+                    height:             ScreenTools.defaultFontPixelHeight * 0.75
+                    width:              ScreenTools.defaultFontPixelWidth  * 3.5
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
                     color:              qgcPal.windowShade
-                    visible:            mainIsMap
                     anchors.bottom:         parent.bottom
                     anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * -0.25
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -254,8 +230,8 @@ Item {
             QGCLabel {
                 id:                     firstLabel
                 text: {
-                    if(activeVehicle)
-                        return secondsToHHMMSS(activeVehicle.getFact("flightTime").value)
+                    if(_activeVehicle)
+                        return secondsToHHMMSS(_activeVehicle.getFact("flightTime").value)
                     return "00:00:00"
                 }
                 color:                  _indicatorsColor
@@ -275,7 +251,7 @@ Item {
                 color:                  qgcPal.text
             }
             QGCLabel {
-                text:                   activeVehicle ? activeVehicle.groundSpeed.value.toFixed(1) + ' ' + activeVehicle.groundSpeed.units : "0.0"
+                text:                   _activeVehicle ? _activeVehicle.groundSpeed.value.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -294,7 +270,7 @@ Item {
 
             }
             QGCLabel {
-                text:                   activeVehicle ? activeVehicle.climbRate.value.toFixed(1) + ' ' + activeVehicle.climbRate.units : "0.0"
+                text:                   _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -314,7 +290,7 @@ Item {
 
             }
             QGCLabel {
-                text:                   activeVehicle ? ('00000' + activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + activeVehicle.flightDistance.units : "00000"
+                text:                   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -374,15 +350,15 @@ Item {
         id:                     attitudeIndicator
         anchors.bottom:         vehicleIndicator.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * -0.5
-        anchors.right:  parent.right
-        anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
+        anchors.right:          parent.right
+        anchors.rightMargin:    _toolsMargin
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
         color:                  qgcPal.windowShade
         CustomAttitudeWidget {
             size:               parent.height * 0.95
-            vehicle:            activeVehicle
+            vehicle:            _activeVehicle
             showHeading:        false
             anchors.centerIn:   parent
         }

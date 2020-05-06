@@ -1,2 +1,3 @@
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">src/FlightDisplay/FlyViewCustomLayer.qml</file>
 

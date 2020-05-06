@@ -157,6 +157,7 @@
         <file alias="QGroundControl/Controls/QGCTabButton.qml">src/QmlControls/QGCTabButton.qml</file>
         <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
+        <file alias="QGroundControl/Controls/QGCToolInsets.qml">src/QmlControls/QGCToolInsets.qml</file>
         <file alias="QGroundControl/Controls/QGCViewDialog.qml">src/QmlControls/QGCViewDialog.qml</file>
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">src/QmlControls/QGCViewMessage.qml</file>
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/QGroundControl/Controls/qmldir</file>
@@ -192,14 +193,18 @@
         <file alias="QGroundControl/FactControls/FactTextFieldSlider.qml">src/FactSystem/FactControls/FactTextFieldSlider.qml</file>
         <file alias="QGroundControl/FactControls/FactValueSlider.qml">src/FactSystem/FactControls/FactValueSlider.qml</file>
         <file alias="QGroundControl/FactControls/qmldir">src/QmlControls/QGroundControl/FactControls/qmldir</file>
-        <file alias="QGroundControl/FlightDisplay/FlightDisplayView.qml">src/FlightDisplay/FlightDisplayView.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewMap.qml">src/FlightDisplay/FlightDisplayViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">src/FlightDisplay/FlightDisplayViewVideo.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewAirspaceIndicator.qml">src/FlightDisplay/FlyViewAirspaceIndicator.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyView.qml">src/FlightDisplay/FlyView.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">src/FlightDisplay/FlyViewCustomLayer.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewInstrumentPanel.qml">src/FlightDisplay/FlyViewInstrumentPanel.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewMap.qml">src/FlightDisplay/FlyViewMap.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewMissionCompleteDialog.qml">src/FlightDisplay/FlyViewMissionCompleteDialog.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewPreFlightChecklistPopup.qml">src/FlightDisplay/FlyViewPreFlightChecklistPopup.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewToolStrip.qml">src/FlightDisplay/FlyViewToolStrip.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewVideo.qml">src/FlightDisplay/FlyViewVideo.qml</file>
+        <file alias="QGroundControl/FlightDisplay/FlyViewWidgetLayer.qml">src/FlightDisplay/FlyViewWidgetLayer.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionConfirm.qml">src/FlightDisplay/GuidedActionConfirm.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionList.qml">src/FlightDisplay/GuidedActionList.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedActionsController.qml">src/FlightDisplay/GuidedActionsController.qml</file>
@@ -212,6 +217,7 @@
         <file alias="QGroundControl/FlightDisplay/PreFlightSensorsHealthCheck.qml">src/FlightDisplay/PreFlightSensorsHealthCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSoundCheck.qml">src/FlightDisplay/PreFlightSoundCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/TerrainProgress.qml">src/FlightDisplay/TerrainProgress.qml</file>
+        <file alias="QGroundControl/FlightDisplay/VehicleWarnings.qml">src/FlightDisplay/VehicleWarnings.qml</file>
         <file alias="QGroundControl/FlightDisplay/qmldir">src/QmlControls/QGroundControl/FlightDisplay/qmldir</file>
         <file alias="QGroundControl/FlightMap/CameraTriggerIndicator.qml">src/FlightMap/MapItems/CameraTriggerIndicator.qml</file>
         <file alias="QGroundControl/FlightMap/CenterMapDropButton.qml">src/FlightMap/Widgets/CenterMapDropButton.qml</file>

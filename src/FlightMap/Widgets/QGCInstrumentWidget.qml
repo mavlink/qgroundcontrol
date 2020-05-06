@@ -20,16 +20,14 @@ import QGroundControl.Palette       1.0
 
 ColumnLayout {
     id:         root
-    width:      getPreferredInstrumentWidth()
     spacing:    ScreenTools.defaultFontPixelHeight / 4
+
+    // These properties are expected to be in the Loader
+    //  property real maxHeight
+    //  property bool showValues - true: show value pages
 
     property real   _innerRadius:           (width - (_topBottomMargin * 3)) / 4
     property real   _outerRadius:           _innerRadius + _topBottomMargin
-    property real   _defaultSize:           ScreenTools.defaultFontPixelHeight * (9)
-    property real   _sizeRatio:             ScreenTools.isTinyScreen ? (width / _defaultSize) * 0.5 : width / _defaultSize
-    property real   _bigFontSize:           ScreenTools.defaultFontPointSize * 2.5  * _sizeRatio
-    property real   _normalFontSize:        ScreenTools.defaultFontPointSize * 1.5  * _sizeRatio
-    property real   _labelFontSize:         ScreenTools.defaultFontPointSize * 0.75 * _sizeRatio
     property real   _spacing:               ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:       (width * 0.05) / 2
     property real   _availableValueHeight:  maxHeight - _valuesItem.y
@@ -42,8 +40,6 @@ ColumnLayout {
         Layout.fillWidth:   true
         radius:             _outerRadius
         color:              qgcPal.window
-        border.width:       1
-        border.color:       qgcPal.mapWidgetBorderLight
 
         DeadMouseArea { anchors.fill: parent }
 
@@ -74,7 +70,7 @@ ColumnLayout {
         id:                 _valuesItem
         Layout.fillWidth:   true
         height:             _valuesWidget.height
-        visible:            widgetRoot.showValues
+        visible:            showValues
 
         DeadMouseArea { anchors.fill: parent }
 
