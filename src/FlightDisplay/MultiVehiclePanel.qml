@@ -15,17 +15,19 @@ import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
 
 /// Multi vehicle panel for Fly View
 Item {
     id:         _root
-    width:      ScreenTools.defaultFontPixelWidth * 30
     height:     singleVehiclePanel ? selectorRow.height : availableHeight
-    visible:    QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
+    visible:    QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.flyView.showMultiVehicleList
 
-    property alias  singleVehiclePanel: singleVehicleView.checked
+    property alias  singleVehiclePanel:     singleVehicleView.checked
     property real   availableHeight
     property var    guidedActionsController
+
+    QGCMapPalette { id: mapPal; lightColors: true }
 
     Row {
         id:         selectorRow
@@ -49,7 +51,7 @@ Item {
         anchors.top:                selectorRow.bottom
         anchors.bottom:             parent.bottom
         width:                      parent.width
-        visible:                    !singleVehiclePanel && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.enableMultiVehicleList
+        visible:                    !singleVehiclePanel && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.showMultiVehicleList
         guidedActionsController:    _root.guidedActionsController
     }
 }

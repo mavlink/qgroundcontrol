@@ -13,7 +13,6 @@
 #include <QApplication>
 #include <QPalette>
 
-QColor QGCMapPalette::_thumbJoystick[QGCMapPalette::_cColorGroups] = { QColor(255,255,255,127), QColor(0,0,0,127) };
 QColor QGCMapPalette::_text         [QGCMapPalette::_cColorGroups] = { QColor(255,255,255),     QColor(0,0,0) };
 QColor QGCMapPalette::_textOutline  [QGCMapPalette::_cColorGroups] = { QColor(0,0,0,192),       QColor(255,255,255,192) };
 

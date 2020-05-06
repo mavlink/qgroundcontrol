@@ -26,33 +26,41 @@
 
 QGC_LOGGING_CATEGORY(CustomLog, "CustomLog")
 
+CustomFlyViewOptions::CustomFlyViewOptions(CustomOptions* options, QObject* parent)
+    : QGCFlyViewOptions(options, parent)
+{
+
+}
+
+// This custom build does not support conecting multiple vehicles to it. This in turn simplifies various parts of the QGC ui.
+bool CustomFlyViewOptions::showMultiVehicleList(void) const
+{
+    return false;
+}
+
+// This custom build has it's own custom instrument panel. Don't show regular one.
+bool CustomFlyViewOptions::showInstrumentPanel(void) const
+{
+    return false;
+}
+
 CustomOptions::CustomOptions(CustomPlugin*, QObject* parent)
     : QGCOptions(parent)
 {
+}
+
+QGCFlyViewOptions* CustomOptions::flyViewOptions(void)
+{
+    if (!_flyViewOptions) {
+        _flyViewOptions = new CustomFlyViewOptions(this, this);
+    }
+    return _flyViewOptions;
 }
 
 // Firmware upgrade page is only shown in Advanced Mode.
 bool CustomOptions::showFirmwareUpgrade() const
 {
     return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
-}
-
-// This custom build does not support conecting multiple vehicles to it. This in turn simplifies various parts of the QGC ui.
-bool CustomOptions::enableMultiVehicleList(void) const
-{
-    return false;
-}
-
-// This allows you to show a custom overlay on the fly screen.
-QUrl CustomOptions::flyViewOverlay(void) const
-{
-    return QUrl::fromUserInput("qrc:/custom/CustomFlyViewOverlay.qml");
-}
-
-// The standard instrement widget is now show. Only the custom overlay is shown.
-CustomInstrumentWidget* CustomOptions::instrumentWidget(void)
-{
-    return nullptr;
 }
 
 // Normal QGC needs to work with an ESP8266 WiFi thing which is remarkably crappy. This in turns causes PX4 Pro calibration to fail
@@ -63,11 +71,9 @@ bool CustomOptions::wifiReliableForCalibration(void) const
     return true;
 }
 
-
 CustomPlugin::CustomPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
 {
-
     _options = new CustomOptions(this, this);
     _showAdvancedUI = false;
 }

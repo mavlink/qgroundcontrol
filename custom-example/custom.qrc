@@ -31,4 +31,7 @@
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
     </qresource>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">res/CustomFlyViewOverlay.qml</file>
+    </qresource>
 </RCC>

@@ -19,10 +19,21 @@
 
 #include <QTranslator>
 
+class CustomOptions;
 class CustomPlugin;
 class CustomSettings;
 
 Q_DECLARE_LOGGING_CATEGORY(CustomLog)
+
+class CustomFlyViewOptions : public QGCFlyViewOptions
+{
+public:
+    CustomFlyViewOptions(CustomOptions* options, QObject* parent = nullptr);
+
+    // Overrides from CustomFlyViewOptions
+    bool                    showInstrumentPanel         (void) const final;
+    bool                    showMultiVehicleList        (void) const final;
+};
 
 class CustomOptions : public QGCOptions
 {
@@ -30,14 +41,13 @@ public:
     CustomOptions(CustomPlugin*, QObject* parent = nullptr);
 
     // Overrides from QGCOptions
-
     bool                    wifiReliableForCalibration  (void) const final;
-    QUrl                    flyViewOverlay              (void) const final;
-    CustomInstrumentWidget* instrumentWidget            (void) final;
     bool                    showFirmwareUpgrade         (void) const final;
-    bool                    enableMultiVehicleList      (void) const final;
-};
+    QGCFlyViewOptions*      flyViewOptions(void) final;
 
+private:
+    CustomFlyViewOptions* _flyViewOptions = nullptr;
+};
 
 class CustomPlugin : public QGCCorePlugin
 {

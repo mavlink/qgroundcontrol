@@ -19,20 +19,16 @@ import QGroundControl.Palette       1.0
 
 Rectangle {
     id:             root
-    width:          getPreferredInstrumentWidth()
     height:         _outerRadius * 4 + _valuesWidget.height
     radius:         _outerRadius
     color:          qgcPal.window
-    border.width:   1
-    border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
+
+    // These properties are expected to be in the Loader
+    //  property real maxHeight
+    //  property bool showValues - true: show value pages
 
     property real   _innerRadius:       (width - (_topBottomMargin * 2)) / 2
     property real   _outerRadius:       _innerRadius + _topBottomMargin * 2
-    property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
-    property real   _sizeRatio:         ScreenTools.isTinyScreen ? (width / _defaultSize) * 0.5 : width / _defaultSize
-    property real   _bigFontSize:       ScreenTools.defaultFontPointSize * 2.5  * _sizeRatio
-    property real   _normalFontSize:    ScreenTools.defaultFontPointSize * 1.5  * _sizeRatio
-    property real   _labelFontSize:     ScreenTools.defaultFontPointSize * 0.75 * _sizeRatio
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (width * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (attitude.height + compass.height)
@@ -62,7 +58,7 @@ Rectangle {
         anchors.bottom:     compass.top
         width:              parent.width
         height:             _valuesWidget.height
-        visible:            widgetRoot.showValues
+        visible:            showValues
 
         // Prevent all clicks from going through to lower layers
         DeadMouseArea {
