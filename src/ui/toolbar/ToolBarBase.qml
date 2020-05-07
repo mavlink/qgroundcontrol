@@ -22,12 +22,10 @@ import QGroundControl.Controllers           1.0
 Item {
     id: _root
 
-    property alias indicatorSource:     indicatorLoader.source
-    property alias showModeIndicators:  indicatorLoader.showModeIndicators
-
     // FIXME: Reaching up for communicationLost?
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
+    property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
 
     Component.onCompleted: _viewButtonClicked(flyButton)
 
@@ -62,6 +60,18 @@ Item {
         height:         1
         color:          "black"
         visible:        qgcPal.globalTheme === QGCPalette.Light
+    }
+
+
+    //-- Setup can be invoked from c++ side
+    Connections {
+        target: setupWindow
+        onVisibleChanged: {
+            if (setupWindow.visible) {
+                buttonRow.clearAllChecks()
+                setupButton.checked = true
+            }
+        }
     }
 
     RowLayout {
@@ -195,34 +205,76 @@ Item {
         }
     }
 
-    Rectangle {
-        id:                 separator
-        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.left:       viewButtonRow.right
-        width:              1
-        color:              qgcPal.text
+    // View / Tool separator
+    Row {
+        id:                     separator
+        anchors.bottomMargin:   1
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        spacing:                ScreenTools.defaultFontPixelWidth * 1.5
+
+        Item {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            width:              ScreenTools.defaultFontPixelWidth / 2
+        }
+
+        Rectangle {
+            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            width:              1
+            color:              qgcPal.text
+        }
+
+        Item {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            width:              ScreenTools.defaultFontPixelWidth / 2
+        }
     }
 
     QGCFlickable {
         id:                     toolsFlickable
-        anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
         anchors.left:           separator.right
         anchors.right:          connectionStatus.visible ? connectionStatus.left : parent.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        contentWidth:           indicatorLoader.width
+        contentWidth:           toolRow.width
         flickableDirection:     Flickable.HorizontalFlick
 
-        Loader {
-            id:                 indicatorLoader
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            source:             "qrc:/toolbar/MainToolBarIndicators.qml"
+        Row {
+            id:                     toolRow
+            anchors.bottomMargin:   1
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            spacing:                ScreenTools.defaultFontPixelWidth * 1.5
 
-            property bool showModeIndicators: true
+            Repeater {
+                id:     appRepeater
+                model:  QGroundControl.corePlugin.toolBarIndicators
+
+                Loader {
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    anchors.margins:    _toolIndicatorMargins
+                    source:             modelData
+                    visible:            item.showIndicator
+                }
+            }
+
+            Repeater {
+                model: _activeVehicle ? _activeVehicle.toolBarIndicators : []
+
+                Loader {
+                    anchors.top:        parent.top
+                    anchors.bottom:     parent.bottom
+                    anchors.margins:    _toolIndicatorMargins
+                    source:             modelData
+                    visible:            item.showIndicator
+                }
+            }
         }
     }
 
@@ -246,20 +298,20 @@ Item {
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
         property string _brandImageIndoor:      _userBrandingIndoor ?
                                                     _userBrandImageIndoor : (_userBrandingOutdoor ?
-                                                                                 _userBrandImageOutdoor : (_corePluginBranding ?
-                                                                                                               QGroundControl.corePlugin.brandImageIndoor : (activeVehicle ?
-                                                                                                                                                                 activeVehicle.brandImageIndoor : ""
-                                                                                                                                                             )
-                                                                                                           )
-                                                                             )
+                                                        _userBrandImageOutdoor : (_corePluginBranding ?
+                                                            QGroundControl.corePlugin.brandImageIndoor : (activeVehicle ?
+                                                                activeVehicle.brandImageIndoor : ""
+                                                            )
+                                                        )
+                                                    )
         property string _brandImageOutdoor:     _userBrandingOutdoor ?
                                                     _userBrandImageOutdoor : (_userBrandingIndoor ?
-                                                                                  _userBrandImageIndoor : (_corePluginBranding ?
-                                                                                                               QGroundControl.corePlugin.brandImageOutdoor : (activeVehicle ?
-                                                                                                                                                                  activeVehicle.brandImageOutdoor : ""
-                                                                                                                                                              )
-                                                                                                           )
-                                                                              )
+                                                        _userBrandImageIndoor : (_corePluginBranding ?
+                                                            QGroundControl.corePlugin.brandImageOutdoor : (activeVehicle ?
+                                                                activeVehicle.brandImageOutdoor : ""
+                                                            )
+                                                        )
+                                                    )
     }
 
     // Small parameter download progress bar

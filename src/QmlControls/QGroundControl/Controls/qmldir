@@ -99,6 +99,7 @@ SurveyMapVisuals        1.0 SurveyMapVisuals.qml
 TerrainStatus           1.0 TerrainStatus.qml
 TransectStyleComplexItemStats 1.0 TransectStyleComplexItemStats.qml
 TransectStyleMapVisuals 1.0 TransectStyleMapVisuals.qml
+ToolBarBase             1.0 ToolBarBase.qml
 ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml

@@ -304,17 +304,26 @@ QString FirmwarePlugin::vehicleImageCompass(const Vehicle*) const
     return QStringLiteral("/qmlimages/compassInstrumentArrow.svg");
 }
 
-const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle*)
+const QVariantList& FirmwarePlugin::toolIndicators(const Vehicle*)
 {
     //-- Default list of indicators for all vehicles.
-    if(_toolBarIndicatorList.size() == 0) {
-        _toolBarIndicatorList = QVariantList({
+    if(_toolIndicatorList.size() == 0) {
+        _toolIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+        });
+    }
+    return _toolIndicatorList;
+}
+
+const QVariantList& FirmwarePlugin::modeIndicators(const Vehicle*)
+{
+    //-- Default list of indicators for all vehicles.
+    if(_modeIndicatorList.size() == 0) {
+        _modeIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ROIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
@@ -323,7 +332,7 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle*)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")),
         });
     }
-    return _toolBarIndicatorList;
+    return _modeIndicatorList;
 }
 
 const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)

@@ -41,8 +41,8 @@ FlightMap {
     property var    guidedActionsController
     property var    rightPanelWidth
     property var    planMasterController
-    property bool   pipMode:                    false                           // true: map is shown in a small pip mode
-    property var    toolInsets                                                  // Insets for the center viewport area
+    property bool   pipMode:                    false   // true: map is shown in a small pip mode
+    property var    toolInsets                          // Insets for the center viewport area
 
     property var    _planMasterController:      planMasterController
     property var    _geoFenceController:        planMasterController.geoFenceController

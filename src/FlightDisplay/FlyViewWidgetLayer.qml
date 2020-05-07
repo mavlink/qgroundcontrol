@@ -33,9 +33,9 @@ import QGroundControl.Vehicle       1.0
 Item {
     id: _root
 
-    property var   parentToolInsets
-    property var   totalToolInsets:         _totalToolInsets
-    property var   mapControl
+    property var    parentToolInsets
+    property var    totalToolInsets:        _totalToolInsets
+    property var    mapControl
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:  mainWindow.planMasterControllerPlanView

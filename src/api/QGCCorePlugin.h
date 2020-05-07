@@ -58,7 +58,7 @@ public:
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
     Q_PROPERTY(QStringList          startupPages            READ startupPages                                   NOTIFY startupPagesChanged)
-
+    Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                              NOTIFY toolBarIndicatorsChanged)
 
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
@@ -172,6 +172,11 @@ public:
     /// @return QML files paths that will be loaded using the StartupWizard control
     virtual QStringList startupPages();
 
+    /// Returns the list of toolbar indicators which are not related to a vehicle
+    ///     signals toolbarIndicatorsChanged
+    /// @return A list of QUrl with the indicators
+    virtual const QVariantList& toolBarIndicators(void);
+
     bool showTouchAreas() const { return _showTouchAreas; }
     bool showAdvancedUI() const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
@@ -181,12 +186,13 @@ public:
     void                            setToolbox              (QGCToolbox* toolbox);
 
 signals:
-    void settingsPagesChanged   ();
-    void analyzePagesChanged    ();
-    void instrumentPagesChanged ();
-    void showTouchAreasChanged  (bool showTouchAreas);
-    void showAdvancedUIChanged  (bool showAdvancedUI);
-    void startupPagesChanged    ();
+    void settingsPagesChanged       ();
+    void analyzePagesChanged        ();
+    void instrumentPagesChanged     ();
+    void showTouchAreasChanged      (bool showTouchAreas);
+    void showAdvancedUIChanged      (bool showAdvancedUI);
+    void startupPagesChanged        ();
+    void toolBarIndicatorsChanged   ();
 
 protected slots:
     void _activeVehicleChanged  (Vehicle* activeVehicle);
@@ -203,6 +209,7 @@ protected:
     Vehicle*            _activeVehicle  = nullptr;
     QGCCameraManager*   _dynamicCameras = nullptr;
     QGCCameraControl*   _currentCamera  = nullptr;
+    QVariantList        _toolBarIndicatorList;
 
 private:
     QGCCorePlugin_p*    _p;

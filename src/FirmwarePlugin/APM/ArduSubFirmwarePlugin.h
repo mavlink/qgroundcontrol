@@ -136,14 +136,16 @@ public:
     QString brandImageOutdoor(const Vehicle* vehicle) const final { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImageSub"); }
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
-    const QVariantList& toolBarIndicators(const Vehicle* vehicle) final;
+    const QVariantList& toolIndicators(const Vehicle* vehicle) final;
+    const QVariantList& modeIndicators(const Vehicle* vehicle) final;
     bool  adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message) final;
     virtual QMap<QString, FactGroup*>* factGroups(void) final;
     void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) override final;
 
 
 private:
-    QVariantList _toolBarIndicators;
+    QVariantList _toolIndicators;
+    QVariantList _modeIndicators;
     static bool _remapParamNameIntialized;
     QMap<QString, QString> _factRenameMap;
     static FirmwarePlugin::remapParamNameMajorVersionMap_t  _remapParamName;
