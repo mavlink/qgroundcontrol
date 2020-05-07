@@ -1544,6 +1544,8 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Update VTOL state
+        //VTOL default state is criuse 
+        vtolInHover = false;
         if (simpleItem && _controllerVehicle->vtol()) {
             switch (simpleItem->command()) {
             case MAV_CMD_NAV_TAKEOFF:
