@@ -21,16 +21,6 @@ QGCOptions::QGCOptions(QObject* parent)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-QUrl QGCOptions::mainToolbarUrl() const
-{
-    return QUrl(QStringLiteral("qrc:/toolbar/MainToolBar.qml"));
-}
-
-QUrl QGCOptions::planToolbarUrl() const
-{
-    return QUrl(QStringLiteral("qrc:/qml/PlanToolBar.qml"));
-}
-
 QColor QGCOptions::toolbarBackgroundLight() const
 {
     return QColor(255,255,255,204);
@@ -39,11 +29,6 @@ QColor QGCOptions::toolbarBackgroundLight() const
 QColor QGCOptions::toolbarBackgroundDark() const
 {
     return QColor(0,0,0,192);
-}
-
-QUrl QGCOptions::planToolbarIndicatorsUrl() const
-{
-    return QUrl(QStringLiteral("PlanToolBar.qml"));
 }
 
 QGCFlyViewOptions* QGCOptions::flyViewOptions(void)

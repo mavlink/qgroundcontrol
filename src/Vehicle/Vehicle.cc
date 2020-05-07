@@ -414,8 +414,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
-    , _headingToNextWPFact  (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
     , _missionItemIndexFact (0, _missionItemIndexFactName,  FactMetaData::valueTypeUint16)
+    , _headingToNextWPFact  (0, _headingToNextWPFactName,   FactMetaData::valueTypeDouble)
     , _headingToHomeFact    (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
     , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
@@ -446,7 +446,8 @@ void Vehicle::_commonInit()
 {
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
-    connect(_firmwarePlugin, &FirmwarePlugin::toolbarIndicatorsChanged, this, &Vehicle::toolBarIndicatorsChanged);
+    connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
+    connect(_firmwarePlugin, &FirmwarePlugin::modeIndicatorsChanged, this, &Vehicle::modeIndicatorsChanged);
 
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingToHome);
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToGCS);
@@ -3902,10 +3903,19 @@ QString Vehicle::vehicleImageCompass() const
         return QString();
 }
 
-const QVariantList& Vehicle::toolBarIndicators()
+const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {
-        return _firmwarePlugin->toolBarIndicators(this);
+        return _firmwarePlugin->toolIndicators(this);
+    }
+    static QVariantList emptyList;
+    return emptyList;
+}
+
+const QVariantList& Vehicle::modeIndicators()
+{
+    if(_firmwarePlugin) {
+        return _firmwarePlugin->modeIndicators(this);
     }
     static QVariantList emptyList;
     return emptyList;

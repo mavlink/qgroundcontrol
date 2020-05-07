@@ -516,8 +516,18 @@ QString QGCCorePlugin::stableVersionCheckFileUrl() const
 #endif
 }
 
-QStringList
-QGCCorePlugin::startupPages()
+QStringList QGCCorePlugin::startupPages()
 {
     return { "/qml/QGroundControl/Specific/UnitsWizardPage.qml" };
+}
+
+const QVariantList &QGCCorePlugin::toolBarIndicators(void)
+{
+    //-- Default list of indicators for all vehicles.
+    if(_toolBarIndicatorList.size() == 0) {
+        _toolBarIndicatorList = QVariantList({
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")),
+        });
+    }
+    return _toolBarIndicatorList;
 }

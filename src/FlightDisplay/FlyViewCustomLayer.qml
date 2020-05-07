@@ -34,8 +34,8 @@ import QGroundControl.Vehicle       1.0
 Item {
     id: _root
 
-    property var parentToolInsets             // These insets tell you what screen real estate is available for positioning the controls in your overlay
-    property var toolInsets:      _toolInsets // These are the insets for your custom overlay additions
+    property var parentToolInsets               // These insets tell you what screen real estate is available for positioning the controls in your overlay
+    property var totalToolInsets:   _toolInsets // These are the insets for your custom overlay additions
     property var mapControl
 
     QGCToolInsets {
