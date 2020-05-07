@@ -217,20 +217,31 @@ bool ArduSubFirmwarePlugin::supportsMotorInterference(void)
     return false;
 }
 
-const QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+const QVariantList& ArduSubFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     //-- Sub specific list of indicators (Enter your modified list here)
-    if(_toolBarIndicators.size() == 0) {
-        _toolBarIndicators = QVariantList({
+    if(_toolIndicators.size() == 0) {
+        _toolIndicators = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")),
+        });
+    }
+    return _toolIndicators;
+}
+
+const QVariantList& ArduSubFirmwarePlugin::modeIndicators(const Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    //-- Sub specific list of indicators (Enter your modified list here)
+    if(_modeIndicators.size() == 0) {
+        _modeIndicators = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
         });
     }
-    return _toolBarIndicators;
+    return _modeIndicators;
 }
 
 void ArduSubFirmwarePlugin::_handleNamedValueFloat(mavlink_message_t* message)
