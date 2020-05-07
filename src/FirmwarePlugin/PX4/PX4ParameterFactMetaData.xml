@@ -913,7 +913,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <short_desc>Require all the ESCs to be detected to arm</short_desc>
       <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
     </parameter>
-    <parameter default="1.73e-3" name="COM_ARM_EKF_AB" type="FLOAT">
+    <parameter default="0.0022" name="COM_ARM_EKF_AB" type="FLOAT">
       <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming.
 Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than EKF2_ABL_LIM * FILTER_UPDATE_PERIOD_MS * 0.001 so this parameter must be less than that to be useful</short_desc>
       <min>0.001</min>
@@ -922,12 +922,12 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <decimal>4</decimal>
       <increment>0.0001</increment>
     </parameter>
-    <parameter default="8.7e-4" name="COM_ARM_EKF_GB" type="FLOAT">
+    <parameter default="0.0011" name="COM_ARM_EKF_GB" type="FLOAT">
       <short_desc>Maximum value of EKF gyro delta angle bias estimate that will allow arming</short_desc>
       <min>0.0001</min>
       <max>0.0017</max>
       <unit>rad</unit>
-      <decimal>5</decimal>
+      <decimal>4</decimal>
       <increment>0.0001</increment>
     </parameter>
     <parameter default="1.0" name="COM_ARM_EKF_HGT" type="FLOAT">
