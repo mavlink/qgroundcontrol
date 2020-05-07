@@ -55,11 +55,8 @@ public:
     Q_PROPERTY(double                   toolbarHeightMultiplier         READ toolbarHeightMultiplier        CONSTANT)
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(QUrl                     preFlightChecklistUrl           READ preFlightChecklistUrl          CONSTANT)
-    Q_PROPERTY(QUrl                     mainToolbarUrl                  READ mainToolbarUrl                 CONSTANT)
-    Q_PROPERTY(QUrl                     planToolbarUrl                  READ planToolbarUrl                 CONSTANT)
     Q_PROPERTY(QColor                   toolbarBackgroundLight          READ toolbarBackgroundLight         CONSTANT)
     Q_PROPERTY(QColor                   toolbarBackgroundDark           READ toolbarBackgroundDark          CONSTANT)
-    Q_PROPERTY(QUrl                     planToolbarIndicatorsUrl        READ planToolbarIndicatorsUrl       CONSTANT)
     Q_PROPERTY(bool                     showSensorCalibrationCompass    READ showSensorCalibrationCompass   NOTIFY showSensorCalibrationCompassChanged)
     Q_PROPERTY(bool                     showSensorCalibrationGyro       READ showSensorCalibrationGyro      NOTIFY showSensorCalibrationGyroChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAccel      READ showSensorCalibrationAccel     NOTIFY showSensorCalibrationAccelChanged)
@@ -107,16 +104,10 @@ public:
     /// Provides an optional, custom preflight checklist
     virtual QUrl    preFlightChecklistUrl           () const { return QUrl::fromUserInput("qrc:/qml/PreFlightCheckList.qml"); }
 
-    /// Allows replacing the Main toolbar
-    virtual QUrl    mainToolbarUrl                  () const;
-    /// Allows replacing the Plan View toolbar
-    virtual QUrl    planToolbarUrl                  () const;
     /// Allows replacing the toolbar Light Theme color
     virtual QColor  toolbarBackgroundLight          () const;
     /// Allows replacing the toolbar Dark Theme color
     virtual QColor  toolbarBackgroundDark           () const;
-    /// Allows replacing the Plan View toolbar container
-    virtual QUrl    planToolbarIndicatorsUrl        () const;
     /// By returning false you can hide the following sensor calibration pages
     virtual bool    showSensorCalibrationCompass    () const { return true; }
     virtual bool    showSensorCalibrationGyro       () const { return true; }

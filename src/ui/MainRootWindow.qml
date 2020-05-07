@@ -49,10 +49,7 @@ ApplicationWindow {
 
     property var                _rgPreventViewSwitch:       [ false ]
 
-
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
-    readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
-    readonly property string    _planToolbar:               QGroundControl.corePlugin.options.planToolbarUrl
 
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
@@ -107,44 +104,47 @@ ApplicationWindow {
         return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
     }
 
-    function viewSwitch(isPlanView) {
+    function viewSwitch(isPlanView, showModeIndicators) {
         settingsWindow.visible  = false
         setupWindow.visible     = false
         analyzeWindow.visible   = false
         flightView.visible      = false
         planViewLoader.visible  = false
-        if(isPlanView) {
-            toolbar.source  = _planToolbar
+        var indicatorSource
+        if (isPlanView) {
+            indicatorSource = "qrc:/qml/PlanToolBarIndicators.qml"
         } else {
-            toolbar.source  = _mainToolbar
+            indicatorSource = "qrc:/toolbar/MainToolBarIndicators.qml"
         }
+        toolbar.item.indicatorSource = indicatorSource
+        toolbar.item.showModeIndicators = showModeIndicators
     }
 
     function showFlyView() {
         if (!flightView.visible) {
             mainWindow.showPreFlightChecklistIfNeeded()
         }
-        viewSwitch(false)
+        viewSwitch(false, true)
         flightView.visible = true
     }
 
     function showPlanView() {
-        viewSwitch(true)
+        viewSwitch(true, false)
         planViewLoader.visible = true
     }
 
     function showAnalyzeView() {
-        viewSwitch(false)
+        viewSwitch(false, false)
         analyzeWindow.visible = true
     }
 
     function showSetupView() {
-        viewSwitch(false)
+        viewSwitch(false, false)
         setupWindow.visible = true
     }
 
     function showSettingsView() {
-        viewSwitch(false)
+        viewSwitch(false, false)
         settingsWindow.visible = true
     }
 
@@ -324,13 +324,13 @@ ApplicationWindow {
     header: ToolBar {
         height:         ScreenTools.toolbarHeight
         visible:        !QGroundControl.videoManager.fullScreen
-        background:     Rectangle {
+        background: Rectangle {
             color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
         }
         Loader {
             id:             toolbar
             anchors.fill:   parent
-            source:         _mainToolbar
+            source:         "qrc:/toolbar/MainToolBar.qml"
             //-- Toggle Full Screen / Windowed
             MouseArea {
                 anchors.fill:   parent

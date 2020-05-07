@@ -11,7 +11,7 @@ import QGroundControl.Palette           1.0
 
 // Toolbar for Plan View
 Item {
-    anchors.fill:   parent
+    width: missionStats.width + _margins
 
     property var    _planMasterController:      mainWindow.planMasterControllerPlanView
     property var    _currentMissionItem:        mainWindow.currentPlanMissionItem          ///< Mission item to display status for
@@ -109,11 +109,9 @@ Item {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
-        anchors.rightMargin:    _margins
         anchors.left:           parent.left
-        anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
         columnSpacing:          0
-        columns:                3
+        columns:                4
 
         GridLayout {
             columns:                8
@@ -226,37 +224,25 @@ Item {
             }
 
             Item { width: 1; height: 1 }
-/*
-            FIXME: Swap point display is currently hidden since the code which calcs it doesn't work correctly
-            QGCLabel { text: qsTr("Swap waypoint:"); font.pointSize: _dataFontSize; }
-            QGCLabel {
-                text:                   _batteryChangePointText
-                font.pointSize:         _dataFontSize
-                Layout.minimumWidth:    _mediumValueWidth
-            }
-*/
         }
-    }
 
-    QGCButton {
-        id:                     uploadButton
-        anchors.rightMargin:    _margins
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        text:                   _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
-        enabled:                !_controllerSyncInProgress
-        visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
-        primary:                _controllerDirty
-        onClicked:              _planMasterController.upload()
+        QGCButton {
+            id:          uploadButton
+            text:        _controllerDirty ? qsTr("Upload Required") : qsTr("Upload")
+            enabled:     !_controllerSyncInProgress
+            visible:     !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
+            primary:     _controllerDirty
+            onClicked:   _planMasterController.upload()
 
-        PropertyAnimation on opacity {
-            easing.type:    Easing.OutQuart
-            from:           0.5
-            to:             1
-            loops:          Animation.Infinite
-            running:        _controllerDirty && !_controllerSyncInProgress
-            alwaysRunToEnd: true
-            duration:       2000
+            PropertyAnimation on opacity {
+                easing.type:    Easing.OutQuart
+                from:           0.5
+                to:             1
+                loops:          Animation.Infinite
+                running:        _controllerDirty && !_controllerSyncInProgress
+                alwaysRunToEnd: true
+                duration:       2000
+            }
         }
     }
 
@@ -276,16 +262,6 @@ Item {
             }
         }
     }
-
-    /*
-    Rectangle {
-        anchors.bottom: parent.bottom
-        height:         toolBar.height * 0.05
-        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
-        color:          qgcPal.colorGreen
-        visible:        !largeProgressBar.visible
-    }
-    */
 
     // Large mission download progress bar
     Rectangle {
