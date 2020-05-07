@@ -16,12 +16,6 @@ ToolStripAction {
 
     onTriggered: {
         guidedActionsController.closeAll()
-        if (actionID === -1) {
-            // FIXME: NYI
-            guidedActionList.model   = _actionModel
-            guidedActionList.visible = true
-        } else {
-            guidedController.confirmAction(actionID)
-        }
+        guidedController.confirmAction(actionID)
     }
 }
