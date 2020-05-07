@@ -2341,12 +2341,14 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
                 if (currentSeqNumber == sequenceNumber && _isROIBeginItem(simpleItem)) {
                     _isROIBeginCurrentItem = true;
                 }
+            }
 
-                if (simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate()) {
+            if (viIndex != 0) {
+                // Complex items are assumed to be fly through
+                if (!simpleItem || (simpleItem->specifiesCoordinate() && !simpleItem->isStandaloneCoordinate())) {
                     lastFlyThroughSeqNum = currentSeqNumber;
                 }
             }
-
 
             if (currentSeqNumber == sequenceNumber) {
                 pVI->setIsCurrentItem(true);
