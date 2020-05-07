@@ -26,34 +26,15 @@ Rectangle {
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
     property alias  title:              titleLabel.text
 
-    property AbstractButton lastClickedButton: null
-
     function simulateClick(buttonIndex) {
         buttonIndex = buttonIndex + 1 // skip over title
-        if (!toolStripColumn.children[buttonIndex].checked) {
-            toolStripColumn.children[buttonIndex].checked = true
-            toolStripColumn.children[buttonIndex].clicked()
-        }
+        toolStripColumn.children[buttonIndex].clicked()
     }
 
     // Ensure we don't get narrower than content
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
-    signal clicked(int index, bool checked)
     signal dropped(int index)
-
-    function setChecked(idx, check) {
-        repeater.itemAt(idx).checked = check
-    }
-
-    function getChecked(idx) {
-        return repeater.itemAt(idx).checked
-    }
-
-    ButtonGroup {
-        id:         buttonGroup
-        buttons:    toolStripColumn.children
-    }
 
     DeadMouseArea {
         anchors.fill: parent
@@ -98,27 +79,25 @@ Rectangle {
                     fontPointSize:  ScreenTools.smallFontPointSize
                     autoExclusive:  true
 
-                    enabled:        modelData.buttonEnabled
-                    visible:        modelData.buttonVisible
+                    enabled:        modelData.enabled
+                    visible:        modelData.visible
                     imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
-                    text:           modelData.name
-                    checked:        modelData.checked !== undefined ? modelData.checked : checked
+                    text:           modelData.text
+                    checked:        modelData.checked
+                    checkable:      modelData.dropPanelComponent || modelData.checkable
 
-                    ButtonGroup.group: buttonGroup
-                    // Only drop panel and toggleable are checkable
-                    checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
+                    onCheckedChanged: modelData.checked = checked
 
                     onClicked: {
-                        dropPanel.hide()    // DropPanel will call hide on "lastClickedButton"
-                        if (modelData.dropPanelComponent === undefined) {
-                            _root.clicked(index, checked)
+                        dropPanel.hide()
+                        if (!modelData.dropPanelComponent) {
+                            modelData.triggered(this)
                         } else if (checked) {
                             var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                            dropPanel.show(panelEdgeTopPoint, modelData.dropPanelComponent)
+                            dropPanel.show(panelEdgeTopPoint, modelData.dropPanelComponent, this)
+                            checked = true
                             _root.dropped(index)
                         }
-                        if(_root && buttonTemplate)
-                            _root.lastClickedButton = buttonTemplate
                     }
                 }
             }

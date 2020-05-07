@@ -106,6 +106,8 @@
 #include "RCToParamDialogController.h"
 #include "QGCImageProvider.h"
 #include "TerrainProfile.h"
+#include "ToolStripAction.h"
+#include "ToolStripActionList.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -559,6 +561,8 @@ void QGCApplication::_initCommon()
     qmlRegisterType<RCToParamDialogController>      (kQGCControllers,                       1, 0, "RCToParamDialogController");
 
     qmlRegisterType<TerrainProfile>                 ("QGroundControl.Controls",             1, 0, "TerrainProfile");
+    qmlRegisterType<ToolStripAction>                ("QGroundControl.Controls",             1, 0, "ToolStripAction");
+    qmlRegisterType<ToolStripActionList>            ("QGroundControl.Controls",             1, 0, "ToolStripActionList");
 
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
