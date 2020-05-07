@@ -27,10 +27,9 @@ Popup {
         clip:           true
     }
 
-    property bool   useChecklist:       QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
-
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _enforceChecklist:  useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
+    property bool   _useChecklist:      QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+    property bool   _enforceChecklist:  _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
     property bool   _checklistComplete: _activeVehicle && (_activeVehicle.checkListState === Vehicle.CheckListPassed)
 
     on_ActiveVehicleChanged: _showPreFlightChecklistIfNeeded()

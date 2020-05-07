@@ -659,6 +659,8 @@ HEADERS += \
     src/QmlControls/RCToParamDialogController.h \
     src/QmlControls/ScreenToolsController.h \
     src/QmlControls/TerrainProfile.h \
+    src/QmlControls/ToolStripAction.h \
+    src/QmlControls/ToolStripActionList.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
     src/Settings/ADSBVehicleManagerSettings.h \
     src/Settings/AppSettings.h \
@@ -867,6 +869,8 @@ SOURCES += \
     src/QmlControls/RCToParamDialogController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/QmlControls/TerrainProfile.cc \
+    src/QmlControls/ToolStripAction.cc \
+    src/QmlControls/ToolStripActionList.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
     src/Settings/ADSBVehicleManagerSettings.cc \
     src/Settings/AppSettings.cc \

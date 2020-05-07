@@ -40,8 +40,10 @@ Item {
     property real   _viewportMaxBottom: parent.parent.height - parent.y
     property real   _viewportMaxHeight: _viewportMaxBottom - _viewportMaxTop
     property var    _dropPanelCancel
+    property var    _parentButton
 
-    function show(panelEdgeTopPoint, panelComponent) {
+    function show(panelEdgeTopPoint, panelComponent, parentButton) {
+        _parentButton = parentButton
         _dropEdgeTopPoint = panelEdgeTopPoint
         _dropDownComponent = panelComponent
         _calcPositions()
@@ -52,13 +54,9 @@ Item {
     function hide() {
         if (_dropPanelCancel) {
             _dropPanelCancel.destroy()
-        }
-        if (visible) {
+            _parentButton.checked = false
             visible = false
             _dropDownComponent = undefined
-            if (toolStrip.lastClickedButton) {
-                toolStrip.lastClickedButton.checked = false
-            }
         }
     }
 
