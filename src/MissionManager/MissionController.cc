@@ -1205,6 +1205,7 @@ void MissionController::_recalcFlightPathSegments(void)
 
     FlightPathSegmentHashTable oldSegmentTable = _flightPathSegmentHashTable;
 
+    _missionContainsVTOLTakeoff = false;
     _flightPathSegmentHashTable.clear();
     _waypointPath.clear();
 
@@ -1244,6 +1245,7 @@ void MissionController::_recalcFlightPathSegments(void)
             switch (command) {
             case MAV_CMD_NAV_TAKEOFF:
             case MAV_CMD_NAV_VTOL_TAKEOFF:
+                _missionContainsVTOLTakeoff = command == MAV_CMD_NAV_VTOL_TAKEOFF;
                 if (!linkEndToHome) {
                     // If we still haven't found the first coordinate item and we hit a takeoff command this means the mission starts from the ground.
                     // Link the first item back to home to show that.
@@ -1459,7 +1461,7 @@ void MissionController::_recalcMissionFlightStatus()
 
     _resetMissionFlightStatus();
 
-    bool   vtolInHover =                true;
+    bool   vtolInHover =                _missionContainsVTOLTakeoff;
     bool   linkStartToHome =            false;
     bool   foundRTL =                   false;
     bool   vehicleYawSpecificallySet =  false;
