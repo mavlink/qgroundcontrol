@@ -369,6 +369,7 @@ private:
     bool                        _isROIBeginCurrentItem =        false;
     double                      _minAMSLAltitude =              0;
     double                      _maxAMSLAltitude =              0;
+    bool                        _missionContainsVTOLTakeoff =   false;
 
     static const char*  _settingsGroup;
 
