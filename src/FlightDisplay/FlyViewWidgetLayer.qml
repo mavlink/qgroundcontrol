@@ -38,7 +38,7 @@ Item {
     property var    mapControl
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _planMasterController:  mainWindow.planMasterControllerPlanView
+    property var    _planMasterController:  mainWindow.planMasterControllerFlyView
     property var    _missionController:     _planMasterController.missionController
     property var    _geoFenceController:    _planMasterController.geoFenceController
     property var    _rallyPointController:  _planMasterController.rallyPointController
@@ -115,7 +115,6 @@ Item {
         maxHeight:                  parent.height - y - parentToolInsets.leftEdgeBottomInset - _toolsMargin
         guidedActionsController:    _guidedController
         guidedActionList:           _guidedActionList
-        usePreFlightChecklist:      preFlightChecklistPopup.useChecklist
         visible:                    !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: preFlightChecklistPopup.open()
