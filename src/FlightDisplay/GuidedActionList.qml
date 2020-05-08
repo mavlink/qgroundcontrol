@@ -14,6 +14,7 @@ import QtQuick.Layouts  1.2
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FlightDisplay 1.0
 import QGroundControl.Palette       1.0
 
 /// Dialog showing list of available guided actions
@@ -28,12 +29,41 @@ Rectangle {
 
     property var    guidedController
     property var    altitudeSlider
-    property alias  model:              actionRepeater.model
+
+    function show() {
+        visible = true
+    }
 
     property real _margins:             Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
     property real _actionWidth:         ScreenTools.defaultFontPixelWidth * 25
     property real _actionHorizSpacing:  ScreenTools.defaultFontPixelHeight * 2
 
+    property var _model: [
+        {
+            title:      guidedController.startMissionTitle,
+            text:       guidedController.startMissionMessage,
+            action:     guidedController.actionStartMission,
+            visible:    guidedController.showStartMission
+        },
+        {
+            title:      guidedController.continueMissionTitle,
+            text:       guidedController.continueMissionMessage,
+            action:     guidedController.actionContinueMission,
+            visible:    guidedController.showContinueMission
+        },
+        {
+            title:      guidedController.changeAltTitle,
+            text:       guidedController.changeAltMessage,
+            action:     guidedController.actionChangeAlt,
+            visible:    guidedController.showChangeAlt
+        },
+        {
+            title:      guidedController.landAbortTitle,
+            text:       guidedController.landAbortMessage,
+            action:     guidedController.actionLandAbort,
+            visible:    guidedController.showLandAbort
+        }
+    ]
 
     QGCPalette { id: qgcPal }
 
@@ -67,7 +97,8 @@ Rectangle {
                 spacing:    _actionHorizSpacing
 
                 Repeater {
-                    id: actionRepeater
+                    id:     actionRepeater
+                    model:  _model
 
                     ColumnLayout {
                         spacing:            ScreenTools.defaultFontPixelHeight / 2
