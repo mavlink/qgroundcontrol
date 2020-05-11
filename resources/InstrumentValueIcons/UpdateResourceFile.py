@@ -10,7 +10,7 @@ def main():
     files = os.listdir(".")
     for filename in files:
         if filename.endswith(".svg"):
-            qrcFile.write("\t\t<file alias=\"%s\">resources/InstrumentValueIcons/%s</file>\n" % (filename, filename))
+            qrcFile.write("\t\t<file alias=\"%s\">%s</file>\n" % (filename, filename))
 
     qrcFile.write("\t</qresource>\n")
     qrcFile.write("</RCC>\n")
