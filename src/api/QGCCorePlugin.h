@@ -108,7 +108,7 @@ public:
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
 
-    virtual void instrumentValueAreaCreateDefaultSettings(const QString& defaultSettingsGroup);
+    virtual void factValueGridCreateDefaultSettings(const QString& defaultSettingsGroup);
 
     /// Allows the plugin to override or get access to the QmlApplicationEngine to do things like add import
     /// path or stuff things into the context prior to window creation.

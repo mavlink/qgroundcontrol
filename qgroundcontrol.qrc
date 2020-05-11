@@ -98,9 +98,10 @@
         <file alias="QGroundControl/Controls/FWLandingPatternMapVisual.qml">src/PlanView/FWLandingPatternMapVisual.qml</file>
         <file alias="QGroundControl/Controls/GeoFenceEditor.qml">src/PlanView/GeoFenceEditor.qml</file>
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
+        <file alias="QGroundControl/Controls/HorizontalFactValueGrid.qml">src/QmlControls/HorizontalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
-        <file alias="QGroundControl/Controls/InstrumentValue.qml">src/QmlControls/InstrumentValue.qml</file>
-        <file alias="QGroundControl/Controls/InstrumentValueArea.qml">src/QmlControls/InstrumentValueArea.qml</file>
+        <file alias="QGroundControl/Controls/InstrumentValueLabel.qml">src/QmlControls/InstrumentValueLabel.qml</file>
+        <file alias="QGroundControl/Controls/InstrumentValueValue.qml">src/QmlControls/InstrumentValueValue.qml</file>
         <file alias="QGroundControl/Controls/InstrumentValueEditDialog.qml">src/QmlControls/InstrumentValueEditDialog.qml</file>
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
         <file alias="QGroundControl/Controls/KMLOrSHPFileDialog.qml">src/QmlControls/KMLOrSHPFileDialog.qml</file>
@@ -182,6 +183,7 @@
         <file alias="QGroundControl/Controls/TransectStyleComplexItemStats.qml">src/PlanView/TransectStyleComplexItemStats.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
+        <file alias="QGroundControl/Controls/VerticalFactValueGrid.qml">src/QmlControls/VerticalFactValueGrid.qml</file>
         <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
         <file alias="QGroundControl/FactControls/AltitudeFactTextField.qml">src/FactSystem/FactControls/AltitudeFactTextField.qml</file>
         <file alias="QGroundControl/FactControls/FactBitmask.qml">src/FactSystem/FactControls/FactBitmask.qml</file>

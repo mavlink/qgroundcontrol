@@ -209,15 +209,31 @@ Item {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
         anchors.left:           separator.right
-        anchors.right:          connectionStatus.visible ? connectionStatus.left : parent.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        contentWidth:           indicatorLoader.width
+        anchors.right:          connectionStatus.visible ? connectionStatus.left : parent.right
+        contentWidth:           indicatorLoader.x + indicatorLoader.width
         flickableDirection:     Flickable.HorizontalFlick
+        clip:                   !valueArea.settingsUnlocked
+
+        HorizontalFactValueGrid {
+            id:                     valueArea
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            userSettingsGroup:      toolbarUserSettingsGroup
+            defaultSettingsGroup:   toolbarDefaultSettingsGroup
+
+            QGCMouseArea {
+                anchors.fill:   parent
+                visible:        !parent.settingsUnlocked
+                onClicked:      parent.settingsUnlocked = true
+            }
+        }
 
         Loader {
             id:                 indicatorLoader
+            anchors.left:       valueArea.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             "qrc:/toolbar/MainToolBarIndicators.qml"
