@@ -1513,11 +1513,11 @@ void MissionController::_recalcMissionFlightStatus()
 
         // Look for specific gimbal changes
         double gimbalYaw = item->specifiedGimbalYaw();
-        if (!qIsNaN(gimbalYaw)) {
+        if (!qIsNaN(gimbalYaw) || _planViewSettings->showGimbalOnlyWhenSet()->rawValue().toBool()) {
             _missionFlightStatus.gimbalYaw = gimbalYaw;
         }
         double gimbalPitch = item->specifiedGimbalPitch();
-        if (!qIsNaN(gimbalPitch)) {
+        if (!qIsNaN(gimbalPitch) || _planViewSettings->showGimbalOnlyWhenSet()->rawValue().toBool()) {
             _missionFlightStatus.gimbalPitch = gimbalPitch;
         }
 
