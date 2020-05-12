@@ -15,7 +15,7 @@
 
 #include <QObject>
 
-class InstrumentValueArea;
+class FactValueGrid;
 
 class InstrumentValueData : public QObject
 {
@@ -30,9 +30,9 @@ public:
     };
     Q_ENUMS(RangeType)
 
-    explicit InstrumentValueData(InstrumentValueArea* instrumentValueArea, QObject *parent = nullptr);
+    explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent);
 
-    Q_PROPERTY(InstrumentValueArea* instrumentValueArea MEMBER _instrumentValueArea                         CONSTANT)
+    Q_PROPERTY(FactValueGrid*       factValueGrid       MEMBER _factValueGrid                               CONSTANT)
     Q_PROPERTY(QStringList          factGroupNames      MEMBER  _factGroupNames                             NOTIFY factGroupNamesChanged)
     Q_PROPERTY(QStringList          factValueNames      MEMBER  _factValueNames                             NOTIFY factValueNamesChanged)
     Q_PROPERTY(QString              factGroupName       READ    factGroupName                               NOTIFY factGroupNameChanged)
@@ -78,6 +78,9 @@ public:
     void            setRangeIcons           (const QVariantList& rangeIcons);
     void            setRangeOpacities       (const QVariantList& rangeOpacities);
 
+
+    static const char*  vehicleFactGroupName;
+
 signals:
     void factChanged            (Fact* fact);
     void factNameChanged        (const QString& factName);
@@ -107,7 +110,7 @@ private:
     void _updateIcon            (void);
     void _updateOpacity         (void);
 
-    InstrumentValueArea*    _instrumentValueArea =  nullptr;
+    FactValueGrid*          _factValueGrid =        nullptr;
     Vehicle*                _activeVehicle =        nullptr;
     QmlObjectListModel*     _rowModel =             nullptr;
     Fact*                   _fact =                 nullptr;
@@ -139,7 +142,6 @@ private:
     // These are user facing string for the various enums.
     static const QStringList _rangeTypeNames;
 
-    static const char*  _vehicleFactGroupName;
 };
 
 QML_DECLARE_TYPE(InstrumentValueData)
