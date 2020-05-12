@@ -33,27 +33,13 @@ QGCPopupDialog {
     GridLayout {
         rowSpacing:     _margins
         columnSpacing:  _margins
-        columns:        3
-
-        QGCCheckBox {
-            id:         valueCheckBox
-            text:       qsTr("Value")
-            checked:    instrumentValueData.fact
-            onClicked: {
-                if (checked) {
-                    instrumentValueData.setFact(instrumentValueData.factGroupNames[0], instrumentValueData.factValueNames[0])
-                } else {
-                    instrumentValueData.clearFact()
-                }
-            }
-        }
+        columns:        2
 
         QGCComboBox {
             id:                     factGroupCombo
             Layout.fillWidth:       true
             model:                  instrumentValueData.factGroupNames
             sizeToContents:         true
-            enabled:                valueCheckBox.checked
             Component.onCompleted:  currentIndex = find(instrumentValueData.factGroupName)
             onActivated: {
                 instrumentValueData.setFact(currentText, "")
@@ -71,7 +57,6 @@ QGCPopupDialog {
             Layout.fillWidth:       true
             model:                  instrumentValueData.factValueNames
             sizeToContents:         true
-            enabled:                valueCheckBox.checked
             Component.onCompleted:  currentIndex = find(instrumentValueData.factName)
             onActivated: {
                 instrumentValueData.setFact(instrumentValueData.factGroupName, currentText)
@@ -90,17 +75,18 @@ QGCPopupDialog {
             Component.onCompleted:  checked = instrumentValueData.icon != ""
             onClicked: {
                 instrumentValueData.text = ""
-                instrumentValueData.icon = instrumentValueData.iconNames[0]
+                instrumentValueData.icon = instrumentValueData.factValueGrid.iconNames[0]
                 var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
             }
         }
 
         QGCColoredImage {
+            id:                 valueIcon
             Layout.alignment:   Qt.AlignHCenter
             height:             ScreenTools.implicitComboBoxHeight
             width:              height
-            source:             "/InstrumentValueIcons/" + (instrumentValueData.icon ? instrumentValueData.icon : instrumentValueData.instrumentValueArea.iconNames[0])
+            source:             "/InstrumentValueIcons/" + (instrumentValueData.icon ? instrumentValueData.icon : instrumentValueData.factValueGrid.iconNames[0])
             sourceSize.height:  height
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
@@ -112,12 +98,16 @@ QGCPopupDialog {
                 anchors.fill:   parent
                 onClicked: {
                     var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                    mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                    mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
                 }
             }
-        }
 
-        Item { height: 1; width: 1 }
+            Rectangle {
+                anchors.fill:   valueIcon
+                color:          qgcPal.text
+                visible:        valueIcon.status === Image.Error
+            }
+        }
 
         QGCRadioButton {
             id:                     textRadio
@@ -132,7 +122,6 @@ QGCPopupDialog {
         QGCTextField {
             id:                     labelTextField
             Layout.fillWidth:       true
-            Layout.columnSpan:      2
             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
             text:                   instrumentValueData.text
             enabled:                textRadio.checked
@@ -144,13 +133,14 @@ QGCPopupDialog {
         QGCComboBox {
             id:                 fontSizeCombo
             Layout.fillWidth:   true
-            model:              instrumentValueData.instrumentValueArea.fontSizeNames
-            currentIndex:       instrumentValueData.instrumentValueArea.fontSize
+            model:              instrumentValueData.factValueGrid.fontSizeNames
+            currentIndex:       instrumentValueData.factValueGrid.fontSize
             sizeToContents:     true
-            onActivated:        instrumentValueData.instrumentValueArea.fontSize = index
+            onActivated:        instrumentValueData.factValueGrid.fontSize = index
         }
 
         QGCCheckBox {
+            Layout.columnSpan:  2
             text:               qsTr("Show Units")
             checked:            instrumentValueData.showUnits
             onClicked:          instrumentValueData.showUnits = checked
@@ -160,7 +150,6 @@ QGCPopupDialog {
 
         QGCComboBox {
             id:                 rangeTypeCombo
-            Layout.columnSpan:  2
             Layout.fillWidth:   true
             model:              instrumentValueData.rangeTypeNames
             currentIndex:       instrumentValueData.rangeType
@@ -170,7 +159,7 @@ QGCPopupDialog {
 
         Loader {
             id:                     rangeLoader
-            Layout.columnSpan:      3
+            Layout.columnSpan:      2
             Layout.fillWidth:       true
             Layout.preferredWidth:  item ? item.width : 0
             Layout.preferredHeight: item ? item.height : 0
@@ -403,7 +392,7 @@ QGCPopupDialog {
                                     anchors.fill:   parent
                                     onClicked: {
                                         var updateFunction = function(icon){ updateIconValue(index, icon) }
-                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.instrumentValueArea.iconNames, icon: modelData, updateIconFunction: updateFunction })
+                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction })
                                     }
                                 }
                             }

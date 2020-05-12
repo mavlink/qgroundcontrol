@@ -8,13 +8,13 @@
  ****************************************************************************/
 
 #include "InstrumentValueData.h"
-#include "InstrumentValueArea.h"
+#include "FactValueGrid.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
 #include <QSettings>
 
-const char*  InstrumentValueData::_vehicleFactGroupName =   "Vehicle";
+const char*  InstrumentValueData::vehicleFactGroupName =   "Vehicle";
 
 // Important: The indices of these strings must match the InstrumentValueData::RangeType enum
 const QStringList InstrumentValueData::_rangeTypeNames = {
@@ -24,9 +24,9 @@ const QStringList InstrumentValueData::_rangeTypeNames = {
     QT_TRANSLATE_NOOP("InstrumentValue", "Icon"),
 };
 
-InstrumentValueData::InstrumentValueData(InstrumentValueArea* instrumentValueArea, QObject *parent)
-    : QObject               (parent)
-    , _instrumentValueArea  (instrumentValueArea)
+InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent)
+    : QObject       (parent)
+    , _factValueGrid(factValueGrid)
 {
     MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
     connect(multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &InstrumentValueData::_activeVehicleChanged);
@@ -57,14 +57,14 @@ void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
     for (QString& name: _factGroupNames) {
         name[0] = name[0].toUpper();
     }
-    _factGroupNames.prepend(_vehicleFactGroupName);
+    _factGroupNames.prepend(vehicleFactGroupName);
     emit factGroupNamesChanged(_factGroupNames);
 
     if (_fact) {
         _fact = nullptr;
 
         FactGroup* factGroup = nullptr;
-        if (_factGroupName == _vehicleFactGroupName) {
+        if (_factGroupName == vehicleFactGroupName) {
             factGroup = _activeVehicle;
         } else {
             factGroup = _activeVehicle->getFactGroup(_factGroupName);
@@ -108,7 +108,7 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     }
 
     FactGroup* factGroup = nullptr;
-    if (factGroupName == _vehicleFactGroupName) {
+    if (factGroupName == vehicleFactGroupName) {
         factGroup = _activeVehicle;
     } else {
         factGroup = _activeVehicle->getFactGroup(factGroupName);
@@ -225,7 +225,7 @@ void InstrumentValueData::_resetRangeInfo(void)
             _rangeOpacities.append(1.0);
             break;
         case IconSelectRange:
-            _rangeIcons.append(_instrumentValueArea->iconNames()[0]);
+            _rangeIcons.append(_factValueGrid->iconNames()[0]);
             break;
         }
     }
@@ -250,7 +250,7 @@ void InstrumentValueData::addRangeValue(void)
         _rangeOpacities.append(1.0);
         break;
     case IconSelectRange:
-        _rangeIcons.append(_instrumentValueArea->iconNames()[0]);
+        _rangeIcons.append(_factValueGrid->iconNames()[0]);
         break;
     }
 

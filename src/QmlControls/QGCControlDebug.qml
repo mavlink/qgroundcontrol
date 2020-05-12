@@ -9,19 +9,30 @@
 
 import QtQuick 2.12
 
-Item {
-    property string name: "control"
+Rectangle {
+    id:             _root
+    border.width:   borderColor === undefined ? 0 : 1
+    border.color:   borderColor
+    color:          "transparent"
 
-    Component.onCompleted: console.log("QGCControlDebug.onCompleted name,x,y,width,height,visible,z,parent", name, x, y, width, height, visible, z, parent)
+    property string name
+    property color  borderColor
+
+    function logEverything() {
+        console.log(qsTr("%1 x:%2 y:%3 width:%4 height:%5 visible: %6 enabled: %7 z:%8 parent:%9 implicitWidth/Height:%10:%11", "Do not translate").arg(name).arg(parent.x).arg(parent.y).arg(parent.width).arg(parent.height).arg(parent.visible).arg(parent.enabled).arg(parent.z).arg(parent.parent))
+    }
+
+    Component.onCompleted: logEverything()
 
     Connections {
         target:             parent
-        onXChanged:         console.log(name, "xChanged",       parent.x)
-        onYChanged:         console.log(name, "yChanged",       parent.y)
-        onWidthChanged:     console.log(name, "widthChanged",   parent.width)
-        onHeightChanged:    console.log(name, "heightChanged",  parent.height)
-        onVisibleChanged:   console.log(name, "visibleChanged", parent.visible)
-        onZChanged:         console.log(name, "zChanged",       parent.z)
-        onParentChanged:    console.log(name, "parentChanged",  parent.parent)
+        onXChanged:         { console.log(name, "xChanged",       parent.x);        logEverything() }
+        onYChanged:         { console.log(name, "yChanged",       parent.y);        logEverything() }
+        onWidthChanged:     { console.log(name, "widthChanged",   parent.width);    logEverything() }
+        onHeightChanged:    { console.log(name, "heightChanged",  parent.height);   logEverything() }
+        onVisibleChanged:   { console.log(name, "visibleChanged", parent.visible);  logEverything() }
+        onZChanged:         { console.log(name, "zChanged",       parent.z);        logEverything() }
+        onParentChanged:    { console.log(name, "parentChanged",  parent.parent);   logEverything() }
+        onEnabledChanged:   { console.log(name, "enabledChanged", parent.enabled);  logEverything() }
     }
 }

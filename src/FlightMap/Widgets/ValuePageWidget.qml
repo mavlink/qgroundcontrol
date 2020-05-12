@@ -23,12 +23,11 @@ import QGroundControl.FlightMap     1.0
 import QGroundControl               1.0
 
 /// Value page for InstrumentPanel PageView
-InstrumentValueArea {
+VerticalFactValueGrid {
     id:                     _root
     width:                  pageWidth
     userSettingsGroup:      valuePageUserSettingsGroup
     defaultSettingsGroup:   valuePageDefaultSettingsGroup
-    orientation:            InstrumentValueArea.VerticalOrientation
 
     property bool showSettingsIcon: true
     property bool showLockIcon:     true
