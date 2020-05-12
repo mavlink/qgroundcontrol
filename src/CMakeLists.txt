@@ -26,8 +26,8 @@ if(GST_FOUND)
 	)
 	if(ANDROID) # Should also be expanded to iOS
 		list(APPEND EXTRA_SRC
-			src/Taisync/TaisyncTelemetry.cc
-			src/Taisync/TaisyncVideoReceiver.cc
+			Taisync/TaisyncTelemetry.cc
+			Taisync/TaisyncVideoReceiver.cc
 		)
 	endif()
 endif()
