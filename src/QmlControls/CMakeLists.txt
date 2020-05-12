@@ -4,10 +4,12 @@ add_library(QmlControls
 	AppMessages.h
 	EditPositionDialogController.cc
 	EditPositionDialogController.h
+	FactValueGrid.cc
+	FactValueGrid.h
 	FlightPathSegment.cc
 	FlightPathSegment.h
-	InstrumentValueArea.cc
-	InstrumentValueArea.h
+	HorizontalFactValueGrid.cc
+	HorizontalFactValueGrid.h
 	InstrumentValueData.cc
 	InstrumentValueData.h
 	ParameterEditorController.cc
@@ -31,11 +33,17 @@ add_library(QmlControls
 	ScreenToolsController.h
 	TerrainProfile.cc
 	TerrainProfile.h
+	ToolStripAction.cc
+	ToolStripAction.h
+	ToolStripActionList.cc
+	ToolStripActionList.h
+	VerticalFactValueGrid.cc
+	VerticalFactValueGrid.h
 )
 
 add_custom_target(QmlControlsQml
 	SOURCES
-		APMSubMotorDisplay.qml	
+		APMSubMotorDisplay.qml
 		AppMessages.qml
 		AxisMonitor.qml
 		ClickableColor.qml
@@ -50,9 +58,18 @@ add_custom_target(QmlControlsQml
 		FlightModeMenu.qml
 		HackAndroidFileDialog.qml
 		HackFileDialog.qml
+		HeightIndicator.qml
+		HorizontalFactValueGrid.qml
 		IndicatorButton.qml
+		InstrumentValueArea.qml
+		InstrumentValueEditDialog.qml
+		InstrumentValueLabel.qml
+		InstrumentValueValue.qml
 		JoystickThumbPad.qml
+		KMLOrSHPFileDialog.qml
 		LogReplayStatusBar.qml
+		MainWindowSavedState.qml
+		MAVLinkChart.qml
 		MAVLinkMessageButton.qml
 		MissionCommandDialog.qml
 		MissionItemIndexLabel.qml
@@ -60,31 +77,38 @@ add_custom_target(QmlControlsQml
 		MultiRotorMotorDisplay.qml
 		OfflineMapButton.qml
 		PageView.qml
-		ParameterEditor.qml
 		ParameterEditorDialog.qml
+		ParameterEditor.qml
 		PIDTuning.qml
 		PreFlightCheckButton.qml
 		PreFlightCheckGroup.qml
+		PreFlightCheckList.qml
 		PreFlightCheckModel.qml
 		QGCButton.qml
 		QGCCheckBox.qml
 		QGCColoredImage.qml
 		QGCComboBox.qml
+		QGCControlDebug.qml
+		QGCDynamicObjectManager.qml
 		QGCFileDialog.qml
-		QGCFlickable.qml
 		QGCFlickableHorizontalIndicator.qml
+		QGCFlickable.qml
 		QGCFlickableVerticalIndicator.qml
 		QGCGroupBox.qml
 		QGCHoverButton.qml
 		QGCLabel.qml
 		QGCListView.qml
 		QGCMapLabel.qml
-		QGCMenu.qml
 		QGCMenuItem.qml
+		QGCMenu.qml
 		QGCMenuSeparator.qml
 		QGCMouseArea.qml
 		QGCMovableItem.qml
-		QGCPipable.qml
+		QGCOptionsComboBox.qml
+		QGCPipOverlay.qml
+		QGCPipState.qml
+		QGCPopupDialogContainer.qml
+		QGCPopupDialog.qml
 		QGCRadioButton.qml
 		QGCSlider.qml
 		QGCSwitch.qml
@@ -92,11 +116,13 @@ add_custom_target(QmlControlsQml
 		QGCTabButton.qml
 		QGCTextField.qml
 		QGCToolBarButton.qml
-		QGCViewDialog.qml
+		QGCToolInsets.qml
 		QGCViewDialogContainer.qml
+		QGCViewDialog.qml
 		QGCViewMessage.qml
 		QmlTest.qml
 		RCChannelMonitor.qml
+		RCToParamDialog.qml
 		RoundButton.qml
 		ScreenTools.qml
 		SectionHeader.qml
@@ -105,6 +131,7 @@ add_custom_target(QmlControlsQml
 		ToolStrip.qml
 		VehicleRotationCal.qml
 		VehicleSummaryRow.qml
+		VerticalFactValueGrid.qml
 )
 target_link_libraries(QmlControls
         PUBLIC
