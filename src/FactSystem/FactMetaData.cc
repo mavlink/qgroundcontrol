@@ -424,6 +424,13 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
 
     errorString.clear();
 
+    if (!convertOnly && _customCookedValidator) {
+        errorString = _customCookedValidator(cookedValue);
+        if (!errorString.isEmpty()) {
+            return false;
+        }
+    }
+
     switch (type()) {
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
