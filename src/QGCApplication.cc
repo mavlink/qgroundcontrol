@@ -224,10 +224,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             permFile.close();
         }
 
-        // Set default QtQuick style if not configured
-        if (QString(getenv("QT_QUICK_CONTROLS_STYLE")).isEmpty()) {
-            QQuickStyle::setStyle("Universal");
-        }
+        // Always set style to default, this way QT_QUICK_CONTROLS_STYLE environment variable doesn't cause random changes in ui
+        QQuickStyle::setStyle("Default");
     }
 #endif
 #endif
