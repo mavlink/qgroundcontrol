@@ -13,7 +13,11 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-### 4.0.6 - Not yet released
+## 4.0.7 - Not yet released
+
+* Fix video page sizing
+
+### 4.0.6 - Stable
 
 * Analyze/Log Download - Fix download on mobile versions of QGC
 * Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
