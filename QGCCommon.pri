@@ -250,7 +250,8 @@ WindowsBuild {
         /wd4996 \   # silence warnings about deprecated strcpy and whatnot, these come from the shapefile code with is external
         /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
         /wd4290 \   # ignore exception specifications
-        /wd4267     # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
+        /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
+        /wd4100     # gst-plugins-good has this error
     WarningsAsErrorsOn {
         QMAKE_CXXFLAGS_WARN_ON += /WX
     }
