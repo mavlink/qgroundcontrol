@@ -1,6 +1,3 @@
-# FIXME: will be fixed after converting qmlglsink into .pro#static lib
-QMAKE_CXXFLAGS_WARN_ON =
-
 LinuxBuild {
     DEFINES += HAVE_QT_X11 HAVE_QT_EGLFS HAVE_QT_WAYLAND
 } else:MacBuild {
