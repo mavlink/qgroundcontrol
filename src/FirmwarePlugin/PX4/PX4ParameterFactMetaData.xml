@@ -1640,7 +1640,7 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
     </parameter>
     <parameter default="0.05" name="EKF2_EVA_NOISE" type="FLOAT">
       <short_desc>Measurement noise for vision angle observations used to lower bound or replace the uncertainty included in the message</short_desc>
-      <min>0.01</min>
+      <min>0.05</min>
       <unit>rad</unit>
       <decimal>2</decimal>
     </parameter>
