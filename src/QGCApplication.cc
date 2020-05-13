@@ -223,14 +223,14 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             }
             permFile.close();
         }
-
-        // Set default QtQuick style if not configured
-        if (QString(getenv("QT_QUICK_CONTROLS_STYLE")).isEmpty()) {
-            QQuickStyle::setStyle("Universal");
-        }
     }
 #endif
 #endif
+
+    // Set default QtQuick style if not configured
+    if (QString(getenv("QT_QUICK_CONTROLS_STYLE")).isEmpty()) {
+        QQuickStyle::setStyle("Universal");
+    }
 
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
