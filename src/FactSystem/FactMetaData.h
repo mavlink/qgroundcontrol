@@ -43,6 +43,10 @@ public:
 
     typedef QVariant (*Translator)(const QVariant& from);
 
+    // Custom function to validate a cooked value.
+    //  @return Error string for failed validation explanation to user. Empty string indicates no error.
+    typedef QString (*CustomCookedValidator)(const QVariant& cookedValue);
+
     FactMetaData(QObject* parent = nullptr);
     FactMetaData(ValueType_t type, QObject* parent = nullptr);
     FactMetaData(ValueType_t type, const QString name, QObject* parent = nullptr);
@@ -179,6 +183,10 @@ public:
     /// @returns false: Convertion failed
     bool clampValue(const QVariant& cookedValue, QVariant& typedValue);
 
+    /// Sets a custom cooked validator function for this metadata. The custom validator will be called
+    /// prior to the standard validator when convertAndValidateCooked is called.
+    void setCustomCookedValidator(CustomCookedValidator customValidator) { _customCookedValidator = customValidator; }
+
     static const int kDefaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
 
@@ -285,6 +293,7 @@ private:
     bool            _readOnly;
     bool            _writeOnly;
     bool            _volatile;
+    CustomCookedValidator _customCookedValidator = nullptr;
 
     // Exact conversion constants
     static const struct UnitConsts_s {
