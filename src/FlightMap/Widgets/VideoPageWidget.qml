@@ -26,7 +26,7 @@ import QGroundControl.FactControls      1.0
 /// Video streaming page for Instrument Panel PageView
 Item {
     width:              pageWidth
-    height:             videoGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+    height:             videoGrid.y + videoGrid.height + _margins
     anchors.margins:    ScreenTools.defaultFontPixelWidth * 2
     anchors.centerIn:   parent
 
@@ -38,15 +38,19 @@ Item {
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:                _isCamera ? (_dynamicCameras.cameras.get(_curCameraIndex) && _dynamicCameras.cameras.get(_curCameraIndex).paramComplete ? _dynamicCameras.cameras.get(_curCameraIndex) : null) : null
+    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
     GridLayout {
         id:                 videoGrid
+        anchors.margins:    _margins
+        anchors.top:        parent.top
+        anchors.left:       parent.left
+        anchors.right:      parent.right
         columns:            2
-        columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+        columnSpacing:      _margins
         rowSpacing:         ScreenTools.defaultFontPixelHeight
-        anchors.centerIn:   parent
         Connections {
             // For some reason, the normal signal is not reflected in the control below
             target: QGroundControl.settingsManager.videoSettings.streamEnabled
@@ -56,7 +60,7 @@ Item {
         }
         // Enable/Disable Video Streaming
         QGCLabel {
-           text:                qsTr("Enable Stream")
+           text:                qsTr("Enable")
            font.pointSize:      ScreenTools.smallFontPointSize
            visible:             !_camera || !_camera.autoStream
         }
@@ -97,7 +101,7 @@ Item {
         }
         //-- Video Fit
         QGCLabel {
-            text:               qsTr("Video Screen Fit")
+            text:               qsTr("Video Fit")
             visible:            QGroundControl.videoManager.isGStreamer
             font.pointSize:     ScreenTools.smallFontPointSize
         }
@@ -108,13 +112,14 @@ Item {
             Layout.alignment:   Qt.AlignHCenter
         }
         QGCLabel {
-            text: qsTr("File Name");
-            visible: QGroundControl.videoManager.isGStreamer
+            text:               qsTr("File Name");
+            font.pointSize:     ScreenTools.smallFontPointSize
+            visible:            QGroundControl.videoManager.isGStreamer
         }
-        TextField {
-            id: videoFileName
-            visible: QGroundControl.videoManager.isGStreamer
-            width: 100
+        QGCTextField {
+            id:                 videoFileName
+            Layout.fillWidth:   true
+            visible:            QGroundControl.videoManager.isGStreamer
         }
         //-- Video Recording
         QGCLabel {
