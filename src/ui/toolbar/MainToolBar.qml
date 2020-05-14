@@ -100,6 +100,13 @@ Item {
                 onTriggered:    viewButtonSelectRow.visible = false
             }
 
+            Rectangle {
+                Layout.margins:     ScreenTools.defaultFontPixelHeight / 2
+                Layout.fillHeight:  true
+                width:              1
+                color:              qgcPal.text
+            }
+
             QGCToolBarButton {
                 id:                 settingsButton
                 Layout.fillHeight:  true
@@ -196,7 +203,7 @@ Item {
     }
 
     Rectangle {
-        id:                 separator
+        id:                 separator1
         anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
@@ -208,7 +215,7 @@ Item {
     QGCFlickable {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
-        anchors.left:           separator.right
+        anchors.left:           separator1.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
@@ -231,9 +238,21 @@ Item {
             }
         }
 
+        Rectangle {
+            id:                     separator2
+            anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
+            anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight / 2 - 1
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            anchors.left:           valueArea.right
+            width:                  1
+            color:                  qgcPal.text
+        }
+
         Loader {
             id:                 indicatorLoader
-            anchors.left:       valueArea.right
+            anchors.leftMargin: ScreenTools.defaultFontPixelHeight / 2
+            anchors.left:       separator2.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             "qrc:/toolbar/MainToolBarIndicators.qml"
