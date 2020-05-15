@@ -18,10 +18,11 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Popup {
-    property var dialogComponent
-    property var dialogProperties
+    property var    dialogComponent
+    property string dialogSource
+    property var    dialogProperties
 
-    id:                 popupRoot
+    id:                 _root
     anchors.centerIn:   parent
     width:              mainColumnLayout.width + (padding * 2)
     height:             mainColumnLayout.y + mainColumnLayout.height + padding
@@ -75,7 +76,7 @@ Popup {
         }
 
         Rectangle {
-            anchors.margins:    popupRoot.padding
+            anchors.margins:    _root.padding
             anchors.fill:       parent
             color:              _pal.window
         }
@@ -209,10 +210,11 @@ Popup {
                 Loader {
                     id:                 dialogComponentLoader
                     x:                  _contentMargin
+                    source:             dialogSource
                     sourceComponent:    dialogComponent
                     focus:              true
 
-                    property var dialogProperties:  popupRoot.dialogProperties
+                    property var dialogProperties:  _root.dialogProperties
                     property bool acceptAllowed:    acceptButton.visible
                     property bool rejectAllowed:    rejectButton.visible
                 }
