@@ -45,8 +45,14 @@ void parseXmp(const JPEGSegmentParser::Segment& seg, std::map<QString, QString>*
                 const auto& item = attrs.item(index);
                 const QString& name = item.nodeName();
                 const QString& value = item.nodeValue();
-
                 (*dst)[name] = value;
+            }
+
+            //parse child fields
+            auto fields = description.childNodes();
+            for (int index = 0; index < fields.length(); ++index) {
+                auto element = fields.item(index).toElement();
+                (*dst)[element.tagName()] = element.text();
             }
         }
     }
