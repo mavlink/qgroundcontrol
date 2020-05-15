@@ -144,7 +144,7 @@ T.VerticalFactValueGrid {
             var item = valueGrid.childAt(mouse.x, mouse.y)
             //console.log(item, item ? item.instrumentValueData : "null", item && item.parent ? item.parent.instrumentValueData : "null")
             if (item && item.instrumentValueData !== undefined) {
-                mainWindow.showPopupDialog(valueEditDialog, { instrumentValueData: item.instrumentValueData })
+                mainWindow.showPopupDialogFromComponent(valueEditDialog, { instrumentValueData: item.instrumentValueData })
             }
         }
 

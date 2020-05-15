@@ -59,7 +59,7 @@ public:
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(usePairing)
     DEFINE_SETTINGFACT(saveCsvTelemetry)
-    DEFINE_SETTINGFACT(firstTimeStart)
+    DEFINE_SETTINGFACT(firstRunPromptIdsShown)
 
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
@@ -87,6 +87,11 @@ public:
     QString logSavePath         ();
     QString videoSavePath       ();
     QString crashSavePath       ();
+
+    // Helper methods for working with firstRunPromptIds QVariant settings string list
+    static QList<int> firstRunPromptsIdsVariantToList   (const QVariant& firstRunPromptIds);
+    static QVariant   firstRunPromptsIdsListToVariant   (const QList<int>& rgIds);
+    Q_INVOKABLE void  firstRunPromptIdsMarkIdAsShown    (int id);
 
     static MAV_AUTOPILOT    offlineEditingFirmwareTypeFromFirmwareType  (MAV_AUTOPILOT firmwareType);
     static MAV_TYPE         offlineEditingVehicleTypeFromVehicleType    (MAV_TYPE vehicleType);

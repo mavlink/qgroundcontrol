@@ -33,16 +33,16 @@ AutoPilotPlugin* CustomFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
     return new CustomAutoPilotPlugin(vehicle, vehicle);
 }
 
-const QVariantList& CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+const QVariantList& CustomFirmwarePlugin::toolIndicators(const Vehicle* vehicle)
 {
-    if (_toolBarIndicatorList.size() == 0) {
+    if (_toolIndicatorList.size() == 0) {
         // First call the base class to get the standard QGC list. This way we are guaranteed to always get
         // any new toolbar indicators which are added upstream in our custom build.
-        _toolBarIndicatorList = FirmwarePlugin::toolBarIndicators(vehicle);
+        _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
         // Then specifically remove the RC RSSI indicator.
-        _toolBarIndicatorList.removeOne(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
+        _toolIndicatorList.removeOne(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));
     }
-    return _toolBarIndicatorList;
+    return _toolIndicatorList;
 }
 
 // Tells QGC that your vehicle has a gimbal on it. This will in turn cause thing like gimbal commands to point
