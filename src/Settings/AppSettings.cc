@@ -105,7 +105,7 @@ DECLARE_SETTINGSFACT(AppSettings, language)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, usePairing)
 DECLARE_SETTINGSFACT(AppSettings, saveCsvTelemetry)
-DECLARE_SETTINGSFACT(AppSettings, firstTimeStart)
+DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -222,5 +222,33 @@ MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleT
         return MAV_TYPE_FIXED_WING;
     } else {
         return MAV_TYPE_QUADROTOR;
+    }
+}
+
+QList<int> AppSettings::firstRunPromptsIdsVariantToList(const QVariant& firstRunPromptIds)
+{
+    QList<int> rgIds;
+    QStringList strIdList = firstRunPromptIds.toString().split(",", QString::SkipEmptyParts);
+    for (const QString& strId: strIdList) {
+        rgIds.append(strId.toInt());
+    }
+    return rgIds;
+}
+
+QVariant AppSettings::firstRunPromptsIdsListToVariant(const QList<int>& rgIds)
+{
+    QStringList strList;
+    for (int id: rgIds) {
+        strList.append(QString::number(id));
+    }
+    return QVariant(strList.join(","));
+}
+
+void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
+{
+    QList<int> rgIds = firstRunPromptsIdsVariantToList(firstRunPromptIdsShown()->rawValue());
+    if (!rgIds.contains(id)) {
+        rgIds.append(id);
+        firstRunPromptIdsShown()->setRawValue(firstRunPromptsIdsListToVariant(rgIds));
     }
 }

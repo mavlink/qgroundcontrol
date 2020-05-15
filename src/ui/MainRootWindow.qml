@@ -19,7 +19,6 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.Specific      1.0
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -38,11 +37,34 @@ ApplicationWindow {
             height  = ScreenTools.isMobile ? Screen.height : Math.min(150 * Screen.pixelDensity, Screen.height)
         }
 
-        // Startup experience wizard and provide the source using QGCCorePlugin
-        if (QGroundControl.settingsManager.appSettings.firstTimeStart.value) {
-            startupPopup.open()
-        } else {
-            showPreFlightChecklistIfNeeded()
+        // Start the sequence of first run prompt(s)
+        firstRunPromptManager.nextPrompt()
+    }
+
+    QtObject {
+        id: firstRunPromptManager
+
+        property var currentDialog:     null
+        property var rgPromptIds:       QGroundControl.corePlugin.firstRunPromptsToShow()
+        property int nextPromptIdIndex: 0
+
+        onRgPromptIdsChanged: console.log(QGroundControl.corePlugin, QGroundControl.corePlugin.firstRunPromptsToShow())
+
+        function clearNextPromptSignal() {
+            if (currentDialog) {
+                currentDialog.closed.disconnect(nextPrompt)
+            }
+        }
+
+        function nextPrompt() {
+            if (nextPromptIdIndex < rgPromptIds.length) {
+                currentDialog = showPopupDialogFromSource(QGroundControl.corePlugin.firstRunPromptResource(rgPromptIds[nextPromptIdIndex]))
+                currentDialog.closed.connect(nextPrompt)
+                nextPromptIdIndex++
+            } else {
+                currentDialog = null
+                showPreFlightChecklistIfNeeded()
+            }
         }
     }
 
@@ -228,9 +250,18 @@ ApplicationWindow {
         }
     }
 
-    function showPopupDialog(component, properties) {
+    // Dialogs based on QGCPopupDialog
+
+    function showPopupDialogFromComponent(component, properties) {
         var dialog = popupDialogContainerComponent.createObject(mainWindow, { dialogComponent: component, dialogProperties: properties })
         dialog.open()
+        return dialog
+    }
+
+    function showPopupDialogFromSource(source, properties) {
+        var dialog = popupDialogContainerComponent.createObject(mainWindow, { dialogSource: source, dialogProperties: properties })
+        dialog.open()
+        return dialog
     }
 
     Component {
@@ -241,9 +272,12 @@ ApplicationWindow {
     property bool _forceClose: false
 
     function finishCloseProcess() {
+        _forceClose = true
+        // For some reason on the Qml side Qt doesn't automatically disconnect a signal when an object is destroyed.
+        // So we have to do it ourselves otherwise the signal flows through on app shutdown to an object which no longer exists.
+        firstRunPromptManager.clearNextPromptSignal()
         QGroundControl.linkManager.shutdown()
         QGroundControl.videoManager.stopVideo();
-        _forceClose = true
         mainWindow.close()
     }
 
@@ -682,37 +716,6 @@ ApplicationWindow {
         onClosed: {
             loader.sourceComponent = null
             indicatorDropdown.currentIndicator = null
-        }
-    }
-
-    //-- Startup PopUp wizard
-    Popup {
-        id:                 startupPopup
-        anchors.centerIn:   parent
-        width:              Math.min(startupWizard.implicitWidth, mainWindow.width - 2 * startupPopup._horizontalSpacing)
-        height:             Math.min(startupWizard.implicitHeight, mainWindow.availableHeight - 2 * startupPopup._verticalSpacing)
-        modal:              true
-        focus:              true
-        closePolicy:        (startupWizard && startupWizard.forceKeepingOpen !== undefined && startupWizard.forceKeepingOpen) ? Popup.NoAutoClose : Popup.CloseOnEscape | Popup.CloseOnPressOutside
-
-        onClosed: mainWindow.showPreFlightChecklistIfNeeded()
-
-        property real _horizontalSpacing: ScreenTools.defaultFontPixelWidth * 5
-        property real _verticalSpacing: ScreenTools.defaultFontPixelHeight * 2
-
-        Connections {
-            target:         startupWizard
-            onCloseView:    startupPopup.close()
-        }
-
-        background: Rectangle {
-            radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-        }
-
-        StartupWizard {
-            id:             startupWizard
-            anchors.fill:   parent
         }
     }
 }
