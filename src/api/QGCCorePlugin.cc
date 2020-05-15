@@ -533,12 +533,7 @@ QString QGCCorePlugin::stableVersionCheckFileUrl() const
 #endif
 }
 
-QStringList QGCCorePlugin::startupPages()
-{
-    return { "/qml/QGroundControl/Specific/UnitsWizardPage.qml" };
-}
-
-const QVariantList &QGCCorePlugin::toolBarIndicators(void)
+const QVariantList& QGCCorePlugin::toolBarIndicators(void)
 {
     //-- Default list of indicators for all vehicles.
     if(_toolBarIndicatorList.size() == 0) {
@@ -547,4 +542,49 @@ const QVariantList &QGCCorePlugin::toolBarIndicators(void)
                                              });
     }
     return _toolBarIndicatorList;
+}
+
+QList<int> QGCCorePlugin::firstRunPromptStdIds(void)
+{
+    QList<int> rgStdIds = { unitsFirstRunPromptId, offlineVehicleFirstRunPromptId };
+    return rgStdIds;
+}
+
+QList<int> QGCCorePlugin::firstRunPromptCustomIds(void)
+{
+    return QList<int>();
+}
+
+QVariantList QGCCorePlugin::firstRunPromptsToShow(void)
+{
+    QList<int> rgIdsToShow;
+
+    rgIdsToShow.append(firstRunPromptStdIds());
+    rgIdsToShow.append(firstRunPromptCustomIds());
+
+    QList<int> rgAlreadyShownIds = AppSettings::firstRunPromptsIdsVariantToList(_toolbox->settingsManager()->appSettings()->firstRunPromptIdsShown()->rawValue());
+
+    for (int idToRemove: rgAlreadyShownIds) {
+        rgIdsToShow.removeOne(idToRemove);
+    }
+
+    QVariantList rgVarIdsToShow;
+    for (int id: rgIdsToShow) {
+        rgVarIdsToShow.append(id);
+    }
+
+    return rgVarIdsToShow;
+}
+
+QString QGCCorePlugin::firstRunPromptResource(int id)
+{
+    switch (id) {
+    case unitsFirstRunPromptId:
+        return "/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml";
+    case offlineVehicleFirstRunPromptId:
+        return "/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml";
+        break;
+    }
+
+    return QString();
 }

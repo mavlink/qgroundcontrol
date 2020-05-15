@@ -46,19 +46,20 @@ public:
     QGCCorePlugin(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCCorePlugin();
 
-    Q_PROPERTY(QVariantList         settingsPages           READ settingsPages                                  NOTIFY settingsPagesChanged)
-    Q_PROPERTY(QVariantList         analyzePages            READ analyzePages                                   NOTIFY analyzePagesChanged)
-    Q_PROPERTY(QVariantList         instrumentPages         READ instrumentPages                                NOTIFY instrumentPagesChanged)
-    Q_PROPERTY(int                  defaultSettings         READ defaultSettings                                CONSTANT)
-    Q_PROPERTY(QGCOptions*          options                 READ options                                        CONSTANT)
-    Q_PROPERTY(bool                 showTouchAreas          READ showTouchAreas         WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
-    Q_PROPERTY(bool                 showAdvancedUI          READ showAdvancedUI         WRITE setShowAdvancedUI NOTIFY showAdvancedUIChanged)
-    Q_PROPERTY(QString              showAdvancedUIMessage   READ showAdvancedUIMessage                          CONSTANT)
-    Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                               CONSTANT)
-    Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                              CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  customMapItems          READ customMapItems                                 CONSTANT)
-    Q_PROPERTY(QStringList          startupPages            READ startupPages                                   NOTIFY startupPagesChanged)
-    Q_PROPERTY(QVariantList         toolBarIndicators       READ toolBarIndicators                              NOTIFY toolBarIndicatorsChanged)
+    Q_PROPERTY(QVariantList         settingsPages                   READ settingsPages                                  NOTIFY settingsPagesChanged)
+    Q_PROPERTY(QVariantList         analyzePages                    READ analyzePages                                   NOTIFY analyzePagesChanged)
+    Q_PROPERTY(QVariantList         instrumentPages                 READ instrumentPages                                NOTIFY instrumentPagesChanged)
+    Q_PROPERTY(int                  defaultSettings                 READ defaultSettings                                CONSTANT)
+    Q_PROPERTY(QGCOptions*          options                         READ options                                        CONSTANT)
+    Q_PROPERTY(bool                 showTouchAreas                  READ showTouchAreas         WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool                 showAdvancedUI                  READ showAdvancedUI         WRITE setShowAdvancedUI NOTIFY showAdvancedUIChanged)
+    Q_PROPERTY(QString              showAdvancedUIMessage           READ showAdvancedUIMessage                          CONSTANT)
+    Q_PROPERTY(QString              brandImageIndoor                READ brandImageIndoor                               CONSTANT)
+    Q_PROPERTY(QString              brandImageOutdoor               READ brandImageOutdoor                              CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  customMapItems                  READ customMapItems                                 CONSTANT)
+    Q_PROPERTY(QVariantList         toolBarIndicators               READ toolBarIndicators                              NOTIFY toolBarIndicatorsChanged)
+    Q_PROPERTY(int                  unitsFirstRunPromptId           MEMBER unitsFirstRunPromptId                        CONSTANT)
+    Q_PROPERTY(int                  offlineVehicleFirstRunPromptId  MEMBER offlineVehicleFirstRunPromptId               CONSTANT)
 
     Q_INVOKABLE bool guidedActionsControllerLogging() const;
 
@@ -165,17 +166,26 @@ public:
     /// @return Complex items to be made available to user
     virtual QStringList complexMissionItemNames(Vehicle* /*vehicle*/, const QStringList& complexMissionItemNames) { return complexMissionItemNames; }
 
-    /// Use it to customize the pages that are shown on startup. This will be queried
-    /// only if AppSettings::firstTimeStart Fact is true, that is reset to false when the user
-    /// goes for the fist time through all the pages.
-    /// Insert pages only if they are required to be displayed at start for a good user experience.
-    /// @return QML files paths that will be loaded using the StartupWizard control
-    virtual QStringList startupPages();
+    /// Returns the standard list of first run prompt ids for possible display. Actual display is based on the
+    /// current AppSettings::firstRunPromptIds value. The order of this list also determines the order the prompts
+    /// will be displayed in.
+    virtual QList<int> firstRunPromptStdIds(void);
+
+    /// Returns the custom build list of first run prompt ids for possible display. Actual display is based on the
+    /// current AppSettings::firstRunPromptIds value. The order of this list also determines the order the prompts
+    /// will be displayed in.
+    virtual QList<int> firstRunPromptCustomIds(void);
+
+    /// Returns the resource which contains the specified first run prompt for display
+    Q_INVOKABLE virtual QString firstRunPromptResource(int id);
 
     /// Returns the list of toolbar indicators which are not related to a vehicle
     ///     signals toolbarIndicatorsChanged
     /// @return A list of QUrl with the indicators
     virtual const QVariantList& toolBarIndicators(void);
+
+    /// Returns the list of first run prompt ids which need to be displayed according to current settings
+    Q_INVOKABLE QVariantList firstRunPromptsToShow(void);
 
     bool showTouchAreas() const { return _showTouchAreas; }
     bool showAdvancedUI() const { return _showAdvancedUI; }
@@ -185,13 +195,19 @@ public:
     // Override from QGCTool
     void                            setToolbox              (QGCToolbox* toolbox);
 
+    // Standard first run prompt ids
+    static const int unitsFirstRunPromptId =            1;
+    static const int offlineVehicleFirstRunPromptId =   2;
+
+    // Custom builds can start there first run prompt ids from here
+    static const int firstRunPromptIdsFirstCustomId = 10000;
+
 signals:
     void settingsPagesChanged       ();
     void analyzePagesChanged        ();
     void instrumentPagesChanged     ();
     void showTouchAreasChanged      (bool showTouchAreas);
     void showAdvancedUIChanged      (bool showAdvancedUI);
-    void startupPagesChanged        ();
     void toolBarIndicatorsChanged   ();
 
 protected slots:

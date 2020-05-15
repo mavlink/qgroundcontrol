@@ -290,7 +290,7 @@ QGCViewDialog {
                 text:       qsTr("Set RC to Param")
                 width:      _editFieldWidth
                 visible:    _advanced.checked && !validate && showRCToParam
-                onClicked:  mainWindow.showPopupDialog(rcToParamDialog)
+                onClicked:  mainWindow.showPopupDialogFromComponent(rcToParamDialog)
             }
         } // Column
     }

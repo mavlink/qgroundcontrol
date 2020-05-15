@@ -15,6 +15,7 @@ DropPanel                       1.0 DropPanel.qml
 EditPositionDialog              1.0 EditPositionDialog.qml
 ExclusiveGroupItem              1.0 ExclusiveGroupItem.qml
 FactSliderPanel                 1.0 FactSliderPanel.qml
+FirstRunPrompt                  1.0 FirstRunPrompt.qml
 FileButton                      1.0 FileButton.qml
 FlightModeDropdown              1.0 FlightModeDropdown.qml
 FlightModeMenu                  1.0 FlightModeMenu.qml

@@ -77,7 +77,7 @@ QGCPopupDialog {
                 instrumentValueData.text = ""
                 instrumentValueData.icon = instrumentValueData.factValueGrid.iconNames[0]
                 var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
             }
         }
 
@@ -98,7 +98,7 @@ QGCPopupDialog {
                 anchors.fill:   parent
                 onClicked: {
                     var updateFunction = function(icon){ instrumentValueData.icon = icon }
-                    mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
+                    mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: instrumentValueData.icon, updateIconFunction: updateFunction })
                 }
             }
 
@@ -392,7 +392,7 @@ QGCPopupDialog {
                                     anchors.fill:   parent
                                     onClicked: {
                                         var updateFunction = function(icon){ updateIconValue(index, icon) }
-                                        mainWindow.showPopupDialog(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction })
+                                        mainWindow.showPopupDialogFromComponent(iconPickerDialog, { iconNames: instrumentValueData.factValueGrid.iconNames, icon: modelData, updateIconFunction: updateFunction })
                                     }
                                 }
                             }
