@@ -17,6 +17,8 @@
 # the project file.
 
 CONFIG -= debug_and_release
+CONFIG += warn_on
+
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
@@ -25,12 +27,14 @@ linux {
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
-        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
         } else {
-            QMAKE_CXXFLAGS += -Wno-deprecated-copy
+            QMAKE_CXXFLAGS_WARN_ON += -Werror \
+                -Wno-deprecated-copy \      # These come from mavlink headers
+                -Wno-unused-parameter \     # gst_plugins-good has these errors
+                -Wno-implicit-fallthrough   # gst_plugins-good has these errors
         }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
@@ -45,9 +49,14 @@ linux {
         DEFINES += QGC_ENABLE_BLUETOOTH
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
-        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
-        QMAKE_CXXFLAGS += -Wno-unused-command-line-argument
-        QMAKE_CFLAGS += -Wno-unused-command-line-argument
+        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+            -Wno-address-of-packed-member \     # Mavlink headers
+            -Wno-unused-parameter \             # gst_plugins-good has these errors
+            -Wno-implicit-fallthrough \         # gst_plugins-good has these errors
+            -Wno-unused-command-line-argument \ # from somewhere in Qt generated build files
+            -Wno-parentheses-equality           # android gstreamer header files
+        QMAKE_CFLAGS_WARN_ON += \
+            -Wno-unused-command-line-argument   # from somewhere in Qt generated build files
         QMAKE_LINK += -nostdlib++ # Hack fix?: https://forum.qt.io/topic/103713/error-cannot-find-lc-qt-5-12-android
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
@@ -72,11 +81,22 @@ linux {
     contains(QMAKE_TARGET.arch, x86_64) {
         message("Windows build")
         CONFIG += WindowsBuild
-        CONFIG += WarningsAsErrorsOn
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+        QMAKE_CFLAGS -= -Zc:strictStrings
+        QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+        QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+        QMAKE_CXXFLAGS -= -Zc:strictStrings
+        QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+        QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+        QMAKE_CXXFLAGS += /std:c++17
+        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
+            /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
+            /wd4290 \   # ignore exception specifications
+            /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
+            /wd4100     # unreferenced formal parameter - gst-plugins-good
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
@@ -95,10 +115,11 @@ linux {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         }
         #-- Not forcing anything. Let qmake find the latest, installed SDK.
-        #QMAKE_MAC_SDK = macosx10.12
+        #QMAKE_MAC_SDK = macosx10.15
         QMAKE_CXXFLAGS += -fvisibility=hidden
-        #-- Disable annoying warnings comming from mavlink.h
-        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
+        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+            -Wno-address-of-packed-member \ # Mavlink headers
+            -Wno-unused-parameter           # gst-plugins-good
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
@@ -224,36 +245,11 @@ LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-MacBuild | LinuxBuild {
-    QMAKE_CXXFLAGS_WARN_ON += -Wall
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += -Werror
-    }
-    MacBuild {
-        # Latest clang version has a buggy check for this which cause Qt headers to throw warnings on qmap.h
-        QMAKE_CXXFLAGS_WARN_ON += -Wno-return-stack-address
-        # Xcode 8.3 has issues on how MAVLink accesses (packed) message structure members.
-        # Note that this will fail when Xcode version reaches 10.x.x
-        XCODE_VERSION = $$system($$PWD/tools/get_xcode_version.sh)
-        greaterThan(XCODE_VERSION, 8.2.0): QMAKE_CXXFLAGS_WARN_ON += -Wno-address-of-packed-member
-    }
-}
-
-WindowsBuild {
-    QMAKE_CFLAGS -= -Zc:strictStrings
-    QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
-    QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-    QMAKE_CXXFLAGS -= -Zc:strictStrings
-    QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
-    QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-    QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /wd4996 \   # silence warnings about deprecated strcpy and whatnot, these come from the shapefile code with is external
-        /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
-        /wd4290 \   # ignore exception specifications
-        /wd4267     # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += /WX
-    }
+MacBuild {
+    # Xcode 8.3 has issues on how MAVLink accesses (packed) message structure members.
+    # Note that this will fail when Xcode version reaches 10.x.x
+    XCODE_VERSION = $$system($$PWD/tools/get_xcode_version.sh)
+    greaterThan(XCODE_VERSION, 8.2.0): QMAKE_CXXFLAGS_WARN_ON += -Wno-address-of-packed-member
 }
 
 #

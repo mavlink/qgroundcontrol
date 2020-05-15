@@ -76,7 +76,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
             break;
         default:
             qWarning() << "Unsupported fact type" << _fact->type() << "for" << _fact->name();
-            //-- Fall Through (screw clang)
+            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             _mavParamType = MAV_PARAM_EXT_TYPE_INT32;
             break;
@@ -176,7 +176,7 @@ QGCCameraParamIO::_sendParameter()
             break;
         default:
             qCritical() << "Unsupported fact type" << factType << "for" << _fact->name();
-            //-- Fall Through (screw clang)
+            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             union_value.param_int32 = static_cast<int32_t>(_fact->rawValue().toInt());
             break;

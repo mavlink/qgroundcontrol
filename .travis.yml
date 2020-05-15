@@ -197,12 +197,7 @@ script:
         echo "Daily build" &&
         export STABLE_OR_DAILY=DailyBuild;
     fi
-  # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
-  - if [ "${SPEC}" = "macx-clang" ]; then
-        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} CONFIG+=WarningsAsErrorsOn -spec ${SPEC};
-    else
-        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} -spec ${SPEC};
-    fi
+  - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} -spec ${SPEC};
 
   # compile
   - if [ "${SPEC}" != "macx-ios-clang" ]; then
