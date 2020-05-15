@@ -377,6 +377,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 case MAV_TYPE_QUADROTOR:
                     // Start TCP video handshake with ARTOO in case it's a Solo running ArduPilot firmware
                     _soloVideoHandshake(vehicle, false /* originalSoloFirmware */);
+                    [[fallthrough]];
                 case MAV_TYPE_COAXIAL:
                 case MAV_TYPE_HELICOPTER:
                 case MAV_TYPE_SUBMARINE:
