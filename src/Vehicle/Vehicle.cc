@@ -2481,10 +2481,15 @@ QGeoCoordinate Vehicle::homePosition()
 
 void Vehicle::setArmed(bool armed)
 {
+    setArmedMsg(armed, true);
+}
+
+void Vehicle::setArmedMsg(bool armed, bool showError)
+{
     // We specifically use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM since it is supported by more flight stacks.
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_COMPONENT_ARM_DISARM,
-                   true,    // show error if fails
+                   showError,    // show error if fails
                    armed ? 1.0f : 0.0f);
 }
 

@@ -718,7 +718,7 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
 
     // We try arming 3 times
     for (int retries=0; retries<3; retries++) {
-        vehicle->setArmed(true);
+        vehicle->setArmedMsg(true, false);
 
         // Wait for vehicle to return armed state for 3 seconds
         for (int i=0; i<30; i++) {

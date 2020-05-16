@@ -864,6 +864,7 @@ public:
 
     bool armed      () { return _armed; }
     void setArmed   (bool armed);
+    void setArmedMsg   (bool armed, bool showError);
 
     bool flightModeSetAvailable             ();
     QStringList flightModes                 ();
