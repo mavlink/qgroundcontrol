@@ -611,6 +611,26 @@ Item {
             border.color:   qgcPal.text
             radius:         ScreenTools.defaultFontPixelWidth
         }
+        QGCColoredImage {
+            property real _margins: ScreenTools.defaultFontPixelHeight * 0.5
+            width:              ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
+            height:             width
+            sourceSize.height:  width
+            anchors.right:      parent.right
+            anchors.top:        parent.top
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              qgcPal.text
+            MouseArea {
+                anchors.fill:       parent
+                anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
+                onClicked: {
+                    cameraSettings.close()
+                }
+            }
+        }
         Item {
             id:                 cameraSettingsControl
             anchors.fill:       parent
