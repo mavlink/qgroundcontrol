@@ -164,7 +164,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     _vendor = QString(reinterpret_cast<const char*>(info->vendor_name));
     _modelName = QString(reinterpret_cast<const char*>(info->model_name));
     int ver = static_cast<int>(_info.cam_definition_version);
-    _cacheFile.sprintf("%s/%s_%s_%03d.xml",
+    _cacheFile = QString::asprintf("%s/%s_%s_%03d.xml",
         qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
         _vendor.toStdString().c_str(),
         _modelName.toStdString().c_str(),
@@ -228,9 +228,7 @@ QGCCameraControl::firmwareVersion()
     int major = (_info.firmware_version >> 24) & 0xFF;
     int minor = (_info.firmware_version >> 16) & 0xFF;
     int build = _info.firmware_version & 0xFFFF;
-    QString ver;
-    ver.sprintf("%d.%d.%d", major, minor, build);
-    return ver;
+    return QString::asprintf("%d.%d.%d", major, minor, build);
 }
 
 //-----------------------------------------------------------------------------
