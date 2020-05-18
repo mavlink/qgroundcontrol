@@ -403,7 +403,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 
     if(success){
-        _currentPlanFile.sprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
+        _currentPlanFile = QString::asprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
     } else {
         _currentPlanFile.clear();
     }
