@@ -126,6 +126,8 @@ public:
     void        updateSettings       ();
     bool        isAutoConnectAllowed () { return true; }
     bool        isHighLatencyAllowed () { return true; }
+    bool        isForwardMavlinkAllowed() { return true; }
+
     QString     settingsURL          () { return "UdpSettings.qml"; }
     QString     settingsTitle        () { return tr("UDP Link Settings"); }
 

@@ -36,6 +36,7 @@ LinkConfiguration::LinkConfiguration(const QString& name)
     , _dynamic(false)
     , _autoConnect(false)
     , _highLatency(false)
+    , _forwardMavlink(false)
 {
     _name = name;
     if (_name.isEmpty()) {
@@ -50,6 +51,7 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
     _dynamic    = copy->isDynamic();
     _autoConnect= copy->isAutoConnect();
     _highLatency= copy->isHighLatency();
+    _forwardMavlink= copy->isForwardMavlink();
     Q_ASSERT(!_name.isEmpty());
 }
 
@@ -61,6 +63,7 @@ void LinkConfiguration::copyFrom(LinkConfiguration* source)
     _dynamic    = source->isDynamic();
     _autoConnect= source->isAutoConnect();
     _highLatency= source->isHighLatency();
+    _forwardMavlink= source->isForwardMavlink();
 }
 
 /*!
