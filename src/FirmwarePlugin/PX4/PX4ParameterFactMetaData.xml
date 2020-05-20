@@ -4587,6 +4587,14 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <max>90</max>
       <unit>[deg]</unit>
     </parameter>
+    <parameter default="0.0" name="MC_MAN_TILT_TAU" type="FLOAT">
+      <short_desc>Manual tilt input filter time constant
+Setting this parameter to 0 disables the filter</short_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <unit>s</unit>
+      <decimal>2</decimal>
+    </parameter>
     <parameter default="3.0" name="MPC_ACC_DOWN_MAX" type="FLOAT">
       <short_desc>Maximum vertical acceleration in velocity controlled modes down</short_desc>
       <min>2.0</min>
@@ -6727,18 +6735,6 @@ default 1.5 turns per second</short_desc>
       <min>0</min>
       <max>2200</max>
       <unit>us</unit>
-    </parameter>
-    <parameter default="10.0" name="RC_FLT_CUTOFF" type="FLOAT">
-      <short_desc>Cutoff frequency for the low pass filter on roll, pitch, yaw and throttle</short_desc>
-      <long_desc>Does not get set unless below RC_FLT_SMP_RATE/2 because of filter instability characteristics. Set to 0 to disable the filter.</long_desc>
-      <min>0</min>
-      <unit>Hz</unit>
-    </parameter>
-    <parameter default="50.0" name="RC_FLT_SMP_RATE" type="FLOAT">
-      <short_desc>Sample rate of the remote control values for the low pass filter on roll, pitch, yaw and throttle</short_desc>
-      <long_desc>Has an influence on the cutoff frequency precision.</long_desc>
-      <min>1.0</min>
-      <unit>Hz</unit>
     </parameter>
     <parameter default="0" name="RC_MAP_AUX1" type="INT32">
       <short_desc>AUX1 Passthrough RC channel</short_desc>
