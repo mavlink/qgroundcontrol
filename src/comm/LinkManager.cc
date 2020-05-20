@@ -34,7 +34,7 @@
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
-const char* LinkManager::_defaultUPDLinkName =       "UDP Link (AutoConnect)";
+const char* LinkManager::_defaultUDPLinkName =       "UDP Link (AutoConnect)";
 
 const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
 #ifdef Q_OS_WIN
@@ -344,6 +344,8 @@ void LinkManager::saveLinkConfigurationList()
                 settings.setValue(root + "/type", linkConfig->type());
                 settings.setValue(root + "/auto", linkConfig->isAutoConnect());
                 settings.setValue(root + "/high_latency", linkConfig->isHighLatency());
+                settings.setValue(root + "/forward_mavlink", linkConfig->isForwardMavlink());
+
                 // Have the instance save its own values
                 linkConfig->saveSettings(settings, root);
             }
@@ -376,6 +378,8 @@ void LinkManager::loadLinkConfigurationList()
                             LinkConfiguration* pLink = nullptr;
                             bool autoConnect = settings.value(root + "/auto").toBool();
                             bool highLatency = settings.value(root + "/high_latency").toBool();
+                            bool forwardMavlink = settings.value(root + "/forward_mavlink").toBool();
+
                             switch(type) {
 #ifndef NO_SERIAL_LINK
                             case LinkConfiguration::TypeSerial:
@@ -408,6 +412,7 @@ void LinkManager::loadLinkConfigurationList()
                                 //-- Have the instance load its own values
                                 pLink->setAutoConnect(autoConnect);
                                 pLink->setHighLatency(highLatency);
+                                pLink->setForwardMavlink(forwardMavlink);
                                 pLink->loadSettings(settings, root);
                                 addConfiguration(pLink);
                                 linksChanged = true;
@@ -463,7 +468,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     bool foundUDP = false;
     for (int i = 0; i < _sharedLinks.count(); i++) {
         LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
-        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _defaultUPDLinkName) {
+        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _defaultUDPLinkName) {
             foundUDP = true;
             break;
         }
@@ -471,7 +476,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     if (!foundUDP && _autoConnectSettings->autoConnectUDP()->rawValue().toBool()) {
         qCDebug(LinkManagerLog) << "New auto-connect UDP port added";
         //-- Default UDPConfiguration is set up for autoconnect
-        UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUPDLinkName);
+        UDPConfiguration* udpConfig = new UDPConfiguration(_defaultUDPLinkName);
         udpConfig->setDynamic(true);
         SharedLinkConfigurationPointer config = addConfiguration(udpConfig);
         createConnectedLink(config);
@@ -1011,6 +1016,21 @@ void LinkManager::_freeMavlinkChannel(int channel)
 
 void LinkManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message) {
     link->startMavlinkMessagesTimer(message.sysid);
+
+    // Walk the list of Links. If mavlink forwarding is enabled for a given link then send the data out.
+    for (int i = 0; i < _sharedLinks.count(); i++) {
+        LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
+
+        bool isUniqueLink = linkConfig->link() != link; // We do not want to send messages back on the link from which they originated
+        bool forwardMavlink = isUniqueLink && linkConfig->isForwardMavlink();
+
+        if (forwardMavlink) {
+            qCDebug(LinkManagerLog) << "Forwarding mavlink packet";
+            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+            int len = mavlink_msg_to_send_buffer(buffer, &message);
+            _sharedLinks[i]->writeBytesSafe((const char*)buffer, len);
+        }
+    }
 }
 
 LogReplayLink* LinkManager::startLogReplay(const QString& logFile)

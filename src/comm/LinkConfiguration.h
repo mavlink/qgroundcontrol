@@ -23,16 +23,19 @@ public:
     LinkConfiguration(LinkConfiguration* copy);
     virtual ~LinkConfiguration() {}
 
-    Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link                READ link           WRITE setLink           NOTIFY linkChanged)
-    Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
-    Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
-    Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
-    Q_PROPERTY(bool             autoConnectAllowed  READ isAutoConnectAllowed                   CONSTANT)
-    Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
-    Q_PROPERTY(QString          settingsTitle       READ settingsTitle                          CONSTANT)
-    Q_PROPERTY(bool             highLatency         READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
-    Q_PROPERTY(bool             highLatencyAllowed  READ isHighLatencyAllowed                   CONSTANT)
+    Q_PROPERTY(QString          name                    READ name               WRITE setName           NOTIFY nameChanged)
+    Q_PROPERTY(LinkInterface*   link                    READ link               WRITE setLink           NOTIFY linkChanged)
+    Q_PROPERTY(LinkType         linkType                READ type                                       CONSTANT)
+    Q_PROPERTY(bool             dynamic                 READ isDynamic          WRITE setDynamic        NOTIFY dynamicChanged)
+    Q_PROPERTY(bool             autoConnect             READ isAutoConnect      WRITE setAutoConnect    NOTIFY autoConnectChanged)
+    Q_PROPERTY(bool             autoConnectAllowed      READ isAutoConnectAllowed                       CONSTANT)
+    Q_PROPERTY(QString          settingsURL             READ settingsURL                                CONSTANT)
+    Q_PROPERTY(QString          settingsTitle           READ settingsTitle                              CONSTANT)
+    Q_PROPERTY(bool             highLatency             READ isHighLatency      WRITE setHighLatency    NOTIFY highLatencyChanged)
+    Q_PROPERTY(bool             highLatencyAllowed      READ isHighLatencyAllowed                       CONSTANT)
+    Q_PROPERTY(bool             forwardMavlink          READ isForwardMavlink     WRITE setForwardMavlink NOTIFY forwardMavlinkChanged)
+    Q_PROPERTY(bool             forwardMavlinkAllowed   READ isForwardMavlinkAllowed                    CONSTANT)
+
 
     // Property accessors
 
@@ -83,6 +86,13 @@ public:
     bool isHighLatency() { return _highLatency; }
 
     /*!
+     *
+     * Is this mavlink forwarding configuration?
+     * @return True if this is a mavlink forwarding configuration (sends all received packets to this end point).
+     */
+    bool isForwardMavlink() { return _forwardMavlink; }
+
+    /*!
      * Set if this is this a dynamic configuration. (decided at runtime)
     */
     void setDynamic(bool dynamic = true) { _dynamic = dynamic; emit dynamicChanged(); }
@@ -96,6 +106,12 @@ public:
      * Set if this is this an High Latency configuration.
     */
     void setHighLatency(bool hl = false) { _highLatency = hl; emit highLatencyChanged(); }
+
+    /*!
+     * Set if this is this mavlink forwarding configuration.
+    */
+    void setForwardMavlink(bool forward = false) { _forwardMavlink = forward; emit forwardMavlinkChanged(); }
+
 
     /// Virtual Methods
 
@@ -112,6 +128,13 @@ public:
      * @return True if this type can be set as an High Latency configuration
      */
     virtual bool isHighLatencyAllowed() { return false; }
+
+    /*!
+     *
+     * Is mavlink forwarding allowed for this type?
+     * @return True if this type can be set as a mavlink forwarding configuration
+     */
+    virtual bool isForwardMavlinkAllowed() { return false; }
 
     /*!
      * @brief Connection type
@@ -195,11 +218,12 @@ public:
     static LinkConfiguration* duplicateSettings(LinkConfiguration *source);
 
 signals:
-    void nameChanged        (const QString& name);
-    void dynamicChanged     ();
-    void autoConnectChanged ();
-    void linkChanged        (LinkInterface* link);
-    void highLatencyChanged ();
+    void nameChanged            (const QString& name);
+    void dynamicChanged         ();
+    void autoConnectChanged     ();
+    void linkChanged            (LinkInterface* link);
+    void highLatencyChanged     ();
+    void forwardMavlinkChanged  ();
 
 protected:
     LinkInterface* _link; ///< Link currently using this configuration (if any)
@@ -208,6 +232,7 @@ private:
     bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
     bool    _autoConnect;   ///< This connection is started automatically at boot
     bool    _highLatency;
+    bool    _forwardMavlink;
 };
 
 typedef QSharedPointer<LinkConfiguration> SharedLinkConfigurationPointer;

@@ -234,7 +234,7 @@ private:
     static const int    _activeLinkCheckTimeoutMSecs = 15000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.
 #endif
 
-    static const char*  _defaultUPDLinkName;
+    static const char*  _defaultUDPLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
 
