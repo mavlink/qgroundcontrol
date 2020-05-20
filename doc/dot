@@ -34,4 +34,13 @@ do
   fi
 done
 
-/usr/local/bin/dot ${ARGS}
+if [[ -x "/usr/local/bin/dot" ]]  
+then
+  /usr/local/bin/dot ${ARGS}
+elif [[ -x "/usr/bin/dot" ]]
+then 
+  /usr/bin/dot ${ARGS}
+else
+  echo "Program dot not found: See file doc/dot"
+  exit 1
+fi
