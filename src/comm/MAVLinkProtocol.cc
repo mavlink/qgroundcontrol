@@ -208,6 +208,20 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         return;
     }
 
+    // Walk the list of Links. If mavlink forwarding is enabled for a given link then send the data out.
+    QList<LinkInterface*> links = _linkMgr->links();
+    for (int i = 0; i < links.count(); i++) {
+        LinkConfiguration* linkConfig = links[i]->getLinkConfiguration();
+
+        bool isUniqueLink = links[i] != link; // We do not want to send messages back on the link from which they originated
+        bool forwardMavlink = isUniqueLink && linkConfig->isForwardMavlink();
+
+        if (forwardMavlink) {
+            qDebug() << "Forwarding mavlink packet on: " << linkConfig->name();
+            links[i]->writeBytesSafe(b.data(), b.length());
+        }
+    }
+
     uint8_t mavlinkChannel = link->mavlinkChannel();
 
     static int  nonmavlinkCount = 0;

@@ -1016,21 +1016,6 @@ void LinkManager::_freeMavlinkChannel(int channel)
 
 void LinkManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message) {
     link->startMavlinkMessagesTimer(message.sysid);
-
-    // Walk the list of Links. If mavlink forwarding is enabled for a given link then send the data out.
-    for (int i = 0; i < _sharedLinks.count(); i++) {
-        LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
-
-        bool isUniqueLink = linkConfig->link() != link; // We do not want to send messages back on the link from which they originated
-        bool forwardMavlink = isUniqueLink && linkConfig->isForwardMavlink();
-
-        if (forwardMavlink) {
-            qCDebug(LinkManagerLog) << "Forwarding mavlink packet";
-            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-            int len = mavlink_msg_to_send_buffer(buffer, &message);
-            _sharedLinks[i]->writeBytesSafe((const char*)buffer, len);
-        }
-    }
 }
 
 LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
