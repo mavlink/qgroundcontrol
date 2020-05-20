@@ -29,13 +29,13 @@ jobs:
           sudo: required
         - stage: "Build"
           name: "Android 32 bit"
-          dist: trusty
+          dist: xenial
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32 GSTREAMER_NAME=armv7
           sudo: false
         - stage: "Build"
           name: "Android 64 bit"
-          dist: trusty
+          dist: xenial
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=64 GSTREAMER_NAME=arm64
           sudo: false
