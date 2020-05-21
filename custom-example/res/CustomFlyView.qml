@@ -704,7 +704,7 @@ Item {
 
         Timer {
             interval:   100  //-- 10Hz
-            running:    camControlLoader.visible && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl || gimbalControl._haveJoystick)
+            running:    _camera && _camera.paramComplete && activeVehicle && (CustomQuickInterface.useEmbeddedGimbal || CustomQuickInterface.showGimbalControl || gimbalControl._haveJoystick)
             repeat:     true
 
             onTriggered: {
