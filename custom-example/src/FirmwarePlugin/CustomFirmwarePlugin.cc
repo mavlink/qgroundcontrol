@@ -52,4 +52,5 @@ bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool& rollSupported, 
     rollSupported = false;
     pitchSupported = true;
     yawSupported = true;
+    return true;
 }

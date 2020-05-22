@@ -13,6 +13,11 @@
 
 #pragma once
 
+#if __GNUC__ > 8
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
+
 #include "UASInterface.h"
 #include <MAVLinkProtocol.h>
 #include <QVector3D>
