@@ -280,7 +280,7 @@ void Joystick::_loadSettings()
 
     for (int button = 0; button < _totalButtonCount; button++) {
         QString a = settings.value(QString(_buttonActionNameKey).arg(button), QString()).toString();
-        if(!a.isEmpty() && _findAssignableButtonAction(a) >= 0 && a != _buttonActionNone) {
+        if(!a.isEmpty() && a != _buttonActionNone) {
             if(_buttonActionArray[button]) {
                 _buttonActionArray[button]->deleteLater();
             }

@@ -75,16 +75,18 @@ Item {
                         id:                         buttonActionCombo
                         width:                      ScreenTools.defaultFontPixelWidth * 26
                         model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
-                        onActivated: {
-                            _activeJoystick.setButtonAction(modelData, textAt(index))
-                        }
-                        Component.onCompleted: {
+
+                        function _findCurrentButtonAction() {
                             if(_activeJoystick) {
                                 var i = find(_activeJoystick.buttonActions[modelData])
                                 if(i < 0) i = 0
                                 currentIndex = i
                             }
                         }
+
+                        Component.onCompleted:  _findCurrentButtonAction()
+                        onModelChanged:         _findCurrentButtonAction()
+                        onActivated:            _activeJoystick.setButtonAction(modelData, textAt(index))
                     }
                     QGCCheckBox {
                         id:                         repeatCheck
