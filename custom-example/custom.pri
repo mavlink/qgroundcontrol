@@ -35,14 +35,14 @@ CONFIG  += QGC_DISABLE_PX4_PLUGIN_FACTORY
 DEFINES += CUSTOMHEADER=\"\\\"CustomPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=CustomPlugin
 
-TARGET   = MyGroundStation
+TARGET   = CustomQGroundControl
 DEFINES += QGC_APPLICATION_NAME='"\\\"Custom QGroundControl\\\""'
 
 DEFINES += QGC_ORG_NAME=\"\\\"qgroundcontrol.org\\\"\"
 DEFINES += QGC_ORG_DOMAIN=\"\\\"org.qgroundcontrol\\\"\"
 
 QGC_APP_NAME        = "Custom QGroundControl"
-QGC_BINARY_NAME     = "MyGroundStation"
+QGC_BINARY_NAME     = "CustomQGroundControl"
 QGC_ORG_NAME        = "Custom"
 QGC_ORG_DOMAIN      = "org.custom"
 QGC_APP_DESCRIPTION = "Custom QGroundControl"
