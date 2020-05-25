@@ -12,3 +12,10 @@ $doxygen Doxyfile
 
 The html file index.html should be in doc/html. 
 
+Debian
+=====================
+#To build documentation first install dependencies (doxygen, doxyqml and dot):
+sudo apt install doxygen graphviz doxyqml
+
+#Then build documentation in the doc/ directory
+doxygen ./Doxyfile
