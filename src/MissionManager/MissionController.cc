@@ -1548,11 +1548,9 @@ void MissionController::_recalcMissionFlightStatus()
         // Update VTOL state
         if (simpleItem && _controllerVehicle->vtol()) {
             switch (simpleItem->command()) {
-            case MAV_CMD_NAV_TAKEOFF:
+            case MAV_CMD_NAV_TAKEOFF:       // This will do a fixed wing style takeoff
+            case MAV_CMD_NAV_VTOL_TAKEOFF:  // Vehicle goes straight up and then transitions to FW
                 vtolInHover = false;
-                break;
-            case MAV_CMD_NAV_VTOL_TAKEOFF:
-                vtolInHover = true;
                 break;
             case MAV_CMD_NAV_LAND:
                 vtolInHover = false;
