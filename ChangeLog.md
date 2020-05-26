@@ -16,6 +16,7 @@ Note: This file only contains high level features or important fixes.
 ## 4.0.7 - Not yet released
 
 * Fix video page sizing
+* Fix display of multiple ADSB vehicles
 
 ### 4.0.6 - Stable
 

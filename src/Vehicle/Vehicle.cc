@@ -3997,6 +3997,7 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
         ADSBVehicle::VehicleInfo_t vehicleInfo;
 
         vehicleInfo.availableFlags = 0;
+        vehicleInfo.icaoAddress = adsbVehicleMsg.ICAO_address;
 
         vehicleInfo.location.setLatitude(adsbVehicleMsg.lat / 1e7);
         vehicleInfo.location.setLongitude(adsbVehicleMsg.lon / 1e7);
