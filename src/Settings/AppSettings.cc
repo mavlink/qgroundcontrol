@@ -39,6 +39,15 @@ DECLARE_SETTINGGROUP(App, "")
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
+    // virtualJoystickCentralized -> virtualJoystickAutoCenterThrottle
+    QSettings settings;
+    settings.beginGroup(_settingsGroup);
+    QString deprecatedVirtualJoystickCentralizedKey("virtualJoystickCentralized");
+    if (settings.contains(deprecatedVirtualJoystickCentralizedKey)) {
+        settings.setValue(virtualJoystickAutoCenterThrottleName, settings.value(deprecatedVirtualJoystickCentralizedKey));
+        settings.remove(deprecatedVirtualJoystickCentralizedKey);
+    }
+
     // Instantiate savePath so we can check for override and setup default path if needed
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
@@ -85,7 +94,7 @@ DECLARE_SETTINGSFACT(AppSettings, telemetrySaveNotArmed)
 DECLARE_SETTINGSFACT(AppSettings, audioMuted)
 DECLARE_SETTINGSFACT(AppSettings, checkInternet)
 DECLARE_SETTINGSFACT(AppSettings, virtualJoystick)
-DECLARE_SETTINGSFACT(AppSettings, virtualJoystickCentralized)
+DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
