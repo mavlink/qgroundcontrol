@@ -33,18 +33,27 @@
 #include "QGCConfig.h"
 #include "LinkManager.h"
 
-class UDPCLient {
+class UDPClient {
 public:
-    UDPCLient(const QHostAddress& address_, quint16 port_)
-        : address(address_)
-        , port(port_)
+    UDPClient(const QHostAddress& address_, quint16 port_)
+        : _hostname(address_.toString())
+        , _address(address_)
+        , _port(port_)
     {}
-    UDPCLient(const UDPCLient* other)
-        : address(other->address)
-        , port(other->port)
+    UDPClient(const QString& hostname_, quint16 port_);
+    UDPClient(const UDPClient* other)
+        : _hostname(other->hostname())
+        , _address(other->address())
+        , _port(other->port())
     {}
-    QHostAddress    address;
-    quint16         port;
+    QString         hostname()  const   { return _hostname; };
+    QHostAddress    address()   const   { return _address; };
+    quint16         port()      const   { return _port; };
+
+private:
+    QString         _hostname;
+    QHostAddress    _address;
+    quint16         _port;
 };
 
 class UDPConfiguration : public LinkConfiguration
@@ -116,7 +125,7 @@ public:
      */
     QStringList hostList    () { return _hostList; }
 
-    const QList<UDPCLient*> targetHosts() { return _targetHosts; }
+    const QList<UDPClient*> targetHosts() { return _targetHosts; }
 
     /// From LinkConfiguration
     LinkType    type                 () { return LinkConfiguration::TypeUdp; }
@@ -139,7 +148,7 @@ private:
     void _copyFrom          (LinkConfiguration *source);
 
 private:
-    QList<UDPCLient*>   _targetHosts;
+    QList<UDPClient*>   _targetHosts;
     QStringList         _hostList;      ///< Exposed to QML
     quint16             _localPort;
 };
@@ -189,7 +198,7 @@ private:
     void    _restartConnection      ();
     void    _registerZeroconf       (uint16_t port, const std::string& regType);
     void    _deregisterZeroconf     ();
-    void    _writeDataGram          (const QByteArray data, const UDPCLient* target);
+    void    _writeDataGram          (const QByteArray data, const UDPClient* target);
 
 #if defined(QGC_ZEROCONF_ENABLED)
     DNSServiceRef  _dnssServiceRef;
@@ -199,7 +208,7 @@ private:
     QUdpSocket*             _socket;
     UDPConfiguration*       _udpConfig;
     bool                    _connectState;
-    QList<UDPCLient*>       _sessionTargets;
+    QList<UDPClient*>       _sessionTargets;
     QList<QHostAddress>     _localAddress;
 
 };

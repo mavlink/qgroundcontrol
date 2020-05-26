@@ -67,14 +67,25 @@ static QString get_ip_address(const QString& address)
     return {};
 }
 
-static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
+static bool contains_target(const QList<UDPClient*> list, const QHostAddress& address, quint16 port)
 {
-    for(UDPCLient* target: list) {
-        if(target->address == address && target->port == port) {
+    for(UDPClient* target: list) {
+        if(target->address() == address && target->port() == port) {
             return true;
         }
     }
     return false;
+}
+
+UDPClient::UDPClient(const QString& hostname_, quint16 port_)
+    : _hostname(hostname_)
+    , _address(get_ip_address(hostname_))
+    , _port(port_)
+{
+    if (_address.isNull())
+    {
+        qWarning() << "Could not resolve address for host " << _hostname;
+    }
 }
 
 UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
@@ -171,23 +182,23 @@ void UDPLink::_writeBytes(const QByteArray data)
     }
     emit bytesSent(this, data);
     // Send to all manually targeted systems
-    for(UDPCLient* target: _udpConfig->targetHosts()) {
+    for(UDPClient* target: _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
-        if(!contains_target(_sessionTargets, target->address, target->port)) {
+        if(!contains_target(_sessionTargets, target->address(), target->port())) {
             _writeDataGram(data, target);
         }
     }
     // Send to all connected systems
-    for(UDPCLient* target: _sessionTargets) {
+    for(UDPClient* target: _sessionTargets) {
         _writeDataGram(data, target);
     }
 }
 
-void UDPLink::_writeDataGram(const QByteArray data, const UDPCLient* target)
+void UDPLink::_writeDataGram(const QByteArray data, const UDPClient* target)
 {
     //qDebug() << "UDP Out" << target->address << target->port;
-    if(_socket->writeDatagram(data, target->address, target->port) < 0) {
-        qWarning() << "Error writing to" << target->address << target->port;
+    if(_socket->writeDatagram(data, target->address(), target->port()) < 0) {
+        qWarning() << "Error writing to" << target->address() << target->port();
     } else {
         // Only log rate if data actually got sent. Not sure about this as
         // "host not there" takes time too regardless of size of data. In fact,
@@ -231,7 +242,7 @@ void UDPLink::readBytes()
         }
         if(!contains_target(_sessionTargets, asender, senderPort)) {
             qDebug() << "Adding target" << asender << senderPort;
-            UDPCLient* target = new UDPCLient(asender, senderPort);
+            UDPClient* target = new UDPClient(asender, senderPort);
             _sessionTargets.append(target);
         }
     }
@@ -401,9 +412,9 @@ void UDPConfiguration::_copyFrom(LinkConfiguration *source)
     if (usource) {
         _localPort = usource->localPort();
         _clearTargetHosts();
-        for(UDPCLient* target: usource->targetHosts()) {
-            if(!contains_target(_targetHosts, target->address, target->port)) {
-                UDPCLient* newTarget = new UDPCLient(target);
+        for(UDPClient* target: usource->targetHosts()) {
+            if(!contains_target(_targetHosts, target->address(), target->port())) {
+                UDPClient* newTarget = new UDPClient(target);
                 _targetHosts.append(newTarget);
                 _updateHostList();
             }
@@ -444,7 +455,7 @@ void UDPConfiguration::addHost(const QString& host, quint16 port)
     } else {
         QHostAddress address(ipAdd);
         if(!contains_target(_targetHosts, address, port)) {
-            UDPCLient* newTarget = new UDPCLient(address, port);
+            UDPClient* newTarget = new UDPClient(host, port);
             _targetHosts.append(newTarget);
             _updateHostList();
         }
@@ -458,8 +469,8 @@ void UDPConfiguration::removeHost(const QString host)
         QHostAddress address = QHostAddress(get_ip_address(host.split(":").first()));
         quint16 port = host.split(":").last().toUInt();
         for(int i = 0; i < _targetHosts.size(); i++) {
-            UDPCLient* target = _targetHosts.at(i);
-            if(target->address == address && target->port == port) {
+            UDPClient* target = _targetHosts.at(i);
+            if(target->address() == address && target->port() == port) {
                 _targetHosts.removeAt(i);
                 delete target;
                 _updateHostList();
@@ -482,11 +493,11 @@ void UDPConfiguration::saveSettings(QSettings& settings, const QString& root)
     settings.setValue("port", (int)_localPort);
     settings.setValue("hostCount", _targetHosts.size());
     for(int i = 0; i < _targetHosts.size(); i++) {
-        UDPCLient* target = _targetHosts.at(i);
+        UDPClient* target = _targetHosts.at(i);
         QString hkey = QString("host%1").arg(i);
-        settings.setValue(hkey, target->address.toString());
+        settings.setValue(hkey, target->hostname());
         QString pkey = QString("port%1").arg(i);
-        settings.setValue(pkey, target->port);
+        settings.setValue(pkey, target->port());
     }
     settings.endGroup();
 }
@@ -523,8 +534,8 @@ void UDPConfiguration::_updateHostList()
 {
     _hostList.clear();
     for(int i = 0; i < _targetHosts.size(); i++) {
-        UDPCLient* target = _targetHosts.at(i);
-        QString host = QString("%1").arg(target->address.toString()) + ":" + QString("%1").arg(target->port);
+        UDPClient* target = _targetHosts.at(i);
+        QString host = QString("%1").arg(target->hostname()) + ":" + QString("%1").arg(target->port());
         _hostList << host;
     }
     emit hostListChanged();
