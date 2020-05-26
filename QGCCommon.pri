@@ -19,6 +19,15 @@
 CONFIG -= debug_and_release
 CONFIG += warn_on
 
+WarningsAsErrorsOff {
+    warning("Warnings as errors is turned off. Pull requests with compiler warnings will not be accepted.")
+}
+
+# IMPORTANT NOTE: Turning off compiler warnings at a global scope within this file should only be done for
+# warnings which occur in code which comes from third parties. For QGC code itself, the warnings should be
+# disabled with pragma directly within the C++ code or header. And the scope of where that warning is turned
+# off should be as limited as possible to specific sections of code.
+
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
@@ -31,10 +40,13 @@ linux {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
         } else {
-            QMAKE_CXXFLAGS_WARN_ON += -Werror \
+            QMAKE_CXXFLAGS += \
                 -Wno-deprecated-copy \      # These come from mavlink headers
                 -Wno-unused-parameter \     # gst_plugins-good has these errors
                 -Wno-implicit-fallthrough   # gst_plugins-good has these errors
+            !WarningsAsErrorsOff {
+                QMAKE_CXXFLAGS += -Werror
+            }
         }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
@@ -49,13 +61,16 @@ linux {
         DEFINES += QGC_ENABLE_BLUETOOTH
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
-        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+        QMAKE_CXXFLAGS += \
             -Wno-unused-parameter \             # gst_plugins-good has these errors
             -Wno-implicit-fallthrough \         # gst_plugins-good has these errors
             -Wno-unused-command-line-argument \ # from somewhere in Qt generated build files
             -Wno-parentheses-equality           # android gstreamer header files
-        QMAKE_CFLAGS_WARN_ON += \
+        QMAKE_CFLAGS += \
             -Wno-unused-command-line-argument   # from somewhere in Qt generated build files
+        !WarningsAsErrorsOff {
+            QMAKE_CXXFLAGS += -Werror
+        }
         QMAKE_LINK += -nostdlib++ # Hack fix?: https://forum.qt.io/topic/103713/error-cannot-find-lc-qt-5-12-android
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
@@ -91,11 +106,14 @@ linux {
         QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
         QMAKE_CXXFLAGS += /std:c++17
-        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
+        QMAKE_CXXFLAGS += /W3 \
             /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
             /wd4100     # unreferenced formal parameter - gst-plugins-good
+        !WarningsAsErrorsOff {
+            QMAKE_CXXFLAGS += /WX
+        }
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
@@ -116,8 +134,11 @@ linux {
         #-- Not forcing anything. Let qmake find the latest, installed SDK.
         #QMAKE_MAC_SDK = macosx10.15
         QMAKE_CXXFLAGS += -fvisibility=hidden
-        QMAKE_CXXFLAGS_WARN_ON += -Werror \
-            -Wno-unused-parameter           # gst-plugins-good
+        QMAKE_CXXFLAGS += \
+            -Wno-unused-parameter # gst-plugins-good
+        !WarningsAsErrorsOff {
+            QMAKE_CXXFLAGS += -Werror
+        }
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
