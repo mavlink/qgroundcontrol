@@ -736,8 +736,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
                                 int testCount = 0;
                                 //-- Set with this name already exists. Make name unique.
                                 while (true) {
-                                    QString testName;
-                                    testName.sprintf("%s %02d", name.toLatin1().data(), ++testCount);
+                                    auto testName = QString::asprintf("%s %02d", name.toLatin1().data(), ++testCount);
                                     if(!_findTileSetID(testName, insertSetID) || testCount > 99) {
                                         name = testName;
                                         break;
