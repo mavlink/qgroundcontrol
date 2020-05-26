@@ -249,8 +249,8 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate_from_orientation(
 
         for (unsigned int cur_orientation=0; cur_orientation<detect_orientation_side_count; cur_orientation++) {
             if (!side_data_collected[cur_orientation]) {
-                strcat(pendingStr, " ");
-                strcat(pendingStr, detect_orientation_str((enum detect_orientation_return)cur_orientation));
+                strcat_s(pendingStr, sizeof(pendingStr), " ");
+                strcat_s(pendingStr, sizeof(pendingStr), detect_orientation_str((enum detect_orientation_return)cur_orientation));
             }
         }
         _emitVehicleTextMessage(QStringLiteral("[cal] pending:%1").arg(pendingStr));

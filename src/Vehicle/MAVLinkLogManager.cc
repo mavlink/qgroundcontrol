@@ -155,7 +155,8 @@ MAVLinkLogProcessor::create(MAVLinkLogManager* manager, const QString path, uint
                       id,
                       QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss-zzz").toLocal8Bit().data(),
                       manager->logExtension().toLocal8Bit().data());
-    _fd = fopen(_fileName.toLocal8Bit().data(), "wb");
+    _fd = nullptr;
+    fopen_s(&_fd, _fileName.toLocal8Bit().data(), "wb");
     if(_fd) {
         _record = new MAVLinkLogFiles(manager, _fileName, true);
         _record->setWriting(true);
@@ -801,7 +802,8 @@ MAVLinkLogManager::_uploadFinished()
                 //-- Write side-car file to flag it as uploaded
                 QString sideCar = _makeFilename(_currentLogfile->name());
                 sideCar.replace(_ulogExtension, kSidecarExtension);
-                FILE* f = fopen(sideCar.toLatin1().data(), "wb");
+                FILE* f = nullptr;
+                fopen_s(&f, sideCar.toLatin1().data(), "wb");
                 if(f) {
                     fclose(f);
                 }

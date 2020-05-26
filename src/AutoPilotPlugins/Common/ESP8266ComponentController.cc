@@ -101,7 +101,7 @@ ESP8266ComponentController::setWifiSSID(QString ssid)
     char tmp[20];
     memset(tmp, 0, sizeof(tmp));
     std::string	sid = ssid.toStdString();
-    strncpy(tmp, sid.c_str(), sizeof(tmp));
+    strncpy_s(tmp, sizeof(tmp), sid.c_str(), sizeof(tmp));
     Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID1"));
     Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID2"));
     Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSID3"));
@@ -140,7 +140,7 @@ ESP8266ComponentController::setWifiPassword(QString password)
     char tmp[20];
     memset(tmp, 0, sizeof(tmp));
     std::string	pwd = password.toStdString();
-    strncpy(tmp, pwd.c_str(), sizeof(tmp));
+    strncpy_s(tmp, sizeof(tmp), pwd.c_str(), sizeof(tmp));
     Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD1"));
     Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD2"));
     Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PASSWORD3"));
@@ -183,7 +183,7 @@ ESP8266ComponentController::setWifiSSIDSta(QString ssid)
         char tmp[20];
         memset(tmp, 0, sizeof(tmp));
         std::string	sid = ssid.toStdString();
-        strncpy(tmp, sid.c_str(), sizeof(tmp));
+        strncpy_s(tmp, sizeof(tmp), sid.c_str(), sizeof(tmp));
         Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSIDSTA1"));
         Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSIDSTA2"));
         Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_SSIDSTA3"));
@@ -227,7 +227,7 @@ ESP8266ComponentController::setWifiPasswordSta(QString password)
         char tmp[20];
         memset(tmp, 0, sizeof(tmp));
         std::string	pwd = password.toStdString();
-        strncpy(tmp, pwd.c_str(), sizeof(tmp));
+        strncpy_s(tmp, sizeof(tmp), pwd.c_str(), sizeof(tmp));
         Fact* f1 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PWDSTA1"));
         Fact* f2 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PWDSTA2"));
         Fact* f3 = getParameterFact(MAV_COMP_ID_UDP_BRIDGE, QStringLiteral("WIFI_PWDSTA3"));

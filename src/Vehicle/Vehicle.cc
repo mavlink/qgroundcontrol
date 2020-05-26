@@ -1031,7 +1031,7 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
     uint8_t compId = message.compid;
 
     b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    strncpy(b.data(), statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+    strncpy_s(b.data(), MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN, statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
     b[b.length()-1] = '\0';
     messageText = QString(b);
     bool includesNullTerminator = messageText.length() < MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN;
@@ -1479,7 +1479,7 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
     } else {
         // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
         char nullStr[9];
-        strncpy(nullStr, (char*)autopilotVersion.flight_custom_version, 8);
+        strncpy_s(nullStr, sizeof(nullStr), (char*)autopilotVersion.flight_custom_version, 8);
         nullStr[8] = 0;
         _gitHash = nullStr;
     }

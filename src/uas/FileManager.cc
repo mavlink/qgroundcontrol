@@ -538,7 +538,7 @@ void FileManager::listDirectory(const QString& dirPath)
 
 void FileManager::_fillRequestWithString(Request* request, const QString& str)
 {
-    strncpy((char *)&request->data[0], str.toStdString().c_str(), sizeof(request->data));
+    strncpy_s((char *)&request->data[0], sizeof(request->data), str.toStdString().c_str(), sizeof(request->data));
     request->hdr.size = static_cast<uint8_t>(strnlen((const char *)&request->data[0], sizeof(request->data)));
 }
 

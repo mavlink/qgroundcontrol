@@ -37,13 +37,7 @@ static const char* kZeroconfRegistration = "_qgroundcontrol._udp";
 
 static bool is_ip(const QString& address)
 {
-    int a,b,c,d;
-    if (sscanf(address.toStdString().c_str(), "%d.%d.%d.%d", &a, &b, &c, &d) != 4
-            && strcmp("::1", address.toStdString().c_str())) {
-        return false;
-    } else {
-        return true;
-    }
+    return !QHostAddress(address).isNull();
 }
 
 static QString get_ip_address(const QString& address)

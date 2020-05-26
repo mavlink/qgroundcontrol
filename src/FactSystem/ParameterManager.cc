@@ -822,7 +822,7 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
     mavlink_message_t msg;
     char fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
 
-    strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
+    strncpy_s(fixedParamName, sizeof(fixedParamName), paramName.toStdString().c_str(), sizeof(fixedParamName));
     mavlink_msg_param_request_read_pack_chan(_mavlink->getSystemId(),   // QGC system id
                                              _mavlink->getComponentId(),     // QGC component id
                                              _vehicle->priorityLink()->mavlinkChannel(),
@@ -882,7 +882,7 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
     p.target_system = (uint8_t)_vehicle->id();
     p.target_component = (uint8_t)componentId;
 
-    strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
+    strncpy_s(p.param_id, sizeof(p.param_id), paramName.toStdString().c_str(), sizeof(p.param_id));
 
     mavlink_message_t msg;
     mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
@@ -986,7 +986,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         mavlink_param_union_t   union_value;
         memset(&p, 0, sizeof(p));
         p.param_type = MAV_PARAM_TYPE_UINT32;
-        strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
+        strncpy_s(p.param_id, sizeof(p.param_id), "_HASH_CHECK", sizeof(p.param_id));
         union_value.param_uint32 = crc32_value;
         p.param_value = union_value.param_float;
         p.target_system = (uint8_t)_vehicle->id();

@@ -184,7 +184,7 @@ QGCCameraParamIO::_sendParameter()
     memcpy(&p.param_value[0], &union_value.bytes[0], MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
     p.target_system     = static_cast<uint8_t>(_vehicle->id());
     p.target_component  = static_cast<uint8_t>(_control->compID());
-    strncpy(p.param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
+    strncpy_s(p.param_id, sizeof(p.param_id), _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
     mavlink_msg_param_ext_set_encode_chan(
         static_cast<uint8_t>(_pMavlink->getSystemId()),
         static_cast<uint8_t>(_pMavlink->getComponentId()),
@@ -353,7 +353,7 @@ QGCCameraParamIO::paramRequest(bool reset)
     qCDebug(CameraIOLog) << "Request parameter:" << _fact->name();
     char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
     memset(param_id, 0, sizeof(param_id));
-    strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
+    strncpy_s(param_id, sizeof(param_id), _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_read_pack_chan(
         static_cast<uint8_t>(_pMavlink->getSystemId()),
