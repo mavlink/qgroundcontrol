@@ -286,6 +286,20 @@
     "shortDescription": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",
     "defaultValue":     ""
+},
+{
+    "name":             "forwardMavlink",
+    "shortDescription": "Enable mavlink forwarding",
+    "longDescription":  "Enable mavlink forwarding",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "forwardMavlinkHostName",
+    "shortDescription": "Host name",
+    "longDescription":  "Host name to forward mavlink to. i.e: localhost:14445",
+    "type":             "string",
+    "defaultValue":     "localhost:14445"
 }
 ]
 }

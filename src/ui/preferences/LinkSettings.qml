@@ -326,20 +326,6 @@ Rectangle {
                                         checked = editConfig.highLatency
                                 }
                             }
-                            QGCCheckBox {
-                                text:               qsTr("Forward all mavlink packets to this end point")
-                                checked:            false
-                                enabled:            editConfig ? editConfig.forwardMavlinkAllowed : false
-                                onCheckedChanged: {
-                                    if(editConfig) {
-                                        editConfig.forwardMavlink = checked
-                                    }
-                                }
-                                Component.onCompleted: {
-                                    if(editConfig)
-                                        checked = editConfig.forwardMavlink
-                                }
-                            }
                         }
                     }
                     Item {
