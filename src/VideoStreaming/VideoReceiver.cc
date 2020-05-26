@@ -353,12 +353,12 @@ VideoReceiver::_makeSource(const QString& uri)
         return nullptr;
     }
 
-    bool isTaisync  = uri.contains("tsusb://");
-    bool isUdp264   = uri.contains("udp://");
-    bool isRtsp     = uri.contains("rtsp://");
-    bool isUdp265   = uri.contains("udp265://");
-    bool isTcpMPEGTS= uri.contains("tcp://");
-    bool isUdpMPEGTS= uri.contains("mpegts://");
+    bool isTaisync  = uri.contains("tsusb://",  Qt::CaseInsensitive);
+    bool isUdp264   = uri.contains("udp://",    Qt::CaseInsensitive);
+    bool isRtsp     = uri.contains("rtsp://",   Qt::CaseInsensitive);
+    bool isUdp265   = uri.contains("udp265://", Qt::CaseInsensitive);
+    bool isTcpMPEGTS= uri.contains("tcp://",    Qt::CaseInsensitive);
+    bool isUdpMPEGTS= uri.contains("mpegts://", Qt::CaseInsensitive);
 
     GstElement* source  = nullptr;
     GstElement* buffer  = nullptr;
@@ -535,7 +535,7 @@ VideoReceiver::_tcp_timeout()
         //   found to be working, only then we actually start the stream.
         QUrl url(_uri);
         //-- If RTSP and no port is defined, set default RTSP port (554)
-        if(_uri.contains("rtsp://") && url.port() <= 0) {
+        if(_uri.contains("rtsp://", Qt::CaseInsensitive) && url.port() <= 0) {
             url.setPort(554);
         }
         _socket = new QTcpSocket;
@@ -620,7 +620,7 @@ VideoReceiver::start()
         return;
     }
 
-    bool useTcpConnection = uri.contains("rtsp://") || uri.contains("tcp://");
+    bool useTcpConnection = uri.contains("rtsp://", Qt::CaseInsensitive) || uri.contains("tcp://", Qt::CaseInsensitive);
 
     if (_videoSink == nullptr) {
         qCWarning(VideoReceiverLog) << "Failed because video sink is not set";
