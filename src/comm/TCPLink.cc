@@ -151,6 +151,11 @@ bool TCPLink::_hardwareConnect()
     _socket = new QTcpSocket();
 
     QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
+    auto address = _tcpConfig->address();
+    if (address.isNull())
+    {
+        emit communicationError(tr("Link Error"), tr("Error on link %1. Unable to resolve hostname %2").arg(getName(), _tcpConfig->host()));
+    }
     _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
     QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
 
@@ -269,13 +274,13 @@ static QString get_ip_address(const QString& address)
 TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
 {
     _port    = QGC_TCP_PORT;
-    _address = QHostAddress::Any;
+    _hostname = "";
 }
 
 TCPConfiguration::TCPConfiguration(TCPConfiguration* source) : LinkConfiguration(source)
 {
     _port    = source->port();
-    _address = source->address();
+    _hostname = source->host();
 }
 
 void TCPConfiguration::copyFrom(LinkConfiguration *source)
@@ -284,7 +289,7 @@ void TCPConfiguration::copyFrom(LinkConfiguration *source)
     auto* usource = qobject_cast<TCPConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _port    = usource->port();
-    _address = usource->address();
+    _hostname = usource->host();
 }
 
 void TCPConfiguration::setPort(quint16 port)
@@ -294,16 +299,15 @@ void TCPConfiguration::setPort(quint16 port)
 
 void TCPConfiguration::setAddress(const QHostAddress& address)
 {
-    _address = address;
+    _hostname = address.toString();
 }
 
-void TCPConfiguration::setHost(const QString host)
+void TCPConfiguration::setHost(const QString& host)
 {
     QString ipAdd = get_ip_address(host);
+    _hostname = host;
     if(ipAdd.isEmpty()) {
         qWarning() << "TCP:" << "Could not resolve host:" << host;
-    } else {
-        _address = QHostAddress(ipAdd);
     }
 }
 
@@ -311,7 +315,7 @@ void TCPConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     settings.setValue("port", (int)_port);
-    settings.setValue("host", address().toString());
+    settings.setValue("host", host());
     settings.endGroup();
 }
 
@@ -319,8 +323,7 @@ void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
     _port = (quint16)settings.value("port", QGC_TCP_PORT).toUInt();
-    QString address = settings.value("host", _address.toString()).toString();
-    _address = address;
+    _hostname = settings.value("host", _hostname).toString();
     settings.endGroup();
 }
 
@@ -332,4 +335,9 @@ void TCPConfiguration::updateSettings()
             ulink->_restartConnection();
         }
     }
+}
+
+const QHostAddress TCPConfiguration::address()
+{
+    return QHostAddress(get_ip_address(_hostname));
 }

@@ -80,10 +80,16 @@ public:
     /*!
      * @brief The host address
      *
-     * @return Host address
+     * @return Resolved host address, or a null QHostAddress if hostname can't be resolved
      */
-    const QHostAddress& address   () { return _address; }
-    const QString       host      () { return _address.toString(); }
+    const QHostAddress  address   ();
+
+    /*!
+     * @brief The host name
+     *
+     * @return Stored host name
+     */
+    const QString       host      () { return _hostname; }
 
     /*!
      * @brief Set the host address
@@ -91,7 +97,13 @@ public:
      * @param[in] address Host address
      */
     void setAddress (const QHostAddress& address);
-    void setHost    (const QString host);
+
+    /*!
+     * @brief Set the host name
+     *
+     * @param[in] host Host name
+     */
+    void setHost    (const QString& host);
 
     /// From LinkConfiguration
     LinkType    type            () { return LinkConfiguration::TypeTcp; }
@@ -108,7 +120,7 @@ signals:
     void hostChanged();
 
 private:
-    QHostAddress _address;
+    QString _hostname;
     quint16 _port;
 };
 
