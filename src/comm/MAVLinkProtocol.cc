@@ -208,20 +208,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         return;
     }
 
-    // Walk the list of Links. If mavlink forwarding is enabled for a given link then send the data out.
-    QList<LinkInterface*> links = _linkMgr->links();
-    for (int i = 0; i < links.count(); i++) {
-        LinkConfiguration* linkConfig = links[i]->getLinkConfiguration();
-
-        bool isUniqueLink = links[i] != link; // We do not want to send messages back on the link from which they originated
-        bool forwardMavlink = isUniqueLink && linkConfig->isForwardMavlink();
-
-        if (forwardMavlink) {
-            qDebug() << "Forwarding mavlink packet on: " << linkConfig->name();
-            links[i]->writeBytesSafe(b.data(), b.length());
-        }
-    }
-
     uint8_t mavlinkChannel = link->mavlinkChannel();
 
     static int  nonmavlinkCount = 0;
@@ -281,6 +267,19 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             runningLossPercent[mavlinkChannel] = receiveLossPercent;
 
             //qDebug() << foo << _message.seq << expectedSeq << lastSeq << totalLossCounter[mavlinkChannel] << totalReceiveCounter[mavlinkChannel] << totalSentCounter[mavlinkChannel] << "(" << _message.sysid << _message.compid << ")";
+
+            //-----------------------------------------------------------------
+            // MAVLink forwarding
+            bool forwardingEnabled = _app->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool();
+            if (forwardingEnabled) {
+                SharedLinkInterfacePointer forwardingLink = _linkMgr->mavlinkForwardingLink();
+
+                if (forwardingLink) {
+                    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                    int len = mavlink_msg_to_send_buffer(buf, &_message);
+                    forwardingLink->writeBytesSafe((const char*)buf, len);
+                }
+            }
 
             //-----------------------------------------------------------------
             // Log data

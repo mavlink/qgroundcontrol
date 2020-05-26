@@ -112,6 +112,9 @@ public:
     /// Creates, connects (and adds) a link  based on the given configuration name.
     LinkInterface* createConnectedLink(const QString& name);
 
+    /// Returns pointer to the mavlink forwarding link, or nullptr if it does not exist
+    SharedLinkInterfacePointer mavlinkForwardingLink();
+
     /// Disconnects all existing links
     void disconnectAll(void);
 
@@ -235,6 +238,7 @@ private:
 #endif
 
     static const char*  _defaultUDPLinkName;
+    static const char*  _mavlinkForwardingLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
 

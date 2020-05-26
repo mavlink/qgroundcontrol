@@ -35,6 +35,7 @@ QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
 const char* LinkManager::_defaultUDPLinkName =       "UDP Link (AutoConnect)";
+const char* LinkManager::_mavlinkForwardingLinkName =       "MAVLink Forwarding Link";
 
 const int LinkManager::_autoconnectUpdateTimerMSecs =   1000;
 #ifdef Q_OS_WIN
@@ -170,6 +171,19 @@ LinkInterface* LinkManager::createConnectedLink(const QString& name)
             }
         }
     }
+    return nullptr;
+}
+
+SharedLinkInterfacePointer LinkManager::mavlinkForwardingLink()
+{
+    for (int i = 0; i < _sharedLinks.count(); i++) {
+        LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
+        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _mavlinkForwardingLinkName) {
+            SharedLinkInterfacePointer& link = _sharedLinks[i];
+            return link;
+        }
+    }
+
     return nullptr;
 }
 
@@ -344,8 +358,6 @@ void LinkManager::saveLinkConfigurationList()
                 settings.setValue(root + "/type", linkConfig->type());
                 settings.setValue(root + "/auto", linkConfig->isAutoConnect());
                 settings.setValue(root + "/high_latency", linkConfig->isHighLatency());
-                settings.setValue(root + "/forward_mavlink", linkConfig->isForwardMavlink());
-
                 // Have the instance save its own values
                 linkConfig->saveSettings(settings, root);
             }
@@ -378,7 +390,6 @@ void LinkManager::loadLinkConfigurationList()
                             LinkConfiguration* pLink = nullptr;
                             bool autoConnect = settings.value(root + "/auto").toBool();
                             bool highLatency = settings.value(root + "/high_latency").toBool();
-                            bool forwardMavlink = settings.value(root + "/forward_mavlink").toBool();
 
                             switch(type) {
 #ifndef NO_SERIAL_LINK
@@ -412,7 +423,6 @@ void LinkManager::loadLinkConfigurationList()
                                 //-- Have the instance load its own values
                                 pLink->setAutoConnect(autoConnect);
                                 pLink->setHighLatency(highLatency);
-                                pLink->setForwardMavlink(forwardMavlink);
                                 pLink->loadSettings(settings, root);
                                 addConfiguration(pLink);
                                 linksChanged = true;
@@ -482,6 +492,35 @@ void LinkManager::_updateAutoConnectLinks(void)
         createConnectedLink(config);
         emit linkConfigurationsChanged();
     }
+
+    // Connect MAVLink forwarding if it is enabled
+    bool foundMAVLinkForwardingLink = false;
+    for (int i = 0; i < _sharedLinks.count(); i++) {
+        LinkConfiguration* linkConfig = _sharedLinks[i]->getLinkConfiguration();
+        if (linkConfig->type() == LinkConfiguration::TypeUdp && linkConfig->name() == _mavlinkForwardingLinkName) {
+            foundMAVLinkForwardingLink = true;
+            // TODO: should we check if the host/port matches the mavlinkForwardHostName setting and update if it does not match?
+            break;
+        }
+    }
+
+    // Create the link if necessary
+    bool forwardingEnabled = _toolbox->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool();
+    if (!foundMAVLinkForwardingLink && forwardingEnabled) {
+
+        qCDebug(LinkManagerLog) << "New MAVLink forwarding port added";
+
+        UDPConfiguration* udpConfig = new UDPConfiguration(_mavlinkForwardingLinkName);
+        udpConfig->setDynamic(true);
+
+        QString hostName = _toolbox->settingsManager()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
+        udpConfig->addHost(hostName);
+
+        SharedLinkConfigurationPointer config = addConfiguration(udpConfig);
+        createConnectedLink(config);
+        emit linkConfigurationsChanged();
+    }
+
 #ifndef __mobile__
 #ifndef NO_SERIAL_LINK
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect

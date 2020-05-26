@@ -153,6 +153,34 @@ Rectangle {
                             QGroundControl.isVersionCheckEnabled = checked
                         }
                     }
+
+                    FactCheckBox {
+                        id:         mavlinkForwardingChecked
+                        text:       qsTr("Enable MAVLink forwarding")
+                        fact:       QGroundControl.settingsManager.appSettings.forwardMavlink
+                    }
+
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   mavlinkForwardingHostNameField.baseline
+                            visible:            QGroundControl.settingsManager.appSettings.forwardMavlink.rawValue
+                            text:               qsTr("Host name:")
+                        }
+                        FactTextField {
+                            id:                     mavlinkForwardingHostNameField
+                            fact:                   QGroundControl.settingsManager.appSettings.forwardMavlinkHostName
+                            width:                  _valueWidth
+                            visible:                QGroundControl.settingsManager.appSettings.forwardMavlink.rawValue
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                    }
+                   QGCLabel {
+                        text:       qsTr("<i> Changing the host name requires restart of application. </i>")
+                        visible:    QGroundControl.settingsManager.appSettings.forwardMavlink.rawValue
+                    }
                 }
             }
             //-----------------------------------------------------------------
