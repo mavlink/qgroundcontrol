@@ -127,6 +127,24 @@ int UAS::getUASID() const
     return uasId;
 }
 
+// Ignore warnings from mavlink headers for both GCC/Clang and MSVC
+#ifdef __GNUC__
+
+#if __GNUC__ > 8
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#endif
+
+#else
+#pragma warning(push, 0)
+#endif
+
 void UAS::receiveMessage(mavlink_message_t message)
 {
     // Only accept messages from this system (condition 1)
@@ -326,6 +344,17 @@ void UAS::receiveMessage(mavlink_message_t message)
         }
     }
 }
+
+// Pop warnings ignoring for mavlink headers for both GCC/Clang and MSVC
+#ifdef __GNUC__
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #else
+        #pragma GCC diagnostic pop
+    #endif
+#else
+#pragma warning(pop, 0)
+#endif
 
 void UAS::startCalibration(UASInterface::StartCalibrationType calType)
 {
