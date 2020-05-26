@@ -1179,6 +1179,24 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
     }
 }
 
+// Ignore warnings from mavlink headers for both GCC/Clang and MSVC
+#ifdef __GNUC__
+
+#if __GNUC__ > 8
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Waddress-of-packed-member"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#endif
+
+#else
+#pragma warning(push, 0)
+#endif
+
 void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
 {
     mavlink_attitude_target_t attitudeTarget;
@@ -2002,6 +2020,17 @@ void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channelCount, pwmValues);
 }
+
+// Pop warnings ignoring for mavlink headers for both GCC/Clang and MSVC
+#ifdef __GNUC__
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #else
+        #pragma GCC diagnostic pop
+    #endif
+#else
+#pragma warning(pop, 0)
+#endif
 
 void Vehicle::_handleScaledPressure(mavlink_message_t& message) {
     mavlink_scaled_pressure_t pressure;
