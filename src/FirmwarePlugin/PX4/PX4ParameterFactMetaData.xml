@@ -4885,17 +4885,18 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>1.0</max>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
+    <parameter default="0.2" name="MPC_XY_VEL_D_ACC" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
-      <min>0.005</min>
-      <max>0.1</max>
+      <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
+      <min>0.1</min>
+      <max>2.0</max>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.02" name="MPC_XY_VEL_I" type="FLOAT">
+    <parameter default="0.4" name="MPC_XY_VEL_I_ACC" type="FLOAT">
       <short_desc>Integral gain for horizontal velocity error</short_desc>
-      <long_desc>Non-zero value allows to eliminate steady state errors in the presence of disturbances like wind.</long_desc>
+      <long_desc>defined as correction acceleration in m/s^2 per m velocity integral Non-zero value allows to eliminate steady state errors in the presence of disturbances like wind.</long_desc>
       <min>0.0</min>
-      <max>3.0</max>
+      <max>60.0</max>
       <decimal>3</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_XY_VEL_MAX" type="FLOAT">
@@ -4907,10 +4908,11 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="0.09" name="MPC_XY_VEL_P" type="FLOAT">
+    <parameter default="1.8" name="MPC_XY_VEL_P_ACC" type="FLOAT">
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
-      <min>0.06</min>
-      <max>0.15</max>
+      <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
+      <min>1.2</min>
+      <max>3.0</max>
       <decimal>2</decimal>
     </parameter>
     <parameter default="0.6" name="MPC_YAW_EXPO" type="FLOAT">
@@ -4933,17 +4935,18 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>1.5</max>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
+    <parameter default="0.0" name="MPC_Z_VEL_D_ACC" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
+      <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
       <min>0.0</min>
-      <max>0.1</max>
+      <max>2.0</max>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.1" name="MPC_Z_VEL_I" type="FLOAT">
+    <parameter default="2.0" name="MPC_Z_VEL_I_ACC" type="FLOAT">
       <short_desc>Integral gain for vertical velocity error</short_desc>
-      <long_desc>Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
-      <min>0.01</min>
-      <max>0.1</max>
+      <long_desc>defined as correction acceleration in m/s^2 per m velocity integral Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
+      <min>0.2</min>
+      <max>2.0</max>
       <decimal>3</decimal>
     </parameter>
     <parameter default="1.0" name="MPC_Z_VEL_MAX_DN" type="FLOAT">
@@ -4961,10 +4964,11 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="0.2" name="MPC_Z_VEL_P" type="FLOAT">
+    <parameter default="4.0" name="MPC_Z_VEL_P_ACC" type="FLOAT">
       <short_desc>Proportional gain for vertical velocity error</short_desc>
-      <min>0.1</min>
-      <max>0.4</max>
+      <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
+      <min>2.0</min>
+      <max>8.0</max>
       <decimal>2</decimal>
     </parameter>
     <parameter default="0" name="WV_EN" type="INT32">
