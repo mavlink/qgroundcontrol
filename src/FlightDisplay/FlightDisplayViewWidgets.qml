@@ -95,10 +95,6 @@ Item {
         target:         QGroundControl.settingsManager.appSettings.virtualJoystick
         onValueChanged: _setInstrumentWidget()
     }
-    Connections {
-        target:         QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
-        onValueChanged: _setInstrumentWidget()
-    }
 
     Connections {
         target:         QGroundControl.settingsManager.appSettings.showLargeCompass
