@@ -16,7 +16,13 @@ bool QGCMAVLink::isFixedWing(MAV_TYPE mavType)
 
 bool QGCMAVLink::isRover(MAV_TYPE mavType)
 {
-    return mavType == MAV_TYPE_GROUND_ROVER;
+    switch (mavType) {
+    case MAV_TYPE_GROUND_ROVER:
+    case MAV_TYPE_SURFACE_BOAT:
+        return true;
+    default:
+        return false;
+    }
 }
 
 bool QGCMAVLink::isSub(MAV_TYPE mavType)
