@@ -293,10 +293,18 @@ bool UDPLink::_hardwareConnect()
         //-- Make sure we have a large enough IO buffers
 #ifdef __mobile__
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
-        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+        if (_udpConfig->isTransmitOnly()) {
+            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 0);
+        } else {
+            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+        }
 #else
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
-        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
+        if (_udpConfig->isTransmitOnly()) {
+            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 0);;
+        } else {
+            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);;
+        }
 #endif
         _registerZeroconf(_udpConfig->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
@@ -369,7 +377,9 @@ void UDPLink::_deregisterZeroconf()
 //--------------------------------------------------------------------------
 //-- UDPConfiguration
 
-UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
+UDPConfiguration::UDPConfiguration(const QString& name)
+    : LinkConfiguration(name)
+    , _transmitOnly(false)
 {
     AutoConnectSettings* settings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
     _localPort = settings->udpListenPort()->rawValue().toInt();
@@ -379,7 +389,9 @@ UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name
     }
 }
 
-UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
+UDPConfiguration::UDPConfiguration(UDPConfiguration* source)
+    : LinkConfiguration(source)
+    , _transmitOnly(false)
 {
     _copyFrom(source);
 }

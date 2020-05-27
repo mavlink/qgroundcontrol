@@ -512,6 +512,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
         UDPConfiguration* udpConfig = new UDPConfiguration(_mavlinkForwardingLinkName);
         udpConfig->setDynamic(true);
+        udpConfig->setTransmitOnly(true);
 
         QString hostName = _toolbox->settingsManager()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
         udpConfig->addHost(hostName);
