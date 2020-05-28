@@ -90,7 +90,7 @@ LinuxBuild {
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
 
     # QT_INSTALL_LIBS
-    QT_LIB_LIST = \
+    QT_LIB_LIST += \
         libQt5Charts.so.5 \
         libQt5Core.so.5 \
         libQt5DBus.so.5 \
@@ -160,7 +160,11 @@ LinuxBuild {
     }
 
     # QGroundControl start script
-    QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
-    QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol.desktop $$DESTDIR
-    QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/resources/icons/qgroundcontrol.png $$DESTDIR
+    contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) | !exists($$PWD/custom/custom.pri) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol.desktop $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/resources/icons/qgroundcontrol.png $$DESTDIR
+    } else {
+        include($$PWD/custom/custom_deploy.pri)
+    }
 }
