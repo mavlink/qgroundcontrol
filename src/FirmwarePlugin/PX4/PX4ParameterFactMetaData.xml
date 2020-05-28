@@ -1574,7 +1574,7 @@ Use EKF2_FUSE_BETA to activate sideslip fusion</short_desc>
       <unit>SD</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="2.0" name="EKF2_BARO_NOISE" type="FLOAT">
+    <parameter default="3.5" name="EKF2_BARO_NOISE" type="FLOAT">
       <short_desc>Measurement noise for barometric altitude</short_desc>
       <min>0.01</min>
       <max>15.0</max>
