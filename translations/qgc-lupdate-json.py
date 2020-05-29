@@ -86,17 +86,11 @@ def walkDirectoryTreeForJsonFiles(dir, multiFileLocArray):
         if (os.path.isdir(path)):
             walkDirectoryTreeForJsonFiles(path, multiFileLocArray)
 
-def appendToQGCTSFile(multiFileLocArray):
-    originalTSFile = codecs.open('qgc.ts', 'r', "utf-8")
-    newTSFile = codecs.open('qgc.ts.new', 'w', "utf-8")
-    line = originalTSFile.readline()
-    while (line != "</TS>\n"):
-        newTSFile.write(line);
-        line = originalTSFile.readline()
-    originalTSFile.close()
+def writeJsonTSFile(multiFileLocArray):
+    jsonTSFile = codecs.open('qgc-json.ts', 'w', "utf-8")
     for entry in multiFileLocArray:
-        newTSFile.write("<context>\n")
-        newTSFile.write("    <name>%s</name>\n" % entry[0])
+        jsonTSFile.write("<context>\n")
+        jsonTSFile.write("    <name>%s</name>\n" % entry[0])
         singleFileLocStringDict = entry[2]
         for locStr in singleFileLocStringDict.keys():
             disambiguation = ""
@@ -108,25 +102,25 @@ def appendToQGCTSFile(multiFileLocArray):
                     sys.exit(1)
                 disambiguation = workStr[:terminatorIndex]
                 locStr = workStr[terminatorIndex+1:]
-            newTSFile.write("    <message>\n")
+            jsonTSFile.write("    <message>\n")
             if len(disambiguation):
-                newTSFile.write("        <comment>%s</comment>\n" % disambiguation)
+                jsonTSFile.write("        <comment>%s</comment>\n" % disambiguation)
             extraCommentStr = ""
             for jsonHierachy in singleFileLocStringDict[locStr]:
                 extraCommentStr += "%s, " % jsonHierachy
-            newTSFile.write("        <extracomment>%s</extracomment>\n" % extraCommentStr)
-            newTSFile.write("        <location filename=\"%s\"/>\n" % entry[1])
-            newTSFile.write(unicode("        <source>%s</source>\n") % locStr)
-            newTSFile.write("        <translation type=\"unfinished\"></translation>\n")
-            newTSFile.write("    </message>\n")
-        newTSFile.write("</context>\n")
-    newTSFile.write("</TS>\n")
-    newTSFile.close()
+            jsonTSFile.write("        <extracomment>%s</extracomment>\n" % extraCommentStr)
+            jsonTSFile.write("        <location filename=\"%s\"/>\n" % entry[1])
+            jsonTSFile.write(unicode("        <source>%s</source>\n") % locStr)
+            jsonTSFile.write("        <translation type=\"unfinished\"></translation>\n")
+            jsonTSFile.write("    </message>\n")
+        jsonTSFile.write("</context>\n")
+    jsonTSFile.write("</TS>\n")
+    jsonTSFile.close()
 
 def main():
     multiFileLocArray = []
     walkDirectoryTreeForJsonFiles("../src", multiFileLocArray)
-    appendToQGCTSFile(multiFileLocArray)
+    writeJsonTSFile(multiFileLocArray)
 
 if __name__ == '__main__':
     main()
