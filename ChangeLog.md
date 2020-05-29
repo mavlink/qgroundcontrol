@@ -4,13 +4,15 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.7 - Not yet released
+## 4.0.8 - Not yet released
+
+## 4.0.7 - Stable
 
 * Fix video page sizing
 * Virtual Joystick: Fix right stick centering. Fix/add support for rover/sub reverse throttle support.
 * Fix display of multiple ADSB vehicles
 
-### 4.0.6 - Stable
+### 4.0.6
 
 * Analyze/Log Download - Fix download on mobile versions of QGC
 * Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
