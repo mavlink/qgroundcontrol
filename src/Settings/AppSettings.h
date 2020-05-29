@@ -39,7 +39,7 @@ public:
     DEFINE_SETTINGFACT(audioMuted)
     DEFINE_SETTINGFACT(checkInternet)
     DEFINE_SETTINGFACT(virtualJoystick)
-    DEFINE_SETTINGFACT(virtualJoystickCentralized)
+    DEFINE_SETTINGFACT(virtualJoystickAutoCenterThrottle)
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)
