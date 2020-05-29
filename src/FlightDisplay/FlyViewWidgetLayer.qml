@@ -91,18 +91,16 @@ Item {
         z:                          QGroundControl.zOrderTopMost + 1
         width:                      parent.width  - (_pipOverlay.width / 2)
         height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-        visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+        visible:                    _virtualJoystickEnabled && !QGroundControl.videoManager.fullScreen && !(activeVehicle ? activeVehicle.highLatencyLink : false)
         anchors.bottom:             parent.bottom
         anchors.bottomMargin:       parentToolInsets.leftEdgeBottomInset + ScreenTools.defaultFontPixelHeight * 2
         anchors.horizontalCenter:   parent.horizontalCenter
         source:                     "qrc:/qml/VirtualJoystick.qml"
-        active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+        active:                     _virtualJoystickEnabled && !(activeVehicle ? activeVehicle.highLatencyLink : false)
 
-        property bool centralizeThrottle:   _virtualJoystickCentralized ? _virtualJoystickCentralized.value : false
-        property var  parentToolInsets:     _totalToolInsets
+        property bool autoCenterThrottle: QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle.rawValue
 
-        property Fact _virtualJoystick:             QGroundControl.settingsManager.appSettings.virtualJoystick
-        property Fact _virtualJoystickCentralized:  QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
+        property bool _virtualJoystickEnabled: QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue
     }
 
     FlyViewToolStrip {
