@@ -2,6 +2,8 @@
 
 QGC uses the standard Qt Linguist mechanisms for string translation. QGC uses crowd sourced string translation through a [Crowdin project](https://crowdin.com/project/qgroundcontrol for translation).
 
+## `source qgc-lupdate.sh`
+Run this command to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
 
 ## C++ and Qml code strings
 These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.
