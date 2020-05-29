@@ -16,6 +16,8 @@ Note: This file only contains high level features or important fixes.
 ## 4.0.7 - Not yet released
 
 * Fix video page sizing
+* Virtual Joystick: Fix right stick centering. Fix/add support for rover/sub reverse throttle support.
+* Fix display of multiple ADSB vehicles
 
 ### 4.0.6 - Stable
 

@@ -115,9 +115,9 @@
     "defaultValue":     false
 },
 {
-    "name":             "virtualJoystickCentralized",
-    "shortDescription": "Set virtual joystick to be centralize throttle (spring-loaded).",
-    "longDescription":  "If this option is enabled the virtual joystick throttle stick will be centralized.",
+    "name":             "virtualJoystickAutoCenterThrottle",
+    "shortDescription": "Auto-Center Throttle",
+    "longDescription":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
     "defaultValue":     false
 },
