@@ -88,6 +88,9 @@ def walkDirectoryTreeForJsonFiles(dir, multiFileLocArray):
 
 def writeJsonTSFile(multiFileLocArray):
     jsonTSFile = codecs.open('qgc-json.ts', 'w', "utf-8")
+    jsonTSFile.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
+    jsonTSFile.write("<!DOCTYPE TS>\n")
+    jsonTSFile.write("<TS version=\"2.1\">\n")
     for entry in multiFileLocArray:
         jsonTSFile.write("<context>\n")
         jsonTSFile.write("    <name>%s</name>\n" % entry[0])

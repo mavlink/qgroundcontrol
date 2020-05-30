@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1">
 <context>
     <name>SubmarineFact.json</name>
     <message>
@@ -3343,15 +3346,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <extracomment>.QGC.MetaData.Facts[language].shortDescription, </extracomment>
+        <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].longDescription, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
-        <source>Language</source>
+        <source>If enabled the throttle stick will snap back to center when released.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
         <source>Indoor,Outdoor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].shortDescription, </extracomment>
+        <location filename="../src/Settings/App.SettingsGroup.json"/>
+        <source>Auto-Center Throttle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3427,6 +3436,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <extracomment>.QGC.MetaData.Facts[language].shortDescription, </extracomment>
+        <location filename="../src/Settings/App.SettingsGroup.json"/>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <extracomment>.QGC.MetaData.Facts[firstRunPromptIdsShown].shortDescription, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
         <source>Comma separated list of first run prompt ids which have already been shown.</source>
@@ -3478,12 +3493,6 @@
         <extracomment>.QGC.MetaData.Facts[enforceChecklist].longDescription, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
         <source>If this option is enabled the preflight checklist must pass before arming.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystickCentralized].longDescription, </extracomment>
-        <location filename="../src/Settings/App.SettingsGroup.json"/>
-        <source>If this option is enabled the virtual joystick throttle stick will be centralized.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3685,9 +3694,9 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <extracomment>.QGC.MetaData.Facts[virtualJoystickCentralized].shortDescription, </extracomment>
+        <extracomment>.QGC.MetaData.Facts[indoorPalette].longDescription, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
-        <source>Set virtual joystick to be centralize throttle (spring-loaded).</source>
+        <source>The color scheme for the user interface.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3700,12 +3709,6 @@
         <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].longDescription, </extracomment>
         <location filename="../src/Settings/App.SettingsGroup.json"/>
         <source>This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <extracomment>.QGC.MetaData.Facts[indoorPalette].longDescription, </extracomment>
-        <location filename="../src/Settings/App.SettingsGroup.json"/>
-        <source>The color scheme for the user interface.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
