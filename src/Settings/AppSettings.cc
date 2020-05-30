@@ -53,23 +53,27 @@ DECLARE_SETTINGGROUP(App, "")
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = qgcApp()->applicationName();
 #ifdef __mobile__
-    // Mobile builds always use the runtime generated location for savePath. The reason is that for example on iOS the save path includes
-    // a UID for the app in it. When you then update the app that UID could change which in turn makes any saved value invalid.
-    if (true) {
+    // Mobile builds always use the runtime generated location for savePath.
+    bool userHasModifiedSavePath = false;
 #else
-    if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
+    bool userHasModifiedSavePath = !savePathFact->rawValue().toString().isEmpty() || !_nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty();
 #endif
+
+    if (!userHasModifiedSavePath) {
 #ifdef __mobile__
-#ifdef __ios__
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-#else
+    #ifdef __ios__
+        // This will expose the directories directly to the File iOs app
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        savePathFact->setRawValue(rootDir.absolutePath());
+    #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
-#endif
+        savePathFact->setRawValue(rootDir.filePath(appName));
+    #endif
         savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-#endif
         savePathFact->setRawValue(rootDir.filePath(appName));
+#endif
     }
 
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
