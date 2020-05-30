@@ -31,6 +31,7 @@ InstrumentValueEditDialog       1.0 InstrumentValueEditDialog.qml
 JoystickThumbPad                1.0 JoystickThumbPad.qml
 KMLOrSHPFileDialog              1.0 KMLOrSHPFileDialog.qml
 LogReplayStatusBar              1.0 LogReplayStatusBar.qml
+MainToolBar                     1.0 MainToolBar.qml
 MainWindowSavedState            1.0 MainWindowSavedState.qml
 MAVLinkMessageButton            1.0 MAVLinkMessageButton.qml
 MissionCommandDialog            1.0 MissionCommandDialog.qml
@@ -101,7 +102,6 @@ SurveyMapVisuals                1.0 SurveyMapVisuals.qml
 TerrainStatus                   1.0 TerrainStatus.qml
 TransectStyleComplexItemStats   1.0 TransectStyleComplexItemStats.qml
 TransectStyleMapVisuals         1.0 TransectStyleMapVisuals.qml
-ToolBarBase                     1.0 ToolBarBase.qml
 ToolStrip                       1.0 ToolStrip.qml
 VehicleRotationCal              1.0 VehicleRotationCal.qml
 VehicleSummaryRow               1.0 VehicleSummaryRow.qml
