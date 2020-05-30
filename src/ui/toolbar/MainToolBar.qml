@@ -19,15 +19,18 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
 
-Item {
-    id: _root
+Rectangle {
+    id:     _root
+    color:  qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
 
-    property alias indicatorSource:     indicatorLoader.source
-    property alias showModeIndicators:  indicatorLoader.showModeIndicators
+    property int currentToolbar: flyViewToolbar
 
-    // FIXME: Reaching up for communicationLost?
+    readonly property int flyViewToolbar:   0
+    readonly property int planViewToolbar:  1
+    readonly property int simpleToolbar:    2
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
 
     Component.onCompleted: _viewButtonClicked(flyButton)
 
@@ -74,6 +77,7 @@ Item {
         QGCToolBarButton {
             id:                 currentButton
             Layout.fillHeight:  true
+            visible:            !viewButtonSelectRow.visible
 
             onClicked: {
                 viewButtonSelectRow.visible = !viewButtonSelectRow.visible
@@ -100,19 +104,12 @@ Item {
                 onTriggered:    viewButtonSelectRow.visible = false
             }
 
-            Rectangle {
-                Layout.margins:     ScreenTools.defaultFontPixelHeight / 2
-                Layout.fillHeight:  true
-                width:              1
-                color:              qgcPal.text
-            }
-
             QGCToolBarButton {
                 id:                 settingsButton
                 Layout.fillHeight:  true
                 icon.source:        "/res/QGCLogoFull"
                 logo:               true
-                visible:            currentButton.icon.source !== icon.source && !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                 onClicked: {
                     if (_viewButtonClicked(this)) {
                         mainWindow.showSettingsView()
@@ -124,7 +121,6 @@ Item {
                 id:                 setupButton
                 Layout.fillHeight:  true
                 icon.source:        "/qmlimages/Gears.svg"
-                visible:            currentButton.icon.source !== icon.source
                 onClicked: {
                     if (_viewButtonClicked(this)) {
                         mainWindow.showSetupView()
@@ -136,7 +132,6 @@ Item {
                 id:                 planButton
                 Layout.fillHeight:  true
                 icon.source:        "/qmlimages/Plan.svg"
-                visible:            currentButton.icon.source !== icon.source
                 onClicked: {
                     if (_viewButtonClicked(this)) {
                         mainWindow.showPlanView()
@@ -148,7 +143,6 @@ Item {
                 id:                 flyButton
                 Layout.fillHeight:  true
                 icon.source:        "/qmlimages/PaperPlane.svg"
-                visible:            currentButton.icon.source !== icon.source
                 onClicked: {
                     if (_viewButtonClicked(this)) {
                         mainWindow.showFlyView()
@@ -192,7 +186,7 @@ Item {
                 id:                 analyzeButton
                 Layout.fillHeight:  true
                 icon.source:        "/qmlimages/Analyze.svg"
-                visible:            currentButton.icon.source !== icon.source && QGroundControl.corePlugin.showAdvancedUI
+                visible:            QGroundControl.corePlugin.showAdvancedUI
                 onClicked: {
                     if (_viewButtonClicked(this)) {
                         mainWindow.showAnalyzeView()
@@ -230,6 +224,7 @@ Item {
             anchors.bottom:         parent.bottom
             userSettingsGroup:      toolbarUserSettingsGroup
             defaultSettingsGroup:   toolbarDefaultSettingsGroup
+            visible:                currentToolbar !== planViewToolbar
 
             QGCMouseArea {
                 anchors.fill:   parent
@@ -247,17 +242,18 @@ Item {
             anchors.left:           valueArea.right
             width:                  1
             color:                  qgcPal.text
+            visible:                currentToolbar == flyViewToolbar
         }
 
         Loader {
             id:                 indicatorLoader
-            anchors.leftMargin: ScreenTools.defaultFontPixelHeight / 2
-            anchors.left:       separator2.right
+            anchors.leftMargin: currentToolbar !== planViewToolbar ? ScreenTools.defaultFontPixelHeight / 2 : 0
+            anchors.left:       currentToolbar !== planViewToolbar ? separator2.right : parent.left
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            source:             "qrc:/toolbar/MainToolBarIndicators.qml"
-
-            property bool showModeIndicators: true
+            source:             currentToolbar === flyViewToolbar ?
+                                    "qrc:/toolbar/MainToolBarIndicators.qml" :
+                                    (currentToolbar == planViewToolbar ? "qrc:/qml/PlanToolBarIndicators.qml" : "")
         }
     }
 
@@ -268,7 +264,7 @@ Item {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
-        visible:                _activeVehicle && !communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
+        visible:                currentToolbar !== planViewToolbar && _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true
@@ -363,7 +359,7 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         font.family:            ScreenTools.demiboldFontFamily
         color:                  qgcPal.colorRed
-        visible:                !_activeVehicle
+        visible:                currentToolbar !== planViewToolbar && !_activeVehicle
     }
 
     //-------------------------------------------------------------------------
@@ -376,7 +372,7 @@ Item {
         anchors.right:          parent.right
         layoutDirection:        Qt.RightToLeft
         spacing:                ScreenTools.defaultFontPixelWidth
-        visible:                _activeVehicle && communicationLost
+        visible:                currentToolbar !== planViewToolbar && _activeVehicle && _communicationLost
 
         QGCButton {
             id:                     disconnectButton
