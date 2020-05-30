@@ -6,6 +6,8 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0.8 - Not yet released
 
+* iOS: Modify QGC file storage location to support new Files app
+
 ## 4.0.7 - Stable
 
 * Fix video page sizing
