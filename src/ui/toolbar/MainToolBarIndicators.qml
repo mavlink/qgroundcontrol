@@ -21,9 +21,6 @@ Row {
     anchors.margins:    _toolIndicatorMargins
     spacing:            ScreenTools.defaultFontPixelWidth * 1.5
 
-    // This property should come in from the Loader
-    //property bool showModeIndicators: true
-
     property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
     property real _toolIndicatorMargins:    ScreenTools.defaultFontPixelHeight * 0.66
 
@@ -49,7 +46,7 @@ Row {
     }
 
     Repeater {
-        model: _activeVehicle && showModeIndicators ? _activeVehicle.modeIndicators : []
+        model: _activeVehicle ? _activeVehicle.modeIndicators : []
         Loader {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
