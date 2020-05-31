@@ -77,8 +77,6 @@ ApplicationWindow {
 
     /// Current active Vehicle
     property var                activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
-    /// Indicates communication with vehicle is list (no heartbeats)
-    property bool               communicationLost:              activeVehicle ? activeVehicle.connectionLost : false
     property string             formatedMessage:                activeVehicle ? activeVehicle.formatedMessage : ""
     /// Indicates usable height between toolbar and footer
     property real               availableHeight:                mainWindow.height - mainWindow.header.height - mainWindow.footer.height
@@ -125,47 +123,40 @@ ApplicationWindow {
         return _rgPreventViewSwitch[_rgPreventViewSwitch.length - 1]
     }
 
-    function viewSwitch(isPlanView, showModeIndicators) {
+    function viewSwitch(currentToolbar) {
         settingsWindow.visible  = false
         setupWindow.visible     = false
         analyzeWindow.visible   = false
         flightView.visible      = false
         planViewLoader.visible  = false
-        var indicatorSource
-        if (isPlanView) {
-            indicatorSource = "qrc:/qml/PlanToolBarIndicators.qml"
-        } else {
-            indicatorSource = "qrc:/toolbar/MainToolBarIndicators.qml"
-        }
-        toolbar.item.indicatorSource = indicatorSource
-        toolbar.item.showModeIndicators = showModeIndicators
+        toolbar.currentToolbar  = currentToolbar
     }
 
     function showFlyView() {
         if (!flightView.visible) {
             mainWindow.showPreFlightChecklistIfNeeded()
         }
-        viewSwitch(false, true)
+        viewSwitch(toolbar.flyViewToolbar)
         flightView.visible = true
     }
 
     function showPlanView() {
-        viewSwitch(true, false)
+        viewSwitch(toolbar.planViewToolbar)
         planViewLoader.visible = true
     }
 
     function showAnalyzeView() {
-        viewSwitch(false, false)
+        viewSwitch(toolbar.simpleToolbar)
         analyzeWindow.visible = true
     }
 
     function showSetupView() {
-        viewSwitch(false, false)
+        viewSwitch(toolbar.simpleToolbar)
         setupWindow.visible = true
     }
 
     function showSettingsView() {
-        viewSwitch(false, false)
+        viewSwitch(toolbar.simpleToolbar)
         settingsWindow.visible = true
     }
 
@@ -354,29 +345,10 @@ ApplicationWindow {
 
     //-------------------------------------------------------------------------
     /// Toolbar
-    header: ToolBar {
-        height:         ScreenTools.toolbarHeight
-        visible:        !QGroundControl.videoManager.fullScreen
-        background: Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
-        }
-        Loader {
-            id:             toolbar
-            anchors.fill:   parent
-            source:         "qrc:/toolbar/MainToolBar.qml"
-            //-- Toggle Full Screen / Windowed
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        !ScreenTools.isMobile
-                onDoubleClicked: {
-                    if(mainWindow.visibility === Window.Windowed) {
-                        mainWindow.showFullScreen()
-                    } else {
-                        mainWindow.showNormal()
-                    }
-                }
-            }
-        }
+    header: MainToolBar {
+        id:         toolbar
+        height:     ScreenTools.toolbarHeight
+        visible:    !QGroundControl.videoManager.fullScreen
     }
 
     footer: LogReplayStatusBar {

@@ -103,5 +103,16 @@ Rectangle {
             onClicked:  pickLogFile()
             visible:    !controller.link
         }
+
+        QGCButton {
+            text:       qsTr("Close")
+            onClicked: {
+                var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
+                if (activeVehicle) {
+                    activeVehicle.disconnectInactiveVehicle()
+                }
+                QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue = false
+            }
+        }
     }
 }
