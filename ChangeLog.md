@@ -4,12 +4,14 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.8 - Not yet released
+## 4.0.9 - Not yet released
+
+## 4.0.8 - Stable
 
 * iOS: Modify QGC file storage location to support new Files app
 * Mobile: Fix Log Replay status bar file selection
 
-## 4.0.7 - Stable
+## 4.0.7
 
 * Fix video page sizing
 * Virtual Joystick: Fix right stick centering. Fix/add support for rover/sub reverse throttle support.
