@@ -27,7 +27,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="73"/>
       <source> and frame type &apos;%2&apos;</source>
-      <translation type="unfinished"> and frame type &apos;%2&apos;</translation>
+      <translation>和帧类型 &apos;%2&apos;</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="74"/>
