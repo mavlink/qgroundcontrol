@@ -16,6 +16,7 @@ Note: This file only contains high level features or important fixes.
 ## 4.0.8 - Not yet released
 
 * iOS: Modify QGC file storage location to support new Files app
+* Mobile: Fix Log Replay status bar file selection
 
 ## 4.0.7 - Stable
 
