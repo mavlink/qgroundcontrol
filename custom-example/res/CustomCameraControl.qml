@@ -928,7 +928,7 @@ Item {
                     //-- Gimbal Control
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
-                        visible:        !CustomQuickInterface.useEmbeddedGimbal && _camera && !_camera.isThermal
+                        visible:        _camera && !_camera.isThermal
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:       qsTr("Show Gimbal Control")
