@@ -1805,7 +1805,7 @@ Sets the number of standard deviations used by the innovation consistency test</
       <unit>SD</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="0.5" name="EKF2_GPS_V_NOISE" type="FLOAT">
+    <parameter default="0.3" name="EKF2_GPS_V_NOISE" type="FLOAT">
       <short_desc>Measurement noise for gps horizontal velocity</short_desc>
       <min>0.01</min>
       <max>5.0</max>
@@ -7721,6 +7721,17 @@ default 1.5 turns per second</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Return To Land">
+    <parameter default="0" name="RTL_PLD_MD" type="INT32">
+      <short_desc>RTL precision land mode</short_desc>
+      <long_desc>Use precision landing when doing an RTL landing phase.</long_desc>
+      <values>
+        <value code="0">No precision landing</value>
+        <value code="1">Opportunistic precision landing</value>
+        <value code="2">Required precision landing</value>
+      </values>
+    </parameter>
+  </group>
   <group name="Roboclaw">
     <parameter default="0" name="RBCLW_SER_CFG" type="INT32">
       <short_desc>Serial Configuration for Roboclaw Driver</short_desc>
@@ -8735,7 +8746,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="200" name="IMU_INTEG_RATE" type="INT32">
       <short_desc>IMU integration rate</short_desc>
-      <long_desc>The rate at which raw IMU data is integrated to produce delta angles and delta velocities.</long_desc>
+      <long_desc>The rate at which raw IMU data is integrated to produce delta angles and delta velocities. Recommended to set this to a multiple of the estimator update period (currently 10 ms for ekf2).</long_desc>
       <min>100</min>
       <max>1000</max>
       <unit>Hz</unit>
