@@ -76,9 +76,69 @@
     "shortDescription": "Gimbal Proportional factor",
     "longDescription":  "Gimbal Proportional factor",
     "type":             "double",
-    "defaultValue":     3.5,
+    "defaultValue":     2.5,
     "min":              0.01,
-    "max":              10.0,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalPitchKPFactor",
+    "shortDescription": "Gimbal Pitch Proportional factor",
+    "longDescription":  "Gimbal Pitch Proportional factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalPitchKIFactor",
+    "shortDescription": "Gimbal Pitch Integral factor",
+    "longDescription":  "Gimbal Pitch Integral factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalPitchKDFactor",
+    "shortDescription": "Gimbal Pitch Derivative factor",
+    "longDescription":  "Gimbal Pitch Derivative factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalYawKPFactor",
+    "shortDescription": "Gimbal Yaw Proportional factor",
+    "longDescription":  "Gimbal Yaw Proportional factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalYawKIFactor",
+    "shortDescription": "Gimbal Yaw Integral factor",
+    "longDescription":  "Gimbal Yaw Integral factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalYawKDFactor",
+    "shortDescription": "Gimbal Yaw Derivative factor",
+    "longDescription":  "Gimbal Yaw Derivative factor",
+    "type":             "double",
+    "defaultValue":     1.0,
+    "min":              0.01,
+    "max":              100.00,
     "decimalPlaces":    2
 },
 {

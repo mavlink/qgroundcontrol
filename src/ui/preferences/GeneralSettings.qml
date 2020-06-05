@@ -585,25 +585,126 @@ Rectangle {
                                     visible:                parent._maxGoToLocationDistance.visible
                                     fact:                   parent._maxGoToLocationDistance
                                 }
-                                QGCLabel { text: QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor.shortDescription }
-                                FactTextField {
-                                    Layout.preferredWidth:  _valueFieldWidth
-                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor
-                                }
-                                QGCLabel { text: qsTr("Use Camera Gimbal Control") }
+                                QGCLabel { text: qsTr("Use Camera Slider Gimbal Control") }
                                 CustomOnOffSwitch {
                                     checked:    CustomQuickInterface.useEmbeddedGimbal
                                     width:      _valueFieldWidth
                                     onClicked:  CustomQuickInterface.useEmbeddedGimbal = checked
                                 }
-                                QGCLabel {
-                                    visible: !CustomQuickInterface.useEmbeddedGimbal
-                                    text: qsTr("Show Gimbal Control") }
+                                QGCLabel { text: qsTr("Use Virtual Joystick Gimbal Control") }
                                 CustomOnOffSwitch {
-                                    visible:    !CustomQuickInterface.useEmbeddedGimbal
                                     checked:    CustomQuickInterface.showGimbalControl
                                     width:      _valueFieldWidth
                                     onClicked:  CustomQuickInterface.showGimbalControl = checked
+                                }
+                                QGCLabel { text: qsTr("Enable New Gimbal Controls") }
+                                CustomOnOffSwitch {
+                                    checked:    CustomQuickInterface.enableNewGimbalControls
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.enableNewGimbalControls = checked
+                                }
+                                QGCLabel {
+                                    visible: !CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: !CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor
+                                }
+                                QGCLabel {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    text: qsTr("Gimbal pitch inverted")
+                                }
+                                CustomOnOffSwitch {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    checked:    CustomQuickInterface.gimbalPitchInverted
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.gimbalPitchInverted = checked
+                                }
+                                QGCLabel {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    text: qsTr("Gimbal yaw inverted")
+                                }
+                                CustomOnOffSwitch {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    checked:    CustomQuickInterface.gimbalYawInverted
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.gimbalYawInverted = checked
+                                }
+                                QGCLabel {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    text: qsTr("Gimbal Enabled Pitch Setpoint PID")
+                                }
+                                CustomOnOffSwitch {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    checked:    CustomQuickInterface.gimbalPitchPidEnabled
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.gimbalPitchPidEnabled = checked
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalPitchKPFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalPitchKPFactor
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalPitchKIFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalPitchKIFactor
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalPitchKDFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalPitchPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalPitchKDFactor
+                                }
+                                QGCLabel {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    text: qsTr("Gimbal Enabled Yaw Setpoint PID")
+                                    }
+                                CustomOnOffSwitch {
+                                    visible:    CustomQuickInterface.enableNewGimbalControls
+                                    checked:    CustomQuickInterface.gimbalYawPidEnabled
+                                    width:      _valueFieldWidth
+                                    onClicked:  CustomQuickInterface.gimbalYawPidEnabled = checked
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalYawKPFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalYawKPFactor
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalYawKIFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalYawKIFactor
+                                }
+                                QGCLabel {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalYawKDFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.gimbalYawPidEnabled && CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalYawKDFactor
                                 }
                             }
                         }
