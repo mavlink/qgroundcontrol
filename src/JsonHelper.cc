@@ -190,7 +190,11 @@ bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, Q
     } else {
         // "enumValues": "0,1,2,3,4,5",
         QString value = jsonObject.value(_enumValuesJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         enumValues = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
+#else
+        enumValues = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
+#endif
     }
 
     if (enumStrings.count() != enumValues.count()) {
