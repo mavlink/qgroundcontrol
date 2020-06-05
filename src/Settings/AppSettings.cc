@@ -241,7 +241,13 @@ MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleT
 QList<int> AppSettings::firstRunPromptsIdsVariantToList(const QVariant& firstRunPromptIds)
 {
     QList<int> rgIds;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QStringList strIdList = firstRunPromptIds.toString().split(",", QString::SkipEmptyParts);
+#else
+    QStringList strIdList = firstRunPromptIds.toString().split(",", Qt::SkipEmptyParts);
+#endif
+
     for (const QString& strId: strIdList) {
         rgIds.append(strId.toInt());
     }
