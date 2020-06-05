@@ -1274,17 +1274,26 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
     qCDebug(CameraControlVerboseLog) << "_processConditionTest(" << conditionTest << ")";
     int op = TEST_NONE;
     QStringList test;
+
+    auto split = [&conditionTest](const QString& sep ) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+        return conditionTest.split(sep, QString::SkipEmptyParts);
+#else
+        return conditionTest.split(sep, Qt::SkipEmptyParts);
+#endif
+    };
+
     if(conditionTest.contains("!=")) {
-        test = conditionTest.split("!=", QString::SkipEmptyParts);
+        test = split("!=");
         op = TEST_NOT_EQUAL;
     } else if(conditionTest.contains("=")) {
-        test = conditionTest.split("=", QString::SkipEmptyParts);
+        test = split("=");
         op = TEST_EQUAL;
     } else if(conditionTest.contains(">")) {
-        test = conditionTest.split(">", QString::SkipEmptyParts);
+        test = split(">");
         op = TEST_GREATER;
     } else if(conditionTest.contains("<")) {
-        test = conditionTest.split("<", QString::SkipEmptyParts);
+        test = split("<");
         op = TEST_SMALLER;
     }
     if(test.size() == 2) {
@@ -1319,7 +1328,11 @@ QGCCameraControl::_processCondition(const QString condition)
     bool result = true;
     bool andOp  = true;
     if(!condition.isEmpty()) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         QStringList scond = condition.split(" ", QString::SkipEmptyParts);
+#else
+        QStringList scond = condition.split(" ", Qt::SkipEmptyParts);
+#endif
         while(scond.size()) {
             QString test = scond.first();
             scond.removeFirst();
