@@ -329,7 +329,7 @@ void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
     settings.beginGroup(root);
     _port = (quint16)settings.value("port", QGC_TCP_PORT).toUInt();
     QString address = settings.value("host", _address.toString()).toString();
-    _address = address;
+    _address = QHostAddress(address);
     settings.endGroup();
 }
 
