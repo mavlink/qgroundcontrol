@@ -127,7 +127,12 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
 
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
     connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     connect(networkReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &TerrainAirMapQuery::_requestError);
+#else
+    connect(networkReply, &QNetworkReply::errorOccurred, this, &TerrainAirMapQuery::_requestError);
+#endif
 }
 
 void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
