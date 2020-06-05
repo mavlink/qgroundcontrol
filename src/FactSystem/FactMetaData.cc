@@ -232,7 +232,7 @@ QVariant FactMetaData::rawDefaultValue(void) const
 
 void FactMetaData::setRawDefaultValue(const QVariant& rawDefaultValue)
 {
-    if (_type == valueTypeString || (_rawMin <= rawDefaultValue && rawDefaultValue <= _rawMax)) {
+    if (_type == valueTypeString || (isInRawMinLimit(rawDefaultValue) && isInRawMaxLimit(rawDefaultValue))) {
         _rawDefaultValue = rawDefaultValue;
         _defaultValueAvailable = true;
     } else {
@@ -242,7 +242,7 @@ void FactMetaData::setRawDefaultValue(const QVariant& rawDefaultValue)
 
 void FactMetaData::setRawMin(const QVariant& rawMin)
 {
-    if (rawMin >= _minForType()) {
+    if (isInRawMinLimit(rawMin)) {
         _rawMin = rawMin;
         _minIsDefaultForType = false;
     } else {
@@ -255,13 +255,73 @@ void FactMetaData::setRawMin(const QVariant& rawMin)
 
 void FactMetaData::setRawMax(const QVariant& rawMax)
 {
-    if (rawMax > _maxForType()) {
-        qWarning() << "Attempt to set max above allowable value";
-        _rawMax = _maxForType();
-    } else {
+    if (isInRawMaxLimit(rawMax)) {
         _rawMax = rawMax;
         _maxIsDefaultForType = false;
+    } else {
+        qWarning() << "Attempt to set max above allowable value";
+        _rawMax = _maxForType();
     }
+}
+
+bool FactMetaData::isInRawMinLimit(const QVariant& variantValue) const
+{
+    switch (_type) {
+    case valueTypeUint8:
+        return _rawMin.value<unsigned char>() <= variantValue.value<unsigned char>();
+    case valueTypeInt8:
+        return _rawMin.value<signed char>() <= variantValue.value<signed char>();
+    case valueTypeUint16:
+        return _rawMin.value<unsigned short int>() <= variantValue.value<unsigned short int>();
+    case valueTypeInt16:
+        return _rawMin.value<short int>() <= variantValue.value<short int>();
+    case valueTypeUint32:
+        return _rawMin.value<uint32_t>() <= variantValue.value<uint32_t>();
+    case valueTypeInt32:
+        return _rawMin.value<int32_t>() <= variantValue.value<int32_t>();
+    case valueTypeUint64:
+        return _rawMin.value<uint64_t>() <= variantValue.value<uint64_t>();
+    case valueTypeInt64:
+        return _rawMin.value<int64_t>() <= variantValue.value<int64_t>();
+    case valueTypeFloat:
+        return _rawMin.value<float>() <= variantValue.value<float>();
+    case valueTypeDouble:
+        return _rawMin.value<double>() <= variantValue.value<double>();
+    default:
+        return true;
+    }
+
+    return true;
+}
+
+bool FactMetaData::isInRawMaxLimit(const QVariant& variantValue) const
+{
+    switch (_type) {
+    case valueTypeUint8:
+        return _rawMax.value<unsigned char>() >= variantValue.value<unsigned char>();
+    case valueTypeInt8:
+        return _rawMax.value<signed char>() >= variantValue.value<signed char>();
+    case valueTypeUint16:
+        return _rawMax.value<unsigned short int>() >= variantValue.value<unsigned short int>();
+    case valueTypeInt16:
+        return _rawMax.value<short int>() >= variantValue.value<short int>();
+    case valueTypeUint32:
+        return _rawMax.value<uint32_t>() >= variantValue.value<uint32_t>();
+    case valueTypeInt32:
+        return _rawMax.value<int32_t>() >= variantValue.value<int32_t>();
+    case valueTypeUint64:
+        return _rawMax.value<uint64_t>() >= variantValue.value<uint64_t>();
+    case valueTypeInt64:
+        return _rawMax.value<int64_t>() >= variantValue.value<int64_t>();
+    case valueTypeFloat:
+        return _rawMax.value<float>() >= variantValue.value<float>();
+    case valueTypeDouble:
+        return _rawMax.value<double>() >= variantValue.value<double>();
+    default:
+        return true;
+    }
+
+    return true;
 }
 
 QVariant FactMetaData::_minForType(void) const
@@ -349,7 +409,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeInt32:
         typedValue = QVariant(rawValue.toInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<int32_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toInt()).arg(rawMax().toInt());
             }
         }
@@ -357,7 +417,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeInt64:
         typedValue = QVariant(rawValue.toLongLong(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<int64_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toInt()).arg(rawMax().toInt());
             }
         }
@@ -367,7 +427,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeUint32:
         typedValue = QVariant(rawValue.toUInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<uint32_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toUInt()).arg(rawMax().toUInt());
             }
         }
@@ -375,7 +435,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeUint64:
         typedValue = QVariant(rawValue.toULongLong(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<uint64_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toUInt()).arg(rawMax().toUInt());
             }
         }
@@ -383,7 +443,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<float>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toDouble()).arg(rawMax().toDouble());
             }
         }
@@ -392,7 +452,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(rawValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
-            if (typedValue < rawMin() || typedValue > rawMax()) {
+            if (!isInRawLimit<double>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(rawMin().toDouble()).arg(rawMax().toDouble());
             }
         }
@@ -437,7 +497,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeInt32:
         typedValue = QVariant(cookedValue.toInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<int32_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
             }
         }
@@ -445,7 +505,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeInt64:
         typedValue = QVariant(cookedValue.toLongLong(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<int64_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toInt()).arg(cookedMax().toInt());
             }
         }
@@ -455,7 +515,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeUint32:
         typedValue = QVariant(cookedValue.toUInt(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<uint32_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
             }
         }
@@ -463,7 +523,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeUint64:
         typedValue = QVariant(cookedValue.toULongLong(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<uint64_t>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toUInt()).arg(cookedMax().toUInt());
             }
         }
@@ -471,7 +531,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(cookedValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<float>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toFloat()).arg(cookedMax().toFloat());
             }
         }
@@ -480,7 +540,7 @@ bool FactMetaData::convertAndValidateCooked(const QVariant& cookedValue, bool co
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(cookedValue.toDouble(&convertOk));
         if (!convertOnly && convertOk) {
-            if (cookedMin() > typedValue || typedValue > cookedMax()) {
+            if (!isInCookedLimit<double>(typedValue)) {
                 errorString = tr("Value must be within %1 and %2").arg(cookedMin().toDouble()).arg(cookedMax().toDouble());
             }
         }
@@ -515,21 +575,13 @@ bool FactMetaData::clampValue(const QVariant& cookedValue, QVariant& typedValue)
     case FactMetaData::valueTypeInt32:
         typedValue = QVariant(cookedValue.toInt(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<int32_t>(typedValue);
         }
         break;
     case FactMetaData::valueTypeInt64:
         typedValue = QVariant(cookedValue.toLongLong(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<int64_t>(typedValue);
         }
         break;
     case FactMetaData::valueTypeUint8:
@@ -537,42 +589,26 @@ bool FactMetaData::clampValue(const QVariant& cookedValue, QVariant& typedValue)
     case FactMetaData::valueTypeUint32:
         typedValue = QVariant(cookedValue.toUInt(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<uint32_t>(typedValue);
         }
         break;
     case FactMetaData::valueTypeUint64:
         typedValue = QVariant(cookedValue.toULongLong(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<uint64_t>(typedValue);
         }
         break;
     case FactMetaData::valueTypeFloat:
         typedValue = QVariant(cookedValue.toFloat(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<float>(typedValue);
         }
         break;
     case FactMetaData::valueTypeElapsedTimeInSeconds:
     case FactMetaData::valueTypeDouble:
         typedValue = QVariant(cookedValue.toDouble(&convertOk));
         if (convertOk) {
-            if (cookedMin() > typedValue) {
-                typedValue = cookedMin();
-            } else if(typedValue > cookedMax()) {
-                typedValue = cookedMax();
-            }
+            clamp<double>(typedValue);
         }
         break;
     case FactMetaData::valueTypeString:
