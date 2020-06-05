@@ -8696,9 +8696,9 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter default="30.0" name="IMU_DGYRO_CUTOFF" type="FLOAT">
+    <parameter default="0.0" name="IMU_DGYRO_CUTOFF" type="FLOAT">
       <short_desc>Cutoff frequency for angular acceleration (D-Term filter)</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter used on the time derivative of the measured angular velocity, also known as the D-term filter in the rate controller. The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to decrease the driver-level filtering, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter used on the time derivative of the measured angular velocity, also known as the D-term filter in the rate controller. The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to increase IMU_GYRO_CUTOFF, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
@@ -8706,7 +8706,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="30.0" name="IMU_GYRO_CUTOFF" type="FLOAT">
       <short_desc>Low pass filter cutoff frequency for gyro</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary gyro. This only affects the angular velocity sent to the controllers, not the estimators. Doesn't apply to the angular acceleration (D-Term filter), see IMU_DGYRO_CUTOFF. A value of 0 disables the filter.</long_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary gyro. This only affects the angular velocity sent to the controllers, not the estimators. It applies also to the angular acceleration (D-Term filter), see IMU_DGYRO_CUTOFF. A value of 0 disables the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
@@ -10052,9 +10052,10 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter default="0" name="SYS_HITL" type="INT32">
       <short_desc>Enable HITL/SIH mode on next boot</short_desc>
-      <long_desc>While enabled the system will boot in Hardware-In-The-Loop (HITL) or Simulation-In-Hardware (SIH) mode and not enable all sensors and checks. When disabled the same vehicle can be flown normally.</long_desc>
+      <long_desc>While enabled the system will boot in Hardware-In-The-Loop (HITL) or Simulation-In-Hardware (SIH) mode and not enable all sensors and checks. When disabled the same vehicle can be flown normally. Set to 'external HITL', if the system should perform as if it were a real vehicle (the only difference to a real system is then only the parameter value, which can be used for log analysis).</long_desc>
       <reboot_required>true</reboot_required>
       <values>
+        <value code="-1">external HITL</value>
         <value code="0">HITL and SIH disabled</value>
         <value code="1">HITL enabled</value>
         <value code="2">SIH enabled</value>
