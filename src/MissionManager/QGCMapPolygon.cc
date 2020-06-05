@@ -453,7 +453,12 @@ void QGCMapPolygon::offset(double distance)
         QGeoCoordinate  tangentOrigin = vertexCoordinate(0);
         for (int i=0; i<rgOffsetEdges.count(); i++) {
             int prevIndex = i == 0 ? rgOffsetEdges.count() - 1 : i - 1;
-            if (rgOffsetEdges[prevIndex].intersect(rgOffsetEdges[i], &newVertex) == QLineF::NoIntersection) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+            auto intersect = rgOffsetEdges[prevIndex].intersect(rgOffsetEdges[i], &newVertex);
+#else
+            auto intersect = rgOffsetEdges[prevIndex].intersects(rgOffsetEdges[i], &newVertex);
+#endif
+            if (intersect == QLineF::NoIntersection) {
                 // FIXME: Better error handling?
                 qWarning("Intersection failed");
                 return;
