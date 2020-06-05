@@ -20,6 +20,7 @@
 #include "AppSettings.h"
 #include "SettingsManager.h"
 
+#include <QRandomGenerator>
 #include <QTemporaryFile>
 #include <QTime>
 
@@ -464,12 +465,12 @@ QString UnitTest::createRandomFile(uint32_t byteCount)
     QTemporaryFile tempFile;
 
     QTime time = QTime::currentTime();
-    qsrand((uint)time.msec());
+    QRandomGenerator::global()->seed(time.msec());
 
     tempFile.setAutoRemove(false);
     if (tempFile.open()) {
         for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
-            unsigned char byte = (qrand() * 0xFF) / RAND_MAX;
+            unsigned char byte = (QRandomGenerator::global()->generate() * 0xFF) / RAND_MAX;
             tempFile.write((char *)&byte, 1);
         }
         tempFile.close();
