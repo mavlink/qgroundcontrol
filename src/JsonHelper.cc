@@ -170,7 +170,11 @@ bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, Q
     } else {
         // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
         QString value = jsonObject.value(_enumStringsJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         enumStrings = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
+#else
+        enumStrings = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
+#endif
     }
 
     if(jsonObject.value(_enumValuesJsonKey).isArray()) {
