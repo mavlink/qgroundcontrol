@@ -816,7 +816,7 @@ Item {
                                 pitch = 0.0
                                 yaw = 0.0
                             } else {
-                                if(CustomQuickInterface.gimbalYawPidEnabled){
+                                if(CustomQuickInterface.gimbalYawPidEnabled && gimbalRateMode){
                                     var yaw_setpoint = CustomQuickInterface.gimbalYawInverted ? gimbalControl._mountYaw - yaw_stick : gimbalControl._mountYaw + yaw_stick
                                     var yaw_inc = _pid(yaw_setpoint, gimbalControl._mountYaw, false)
                                 } else {
@@ -824,7 +824,7 @@ Item {
                                 }
                                 yaw = gimbalControl._mountYaw + yaw_inc
 
-                                if(CustomQuickInterface.gimbalPitchPidEnabled){
+                                if(CustomQuickInterface.gimbalPitchPidEnabled && gimbalRateMode){
                                     var pitch_setpoint = CustomQuickInterface.gimbalPitchInverted ? gimbalControl._mountPitch - pitch_stick : gimbalControl._mountPitch + pitch_stick
                                     var pitch_inc = _pid(pitch_setpoint, gimbalControl._mountPitch, true)
                                 } else {
