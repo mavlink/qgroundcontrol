@@ -72,9 +72,9 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "gimbalKPFactor",
-    "shortDescription": "Gimbal Proportional factor",
-    "longDescription":  "Gimbal Proportional factor",
+    "name":             "gimbalSpeedFactor",
+    "shortDescription": "Gimbal Speed factor",
+    "longDescription":  "Gimbal Speed factor",
     "type":             "double",
     "defaultValue":     2.5,
     "min":              0.01,

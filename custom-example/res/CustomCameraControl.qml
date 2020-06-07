@@ -484,7 +484,7 @@ Item {
                                     y: -yawIndicator.height / 2
                                 },
                                 Rotation {
-                                    angle: _gimbalYaw
+                                    angle: _gimbalYaw * pitchScale._yawSign
                                 }
                             ]
                         }
@@ -493,11 +493,14 @@ Item {
                         readonly property real maxValue: 90
                         readonly property real rangeValue: maxValue - minValue
                         readonly property real scaleRatio: 1/7
-                        property real          _pitch: _gimbalPitch < minValue ? minValue  : (_gimbalPitch > maxValue ? maxValue : _gimbalPitch)
+
+                        property real _yawSign: CustomQuickInterface.gimbalYawInverted && CustomQuickInterface.enableNewGimbalControls ? -1.0 : 1.0
+                        property real _pitchSign: CustomQuickInterface.gimbalPitchInverted && CustomQuickInterface.enableNewGimbalControls ? -1.0 : 1.0
+                        property real _pitch: (_pitchSign*_gimbalPitch) < minValue ? minValue  : ((_pitchSign*_gimbalPitch) > maxValue ? maxValue : (_pitchSign*_gimbalPitch))
                     }
                     QGCLabel {
                         id:             gimbalLabel
-                        width:          gimbalCol.width
+                        width:          gimbalCol.widthmaxValue
                         color:          qgcPal.text
                         font.pointSize: ScreenTools.smallFontPointSize
                         text:           activeVehicle ? activeVehicle.gimbalPitch.toFixed(0) : "-"
@@ -928,7 +931,7 @@ Item {
                     //-- Gimbal Control
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
-                        visible:        _camera && !_camera.isThermal
+                        visible:        _camera && !_camera.isThermal && (CustomQuickInterface.enableNewGimbalControls || !CustomQuickInterface.useEmbeddedGimbal)
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:       qsTr("Show Gimbal Control")

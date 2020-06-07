@@ -585,32 +585,22 @@ Rectangle {
                                     visible:                parent._maxGoToLocationDistance.visible
                                     fact:                   parent._maxGoToLocationDistance
                                 }
-                                QGCLabel { text: qsTr("Use Camera Slider Gimbal Control") }
-                                CustomOnOffSwitch {
-                                    checked:    CustomQuickInterface.useEmbeddedGimbal
-                                    width:      _valueFieldWidth
-                                    onClicked:  CustomQuickInterface.useEmbeddedGimbal = checked
-                                }
-                                QGCLabel { text: qsTr("Use Virtual Joystick Gimbal Control") }
-                                CustomOnOffSwitch {
-                                    checked:    CustomQuickInterface.showGimbalControl
-                                    width:      _valueFieldWidth
-                                    onClicked:  CustomQuickInterface.showGimbalControl = checked
-                                }
-                                QGCLabel { text: qsTr("Enable New Gimbal Controls") }
+                                QGCLabel { text: qsTr("Enable New Gimbal Controls (reboot required)") }
                                 CustomOnOffSwitch {
                                     checked:    CustomQuickInterface.enableNewGimbalControls
                                     width:      _valueFieldWidth
-                                    onClicked:  CustomQuickInterface.enableNewGimbalControls = checked
+                                    onClicked:  {
+                                        CustomQuickInterface.enableNewGimbalControls = checked
+                                    }
                                 }
                                 QGCLabel {
-                                    visible: !CustomQuickInterface.enableNewGimbalControls
-                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor.shortDescription
+                                    visible: CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalSpeedFactor.shortDescription
                                 }
                                 FactTextField {
-                                    visible: !CustomQuickInterface.enableNewGimbalControls
+                                    visible: CustomQuickInterface.enableNewGimbalControls
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSpeedFactor
                                 }
                                 QGCLabel {
                                     visible:    CustomQuickInterface.enableNewGimbalControls

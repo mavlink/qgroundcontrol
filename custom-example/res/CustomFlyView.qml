@@ -676,7 +676,7 @@ Item {
     //-- Gimbal Control
     Rectangle {
         id:                     gimbalControl
-        visible:                camControlLoader.visible && _hasGimbal && CustomQuickInterface.showGimbalControl
+        visible:                camControlLoader.visible && _hasGimbal && CustomQuickInterface.showGimbalControl && (CustomQuickInterface.enableNewGimbalControls || !CustomQuickInterface.useEmbeddedGimbal)
         anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
@@ -685,10 +685,6 @@ Item {
         color:                  Qt.rgba(1,1,1,0.25)
         radius:                 width * 0.5
 
-        // property real _currentPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
-        // property real _currentYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
-        // property real _lastPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
-        // property real _lastYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
         property real _mountPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
         property real _mountYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
         property real time_last_seconds:0
@@ -706,7 +702,7 @@ Item {
         property real _cameraPitchControlAngleRange: 45
 
         property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
-        property real gimbalKPFactor: _flyViewSettings ? _flyViewSettings.gimbalKPFactor.rawValue : 2.5
+        property real gimbalSpeedFactor: _flyViewSettings ? _flyViewSettings.gimbalSpeedFactor.rawValue : 2.5
 
         // PID global variables
         property real _KpPitch: _flyViewSettings ? _flyViewSettings.gimbalPitchKPFactor.rawValue : 1.0
@@ -724,6 +720,13 @@ Item {
         property real _dt: 0.01
 
         property bool _firstTime: true
+
+        // Old gimbal control
+        property real speedMultiplier:  2.5
+        property real _currentPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
+        property real _currentYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
+        property real _lastPitch:       _hasGimbal ? activeVehicle.gimbalPitch : 0
+        property real _lastYaw:         _hasGimbal ? activeVehicle.gimbalYaw : 0
 
         // Loop to run gimbal controls at 10Hz. If no input is modified then nothing will happen.
         Timer {
@@ -754,83 +757,136 @@ Item {
 
             onTriggered: {
                 var gimbalRateMode = true;
+                // TODO: send DO_MOUNT_CONFIGURE every time we detect a new gimbal
+                // if(gimbalControl._firstTime){
+                //     activeVehicle.gimbalConfigure()
+                //     gimbalControl._firstTime = false
+                // }
                 if (activeVehicle) {
-                    var yaw = 0
-                    var pitch = 0
-                    var updateSetpoint = false
+                    // New camera controls with mount orientation feedback and optional PID controller to smoothen setpoints
+                    if(CustomQuickInterface.enableNewGimbalControls){
+                        var yaw = 0
+                        var pitch = 0
+                        var pitch_stick = 0
+                        var yaw_stick = 0
+                        var updateSetpoint = false
 
-                    // TODO: send DO_MOUNT_CONFIGURE every time we detect a new gimbal
-                    // if(gimbalControl._firstTime){
-                    //     activeVehicle.gimbalConfigure()
-                    //     gimbalControl._firstTime = false
-                    // }
+                        // Is the Gimbal virtual joystick not centered? Then do joystick control
+                        gimbalControl._doVirtualJoystickControl = (stick.xAxis !== 0) && (stick.yAxis !== 0.5)
 
-                    // Is the Gimbal virtual joystick not centered? Then do joystick control
-                    gimbalControl._doVirtualJoystickControl = (stick.xAxis !== 0) && (stick.yAxis !== 0.5)
-
-                    var pitch_stick = 0
-                    var yaw_stick = 0
-
-                    // Gimbal slider pitch control: if gimbal slider is loaded, enabled and pressed
-                    if(camControlLoader.status === Loader.Ready && CustomQuickInterface.useEmbeddedGimbal && camControlLoader.item.joystickPitchActive) {
-                        pitch_stick = camControlLoader.item.joystickPitchNormalized * gimbalControl._cameraPitchControlAngleRange;
-                        gimbalRateMode = false;
-                        updateSetpoint = true;
-                    }
-                    // Gimbal virtual joystick control: if virtual joystick is not centered
-                    if(gimbalControl.visible && gimbalControl._doVirtualJoystickControl) {
-                        pitch_stick = (stick.yAxis * 2.0 - 1.0);
-                        yaw_stick = stick.xAxis;
-                        gimbalRateMode = true;
-                        updateSetpoint = true;
-                    }
-                    // Gimbal physical joystick control: if either continuous or step pitch/yaw is triggered via joystick button
-                    if(gimbalControl._haveJoystick && (gimbalControl._doJoystickPitchContinuous || gimbalControl._doJoystickPitchStep || gimbalControl._doJoystickYawStep)) {
-                        pitch_stick = gimbalControl._joystickPitch;
-                        yaw_stick = gimbalControl._joystickYaw;
-                        if(gimbalControl._doJoystickPitchStep) {
-                            gimbalControl._joystickPitch = 0;
-                            gimbalControl._doJoystickPitchStep = false;
+                        // Gimbal slider pitch control: if gimbal slider is loaded, enabled and pressed
+                        if(camControlLoader.status === Loader.Ready && CustomQuickInterface.useEmbeddedGimbal && camControlLoader.item.joystickPitchActive) {
+                            pitch_stick = camControlLoader.item.joystickPitchNormalized * gimbalControl._cameraPitchControlAngleRange;
+                            gimbalRateMode = false;
+                            updateSetpoint = true;
                         }
-                        if(gimbalControl._doJoystickYawStep) {
-                            gimbalControl._joystickYaw = 0;
-                            gimbalControl._doJoystickYawStep = false;
+                        // Gimbal virtual joystick control: if virtual joystick is not centered
+                        if(gimbalControl.visible && gimbalControl._doVirtualJoystickControl) {
+                            pitch_stick = (stick.yAxis * 2.0 - 1.0);
+                            yaw_stick = stick.xAxis;
+                            gimbalRateMode = true;
+                            updateSetpoint = true;
                         }
-                        gimbalRateMode = true;
-                        updateSetpoint = true;
-                    }
-                    // Center gimbal from physical joystick: reset setpoint
-                    if(gimbalControl._centerGimbal) {
-                        yaw_stick = 0
-                        pitch_stick = 0
-                        gimbalControl._centerGimbal = false
-                        gimbalRateMode = false;
-                        updateSetpoint = true;
-                    }
-
-                    // Send mavlink gimbal setpoint only if a variation is detected
-                    if(updateSetpoint) {
-                        var yaw_setpoint = CustomQuickInterface.gimbalYawInverted ? gimbalControl._mountYaw - yaw_stick : gimbalControl._mountYaw + yaw_stick
-                        if(CustomQuickInterface.gimbalYawPidEnabled){
-                            var yaw_inc = _pid(yaw_setpoint, gimbalControl._mountYaw, false)
-                        } else {
-                            var yaw_inc = CustomQuickInterface.gimbalYawInverted ? -yaw_stick : yaw_stick
+                        // Gimbal physical joystick control: if either continuous or step pitch/yaw is triggered via joystick button
+                        if(gimbalControl._haveJoystick && (gimbalControl._doJoystickPitchContinuous || gimbalControl._doJoystickPitchStep || gimbalControl._doJoystickYawStep)) {
+                            pitch_stick = gimbalControl._joystickPitch;
+                            yaw_stick = gimbalControl._joystickYaw;
+                            if(gimbalControl._doJoystickPitchStep) {
+                                gimbalControl._joystickPitch = 0;
+                                gimbalControl._doJoystickPitchStep = false;
+                            }
+                            if(gimbalControl._doJoystickYawStep) {
+                                gimbalControl._joystickYaw = 0;
+                                gimbalControl._doJoystickYawStep = false;
+                            }
+                            gimbalRateMode = true;
+                            updateSetpoint = true;
                         }
-                        yaw = gimbalControl._mountYaw + yaw_inc
-
-                        var pitch_setpoint = CustomQuickInterface.gimbalPitchInverted ? gimbalControl._mountPitch - pitch_stick : gimbalControl._mountPitch + pitch_stick
-                        if(CustomQuickInterface.gimbalPitchPidEnabled){
-                            var pitch_inc = _pid(pitch_setpoint, gimbalControl._mountPitch, true)
-                        } else {
-                            var pitch_inc = CustomQuickInterface.gimbalPitchInverted ? -pitch_stick : pitch_stick
+                        // Center gimbal from physical joystick: reset setpoint
+                        if(gimbalControl._centerGimbal) {
+                            updateSetpoint = true;
                         }
-                        pitch = gimbalControl._mountPitch + pitch_inc
 
-                        // Clamp setpoints to gimbal angle ranges
+                        // Send mavlink gimbal setpoint only if a variation is detected
+                        if(updateSetpoint) {
+                            // Center gimbal from physical joystick: reset setpoint
+                            if(gimbalControl._centerGimbal) {
+                                gimbalControl._centerGimbal = false
+                                gimbalRateMode = false;
+                                pitch = 0.0
+                                yaw = 0.0
+                            } else {
+                                if(CustomQuickInterface.gimbalYawPidEnabled){
+                                    var yaw_setpoint = CustomQuickInterface.gimbalYawInverted ? gimbalControl._mountYaw - yaw_stick : gimbalControl._mountYaw + yaw_stick
+                                    var yaw_inc = _pid(yaw_setpoint, gimbalControl._mountYaw, false)
+                                } else {
+                                    var yaw_inc = yaw_stick * (gimbalRateMode ? gimbalControl.gimbalSpeedFactor : 1.0) * (CustomQuickInterface.gimbalYawInverted ? -1.0 : 1.0)
+                                }
+                                yaw = gimbalControl._mountYaw + yaw_inc
+
+                                if(CustomQuickInterface.gimbalPitchPidEnabled){
+                                    var pitch_setpoint = CustomQuickInterface.gimbalPitchInverted ? gimbalControl._mountPitch - pitch_stick : gimbalControl._mountPitch + pitch_stick
+                                    var pitch_inc = _pid(pitch_setpoint, gimbalControl._mountPitch, true)
+                                } else {
+                                    var pitch_inc = pitch_stick * (gimbalRateMode ? gimbalControl.gimbalSpeedFactor : 1.0) * (CustomQuickInterface.gimbalPitchInverted ? -1.0 : 1.0)
+                                }
+                                pitch = gimbalControl._mountPitch + pitch_inc
+                            }
+
+                            // Clamp setpoints to gimbal angle ranges
+                            yaw = clamp(yaw, -180, 180)
+                            pitch = clamp(pitch, -90, 90)
+                            activeVehicle.gimbalControlValue(pitch, yaw)
+                        }
+                    // Old gimbal controls with no feedback from gimbal and only open loop angle control
+                    } else {
+                        if(gimbalControl._centerGimbal) {
+                            gimbalControl._currentYaw = 0
+                            gimbalControl._currentPitch = 0
+                            gimbalControl._centerGimbal = false
+                        }
+
+                        var yaw = gimbalControl._currentYaw
+                        var pitch = gimbalControl._currentPitch
+
+                        var pitch_stick = 0
+                        var yaw_stick = 0
+                        if(gimbalControl.visible) {
+                            pitch_stick = (stick.yAxis * 2.0 - 1.0);
+                            yaw_stick = stick.xAxis;
+                        }
+                        else if(CustomQuickInterface.useEmbeddedGimbal && camControlLoader.status === Loader.Ready) {
+                            pitch_stick = camControlLoader.item.joystickPitchNormalized * gimbalControl._cameraPitchControlAngleRange;
+                            yaw_stick = stick.xAxis;
+                            gimbalRateMode = false;
+                        }
+                        else if(gimbalControl._haveJoystick) {
+                            pitch_stick = gimbalControl._joystickPitch;
+                            yaw_stick = gimbalControl._joystickYaw;
+                            if(gimbalControl._doJoystickPitchStep) {
+                                gimbalControl._joystickPitch = 0;
+                                gimbalControl._doJoystickPitchStep = false;
+                            }
+                            if(gimbalControl._doJoystickYawStep) {
+                                gimbalControl._joystickYaw = 0;
+                                gimbalControl._doJoystickYawStep = false;
+                            }
+                        }
+
+                        yaw += yaw_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
+                        pitch += pitch_stick * (gimbalRateMode ? gimbalControl.speedMultiplier : 1)
                         yaw = clamp(yaw, -180, 180)
                         pitch = clamp(pitch, -90, 90)
-
-                        activeVehicle.gimbalControlValue(pitch, yaw)
+                        if(Math.abs(yaw - gimbalControl._lastYaw) > 0.001 || Math.abs(pitch - gimbalControl._lastPitch) > 0.001) {
+                            activeVehicle.gimbalControlValue(pitch, yaw)
+                            // Break the initial bindings
+                            gimbalControl._lastPitch = pitch;
+                            gimbalControl._lastYaw = yaw;
+                            if(gimbalRateMode) {
+                                gimbalControl._currentPitch = pitch
+                                gimbalControl._currentYaw = yaw
+                            }
+                        }
                     }
                 }
             }
@@ -872,6 +928,22 @@ Item {
             }
             onCenterGimbal: gimbalControl._centerGimbal = true;
         }
+
+        Connections {
+            enabled: camControlLoader.status === Loader.Ready && _hasGimbal && !CustomQuickInterface.enableNewGimbalControls
+            target: camControlLoader.item
+            onJoystickPitchActiveChanged: {
+                if(camControlLoader.item.joystickPitchActive) {
+                    gimbalControl._currentPitch = activeVehicle.gimbalPitch
+                    gimbalControl._currentYaw = activeVehicle.gimbalYaw
+                }
+                else {
+                    gimbalControl._currentPitch = gimbalControl._lastPitch
+                    gimbalControl._currentYaw = gimbalControl._lastYaw
+                }
+            }
+        }
+
     }
     //-------------------------------------------------------------------------
     //-- Object Avoidance

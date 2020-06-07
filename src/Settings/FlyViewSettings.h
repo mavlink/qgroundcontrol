@@ -29,7 +29,7 @@ public:
     DEFINE_SETTINGFACT(gimbalMaxRate)
     DEFINE_SETTINGFACT(gimbalExpFactor)
     DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
-    DEFINE_SETTINGFACT(gimbalKPFactor)
+    DEFINE_SETTINGFACT(gimbalSpeedFactor)
     DEFINE_SETTINGFACT(gimbalPitchKPFactor)
     DEFINE_SETTINGFACT(gimbalPitchKIFactor)
     DEFINE_SETTINGFACT(gimbalPitchKDFactor)
