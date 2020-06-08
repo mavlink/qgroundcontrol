@@ -630,9 +630,12 @@ void QGCMapPolygon::setShowAltColor(bool showAltColor){
 
 void QGCMapPolygon::selectVertex(int index)
 {
-    if(0 <= index && index < count() && index != _selectedVertexIndex) {
+    if(index == _selectedVertexIndex) return;   // do nothing
+
+    if((0 <= index && index < count()) || index == -1) {
         _selectedVertexIndex = index;
     } else {
+        qWarning() << "QGCMapPolygon: Selected vertex index is out of bounds!";
         _selectedVertexIndex = -1;   // deselect vertex
     }
 

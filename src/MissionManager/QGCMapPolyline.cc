@@ -243,6 +243,11 @@ void QGCMapPolyline::removeVertex(int vertexIndex)
 
     QObject* coordObj = _polylineModel.removeAt(vertexIndex);
     coordObj->deleteLater();
+    if(vertexIndex == _selectedVertexIndex) {
+        selectVertex(-1);
+    } else if (vertexIndex < _selectedVertexIndex) {
+        selectVertex(_selectedVertexIndex - 1);
+    } // else do nothing - keep current selected vertex
 
     _polylinePath.removeAt(vertexIndex);
     emit pathChanged();
@@ -438,4 +443,18 @@ void QGCMapPolyline::setTraceMode(bool traceMode)
         _traceMode = traceMode;
         emit traceModeChanged(traceMode);
     }
+}
+
+void QGCMapPolyline::selectVertex(int index)
+{
+    if(index == _selectedVertexIndex) return;   // do nothing
+
+    if((0 <= index && index < count()) || index == -1) {
+        _selectedVertexIndex = index;
+    } else {
+        qWarning() << "QGCMapPolyline: Selected vertex index is out of bounds!";
+        _selectedVertexIndex = -1;   // deselect vertex
+    }
+
+    emit selectedVertexChanged(_selectedVertexIndex);
 }
