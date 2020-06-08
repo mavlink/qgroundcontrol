@@ -311,7 +311,11 @@ void QGCMapPolygon::removeVertex(int vertexIndex)
 
     QObject* coordObj = _polygonModel.removeAt(vertexIndex);
     coordObj->deleteLater();
-    selectVertex(-1);
+    if(vertexIndex == _selectedVertexIndex) {
+        selectVertex(-1);
+    } else if (vertexIndex < _selectedVertexIndex) {
+        selectVertex(_selectedVertexIndex - 1);
+    } // else do nothing - keep current selected vertex
 
     _polygonPath.removeAt(vertexIndex);
     emit pathChanged();
