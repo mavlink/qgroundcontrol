@@ -42,6 +42,7 @@ public:
     Q_PROPERTY(bool                 empty           READ empty                                  NOTIFY isEmptyChanged)
     Q_PROPERTY(bool                 traceMode       READ traceMode      WRITE setTraceMode      NOTIFY traceModeChanged)
     Q_PROPERTY(bool                 showAltColor    READ showAltColor   WRITE setShowAltColor   NOTIFY showAltColorChanged)
+    Q_PROPERTY(int                  selectedVertex  READ selectedVertex WRITE selectVertex      NOTIFY selectedVertexChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -111,6 +112,7 @@ public:
     bool            empty       (void) const { return _polygonModel.count() == 0; }
     bool            traceMode   (void) const { return _traceMode; }
     bool            showAltColor(void) const { return _showAltColor; }
+    int             selectedVertex()   const { return _selectedVertexIndex; }
 
     QVariantList        path        (void) const { return _polygonPath; }
     QmlObjectListModel* qmlPathModel(void) { return &_polygonModel; }
@@ -123,6 +125,7 @@ public:
     void setInteractive (bool interactive);
     void setTraceMode   (bool traceMode);
     void setShowAltColor(bool showAltColor);
+    void selectVertex   (int index);
 
     static const char* jsonPolygonKey;
 
@@ -138,6 +141,7 @@ signals:
     bool isEmptyChanged     (void);
     void traceModeChanged   (bool traceMode);
     void showAltColorChanged(bool showAltColor);
+    void selectedVertexChanged(int index);
 
 private slots:
     void _polygonModelCountChanged(int count);
@@ -162,6 +166,7 @@ private:
     bool                _resetActive =          false;
     bool                _traceMode =            false;
     bool                _showAltColor =         false;
+    int                 _selectedVertexIndex =  -1;
 };
 
 #endif

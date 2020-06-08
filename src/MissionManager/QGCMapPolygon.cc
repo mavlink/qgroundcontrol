@@ -311,6 +311,7 @@ void QGCMapPolygon::removeVertex(int vertexIndex)
 
     QObject* coordObj = _polygonModel.removeAt(vertexIndex);
     coordObj->deleteLater();
+    selectVertex(-1);
 
     _polygonPath.removeAt(vertexIndex);
     emit pathChanged();
@@ -621,4 +622,15 @@ void QGCMapPolygon::setShowAltColor(bool showAltColor){
         _showAltColor = showAltColor;
         emit showAltColorChanged(showAltColor);
     }
+}
+
+void QGCMapPolygon::selectVertex(int index)
+{
+    if(0 <= index && index < count() && index != _selectedVertexIndex) {
+        _selectedVertexIndex = index;
+    } else {
+        _selectedVertexIndex = -1;   // deselect vertex
+    }
+
+    emit selectedVertexChanged(_selectedVertexIndex);
 }
