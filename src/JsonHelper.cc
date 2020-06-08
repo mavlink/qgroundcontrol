@@ -325,7 +325,7 @@ QJsonObject JsonHelper::_translateObject(QJsonObject& jsonObject, const QString&
                     }
                 }
 
-                QString xlatString = qgcApp()->qgcTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
+                QString xlatString = qgcApp()->qgcJSONTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
                 if (!xlatString.isNull()) {
                     jsonObject[key] = xlatString;
                 }
