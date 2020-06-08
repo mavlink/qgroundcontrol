@@ -291,21 +291,16 @@ bool UDPLink::_hardwareConnect()
     if (_connectState) {
         _socket->joinMulticastGroup(QHostAddress("224.0.0.1"));
         //-- Make sure we have a large enough IO buffers
+
 #ifdef __mobile__
-        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
-        if (_udpConfig->isTransmitOnly()) {
-            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 0);
-        } else {
-            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
-        }
+        int bufferSizeMultiplier = 1;
 #else
-        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
-        if (_udpConfig->isTransmitOnly()) {
-            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 0);;
-        } else {
-            _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);;
-        }
+        int bufferSizeMultiplier = 4;
 #endif
+        int receiveBufferSize = _udpConfig->isTransmitOnly() ? 0 : 512 * 1024;
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     bufferSizeMultiplier * 64 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, bufferSizeMultiplier * receiveBufferSize);
+
         _registerZeroconf(_udpConfig->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
