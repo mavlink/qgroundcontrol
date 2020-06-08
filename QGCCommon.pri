@@ -84,6 +84,7 @@ linux {
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+        DEFINES += _CRT_NO_SECURE_WARNINGS
         QMAKE_CFLAGS -= -Zc:strictStrings
         QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
@@ -91,11 +92,19 @@ linux {
         QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
         QMAKE_CXXFLAGS += /std:c++17
-        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
-            /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
+        QMAKE_CXXFLAGS_WARN_ON -= -w34100 # Qt insanity which prevents /wd on 4100 error from working correctly
+        QMAKE_CXXFLAGS += /W3 \
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
             /wd4100     # unreferenced formal parameter - gst-plugins-good
+        QMAKE_CFLAGS += /W3 \
+            /wd4005 \   # shape file code
+            /wd4267 \   # shape file code
+            /wd4996     # shape file code
+        !WarningsAsErrorsOff {
+            QMAKE_CXXFLAGS += /WX
+            QMAKE_CFLAGS += /WX
+         }
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
