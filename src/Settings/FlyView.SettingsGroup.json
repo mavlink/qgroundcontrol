@@ -73,10 +73,20 @@
 },
 {
     "name":             "gimbalSpeedFactor",
-    "shortDescription": "Gimbal Speed factor",
-    "longDescription":  "Gimbal Speed factor",
+    "shortDescription": "Gimbal Joystick Speed factor",
+    "longDescription":  "Gimbal Joystick Speed factor",
     "type":             "double",
     "defaultValue":     2.5,
+    "min":              0.01,
+    "max":              100.00,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalSliderSpeedFactor",
+    "shortDescription": "Gimbal Slider Speed factor",
+    "longDescription":  "Gimbal Slider Speed factor",
+    "type":             "double",
+    "defaultValue":     0.1,
     "min":              0.01,
     "max":              100.00,
     "decimalPlaces":    2

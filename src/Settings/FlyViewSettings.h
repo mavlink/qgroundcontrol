@@ -30,6 +30,7 @@ public:
     DEFINE_SETTINGFACT(gimbalExpFactor)
     DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
     DEFINE_SETTINGFACT(gimbalSpeedFactor)
+    DEFINE_SETTINGFACT(gimbalSliderSpeedFactor)
     DEFINE_SETTINGFACT(gimbalPitchKPFactor)
     DEFINE_SETTINGFACT(gimbalPitchKIFactor)
     DEFINE_SETTINGFACT(gimbalPitchKDFactor)

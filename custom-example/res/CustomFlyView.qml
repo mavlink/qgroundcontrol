@@ -703,6 +703,7 @@ Item {
 
         property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
         property real gimbalSpeedFactor: _flyViewSettings ? _flyViewSettings.gimbalSpeedFactor.rawValue : 2.5
+        property real gimbalSliderSpeedFactor: _flyViewSettings ? _flyViewSettings.gimbalSliderSpeedFactor.rawValue : 0.1
 
         // PID global variables
         property real _KpPitch: _flyViewSettings ? _flyViewSettings.gimbalPitchKPFactor.rawValue : 1.0
@@ -828,7 +829,7 @@ Item {
                                     var pitch_setpoint = CustomQuickInterface.gimbalPitchInverted ? gimbalControl._mountPitch - pitch_stick : gimbalControl._mountPitch + pitch_stick
                                     var pitch_inc = _pid(pitch_setpoint, gimbalControl._mountPitch, true)
                                 } else {
-                                    var pitch_inc = pitch_stick * (gimbalRateMode ? gimbalControl.gimbalSpeedFactor : 1.0) * (CustomQuickInterface.gimbalPitchInverted ? -1.0 : 1.0)
+                                    var pitch_inc = pitch_stick * (gimbalRateMode ? gimbalControl.gimbalSpeedFactor : gimbalControl.gimbalSliderSpeedFactor) * (CustomQuickInterface.gimbalPitchInverted ? -1.0 : 1.0)
                                 }
                                 pitch = gimbalControl._mountPitch + pitch_inc
                             }

@@ -603,6 +603,15 @@ Rectangle {
                                     fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSpeedFactor
                                 }
                                 QGCLabel {
+                                    visible: CustomQuickInterface.enableNewGimbalControls
+                                    text: QGroundControl.settingsManager.flyViewSettings.gimbalSliderSpeedFactor.shortDescription
+                                }
+                                FactTextField {
+                                    visible: CustomQuickInterface.enableNewGimbalControls
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.gimbalSliderSpeedFactor
+                                }
+                                QGCLabel {
                                     visible:    CustomQuickInterface.enableNewGimbalControls
                                     text: qsTr("Gimbal pitch inverted")
                                 }
