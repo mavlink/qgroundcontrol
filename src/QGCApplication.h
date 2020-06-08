@@ -225,7 +225,7 @@ private:
         /*! Returns a signal index that is can be compared to QMetaCallEvent.signalId. */
         static int signalIndex(const QMetaMethod & method) {
             Q_ASSERT(method.methodType() == QMetaMethod::Signal);
-    #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+
             int index = -1;
             const QMetaObject * mobj = method.enclosingMetaObject();
             for (int i = 0; i <= method.methodIndex(); ++i) {
@@ -233,9 +233,6 @@ private:
                 ++ index;
             }
             return index;
-    #else
-            return method.methodIndex();
-    #endif
         }
     public:
         SignalList() {}
