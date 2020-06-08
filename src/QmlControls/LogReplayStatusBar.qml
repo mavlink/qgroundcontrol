@@ -28,13 +28,16 @@ Rectangle {
     QGCFileDialog {
         id:                 filePicker
         title:              qsTr("Select Telemetery Log")
-        nameFilters:        [qsTr("Telemetry Logs (*.%1)").arg(QGroundControl.settingsManager.appSettings.telemetryFileExtension), qsTr("All Files (*)")]
+        nameFilters:        [qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)")]
+        fileExtension:      _logFileExtension
         selectExisting:     true
         folder:             QGroundControl.settingsManager.appSettings.telemetrySavePath
         onAcceptedForLoad: {
             controller.link = QGroundControl.linkManager.startLogReplay(file)
             close()
         }
+
+        property string _logFileExtension: QGroundControl.settingsManager.appSettings.telemetryFileExtension
     }
 
     LogReplayLinkController {
