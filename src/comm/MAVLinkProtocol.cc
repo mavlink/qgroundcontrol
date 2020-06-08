@@ -269,6 +269,19 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             //qDebug() << foo << _message.seq << expectedSeq << lastSeq << totalLossCounter[mavlinkChannel] << totalReceiveCounter[mavlinkChannel] << totalSentCounter[mavlinkChannel] << "(" << _message.sysid << _message.compid << ")";
 
             //-----------------------------------------------------------------
+            // MAVLink forwarding
+            bool forwardingEnabled = _app->toolbox()->settingsManager()->appSettings()->forwardMavlink()->rawValue().toBool();
+            if (forwardingEnabled) {
+                SharedLinkInterfacePointer forwardingLink = _linkMgr->mavlinkForwardingLink();
+
+                if (forwardingLink) {
+                    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                    int len = mavlink_msg_to_send_buffer(buf, &_message);
+                    forwardingLink->writeBytesSafe((const char*)buf, len);
+                }
+            }
+
+            //-----------------------------------------------------------------
             // Log data
             if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
                 uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
