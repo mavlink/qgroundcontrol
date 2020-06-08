@@ -238,19 +238,19 @@
       <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Mission Item Index</source>
-      <translation type="unfinished">Mission Item Index</translation>
+      <translation>任务项目索引</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Alt (Rel)</source>
-      <translation type="unfinished">Alt (Rel)</translation>
+      <translation>高度(相对)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePct].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Throttle %</source>
-      <translation type="unfinished">Throttle %</translation>
+      <translation>油门 %</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDescription, </extracomment>
