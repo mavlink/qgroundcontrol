@@ -487,6 +487,10 @@ public:
             FirmwarePluginManager*  firmwarePluginManager,
             JoystickManager*        joystickManager);
 
+    // Pass these into the offline constructor to create an offline vehicle which tracks the offline vehicle settings
+    static const MAV_AUTOPILOT    MAV_AUTOPILOT_TRACK = static_cast<MAV_AUTOPILOT>(-1);
+    static const MAV_TYPE         MAV_TYPE_TRACK = static_cast<MAV_TYPE>(-1);
+
     // The following is used to create a disconnected Vehicle for use while offline editing.
     Vehicle(MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
@@ -907,6 +911,10 @@ public:
     ///     @param sendMultiple Send multiple time to guarantee Vehicle reception
     void requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool sendMultiple = true);
 
+    // The follow method are used to turn on/off the tracking of settings updates for firmware/vehicle type on offline vehicles.
+    void trackFirmwareVehicleTypeChanges(void);
+    void stopTrackingFirmwareVehicleTypeChanges(void);
+
     typedef enum {
         MessageNone,
         MessageNormal,
@@ -1130,7 +1138,9 @@ public:
     void        setCheckListState       (CheckList cl)  { _checkListState = cl; emit checkListStateChanged(); }
 
 public slots:
-    void setVtolInFwdFlight             (bool vtolInFwdFlight);
+    void setVtolInFwdFlight                 (bool vtolInFwdFlight);
+    void _offlineFirmwareTypeSettingChanged (QVariant value);       // Should only be used by MissionControler to set firmware from Plan file
+    void _offlineVehicleTypeSettingChanged  (QVariant value);       // Should only be used by MissionController to set vehicle type from Plan file
 
 signals:
     void allLinksInactive               (Vehicle* vehicle);
@@ -1254,8 +1264,6 @@ private slots:
     void _remoteControlRSSIChanged      (uint8_t rssi);
     void _handleFlightModeChanged       (const QString& flightMode);
     void _announceArmedChanged          (bool armed);
-    void _offlineFirmwareTypeSettingChanged(QVariant value);
-    void _offlineVehicleTypeSettingChanged(QVariant value);
     void _offlineCruiseSpeedSettingChanged(QVariant value);
     void _offlineHoverSpeedSettingChanged(QVariant value);
     void _updateHighLatencyLink         (bool sendCommand = true);

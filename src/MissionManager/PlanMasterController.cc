@@ -39,11 +39,7 @@ const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)
     , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
-    , _controllerVehicle    (new Vehicle(
-                                 static_cast<MAV_AUTOPILOT>(qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
-                                 static_cast<MAV_TYPE>(qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
-                                 qgcApp()->toolbox()->firmwarePluginManager(),
-                                 this))
+    , _controllerVehicle    (new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, qgcApp()->toolbox()->firmwarePluginManager(), this))
     , _managerVehicle       (_controllerVehicle)
     , _missionController    (this)
     , _geoFenceController   (this)
@@ -94,12 +90,11 @@ PlanMasterController::~PlanMasterController()
 
 }
 
-void PlanMasterController::start(bool flyView)
+void PlanMasterController::start(void)
 {
-    _flyView = flyView;
-    _missionController.start(_flyView);
-    _geoFenceController.start(_flyView);
-    _rallyPointController.start(_flyView);
+    _missionController.start    (_flyView);
+    _geoFenceController.start   (_flyView);
+    _rallyPointController.start (_flyView);
 
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);

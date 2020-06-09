@@ -64,11 +64,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 
-    SettingsManager* settingsManager = toolbox->settingsManager();
-    _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
-                                         static_cast<MAV_TYPE>(settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
-                                         _firmwarePluginManager,
-                                         this);
+    _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, _firmwarePluginManager, this);
 }
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
