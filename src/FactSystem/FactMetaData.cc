@@ -1198,6 +1198,15 @@ QVariant FactMetaData::appSettingsWeightUnitsToGrams(const QVariant& weight) {
     }
 }
 
+QString FactMetaData::appSettingsSpeedUnitsString()
+{
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m/s");
+    if (pAppSettingsTranslation) {
+        return pAppSettingsTranslation->cookedUnits;
+    } else {
+        return QStringLiteral("m/s");
+    }
+}
 
 double FactMetaData::cookedIncrement(void) const
 {
