@@ -532,14 +532,6 @@ ApplicationWindow {
         }
     }
 
-    function showMissingParameterOverlay(missingParamName) {
-        showError(qsTr("Parameters missing: %1").arg(missingParamName))
-    }
-
-    function showFactError(errorMsg) {
-        showError(qsTr("Fact error: %1").arg(errorMsg))
-    }
-
     Popup {
         id:                 systemMessageArea
         y:                  ScreenTools.defaultFontPixelHeight
