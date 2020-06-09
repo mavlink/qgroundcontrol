@@ -345,6 +345,8 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
         setCurrentPlanViewSeqNum(newItem->sequenceNumber(), true);
     }
 
+    _firstItemAdded();
+
     return newItem;
 }
 
@@ -382,6 +384,8 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
     if (makeCurrentItem) {
         setCurrentPlanViewSeqNum(newItem->sequenceNumber(), true);
     }
+
+    _firstItemAdded();
 
     return newItem;
 }
@@ -520,6 +524,7 @@ void MissionController::_insertComplexMissionItemWorker(const QGeoCoordinate& ma
     if (makeCurrentItem) {
         setCurrentPlanViewSeqNum(complexItem->sequenceNumber(), true);
     }
+    _firstItemAdded();
 }
 
 void MissionController::removeVisualItem(int viIndex)
@@ -574,6 +579,10 @@ void MissionController::removeVisualItem(int viIndex)
     setCurrentPlanViewSeqNum(_visualItems->value<VisualMissionItem*>(newVIIndex)->sequenceNumber(), true);
 
     setDirty(true);
+
+    if (_visualItems->count() == 1) {
+        _allItemsRemoved();
+    }
 }
 
 void MissionController::removeAll(void)
@@ -588,6 +597,7 @@ void MissionController::removeAll(void)
         _initAllVisualItems();
         setDirty(true);
         _resetMissionFlightStatus();
+        _allItemsRemoved();
     }
 }
 
@@ -708,16 +718,28 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
     qCDebug(MissionControllerLog) << "MissionController::_loadJsonMissionFileV2 itemCount:" << json[_jsonItemsKey].toArray().count();
 
-    // Mission Settings
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
 
+    // Get the firmware/vehicle type from the plan file
+    MAV_AUTOPILOT   planFileFirmwareType =  static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt());
+    MAV_TYPE        planFileVehicleType =   static_cast<MAV_TYPE>       (appSettings->offlineEditingVehicleType()->rawValue().toInt());
+    if (json.contains(_jsonVehicleTypeKey)) {
+        planFileVehicleType = static_cast<MAV_TYPE>(json[_jsonVehicleTypeKey].toInt());
+    }
+
+    // Update firmware/vehicle offline settings if we aren't connect to a vehicle
     if (_masterController->offline()) {
-        // We only update if offline since if we are online we use the online vehicle settings
         appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType(static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt())));
         if (json.contains(_jsonVehicleTypeKey)) {
             appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(static_cast<MAV_TYPE>(json[_jsonVehicleTypeKey].toInt())));
         }
     }
+
+    // The controller vehicle always tracks the Plan file firmware/vehicle types so update it
+    _controllerVehicle->stopTrackingFirmwareVehicleTypeChanges();
+    _controllerVehicle->_offlineFirmwareTypeSettingChanged(planFileFirmwareType);
+    _controllerVehicle->_offlineVehicleTypeSettingChanged(planFileVehicleType);
+
     if (json.contains(_jsonCruiseSpeedKey)) {
         appSettings->offlineEditingCruiseSpeed()->setRawValue(json[_jsonCruiseSpeedKey].toDouble());
     }
@@ -968,6 +990,12 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
     MissionController::_scanForAdditionalSettings(_visualItems, _masterController);
 
     _initAllVisualItems();
+
+    if (_visualItems->count() > 1) {
+        _firstItemAdded();
+    } else {
+        _allItemsRemoved();
+    }
 }
 
 bool MissionController::load(const QJsonObject& json, QString& errorString)
@@ -2531,4 +2559,32 @@ QString MissionController::corridorScanComplexItemName(void) const
 QString MissionController::structureScanComplexItemName(void) const
 {
     return StructureScanComplexItem::name;
+}
+
+void MissionController::_allItemsRemoved(void)
+{
+    // When there are no mission items we track changes to firmware/vehicle type. This allows a vehicle connection
+    // to adjust these items.
+    _controllerVehicle->trackFirmwareVehicleTypeChanges();
+}
+
+void MissionController::_firstItemAdded(void)
+{
+    // As soon as the first item is added we lock the firmware/vehicle type to current values. So if you then connect a vehicle
+    // it will not affect these values.
+    _controllerVehicle->stopTrackingFirmwareVehicleTypeChanges();
+}
+
+MissionController::SendToVehiclePreCheckState MissionController::sendToVehiclePreCheck(void)
+{
+    if (_managerVehicle->isOfflineEditingVehicle()) {
+        return SendToVehiclePreCheckStateNoActiveVehicle;
+    }
+    if (_managerVehicle->armed() && _managerVehicle->flightMode() == _managerVehicle->missionFlightMode()) {
+        return SendToVehiclePreCheckStateActiveMission;
+    }
+    if (_controllerVehicle->firmwareType() != _managerVehicle->firmwareType() || _controllerVehicle->vehicleType() != _managerVehicle->vehicleType()) {
+        return SendToVehiclePreCheckStateFirwmareVehicleMismatch;
+    }
+    return SendToVehiclePreCheckStateOk;
 }
