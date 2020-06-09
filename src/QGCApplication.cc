@@ -459,7 +459,6 @@ void QGCApplication::setLanguage()
         }
     }
     qCDebug(LocalizationLog) << "Loading localizations for" << _locale.name();
-    QLocale::setDefault(_locale);
     _app->removeTranslator(&_qgcTranslatorJSON);
     _app->removeTranslator(&_qgcTranslatorSourceCode);
     _app->removeTranslator(&_qgcTranslatorQtLibs);
@@ -469,6 +468,7 @@ void QGCApplication::setLanguage()
         qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
     }
     if (_locale.name() != "en_US") {
+        QLocale::setDefault(_locale);
         if(_qgcTranslatorSourceCode.load(_locale, QLatin1String("qgc_source_"), "", ":/i18n")) {
             _app->installTranslator(&_qgcTranslatorSourceCode);
         } else {
