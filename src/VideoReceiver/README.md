@@ -57,6 +57,7 @@ sudo apt-get install $list
 ```
 ```
 sudo apt-get install libgstreamer-plugins-base1.0-dev
+sudo apt-get install libgstreamer-plugins-bad1.0-dev 
 ```
 
 The build system is setup to use pkgconfig and it will find the necessary headers and libraries automatically.
