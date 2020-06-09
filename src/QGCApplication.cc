@@ -462,13 +462,13 @@ void QGCApplication::setLanguage()
     _app->removeTranslator(&_qgcTranslatorJSON);
     _app->removeTranslator(&_qgcTranslatorSourceCode);
     _app->removeTranslator(&_qgcTranslatorQtLibs);
-    if(_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
-        _app->installTranslator(&_qgcTranslatorQtLibs);
-    } else {
-        qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
-    }
     if (_locale.name() != "en_US") {
         QLocale::setDefault(_locale);
+        if(_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+            _app->installTranslator(&_qgcTranslatorQtLibs);
+        } else {
+            qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
+        }
         if(_qgcTranslatorSourceCode.load(_locale, QLatin1String("qgc_source_"), "", ":/i18n")) {
             _app->installTranslator(&_qgcTranslatorSourceCode);
         } else {
