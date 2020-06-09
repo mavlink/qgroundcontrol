@@ -137,6 +137,9 @@ public:
     bool connect(void);
     bool disconnect(void);
 
+    // Reset timers to temporarily suppress loss of communication timeout
+    void resetMavlinkMessagesTimers();
+
 public slots:
 
     /**
