@@ -13,6 +13,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
+#include "QGCLoggingCategory.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -635,7 +636,11 @@ void QGCMapPolygon::selectVertex(int index)
     if(-1 <= index && index < count()) {
         _selectedVertexIndex = index;
     } else {
-        qWarning() << "QGCMapPolygon: Selected vertex index is out of bounds!";
+        if (!qgcApp()->runningUnitTests()) {
+            qCWarning(ParameterManagerLog)
+                    << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
+                               "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+        }
         _selectedVertexIndex = -1;   // deselect vertex
     }
 
