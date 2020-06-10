@@ -267,3 +267,11 @@ void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
         firstRunPromptIdsShown()->setRawValue(firstRunPromptsIdsListToVariant(rgIds));
     }
 }
+
+int AppSettings::_languageID(void)
+{
+    // Hack to provide language settings as early in the boot process as possible. Must be know
+    // prior to loading any json files.
+    QSettings settings;
+    return settings.value("language", 0).toInt();
+}

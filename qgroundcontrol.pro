@@ -1381,7 +1381,9 @@ AndroidBuild {
 # Localization
 #
 
-TRANSLATIONS += $$files($$PWD/localization/qgc_*.ts)
+TRANSLATIONS += \
+    $$files($$PWD/translations/qgc_source_*.ts) \
+    $$files($$PWD/translations/qgc_json_*.ts)
 CONFIG+=lrelease embed_translations
 
 #-------------------------------------------------------------------------------------

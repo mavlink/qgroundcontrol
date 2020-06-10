@@ -1,4 +1,4 @@
-/****************************************************************************
+/***************_qgcTranslatorSourceCode***********************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -118,6 +118,12 @@ public:
     static const char* videoDirectory;
     static const char* crashDirectory;
 
+    // Returns the current language setting bypassing the standard SettingsGroup path. This should only be used
+    // by QGCApplication::setLanguage to query the language setting as early in the boot process as possible.
+    // Specfically prior to any JSON files being loaded such that JSON file can be translated. Also since this
+    // is a one-off mechanism custom build overrides for language are not currently supported.
+    static int _languageID(void);
+
 signals:
     void savePathsChanged();
 
@@ -125,8 +131,4 @@ private slots:
     void _indoorPaletteChanged();
     void _checkSavePathDirectories();
     void _languageChanged();
-
-private:
-    QTranslator _QGCTranslator;
-
 };
