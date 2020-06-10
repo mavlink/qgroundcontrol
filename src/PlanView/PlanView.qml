@@ -576,6 +576,7 @@ Item {
             anchors.margins:    _toolsMargin
             anchors.left:       parent.left
             anchors.top:        parent.top
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 5.0
             z:                  QGroundControl.zOrderWidgets
             maxHeight:          parent.height - toolStrip.y
 
@@ -714,7 +715,7 @@ Item {
             opacity:            planExpanded.visible ? 0.2 : 0
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
-            anchors.rightMargin: _toolsMargin
+            anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 5.0
         }
         //-------------------------------------------------------
         // Right Panel Controls
