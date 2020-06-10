@@ -30,8 +30,7 @@ FactTextField {
     readonly property string _altModeAboveTerrainExtraUnits:    qsTr("(Abv Terr)")
     readonly property string _altModeTerrainFrameExtraUnits:    qsTr("(TerrF)")
 
-    property string _altitudeModeExtraUnits:    _altModeNoneExtraUnits
-    property Fact   _aboveTerrainWarning:       QGroundControl.settingsManager.planViewSettings.aboveTerrainWarning
+    property string _altitudeModeExtraUnits: _altModeNoneExtraUnits
 
     onAltitudeModeChanged: updateAltitudeModeExtraUnits()
 
@@ -45,36 +44,11 @@ FactTextField {
             _altitudeModeExtraUnits = _altModeAbsoluteExtraUnits
         } else if (altitudeMode === QGroundControl.AltitudeModeAboveTerrain) {
             _altitudeModeExtraUnits = _altModeAboveTerrainExtraUnits
-            if (!_aboveTerrainWarning.rawValue && showAboveTerrainWarning) {
-                mainWindow.showComponentDialog(aboveTerrainWarning, qsTr("Warning"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
-            }
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
             _altitudeModeExtraUnits = _altModeTerrainFrameExtraUnits
         } else {
             console.log("AltitudeFactTextField Internal error: Unknown altitudeMode", altitudeMode)
             _altitudeModeExtraUnits = ""
-        }
-    }
-
-    Component {
-        id: aboveTerrainWarning
-        QGCViewDialog {
-            ColumnLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        ScreenTools.defaultFontPixelHeight
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    wrapMode:           Text.WordWrap
-                    text:               qsTr("'Above Terrain' will set an absolute altitude for the item based on the terrain height at the location and the requested altitude above terrain. It does not send terrain heights to the vehicle.")
-                }
-
-                FactCheckBox {
-                    text: qsTr("Don't show again")
-                    fact: _aboveTerrainWarning
-                }
-            }
         }
     }
 }
