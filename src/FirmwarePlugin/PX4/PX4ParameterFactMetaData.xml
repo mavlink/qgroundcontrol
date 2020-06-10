@@ -8989,6 +8989,10 @@ How often the sensor is readout</short_desc>
         <value code="5">TREvo3m</value>
       </values>
     </parameter>
+    <parameter category="System" default="1" name="SENS_EXT_I2C_PRB" type="INT32">
+      <short_desc>External I2C probe</short_desc>
+      <long_desc>Probe for optional external I2C devices.</long_desc>
+    </parameter>
     <parameter default="6" name="SENS_FLOW_ROT" type="INT32">
       <short_desc>PX4Flow board rotation</short_desc>
       <long_desc>This parameter defines the yaw rotation of the PX4FLOW board relative to the vehicle body frame. Zero rotation is defined as X on flow board pointing towards front of vehicle. The recommneded installation default for the PX4FLOW board is with the Y axis forward (270 deg yaw).</long_desc>
