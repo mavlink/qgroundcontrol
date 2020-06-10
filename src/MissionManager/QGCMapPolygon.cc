@@ -13,6 +13,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
 #include "ShapeFileHelper.h"
+#include "QGCLoggingCategory.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -311,6 +312,11 @@ void QGCMapPolygon::removeVertex(int vertexIndex)
 
     QObject* coordObj = _polygonModel.removeAt(vertexIndex);
     coordObj->deleteLater();
+    if(vertexIndex == _selectedVertexIndex) {
+        selectVertex(-1);
+    } else if (vertexIndex < _selectedVertexIndex) {
+        selectVertex(_selectedVertexIndex - 1);
+    } // else do nothing - keep current selected vertex
 
     _polygonPath.removeAt(vertexIndex);
     emit pathChanged();
@@ -626,4 +632,22 @@ void QGCMapPolygon::setShowAltColor(bool showAltColor){
         _showAltColor = showAltColor;
         emit showAltColorChanged(showAltColor);
     }
+}
+
+void QGCMapPolygon::selectVertex(int index)
+{
+    if(index == _selectedVertexIndex) return;   // do nothing
+
+    if(-1 <= index && index < count()) {
+        _selectedVertexIndex = index;
+    } else {
+        if (!qgcApp()->runningUnitTests()) {
+            qCWarning(ParameterManagerLog)
+                    << QString("QGCMapPolygon: Selected vertex index (%1) is out of bounds! "
+                               "Polygon vertices indexes range is [%2..%3].").arg(index).arg(0).arg(count()-1);
+        }
+        _selectedVertexIndex = -1;   // deselect vertex
+    }
+
+    emit selectedVertexChanged(_selectedVertexIndex);
 }

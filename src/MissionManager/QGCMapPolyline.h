@@ -33,6 +33,7 @@ public:
     Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
     Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
     Q_PROPERTY(bool                 traceMode   READ traceMode      WRITE setTraceMode      NOTIFY traceModeChanged)
+    Q_PROPERTY(int              selectedVertex  READ selectedVertex WRITE selectVertex      NOTIFY selectedVertexChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -90,6 +91,7 @@ public:
     bool            isValid     (void) const { return _polylineModel.count() >= 2; }
     bool            empty       (void) const { return _polylineModel.count() == 0; }
     bool            traceMode   (void) const { return _traceMode; }
+    int             selectedVertex()   const { return _selectedVertexIndex; }
 
     QmlObjectListModel* qmlPathModel(void) { return &_polylineModel; }
     QmlObjectListModel& pathModel   (void) { return _polylineModel; }
@@ -98,6 +100,7 @@ public:
     void setPath        (const QVariantList& path);
     void setInteractive (bool interactive);
     void setTraceMode   (bool traceMode);
+    void selectVertex   (int index);
 
     static const char* jsonPolylineKey;
 
@@ -110,6 +113,7 @@ signals:
     void isValidChanged     (void);
     void isEmptyChanged     (void);
     void traceModeChanged   (bool traceMode);
+    void selectedVertexChanged(int index);
 
 private slots:
     void _polylineModelCountChanged(int count);
@@ -128,4 +132,5 @@ private:
     bool                _interactive;
     bool                _resetActive;
     bool                _traceMode = false;
+    int                 _selectedVertexIndex = -1;
 };
