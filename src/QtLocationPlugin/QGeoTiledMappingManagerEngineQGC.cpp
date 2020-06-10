@@ -50,28 +50,18 @@
 
 #include <QtLocation/private/qgeocameracapabilities_p.h>
 #include <QtLocation/private/qgeomaptype_p.h>
-#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-#include <QtLocation/private/qgeotiledmapdata_p.h>
-#else
 #include <QtLocation/private/qgeotiledmap_p.h>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
 #include <QtLocation/private/qgeofiletilecache_p.h>
-#else
-#include <QtLocation/private/qgeotilecache_p.h>
-#endif
-#endif
 
 #include <QDir>
 #include <QStandardPaths>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 //-----------------------------------------------------------------------------
 QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent)
     : QGeoTiledMap(engine, parent)
 {
 
 }
-#endif
 
 //-----------------------------------------------------------------------------
 QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString)
@@ -86,15 +76,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     setTileSize(QSize(256, 256));
 
-    // In Qt 5.10 QGeoMapType need QGeoCameraCapabilities as argument
-    // E.g: https://github.com/qt/qtlocation/blob/2b230b0a10d898979e9d5193f4da2e408b397fe3/src/plugins/geoservices/osm/qgeotiledmappingmanagerengineosm.cpp#L167
-    #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"), cameraCaps)
-    #elif QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
-    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f,QByteArray("QGroundControl"))
-    #else
-    #define QGCGEOMAPTYPE(a,b,c,d,e,f)  QGeoMapType(a,b,c,d,e,f)
-    #endif
 
     /*
      * Google and Bing don't seem kosher at all. This was based on original code from OpenPilot and heavily modified to be used in QGC.
@@ -117,9 +99,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         getQGCMapEngine()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     _setCache(parameters);
-#endif
 
     setTileFetcher(new QGeoTileFetcherQGC(this));
 
@@ -132,16 +112,6 @@ QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
 {
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-
-//-----------------------------------------------------------------------------
-QGeoMapData *QGeoTiledMappingManagerEngineQGC::createMapData()
-{
-    return new QGeoTiledMapData(this, 0);
-}
-
-#else
-
 //-----------------------------------------------------------------------------
 QGeoMap*
 QGeoTiledMappingManagerEngineQGC::createMap()
@@ -149,9 +119,6 @@ QGeoTiledMappingManagerEngineQGC::createMap()
     return new QGeoTiledMapQGC(this);
 }
 
-#endif
-
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 //-----------------------------------------------------------------------------
 void
 QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
@@ -194,12 +161,8 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if(memLimit > 1024 * 1024 * 1024)
         memLimit = 1024 * 1024 * 1024;
     //-- Disable Qt's disk cache (sort of)
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
     setTileCache(pTileCache);
-#else
-    QGeoTileCache* pTileCache = createTileCacheWithDir(cacheDir);
-#endif
     if(pTileCache)
     {
         //-- We're basically telling it to use 100k of disk for cache. It doesn't like
@@ -209,4 +172,3 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
         pTileCache->setMaxMemoryUsage(memLimit);
     }
 }
-#endif
