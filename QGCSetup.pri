@@ -42,8 +42,10 @@ WindowsBuild {
 
 MacBuild {
     # Update version info in bundle
-    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $${MAC_VERSION}\" $$DESTDIR/$${TARGET}.app/Contents/Info.plist
-    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $${MAC_BUILD}\" $$DESTDIR/$${TARGET}.app/Contents/Info.plist
+    PLIST_FILE = $$DESTDIR/$${TARGET}.app/Contents/Info.plist
+    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $${MAC_VERSION}\" $$PLIST_FILE
+    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $${MAC_BUILD}\" $$PLIST_FILE
+    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleExecutable 'MacOs/$${TARGET}'\" $$PLIST_FILE
 }
 
 MacBuild {
