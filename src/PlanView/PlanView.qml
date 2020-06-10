@@ -135,29 +135,16 @@ Item {
     }
 
     Component {
-        id: activeMissionUploadDialogComponent
-        QGCViewDialog {
-            Column {
-                anchors.fill:   parent
-                spacing:        ScreenTools.defaultFontPixelHeight
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       qsTr("Your vehicle is currently flying a mission. In order to upload a new or modified mission the current mission will be paused.")
-                }
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       qsTr("After the mission is uploaded you can adjust the current waypoint and start the mission.")
-                }
-                QGCButton {
-                    text:       qsTr("Pause and Upload")
-                    onClicked: {
-                        activeVehicle.flightMode = activeVehicle.pauseFlightMode
-                        _planMasterController.sendToVehicle()
-                        hideDialog()
-                    }
-                }
+        id: firmwareOrVehicleMismatchUploadDialogComponent
+        QGCViewMessage {
+            message: qsTr("This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. " +
+                            "This can lead to errors or incorrect behavior. " +
+                            "It is recommended to recreate the Plan for the correct firmware/vehicle type.\n\n" +
+                            "Click 'Ok' to upload the Plan anyway.")
+
+            function accept() {
+                _planMasterController.sendToVehicle()
+                hideDialog()
             }
         }
     }
@@ -177,10 +164,11 @@ Item {
     }
 
     PlanMasterController {
-        id: _planMasterController
+        id:         _planMasterController
+        flyView:    false
 
         Component.onCompleted: {
-            _planMasterController.start(false /* flyView */)
+            _planMasterController.start()
             _missionController.setCurrentPlanViewSeqNum(0, true)
             mainWindow.planMasterControllerPlanView = _planMasterController
         }
@@ -210,10 +198,16 @@ Item {
             if (!checkReadyForSaveUpload(false /* save */)) {
                 return
             }
-            if (activeVehicle && activeVehicle.armed && activeVehicle.flightMode === activeVehicle.missionFlightMode) {
-                mainWindow.showComponentDialog(activeMissionUploadDialogComponent, qsTr("Plan Upload"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
-            } else {
-                sendToVehicle()
+            switch (_missionController.sendToVehiclePreCheck()) {
+                case MissionController.SendToVehiclePreCheckStateOk:
+                    sendToVehicle()
+                    break
+                case MissionController.SendToVehiclePreCheckStateActiveMission:
+                    mainWindow.showMessageDialog(qsTr("Send To Vehicle"), qsTr("Current mission must be paused prior to uploading a new Plan"))
+                    break
+                case MissionController.SendToVehiclePreCheckStateFirwmareVehicleMismatch:
+                    mainWindow.showComponentDialog(firmwareOrVehicleMismatchUploadDialogComponent, qsTr("Plan Upload"), mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    break
             }
         }
 

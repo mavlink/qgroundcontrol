@@ -52,13 +52,14 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     // Master controller pulls offline vehicle info from settings
     qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->setRawValue(firmwareType);
     _masterController = new PlanMasterController(this);
+    _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
 
     _multiSpyMissionController = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionController);
     QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
 
-    _masterController->start(false /* flyView */);
+    _masterController->start();
 
     // All signals should some through on start
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask), true);

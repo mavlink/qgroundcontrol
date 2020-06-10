@@ -33,9 +33,10 @@ Item {
     id: _root
 
     PlanMasterController {
-        id: _planController
+        id:         _planController
+        flyView:    true
         Component.onCompleted: {
-            start(true /* flyView */)
+            start()
             mainWindow.planMasterControllerFlyView = _planController
         }
     }

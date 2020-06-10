@@ -35,6 +35,7 @@ public:
 
     ~PlanMasterController();
 
+    Q_PROPERTY(bool                     flyView                 MEMBER _flyView)
     Q_PROPERTY(Vehicle*                 controllerVehicle       READ controllerVehicle                      CONSTANT)                       ///< Offline controller vehicle
     Q_PROPERTY(Vehicle*                 managerVehicle          READ managerVehicle                         NOTIFY managerVehicleChanged)   ///< Either active vehicle or _controllerVehicle if no active vehicle
     Q_PROPERTY(MissionController*       missionController       READ missionController                      CONSTANT)
@@ -53,7 +54,7 @@ public:
     Q_PROPERTY(bool                     supportsTerrain         READ supportsTerrain                        NOTIFY supportsTerrainChanged)
 
     /// Should be called immediately upon Component.onCompleted.
-    Q_INVOKABLE void start(bool flyView);
+    Q_INVOKABLE void start(void);
 
     /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
     ///     @param deleteWhenSendCmplete The PlanMasterController object should be deleted after the first send is completed.
@@ -94,6 +95,8 @@ public:
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
     bool        supportsTerrain (void) const { return _supportsTerrain; }
+
+    void        setFlyView(bool flyView) { _flyView = flyView; }
 
     QJsonDocument saveToJson    ();
 
