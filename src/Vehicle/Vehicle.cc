@@ -1535,7 +1535,7 @@ QString Vehicle::vehicleUIDStr()
 {
     QString uid;
     uint8_t* pUid = (uint8_t*)(void*)&_uid;
-    uid.sprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+    uid.asprintf("%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
                 pUid[0] & 0xff,
             pUid[1] & 0xff,
             pUid[2] & 0xff,
@@ -4102,8 +4102,7 @@ QString Vehicle::hobbsMeter()
         int hours   = hobbsTimeSeconds / 3600;
         int minutes = (hobbsTimeSeconds % 3600) / 60;
         int seconds = hobbsTimeSeconds % 60;
-        QString timeStr;
-        timeStr.sprintf("%04d:%02d:%02d", hours, minutes, seconds);
+        QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
         qCDebug(VehicleLog) << "Hobbs Meter:" << timeStr << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
         return timeStr;
     }
