@@ -167,6 +167,16 @@ public:
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
 
+    enum SendToVehiclePreCheckState {
+        SendToVehiclePreCheckStateOk,                       // Ok to send plan to vehicle
+        SendToVehiclePreCheckStateNoActiveVehicle,          // There is no active vehicle
+        SendToVehiclePreCheckStateFirwmareVehicleMismatch,  // Firmware/Vehicle type for plan mismatch with actual vehicle
+        SendToVehiclePreCheckStateActiveMission,            // Vehicle is currently flying a mission
+    };
+    Q_ENUM(SendToVehiclePreCheckState)
+
+    Q_INVOKABLE SendToVehiclePreCheckState sendToVehiclePreCheck(void);
+
     /// Determines if the mission has all data needed to be saved or sent to the vehicle.
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
     /// a nightmare of circular header dependency problems.
@@ -328,6 +338,8 @@ private:
     bool                    _isROIBeginItem                     (SimpleMissionItem* simpleItem);
     bool                    _isROICancelItem                    (SimpleMissionItem* simpleItem);
     FlightPathSegment*      _createFlightPathSegmentWorker      (VisualItemPair& pair);
+    void                    _allItemsRemoved                    (void);
+    void                    _firstItemAdded                     (void);
 
     static double           _calcDistanceToHome                 (VisualMissionItem* currentItem, VisualMissionItem* homeItem);
     static double           _normalizeLat                       (double lat);

@@ -430,16 +430,29 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 {
     _commonInit();
 
-    // Offline editing vehicle tracks settings changes for offline editing settings
-    connect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    connect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    if (_firmwareType == MAV_AUTOPILOT_TRACK) {
+        trackFirmwareVehicleTypeChanges();
+    }
     connect(_settingsManager->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
-    // This add correct terrain capability bit
-    _offlineFirmwareTypeSettingChanged(_firmwareType);
-
+    _offlineFirmwareTypeSettingChanged(_firmwareType);  // This adds correct terrain capability bit
     _firmwarePlugin->initializeVehicle(this);
+}
+
+void Vehicle::trackFirmwareVehicleTypeChanges(void)
+{
+    connect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+
+    _offlineFirmwareTypeSettingChanged(_settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue());
+    _offlineVehicleTypeSettingChanged(_settingsManager->appSettings()->offlineEditingVehicleType()->rawValue());
+}
+
+void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
+{
+    disconnect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    disconnect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
 void Vehicle::_commonInit()

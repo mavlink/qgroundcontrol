@@ -41,5 +41,4 @@ Item {
             hideDialog()
         }
     }
-
 }
