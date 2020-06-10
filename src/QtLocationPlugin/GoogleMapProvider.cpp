@@ -116,7 +116,11 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* network
         _googleReply = networkManager->get(qheader);
         connect(_googleReply, &QNetworkReply::finished, this, &GoogleMapProvider::_googleVersionCompleted);
         connect(_googleReply, &QNetworkReply::destroyed, this, &GoogleMapProvider::_replyDestroyed);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         connect(_googleReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &GoogleMapProvider::_networkReplyError);
+#else
+        connect(_googleReply, &QNetworkReply::errorOccurred, this, &GoogleMapProvider::_networkReplyError);
+#endif
         networkManager->setProxy(proxy);
     }
 }

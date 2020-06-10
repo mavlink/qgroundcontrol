@@ -329,7 +329,12 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
         // Intersect the offset edges to generate new central vertices
         QPointF  newVertex;
         for (int i=1; i<rgOffsetEdges.count(); i++) {
-            if (rgOffsetEdges[i - 1].intersect(rgOffsetEdges[i], &newVertex) == QLineF::NoIntersection) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+            auto intersect = rgOffsetEdges[i - 1].intersect(rgOffsetEdges[i], &newVertex);
+#else
+            auto intersect = rgOffsetEdges[i - 1].intersects(rgOffsetEdges[i], &newVertex);
+#endif
+            if (intersect == QLineF::NoIntersection) {
                 // Two lines are colinear
                 newVertex = rgOffsetEdges[i].p2();
             }
