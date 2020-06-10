@@ -196,6 +196,10 @@ ApplicationWindow {
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
     function showComponentDialog(component, title, charWidth, buttons) {
+        if (mainWindowDialog.visible) {
+            console.warn(("showComponentDialog called while dialog is already visible"))
+            return
+        }
         var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
         mainWindowDialog.width = dialogWidth
         mainWindowDialog.dialogComponent = component
