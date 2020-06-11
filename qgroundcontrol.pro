@@ -37,7 +37,7 @@ QML_IMPORT_PATH += $$PWD/src/QmlControls
 
 MacBuild {
     QMAKE_INFO_PLIST    = Custom-Info.plist
-    ICON                = $${BASEDIR}/resources/icons/macx.icns
+    ICON                = $${SOURCE_DIR}/resources/icons/macx.icns
     OTHER_FILES        += Custom-Info.plist
     LIBS               += -framework ApplicationServices
 }
@@ -62,8 +62,8 @@ QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl
 QGC_APP_COPYRIGHT   = "Copyright (C) 2019 QGroundControl Development Team. All rights reserved."
 
 WindowsBuild {
-    QGC_INSTALLER_ICON          = "WindowsQGC.ico"
-    QGC_INSTALLER_HEADER_BITMAP = "installheader.bmp"
+    QGC_INSTALLER_ICON          = "$$SOURCE_DIR\\WindowsQGC.ico"
+    QGC_INSTALLER_HEADER_BITMAP = "$$SOURCE_DIR\\installheader.bmp"
 }
 
 # Load additional config flags from user_config.pri
@@ -120,17 +120,17 @@ iOSBuild {
         ForAppStore {
             message(App Store Build)
             #-- Create official, versioned Info.plist
-            APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
+            APP_STORE = $$system(cd $${SOURCE_DIR} && $${SOURCE_DIR}/tools/update_ios_version.sh $${SOURCE_DIR}/ios/iOSForAppStore-Info-Source.plist $${SOURCE_DIR}/ios/iOSForAppStore-Info.plist)
             APP_ERROR = $$find(APP_STORE, "Error")
             count(APP_ERROR, 1) {
                 error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
             }
             QT               += qml-private
-            QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
-            OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
+            QMAKE_INFO_PLIST  = $${SOURCE_DIR}/ios/iOSForAppStore-Info.plist
+            OTHER_FILES      += $${SOURCE_DIR}/ios/iOSForAppStore-Info.plist
         } else {
-            QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
-            OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
+            QMAKE_INFO_PLIST  = $${SOURCE_DIR}/ios/iOS-Info.plist
+            OTHER_FILES      += $${SOURCE_DIR}/ios/iOS-Info.plist
         }
         QMAKE_ASSET_CATALOGS += ios/Images.xcassets
         BUNDLE.files          = ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST

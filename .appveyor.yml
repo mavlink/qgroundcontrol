@@ -45,7 +45,7 @@ install:
 build_script:
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && %QT_QMAKE_DIR%\qmake -r CONFIG+=%CONFIG% %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
   - cd %SHADOW_BUILD_DIR% && %QT_JOM_DIR%\jom
-  - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\qgc-app\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
+  - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\staging\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
 # Generate the source server information to embed in the PDB
 # Temporarily disabled while we try to figure out where this is located on appveyor image
 #  - '"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\srctool.exe" -r -u "%SHADOW_BUILD_DIR%\qgc-app\qgroundcontrol.pdb" | grep qgroundcontrol | grep -v moc_ | grep -v libs\\mavlink | grep -v build_windows_install | python %APPVEYOR_BUILD_FOLDER%\deploy\genPDBsrcsrv.py > %SHADOW_BUILD_DIR%\qgc-app\qgroundcontrol.pdb.srcsrv'
@@ -62,7 +62,7 @@ test_script:
 artifacts:
   - path: QGroundControl-installer.exe
     name: qgcinstaller
-  - path: build_windows_install\qgc-app\qgroundcontrol.pdb
+  - path: build_windows_install\staging\qgroundcontrol.pdb
     name: pdb
 
 deploy:

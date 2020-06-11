@@ -24,51 +24,50 @@ MacBuild {
     # with the differences between post list command running in a shell script (XCode) versus a makefile (Qt Creator)
     macx-xcode {
         # SDL2 Framework
-        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks/SDL2.Framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.Framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks/
             QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
         }
     } else {
         # SDL2 Framework
-        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks/SDL2.Framework $${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && rsync -a --delete $$SOURCE_DIR/libs/Frameworks/SDL2.Framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
             QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
         }
     }
 }
 
 WindowsBuild {
-    BASEDIR_WIN = $$replace(BASEDIR, "/", "\\")
-    DESTDIR_WIN = $$replace(DESTDIR, "/", "\\")
+    #BASEDIR_WIN = $$replace(SOURCE_DIR, "/", "\\")
     QT_BIN_DIR  = $$dirname(QMAKE_QMAKE)
 
     # Copy dependencies
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
-        $$BASEDIR\\deploy\\libcrypto-1_1-x64.dll \
-        $$BASEDIR_WIN\\deploy\\libssl-1_1-x64.dll
+        $$SOURCE_DIR\\libs\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+        $$SOURCE_DIR\\deploy\\libcrypto-1_1-x64.dll \
+        $$SOURCE_DIR\\deploy\\libssl-1_1-x64.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR\"
     }
 
     ReleaseBuild {
         # Copy Visual Studio DLLs
         # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
-        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$BASEDIR\\deploy\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\deploy\\msvcp140.dll\"  \"$$DESTDIR\"
+        QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$SOURCE_DIR\\deploy\\vcruntime140.dll\"  \"$$DESTDIR\"
     }
 
-    DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --qmldir=$${BASEDIR_WIN}\\src $${DEPLOY_TARGET}
+    DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR\\$${TARGET}.exe))
+    QMAKE_POST_LINK += $$escape_expand(\\n) $$QT_BIN_DIR\\windeployqt --qmldir=$${SOURCE_DIR}\\src $${DEPLOY_TARGET}
 }
 
 LinuxBuild {
@@ -146,9 +145,9 @@ LinuxBuild {
 
     # QGroundControl start script
     contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) | !exists($$PWD/custom/custom.pri) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol.desktop $$DESTDIR
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/resources/icons/qgroundcontrol.png $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol-start.sh $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol.desktop $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/resources/icons/qgroundcontrol.png $$DESTDIR
     } else {
         include($$PWD/custom/custom_deploy.pri)
     }
