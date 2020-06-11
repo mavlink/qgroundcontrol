@@ -7,9 +7,15 @@
 #
 ################################################################################
 
+# These are the Post Link steps which are specific to installer builds
+
 installer {
     DEFINES += QGC_INSTALL_RELEASE
+
     MacBuild {
+        QMAKE_POST_LINK += && mkdir -p staging
+        QMAKE_POST_LINK += && cp -r $${TARGET}.app staging # fixme rsync instead
+
         VideoEnabled {
             # Install the gstreamer framework
             # This will:
@@ -18,24 +24,22 @@ installer {
             # Relocate all dylibs so they can work under @executable_path/...
             # Copy the result into the app bundle
             # Make sure qgroundcontrol can find them
-            message("Preparing GStreamer Framework")
-            QMAKE_POST_LINK += && $$BASEDIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${DESTDIR}/$${TARGET}.app $${TARGET}
-        } else {
-            message("Skipping GStreamer Framework")
+            QMAKE_POST_LINK += && $$BASEDIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ staging/$${TARGET}.app $${TARGET}
         }
 
-        # We cd to release directory so we can run macdeployqt without a path to the
-        # qgroundcontrol.app file. If you specify a path to the .app file the symbolic
-        # links to plugins will not be created correctly.
-        QMAKE_POST_LINK += && cd $${DESTDIR} && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${BASEDIR}/src
+
+        QMAKE_POST_LINK += && echo macdeployqt
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt staging/$${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${BASEDIR}/src
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
-        QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        QMAKE_POST_LINK += && echo osxrelocator
+        QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py staging/$${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
         # Create package
-        QMAKE_POST_LINK += && hdiutil create /tmp/tmp.dmg -ov -volname "$${TARGET}-$${MAC_VERSION}" -fs HFS+ -srcfolder "$${DESTDIR}/"
-        QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
-        QMAKE_POST_LINK += && hdiutil convert /tmp/tmp.dmg -format UDBZ -o $${DESTDIR}/package/$${TARGET}.dmg
+        QMAKE_POST_LINK += && echo hdiutil
+        QMAKE_POST_LINK += && mkdir -p package
+        QMAKE_POST_LINK += && hdiutil create /tmp/tmp.dmg -ov -volname "$${TARGET}-$${MAC_VERSION}" -fs HFS+ -srcfolder "staging"
+        QMAKE_POST_LINK += && hdiutil convert /tmp/tmp.dmg -format UDBZ -o package/$${TARGET}.dmg
         QMAKE_POST_LINK += && rm /tmp/tmp.dmg
     }
     WindowsBuild {
@@ -48,9 +52,9 @@ installer {
         QMAKE_POST_LINK += && tar -cj --exclude='package' -f release/package/QGroundControl.tar.bz2 release --transform 's/release/qgroundcontrol/'
     }
     AndroidBuild {
-        QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
-        QMAKE_POST_LINK += && make install INSTALL_ROOT=$${DESTDIR}/android-build/
-        QMAKE_POST_LINK += && androiddeployqt --input android-libQGroundControl.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle --sign $${BASEDIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
+        QMAKE_POST_LINK += && mkdir -p package
+        QMAKE_POST_LINK += && make install INSTALL_ROOT=android-build/
+        QMAKE_POST_LINK += && androiddeployqt --input android-libQGroundControl.so-deployment-settings.json --output android-build --deployment bundled --gradle --sign $${BASEDIR}/android/android_release.keystore dagar --storepass $$(ANDROID_STOREPASS)
         contains(QT_ARCH, arm) {
             QGC_APK_BITNESS = "32"
         } else:contains(QT_ARCH, arm64) {
@@ -58,6 +62,6 @@ installer {
         } else {
             QGC_APK_BITNESS = ""
         }
-        QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/QGroundControl$${QGC_APK_BITNESS}.apk
+        QMAKE_POST_LINK += && cp android-build/build/outputs/apk/android-build-release-signed.apk package/QGroundControl$${QGC_APK_BITNESS}.apk
     }
 }

@@ -1,11 +1,11 @@
-# -------------------------------------------------
-# QGroundControl - Micro Air Vehicle Groundstation
-# Please see our website at <http://qgroundcontrol.org>
-# Maintainer:
-# Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2019 QGroundControl Developers
-# License terms set in COPYING.md
-# -------------------------------------------------
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
 
 QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in make files
 
@@ -28,7 +28,6 @@ include(QGCCommon.pri)
 TARGET   = QGroundControl
 TEMPLATE = app
 QGCROOT  = $$PWD
-DESTDIR  = qgc-app
 
 QML_IMPORT_PATH += $$PWD/src/QmlControls
 
@@ -1385,7 +1384,7 @@ CONFIG+=lrelease embed_translations
 contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
     message("Disable standard build setup")
 } else {
-    include(QGCSetup.pri)
+    include(QGCPostLinkCommon.pri)
 }
 
 #
@@ -1395,7 +1394,7 @@ contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
 contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
     message("Disable standard installer setup")
 } else {
-    include(QGCInstaller.pri)
+    include(QGCPostLinkInstaller.pri)
 }
 
 DISTFILES += \
