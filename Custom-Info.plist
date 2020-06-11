@@ -9,18 +9,14 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
-    <string>###</string>
+    <string>${QMAKE_FULL_VERSION}</string>
     <key>CFBundleShortVersionString</key>
-    <string>#.#.#</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
+    <string>${QMAKE_FULL_VERSION}</string>
     <key>CFBundleExecutable</key>
-    <string>@EXECUTABLE@</string>
+    <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIdentifier</key>
-    <string>org.qgroundcontrol.qgroundcontrol</string>
-    <key>NOTE</key>
-    <string>Open source ground control app provided by QGroundControl dev team</string>
+    <string>${PRODUCT_BUNDLE_IDENTIFIER}</string>
     <key>NSCameraUsageDescription</key>
-    <string>QGC uses UVC camera devices for FPV</string>
+    <string>Camera devices used for FPV</string>
 </dict>
 </plist>
