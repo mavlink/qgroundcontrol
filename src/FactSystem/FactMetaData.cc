@@ -1080,6 +1080,26 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsArea
     return nullptr;
 }
 
+const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsSpeedUnitsTranslation(const QString& rawUnits)
+{
+    for (size_t i=0; i<sizeof(_rgAppSettingsTranslations)/sizeof(_rgAppSettingsTranslations[0]); i++) {
+        const AppSettingsTranslation_s* pAppSettingsTranslation = &_rgAppSettingsTranslations[i];
+
+        if (rawUnits.toLower() != pAppSettingsTranslation->rawUnits.toLower()) {
+            continue;
+        }
+
+        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->speedUnits()->rawValue().toUInt();
+
+        if (pAppSettingsTranslation->unitType == UnitSpeed
+                && pAppSettingsTranslation->unitOption == settingsUnits) {
+            return pAppSettingsTranslation;
+        }
+    }
+
+    return nullptr;
+}
+
 QVariant FactMetaData::metersToAppSettingsHorizontalDistanceUnits(const QVariant& meters)
 {
     const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m");
@@ -1200,7 +1220,7 @@ QVariant FactMetaData::appSettingsWeightUnitsToGrams(const QVariant& weight) {
 
 QString FactMetaData::appSettingsSpeedUnitsString()
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsHorizontalDistanceUnitsTranslation("m/s");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsSpeedUnitsTranslation("m/s");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedUnits;
     } else {
