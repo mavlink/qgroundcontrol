@@ -212,7 +212,7 @@ script:
     	mkdir -p ~/.config/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
         export QT_FATAL_WARNINGS=1 &&
-        ./qgc-app/qgroundcontrol-start.sh --unittest;
+        ./staging/qgroundcontrol-start.sh --unittest;
     fi
 
 after_success:
