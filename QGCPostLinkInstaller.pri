@@ -11,11 +11,7 @@
 
 installer {
     DEFINES += QGC_INSTALL_RELEASE
-
     MacBuild {
-        QMAKE_POST_LINK += && mkdir -p staging
-        QMAKE_POST_LINK += && rsync -a --delete $${TARGET}.app staging
-
         VideoEnabled {
             # Install the gstreamer framework
             # This will:
@@ -24,20 +20,21 @@ installer {
             # Relocate all dylibs so they can work under @executable_path/...
             # Copy the result into the app bundle
             # Make sure qgroundcontrol can find them
-            QMAKE_POST_LINK += && $$BASEDIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ staging/$${TARGET}.app $${TARGET}
+            QMAKE_POST_LINK += && $$BASEDIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
         }
 
-
         QMAKE_POST_LINK += && echo macdeployqt
-        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt staging/$${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${BASEDIR}/src
+        QMAKE_POST_LINK += && $$dirname(QMAKE_QMAKE)/macdeployqt $${TARGET}.app -appstore-compliant -verbose=1 -qmldir=$${BASEDIR}/src
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
         QMAKE_POST_LINK += && echo osxrelocator
-        QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py staging/$${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        QMAKE_POST_LINK += && python $$BASEDIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
         # Create package
         QMAKE_POST_LINK += && echo hdiutil
         QMAKE_POST_LINK += && mkdir -p package
+        QMAKE_POST_LINK += && mkdir -p staging
+        QMAKE_POST_LINK += && rsync -a --delete $${TARGET}.app staging
         QMAKE_POST_LINK += && hdiutil create /tmp/tmp.dmg -ov -volname "$${TARGET}-$${MAC_VERSION}" -fs HFS+ -srcfolder "staging"
         QMAKE_POST_LINK += && hdiutil convert /tmp/tmp.dmg -format UDBZ -o package/$${TARGET}.dmg
         QMAKE_POST_LINK += && rm /tmp/tmp.dmg
