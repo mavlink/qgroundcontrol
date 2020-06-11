@@ -117,7 +117,7 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     }
 
     _isCurrentItem = missionItem.isCurrentItem();
-    _altitudeFact.setRawValue(specifiesCoordinate() || specifiesAltitudeOnly() ? _missionItem._param7Fact.rawValue() : qQNaN());
+    _altitudeFact.setRawValue(specifiesAltitude() ? _missionItem._param7Fact.rawValue() : qQNaN());
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
 
     // In flyView we skip some of the intialization to save memory
@@ -267,7 +267,7 @@ void SimpleMissionItem::save(QJsonArray&  missionItems)
         item->save(saveObject);
         if (i == 0) {
             // This is the main simple item, save the alt/terrain data
-            if (specifiesCoordinate()) {
+            if (specifiesAltitude()) {
                 saveObject[_jsonAltitudeModeKey] =          _altitudeMode;
                 saveObject[_jsonAltitudeKey] =              _altitudeFact.rawValue().toDouble();
                 saveObject[_jsonAMSLAltAboveTerrainKey] =   _amslAltAboveTerrainFact.rawValue().toDouble();
@@ -282,7 +282,7 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
 {
     bool success;
     if ((success = _missionItem.load(loadStream))) {
-        if (specifiesCoordinate()) {
+        if (specifiesAltitude()) {
             _altitudeMode = _missionItem.relativeAltitude() ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute;
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
             _amslAltAboveTerrainFact.setRawValue(qQNaN());
@@ -302,7 +302,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
         return false;
     }
 
-    if (specifiesCoordinate()) {
+    if (specifiesAltitude()) {
         if (json.contains(_jsonAltitudeModeKey) || json.contains(_jsonAltitudeKey) || json.contains(_jsonAMSLAltAboveTerrainKey)) {
             QList<JsonHelper::KeyValidateInfo> keyInfoList = {
                 { _jsonAltitudeModeKey,         QJsonValue::Double, true },
@@ -573,7 +573,7 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
             return false;
         }
 
-        if (specifiesCoordinate() || specifiesAltitudeOnly()) {
+        if (specifiesAltitude()) {
             MAV_FRAME frame = _missionItem.frame();
             switch (frame) {
             case MAV_FRAME_GLOBAL:
@@ -726,7 +726,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
     emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
-    if (specifiesCoordinate() || isStandaloneCoordinate() || specifiesAltitudeOnly()) {
+    if (specifiesAltitude() || isStandaloneCoordinate()) {
         double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
@@ -758,7 +758,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     }
 
     _missionItem.setAutoContinue(true);
-    _missionItem.setFrame((specifiesCoordinate() || specifiesAltitudeOnly()) ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
+    _missionItem.setFrame(specifiesAltitude() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
 }
 
