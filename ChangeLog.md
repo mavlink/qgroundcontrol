@@ -16,6 +16,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0.8 - Not yet released
 
+* Plan: Fix bugs associated with mission commands which specify and altitude but no lat/lon
 * Fix bug which could prevent view switching from working after altitude mode warning dialog would pop up
 
 ## 4.0.8 - Stable
