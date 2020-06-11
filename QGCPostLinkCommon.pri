@@ -71,6 +71,7 @@ WindowsBuild {
 }
 
 LinuxBuild {
+    QMAKE_POST_LINK += echo "Post Link Common"
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
 
     # QT_INSTALL_LIBS
