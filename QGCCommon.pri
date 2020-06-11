@@ -84,7 +84,6 @@ linux {
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
-        DEFINES += _CRT_NO_SECURE_WARNINGS
         QMAKE_CFLAGS -= -Zc:strictStrings
         QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
@@ -92,19 +91,11 @@ linux {
         QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
         QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
         QMAKE_CXXFLAGS += /std:c++17
-        QMAKE_CXXFLAGS_WARN_ON -= -w34100 # Qt insanity which prevents /wd on 4100 error from working correctly
-        QMAKE_CXXFLAGS += /W3 \
+        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
+            /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
             /wd4290 \   # ignore exception specifications
             /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
             /wd4100     # unreferenced formal parameter - gst-plugins-good
-        QMAKE_CFLAGS += /W3 \
-            /wd4005 \   # shape file code
-            /wd4267 \   # shape file code
-            /wd4996     # shape file code
-        !WarningsAsErrorsOff {
-            QMAKE_CXXFLAGS += /WX
-            QMAKE_CFLAGS += /WX
-         }
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
@@ -123,7 +114,7 @@ linux {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         }
         #-- Not forcing anything. Let qmake find the latest, installed SDK.
-        #QMAKE_MAC_SDK = macosx10.15
+        QMAKE_MAC_SDK = macosx10.15
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
             -Wno-unused-parameter           # gst-plugins-good
@@ -253,10 +244,8 @@ LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 DEFINES += _TTY_NOWARN_
 
 MacBuild {
-    # Xcode 8.3 has issues on how MAVLink accesses (packed) message structure members.
-    # Note that this will fail when Xcode version reaches 10.x.x
-    XCODE_VERSION = $$system($$PWD/tools/get_xcode_version.sh)
-    greaterThan(XCODE_VERSION, 8.2.0): QMAKE_CXXFLAGS_WARN_ON += -Wno-address-of-packed-member
+    QMAKE_TARGET_BUNDLE_PREFIX =    org.qgroundcontrol
+    QMAKE_BUNDLE =                  qgroundcontrol
 }
 
 #

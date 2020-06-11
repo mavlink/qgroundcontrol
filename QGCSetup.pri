@@ -7,56 +7,37 @@
 #
 ################################################################################
 
-QMAKE_POST_LINK += echo "Copying files"
-
-#
-# Copy the application resources to the associated place alongside the application
-#
-
-LinuxBuild {
-    DESTDIR_COPY_RESOURCE_LIST = $$DESTDIR
-}
-
-MacBuild {
-    DESTDIR_COPY_RESOURCE_LIST = $$DESTDIR/$${TARGET}.app/Contents/MacOS
-}
-
-# Windows version of QMAKE_COPY_DIR of course doesn't work the same as Mac/Linux. It will only
-# copy the contents of the source directory. It doesn't create the top level source directory
-# in the target.
-WindowsBuild {
-    # Make sure to keep both side of this if using the same set of directories
-    DESTDIR_COPY_RESOURCE_LIST = $$replace(DESTDIR,"/","\\")
-    BASEDIR_COPY_RESOURCE_LIST = $$replace(BASEDIR,"/","\\")
-    QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY_DIR \"$$BASEDIR_COPY_RESOURCE_LIST\\resources\\flightgear\" \"$$DESTDIR_COPY_RESOURCE_LIST\\flightgear\"
-} else {
-    !MobileBuild {
-        # Make sure to keep both sides of this if using the same set of directories
-        QMAKE_POST_LINK += && $$QMAKE_COPY_DIR $$BASEDIR/resources/flightgear $$DESTDIR_COPY_RESOURCE_LIST
-    }
-}
+QMAKE_POST_LINK += echo "QGC Post Link"
 
 #
 # Perform platform specific setup
 #
 
 MacBuild {
-    # Update version info in bundle
-    PLIST_FILE = $$DESTDIR/$${TARGET}.app/Contents/Info.plist
-    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $${MAC_VERSION}\" $$PLIST_FILE
-    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $${MAC_BUILD}\" $$PLIST_FILE
-    QMAKE_POST_LINK += && /usr/libexec/PlistBuddy -c \"Set :CFBundleExecutable 'MacOs/$${TARGET}'\" $$PLIST_FILE
-}
-
-MacBuild {
-    # Copy non-standard frameworks into app package
-    QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
-    # SDL2 Framework
-    QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
-    # AirMap
-    contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $$DESTDIR/$${TARGET}.app/Contents/Frameworks/
-        QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+    # The Post Link phase happens before a qmake built XCode Project does the "Project Copy" phase.
+    # This means the QGroundControl.app is not yet in the DESTDIR. It is still in XCode BUILT_PRODUCTS_DIR location.
+    # I could figure out a way to make it work without duplicating the code. This is because XCode puts these command
+    # into a shell script and Qt Creator put them into a makefile.
+    macx-xcode {
+        # Copy non-standard frameworks into app package
+        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/
+        # SDL2 Framework
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        # AirMap
+        contains (DEFINES, QGC_AIRMAP_ENABLED) {
+            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        }
+    } else {
+        # Copy non-standard frameworks into app package
+        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks $$DESTDIR/$${TARGET}.app/Contents/
+        # SDL2 Framework
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        # AirMap
+        contains (DEFINES, QGC_AIRMAP_ENABLED) {
+            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $$DESTDIR/$${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        }
     }
 }
 
