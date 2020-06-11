@@ -12,6 +12,7 @@
 installer {
     DEFINES += QGC_INSTALL_RELEASE
     MacBuild {
+        #QMAKE_POST_LINK += && rsync -a --delete $BUILT_PRODUCTS_DIR/$${TARGET}.app .
         VideoEnabled {
             # Install the gstreamer framework
             # This will:
