@@ -114,7 +114,7 @@ linux {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         }
         #-- Not forcing anything. Let qmake find the latest, installed SDK.
-        #QMAKE_MAC_SDK = macosx10.15
+        QMAKE_MAC_SDK = macosx10.15
         QMAKE_CXXFLAGS += -fvisibility=hidden
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
             -Wno-unused-parameter           # gst-plugins-good
@@ -155,7 +155,7 @@ linux|macx|ios {
 }
 
 !MacBuild {
-    # See QGCPostLinkCommon.pri for details on why MacBuild doesn't set DESTDIR
+    # See QGCPostLinkCommon.pri for details on why MacBuild doesn't use DESTDIR
     DESTDIR = staging
 }
 
