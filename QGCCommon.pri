@@ -231,7 +231,7 @@ CONFIG(debug, debug|release) {
 
 # Setup our build directories
 
-BASEDIR      = $$IN_PWD
+SOURCE_DIR = $$IN_PWD
 
 !iOSBuild {
     OBJECTS_DIR  = $${OUT_PWD}/obj
