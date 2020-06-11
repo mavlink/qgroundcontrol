@@ -14,7 +14,7 @@ installer {
 
     MacBuild {
         QMAKE_POST_LINK += && mkdir -p staging
-        QMAKE_POST_LINK += && cp -r $${TARGET}.app staging # fixme rsync instead
+        QMAKE_POST_LINK += && rsync -a --delete $${TARGET}.app staging
 
         VideoEnabled {
             # Install the gstreamer framework
