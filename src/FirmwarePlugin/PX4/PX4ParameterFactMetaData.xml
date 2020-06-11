@@ -8961,7 +8961,7 @@ How often the sensor is readout</short_desc>
     <parameter default="0" name="SENS_EN_SF1XX" type="INT32">
       <short_desc>Lightware SF1xx/SF20/LW20 laser rangefinder (i2c)</short_desc>
       <min>0</min>
-      <max>5</max>
+      <max>6</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Disabled</value>
