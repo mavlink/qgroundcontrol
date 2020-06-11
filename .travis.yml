@@ -238,7 +238,7 @@ before_deploy:
   # create linux appimage
   - cd ${TRAVIS_BUILD_DIR}
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "installer" ]]; then
-        ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/qgc-app ${SHADOW_BUILD_DIR}/qgc-app/package;
+        ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/staging ${SHADOW_BUILD_DIR}/package;
     fi
 
 deploy:
@@ -249,7 +249,7 @@ deploy:
     secret_access_key:
       secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
     bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/qgc-app/package
+    local_dir: ${SHADOW_BUILD_DIR}/package
     upload-dir: builds/${TRAVIS_BRANCH}
     acl: public_read
     region: us-west-2
@@ -265,7 +265,7 @@ deploy:
     secret_access_key:
       secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
     bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/qgc-app/package
+    local_dir: ${SHADOW_BUILD_DIR}/package
     upload-dir: latest
     acl: public_read
     region: us-west-2
@@ -281,7 +281,7 @@ deploy:
     secret_access_key:
       secure: BsLXeXUPsCJdX4tawrDnO8OFK5Hk4kzlDTiyH93En6TbjUargVAWDMcHVj7TUhr7+3Tao1W1zb0G4SJe9kHv+jrky0yE72KvoG3YAON0VXWKizxBAKkgHE2RxSTNAwDeKbi2G6YJfNDescBBfX7zEohShdXglQu7CGaUQKRaiI4=
     bucket: qgroundcontrol
-    local_dir: ${SHADOW_BUILD_DIR}/qgc-app/package
+    local_dir: ${SHADOW_BUILD_DIR}/package
     upload-dir: ${TRAVIS_BRANCH}
     acl: public_read
     region: us-west-2
