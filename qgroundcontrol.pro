@@ -28,12 +28,7 @@ include(QGCCommon.pri)
 TARGET   = QGroundControl
 TEMPLATE = app
 QGCROOT  = $$PWD
-
-DebugBuild {
-    DESTDIR  = $${OUT_PWD}/debug
-} else {
-    DESTDIR  = $${OUT_PWD}/release
-}
+DESTDIR  = qgc-app
 
 QML_IMPORT_PATH += $$PWD/src/QmlControls
 
@@ -509,7 +504,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         #src/AnalyzeView/LogDownloadTest.h \
         #src/qgcunittest/FileDialogTest.h \
         #src/qgcunittest/FileManagerTest.h \
-        #src/qgcunittest/FlightGearTest.h \
         #src/qgcunittest/MainWindowTest.h \
         #src/qgcunittest/MessageBoxTest.h \
 
@@ -553,7 +547,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         #src/AnalyzeView/LogDownloadTest.cc \
         #src/qgcunittest/FileDialogTest.cc \
         #src/qgcunittest/FileManagerTest.cc \
-        #src/qgcunittest/FlightGearTest.cc \
         #src/qgcunittest/MainWindowTest.cc \
         #src/qgcunittest/MessageBoxTest.cc \
 
@@ -1381,9 +1374,7 @@ AndroidBuild {
 # Localization
 #
 
-TRANSLATIONS += \
-    $$files($$PWD/translations/qgc_source_*.ts) \
-    $$files($$PWD/translations/qgc_json_*.ts)
+TRANSLATIONS += $$files($$PWD/localization/qgc_*.ts)
 CONFIG+=lrelease embed_translations
 
 #-------------------------------------------------------------------------------------
