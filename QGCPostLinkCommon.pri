@@ -14,19 +14,32 @@
 #
 
 MacBuild {
-    macx-xcode {
-        # XCode Project builds create the .app in BUILT_PRODUCTS_DIR. Copy it to the normal location for QtCreator builds.
-        QMAKE_POST_LINK += cp -r $BUILT_PRODUCTS_DIR/$${TARGET}.app .
-    }
+    QMAKE_POST_LINK += echo "Post Link Common"
 
-    # Copy non-standard frameworks into app package
-    QMAKE_POST_LINK += rsync -a --delete $$BASEDIR/libs/Frameworks $${TARGET}.app/Contents/
-    # SDL2 Framework
-    QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
-    # AirMap
-    contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
-        QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
+    # Qt is screwed up if you use qmake to create an XCode Project which has a DESTDIR set on it.
+    # This is because XCode builds create the .app in BUILT_PRODUCTS_DIR. If you use a DESTDIR then
+    # Qt adds a Copy Phase to the build which copies the .app from the BUILT_PRODUCTS_DIR to DESTDIR.
+    # This causes all sort of problem which are too long to list here. In order to work around this
+    # We have to duplicate the post link commands here to work from two different locations. And to deal
+    # with the differences between post list command running in a shell script (XCode) versus a makefile (Qt Creator)
+    macx-xcode {
+        # SDL2 Framework
+        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks/SDL2.Framework $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        # AirMap
+        contains (DEFINES, QGC_AIRMAP_ENABLED) {
+            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $BUILT_PRODUCTS_DIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
+        }
+    } else {
+        # SDL2 Framework
+        QMAKE_POST_LINK += && rsync -a --delete $$BASEDIR/libs/Frameworks/SDL2.Framework $${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
+        # AirMap
+        contains (DEFINES, QGC_AIRMAP_ENABLED) {
+            QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
+        }
     }
 }
 
