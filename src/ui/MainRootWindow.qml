@@ -195,25 +195,35 @@ ApplicationWindow {
     readonly property int showDialogFullWidth:      -1  ///< Use for full width dialog
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
-    function showComponentDialog(component, title, charWidth, buttons) {
-        if (mainWindowDialog.visible) {
+    // Add a workaround function to allow us to nest a dialog inside a dialog.
+    // Only ever use showComponentDialog2 as the top level dialog when experiencing soft-lock due to nested dialogs.
+    function showComponentDialogHack(dialog, component, title, charWidth, buttons) {
+        if (dialog.visible) {
             console.warn(("showComponentDialog called while dialog is already visible"))
             return
         }
         var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
-        mainWindowDialog.width = dialogWidth
-        mainWindowDialog.dialogComponent = component
-        mainWindowDialog.dialogTitle = title
-        mainWindowDialog.dialogButtons = buttons
+        dialog.width = dialogWidth
+        dialog.dialogComponent = component
+        dialog.dialogTitle = title
+        dialog.dialogButtons = buttons
         mainWindow.pushPreventViewSwitch()
-        mainWindowDialog.open()
+        dialog.open()
         if (buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
-            mainWindowDialog.closePolicy = Popup.NoAutoClose;
-            mainWindowDialog.interactive = false;
+            dialog.closePolicy = Popup.NoAutoClose;
+            dialog.interactive = false;
         } else {
-            mainWindowDialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
-            mainWindowDialog.interactive = true;
+            dialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
+            dialog.interactive = true;
         }
+    }
+
+    function showComponentDialog(component, title, charWidth, buttons) {
+        showComponentDialogHack(mainWindowDialog, component, title, charWidth, buttons)
+    }
+
+    function showComponentDialog2(component, title, charWidth, buttons) {
+        showComponentDialogHack(mainWindowDialog2, component, title, charWidth, buttons)
     }
 
     Drawer {
@@ -232,6 +242,7 @@ ApplicationWindow {
             id:             dlgLoader
             anchors.fill:   parent
             onLoaded: {
+                item._dialogWindow = mainWindowDialog
                 item.setupDialogButtons()
             }
         }
@@ -242,6 +253,36 @@ ApplicationWindow {
             //console.log("View switch ok")
             mainWindow.popPreventViewSwitch()
             dlgLoader.source = ""
+        }
+    }
+
+    Drawer {
+        id:             mainWindowDialog2
+        y:              mainWindow.header.height
+        height:         mainWindow.height - mainWindow.header.height
+        edge:           Qt.RightEdge
+        interactive:    false
+        background: Rectangle {
+            color:  qgcPal.windowShadeDark
+        }
+        property var    dialogComponent: null
+        property var    dialogButtons: null
+        property string dialogTitle: ""
+        Loader {
+            id:             dlgLoader2
+            anchors.fill:   parent
+            onLoaded: {
+                item._dialogWindow = mainWindowDialog2
+                item.setupDialogButtons(mainWindowDialog2.dialogButtons)
+            }
+        }
+        onOpened: {
+            dlgLoader2.source = "QGCViewDialogContainer.qml"
+        }
+        onClosed: {
+            //console.log("View switch ok")
+            mainWindow.popPreventViewSwitch()
+            dlgLoader2.source = ""
         }
     }
 
