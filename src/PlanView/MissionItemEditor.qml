@@ -218,7 +218,10 @@ Rectangle {
                 QGCMenuItem {
                     text:           qsTr("Edit position...")
                     visible:        missionItem.specifiesCoordinate
-                    onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    onTriggered:    mainWindow.showComponentDialog2(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    // EditPositionDialog uses a second instance of showComponentDialog to use a second drawer/dialog combination. This is to get around the soft-lock
+                    // issue you can enter, when a dialog is opened inside a dialog. (Eg. EditPositionDialog can open a ParameterEditorDialog through a FactTextField's help button/validation.
+                    // Once in this screen, you lose the ability to close the dialog, and cannot proceed without restarting the application.
                 }
 
                 QGCMenuSeparator {
