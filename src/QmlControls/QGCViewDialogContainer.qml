@@ -20,11 +20,12 @@ Item {
 
     property real   _defaultTextHeight: _textMeasure.contentHeight
     property real   _defaultTextWidth:  _textMeasure.contentWidth
+    property var _dialogWindow
 
     function setupDialogButtons() {
         _acceptButton.visible = false
         _rejectButton.visible = false
-        var buttons = mainWindowDialog.dialogButtons
+        var buttons = _dialogWindow.dialogButtons
         // Accept role buttons
         if (buttons & StandardButton.Ok) {
             _acceptButton.text = qsTr("Ok")
@@ -87,7 +88,8 @@ Item {
         target: _dialogComponentLoader.item
         onHideDialog: {
             Qt.inputMethod.hide()
-            mainWindowDialog.close()
+            if(_dialogWindow)
+                _dialogWindow.close()
         }
     }
 
@@ -105,7 +107,7 @@ Item {
             QGCLabel {
                 id:                 titleLabel
                 x:                  _defaultTextWidth
-                text:               mainWindowDialog.dialogTitle
+                text:               _dialogWindow ? _dialogWindow.dialogTitle : ""
                 height:             parent.height
                 verticalAlignment:	Text.AlignVCenter
             }
@@ -136,7 +138,7 @@ Item {
             anchors.right:      parent.right
             anchors.top:        _spacer.bottom
             anchors.bottom:     parent.bottom
-            sourceComponent:    mainWindowDialog.dialogComponent
+            sourceComponent:    _dialogWindow ? _dialogWindow.dialogComponent : ""
             focus:              true
             property bool acceptAllowed: _acceptButton.visible
             property bool rejectAllowed: _rejectButton.visible
