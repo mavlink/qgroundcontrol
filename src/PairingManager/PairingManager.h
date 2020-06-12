@@ -176,6 +176,7 @@ private:
     QString                       _lastDeviceNameToConnect = "";
     QString                       _nidPrefix = "SRR_";
     std::function<void(void)>     _disconnect_callback;
+    int                           _resetMavlinkMessagesTimersCounter;
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
@@ -208,6 +209,7 @@ private:
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
     void                    _setModemParameters         (const QString& name, int channel, int power, int bandwidth);
+    void                    _resetMavlinkMessagesTimers (const QString& name);
     QString                 _removeRSAkey               (const QString& s);
     int                     _getDeviceChannel           (const QString& name);
     QDateTime               _getDeviceConnectTime       (const QString& name);

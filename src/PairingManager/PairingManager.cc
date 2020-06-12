@@ -810,11 +810,31 @@ PairingManager::_setModemParameters(const QString& name, int channel, int power,
     setPairingStatus(ConfiguringModem, tr("Configuring modem"));
     emit startUpload(name, modemParametersURL, jsonDoc, true);
 
+    _resetMavlinkMessagesTimersCounter = 3;
+    _resetMavlinkMessagesTimers(name);
+
     QTimer::singleShot(5000, [this, map, name, jsonDoc, cc, power, bandwidth]()
     {
         _requestedParameters(cc, power, bandwidth);
         QString statusURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/status";
         emit _startUpload(name, statusURL, jsonDoc, false);
+    });
+}
+//-----------------------------------------------------------------------------
+void
+PairingManager::_resetMavlinkMessagesTimers(const QString& name)
+{
+    QTimer::singleShot(2500, [this, name]()
+    {
+        if (_connectedDevices.contains(name)) {
+            // We reset mavlink messages timer to prevent loss of communication event during channel change
+            _connectedDevices[name]->resetMavlinkMessagesTimers();
+
+            _resetMavlinkMessagesTimersCounter--;
+            if (_resetMavlinkMessagesTimersCounter > 0) {
+                _resetMavlinkMessagesTimers(name);
+            }
+        }
     });
 }
 

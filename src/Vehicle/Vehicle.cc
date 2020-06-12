@@ -4193,6 +4193,7 @@ void Vehicle::flashBootloader(void)
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
     //qDebug() << "Gimbal:" << pitch << yaw;
+# if 0
     sendMavCommand(
         _defaultComponentId,
         MAV_CMD_DO_MOUNT_CONTROL,
@@ -4204,6 +4205,29 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
         0,                                   // Latitude (not used)
         0,                                   // Longitude (not used)
         MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+#else
+    mavlink_message_t       msg;
+    mavlink_command_long_t  cmd;
+    memset(&cmd, 0, sizeof(cmd));
+    cmd.target_system =     _id;
+    cmd.target_component =  _defaultComponentId;
+    cmd.command =           MAV_CMD_DO_MOUNT_CONTROL;
+    cmd.confirmation =      0;
+    cmd.param1 =            static_cast<float>(pitch);
+    cmd.param2 =            0;
+    cmd.param3 =            static_cast<float>(yaw);
+    cmd.param4 =            0;
+    cmd.param5 =            0;
+    cmd.param6 =            0;
+    cmd.param7 =            MAV_MOUNT_MODE_MAVLINK_TARGETING;
+    mavlink_msg_command_long_encode_chan(
+        _mavlink->getSystemId(),
+        _mavlink->getComponentId(),
+        priorityLink()->mavlinkChannel(),
+        &msg,
+        &cmd);
+    sendMessageOnLink(priorityLink(), msg);
+#endif
 }
 
 void Vehicle::gimbalPitchStep(int direction)
