@@ -30,12 +30,22 @@ bool CustomQuickInterface::_showGimbalControl = false;
 bool CustomQuickInterface::_useEmbeddedGimbal = true;
 bool CustomQuickInterface::_showAttitudeWidget = false;
 bool CustomQuickInterface::_showVirtualKeyboard = true;
+bool CustomQuickInterface::_enableNewGimbalControls = true;
+bool CustomQuickInterface::_gimbalPitchInverted = false;
+bool CustomQuickInterface::_gimbalYawInverted = false;
+bool CustomQuickInterface::_gimbalPitchPidEnabled = false;
+bool CustomQuickInterface::_gimbalYawPidEnabled = false;
 
 static const char* kGroupName       = "CustomSettings";
 static const char* kShowGimbalCtl   = "ShowGimbalCtl";
 static const char* kUseEmbeddedGimbal  = "UseEmbeddedGimbal";
 static const char* kShowAttitudeWidget = "ShowAttitudeWidget";
 static const char* kVirtualKeyboard = "ShowVirtualKeyboard";
+static const char* kEnableNewGimbalControls = "EnableNewGimbalControls";
+static const char* kGimbalPitchInverted = "GimbalPitchInverted";
+static const char* kGimbalYawInverted = "GimbalYawInverted";
+static const char* kGimbalPitchPidEnabled = "GimbalPitchPidEnabled";
+static const char* kGimbalYawPidEnabled = "GimbalYawPidEnabled";
 
 //-----------------------------------------------------------------------------
 CustomQuickInterface::CustomQuickInterface(QObject* parent)
@@ -60,6 +70,11 @@ CustomQuickInterface::initSettings() {
     _useEmbeddedGimbal = _settings->value(kUseEmbeddedGimbal, true).toBool();
     _showAttitudeWidget = _settings->value(kShowAttitudeWidget, false).toBool();
     _showVirtualKeyboard = _settings->value(kVirtualKeyboard, true).toBool();
+    _enableNewGimbalControls = _settings->value(kEnableNewGimbalControls, true).toBool();
+    _gimbalPitchInverted = _settings->value(kGimbalPitchInverted, false).toBool();
+    _gimbalYawInverted = _settings->value(kGimbalYawInverted, false).toBool();
+    _gimbalPitchPidEnabled = _settings->value(kGimbalPitchPidEnabled, false).toBool();
+    _gimbalYawPidEnabled = _settings->value(kGimbalYawPidEnabled, false).toBool();
 }
 
 //-----------------------------------------------------------------------------
@@ -109,5 +124,60 @@ CustomQuickInterface::setShowVirtualKeyboard(bool set)
         _showVirtualKeyboard = set;
         _settings->setValue(kVirtualKeyboard,set);
         emit showVirtualKeyboardChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setEnableNewGimbalControls(bool set)
+{
+    if(_enableNewGimbalControls != set && _settings) {
+        _enableNewGimbalControls = set;
+        _settings->setValue(kEnableNewGimbalControls,set);
+        emit enableNewGimbalControlsChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setGimbalPitchInverted(bool set)
+{
+    if(_gimbalPitchInverted != set && _settings) {
+        _gimbalPitchInverted = set;
+        _settings->setValue(kGimbalPitchInverted,set);
+        emit gimbalPitchInvertedChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setGimbalYawInverted(bool set)
+{
+    if(_gimbalYawInverted != set && _settings) {
+        _gimbalYawInverted = set;
+        _settings->setValue(kGimbalYawInverted,set);
+        emit gimbalYawInvertedChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setGimbalPitchPidEnabled(bool set)
+{
+    if(_gimbalPitchPidEnabled != set && _settings) {
+        _gimbalPitchPidEnabled = set;
+        _settings->setValue(kGimbalPitchPidEnabled,set);
+        emit gimbalPitchPidEnabledChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setGimbalYawPidEnabled(bool set)
+{
+    if(_gimbalYawPidEnabled != set && _settings) {
+        _gimbalYawPidEnabled = set;
+        _settings->setValue(kGimbalYawPidEnabled,set);
+        emit gimbalYawPidEnabledChanged();
     }
 }

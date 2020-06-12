@@ -210,3 +210,12 @@ void LinkInterface::stopMavlinkMessagesTimer() {
 
     _mavlinkMessagesTimers.clear();
 }
+
+void LinkInterface::resetMavlinkMessagesTimers()
+{
+    QMapIterator<int /* vehicle id */, MavlinkMessagesTimer*> iter(_mavlinkMessagesTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        _mavlinkMessagesTimers[iter.key()]->restartTimer();
+    }
+}

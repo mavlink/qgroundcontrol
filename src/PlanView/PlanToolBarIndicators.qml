@@ -243,7 +243,7 @@ Item {
     Row {
         id: actionLayer
 
-        anchors.rightMargin:    _margins
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 5.0
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: _margins

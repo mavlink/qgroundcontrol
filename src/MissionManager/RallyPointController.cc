@@ -279,6 +279,7 @@ void RallyPointController::removePoint(QObject* rallyPoint)
     } else {
         setCurrentRallyPoint(nullptr);
     }
+    setDirty(true);
 }
 
 void RallyPointController::setCurrentRallyPoint(QObject* rallyPoint)

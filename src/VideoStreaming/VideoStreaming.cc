@@ -80,6 +80,25 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 #endif
 #endif
 
+static void
+blacklist()
+{
+    GstRegistry* reg;
+
+    if ((reg = gst_registry_get()) == nullptr) {
+        return;
+    }
+
+    GstPluginFeature* plugin;
+
+    if ((plugin = gst_registry_lookup_feature(reg, "vaapidecodebin")) != nullptr) {
+        gst_plugin_feature_set_rank(plugin, GST_RANK_NONE);
+    }
+    if ((plugin = gst_registry_lookup_feature(reg, "bcmdec")) != nullptr) {
+        gst_plugin_feature_set_rank(plugin, GST_RANK_NONE);
+    }
+}
+
 void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debuglevel)
 {
 #if defined(QGC_GST_STREAMING)
@@ -150,6 +169,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
 #if defined(__ios__)
     gst_ios_post_init();
 #endif
+
+    blacklist();
 
     /* the plugin must be loaded before loading the qml file to register the
      * GstGLVideoItem qml item
