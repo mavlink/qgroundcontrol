@@ -201,12 +201,7 @@ private:
     void _setAppSettingsTranslators(void);
 
 
-    /**
-     * @brief Clamp a value based in the cookedMin and CookedMax values
-     *
-     * @tparam T
-     * @param variantValue
-     */
+    /// Clamp a value to be within cookedMin and cookedMax
     template<class T>
     void clamp(QVariant& variantValue) const {
         if (cookedMin().value<T>() > variantValue.value<T>()) {
@@ -216,44 +211,17 @@ private:
         }
     }
 
-    /**
-     * @brief Check if value is inside cooked limits
-     *
-     * @tparam T
-     * @param variantValue
-     */
     template<class T>
     bool isInCookedLimit(const QVariant& variantValue) const {
-        return cookedMin().value<T>() < variantValue.value<T>() && variantValue.value<T>() < cookedMax().value<T>();
+        return cookedMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= cookedMax().value<T>();
     }
 
-    /**
-     * @brief Check if value is inside raw limits
-     *
-     * @tparam T
-     * @param variantValue
-     */
     template<class T>
     bool isInRawLimit(const QVariant& variantValue) const {
-        return rawMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() < rawMax().value<T>();
+        return rawMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= rawMax().value<T>();
     }
 
-    /**
-     * @brief Check if value if over min limit
-     *
-     * @param variantValue
-     * @return true
-     * @return false
-     */
     bool isInRawMinLimit(const QVariant& variantValue) const;
-
-    /**
-     * @brief Check if value is lower than upper limit
-     *
-     * @param variantValue
-     * @return true
-     * @return false
-     */
     bool isInRawMaxLimit(const QVariant& variantValue) const;
 
     // Built in translators

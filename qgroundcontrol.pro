@@ -7,7 +7,7 @@
 # License terms set in COPYING.md
 # -------------------------------------------------
 
-QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in make files
+QMAKE_PROJECT_DEPTH = 0 # undocumented qmake flag to force absolute paths in makefiles
 
 # These are disabled until proven correct
 DEFINES += QGC_GST_TAISYNC_DISABLED
