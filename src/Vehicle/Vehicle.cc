@@ -428,11 +428,13 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _clockFactGroup(this)
     , _distanceSensorFactGroup(this)
 {
-    _commonInit();
-
+    // This will also set the settings based firmware/vehicle types. So it needs to happen first.
     if (_firmwareType == MAV_AUTOPILOT_TRACK) {
         trackFirmwareVehicleTypeChanges();
     }
+
+    _commonInit();
+
     connect(_settingsManager->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(_settingsManager->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
