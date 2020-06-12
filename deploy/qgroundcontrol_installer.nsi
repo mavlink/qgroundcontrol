@@ -85,7 +85,7 @@ doInstall:
 
   ; Driver location is http://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
   ; Whenever this driver is updated in the repo QGCCURRENTDRIVERVERSION must be bumped by 1
-  File deploy\driver.msi
+  File ${DRIVER_MSI}
 
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
