@@ -9,12 +9,13 @@
 
 # These are the Post Link steps which are common to all builds
 
+QMAKE_POST_LINK += echo "Post Link Common"
+
 #
 # Perform platform specific setup
 #
 
 MacBuild {
-    QMAKE_POST_LINK += echo "Post Link Common"
 
     # Qt is screwed up if you use qmake to create an XCode Project which has a DESTDIR set on it.
     # This is because XCode builds create the .app in BUILT_PRODUCTS_DIR. If you use a DESTDIR then
