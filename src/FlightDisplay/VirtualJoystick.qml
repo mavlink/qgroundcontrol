@@ -28,7 +28,7 @@ Item {
         repeat:     true
         onTriggered: {
             if (activeVehicle) {
-                activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, -rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+                activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
             }
         }
     }

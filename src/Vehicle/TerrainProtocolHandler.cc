@@ -146,7 +146,7 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate& swCorner, ui
                         _currentTerrainRequest.grid_spacing,
                         gridBit,
                         terrainData);
-            _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+            _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
         }
     }
 }

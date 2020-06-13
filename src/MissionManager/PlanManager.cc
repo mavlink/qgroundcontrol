@@ -119,7 +119,7 @@ void PlanManager::_writeMissionCount(void)
                                         _writeMissionItems.count(),
                                         _planType);
 
-    _vehicle->sendMessageOnLink(_dedicatedLink, message);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
     _startAckTimeout(AckMissionRequest);
 }
 
@@ -161,7 +161,7 @@ void PlanManager::_requestList(void)
                                                MAV_COMP_ID_AUTOPILOT1,
                                                _planType);
 
-    _vehicle->sendMessageOnLink(_dedicatedLink, message);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
     _startAckTimeout(AckMissionCount);
 }
 
@@ -301,7 +301,7 @@ void PlanManager::_readTransactionComplete(void)
                                       MAV_MISSION_ACCEPTED,
                                       _planType);
     
-    _vehicle->sendMessageOnLink(_dedicatedLink, message);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
 
     _finishTransaction(true);
 }
@@ -369,7 +369,7 @@ void PlanManager::_requestNextMissionItem(void)
                 _planType);
     }
     
-    _vehicle->sendMessageOnLink(_dedicatedLink, message);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
     _startAckTimeout(AckMissionItem);
 }
 
@@ -586,7 +586,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                            _planType);
     }
     
-    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, messageOut);
     _startAckTimeout(AckMissionRequest);
 }
 
@@ -928,7 +928,7 @@ void PlanManager::_removeAllWorker(void)
                                             _vehicle->id(),
                                             MAV_COMP_ID_AUTOPILOT1,
                                             _planType);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), message);
     _startAckTimeout(AckMissionClearAll);
 }
 

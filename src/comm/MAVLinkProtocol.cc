@@ -277,7 +277,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 if (forwardingLink) {
                     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
                     int len = mavlink_msg_to_send_buffer(buf, &_message);
-                    forwardingLink->writeBytesSafe((const char*)buf, len);
+                    forwardingLink->writeBytesThreadSafe((const char*)buf, len);
                 }
             }
 

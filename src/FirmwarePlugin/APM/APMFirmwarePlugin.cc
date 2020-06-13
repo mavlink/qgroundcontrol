@@ -945,7 +945,7 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
                 &msg,
                 &cmd);
 
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), msg);
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -1139,5 +1139,5 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
                                           vehicle->priorityLink()->mavlinkChannel(),
                                           &message,
                                           &globalPositionInt);
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), message);
 }
