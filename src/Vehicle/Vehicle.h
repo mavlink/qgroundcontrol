@@ -561,8 +561,6 @@ public:
     Q_PROPERTY(QString              formatedMessages        READ formatedMessages                                       NOTIFY formatedMessagesChanged)
     Q_PROPERTY(QString              formatedMessage         READ formatedMessage                                        NOTIFY formatedMessageChanged)
     Q_PROPERTY(QString              latestError             READ latestError                                            NOTIFY latestErrorChanged)
-    Q_PROPERTY(int                  joystickMode            READ joystickMode           WRITE setJoystickMode           NOTIFY joystickModeChanged)
-    Q_PROPERTY(QStringList          joystickModes           READ joystickModes                                          CONSTANT)
     Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled        WRITE setJoystickEnabled        NOTIFY joystickEnabledChanged)
     Q_PROPERTY(bool                 active                  READ active                 WRITE setActive                 NOTIFY activeChanged)
     Q_PROPERTY(int                  flowImageIndex          READ flowImageIndex                                         NOTIFY flowImageIndexChanged)
@@ -809,25 +807,11 @@ public:
     QGeoCoordinate coordinate() { return _coordinate; }
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
-    typedef enum {
-        JoystickModeRC,         ///< Joystick emulates an RC Transmitter
-        JoystickModeAttitude,
-        JoystickModePosition,
-        JoystickModeForce,
-        JoystickModeVelocity,
-        JoystickModeMax
-    } JoystickMode_t;
-
     void updateFlightDistance(double distance);
 
-    int joystickMode();
-    void setJoystickMode(int mode);
-
-    /// List of joystick mode names
-    QStringList joystickModes();
-
-    bool joystickEnabled();
-    void setJoystickEnabled(bool enabled);
+    bool joystickEnabled            ();
+    void setJoystickEnabled         (bool enabled);
+    void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons);
 
     // Is vehicle active with respect to current active vehicle in QGC
     bool active();
@@ -845,7 +829,7 @@ public:
 
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected
-    bool sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
+    bool sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message);
 
     /// Sends the specified messages multiple times to the vehicle in order to attempt to
     /// guarantee that it makes it to the vehicle.
@@ -1145,7 +1129,6 @@ public slots:
 signals:
     void allLinksInactive               (Vehicle* vehicle);
     void coordinateChanged              (QGeoCoordinate coordinate);
-    void joystickModeChanged            (int mode);
     void joystickEnabledChanged         (bool enabled);
     void activeChanged                  (bool active);
     void mavlinkMessageReceived         (const mavlink_message_t& message);
@@ -1180,14 +1163,9 @@ signals:
     void linksPropertiesChanged         ();
     void textMessageReceived            (int uasid, int componentid, int severity, QString text);
     void checkListStateChanged          ();
-
     void messagesReceivedChanged        ();
     void messagesSentChanged            ();
     void messagesLostChanged            ();
-
-    /// Used internally to move sendMessage call to main thread
-    void _sendMessageOnLinkOnThread(LinkInterface* link, mavlink_message_t message);
-
     void messageTypeChanged             ();
     void newMessageCountChanged         ();
     void messageCountChanged            ();
@@ -1258,7 +1236,6 @@ signals:
 private slots:
     void _mavlinkMessageReceived        (LinkInterface* link, mavlink_message_t message);
     void _linkInactiveOrDeleted         (LinkInterface* link);
-    void _sendMessageOnLink             (LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext       ();
     void _parametersReady               (bool parametersReady);
     void _remoteControlRSSIChanged      (uint8_t rssi);
@@ -1388,7 +1365,6 @@ private:
 
     QList<LinkInterface*> _links;
 
-    JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;
 
     UAS* _uas;
@@ -1436,6 +1412,7 @@ private:
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
     CheckList       _checkListState = CheckListNotSetup;
+    QMutex          _sendMessageOnLinkMutex;
 
     QGCCameraManager* _cameras;
 
@@ -1648,7 +1625,5 @@ private:
 
     // Settings keys
     static const char* _settingsGroup;
-    static const char* _joystickModeSettingsKey;
     static const char* _joystickEnabledSettingsKey;
-
 };

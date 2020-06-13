@@ -136,33 +136,11 @@ public:
     bool connect(void);
     bool disconnect(void);
 
-public slots:
+    void writeBytesThreadSafe(const char *bytes, int length);
 
-    /**
-     * @brief This method allows to write bytes to the interface.
-     *
-     * If the underlying communication is packet oriented,
-     * one write command equals a datagram. In case of serial
-     * communication arbitrary byte lengths can be written. The method ensures
-     * thread safety regardless of the underlying LinkInterface implementation.
-     *
-     * @param bytes:  The pointer to the byte array containing the data
-     * @param length: The length of the data array
-     **/
-    void writeBytesSafe(const char *bytes, int length)
-    {
-        emit _invokeWriteBytes(QByteArray(bytes, length));
-    }
-
-private slots:
-    virtual void _writeBytes(const QByteArray) = 0;
-
-    void _activeChanged(bool active, int vehicle_id);
-    
 signals:
     void autoconnectChanged(bool autoconnect);
     void activeChanged(LinkInterface* link, bool active, int vehicle_id);
-    void _invokeWriteBytes(QByteArray);
     void highLatencyChanged(bool highLatency);
 
     /// Signalled when a link suddenly goes away due to it being removed by for example pulling the cable to the connection.
@@ -231,6 +209,9 @@ protected:
     SharedLinkConfigurationPointer _config;
     bool _highLatency;
 
+private slots:
+    void _activeChanged(bool active, int vehicle_id);
+
 private:
     /**
      * @brief logDataRateToBuffer Stores transmission times/amounts for statistics
@@ -288,6 +269,8 @@ private:
      */
     void stopMavlinkMessagesTimer();
 
+    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
+
     bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
     uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
     
@@ -307,7 +290,8 @@ private:
     quint64 _outDataWriteAmounts[_dataRateBufferSize]; // In bytes
     qint64  _outDataWriteTimes[_dataRateBufferSize]; // in ms
     
-    mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
+    mutable QMutex _dataRateMutex;
+    mutable QMutex _writeBytesMutex;
 
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet

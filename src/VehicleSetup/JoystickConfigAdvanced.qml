@@ -128,22 +128,6 @@ Item {
             }
         }
         //-----------------------------------------------------------------
-        //-- Mode
-        QGCLabel {
-            Layout.alignment:   Qt.AlignVCenter
-            text:               qsTr("Joystick mode:")
-            visible:            advancedSettings.checked
-        }
-        QGCComboBox {
-            enabled:            advancedSettings.checked
-            currentIndex:       activeVehicle.joystickMode
-            width:              ScreenTools.defaultFontPixelWidth * 20
-            model:              activeVehicle.joystickModes
-            onActivated:        activeVehicle.joystickMode = index
-            Layout.alignment:   Qt.AlignVCenter
-            visible:            advancedSettings.checked
-        }
-        //-----------------------------------------------------------------
         //-- Axis Message Frequency
         QGCLabel {
             text:               qsTr("Axis frequency (Hz):")

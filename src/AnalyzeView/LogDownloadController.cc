@@ -478,7 +478,7 @@ LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t co
                     &msg,
                     qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId(),
                     id, offset, count);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     }
 }
 
@@ -508,7 +508,7 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
                     _vehicle->defaultComponentId(),
                     start,
                     end);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
         //-- Wait 5 seconds before bitching about not getting anything
         _timer.start(5000);
     }
@@ -674,7 +674,7 @@ LogDownloadController::eraseAll(void)
                     _vehicle->priorityLink()->mavlinkChannel(),
                     &msg,
                     qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
         refresh();
     }
 }

@@ -891,5 +891,5 @@ void FileManager::_sendRequestNoAck(Request* request)
                                                  0,                  // Target component
                                                  (uint8_t*)request); // Payload
     
-    _vehicle->sendMessageOnLink(link, message);
+    _vehicle->sendMessageOnLinkThreadSafe(link, message);
 }
