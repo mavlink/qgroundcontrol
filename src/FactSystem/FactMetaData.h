@@ -285,11 +285,7 @@ private:
         Translator    cookedTranslator;
     };
 
-    static const AppSettingsTranslation_s* _findAppSettingsHorizontalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsVerticalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsWeightUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsSpeedUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsUnitsTranslation(const QString& rawUnits, UnitTypes type);
 
     static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
 
