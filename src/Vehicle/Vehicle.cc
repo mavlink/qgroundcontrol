@@ -59,7 +59,6 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 const char* Vehicle::_settingsGroup =               "Vehicle%1";        // %1 replaced with mavlink system id
-const char* Vehicle::_joystickModeSettingsKey =     "JoystickMode";
 const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
 
 const char* Vehicle::_rollFactName =                "roll";
@@ -116,7 +115,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
     , _mav(nullptr)
@@ -235,7 +233,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _addLink(link);
 
-    connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
 
@@ -328,7 +325,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _soloFirmware(false)
     , _toolbox(qgcApp()->toolbox())
     , _settingsManager(_toolbox->settingsManager())
-    , _joystickMode(JoystickModeRC)
     , _joystickEnabled(false)
     , _uas(nullptr)
     , _mav(nullptr)
@@ -1846,7 +1842,7 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
                                ping.seq,
                                message.sysid,
                                message.compid);
-    sendMessageOnLink(link, msg);
+    sendMessageOnLinkThreadSafe(link, msg);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
@@ -2104,40 +2100,24 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
     }
 }
 
-bool Vehicle::sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
+bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {
-    if (!link || !_links.contains(link) || !link->isConnected()) {
+    if (!link->isConnected()) {
         return false;
     }
 
-    emit _sendMessageOnLinkOnThread(link, message);
-
-    return true;
-}
-
-void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
-{
-    // Make sure this is still a good link
-    if (!link || !_links.contains(link) || !link->isConnected()) {
-        return;
-    }
-
-#if 0
-    // Leaving in for ease in Mav 2.0 testing
-    mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(link->mavlinkChannel());
-    qDebug() << "_sendMessageOnLink" << mavlinkStatus << link->mavlinkChannel() << mavlinkStatus->flags << message.magic;
-#endif
-
     // Give the plugin a chance to adjust
-    _firmwarePlugin->adjustOutgoingMavlinkMessage(this, link, &message);
+    _firmwarePlugin->adjustOutgoingMavlinkMessageThreadSafe(this, link, &message);
 
     // Write message into buffer, prepending start sign
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int len = mavlink_msg_to_send_buffer(buffer, &message);
 
-    link->writeBytesSafe((const char*)buffer, len);
+    link->writeBytesThreadSafe((const char*)buffer, len);
     _messagesSent++;
     emit messagesSentChanged();
+
+    return true;
 }
 
 void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
@@ -2426,11 +2406,6 @@ void Vehicle::_loadSettings()
     }
     QSettings settings;
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-    bool convertOk;
-    _joystickMode = static_cast<JoystickMode_t>(settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk));
-    if (!convertOk) {
-        _joystickMode = JoystickModeRC;
-    }
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (_toolbox->joystickManager()->joysticks().count()) {
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
@@ -2441,42 +2416,13 @@ void Vehicle::_loadSettings()
 void Vehicle::_saveSettings()
 {
     QSettings settings;
-
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-
-    settings.setValue(_joystickModeSettingsKey, _joystickMode);
 
     // The joystick enabled setting should only be changed if a joystick is present
     // since the checkbox can only be clicked if one is present
     if (_toolbox->joystickManager()->joysticks().count()) {
         settings.setValue(_joystickEnabledSettingsKey, _joystickEnabled);
     }
-}
-
-int Vehicle::joystickMode()
-{
-    return _joystickMode;
-}
-
-void Vehicle::setJoystickMode(int mode)
-{
-    if (mode < 0 || mode >= JoystickModeMax) {
-        qCWarning(VehicleLog) << "Invalid joystick mode" << mode;
-        return;
-    }
-
-    _joystickMode = (JoystickMode_t)mode;
-    _saveSettings();
-    emit joystickModeChanged(mode);
-}
-
-QStringList Vehicle::joystickModes()
-{
-    QStringList list;
-
-    list << "Normal" << "Attitude" << "Position" << "Force" << "Velocity";
-
-    return list;
 }
 
 bool Vehicle::joystickEnabled()
@@ -2571,7 +2517,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
                                        id(),
                                        newBaseMode,
                                        custom_mode);
-        sendMessageOnLink(priorityLink(), msg);
+        sendMessageOnLinkThreadSafe(priorityLink(), msg);
     } else {
         qWarning() << "FirmwarePlugin::setFlightMode failed, flightMode:" << flightMode;
     }
@@ -2647,7 +2593,7 @@ void Vehicle::requestDataStream(MAV_DATA_STREAM stream, uint16_t rate, bool send
         // We use sendMessageMultiple since we really want these to make it to the vehicle
         sendMessageMultiple(msg);
     } else {
-        sendMessageOnLink(priorityLink(), msg);
+        sendMessageOnLinkThreadSafe(priorityLink(), msg);
     }
 }
 
@@ -2656,7 +2602,7 @@ void Vehicle::_sendMessageMultipleNext()
     if (_nextSendMessageMultipleIndex < _sendMessageMultipleList.count()) {
         qCDebug(VehicleLog) << "_sendMessageMultipleNext:" << _sendMessageMultipleList[_nextSendMessageMultipleIndex].message.msgid;
 
-        sendMessageOnLink(priorityLink(), _sendMessageMultipleList[_nextSendMessageMultipleIndex].message);
+        sendMessageOnLinkThreadSafe(priorityLink(), _sendMessageMultipleList[_nextSendMessageMultipleIndex].message);
 
         if (--_sendMessageMultipleList[_nextSendMessageMultipleIndex].retryCount <= 0) {
             _sendMessageMultipleList.removeAt(_nextSendMessageMultipleIndex);
@@ -2826,7 +2772,7 @@ void Vehicle::_sendQGCTimeToVehicle()
                                         &msg,
                                         &cmd);
 
-    sendMessageOnLink(priorityLink(), msg);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
 void Vehicle::disconnectInactiveVehicle()
@@ -2884,13 +2830,13 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if ( !_joystickEnabled && !_highLatencyLink) {
-        _uas->setExternalControlSetpoint(
+    if (!_joystickEnabled) {
+        sendJoystickDataThreadSafe(
             static_cast<float>(roll),
             static_cast<float>(pitch),
             static_cast<float>(yaw),
             static_cast<float>(thrust),
-            0, JoystickModeRC);
+            0);
     }
 }
 
@@ -3362,7 +3308,7 @@ void Vehicle::setCurrentMissionSequence(int seq)
         static_cast<uint8_t>(id()),
         _compID,
         static_cast<uint16_t>(seq));
-    sendMessageOnLink(priorityLink(), msg);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
 void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
@@ -3500,7 +3446,7 @@ void Vehicle::_sendMavCommandAgain()
                                              &cmd);
     }
 
-    sendMessageOnLink(priorityLink(), msg);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
 void Vehicle::_sendNextQueuedMavCommand()
@@ -3691,7 +3637,7 @@ void Vehicle::rebootVehicle()
                                          priorityLink()->mavlinkChannel(),
                                          &msg,
                                          &cmd);
-    sendMessageOnLink(priorityLink(), msg);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
 void Vehicle::setSoloFirmware(bool soloFirmware)
@@ -3857,7 +3803,7 @@ void Vehicle::_ackMavlinkLogData(uint16_t sequence)
                 priorityLink()->mavlinkChannel(),
                 &msg,
                 &ack);
-    sendMessageOnLink(priorityLink(), msg);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
 void Vehicle::_handleMavlinkLoggingData(mavlink_message_t& message)
@@ -4426,7 +4372,7 @@ void Vehicle::sendParamMapRC(const QString& paramName, double scale, double cent
                                        static_cast<float>(centerValue),
                                        static_cast<float>(minValue),
                                        static_cast<float>(maxValue));
-    sendMessageOnLink(priorityLink(), message);
+    sendMessageOnLinkThreadSafe(priorityLink(), message);
 }
 
 void Vehicle::clearAllParamMapRC(void)
@@ -4445,8 +4391,37 @@ void Vehicle::clearAllParamMapRC(void)
                                            -2,                                                  // Disable map for specified tuning id
                                            i,                                                   // tuning id
                                            0, 0, 0, 0);                                         // unused
-        sendMessageOnLink(priorityLink(), message);
+        sendMessageOnLinkThreadSafe(priorityLink(), message);
     }
+}
+
+void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
+{
+    if (_highLatencyLink) {
+        return;
+    }
+
+    mavlink_message_t message;
+    
+    // Incoming values are in the range -1:1
+    float axesScaling =         1.0 * 1000.0;
+    float newRollCommand =      roll * axesScaling;
+    float newPitchCommand  =    pitch * axesScaling;    // Joystick data is reverse of mavlink values
+    float newYawCommand    =    yaw * axesScaling;
+    float newThrustCommand =    thrust * axesScaling;
+    
+    mavlink_msg_manual_control_pack_chan(
+        static_cast<uint8_t>(_mavlink->getSystemId()),
+        static_cast<uint8_t>(_mavlink->getComponentId()),
+        priorityLink()->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_id),
+        static_cast<int16_t>(newPitchCommand),
+        static_cast<int16_t>(newRollCommand),
+        static_cast<int16_t>(newThrustCommand),
+        static_cast<int16_t>(newYawCommand),
+        buttons);
+    sendMessageOnLinkThreadSafe(priorityLink(), message);
 }
 
 //-----------------------------------------------------------------------------

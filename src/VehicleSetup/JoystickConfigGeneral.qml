@@ -200,7 +200,7 @@ Item {
 
                     Connections {
                         target:             _activeJoystick
-                        onManualControl: {
+                        onAxisValues: {
                             rollAxis.axisValue      = roll  * 32768.0
                             pitchAxis.axisValue     = pitch * 32768.0
                             yawAxis.axisValue       = yaw   * 32768.0

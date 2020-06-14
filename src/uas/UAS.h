@@ -193,14 +193,6 @@ public slots:
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
 
-    /** @brief Set the values for the manual control of the vehicle */
-    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
-
-    /** @brief Set the values for the 6dof manual control of the vehicle */
-#ifndef __mobile__
-    void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
-#endif
-
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
 

@@ -193,18 +193,8 @@ signals:
     void accumulatorChanged         (bool accumulator);
     void enabledChanged             (bool enabled);
     void circleCorrectionChanged    (bool circleCorrection);
-
-    /// Signal containing new joystick information
-    ///     @param roll:            Range is -1:1, negative meaning roll left, positive meaning roll right
-    ///     @param pitch:           Range i -1:1, negative meaning pitch down, positive meaning pitch up
-    ///     @param yaw:             Range is -1:1, negative meaning yaw left, positive meaning yaw right
-    ///     @param throttle:        Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
-    ///     @param buttons:         Button bitmap
-    ///     @param joystickMmode:   Current joystick mode
-    void manualControl              (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
+    void axisValues                 (float roll, float pitch, float yaw, float throttle);
     void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
-
-    void buttonActionTriggered      (int action);
 
     void gimbalEnabledChanged       ();
     void axisFrequencyChanged       ();

@@ -969,7 +969,7 @@ void LinkManager::_activeLinkCheck(void)
     if (!found && link) {
         // See if we can get an NSH prompt on this link
         bool foundNSHPrompt = false;
-        link->writeBytesSafe("\r", 1);
+        link->writeBytesThreadSafe("\r", 1);
         QSignalSpy spy(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)));
         if (spy.wait(100)) {
             QList<QVariant> arguments = spy.takeFirst();

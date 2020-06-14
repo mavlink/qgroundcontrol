@@ -69,7 +69,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
                                          &messageOut,
                                          &missionItem);
 
-    _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, messageOut);
     _startAckTimeout(AckGuidedItem);
     emit inProgressChanged(true);
 }

@@ -160,8 +160,12 @@ public:
     static MockLink* startAPMArduSubMockLink     (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduRoverMockLink   (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
+signals:
+    void writeBytesQueuedSignal(const QByteArray bytes);
+
 private slots:
-    virtual void _writeBytes(const QByteArray bytes);
+    void _writeBytes(const QByteArray bytes) final;
+    void _writeBytesQueued(const QByteArray bytes);
 
 private slots:
     void _run1HzTasks(void);
