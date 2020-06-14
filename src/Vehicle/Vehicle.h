@@ -1412,7 +1412,6 @@ private:
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
     CheckList       _checkListState = CheckListNotSetup;
-    QMutex          _sendMessageOnLinkMutex;
 
     QGCCameraManager* _cameras;
 

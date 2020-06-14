@@ -2102,14 +2102,12 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
 
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {
-    QMutexLocker lock(&_sendMessageOnLinkMutex);
-
     if (!link->isConnected()) {
         return false;
     }
 
     // Give the plugin a chance to adjust
-    _firmwarePlugin->adjustOutgoingMavlinkMessage(this, link, &message);
+    _firmwarePlugin->adjustOutgoingMavlinkMessageThreadSafe(this, link, &message);
 
     // Write message into buffer, prepending start sign
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
