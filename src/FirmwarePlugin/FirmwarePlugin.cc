@@ -156,11 +156,8 @@ bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_mess
     return true;
 }
 
-void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void FirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle* /*vehicle*/, LinkInterface* /*outgoingLink*/, mavlink_message_t* /*message*/)
 {
-    Q_UNUSED(vehicle);
-    Q_UNUSED(outgoingLink);
-    Q_UNUSED(message);
     // Generic plugin does no message adjustment
 }
 
