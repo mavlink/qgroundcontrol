@@ -193,10 +193,13 @@ public:
     /// Called before any mavlink message is sent to the Vehicle so plugin can adjust any message characteristics.
     /// This is handy to adjust or differences in mavlink spec implementations such that the base code can remain
     /// mavlink generic.
+    ///
+    /// This method must be thread safe.
+    ///
     ///     @param vehicle Vehicle message came from
     ///     @param outgoingLink Link that messae is going out on
     ///     @param message[in,out] Mavlink message to adjust if needed.
-    virtual void adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
+    virtual void adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
 
     /// Determines how to handle the first item of the mission item list. Internally to QGC the first item
     /// is always the home position.
