@@ -1012,25 +1012,26 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnit
             continue;
         }
 
-        uint settingsUnits = 0;
+        uint unitOption = 0;
+        auto unitsSettings = qgcApp()->toolbox()->settingsManager()->unitsSettings();
         switch (type) {
         case UnitHorizontalDistance:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->horizontalDistanceUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->horizontalDistanceUnits()->rawValue().toUInt();
             break;
         case UnitVerticalDistance:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->verticalDistanceUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->verticalDistanceUnits()->rawValue().toUInt();
             break;
         case UnitArea:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->areaUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->areaUnits()->rawValue().toUInt();
             break;
         case UnitSpeed:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->speedUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->speedUnits()->rawValue().toUInt();
             break;
         case UnitTemperature:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->temperatureUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->temperatureUnits()->rawValue().toUInt();
             break;
         case UnitWeight:
-            settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->weightUnits()->rawValue().toUInt();
+            unitOption = unitsSettings->weightUnits()->rawValue().toUInt();
             break;
         default:
             assert(false);
@@ -1038,7 +1039,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnit
         }
 
         if (pAppSettingsTranslation->unitType == type
-                && pAppSettingsTranslation->unitOption == settingsUnits) {
+                && pAppSettingsTranslation->unitOption == unitOption) {
             return pAppSettingsTranslation;
         }
     }
