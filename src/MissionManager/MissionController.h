@@ -15,6 +15,7 @@
 #include "QGCLoggingCategory.h"
 #include "KMLPlanDomDocument.h"
 #include "QGCGeoBoundingCube.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QHash>
 
@@ -104,6 +105,9 @@ public:
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
     Q_PROPERTY(double               minAMSLAltitude                 MEMBER _minAMSLAltitude             NOTIFY minAMSLAltitudeChanged)          ///< Minimum altitude associated with this mission. Used to calculate percentages for terrain status.
     Q_PROPERTY(double               maxAMSLAltitude                 MEMBER _maxAMSLAltitude             NOTIFY maxAMSLAltitudeChanged)          ///< Maximum altitude associated with this mission. Used to calculate percentages for terrain status.
+
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode globalAltitudeMode         READ globalAltitudeMode         WRITE setGlobalAltitudeMode NOTIFY globalAltitudeModeChanged)   ///< AltitudeModeNone indicates the plan can used mixed modes
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode globalAltitudeModeDefault  READ globalAltitudeModeDefault  NOTIFY globalAltitudeModeChanged)                               ///< Default to use for newly created items
 
     Q_INVOKABLE void removeVisualItem(int viIndex);
 
@@ -246,6 +250,10 @@ public:
 
     bool isEmpty                    (void) const;
 
+    QGroundControlQmlGlobal::AltitudeMode globalAltitudeMode(void);
+    QGroundControlQmlGlobal::AltitudeMode globalAltitudeModeDefault(void);
+    void setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altMode);
+
 signals:
     void visualItemsChanged                 (void);
     void waypointPathChanged                (void);
@@ -284,6 +292,7 @@ signals:
     void recalcTerrainProfile               (void);
     void _recalcMissionFlightStatusSignal   (void);
     void _recalcFlightPathSegmentsSignal    (void);
+    void globalAltitudeModeChanged          (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
@@ -383,6 +392,8 @@ private:
     double                      _maxAMSLAltitude =              0;
     bool                        _missionContainsVTOLTakeoff =   false;
 
+    QGroundControlQmlGlobal::AltitudeMode _globalAltMode = QGroundControlQmlGlobal::AltitudeModeRelative;
+
     static const char*  _settingsGroup;
 
     // Json file keys for persistence
@@ -394,6 +405,7 @@ private:
     static const char*  _jsonItemsKey;
     static const char*  _jsonPlannedHomePositionKey;
     static const char*  _jsonParamsKey;
+    static const char*  _jsonGlobalPlanAltitudeModeKey;
 
     // Deprecated V1 format keys
     static const char*  _jsonMavAutopilotKey;

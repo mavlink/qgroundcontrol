@@ -46,6 +46,7 @@ const char* MissionController::_jsonVehicleTypeKey =            "vehicleType";
 const char* MissionController::_jsonCruiseSpeedKey =            "cruiseSpeed";
 const char* MissionController::_jsonHoverSpeedKey =             "hoverSpeed";
 const char* MissionController::_jsonParamsKey =                 "params";
+const char* MissionController::_jsonGlobalPlanAltitudeModeKey = "globalPlanAltitudeMode";
 
 // Deprecated V1 format keys
 const char* MissionController::_jsonComplexItemsKey =           "complexItems";
@@ -65,11 +66,10 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     _resetMissionFlightStatus();
 
     _updateTimer.setSingleShot(true);
-    connect(&_updateTimer, &QTimer::timeout, this, &MissionController::_updateTimeout);
 
-    connect(_planViewSettings->takeoffItemNotRequired(), &Fact::rawValueChanged, this, &MissionController::_takeoffItemNotRequiredChanged);
-
-    connect(this, &MissionController::missionDistanceChanged,  this, &MissionController::recalcTerrainProfile);
+    connect(&_updateTimer,                                  &QTimer::timeout,                           this, &MissionController::_updateTimeout);
+    connect(_planViewSettings->takeoffItemNotRequired(),    &Fact::rawValueChanged,                     this, &MissionController::_takeoffItemNotRequiredChanged);
+    connect(this,                                           &MissionController::missionDistanceChanged, this, &MissionController::recalcTerrainProfile);
 
     // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &MissionController::_recalcMissionFlightStatusSignal, this, &MissionController::_recalcMissionFlightStatus,   Qt::QueuedConnection);
@@ -614,6 +614,8 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
         return false;
     }
 
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
+
     // Read complex items
     QList<SurveyComplexItem*> surveyItems;
     QJsonArray complexArray(json[_jsonComplexItemsKey].toArray());
@@ -711,10 +713,13 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
         { _jsonVehicleTypeKey,              QJsonValue::Double, false },
         { _jsonCruiseSpeedKey,              QJsonValue::Double, false },
         { _jsonHoverSpeedKey,               QJsonValue::Double, false },
+        { _jsonGlobalPlanAltitudeModeKey,   QJsonValue::Double, false },
     };
     if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
         return false;
     }
+
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
 
     qCDebug(MissionControllerLog) << "MissionController::_loadJsonMissionFileV2 itemCount:" << json[_jsonItemsKey].toArray().count();
 
@@ -745,6 +750,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     }
     if (json.contains(_jsonHoverSpeedKey)) {
         appSettings->offlineEditingHoverSpeed()->setRawValue(json[_jsonHoverSpeedKey].toDouble());
+    }
+    if (json.contains(_jsonGlobalPlanAltitudeModeKey)) {
+        setGlobalAltitudeMode(json[_jsonGlobalPlanAltitudeModeKey].toVariant().value<QGroundControlQmlGlobal::AltitudeMode>());
     }
 
     QGeoCoordinate homeCoordinate;
@@ -1044,6 +1052,8 @@ bool MissionController::loadTextFile(QFile& file, QString& errorString)
     QByteArray  bytes = file.readAll();
     QTextStream stream(bytes);
 
+    setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeModeNone);   // Mixed mode
+
     QmlObjectListModel* loadedVisualItems = new QmlObjectListModel(this);
     if (!_loadTextMissionFile(stream, loadedVisualItems, errorStr)) {
         errorString = errorMessage.arg(errorStr);
@@ -1080,11 +1090,12 @@ void MissionController::save(QJsonObject& json)
     }
     QJsonValue coordinateValue;
     JsonHelper::saveGeoCoordinate(settingsItem->coordinate(), true /* writeAltitude */, coordinateValue);
-    json[_jsonPlannedHomePositionKey]   = coordinateValue;
-    json[_jsonFirmwareTypeKey]          = _controllerVehicle->firmwareType();
-    json[_jsonVehicleTypeKey]           = _controllerVehicle->vehicleType();
-    json[_jsonCruiseSpeedKey]           = _controllerVehicle->defaultCruiseSpeed();
-    json[_jsonHoverSpeedKey]            = _controllerVehicle->defaultHoverSpeed();
+    json[_jsonPlannedHomePositionKey]       = coordinateValue;
+    json[_jsonFirmwareTypeKey]              = _controllerVehicle->firmwareType();
+    json[_jsonVehicleTypeKey]               = _controllerVehicle->vehicleType();
+    json[_jsonCruiseSpeedKey]               = _controllerVehicle->defaultCruiseSpeed();
+    json[_jsonHoverSpeedKey]                = _controllerVehicle->defaultHoverSpeed();
+    json[_jsonGlobalPlanAltitudeModeKey]    = _globalAltMode;
 
     // Save the visual items
 
@@ -2587,4 +2598,26 @@ MissionController::SendToVehiclePreCheckState MissionController::sendToVehiclePr
         return SendToVehiclePreCheckStateFirwmareVehicleMismatch;
     }
     return SendToVehiclePreCheckStateOk;
+}
+
+QGroundControlQmlGlobal::AltitudeMode MissionController::globalAltitudeMode(void)
+{
+    return _globalAltMode;
+}
+
+QGroundControlQmlGlobal::AltitudeMode MissionController::globalAltitudeModeDefault(void)
+{
+    if (_globalAltMode == QGroundControlQmlGlobal::AltitudeModeNone) {
+        return QGroundControlQmlGlobal::AltitudeModeRelative;
+    } else {
+        return _globalAltMode;
+    }
+}
+
+void MissionController::setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altMode)
+{
+    if (_globalAltMode != altMode) {
+        _globalAltMode = altMode;
+        emit globalAltitudeModeChanged();
+    }
 }

@@ -51,7 +51,6 @@ public:
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
-    Q_PROPERTY(bool                     supportsTerrain         READ supportsTerrain                        NOTIFY supportsTerrainChanged)
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(void);
@@ -94,7 +93,6 @@ public:
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
-    bool        supportsTerrain (void) const { return _supportsTerrain; }
 
     void        setFlyView(bool flyView) { _flyView = flyView; }
 
@@ -117,7 +115,6 @@ signals:
     void currentPlanFileChanged ();
     void planCreatorsChanged    (QmlObjectListModel* planCreators);
     void managerVehicleChanged  (Vehicle* managerVehicle);
-    void supportsTerrainChanged (bool supportsTerrain);
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
@@ -128,7 +125,6 @@ private slots:
     void _sendGeoFenceComplete      (void);
     void _sendRallyPointsComplete   (void);
     void _updatePlanCreatorsList    (void);
-    void _updateSupportsTerrain     (void);
 #if defined(QGC_AIRMAP_ENABLED)
     void _startFlightPlanning       (void);
 #endif
@@ -152,5 +148,4 @@ private:
     QString                 _currentPlanFile;
     bool                    _deleteWhenSendCompleted =  false;
     QmlObjectListModel*     _planCreators =             nullptr;
-    bool                    _supportsTerrain =          false;
 };
