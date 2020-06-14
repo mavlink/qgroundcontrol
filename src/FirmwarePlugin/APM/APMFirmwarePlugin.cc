@@ -289,10 +289,8 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
                                         &paramValue);
 }
 
-void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
-    Q_UNUSED(vehicle);
-
     mavlink_param_set_t     paramSet;
     mavlink_param_union_t   paramUnion;
 
@@ -336,7 +334,9 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
         qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
     }
 
+    _adjustOutgoingMavlinkMutex.lock();
     mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
+    _adjustOutgoingMavlinkMutex.unlock();
 }
 
 bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message)
@@ -508,11 +508,11 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
     return true;
 }
 
-void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void APMFirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
     switch (message->msgid) {
     case MAVLINK_MSG_ID_PARAM_SET:
-        _handleOutgoingParamSet(vehicle, outgoingLink, message);
+        _handleOutgoingParamSetThreadSafe(vehicle, outgoingLink, message);
         break;
     }
 }
@@ -945,7 +945,7 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
                 &msg,
                 &cmd);
 
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), msg);
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -1139,5 +1139,5 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
                                           vehicle->priorityLink()->mavlinkChannel(),
                                           &message,
                                           &globalPositionInt);
-    vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), message);
 }

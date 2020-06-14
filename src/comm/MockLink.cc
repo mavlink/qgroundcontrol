@@ -89,8 +89,9 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     _highLatency = mockConfig->highLatency();
     _failureMode = mockConfig->failureMode();
 
-    union px4_custom_mode   px4_cm;
+    QObject::connect(this, &MockLink::writeBytesQueuedSignal, this, &MockLink::_writeBytesQueued, Qt::QueuedConnection);
 
+    union px4_custom_mode   px4_cm;
     px4_cm.data = 0;
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
     _mavCustomMode = px4_cm.data;
@@ -412,6 +413,12 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t& msg)
 /// @brief Called when QGC wants to write bytes to the MAV
 void MockLink::_writeBytes(const QByteArray bytes)
 {
+    // This prevents the responses to mavlink messages from being sent until the _writeBytes returns.
+    emit writeBytesQueuedSignal(bytes);
+}
+
+void MockLink::_writeBytesQueued(const QByteArray bytes)
+{
     if (_inNSH) {
         _handleIncomingNSHBytes(bytes.constData(), bytes.count());
     } else {
@@ -422,6 +429,7 @@ void MockLink::_writeBytes(const QByteArray bytes)
 
         _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.count());
     }
+
 }
 
 /// @brief Handle incoming bytes which are meant to be interpreted by the NuttX shell

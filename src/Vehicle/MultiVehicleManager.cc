@@ -387,8 +387,7 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
 
             uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
             int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-            link->writeBytesSafe((const char*)buffer, len);
+            link->writeBytesThreadSafe((const char*)buffer, len);
         }
     }
 }

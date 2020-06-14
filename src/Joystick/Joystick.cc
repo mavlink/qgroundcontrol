@@ -117,8 +117,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
 
 Joystick::~Joystick()
 {
-    // Crash out of the thread if it is still running
-    terminate();
+    _exitThread = true;
     wait();
     delete[] _rgAxisValues;
     delete[] _rgCalibration;
@@ -636,9 +635,9 @@ void Joystick::_handleAxis()
                 // Exponential (0% to -50% range like most RC radios)
                 // _exponential is set by a slider in joystickConfigAdvanced.qml
                 // Calculate new RPY with exponential applied
-                roll =      -_exponential*powf(roll, 3) + (1+_exponential)*roll;
-                pitch =     -_exponential*powf(pitch,3) + (1+_exponential)*pitch;
-                yaw =       -_exponential*powf(yaw,  3) + (1+_exponential)*yaw;
+                roll =  -_exponential*powf(roll, 3) + (1+_exponential)*roll;
+                pitch = -_exponential*powf(pitch,3) + (1+_exponential)*pitch;
+                yaw =   -_exponential*powf(yaw,  3) + (1+_exponential)*yaw;
             }
 
             // Adjust throttle to 0:1 range
@@ -661,7 +660,8 @@ void Joystick::_handleAxis()
                 }
             }
             uint16_t shortButtons = static_cast<uint16_t>(buttonPressedBits & 0xFFFF);
-            emit manualControl(roll, -pitch, yaw, throttle, shortButtons, _activeVehicle->joystickMode());
+            _activeVehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, shortButtons);
+            emit axisValues(roll, -pitch, yaw, throttle); // Used by joystick cal screen
             if(_activeVehicle && _axisCount > 4 && _gimbalEnabled) {
                 //-- TODO: There is nothing consuming this as there are no messages to handle gimbal
                 //   the way MANUAL_CONTROL handles the other channels.
@@ -676,8 +676,6 @@ void Joystick::startPolling(Vehicle* vehicle)
     if (vehicle) {
         // If a vehicle is connected, disconnect it
         if (_activeVehicle) {
-            UAS* uas = _activeVehicle->uas();
-            disconnect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
             disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
@@ -700,8 +698,6 @@ void Joystick::startPolling(Vehicle* vehicle)
         // Only connect the new vehicle if it wants joystick data
         if (vehicle->joystickEnabled()) {
             _pollingStartedForCalibration = false;
-            UAS* uas = _activeVehicle->uas();
-            connect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
             connect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
@@ -710,8 +706,6 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             connect(this, &Joystick::emergencyStop,      _activeVehicle, &Vehicle::emergencyStop);
-            // FIXME: ****
-            //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
     }
     if (!isRunning()) {
@@ -724,10 +718,6 @@ void Joystick::stopPolling(void)
 {
     if (isRunning()) {
         if (_activeVehicle && _activeVehicle->joystickEnabled()) {
-            UAS* uas = _activeVehicle->uas();
-            // Neutral attitude controls
-            // emit manualControl(0, 0, 0, 0.5, 0, _activeVehicle->joystickMode());
-            disconnect(this, &Joystick::manualControl, uas, &UAS::setExternalControlSetpoint);
             disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
@@ -736,8 +726,6 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
             disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
         }
-        // FIXME: ****
-        //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
         _exitThread = true;
     }
 }

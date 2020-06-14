@@ -526,7 +526,7 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
                                              &msg,
                                              _vehicle->id(),
                                              componentId);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
 
     QString what = (componentId == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Request to refresh all parameters for component ID:" << what;
@@ -831,7 +831,7 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
                                              componentId,                    // Target component id
                                              fixedParamName,                 // Named parameter being requested
                                              paramIndex);                    // Parameter index being requested, -1 for named
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
 }
 
 void ParameterManager::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
@@ -890,7 +890,7 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
                                       _vehicle->priorityLink()->mavlinkChannel(),
                                       &msg,
                                       &p);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
 }
 
 void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
@@ -997,7 +997,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
                                           _vehicle->priorityLink()->mavlinkChannel(),
                                           &msg,
                                           &p);
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
 
         // Give the user some feedback things loaded properly
         QVariantAnimation *ani = new QVariantAnimation(this);
