@@ -96,7 +96,6 @@ Column {
             AltitudeFactTextField {
                 fact:                       cameraCalc.distanceToSurface
                 altitudeMode:               distanceToSurfaceAltitudeMode
-                showAboveTerrainWarning:    false
                 enabled:                    fixedDistanceRadio.checked
                 Layout.fillWidth:           true
             }
@@ -130,7 +129,6 @@ Column {
         AltitudeFactTextField {
             fact:                       cameraCalc.distanceToSurface
             altitudeMode:               distanceToSurfaceAltitudeMode
-            showAboveTerrainWarning:    false
             Layout.fillWidth:           true
         }
 

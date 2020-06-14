@@ -64,9 +64,9 @@ PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE 
 
 void PlanMasterController::_commonInit(void)
 {
-    connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
-    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
-    connect(&_rallyPointController, &RallyPointController::dirtyChanged,    this, &PlanMasterController::dirtyChanged);
+    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::dirtyChanged);
+    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::dirtyChanged);
+    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::dirtyChanged);
 
     connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::containsItemsChanged);
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
@@ -77,11 +77,7 @@ void PlanMasterController::_commonInit(void)
     connect(&_rallyPointController, &RallyPointController::syncInProgressChanged,   this, &PlanMasterController::syncInProgressChanged);
 
     // Offline vehicle can change firmware/vehicle type
-    connect(_controllerVehicle, &Vehicle::capabilityBitsChanged,    this, &PlanMasterController::_updateSupportsTerrain);
-    connect(_controllerVehicle, &Vehicle::vehicleTypeChanged,       this, &PlanMasterController::_updateSupportsTerrain);
-    connect(_controllerVehicle, &Vehicle::vehicleTypeChanged,       this, &PlanMasterController::_updatePlanCreatorsList);
-
-    _updateSupportsTerrain();
+    connect(_controllerVehicle,     &Vehicle::vehicleTypeChanged,                   this, &PlanMasterController::_updatePlanCreatorsList);
 }
 
 
@@ -134,7 +130,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         disconnect(_managerVehicle->missionManager(),       nullptr, nullptr, nullptr);
         disconnect(_managerVehicle->geoFenceManager(),      nullptr, nullptr, nullptr);
         disconnect(_managerVehicle->rallyPointManager(),    nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle,                         &Vehicle::capabilityBitsChanged, this, &PlanMasterController::_updateSupportsTerrain);
     }
 
     bool newOffline = false;
@@ -160,9 +155,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
 
-    // Change in capabilities will affect terrain support
-    connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, &PlanMasterController::_updateSupportsTerrain);
-
     emit managerVehicleChanged(_managerVehicle);
 
     // Vehicle changed so we need to signal everything
@@ -171,7 +163,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
     emit syncInProgressChanged();
     emit dirtyChanged(dirty());
     emit offlineChanged(offline());
-    _updateSupportsTerrain();
 
     if (!_flyView) {
         if (!offline()) {
@@ -628,14 +619,5 @@ void PlanMasterController::_updatePlanCreatorsList(void)
                 _planCreators->append(new StructureScanPlanCreator(this, this));
             }
         }
-    }
-}
-
-void PlanMasterController::_updateSupportsTerrain(void)
-{
-    bool supportsTerrain = _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_TERRAIN;
-    if (supportsTerrain != _supportsTerrain) {
-        _supportsTerrain = supportsTerrain;
-        emit supportsTerrainChanged(supportsTerrain);
     }
 }
