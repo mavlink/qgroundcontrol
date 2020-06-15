@@ -16,7 +16,7 @@
 
 #include <QGeoCoordinate>
 
-class TransectStyleItem;
+class TestTransectStyleItem;
 
 class TransectStyleComplexItemTest : public TransectStyleComplexItemTestBase
 {
@@ -36,9 +36,6 @@ private slots:
     void _testAltMode           (void);
 
 private:
-    void _setSurveyAreaPolygon  (void);
-    void _adjustSurveAreaPolygon(void);
-
     enum {
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedIndex = 0,
@@ -74,16 +71,15 @@ private:
     const char*         _rgSignals[_cSignals];
 
     MultiSignalSpy*         _multiSpy =             nullptr;
-    QList<QGeoCoordinate>   _polygonVertices;
-    TransectStyleItem*      _transectStyleItem =    nullptr;
+    TestTransectStyleItem*  _transectStyleItem =    nullptr;
 };
 
-class TransectStyleItem : public TransectStyleComplexItem
+class TestTransectStyleItem : public TransectStyleComplexItem
 {
     Q_OBJECT
 
 public:
-    TransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
+    TestTransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
 
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return QString(); }
@@ -98,6 +94,7 @@ public:
     bool rebuildTransectsPhase1Called;
     bool recalcComplexDistanceCalled;
     bool recalcCameraShotsCalled;
+    void _adjustSurveAreaPolygon(void);
 
 private slots:
     // Overrides from TransectStyleComplexItem
