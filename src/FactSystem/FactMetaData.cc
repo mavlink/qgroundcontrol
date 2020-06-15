@@ -1033,9 +1033,6 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnit
         case UnitWeight:
             unitOption = unitsSettings->weightUnits()->rawValue().toUInt();
             break;
-        default:
-            assert(false);
-            break;
         }
 
         if (pAppSettingsTranslation->unitType == type
