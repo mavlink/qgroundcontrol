@@ -19,8 +19,8 @@ Rectangle {
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property bool _supportsTerrainFrame:    missionItem.masterController.supportsTerrain
     property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
+    property bool _supportsTerrainFrame:    _controllerVehicle.supportsTerrainFrame
     property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
     property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeNone
 
