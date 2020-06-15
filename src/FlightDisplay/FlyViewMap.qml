@@ -533,13 +533,13 @@ FlightMap {
         }
 
         onClicked: {
-            if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
+            if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit && !guidedActionsController.showROI)) {
                 return
             }
             orbitMapCircle.hide()
             gotoLocationItem.hide()
             var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-            if (guidedActionsController.showGotoLocation && guidedActionsController.showOrbit) {
+            if (guidedActionsController.showGotoLocation && (guidedActionsController.showOrbit || guidedActionsController.showROI)) {
                 clickMenu.coord = clickCoord
                 clickMenu.popup()
             } else if (guidedActionsController.showGotoLocation) {
@@ -548,6 +548,9 @@ FlightMap {
             } else if (guidedActionsController.showOrbit) {
                 orbitMapCircle.show(clickCoord)
                 guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickCoord)
+            }else if (guidedActionsController.showROI) {
+                orbitMapCircle.show(clickCoord)
+                guidedActionsController.confirmAction(guidedActionsController.actionROI, clickCoord)
             }
         }
     }
