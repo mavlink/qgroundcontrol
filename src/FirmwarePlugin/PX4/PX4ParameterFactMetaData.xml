@@ -8145,13 +8145,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Simulator block GPS data</short_desc>
       <long_desc>Enable to block the publication of any incoming simulation GPS data.</long_desc>
     </parameter>
-    <parameter default="0.0" name="SIM_GPS_NOISE_X" type="FLOAT">
-      <short_desc>Simulator GPS noise multiplier</short_desc>
-      <min>0</min>
-      <max>10</max>
-      <unit>%</unit>
-      <increment>0.1</increment>
-    </parameter>
     <parameter default="0" name="SIM_GYRO_BLOCK" type="INT32">
       <short_desc>Simulator block gyroscope data</short_desc>
       <long_desc>Enable to block the publication of any incoming simulation gyroscope data.</long_desc>
