@@ -95,6 +95,9 @@ public:
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
 
+    /// Returns the string for speed units which has configued by user
+    static QString appSettingsSpeedUnitsString();
+
     static const QString defaultCategory    ();
     static const QString defaultGroup       ();
 
@@ -282,10 +285,7 @@ private:
         Translator    cookedTranslator;
     };
 
-    static const AppSettingsTranslation_s* _findAppSettingsHorizontalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsVerticalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsWeightUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsUnitsTranslation(const QString& rawUnits, UnitTypes type);
 
     static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
 
