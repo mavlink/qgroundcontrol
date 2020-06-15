@@ -1112,7 +1112,7 @@ QVariant FactMetaData::appSettingsHorizontalDistanceUnitsToMeters(const QVariant
 
 QVariant FactMetaData::appSettingsVerticalDistanceUnitsToMeters(const QVariant& distance)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("alt m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("vertical m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedTranslator(distance);
     } else {
@@ -1132,7 +1132,7 @@ QString FactMetaData::appSettingsHorizontalDistanceUnitsString(void)
 
 QString FactMetaData::appSettingsVerticalDistanceUnitsString(void)
 {
-    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("alt m");
+    const AppSettingsTranslation_s* pAppSettingsTranslation = _findAppSettingsVerticalDistanceUnitsTranslation("vertical m");
     if (pAppSettingsTranslation) {
         return pAppSettingsTranslation->cookedUnits;
     } else {
