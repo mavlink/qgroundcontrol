@@ -181,6 +181,8 @@
         <file alias="QGroundControl/Controls/TakeoffItemMapVisual.qml">src/PlanView/TakeoffItemMapVisual.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">src/QmlControls/ToolStrip.qml</file>
         <file alias="QGroundControl/Controls/TransectStyleComplexItemStats.qml">src/PlanView/TransectStyleComplexItemStats.qml</file>
+        <file alias="QGroundControl/Controls/TransectStyleComplexItemTabBar.qml">src/PlanView/TransectStyleComplexItemTabBar.qml</file>
+        <file alias="QGroundControl/Controls/TransectStyleComplexItemTerrainFollow.qml">src/PlanView/TransectStyleComplexItemTerrainFollow.qml</file>
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/VerticalFactValueGrid.qml">src/QmlControls/VerticalFactValueGrid.qml</file>
