@@ -2984,7 +2984,7 @@ bool Vehicle::supportsMotorInterference() const
 
 bool Vehicle::supportsTerrainFrame() const
 {
-    return _capabilityBits & MAV_PROTOCOL_CAPABILITY_TERRAIN;
+    return !px4Firmware();
 }
 
 QString Vehicle::vehicleTypeName() const {

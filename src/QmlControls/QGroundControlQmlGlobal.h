@@ -148,6 +148,9 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
+    Q_INVOKABLE QString altitudeModeExtraUnits(AltitudeMode altMode);       ///< String shown in the FactTextField.extraUnits ui
+    Q_INVOKABLE QString altitudeModeShortDescription(AltitudeMode altMode); ///< String shown when a user needs to select an altitude mode
+
     // Property accesors
 
     QString                 appName             ()  { return qgcApp()->applicationName(); }
@@ -268,6 +271,7 @@ private:
 #endif
 
     bool                    _skipSetupPage          = false;
+    QStringList             _altitudeModeEnumString;
 
     static const char* _flightMapPositionSettingsGroup;
     static const char* _flightMapPositionLatitudeSettingsKey;
