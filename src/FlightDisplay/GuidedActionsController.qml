@@ -140,7 +140,7 @@ Item {
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
     property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
-    property bool   _hideROI:               !QGroundControl.corePlugin.options.guidedBarShowOrbit
+    property bool   _hideROI:               !QGroundControl.corePlugin.options.guidedBarShowROI
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
