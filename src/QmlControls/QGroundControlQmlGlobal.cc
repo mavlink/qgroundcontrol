@@ -267,3 +267,42 @@ QString QGroundControlQmlGlobal::qgcVersion(void) const
 #endif
     return versionStr;
 }
+
+QString QGroundControlQmlGlobal::altitudeModeExtraUnits(AltitudeMode altMode)
+{
+    switch (altMode) {
+    case AltitudeModeNone:
+        return QString();
+    case AltitudeModeRelative:
+        // Showing (Rel) all the time ends up being too noisy
+        return QString();
+    case AltitudeModeAbsolute:
+        return tr("(AMSL)");
+    case AltitudeModeAboveTerrain:
+        return tr("(Abv Terr)");
+    case AltitudeModeTerrainFrame:
+        return tr("(TerrF)");
+    }
+
+    // Should never get here but makes some compilers happy
+    return QString();
+}
+
+QString QGroundControlQmlGlobal::altitudeModeShortDescription(AltitudeMode altMode)
+{
+    switch (altMode) {
+    case AltitudeModeNone:
+        return QString();
+    case AltitudeModeRelative:
+        return tr("Relative To Launch");
+    case AltitudeModeAbsolute:
+        return tr("Above Mean Sea Level");
+    case AltitudeModeAboveTerrain:
+        return tr("Above Terrain");
+    case AltitudeModeTerrainFrame:
+        return tr("Terrain Frame");
+    }
+
+    // Should never get here but makes some compilers happy
+    return QString();
+}

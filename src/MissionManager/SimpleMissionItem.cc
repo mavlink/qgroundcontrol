@@ -103,10 +103,10 @@ SimpleMissionItem::SimpleMissionItem(PlanMasterController* masterController, boo
     };
 
     const struct MavFrame2AltMode_s rgMavFrame2AltMode[] = {
-    { MAV_FRAME_GLOBAL_TERRAIN_ALT,     QGroundControlQmlGlobal::AltitudeModeTerrainFrame },
-    { MAV_FRAME_GLOBAL,                 QGroundControlQmlGlobal::AltitudeModeAbsolute },
-    { MAV_FRAME_GLOBAL_RELATIVE_ALT,    QGroundControlQmlGlobal::AltitudeModeRelative },
-};
+        { MAV_FRAME_GLOBAL_TERRAIN_ALT,     QGroundControlQmlGlobal::AltitudeModeTerrainFrame },
+        { MAV_FRAME_GLOBAL,                 QGroundControlQmlGlobal::AltitudeModeAbsolute },
+        { MAV_FRAME_GLOBAL_RELATIVE_ALT,    QGroundControlQmlGlobal::AltitudeModeRelative },
+    };
     _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
     for (size_t i=0; i<sizeof(rgMavFrame2AltMode)/sizeof(rgMavFrame2AltMode[0]); i++) {
         const MavFrame2AltMode_s& pMavFrame2AltMode = rgMavFrame2AltMode[i];
@@ -730,6 +730,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
         double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
+        setAltitudeMode(_missionController->globalAltitudeModeDefault());
     } else {
         _altitudeFact.setRawValue(0);
         _missionItem._param7Fact.setRawValue(0);
