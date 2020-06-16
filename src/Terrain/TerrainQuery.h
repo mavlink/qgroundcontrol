@@ -294,3 +294,13 @@ private:
     QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;
     TerrainPathQuery                            _pathQuery;
 };
+
+///
+/// \brief The MockTerrainQuery class provides unit test responses for disconnected environment
+///
+class MockTerrainQuery : public TerrainQueryInterface {
+public:
+    void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) Q_DECL_OVERRIDE;
+    void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) Q_DECL_OVERRIDE;
+    void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) Q_DECL_OVERRIDE;
+};
