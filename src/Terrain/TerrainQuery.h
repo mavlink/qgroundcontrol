@@ -15,6 +15,7 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
+#include <QGeoRectangle>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
@@ -296,11 +297,52 @@ private:
 };
 
 ///
-/// \brief The MockTerrainQuery class provides unit test responses for disconnected environment
+/// @brief The MockTerrainQuery class provides unit test terrain query responses for the disconnected environment.
+/// @details It provides preset, emulated, 1 arc-second (SRMT1) resultion regions that are either
+/// flat, sloped or rugged in a fashion that aids testing terrain-sensitive functionality. All emulated
+/// regions are positioned around Point Nemo - should real terrain became useful and checked in one day.
 ///
-class MockTerrainQuery : public TerrainQueryInterface {
+class UnitTestTerrainQuery : public TerrainQueryInterface {
 public:
+
+    static constexpr double regionExtentDeg = 0.1; //every region 0.1deg x 0.1deg across (around 11km north to south)
+    static constexpr double one_second_deg  = 1.0/3600;
+
+    /// @brief Point Nemo is a point on Earth furthest from land
+    static const QGeoCoordinate pointNemo;
+
+    ///
+    /// @brief flat10Region is a region with constant 10m terrain elevation
+    ///
+    struct Flat10Region : public QGeoRectangle {
+        Flat10Region(const QGeoRectangle& region)
+        :QGeoRectangle(region)
+        {}
+
+        static constexpr double elevationMts = 10;
+    };
+    static const Flat10Region flat10Region;
+
+    ///
+    /// @brief linearSlopeRegion is a region with a linear west to east slope raising from -100m to 1000m
+    ///
+    struct LinearSlopeRegion : public QGeoRectangle {
+        LinearSlopeRegion(const QGeoRectangle& region)
+        :QGeoRectangle(region)
+        {}
+
+        static constexpr double minElevationMts = -100;
+        static constexpr double maxElevationMts = 1000;
+        static constexpr double dElevationMts = maxElevationMts-minElevationMts;
+    };
+    static const LinearSlopeRegion linearSlopeRegion;
+
+    UnitTestTerrainQuery(TerrainQueryInterface* parent = nullptr);
+
     void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) Q_DECL_OVERRIDE;
     void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) Q_DECL_OVERRIDE;
     void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) Q_DECL_OVERRIDE;
+    QList<double> requestCoordinateHeightsSync(const QList<QGeoCoordinate>& coordinates);
+    QPair<QList<QGeoCoordinate>, QList<double>> requestPathHeightsSync(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord);
 };
+
