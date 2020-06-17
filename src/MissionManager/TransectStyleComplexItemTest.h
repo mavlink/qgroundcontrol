@@ -96,6 +96,9 @@ public:
     bool recalcComplexDistanceCalled;
     bool recalcCameraShotsCalled;
     void _adjustSurveAreaPolygon(void);
+    QList<QList<CoordInfo_t>> transects() const {
+        return _transects;
+    }
 
 private slots:
     // Overrides from TransectStyleComplexItem

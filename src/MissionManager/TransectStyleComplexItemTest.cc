@@ -211,13 +211,21 @@ void TransectStyleComplexItemTest::_testAltMode(void)
 
 void TransectStyleComplexItemTest::_testFollowTerrain(void) {
     _multiSpy->clearAllSignals();
-    _transectStyleItem->setFollowTerrain(true);
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
+    _transectStyleItem->setFollowTerrain(true);
     _multiSpy->clearAllSignals();
-    QVERIFY(_multiSpy->waitForSignalByIndex(lastSequenceNumberChangedIndex, 2000));
-    QJsonArray ja;
-    _transectStyleItem->save(ja);
-    qDebug() << ja;
+    while(_transectStyleItem->readyForSaveState() != TransectStyleComplexItem::ReadyForSave) {
+        QVERIFY(_multiSpy->waitForSignalByIndex(lastSequenceNumberChangedIndex, 50));
+    }
+    QList<double> expectedTerrainValues{497,509,512,512};
+    QCOMPARE(_transectStyleItem->transects().size(), 1);
+    for (const auto& transect : _transectStyleItem->transects()) {
+        QCOMPARE(transect.size(), 4);
+        for (const auto pt : transect) {
+            QCOMPARE(pt.coord.altitude(), expectedTerrainValues.front());
+            expectedTerrainValues.pop_front();
+        }
+    }
 }
 
 TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController, QObject* parent)
@@ -228,7 +236,7 @@ TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterControl
 {
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
-    surveyAreaPolygon()->appendVertex(QGeoCoordinate(-48.875556, -123.392500));
+    surveyAreaPolygon()->appendVertex(UnitTestTerrainQuery::linearSlopeRegion.center());
     surveyAreaPolygon()->appendVertex(surveyAreaPolygon()->vertexCoordinate(0).atDistanceAndAzimuth(edgeDistance, 90));
     surveyAreaPolygon()->appendVertex(surveyAreaPolygon()->vertexCoordinate(1).atDistanceAndAzimuth(edgeDistance, 180));
     surveyAreaPolygon()->appendVertex(surveyAreaPolygon()->vertexCoordinate(2).atDistanceAndAzimuth(edgeDistance, -90.0));
