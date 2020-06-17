@@ -1,11 +1,48 @@
 
-add_library(FlightDisplay
-	VideoManager.cc
+add_custom_target(FligthDisplayQml
+	SOURCES
+		DefaultChecklist.qml
+		FixedWingChecklist.qml
+		FlightDisplayViewDummy.qml
+		FlightDisplayViewUVC.qml
+		FlightDisplayViewVideo.qml
+		FlightDisplayViewWidgets.qml
+		FlyViewAirspaceIndicator.qml
+		FlyViewCustomLayer.qml
+		FlyViewInstrumentPanel.qml
+		FlyViewMap.qml
+		FlyViewMissionCompleteDialog.qml
+		FlyViewPreFlightChecklistPopup.qml
+		FlyView.qml
+		FlyViewToolStripActionList.qml
+		FlyViewToolStrip.qml
+		FlyViewVideo.qml
+		FlyViewWidgetLayer.qml
+		GuidedActionActionList.qml
+		GuidedActionConfirm.qml
+		GuidedActionLand.qml
+		GuidedActionList.qml
+		GuidedActionPause.qml
+		GuidedActionRTL.qml
+		GuidedActionsController.qml
+		GuidedActionTakeoff.qml
+		GuidedAltitudeSlider.qml
+		GuidedToolStripAction.qml
+		MultiRotorChecklist.qml
+		MultiVehicleList.qml
+		MultiVehiclePanel.qml
+		PreFlightBatteryCheck.qml
+		PreFlightCheckList.qml
+		PreFlightCheckListShowAction.qml
+		PreFlightGPSCheck.qml
+		PreFlightRCCheck.qml
+		PreFlightSensorsHealthCheck.qml
+		PreFlightSoundCheck.qml
+		RoverChecklist.qml
+		SubChecklist.qml
+		TerrainProgress.qml
+		VehicleWarnings.qml
+		VirtualJoystick.qml
+		VTOLChecklist.qml
 )
 
-target_link_libraries(FlightDisplay
-	PRIVATE
-		qgc
-)
-
-target_include_directories(FlightDisplay PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

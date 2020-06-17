@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,11 +24,12 @@
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
-class APMFactMetaDataRaw
+class APMFactMetaDataRaw : public QObject
 {
+    Q_OBJECT
 public:
-    APMFactMetaDataRaw(void)
-        : rebootRequired(false)
+    APMFactMetaDataRaw(QObject *parent = nullptr)
+        : QObject(parent), rebootRequired(false)
     { }
 
     QString name;
@@ -80,6 +81,7 @@ private:
     bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);
     void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
     QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
+    QString _groupFromParameterName(const QString& name);
 
     bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
     QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>

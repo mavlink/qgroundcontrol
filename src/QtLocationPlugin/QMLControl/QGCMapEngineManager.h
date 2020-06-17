@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,7 +9,7 @@
 
 
 /// @file
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 #ifndef OfflineMapsManager_H
 #define OfflineMapsManager_H
@@ -43,6 +43,7 @@ public:
     Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
+    Q_PROPERTY(QStringList          mapProviderList READ    mapProviderList CONSTANT)
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
@@ -77,6 +78,8 @@ public:
     quint64                         tileSize                () { return _imageSet.tileSize + _elevationSet.tileSize; }
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
+    QStringList                     mapProviderList         ();
+    Q_INVOKABLE QStringList         mapTypeList             (QString provider);
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();

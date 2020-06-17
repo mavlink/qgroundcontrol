@@ -1,18 +1,19 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "mapProvider",
     "shortDescription": "Currently selected map provider for flight maps",
-    "type":             "uint32",
-    "enumStrings":      "Bing,Google,Statkart,Mapbox,Esri,Eniro,VWorld",
-    "enumValues":       "0,1,2,3,4,5,6",
-    "defaultValue":     0
+    "type":             "string",
+    "defaultValue":     "Bing"
 },
 {
     "name":             "mapType",
     "shortDescription": "Currently selected map type for flight maps",
-    "type":             "uint32",
-    "enumStrings":      "Street Map,Satellite Map,Hybrid Map,Terrain Map",
-    "enumValues":       "0,1,2,3",
-    "defaultValue":     2
+    "type":             "string",
+    "defaultValue":     "Hybrid"
 }
 ]
+}

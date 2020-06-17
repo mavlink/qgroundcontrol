@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -28,7 +28,7 @@ public:
 	//			QStandardPaths::TempLocation directory.
 	//		@param template Template for file name following QTemporaryFile rules. Template should NOT include
 	//							directory path, only file name.
-    QGCTemporaryFile(const QString& fileTemplate, QObject* parent = NULL);
+    QGCTemporaryFile(const QString& fileTemplate, QObject* parent = nullptr);
 
 	/// @brief Opens the file in ReadWrite mode.
 	///		@returns false - open failed

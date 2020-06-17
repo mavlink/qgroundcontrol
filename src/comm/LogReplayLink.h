@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -47,6 +47,7 @@ private:
     QString             _logFilename;
 };
 
+/// Pseudo link that reads a telemetry log and feeds it into the application.
 class LogReplayLink : public LinkInterface
 {
     Q_OBJECT

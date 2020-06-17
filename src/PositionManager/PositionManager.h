@@ -1,6 +1,6 @@
 ﻿/****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -35,17 +35,16 @@ public:
         NmeaGPS
     };
 
-    QGeoCoordinate gcsPosition(void) { return _gcsPosition; }
+    QGeoCoordinate      gcsPosition         (void) { return _gcsPosition; }
+    qreal               gcsHeading          (void) { return _gcsHeading; }
+    QGeoPositionInfo    geoPositionInfo     (void) const { return _geoPositionInfo; }
+    void                setPositionSource   (QGCPositionSource source);
+    int                 updateInterval      (void) const;
+    void                setNmeaSourceDevice (QIODevice* device);
 
-    qreal gcsHeading() { return _gcsHeading; }
+    // Overrides from QGCTool
+    void setToolbox(QGCToolbox* toolbox) override;
 
-    void setPositionSource(QGCPositionSource source);
-
-    int updateInterval() const;
-
-    void setToolbox(QGCToolbox* toolbox);
-
-    void setNmeaSourceDevice(QIODevice* device);
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
@@ -57,12 +56,14 @@ signals:
     void positionInfoUpdated(QGeoPositionInfo update);
 
 private:
-    int             _updateInterval;
-    QGeoCoordinate  _gcsPosition;
-    qreal           _gcsHeading;
+    int                 _updateInterval =   0;
+    QGeoPositionInfo    _geoPositionInfo;
+    QGeoCoordinate      _gcsPosition;
+    qreal               _gcsHeading =       qQNaN();
 
-    QGeoPositionInfoSource*     _currentSource;
-    QGeoPositionInfoSource*     _defaultSource;
-    QNmeaPositionInfoSource*    _nmeaSource;
-    QGeoPositionInfoSource*     _simulatedSource;
+    QGeoPositionInfoSource*     _currentSource =        nullptr;
+    QGeoPositionInfoSource*     _defaultSource =        nullptr;
+    QNmeaPositionInfoSource*    _nmeaSource =           nullptr;
+    QGeoPositionInfoSource*     _simulatedSource =      nullptr;
+    bool                        _usingPluginSource =    false;
 };

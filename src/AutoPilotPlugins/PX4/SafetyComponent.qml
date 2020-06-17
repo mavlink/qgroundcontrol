@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -52,7 +52,7 @@ SetupPage {
             property Fact _rcLossAction:        controller.getParameterFact(-1, "NAV_RCL_ACT")
             property Fact _dlLossAction:        controller.getParameterFact(-1, "NAV_DLL_ACT")
             property Fact _disarmLandDelay:     controller.getParameterFact(-1, "COM_DISARM_LAND")
-            property Fact _collisionPrevention: controller.getParameterFact(-1, "MPC_COL_PREV_D")
+            property Fact _collisionPrevention: controller.getParameterFact(-1, "CP_DIST")
             property Fact _objectAvoidance:     controller.getParameterFact(-1, "COM_OBS_AVOID")
             property Fact _landSpeedMC:         controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
             property bool _hitlAvailable:       controller.parameterExists(-1, hitlParam)
@@ -198,7 +198,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:               qsTr("Minimum Distance: (") + QGroundControl.appSettingsDistanceUnitsString + ")"
+                                text:               qsTr("Minimum Distance: (") + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString + ")"
                                 Layout.fillWidth:   true
                                 Layout.alignment:   Qt.AlignVCenter
                             }
@@ -209,15 +209,15 @@ SetupPage {
                                 Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 2
                                 Layout.fillWidth:   true
                                 Layout.fillHeight:  true
-                                maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits(15)
-                                minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(1)
+                                maximumValue:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(15)
+                                minimumValue:       QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(1)
                                 stepSize:           1
                                 displayValue:       true
                                 updateValueWhileDragging:   false
                                 Layout.alignment:   Qt.AlignVCenter
                                 value: {
                                     if (_collisionPrevention && _collisionPrevention.rawValue > 0) {
-                                        return QGroundControl.metersToAppSettingsDistanceUnits(_collisionPrevention.rawValue)
+                                        return QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_collisionPrevention.rawValue)
                                     } else {
                                         return 1;
                                     }
@@ -226,7 +226,7 @@ SetupPage {
                                     if(_collisionPrevention) {
                                         //-- Negative means disabled
                                         if(_collisionPrevention.rawValue >= 0) {
-                                            _collisionPrevention.rawValue = QGroundControl.appSettingsDistanceUnitsToMeters(value)
+                                            _collisionPrevention.rawValue = QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsToMeters(value)
                                         }
                                     }
                                 }
@@ -410,7 +410,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    text:               qsTr("Return Home Settings")
+                    text:               qsTr("Return To Launch Settings")
                 }
 
                 Rectangle {
@@ -449,7 +449,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:                   qsTr("Return home, then:")
+                                text:                   qsTr("Return to launch, then:")
                                 Layout.columnSpan:      2
                             }
                             Row {

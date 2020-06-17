@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,7 +13,6 @@
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
-#include "QGroundControlQmlGlobal.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
@@ -33,11 +32,11 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     : QGCTool(app, toolbox)
     , _activeVehicleAvailable(false)
     , _parameterReadyVehicleAvailable(false)
-    , _activeVehicle(NULL)
-    , _offlineEditingVehicle(NULL)
-    , _firmwarePluginManager(NULL)
-    , _joystickManager(NULL)
-    , _mavlinkProtocol(NULL)
+    , _activeVehicle(nullptr)
+    , _offlineEditingVehicle(nullptr)
+    , _firmwarePluginManager(nullptr)
+    , _joystickManager(nullptr)
+    , _mavlinkProtocol(nullptr)
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
@@ -65,11 +64,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 
-    SettingsManager* settingsManager = toolbox->settingsManager();
-    _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
-                                         static_cast<MAV_TYPE>(settingsManager->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
-                                         _firmwarePluginManager,
-                                         this);
+    _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, _firmwarePluginManager, this);
 }
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
@@ -123,7 +118,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                       << vehicleType;
 
     if (vehicleId == _mavlinkProtocol->getSystemId()) {
-        _app->showMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
+        _app->showAppMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
     }
 
     Vehicle* vehicle = new Vehicle(link, vehicleId, componentId, (MAV_AUTOPILOT)vehicleFirmwareType, (MAV_TYPE)vehicleType, _firmwarePluginManager, _joystickManager);
@@ -141,7 +136,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     emit vehicleAdded(vehicle);
 
     if (_vehicles.count() > 1) {
-        qgcApp()->showMessage(tr("Connected to Vehicle %1").arg(vehicleId));
+        qgcApp()->showAppMessage(tr("Connected to Vehicle %1").arg(vehicleId));
     } else {
         setActiveVehicle(vehicle);
     }
@@ -236,7 +231,7 @@ void MultiVehicleManager::_deleteVehiclePhase2(void)
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
 
-    Vehicle* newActiveVehicle = NULL;
+    Vehicle* newActiveVehicle = nullptr;
     if (_vehicles.count()) {
         newActiveVehicle = qobject_cast<Vehicle*>(_vehicles[0]);
     }
@@ -285,6 +280,14 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
 {
     qCDebug(MultiVehicleManagerLog) << "_setActiveVehiclePhase2 _vehicleBeingSetActive" << _vehicleBeingSetActive;
 
+    //-- Keep track of current vehicle's coordinates
+    if(_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::coordinateChanged, this, &MultiVehicleManager::_coordinateChanged);
+    }
+    if(_vehicleBeingSetActive) {
+        connect(_vehicleBeingSetActive, &Vehicle::coordinateChanged, this, &MultiVehicleManager::_coordinateChanged);
+    }
+
     // Now we signal the new active vehicle
     _activeVehicle = _vehicleBeingSetActive;
     emit activeVehicleChanged(_activeVehicle);
@@ -302,9 +305,15 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
     }
 }
 
+void MultiVehicleManager::_coordinateChanged(QGeoCoordinate coordinate)
+{
+    _lastKnownLocation = coordinate;
+    emit lastKnownLocationChanged();
+}
+
 void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 {
-    ParameterManager* paramMgr = dynamic_cast<ParameterManager*>(sender());
+    auto* paramMgr = qobject_cast<ParameterManager*>(sender());
 
     if (!paramMgr) {
         qWarning() << "Dynamic cast failed!";
@@ -338,7 +347,7 @@ Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
@@ -378,8 +387,7 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
 
             uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
             int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-            link->writeBytesSafe((const char*)buffer, len);
+            link->writeBytesThreadSafe((const char*)buffer, len);
         }
     }
 }

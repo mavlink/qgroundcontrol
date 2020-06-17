@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,7 +15,7 @@
 
 const char* RallyPoint::_longitudeFactName =    "Longitude";
 const char* RallyPoint::_latitudeFactName =     "Latitude";
-const char* RallyPoint::_altitudeFactName =     "Altitude";
+const char* RallyPoint::_altitudeFactName =     "RelativeAltitude";
 
 QMap<QString, FactMetaData*> RallyPoint::_metaDataMap;
 
@@ -63,9 +63,7 @@ RallyPoint::~RallyPoint()
 
 void RallyPoint::_factSetup(void)
 {
-    if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RallyPoint.FactMetaData.json"), NULL /* metaDataParent */);
-    }
+    _cacheFactMetadata();
 
     _longitudeFact.setMetaData(_metaDataMap[_longitudeFactName]);
     _latitudeFact.setMetaData(_metaDataMap[_latitudeFactName]);
@@ -78,6 +76,12 @@ void RallyPoint::_factSetup(void)
     connect(&_longitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
     connect(&_latitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
     connect(&_altitudeFact, &Fact::valueChanged, this, &RallyPoint::_sendCoordinateChanged);
+}
+
+void RallyPoint::_cacheFactMetadata() {
+    if (_metaDataMap.isEmpty()) {
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RallyPoint.FactMetaData.json"), nullptr /* metaDataParent */);
+    }
 }
 
 void RallyPoint::setCoordinate(const QGeoCoordinate& coordinate)
@@ -97,6 +101,15 @@ void RallyPoint::setDirty(bool dirty)
         _dirty = dirty;
         emit dirtyChanged(dirty);
     }
+}
+
+double RallyPoint::getDefaultFactAltitude() {
+    _cacheFactMetadata();
+    auto it = _metaDataMap.find(QString(_altitudeFactName));
+    if(it != _metaDataMap.end() && (*it)->defaultValueAvailable()) {
+        return (*it)->rawDefaultValue().toDouble();
+    }
+    return 0.0;
 }
 
 QGeoCoordinate RallyPoint::coordinate(void) const

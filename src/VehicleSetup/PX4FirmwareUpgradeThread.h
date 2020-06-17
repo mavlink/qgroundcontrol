@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -88,7 +88,7 @@ class PX4FirmwareUpgradeThreadController : public QObject
     Q_OBJECT
     
 public:
-    PX4FirmwareUpgradeThreadController(QObject* parent = NULL);
+    PX4FirmwareUpgradeThreadController(QObject* parent = nullptr);
     ~PX4FirmwareUpgradeThreadController(void);
     
     /// @brief Begins the process of searching for a supported board connected to any serial port. This will

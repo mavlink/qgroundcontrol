@@ -3,7 +3,7 @@ include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
-	VideoStreaming
+	VideoManager
 )
 
 set(EXTRA_SRC)
@@ -11,6 +11,7 @@ set(EXTRA_SRC)
 if(MOBILE)
 	list(APPEND EXTRA_SRC
 		MobileScreenMgr.cc
+		MobileScreenMgr.h
 	)
 endif()
 if(GST_FOUND)
@@ -25,8 +26,8 @@ if(GST_FOUND)
 	)
 	if(ANDROID) # Should also be expanded to iOS
 		list(APPEND EXTRA_SRC
-			src/Taisync/TaisyncTelemetry.cc
-			src/Taisync/TaisyncVideoReceiver.cc
+			Taisync/TaisyncTelemetry.cc
+			Taisync/TaisyncVideoReceiver.cc
 		)
 	endif()
 endif()
@@ -85,34 +86,55 @@ add_library(qgc
 	${EXTRA_SRC}
 
 	CmdLineOptParser.cc
+	CmdLineOptParser.h
 	JsonHelper.cc
-	KMLFileHelper.cc
+	JsonHelper.h
+	KMLDomDocument.cc
+	KMLDomDocument.h
+	KMLHelper.cc
+	KMLHelper.h
 	LogCompressor.cc
+	LogCompressor.h
 	main.cc
-	QGCApplication.cc
 	QGC.cc
+	QGC.h
+	QGCApplication.cc
+	QGCApplication.h
 	QGCComboBox.cc
+	QGCComboBox.h
+	QGCConfig.h
 	QGCDockWidget.cc
+	QGCDockWidget.h
 	QGCFileDownload.cc
-	QGCGeo.cc
+	QGCFileDownload.h
 	QGCLoggingCategory.cc
+	QGCLoggingCategory.h
 	QGCMapPalette.cc
+	QGCMapPalette.h
 	QGCPalette.cc
+	QGCPalette.h
 	QGCQGeoCoordinate.cc
+	QGCQGeoCoordinate.h
 	QGCTemporaryFile.cc
+	QGCTemporaryFile.h
 	QGCToolbox.cc
+	QGCToolbox.h
 	RunGuard.cc
+	RunGuard.h
 	ShapeFileHelper.cc
+	ShapeFileHelper.h
 	SHPFileHelper.cc
+	SHPFileHelper.h
+	stable_headers.h
 	TerrainTile.cc
-
-	UTM.cpp
+	TerrainTile.h
 )
 
-set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
+set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${GIT_VERSION}")
 
 add_subdirectory(ui)
 
+add_subdirectory(ADSB)
 add_subdirectory(Airmap)
 add_subdirectory(AnalyzeView)
 add_subdirectory(api)
@@ -125,9 +147,11 @@ add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
 add_subdirectory(FollowMe)
+add_subdirectory(Geo)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
+add_subdirectory(PlanView)
 add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
@@ -136,17 +160,20 @@ add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
-add_subdirectory(VideoStreaming)
+add_subdirectory(VideoManager)
+add_subdirectory(VideoReceiver)
 add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
 	PRIVATE
 		shp
+                Qt5::QuickControls2
 
 	PUBLIC
 		Qt5::QuickWidgets
 		Qt5::Widgets
 
+                ADSB
 		Airmap
 		AnalyzeView
 		api
@@ -156,9 +183,9 @@ target_link_libraries(qgc
 		comm
 		FactSystem
 		FirmwarePlugin
-		FlightDisplay
 		FlightMap
 		FollowMe
+		Geo
 		gps
 		Joystick
 		MissionManager
@@ -171,7 +198,7 @@ target_link_libraries(qgc
 		ui
 		Vehicle
 		VehicleSetup
-		VideoStreaming
+		VideoManager
 		ViewWidgets
 )
 

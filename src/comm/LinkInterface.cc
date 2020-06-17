@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -65,7 +65,6 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config, bool isPX4F
     memset(_outDataWriteAmounts,0, sizeof(_outDataWriteAmounts));
     memset(_outDataWriteTimes,  0, sizeof(_outDataWriteTimes));
 
-    QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
     qRegisterMetaType<LinkInterface*>("LinkInterface*");
 }
 
@@ -209,4 +208,12 @@ void LinkInterface::stopMavlinkMessagesTimer() {
     }
 
     _mavlinkMessagesTimers.clear();
+}
+
+void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
+{
+    QByteArray byteArray(bytes, length);
+    _writeBytesMutex.lock();
+    _writeBytes(byteArray);
+    _writeBytesMutex.unlock();
 }

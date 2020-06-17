@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,88 +10,95 @@
 import QtQuick          2.11
 import QtQuick.Controls 2.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 
 Rectangle {
     id:         _root
-    color:      qgcPal.window
+    color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
-    height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
+    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model
-    property var    rotateImage         ///< List of bool values, one for each button in strip - true: animation rotation, false: static image
-    property var    animateImage        ///< List of bool values, one for each button in strip - true: animate image, false: static image
-    property var    buttonEnabled       ///< List of bool values, one for each button in strip - true: button enabled, false: button disabled
-    property var    buttonVisible       ///< List of bool values, one for each button in strip - true: button visible, false: button invisible
     property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
-    property var    showAlternateIcon   ///< List of bool values, one for each button in strip - true: show alternate icon, false: show normal icon
+    property alias  title:              titleLabel.text
 
-    property AbstractButton lastClickedButton: null
+    function simulateClick(buttonIndex) {
+        buttonIndex = buttonIndex + 1 // skip over title
+        toolStripColumn.children[buttonIndex].clicked()
+    }
 
     // Ensure we don't get narrower than content
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
-    signal clicked(int index, bool checked)
+    signal dropped(int index)
 
-    ButtonGroup {
-        id: buttonGroup
-        exclusive: false
+    DeadMouseArea {
+        anchors.fill: parent
     }
 
-    Column {
-        id:                 toolStripColumn
+    QGCFlickable {
+        id:                 flickable
         anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+        height:             parent.height
+        contentHeight:      toolStripColumn.height
+        flickableDirection: Flickable.VerticalFlick
+        clip:               true
 
-        Repeater {
-            id: repeater
+        Column {
+            id:             toolStripColumn
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelWidth * 0.25
 
-            QGCHoverButton {
-                id: buttonTemplate
+            QGCLabel {
+                id:                     titleLabel
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                horizontalAlignment:    Text.AlignHCenter
+                font.pointSize:         ScreenTools.smallFontPointSize
+                visible:                title != ""
+            }
 
-                anchors.left:   toolStripColumn.left
-                anchors.right:  toolStripColumn.right
-                height:         width
-                radius:         ScreenTools.defaultFontPixelWidth / 2
-                fontPointSize:  ScreenTools.smallFontPointSize
+            Repeater {
+                id: repeater
 
-                enabled:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
-                visible:        _root.buttonVisible ? _root.buttonVisible[index] : true
-                imageSource:    (_root.showAlternateIcon && _root.showAlternateIcon[index]) ? _alternateIconSource : _iconSource
-                text:           modelData.name
+                QGCHoverButton {
+                    id:             buttonTemplate
 
-                property var    _iconSource:            modelData.iconSource
-                property var    _alternateIconSource:   modelData.alternateIconSource
+                    anchors.left:   toolStripColumn.left
+                    anchors.right:  toolStripColumn.right
+                    height:         width
+                    radius:         ScreenTools.defaultFontPixelWidth / 2
+                    fontPointSize:  ScreenTools.smallFontPointSize
+                    autoExclusive:  true
 
-                ButtonGroup.group: buttonGroup
-                // Only drop pannel and toggleable are checkable
-                checkable: modelData.dropPanelComponent !== undefined || (modelData.toggle !== undefined && modelData.toggle)
+                    enabled:        modelData.enabled
+                    visible:        modelData.visible
+                    imageSource:    modelData.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
+                    text:           modelData.text
+                    checked:        modelData.checked
+                    checkable:      modelData.dropPanelComponent || modelData.checkable
 
-                onClicked: {
-                    dropPanel.hide()    // DropPanel will call hide on "lastClickedButton"
+                    onCheckedChanged: modelData.checked = checked
 
-                    // Uncheck other checked buttons
-                    // TODO: Implement ButtonGroup exclusive with checkable and uncheckable and get rid of this workaround
-                    for(var i = 0; i < buttonGroup.buttons.length; i++) {
-                        var b = buttonGroup.buttons[i]
-                        if(b !== buttonTemplate) {
-                            b.checked = false;
+                    onClicked: {
+                        dropPanel.hide()
+                        if (!modelData.dropPanelComponent) {
+                            modelData.triggered(this)
+                        } else if (checked) {
+                            var panelEdgeTopPoint = mapToItem(_root, width, 0)
+                            dropPanel.show(panelEdgeTopPoint, modelData.dropPanelComponent, this)
+                            checked = true
+                            _root.dropped(index)
                         }
                     }
-
-                    if (modelData.dropPanelComponent === undefined) {
-                        _root.clicked(index, checked)
-                    } else if (checked) {
-                        var panelEdgeTopPoint = mapToItem(_root, width, 0)
-                        dropPanel.show(panelEdgeTopPoint, height, modelData.dropPanelComponent)
-                    }
-                    lastClickedButton = buttonTemplate
                 }
             }
         }

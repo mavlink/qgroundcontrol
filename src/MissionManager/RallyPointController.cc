@@ -1,15 +1,11 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
 
 #include "RallyPointController.h"
 #include "RallyPoint.h"
@@ -20,7 +16,6 @@
 #include "ParameterManager.h"
 #include "JsonHelper.h"
 #include "SimpleMissionItem.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
@@ -34,15 +29,11 @@ const char* RallyPointController::_jsonFileTypeValue =  "RallyPoints";
 const char* RallyPointController::_jsonPointsKey =      "points";
 
 RallyPointController::RallyPointController(PlanMasterController* masterController, QObject* parent)
-    : PlanElementController(masterController, parent)
-    , _rallyPointManager(_managerVehicle->rallyPointManager())
-    , _dirty(false)
-    , _currentRallyPoint(NULL)
-    , _itemsRequested(false)
+    : PlanElementController (masterController, parent)
+    , _managerVehicle               (masterController->managerVehicle())
+    , _rallyPointManager    (masterController->managerVehicle()->rallyPointManager())
 {
     connect(&_points, &QmlObjectListModel::countChanged, this, &RallyPointController::_updateContainsItems);
-
-    managerVehicleChanged(_managerVehicle);
 }
 
 RallyPointController::~RallyPointController()
@@ -50,13 +41,23 @@ RallyPointController::~RallyPointController()
 
 }
 
-void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
+void RallyPointController::start(bool flyView)
+{
+    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+
+    _managerVehicleChanged(_masterController->managerVehicle());
+    connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &RallyPointController::_managerVehicleChanged);
+
+    PlanElementController::start(flyView);
+}
+
+void RallyPointController::_managerVehicleChanged(Vehicle* managerVehicle)
 {
     if (_managerVehicle) {
         _rallyPointManager->disconnect(this);
         _managerVehicle->disconnect(this);
-        _managerVehicle = NULL;
-        _rallyPointManager = NULL;
+        _managerVehicle = nullptr;
+        _rallyPointManager = nullptr;
     }
 
     _managerVehicle = managerVehicle;
@@ -71,7 +72,9 @@ void RallyPointController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_rallyPointManager, &RallyPointManager::removeAllComplete,  this, &RallyPointController::_managerRemoveAllComplete);
     connect(_rallyPointManager, &RallyPointManager::inProgressChanged,  this, &RallyPointController::syncInProgressChanged);
 
+    //-- RallyPointController::supported() tests both the capability bit AND the protocol version.
     connect(_managerVehicle,    &Vehicle::capabilityBitsChanged,        this, &RallyPointController::supportedChanged);
+    connect(_managerVehicle,    &Vehicle::requestProtocolVersion,       this, &RallyPointController::supportedChanged);
 
     emit supportedChanged(supported());
 }
@@ -138,7 +141,7 @@ void RallyPointController::removeAll(void)
 {
     _points.clearAndDeleteContents();
     setDirty(true);
-    setCurrentRallyPoint(NULL);
+    setCurrentRallyPoint(nullptr);
 }
 
 void RallyPointController::removeAllFromVehicle(void)
@@ -202,8 +205,10 @@ QString RallyPointController::editorQml(void) const
 void RallyPointController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
-    // Plan view only reloads on _loadComplete if specifically requested
-    if (_flyView || _itemsRequested) {
+    // Plan view only reloads if:
+    //  - Load was specifically requested
+    //  - There is no current Plan
+    if (_flyView || _itemsRequested || isEmpty()) {
         _points.clearAndDeleteContents();
         QObjectList pointList;
         for (int i=0; i<_rallyPointManager->points().count(); i++) {
@@ -239,7 +244,12 @@ void RallyPointController::addPoint(QGeoCoordinate point)
     if (_points.count()) {
         defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
     } else {
-        defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        if(_masterController->controllerVehicle()->fixedWing()) {
+            defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        }
+        else {
+            defaultAlt = RallyPoint::getDefaultFactAltitude();
+        }
     }
     point.setAltitude(defaultAlt);
     RallyPoint* newPoint = new RallyPoint(point, this);
@@ -268,7 +278,7 @@ void RallyPointController::removePoint(QObject* rallyPoint)
         newIndex = qMax(newIndex, 0);
         setCurrentRallyPoint(_points[newIndex]);
     } else {
-        setCurrentRallyPoint(NULL);
+        setCurrentRallyPoint(nullptr);
     }
 }
 
@@ -282,7 +292,7 @@ void RallyPointController::setCurrentRallyPoint(QObject* rallyPoint)
 
 void RallyPointController::_setFirstPointCurrent(void)
 {
-    setCurrentRallyPoint(_points.count() ? _points[0] : NULL);
+    setCurrentRallyPoint(_points.count() ? _points[0] : nullptr);
 }
 
 bool RallyPointController::containsItems(void) const
@@ -317,4 +327,9 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
             return false;
         }
     }
+}
+
+bool RallyPointController::isEmpty(void) const
+{
+    return _points.count() == 0;
 }

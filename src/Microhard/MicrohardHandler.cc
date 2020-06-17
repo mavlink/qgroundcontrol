@@ -42,20 +42,27 @@ MicrohardHandler::close()
 }
 
 //-----------------------------------------------------------------------------
-bool
+void
 MicrohardHandler::_start(uint16_t port, QHostAddress addr)
 {
     close();
-
     _tcpSocket = new QTcpSocket();
     QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &MicrohardHandler::_readBytes);
     qCDebug(MicrohardLog) << "Connecting to" << addr;
     _tcpSocket->connectToHost(addr, port);
-    if (!_tcpSocket->waitForConnected(1000)) {
+    QTimer::singleShot(1000, this, &MicrohardHandler::_testConnection);
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardHandler::_testConnection()
+{
+    if(_tcpSocket) {
+        if(_tcpSocket->state() == QAbstractSocket::ConnectedState) {
+            qCDebug(MicrohardLog) << "Connected";
+            return;
+        }
         emit connected(0);
         close();
-        return false;
     }
-
-    return true;
 }

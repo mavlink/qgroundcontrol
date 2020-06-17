@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -43,7 +43,10 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
-        { FOLLOW,       "Follow Vehicle" },
+#if 0
+    // Follow me not ready for Stable
+        { FOLLOW,       "Follow" },
+#endif
         { ZIGZAG,       "ZigZag" },
     });
 }
@@ -71,7 +74,10 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         APMCopterMode(APMCopterMode::GUIDED_NOGPS,  true),
         APMCopterMode(APMCopterMode::SMART_RTL,     true),
         APMCopterMode(APMCopterMode::FLOWHOLD,      true),
+#if 0
+    // Follow me not ready for Stable
         APMCopterMode(APMCopterMode::FOLLOW,        true),
+#endif
         APMCopterMode(APMCopterMode::ZIGZAG,        true),
     });
 
@@ -96,6 +102,11 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_7["RC10_OPTION"] =      QStringLiteral("CH10_OPT");
         remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
         remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
+
+        FirmwarePlugin::remapParamNameMap_t& remapV4_0 = _remapParamName[4][0];
+
+        remapV4_0["TUNE_MIN"] = QStringLiteral("TUNE_HIGH");
+        remapV3_7["TUNE_MAX"] = QStringLiteral("TUNE_LOW");
 
         _remapParamNameIntialized = true;
     }
@@ -136,3 +147,10 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+#if 0
+    // Follow me not ready for Stable
+void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
+{
+    _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
+}
+#endif

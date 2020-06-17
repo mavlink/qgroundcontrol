@@ -1,18 +1,138 @@
 
 add_library(QmlControls
 	AppMessages.cc
-	CoordinateVector.cc
+	AppMessages.h
 	EditPositionDialogController.cc
+	EditPositionDialogController.h
+	FactValueGrid.cc
+	FactValueGrid.h
+	FlightPathSegment.cc
+	FlightPathSegment.h
+	HorizontalFactValueGrid.cc
+	HorizontalFactValueGrid.h
+	InstrumentValueData.cc
+	InstrumentValueData.h
 	ParameterEditorController.cc
+	ParameterEditorController.h
 	QGCFileDialogController.cc
+	QGCFileDialogController.h
 	QGCGeoBoundingCube.cc
+	QGCGeoBoundingCube.h
 	QGCImageProvider.cc
+	QGCImageProvider.h
 	QGroundControlQmlGlobal.cc
+	QGroundControlQmlGlobal.h
 	QmlObjectListModel.cc
+	QmlObjectListModel.h
+	QmlUnitsConversion.h
 	RCChannelMonitorController.cc
+	RCChannelMonitorController.h
+	RCToParamDialogController.cc
+	RCToParamDialogController.h
 	ScreenToolsController.cc
+	ScreenToolsController.h
+	TerrainProfile.cc
+	TerrainProfile.h
+	ToolStripAction.cc
+	ToolStripAction.h
+	ToolStripActionList.cc
+	ToolStripActionList.h
+	VerticalFactValueGrid.cc
+	VerticalFactValueGrid.h
 )
 
+add_custom_target(QmlControlsQml
+	SOURCES
+		APMSubMotorDisplay.qml
+		AppMessages.qml
+		AxisMonitor.qml
+		ClickableColor.qml
+		DeadMouseArea.qml
+		DropButton.qml
+		DropPanel.qml
+		EditPositionDialog.qml
+		ExclusiveGroupItem.qml
+		FactSliderPanel.qml
+		FileButton.qml
+		FlightModeDropdown.qml
+		FlightModeMenu.qml
+		HackAndroidFileDialog.qml
+		HackFileDialog.qml
+		HeightIndicator.qml
+		HorizontalFactValueGrid.qml
+		IndicatorButton.qml
+		InstrumentValueArea.qml
+		InstrumentValueEditDialog.qml
+		InstrumentValueLabel.qml
+		InstrumentValueValue.qml
+		JoystickThumbPad.qml
+		KMLOrSHPFileDialog.qml
+		LogReplayStatusBar.qml
+		MainWindowSavedState.qml
+		MAVLinkChart.qml
+		MAVLinkMessageButton.qml
+		MissionCommandDialog.qml
+		MissionItemIndexLabel.qml
+		ModeSwitchDisplay.qml
+		MultiRotorMotorDisplay.qml
+		OfflineMapButton.qml
+		PageView.qml
+		ParameterEditorDialog.qml
+		ParameterEditor.qml
+		PIDTuning.qml
+		PreFlightCheckButton.qml
+		PreFlightCheckGroup.qml
+		PreFlightCheckList.qml
+		PreFlightCheckModel.qml
+		QGCButton.qml
+		QGCCheckBox.qml
+		QGCColoredImage.qml
+		QGCComboBox.qml
+		QGCControlDebug.qml
+		QGCDynamicObjectManager.qml
+		QGCFileDialog.qml
+		QGCFlickableHorizontalIndicator.qml
+		QGCFlickable.qml
+		QGCFlickableVerticalIndicator.qml
+		QGCGroupBox.qml
+		QGCHoverButton.qml
+		QGCLabel.qml
+		QGCListView.qml
+		QGCMapLabel.qml
+		QGCMenuItem.qml
+		QGCMenu.qml
+		QGCMenuSeparator.qml
+		QGCMouseArea.qml
+		QGCMovableItem.qml
+		QGCOptionsComboBox.qml
+		QGCPipOverlay.qml
+		QGCPipState.qml
+		QGCPopupDialogContainer.qml
+		QGCPopupDialog.qml
+		QGCRadioButton.qml
+		QGCSlider.qml
+		QGCSwitch.qml
+		QGCTabBar.qml
+		QGCTabButton.qml
+		QGCTextField.qml
+		QGCToolBarButton.qml
+		QGCToolInsets.qml
+		QGCViewDialogContainer.qml
+		QGCViewDialog.qml
+		QGCViewMessage.qml
+		QmlTest.qml
+		RCChannelMonitor.qml
+		RCToParamDialog.qml
+		RoundButton.qml
+		ScreenTools.qml
+		SectionHeader.qml
+		SliderSwitch.qml
+		SubMenuButton.qml
+		ToolStrip.qml
+		VehicleRotationCal.qml
+		VehicleSummaryRow.qml
+		VerticalFactValueGrid.qml
+)
 target_link_libraries(QmlControls
         PUBLIC
 		qgc

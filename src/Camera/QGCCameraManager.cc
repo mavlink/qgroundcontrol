@@ -1,7 +1,7 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -68,7 +68,8 @@ QGCCameraManager::_vehicleReady(bool ready)
 void
 QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if(message.sysid == _vehicle->id()) {
+    //-- Only pay attention to camera components, as identified by their compId
+    if(message.sysid == _vehicle->id() && (message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6)) {
         switch (message.msgid) {
             case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
                 _handleCaptureStatus(message);
@@ -97,6 +98,9 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
                 _handleVideoStreamStatus(message);
                 break;
+            case MAVLINK_MSG_ID_BATTERY_STATUS:
+                _handleBatteryStatus(message);
+                break;
         }
     }
 }
@@ -107,42 +111,39 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-    //-- Only pay attention to "camera" component IDs
-    if(_vehicleReadyState && _vehicle->id() == message.sysid && message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6) {
-        //-- First time hearing from this one?
-        QString sCompID = QString::number(message.compid);
-        if(!_cameraInfoRequest.contains(sCompID)) {
-            qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
-            CameraStruct* pInfo = new CameraStruct(this, message.compid);
-            pInfo->lastHeartbeat.start();
-            _cameraInfoRequest[sCompID] = pInfo;
-            //-- Request camera info
-            _requestCameraInfo(message.compid);
-        } else {
-            if(_cameraInfoRequest[sCompID]) {
-                CameraStruct* pInfo = _cameraInfoRequest[sCompID];
-                //-- Check if we have indeed received the camera info
-                if(pInfo->infoReceived) {
-                    //-- We have it. Just update the heartbeat timeout
-                    pInfo->lastHeartbeat.start();
-                } else {
-                    //-- Try again. Maybe.
-                    if(pInfo->lastHeartbeat.elapsed() > 2000) {
-                        if(pInfo->tryCount > 3) {
-                            if(!pInfo->gaveUp) {
-                                pInfo->gaveUp = true;
-                                qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
-                            }
-                        } else {
-                            pInfo->tryCount++;
-                            //-- Request camera info again.
-                            _requestCameraInfo(message.compid);
+    //-- First time hearing from this one?
+    QString sCompID = QString::number(message.compid);
+    if(!_cameraInfoRequest.contains(sCompID)) {
+        qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
+        CameraStruct* pInfo = new CameraStruct(this, message.compid);
+        pInfo->lastHeartbeat.start();
+        _cameraInfoRequest[sCompID] = pInfo;
+        //-- Request camera info
+        _requestCameraInfo(message.compid);
+    } else {
+        if(_cameraInfoRequest[sCompID]) {
+            CameraStruct* pInfo = _cameraInfoRequest[sCompID];
+            //-- Check if we have indeed received the camera info
+            if(pInfo->infoReceived) {
+                //-- We have it. Just update the heartbeat timeout
+                pInfo->lastHeartbeat.start();
+            } else {
+                //-- Try again. Maybe.
+                if(pInfo->lastHeartbeat.elapsed() > 2000) {
+                    if(pInfo->tryCount > 3) {
+                        if(!pInfo->gaveUp) {
+                            pInfo->gaveUp = true;
+                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
                         }
+                    } else {
+                        pInfo->tryCount++;
+                        //-- Request camera info again.
+                        _requestCameraInfo(message.compid);
                     }
                 }
-            } else {
-                qWarning() << "_cameraInfoRequest[" << sCompID << "] is null";
             }
+        } else {
+            qWarning() << "_cameraInfoRequest[" << sCompID << "] is null";
         }
     }
 }
@@ -198,7 +199,7 @@ QGCCameraManager::_findCamera(int id)
             }
         }
     }
-    qWarning() << "Camera component id not found:" << id;
+    //qWarning() << "Camera component id not found:" << id;
     return nullptr;
 }
 
@@ -355,6 +356,18 @@ QGCCameraManager::_handleVideoStreamStatus(const mavlink_message_t& message)
         mavlink_video_stream_status_t streamStatus;
         mavlink_msg_video_stream_status_decode(&message, &streamStatus);
         pCamera->handleVideoStatus(&streamStatus);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleBatteryStatus(const mavlink_message_t& message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_battery_status_t batteryStatus;
+        mavlink_msg_battery_status_decode(&message, &batteryStatus);
+        pCamera->handleBatteryStatus(batteryStatus);
     }
 }
 

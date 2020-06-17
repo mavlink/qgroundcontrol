@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,6 +15,7 @@
  *
  */
 
+#include "QGC.h"
 #include <QtGlobal>
 #include <QApplication>
 #include <QIcon>
@@ -82,6 +83,9 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(__android__)
 #include <jni.h>
 #include "JoystickAndroid.h"
+#if defined(QGC_ENABLE_PAIRING)
+#include "PairingManager.h"
+#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
@@ -134,7 +138,7 @@ static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 void setNativeMethods(void)
 {
     JNINativeMethod javaMethods[] {
-        {"nativeInit", "(Landroid/content/Context;)V", reinterpret_cast<void *>(gst_android_init)}
+        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
     };
 
     QAndroidJniEnvironment jniEnv;
@@ -172,12 +176,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
-    setNativeMethods();
 
-    QAndroidJniObject resultL = QAndroidJniObject::callStaticObjectMethod(
-        kJniClassName,
-        "jniOnLoad",
-        "();");
+    setNativeMethods();
 
 #if defined(QGC_GST_STREAMING)
     // Tell the androidmedia plugin about the Java VM
@@ -187,7 +187,12 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
  #if !defined(NO_SERIAL_LINK)
     QSerialPort::setNativeMethods();
  #endif
+
     JoystickAndroid::setNativeMethods();
+
+#if defined(QGC_ENABLE_PAIRING)
+    PairingManager::setNativeMethods();
+#endif
 
     return JNI_VERSION_1_6;
 }
@@ -226,11 +231,14 @@ int main(int argc, char *argv[])
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of QGroundControl is already running. Please close the other instance and try again.")
+            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
         );
         return -1;
     }
 #endif
+
+    //-- Record boot time
+    QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices

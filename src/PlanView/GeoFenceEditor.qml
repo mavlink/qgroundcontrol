@@ -62,7 +62,7 @@ QGCFlickable {
                     wrapMode:           Text.WordWrap
                     font.pointSize:     myGeoFenceController.supported ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
                     text:               myGeoFenceController.supported ?
-                                            qsTr("GeoFencing allows you to set a virtual ‘fence’ around the area you want to fly in.") :
+                                            qsTr("GeoFencing allows you to set a virtual fence around the area you want to fly in.") :
                                             qsTr("This vehicle does not support GeoFence.")
                 }
 
@@ -110,8 +110,10 @@ QGCFlickable {
                     }
 
                     SectionHeader {
-                        id:     insertSection
-                        text:   qsTr("Insert GeoFence")
+                        id:             insertSection
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           qsTr("Insert GeoFence")
                     }
 
                     QGCButton {
@@ -139,8 +141,10 @@ QGCFlickable {
                     }
 
                     SectionHeader {
-                        id:     polygonSection
-                        text:   qsTr("Polygon Fences")
+                        id:             polygonSection
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           qsTr("Polygon Fences")
                     }
 
                     QGCLabel {
@@ -212,8 +216,10 @@ QGCFlickable {
                     } // GridLayout
 
                     SectionHeader {
-                        id:     circleSection
-                        text:   qsTr("Circular Fences")
+                        id:             circleSection
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           qsTr("Circular Fences")
                     }
 
                     QGCLabel {
@@ -302,8 +308,10 @@ QGCFlickable {
                     } // GridLayout
 
                     SectionHeader {
-                        id:     breachReturnSection
-                        text:   qsTr("Breach Return Point")
+                        id:             breachReturnSection
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           qsTr("Breach Return Point")
                     }
 
                     QGCButton {

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -80,10 +80,10 @@ static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& ad
 UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
     : LinkInterface(config)
     #if defined(QGC_ZEROCONF_ENABLED)
-    , _dnssServiceRef(NULL)
+    , _dnssServiceRef(nullptr)
     #endif
     , _running(false)
-    , _socket(NULL)
+    , _socket(nullptr)
     , _udpConfig(qobject_cast<UDPConfiguration*>(config.data()))
     , _connectState(false)
 {
@@ -169,6 +169,7 @@ void UDPLink::_writeBytes(const QByteArray data)
     if (!_socket) {
         return;
     }
+    emit bytesSent(this, data);
     // Send to all manually targeted systems
     for(UDPCLient* target: _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
@@ -253,7 +254,7 @@ void UDPLink::_disconnect(void)
     if (_socket) {
         // Make sure delete happen on correct thread
         _socket->deleteLater();
-        _socket = NULL;
+        _socket = nullptr;
         emit disconnected();
     }
     _connectState = false;
@@ -281,7 +282,7 @@ bool UDPLink::_hardwareConnect()
 {
     if (_socket) {
         delete _socket;
-        _socket = NULL;
+        _socket = nullptr;
     }
     QHostAddress host = QHostAddress::AnyIPv4;
     _socket = new QUdpSocket(this);
@@ -290,13 +291,16 @@ bool UDPLink::_hardwareConnect()
     if (_connectState) {
         _socket->joinMulticastGroup(QHostAddress("224.0.0.1"));
         //-- Make sure we have a large enough IO buffers
+
 #ifdef __mobile__
-        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
-        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
+        int bufferSizeMultiplier = 1;
 #else
-        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
-        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
+        int bufferSizeMultiplier = 4;
 #endif
+        int receiveBufferSize = _udpConfig->isTransmitOnly() ? 0 : 512 * 1024;
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     bufferSizeMultiplier * 64 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, bufferSizeMultiplier * receiveBufferSize);
+
         _registerZeroconf(_udpConfig->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
@@ -368,7 +372,9 @@ void UDPLink::_deregisterZeroconf()
 //--------------------------------------------------------------------------
 //-- UDPConfiguration
 
-UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
+UDPConfiguration::UDPConfiguration(const QString& name)
+    : LinkConfiguration(name)
+    , _transmitOnly(false)
 {
     AutoConnectSettings* settings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
     _localPort = settings->udpListenPort()->rawValue().toInt();
@@ -378,7 +384,9 @@ UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name
     }
 }
 
-UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
+UDPConfiguration::UDPConfiguration(UDPConfiguration* source)
+    : LinkConfiguration(source)
+    , _transmitOnly(false)
 {
     _copyFrom(source);
 }
@@ -396,7 +404,7 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
 
 void UDPConfiguration::_copyFrom(LinkConfiguration *source)
 {
-    UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
+    auto* usource = qobject_cast<UDPConfiguration*>(source);
     if (usource) {
         _localPort = usource->localPort();
         _clearTargetHosts();

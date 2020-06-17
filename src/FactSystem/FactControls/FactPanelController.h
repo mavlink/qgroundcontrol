@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -34,6 +34,12 @@ public:
     Q_INVOKABLE Fact*   getParameterFact    (int componentId, const QString& name, bool reportMissing = true);
     Q_INVOKABLE bool    parameterExists     (int componentId, const QString& name);
 
+    /// Queries the vehicle for parameters which were not available on initial download but should be available now.
+    /// Signals missingParametersAvailable when done. Only works for MAV_COMP_ID_AUTOPILOT1 parameters.
+    Q_INVOKABLE void    getMissingParameters(QStringList rgNames);
+
+signals:
+    void missingParametersAvailable(void);
 
 protected:
     /// Checks for existence of the specified parameters
@@ -47,10 +53,10 @@ protected:
     UASInterface*       _uas        = nullptr;
     AutoPilotPlugin*    _autopilot  = nullptr;
 
-private:
-    void _notifyPanelMissingParameter(const QString& missingParam);
-    void _notifyPanelErrorMsg(const QString& errorMsg);
-    void _showInternalError(const QString& errorMsg);
+private slots:
+    void _checkForMissingParameters(void);
 
-    QStringList _delayedMissingParams;
+private:
+    QStringList _missingParameterWaitList;
+    QTimer      _missingParametersTimer;
 };

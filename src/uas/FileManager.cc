@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,7 +24,7 @@ FileManager::FileManager(QObject* parent, Vehicle* vehicle)
     : QObject(parent)
     , _currentOperation(kCOIdle)
     , _vehicle(vehicle)
-    , _dedicatedLink(NULL)
+    , _dedicatedLink(nullptr)
     , _activeSession(0)
     , _missingDownloadedBytes(0)
     , _downloadingMissingParts(false)
@@ -891,5 +891,5 @@ void FileManager::_sendRequestNoAck(Request* request)
                                                  0,                  // Target component
                                                  (uint8_t*)request); // Payload
     
-    _vehicle->sendMessageOnLink(link, message);
+    _vehicle->sendMessageOnLinkThreadSafe(link, message);
 }

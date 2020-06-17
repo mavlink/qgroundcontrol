@@ -16,21 +16,14 @@ add_library(comm
 	LogReplayLink.cc
 	MavlinkMessagesTimer.cc
 	MAVLinkProtocol.cc
-	QGCJSBSimLink.cc
 	QGCMAVLink.cc
 	QGCSerialPortInfo.cc
-	QGCXPlaneLink.cc
 	SerialLink.cc
 	TCPLink.cc
 	UDPLink.cc
 	UdpIODevice.cc
 
 	${EXTRA_SRC}
-
-	# HEADERS
-	# shouldn't be listed here, but aren't named properly for AUTOMOC
-	QGCHilLink.h
-	QGCJSBSimLink.h
 )
 
 target_link_libraries(comm

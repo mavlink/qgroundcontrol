@@ -1,0 +1,8 @@
+{
+    "comment":      "PX4 Pro, Rover",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
+
+    "mavCmdInfo": [
+    ]
+}

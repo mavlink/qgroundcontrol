@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "minZoomLevelDownload",
@@ -22,3 +26,4 @@
     "defaultValue":     100000
 }
 ]
+}

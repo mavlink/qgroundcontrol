@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /**
  * @file
  *   @brief Definition of Bluetooth connection for unmanned vehicles
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -78,6 +78,7 @@ void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
     if (_targetSocket) {
         if(_targetSocket->write(bytes) > 0) {
+            emit bytesSent(this, bytes);
             _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
         } else {
             qWarning() << "Bluetooth write error";
@@ -270,7 +271,7 @@ QString BluetoothConfiguration::settingsTitle()
 void BluetoothConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    BluetoothConfiguration* usource = dynamic_cast<BluetoothConfiguration*>(source);
+    auto* usource = qobject_cast<BluetoothConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _device = usource->device();
 }
@@ -303,7 +304,7 @@ void BluetoothConfiguration::loadSettings(QSettings& settings, const QString& ro
 void BluetoothConfiguration::updateSettings()
 {
     if(_link) {
-        BluetoothLink* ulink = dynamic_cast<BluetoothLink*>(_link);
+        auto* ulink = qobject_cast<BluetoothLink*>(_link);
         if(ulink) {
             ulink->_restartConnection();
         }

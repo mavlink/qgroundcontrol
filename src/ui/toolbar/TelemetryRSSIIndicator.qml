@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,10 +22,12 @@ Item {
     id:             _root
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          _hasTelemetry ? telemIcon.width * 1.1 : 0
-    visible:        _hasTelemetry
+    width:          telemIcon.width * 1.1
 
-    property bool _hasTelemetry:    activeVehicle ? activeVehicle.telemetryLRSSI !== 0 : false
+    property bool showIndicator: _hasTelemetry
+
+    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
+    property bool _hasTelemetry:    _activeVehicle ? _activeVehicle.telemetryLRSSI !== 0 : false
 
     Component {
         id: telemRSSIInfo

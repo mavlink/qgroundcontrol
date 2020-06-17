@@ -1,19 +1,35 @@
 
 add_library(Settings
+	ADSBVehicleManagerSettings.cc
+	ADSBVehicleManagerSettings.h
 	APMMavlinkStreamRateSettings.cc
+	APMMavlinkStreamRateSettings.h
 	AppSettings.cc
+	AppSettings.h
 	AutoConnectSettings.cc
+	AutoConnectSettings.h
 	BrandImageSettings.cc
+	BrandImageSettings.h
 	FirmwareUpgradeSettings.cc
+	FirmwareUpgradeSettings.h
 	FlightMapSettings.cc
+	FlightMapSettings.h
 	FlyViewSettings.cc
+	FlyViewSettings.h
 	OfflineMapsSettings.cc
+	OfflineMapsSettings.h
 	PlanViewSettings.cc
+	PlanViewSettings.h
 	RTKSettings.cc
+	RTKSettings.h
 	SettingsGroup.cc
+	SettingsGroup.h
 	SettingsManager.cc
+	SettingsManager.h
 	UnitsSettings.cc
+	UnitsSettings.h
 	VideoSettings.cc
+	VideoSettings.h
 )
 
 target_link_libraries(Settings

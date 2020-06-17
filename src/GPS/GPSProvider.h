@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -85,8 +85,8 @@ private:
     float   _fixedBaseAltitudeMeters;
     float   _fixedBaseAccuracyMeters;
 
-	struct vehicle_gps_position_s	_reportGpsPos;
-	struct satellite_info_s		*_pReportSatInfo = nullptr;
+	struct sensor_gps_s        _reportGpsPos;
+	struct satellite_info_s    *_pReportSatInfo = nullptr;
 
 	QSerialPort *_serial = nullptr;
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -31,8 +31,9 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
         qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
     }
 
-    _modeParamPrefix = _vehicle->rover() ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
-    _modeChannelParam = _vehicle->rover() ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
+    bool arduRoverFirmware = parameterExists(-1, QStringLiteral("MODE1"));
+    _modeParamPrefix = arduRoverFirmware ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
+    _modeChannelParam = arduRoverFirmware ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
 
     _simpleModeNames << tr("Off") << tr("Simple") << tr("Super-Simple") << tr("Custom");
     for (int i=0; i<_cFltModes; i++) {

@@ -69,7 +69,7 @@ public class QGCActivity extends QtActivity
     private static UsbManager                           _usbManager = null;
     private static List<UsbSerialDriver>                _drivers;
     private static HashMap<Integer, UsbIoManager>       m_ioManager;
-    private static HashMap<Integer, Integer>            _userDataHashByDeviceId;
+    private static HashMap<Integer, Long>               _userDataHashByDeviceId;
     private static final String                         TAG = "QGC_QGCActivity";
     private static PowerManager.WakeLock                _wakeLock;
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
@@ -85,14 +85,14 @@ public class QGCActivity extends QtActivity
             new UsbIoManager.Listener()
             {
                 @Override
-                public void onRunError(Exception eA, int userData)
+                public void onRunError(Exception eA, long userData)
                 {
                     Log.e(TAG, "onRunError Exception");
                     nativeDeviceException(userData, eA.getMessage());
                 }
 
                 @Override
-                public void onNewData(final byte[] dataA, int userData)
+                public void onNewData(final byte[] dataA, long userData)
                 {
                     nativeDeviceNewData(userData, dataA);
                 }
@@ -174,23 +174,23 @@ public class QGCActivity extends QtActivity
         };
 
     // Native C++ functions which connect back to QSerialPort code
-    private static native void nativeDeviceHasDisconnected(int userData);
-    private static native void nativeDeviceException(int userData, String messageA);
-    private static native void nativeDeviceNewData(int userData, byte[] dataA);
+    private static native void nativeDeviceHasDisconnected(long userData);
+    private static native void nativeDeviceException(long userData, String messageA);
+    private static native void nativeDeviceNewData(long userData, byte[] dataA);
     private static native void nativeUpdateAvailableJoysticks();
 
     // Native C++ functions called to log output
     public static native void qgcLogDebug(String message);
     public static native void qgcLogWarning(String message);
 
-    private static native void nativeInit();
+    public native void nativeInit();
 
     // QGCActivity singleton
     public QGCActivity()
     {
         _instance =                 this;
         _drivers =                  new ArrayList<UsbSerialDriver>();
-        _userDataHashByDeviceId =   new HashMap<Integer, Integer>();
+        _userDataHashByDeviceId =   new HashMap<Integer, Long>();
         m_ioManager =               new HashMap<Integer, UsbIoManager>();
     }
 
@@ -198,6 +198,7 @@ public class QGCActivity extends QtActivity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        nativeInit();
         PowerManager pm = (PowerManager)_instance.getSystemService(Context.POWER_SERVICE);
         _wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
         if(_wakeLock != null) {
@@ -375,7 +376,7 @@ public class QGCActivity extends QtActivity
     /// Open the specified device
     ///     @param userData Data to associate with device and pass back through to native calls.
     /// @return Device id
-    public static int open(Context parentContext, String deviceName, int userData)
+    public static int open(Context parentContext, String deviceName, long userData)
     {
         int deviceId = BAD_DEVICE_ID;
 
@@ -742,11 +743,6 @@ public class QGCActivity extends QtActivity
                 }
             }
         }).start();
-    }
-
-    public void jniOnLoad()
-    {
-        nativeInit();
     }
 }
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,9 +25,8 @@
 class LinkManager;
 
 /**
-* The link interface defines the interface for all links used to communicate
-* with the groundstation application.
-*
+* @brief The link interface defines the interface for all links used to communicate
+* with the ground station application.
 **/
 class LinkInterface : public QThread
 {
@@ -39,7 +38,7 @@ class LinkInterface : public QThread
 public:    
     virtual ~LinkInterface() {
         stopMavlinkMessagesTimer();
-        _config->setLink(NULL);
+        _config->setLink(nullptr);
     }
 
     Q_PROPERTY(bool active      READ active     NOTIFY activeChanged)
@@ -87,7 +86,7 @@ public:
     virtual bool isLogReplay(void) { return false; }
 
     /**
-     * @Enable/Disable data rate collection
+     * @Brief Enable/Disable data rate collection
      **/
     void enableDataRate(bool enable)
     {
@@ -137,33 +136,11 @@ public:
     bool connect(void);
     bool disconnect(void);
 
-public slots:
+    void writeBytesThreadSafe(const char *bytes, int length);
 
-    /**
-     * @brief This method allows to write bytes to the interface.
-     *
-     * If the underlying communication is packet oriented,
-     * one write command equals a datagram. In case of serial
-     * communication arbitrary byte lengths can be written. The method ensures
-     * thread safety regardless of the underlying LinkInterface implementation.
-     *
-     * @param bytes The pointer to the byte array containing the data
-     * @param length The length of the data array
-     **/
-    void writeBytesSafe(const char *bytes, int length)
-    {
-        emit _invokeWriteBytes(QByteArray(bytes, length));
-    }
-
-private slots:
-    virtual void _writeBytes(const QByteArray) = 0;
-
-    void _activeChanged(bool active, int vehicle_id);
-    
 signals:
     void autoconnectChanged(bool autoconnect);
     void activeChanged(LinkInterface* link, bool active, int vehicle_id);
-    void _invokeWriteBytes(QByteArray);
     void highLatencyChanged(bool highLatency);
 
     /// Signalled when a link suddenly goes away due to it being removed by for example pulling the cable to the connection.
@@ -177,9 +154,21 @@ signals:
      * affect performance, for control links it is however desirable to directly
      * forward the link data.
      *
-     * @param data the new bytes
+     * @param link: Link where the data is coming from
+     * @param data: The data received
      */
     void bytesReceived(LinkInterface* link, QByteArray data);
+
+    /**
+     * @brief New data has been sent
+     * *
+     * The new data is contained in the QByteArray data.
+     * The data is logged into telemetry logging system
+     *
+     * @param link: Link used
+     * @param data: The data sent
+     */
+    void bytesSent(LinkInterface* link, QByteArray data);
 
     /**
      * @brief This signal is emitted instantly when the link is connected
@@ -219,6 +208,9 @@ protected:
 
     SharedLinkConfigurationPointer _config;
     bool _highLatency;
+
+private slots:
+    void _activeChanged(bool active, int vehicle_id);
 
 private:
     /**
@@ -277,6 +269,8 @@ private:
      */
     void stopMavlinkMessagesTimer();
 
+    virtual void _writeBytes(const QByteArray) = 0; // Not thread safe, only writeBytesThreadSafe is thread safe
+
     bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
     uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
     
@@ -296,7 +290,8 @@ private:
     quint64 _outDataWriteAmounts[_dataRateBufferSize]; // In bytes
     qint64  _outDataWriteTimes[_dataRateBufferSize]; // in ms
     
-    mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
+    mutable QMutex _dataRateMutex;
+    mutable QMutex _writeBytesMutex;
 
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet

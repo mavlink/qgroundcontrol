@@ -1,4 +1,6 @@
 
+add_subdirectory(FactControls)
+
 set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
@@ -11,7 +13,6 @@ endif()
 
 add_library(FactSystem
 	Fact.cc
-	FactControls/FactPanelController.cc
 	FactGroup.cc
 	FactMetaData.cc
 	FactSystem.cc
@@ -25,6 +26,7 @@ add_library(FactSystem
 target_link_libraries(FactSystem
 	PRIVATE
 		qgc
+		FactControls
 )
 
 target_include_directories(FactSystem

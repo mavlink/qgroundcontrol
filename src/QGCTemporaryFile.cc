@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -18,6 +18,7 @@
 #include "QGCTemporaryFile.h"
 
 #include <QDir>
+#include <QRandomGenerator>
 #include <QStandardPaths>
 
 QGCTemporaryFile::QGCTemporaryFile(const QString& fileTemplate, QObject* parent) :
@@ -40,7 +41,7 @@ bool QGCTemporaryFile::open(QFile::OpenMode openMode)
     do {
         QString uniqueStr;
         for (int i=0; i<6; i++) {
-            uniqueStr += rgDigits[qrand() % 10];
+            uniqueStr += rgDigits[QRandomGenerator::global()->generate() % 10];
         }
         
         if (_template.contains("XXXXXX")) {

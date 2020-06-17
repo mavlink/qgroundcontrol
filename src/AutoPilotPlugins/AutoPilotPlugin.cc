@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -71,7 +71,7 @@ void AutoPilotPlugin::parametersReadyPreChecks(void)
     }
 
     if (!_setupComplete) {
-        qgcApp()->showMessage(tr("One or more vehicle components require setup prior to flight."));
+        qgcApp()->showAppMessage(tr("One or more vehicle components require setup prior to flight."));
 
         // Take the user to Vehicle Summary
         qgcApp()->showSetupView();

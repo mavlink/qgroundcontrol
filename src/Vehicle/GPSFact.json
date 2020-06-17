@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "lat",
@@ -10,6 +14,11 @@
     "shortDescription": "Longitude",
     "type":             "double",
     "decimalPlaces":    7
+},
+{
+    "name":             "mgrs",
+    "shortDescription": "MGRS Position",
+    "type":             "string"
 },
 {
     "name":             "hdop",
@@ -44,3 +53,4 @@
     "type":             "uint32"
 }
 ]
+}

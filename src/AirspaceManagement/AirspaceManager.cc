@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -48,21 +48,16 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 AirspaceManager::~AirspaceManager()
 {
-    if(_advisories) {
-        delete _advisories;
-    }
-    if(_weatherProvider) {
-        delete _weatherProvider;
-    }
-    if(_ruleSetsProvider) {
-        delete _ruleSetsProvider;
-    }
-    if(_airspaces) {
-        delete _airspaces;
-    }
-    if(_flightPlan) {
-        delete _flightPlan;
-    }
+    delete _advisories;
+    _advisories = nullptr;
+    delete _weatherProvider;
+    _weatherProvider = nullptr;
+    delete _ruleSetsProvider;
+    _ruleSetsProvider = nullptr;
+    delete _airspaces;
+    _airspaces = nullptr;
+    delete _flightPlan;
+    _flightPlan = nullptr;
 }
 
 //-----------------------------------------------------------------------------

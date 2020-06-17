@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -681,7 +681,7 @@ Item {
                         visible:        !QGroundControl.airspaceManager.flightPlan.loadingFlightList && _flightList.count > 0 && tableView.currentRow >= 0
                         function updateActiveMapType() {
                             var settings =  QGroundControl.settingsManager.flightMapSettings
-                            var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
+                            var fullMapName = settings.mapProvider.value + " " + settings.mapType.value
                             for (var i = 0; i < map.supportedMapTypes.length; i++) {
                                 if (fullMapName === map.supportedMapTypes[i].name) {
                                     map.activeMapType = map.supportedMapTypes[i]

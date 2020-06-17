@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Cache Data
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -37,7 +37,7 @@ public:
         , _y(0)
         , _z(0)
         , _set(UINT64_MAX)
-        , _type(UrlFactory::Invalid)
+        , _type("Invalid")
     {
     }
 
@@ -53,14 +53,14 @@ public:
     int                 z           () const { return _z; }
     qulonglong          set         () const { return _set;  }
     const QString       hash        () const { return _hash; }
-    UrlFactory::MapType type        () const { return _type; }
+    QString type        () const { return _type; }
 
     void                setX        (int x) { _x = x; }
     void                setY        (int y) { _y = y; }
     void                setZ        (int z) { _z = z; }
     void                setTileSet  (qulonglong set) { _set = set;  }
     void                setHash     (const QString& hash) { _hash = hash; }
-    void                setType     (UrlFactory::MapType type) { _type = type; }
+    void                setType     (QString type) { _type = type; }
 
 private:
     int         _x;
@@ -68,7 +68,7 @@ private:
     int         _z;
     qulonglong  _set;
     QString     _hash;
-    UrlFactory::MapType _type;
+    QString _type;
 };
 
 //-----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ class QGCCacheTile : public QObject
 {
     Q_OBJECT
 public:
-    QGCCacheTile    (const QString hash, const QByteArray img, const QString format, UrlFactory::MapType type, qulonglong set = UINT64_MAX)
+    QGCCacheTile    (const QString hash, const QByteArray img, const QString format, QString type, qulonglong set = UINT64_MAX)
         : _set(set)
         , _hash(hash)
         , _img(img)
@@ -93,13 +93,13 @@ public:
     QString             hash    () { return _hash;  }
     QByteArray          img     () { return _img;   }
     QString             format  () { return _format;}
-    UrlFactory::MapType type    () { return _type; }
+    QString type    () { return _type; }
 private:
     qulonglong  _set;
     QString     _hash;
     QByteArray  _img;
     QString     _format;
-    UrlFactory::MapType _type;
+    QString _type;
 };
 
 //-----------------------------------------------------------------------------
@@ -243,8 +243,8 @@ public:
 
     ~QGCSaveTileTask()
     {
-        if(_tile)
-            delete _tile;
+        delete _tile;
+        _tile = nullptr;
     }
 
     QGCCacheTile*   tile() { return _tile; }

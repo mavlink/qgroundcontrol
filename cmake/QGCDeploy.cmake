@@ -20,7 +20,7 @@ elseif(APPLE)
 		COMMAND
 			${MACDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:QGroundControl>/../.. -appstore-compliant -qmldir=${CMAKE_SOURCE_DIR}/src
 		COMMAND
-			rsync -a ${CMAKE_SOURCE_DIR}/libs/lib/Frameworks $<TARGET_FILE_DIR:QGroundControl>/../../Contents/
+			rsync -a ${CMAKE_SOURCE_DIR}/libs/Frameworks $<TARGET_FILE_DIR:QGroundControl>/../../Contents/
 		COMMAND
 			${CMAKE_INSTALL_NAME_TOOL} -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $<TARGET_FILE:QGroundControl>
 	)

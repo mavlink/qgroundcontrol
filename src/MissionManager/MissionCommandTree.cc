@@ -1,7 +1,7 @@
 
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,7 +14,6 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionCommandList.h"
 #include "SettingsManager.h"
@@ -38,12 +37,12 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
 #ifdef UNITTEST_BUILD
     if (_unitTest) {
         // Load unit testing tree
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC] =           new MissionCommandList(":/unittest/MavCmdInfoCommon.json", true, this);
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_FIXED_WING] =        new MissionCommandList(":/unittest/MavCmdInfoFixedWing.json", false, this);
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_QUADROTOR] =         new MissionCommandList(":/unittest/MavCmdInfoMultiRotor.json", false, this);
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_VTOL_QUADROTOR] =    new MissionCommandList(":/unittest/MavCmdInfoVTOL.json", false, this);
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_SUBMARINE] =         new MissionCommandList(":/unittest/MavCmdInfoSub.json", false, this);
-        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GROUND_ROVER] =      new MissionCommandList(":/unittest/MavCmdInfoRover.json", false, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC] =           new MissionCommandList(":/unittest/UT-MavCmdInfoCommon.json", true, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_FIXED_WING] =        new MissionCommandList(":/unittest/UT-MavCmdInfoFixedWing.json", false, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_QUADROTOR] =         new MissionCommandList(":/unittest/UT-MavCmdInfoMultiRotor.json", false, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_VTOL_QUADROTOR] =    new MissionCommandList(":/unittest/UT-MavCmdInfoVTOL.json", false, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_SUBMARINE] =         new MissionCommandList(":/unittest/UT-MavCmdInfoSub.json", false, this);
+        _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GROUND_ROVER] =      new MissionCommandList(":/unittest/UT-MavCmdInfoRover.json", false, this);
     } else {
 #endif
         // Load all levels of hierarchy
@@ -219,7 +218,7 @@ const MissionCommandUIInfo* MissionCommandTree::getUIInfo(Vehicle* vehicle, MAV_
     }
 }
 
-QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const QString& category)
+QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const QString& category, bool showFlyThroughCommands)
 {
     MAV_AUTOPILOT   baseFirmwareType;
     MAV_TYPE        baseVehicleType;
@@ -237,7 +236,8 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     for (MAV_CMD command: commandMap.keys()) {
         if (supportedCommands.contains(command)) {
             MissionCommandUIInfo* uiInfo = commandMap[command];
-            if (uiInfo->category() == category || category == _allCommandsCategory) {
+            if ((uiInfo->category() == category || category == _allCommandsCategory) &&
+                    (showFlyThroughCommands || !uiInfo->specifiesCoordinate() || uiInfo->isStandaloneCoordinate())) {
                 list.append(QVariant::fromValue(uiInfo));
             }
         }

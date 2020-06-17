@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
 #include "ParameterManager.h"
 #include <cmath>
 
-static const char* kColPrevParam = "MPC_COL_PREV_D";
+static const char* kColPrevParam = "CP_DIST";
 
 //-----------------------------------------------------------------------------
 VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle *vehicle, QObject* parent)
@@ -46,7 +46,7 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
     //-- Create a plottable grid with found objects
     _objGrid.clear();
     _objDistance.clear();
-    VehicleSetpointFactGroup* sp = dynamic_cast<VehicleSetpointFactGroup*>(_vehicle->setpointFactGroup());
+    auto* sp = qobject_cast<VehicleSetpointFactGroup*>(_vehicle->setpointFactGroup());
     qreal startAngle = sp->yaw()->rawValue().toDouble() + _angleOffset;
     for(int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
         if(_distances[i] < _maxDistance && message->distances[i] != UINT16_MAX) {

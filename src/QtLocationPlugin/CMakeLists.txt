@@ -1,5 +1,12 @@
 
 add_library(QtLocationPlugin
+	BingMapProvider.cpp
+	ElevationMapProvider.cpp
+	EsriMapProvider.cpp
+	GenericMapProvider.cpp
+	GoogleMapProvider.cpp
+	MapboxMapProvider.cpp
+	MapProvider.cpp
 	QGCMapEngine.cpp
 	QGCMapTileSet.cpp
 	QGCMapUrlEngine.cpp

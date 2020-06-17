@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,11 +9,10 @@
 
 #include "MissionSettingsTest.h"
 #include "QGCApplication.h"
-#include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
 MissionSettingsTest::MissionSettingsTest(void)
-    : _settingsItem(NULL)
+    : _settingsItem(nullptr)
 {
     
 }
@@ -22,7 +21,7 @@ void MissionSettingsTest::init(void)
 {
     VisualMissionItemTest::init();
 
-    _settingsItem = new MissionSettingsItem(_offlineVehicle, false /* flyView */, this);
+    _settingsItem = new MissionSettingsItem(_masterController, false /* flyView */, this);
 }
 
 void MissionSettingsTest::cleanup(void)

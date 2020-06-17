@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "TurnAroundDistance",
@@ -37,7 +41,7 @@
 },
 {
     "name":             "TerrainAdjustTolerance",
-    "shortDescription": "If adjacent terrain waypoints are within this tolerence they will be removed.",
+    "shortDescription": "Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
@@ -63,3 +67,4 @@
     "defaultValue":     0
 }
 ]
+}

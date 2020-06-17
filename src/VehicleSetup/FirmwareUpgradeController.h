@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -94,6 +94,7 @@ public:
     Q_PROPERTY(bool                 px4FlowBoard                READ px4FlowBoard                                                   NOTIFY boardFound)
     Q_PROPERTY(FirmwareBuildType_t  selectedFirmwareBuildType   READ selectedFirmwareBuildType  WRITE setSelectedFirmwareBuildType  NOTIFY selectedFirmwareBuildTypeChanged)
     Q_PROPERTY(QStringList          apmFirmwareNames            MEMBER _apmFirmwareNames                                            NOTIFY apmFirmwareNamesChanged)
+    Q_PROPERTY(int                  apmFirmwareNamesBestIndex   MEMBER _apmFirmwareNamesBestIndex                                   NOTIFY apmFirmwareNamesChanged)
     Q_PROPERTY(QStringList          apmFirmwareUrls             MEMBER _apmFirmwareUrls                                             NOTIFY apmFirmwareNamesChanged)
     Q_PROPERTY(QString              px4StableVersion            READ px4StableVersion                                               NOTIFY px4StableVersionChanged)
     Q_PROPERTY(QString              px4BetaVersion              READ px4BetaVersion                                                 NOTIFY px4BetaVersionChanged)
@@ -218,7 +219,10 @@ private:
     QHash<FirmwareIdentifier, QString> _rgCrazyflie2Firmware;
     QHash<FirmwareIdentifier, QString> _rgOmnibusF4SDFirmware;
     QHash<FirmwareIdentifier, QString> _rgKakuteF7Firmware;
+    QHash<FirmwareIdentifier, QString> _rgDurandalV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgFMUK66V3Firmware;
+    QHash<FirmwareIdentifier, QString> _rgModalFCV1Firmware;
+    QHash<FirmwareIdentifier, QString> _rgUVifyCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 
@@ -306,6 +310,7 @@ private:
     QMap<QString, FirmwareBuildType_t>      _manifestMavFirmwareVersionTypeToFirmwareBuildTypeMap;
     QMap<QString, FirmwareVehicleType_t>    _manifestMavTypeToFirmwareVehicleTypeMap;
     QStringList                             _apmFirmwareNames;
+    int                                     _apmFirmwareNamesBestIndex = 0;
     QStringList                             _apmFirmwareUrls;
     Fact*                                   _apmChibiOSSetting;
     Fact*                                   _apmVehicleTypeSetting;

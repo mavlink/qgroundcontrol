@@ -47,7 +47,7 @@ def main():
   http = httplib2.Http()
   http = credentials.authorize(http)
 
-  service = build('androidpublisher', 'v2', http=http)
+  service = build('androidpublisher', 'v3', http=http)
 
   # Process flags and read their values.
   flags = argparser.parse_args()
@@ -73,10 +73,13 @@ def main():
         editId=edit_id,
         track=release_track,
         packageName=package_name,
-        body={u'versionCodes': [apk_response['versionCode']]}).execute()
+        body={u'releases': [{
+            u'versionCodes': [str(apk_response['versionCode'])],
+            u'status': u'completed',
+        }]}).execute()
 
-    print 'Track %s is set for version code(s) %s' % (
-        track_response['track'], str(track_response['versionCodes']))
+    print 'Track %s is set with releases: %s' % (
+        track_response['track'], str(track_response['releases']))
 
     commit_request = service.edits().commit(
         editId=edit_id, packageName=package_name).execute()

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -191,6 +191,7 @@ SetupPage {
                             anchors.left:       lightsStepLabel.right
                             width:              ScreenTools.defaultFontPixelWidth * 15
                             model:              lightsOutModel
+                            textRole:           "text"
                             currentIndex:       lights1OutIndex
 
                             onActivated: setRCFunction(lightsOutModel.get(index).value, lights1Function)
@@ -211,6 +212,7 @@ SetupPage {
                             anchors.left:       lightsStepLabel.right
                             width:              lights1Combo.width
                             model:              lightsOutModel
+                            textRole:           "text"
                             currentIndex:       lights2OutIndex
 
                             onActivated: setRCFunction(lightsOutModel.get(index).value, lights2Function)

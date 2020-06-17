@@ -39,6 +39,8 @@ add_compile_options(
 	-Wno-return-type
 )
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # Use rpath?
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # No rpath on Darwin. Setting it will only cause trouble.
@@ -175,7 +177,7 @@ if(BUILD_TEST)
 endif(BUILD_TEST)
 
 foreach(executable ${executables})
-  add_executable(${executable} ${executable}.c)
+  add_executable(${executable} EXCLUDE_FROM_ALL ${executable}.c)
   target_link_libraries(${executable} shp)
   if(USE_RPATH)
     set_target_properties(${executable}
@@ -200,7 +202,7 @@ if(BUILD_TEST)
 
   # Other executables to be built to facilitate tests.
   foreach(executable shptest shputils)
-    add_executable(${executable} ${executable}.c)
+    add_executable(${executable} EXCLUDE_FROM_ALL ${executable}.c)
     target_link_libraries(${executable} shp)
     get_target_property(${executable}_LOC ${executable} LOCATION)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/script.sed "s?\\./${executable}?${${executable}_LOC}?\n")

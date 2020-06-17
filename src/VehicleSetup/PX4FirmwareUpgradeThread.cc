@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -23,9 +23,9 @@
 
 PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgradeThreadController* controller) :
     _controller(controller),
-    _bootloader(NULL),
-    _bootloaderPort(NULL),
-    _timerRetry(NULL),
+    _bootloader(nullptr),
+    _bootloaderPort(nullptr),
+    _timerRetry(nullptr),
     _foundBoard(false),
     _findBoardFirstAttempt(true)
 {
@@ -52,14 +52,14 @@ void PX4FirmwareUpgradeThreadWorker::_init(void)
 {
     // We create the timers here so that they are on the right thread
     
-    Q_ASSERT(_timerRetry == NULL);
+    Q_ASSERT(_timerRetry == nullptr);
     _timerRetry = new QTimer(this);
     Q_CHECK_PTR(_timerRetry);
     _timerRetry->setSingleShot(true);
     _timerRetry->setInterval(_retryTimeout);
     connect(_timerRetry, &QTimer::timeout, this, &PX4FirmwareUpgradeThreadWorker::_findBoardOnce);
     
-    Q_ASSERT(_bootloader == NULL);
+    Q_ASSERT(_bootloader == nullptr);
     _bootloader = new Bootloader(this);
     connect(_bootloader, &Bootloader::updateProgress, this, &PX4FirmwareUpgradeThreadWorker::_updateProgress);
 }
@@ -69,7 +69,7 @@ void PX4FirmwareUpgradeThreadWorker::_cancel(void)
     if (_bootloaderPort) {
         _bootloaderPort->close();
         _bootloaderPort->deleteLater();
-        _bootloaderPort = NULL;
+        _bootloaderPort = nullptr;
     }
 }
 
@@ -233,7 +233,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
             emit error(_bootloader->errorString());
         }
         _bootloaderPort->deleteLater();
-        _bootloaderPort = NULL;
+        _bootloaderPort = nullptr;
         return false;
     }
 
@@ -254,7 +254,7 @@ bool PX4FirmwareUpgradeThreadWorker::_findBootloader(const QGCSerialPortInfo& po
     
     _bootloaderPort->close();
     _bootloaderPort->deleteLater();
-    _bootloaderPort = NULL;
+    _bootloaderPort = nullptr;
     qCDebug(FirmwareUpgradeLog) << "Bootloader error:" << _bootloader->errorString();
     if (errorOnNotFound) {
         emit error(_bootloader->errorString());
@@ -270,7 +270,7 @@ void PX4FirmwareUpgradeThreadWorker::_reboot(void)
             _bootloader->reboot(_bootloaderPort);
         }
         _bootloaderPort->deleteLater();
-        _bootloaderPort = NULL;
+        _bootloaderPort = nullptr;
     }
 }
 
@@ -286,7 +286,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
             emit status("Program complete");
         } else {
             _bootloaderPort->deleteLater();
-            _bootloaderPort = NULL;
+            _bootloaderPort = nullptr;
             qCDebug(FirmwareUpgradeLog) << "Program failed:" << _bootloader->errorString();
             emit error(_bootloader->errorString());
             return;

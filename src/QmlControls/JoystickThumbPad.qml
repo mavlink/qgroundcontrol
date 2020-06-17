@@ -1,32 +1,35 @@
-import QtQuick                  2.3
+import QtQuick                  2.12
 import QtQuick.Controls         1.2
 
+import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 Item {
     id:             _joyRoot
 
-    property alias  lightColors:    mapPal.lightColors  ///< true: use light colors from QGCMapPalette for drawing
-    property real   xAxis:          0                   ///< Value range [-1,1], negative values left stick, positive values right stick
-    property real   yAxis:          0                   ///< Value range [-1,1], negative values up stick, positive values down stick
-    property bool   yAxisThrottle:  false               ///< true: yAxis used for throttle, range [1,0], positive value are stick up
-    property bool   yAxisThrottleCentered: false        ///< false: center yAxis in throttle for reverser and forward
-    property real   xPositionDelta: 0                   ///< Amount to move the control on x axis
-    property real   yPositionDelta: 0                   ///< Amount to move the control on y axis
-    property bool   springYToCenter:true                ///< true: Spring Y to center on release
+    property alias  lightColors:            mapPal.lightColors  ///< true: use light colors from QGCMapPalette for drawing
+    property real   xAxis:                  0                   ///< Value range [-1,1], negative values left stick, positive values right stick
+    property real   yAxis:                  0                   ///< Value range [-1,1], negative values down stick, positive values up stick
+    property bool   yAxisPositiveRangeOnly: false               ///< true: value range [0,1], false: value range [-1,1]
+    property bool   yAxisReCenter:          true                ///< true: snaps back to center on release, false: stays at current position on release
+    property real   xPositionDelta:         0                   ///< Amount to move the control on x axis
+    property real   yPositionDelta:         0                   ///< Amount to move the control on y axis
 
     property real   _centerXY:              width / 2
     property bool   _processTouchPoints:    false
+    property color  _fgColor:               QGroundControl.globalPalette.text
+    property color  _bgColor:               QGroundControl.globalPalette.window
     property real   stickPositionX:         _centerXY
-    property real   stickPositionY:         yAxisThrottleCentered ? _centerXY : height
+    property real   stickPositionY:         yAxisReCenter ? _centerXY : height
 
     QGCMapPalette { id: mapPal }
 
-    onWidthChanged: calculateXAxis()
-    onStickPositionXChanged: calculateXAxis()
-    onHeightChanged: calculateYAxis()
-    onStickPositionYChanged: calculateYAxis()
+    onWidthChanged:                     calculateXAxis()
+    onStickPositionXChanged:            calculateXAxis()
+    onHeightChanged:                    calculateYAxis()
+    onStickPositionYChanged:            calculateYAxis()
+    onYAxisPositiveRangeOnlyChanged:    calculateYAxis()
 
     function calculateXAxis() {
         if(!_joyRoot.visible) {
@@ -42,13 +45,13 @@ Item {
         if(!_joyRoot.visible) {
             return;
         }
-        var yAxisTemp = stickPositionY / height
-        yAxisTemp *= 2.0
-        yAxisTemp -= 1.0
-        if (yAxisThrottle) {
-            yAxisTemp = ((yAxisTemp * -1.0) / 2.0) + 0.5
+        var fullRange = yAxisPositiveRangeOnly ? 1 : 2
+        var pctUp = 1.0 - (stickPositionY / height)
+        var rangeUp = pctUp * fullRange
+        if (!yAxisPositiveRangeOnly) {
+            rangeUp -= 1
         }
-        yAxis = yAxisTemp
+        yAxis = rangeUp
     }
 
     function reCenter() {
@@ -58,9 +61,9 @@ Item {
         xPositionDelta = 0
         yPositionDelta = 0
 
-        // Center sticks
+        // Re-Center sticks as needed
         stickPositionX = _centerXY
-        if (yAxisThrottleCentered) {
+        if (yAxisReCenter) {
             stickPositionY = _centerXY
         }
     }
@@ -68,7 +71,7 @@ Item {
     function thumbDown(touchPoints) {
         // Position the control around the initial thumb position
         xPositionDelta = touchPoints[0].x - _centerXY
-        if (yAxisThrottle) {
+        if (yAxisPositiveRangeOnly) {
             yPositionDelta = touchPoints[0].y - stickPositionY
         } else {
             yPositionDelta = touchPoints[0].y - _centerXY
@@ -87,14 +90,38 @@ Item {
 
     Image {
         anchors.fill:       parent
-        source:             lightColors ? "/res/JoystickBezel.png" : "/res/JoystickBezelLight.png"
+        source:             "/res/JoystickBezelLight.png"
         mipmap:             true
         smooth:             true
     }
 
+    Rectangle {
+        anchors.fill:       parent
+        radius:             width / 2
+        color:              _bgColor
+        opacity:            0.5
+
+        Rectangle {
+            anchors.margins:    parent.width / 4
+            anchors.fill:       parent
+            radius:             width / 2
+            border.color:       _fgColor
+            border.width:       2
+            color:              "transparent"
+        }
+
+        Rectangle {
+            anchors.fill:       parent
+            radius:             width / 2
+            border.color:       _fgColor
+            border.width:       2
+            color:              "transparent"
+        }
+    }
+
     QGCColoredImage {
-        color:                      lightColors ? "white" : "black"
-        visible:                    yAxisThrottle
+        color:                      _fgColor
+        visible:                    yAxisPositiveRangeOnly
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -107,8 +134,8 @@ Item {
     }
 
     QGCColoredImage {
-        color:                      lightColors ? "white" : "black"
-        visible:                    yAxisThrottle
+        color:                      _fgColor
+        visible:                    yAxisPositiveRangeOnly
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -121,8 +148,8 @@ Item {
     }
 
     QGCColoredImage {
-        color:                      lightColors ? "white" : "black"
-        visible:                    yAxisThrottle
+        color:                      _fgColor
+        visible:                    yAxisPositiveRangeOnly
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -135,8 +162,8 @@ Item {
     }
 
     QGCColoredImage {
-        color:                      lightColors ? "white" : "black"
-        visible:                    yAxisThrottle
+        color:                      _fgColor
+        visible:                    yAxisPositiveRangeOnly
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -149,31 +176,14 @@ Item {
     }
 
     Rectangle {
-        anchors.margins:    parent.width / 4
-        anchors.fill:       parent
-        radius:             width / 2
-        border.color:       mapPal.thumbJoystick
-        border.width:       2
-        color:              Qt.rgba(0,0,0,0)
-    }
-
-    Rectangle {
-        anchors.fill:       parent
-        radius:             width / 2
-        border.color:       mapPal.thumbJoystick
-        border.width:       2
-        color:              Qt.rgba(0,0,0,0)
-    }
-
-    Rectangle {
-        width:  hatWidth
-        height: hatWidth
-        radius: hatWidthHalf
-        border.color: lightColors ? "white" : "black"
-        border.width: 1
-        color:  mapPal.thumbJoystick
-        x:      stickPositionX - hatWidthHalf
-        y:      stickPositionY - hatWidthHalf
+        width:          hatWidth
+        height:         hatWidth
+        radius:         hatWidthHalf
+        border.color:   _fgColor
+        border.width:   1
+        color:          Qt.rgba(_fgColor.r, _fgColor.g, _fgColor.b, 0.5)
+        x:              stickPositionX - hatWidthHalf
+        y:              stickPositionY - hatWidthHalf
 
         readonly property real hatWidth:        ScreenTools.defaultFontPixelHeight
         readonly property real hatWidthHalf:    ScreenTools.defaultFontPixelHeight / 2
@@ -200,9 +210,6 @@ Item {
         maximumTouchPoints: 1
         touchPoints:        [ TouchPoint { id: touchPoint } ]
         onPressed:          _joyRoot.thumbDown(touchPoints)
-        onReleased: {
-            if(springYToCenter)
-                _joyRoot.reCenter()
-        }
+        onReleased:         _joyRoot.reCenter()
     }
 }

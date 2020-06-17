@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,7 +17,10 @@
 #include "QGCApplication.h"
 #include "MAVLinkProtocol.h"
 #include "Vehicle.h"
+#include "AppSettings.h"
+#include "SettingsManager.h"
 
+#include <QRandomGenerator>
 #include <QTemporaryFile>
 #include <QTime>
 
@@ -103,6 +106,11 @@ void UnitTest::init(void)
     }
 
     _linkManager->restart();
+
+    // Force offline vehicle back to defaults
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    appSettings->offlineEditingFirmwareType()->setRawValue(appSettings->offlineEditingFirmwareType()->rawDefaultValue());
+    appSettings->offlineEditingVehicleType()->setRawValue(appSettings->offlineEditingVehicleType()->rawDefaultValue());
     
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;
@@ -128,9 +136,6 @@ void UnitTest::cleanup(void)
 
     _disconnectMockLink();
     _closeMainWindow();
-
-    // We add a slight delay here to allow for deleteLater and Qml cleanup
-    QTest::qWait(200);
 
     // Keep in mind that any code below these QCOMPARE may be skipped if the compare fails
     if (_expectMissedMessageBox) {
@@ -460,12 +465,12 @@ QString UnitTest::createRandomFile(uint32_t byteCount)
     QTemporaryFile tempFile;
 
     QTime time = QTime::currentTime();
-    qsrand((uint)time.msec());
+    QRandomGenerator::global()->seed(time.msec());
 
     tempFile.setAutoRemove(false);
     if (tempFile.open()) {
         for (uint32_t bytesWritten=0; bytesWritten<byteCount; bytesWritten++) {
-            unsigned char byte = (qrand() * 0xFF) / RAND_MAX;
+            unsigned char byte = (QRandomGenerator::global()->generate() * 0xFF) / RAND_MAX;
             tempFile.write((char *)&byte, 1);
         }
         tempFile.close();

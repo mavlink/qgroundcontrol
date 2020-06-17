@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -27,10 +27,10 @@ public:
     Q_INVOKABLE QStringList getFiles(const QString& directoryPath, const QStringList& fileExtensions);
 
     /// Returns the specified file name with the extension added it needed
-    Q_INVOKABLE QString filenameWithExtension(const QString& filename, const QString& fileExtension);
+    Q_INVOKABLE QString filenameWithExtension(const QString& filename, const QStringList& rgFileExtensions);
 
     /// Returns the fully qualified file name from the specified parts
-    Q_INVOKABLE QString fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QString& fileExtension);
+    Q_INVOKABLE QString fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& rgFileExtensions);
 
     /// Check for file existence of specified fully qualified file name
     Q_INVOKABLE bool fileExists(const QString& filename);
@@ -39,6 +39,11 @@ public:
     Q_INVOKABLE void deleteFile(const QString& filename);
 
     Q_INVOKABLE QString urlToLocalFile(QUrl url) { return url.toLocalFile(); }
+
+    /// Important: Should only be used in mobile builds where default save location cannot be changed.
+    /// Returns the standard QGC location portion of a fully qualified folder path.
+    /// Example: "/Users/Don/Document/QGroundControl/Missions" returns "QGroundControl/Missions"
+    Q_INVOKABLE QString fullFolderPathToShortMobilePath(const QString& fullFolderPath);
 };
 
 #endif

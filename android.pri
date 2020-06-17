@@ -16,7 +16,11 @@ OTHER_FILES += \
     $$PWD/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
     $$PWD/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java \
-    $$PWD/android/src/org/mavlink/qgroundcontrol/TaiSync.java
+    $$PWD/android/src/org/mavlink/qgroundcontrol/TaiSync.java \
+    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhcCallback.java \
+    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAhsCallback.java \
+    $$PWD/android/src/org/freedesktop/gstreamer/androidmedia/GstAmcOnFrameAvailableListener.java
+
 
 DISTFILES += \
     $$PWD/android/gradle/wrapper/gradle-wrapper.jar \

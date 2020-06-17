@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -213,9 +213,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
                 
                 // Now that we know type we can create meta data object and add it to the system
-                
-                metaData = new FactMetaData(foundType);
-                Q_CHECK_PTR(metaData);
+                metaData = new FactMetaData(foundType, this);
                 if (_mapParameterName2FactMetaData.contains(name)) {
                     // We can't trust the meta data since we have dups
                     qCWarning(PX4ParameterMetaDataLog) << "Duplicate parameter found:" << name;

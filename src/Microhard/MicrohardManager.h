@@ -30,8 +30,8 @@ public:
     Q_PROPERTY(int          linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
-    Q_PROPERTY(QString      localIPAddr         READ localIPAddr                                NOTIFY localIPAddrChanged)
-    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr                               NOTIFY remoteIPAddrChanged)
+    Q_PROPERTY(QString      localIPAddr         READ localIPAddr      WRITE setLocalIPAddr      NOTIFY localIPAddrChanged)
+    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr     WRITE setRemoteIPAddr     NOTIFY remoteIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configUserName      READ configUserName                             NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
@@ -54,6 +54,16 @@ public:
     QString     configUserName                  () { return _configUserName; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
+
+    void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
+    void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
+    void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
+    void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
+    void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
+    void        updateSettings                  ();
+    void        setEncryptionKey                ();
+    void        switchToPairingEncryptionKey    ();
+    void        switchToConnectionEncryptionKey (QString encryptionKey);
 
 signals:
     void    linkChanged                     ();
@@ -99,5 +109,7 @@ private:
     QString            _configUserName;
     QString            _configPassword;
     QString            _encryptionKey;
+    bool               _useCommunicationEncryptionKey = false;
+    QString            _communicationEncryptionKey;
     QTime              _timeoutTimer;
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,15 +15,17 @@
 
 Q_DECLARE_LOGGING_CATEGORY(SectionLog)
 
+class PlanMasterController;
+
 // A Section encapsulates a set of mission commands which can be associated with another simple mission item.
 class Section : public QObject
 {
     Q_OBJECT
 
 public:
-    Section(Vehicle* vehicle, QObject* parent = NULL)
-        : QObject(parent)
-        , _vehicle(vehicle)
+    Section(PlanMasterController* masterController, QObject* parent = nullptr)
+        : QObject           (parent)
+        , _masterController (masterController)
     {
 
     }
@@ -62,5 +64,5 @@ signals:
     void itemCountChanged           (int itemCount);
 
 protected:
-    Vehicle* _vehicle;
+    PlanMasterController* _masterController = nullptr;
 };

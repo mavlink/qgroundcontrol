@@ -26,11 +26,22 @@ Item {
     property real   _margins:       ScreenTools.defaultFontPixelHeight / 2
     property bool   _mobileDlg:     QGroundControl.corePlugin.options.useMobileFileDialog
     property var    _rgExtensions
+    property string _mobileShortPath
 
-    Component.onCompleted: setupFileExtensions()
+    Component.onCompleted: {
+        setupFileExtensions()
+        _updateMobileShortPath()
+    }
 
-    onFileExtensionChanged: setupFileExtensions()
-    onFileExtension2Changed: setupFileExtensions()
+    onFileExtensionChanged:     setupFileExtensions()
+    onFileExtension2Changed:    setupFileExtensions()
+    onFolderChanged:            _updateMobileShortPath()
+
+    function _updateMobileShortPath() {
+        if (ScreenTools.isMobile) {
+            _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
+        }
+    }
 
     function setupFileExtensions() {
         if (fileExtension2 == "") {
@@ -105,6 +116,8 @@ Item {
                     anchors.right:  parent.right
                     spacing:        ScreenTools.defaultFontPixelHeight / 2
 
+                    QGCLabel { text: qsTr("Path: %1").arg(_mobileShortPath) }
+
                     Repeater {
                         id:     fileRepeater
                         model:  controller.getFiles(folder, _rgExtensions)
@@ -117,12 +130,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, fileExtension)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
                                 hamburgerMenu.popup()
                             }
 
@@ -162,12 +175,12 @@ Item {
                     return
                 }
                 if (!replaceMessage.visible) {
-                    if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))) {
+                    if (controller.fileExists(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))) {
                         replaceMessage.visible = true
                         return
                     }
                 }
-                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, fileExtension))
+                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, filenameTextField.text, _rgExtensions))
                 hideDialog()
             }
 
@@ -230,12 +243,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, fileExtension))
+                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, fileExtension)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
                                 hamburgerMenu.popup()
                             }
 

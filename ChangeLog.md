@@ -2,10 +2,85 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 3.6
+## 4.1 - Daily build
 
-### 3.6.0 - Daily Build
+* Settings/Mavlink: Add ability to forward mavlink traffic out specified UDP port
+* Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
+* Fly: New instrument values display/editing support
+* Plan: Added new VTOL Landing Pattern support
+* Plan: Much better conversion of missions to KML for 3d visualization/verification of missions
+* Plan: New Terrain Profile display including terrain collision indications on profile and in patterns (Survey, CorridorScan, etc)
+* Fly: Rearchitect view and controls within for much better customization support in custom builds
 
+## 4.0
+
+## 4.0.8 - Not yet released
+
+* Plan: Fix bugs associated with mission commands which specify and altitude but no lat/lon
+* Fix bug which could prevent view switching from working after altitude mode warning dialog would pop up
+
+## 4.0.8 - Stable
+
+* iOS: Modify QGC file storage location to support new Files app
+* Mobile: Fix Log Replay status bar file selection
+
+## 4.0.7 - Stable
+
+* Fix video page sizing
+* Virtual Joystick: Fix right stick centering. Fix/add support for rover/sub reverse throttle support.
+* Fix display of multiple ADSB vehicles
+
+### 4.0.6 - Stable
+
+* Analyze/Log Download - Fix download on mobile versions of QGC
+* Fly: Fix problems where Continue Mission and Change Altitude were not available after a Mission Pause.
+* PX4 Flow: Fix video display problem
+
+### 4.0.5 - Stable
+
+* Solo: Fix mission upload failures
+* Plan: Fix crash when using Create Plan - Survey for fixed wing vehicle
+
+### 4.0.4
+
+* Mobile File Save: Fix problem with incorrect file extension being added
+* Radio Setup: Fix problem with Spektrum bind
+* Plan/Fly: Bring back waypoint number display in map items
+
+### 4.0.3
+
+* Plan: Add setting for takeoff item not required
+* Plan: Takeoff item must be added prior to allowing other item types to enable
+* Video: Add low latency mode as optional configuration setting (defaults to false)
+* ArduPilot: Fix generated list of available firmwares
+
+### 4.0.2
+
+* Fix Mavlink V2 protocol negotation based on capability bits
+* Fix waiting for AUTOPILOT_VERSION response to get capability bits
+* ArduPilot: Above two fixes make fence/rally support enabling more reliable
+
+### 4.0.1
+
+* Fix ArduPilot current mission item tracking in Fly view
+* Fix ADSB vehicle display
+* Fix map positioning bug in Plan view
+* Fix Windows 0xcc000007b startup error causes by incorrect VC runtimes being installed.
+
+### 4.0.0
+
+* Added ROI option during manual flight.
+* Windows: Move builds to 64 bit, Qt 5.12.5
+* Plan: ROI button will switch to Cancel ROI at appropriate times
+* Plan: When ROI is selected the flight path lines which are affected by the ROI will change color
+* ADSB: Added support for connecting to SBS server. Adds support for ADSB data from USB SDR Dongle running 'dump1090 --net' for example.
+* Toolbar: Scrollable left/right on small screens like phones
+* Plan View: New create plan UI for initial plan creation
+* New Corridor editing tools ui. Includes ability to trace polyline by clicking.
+* New Polygon editing tools ui. Includes ability to trace polygon by clicking.
+* More performant flight path display algorithm. Mobile builds no longer show limited path length.
+* ArduPilot: Add Motor Test vehicle setup page
+* Compass Instrument: Add indicators for Home, COG and Next Waypoint headings.
 * Log Replay: Support changing speed of playback
 * Basic object avoidance added to vehicles.
 * Added ability to set a joystick button to be single action or repeated action while the button is held down.
@@ -38,20 +113,26 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.4 - Not yet released
+## 3.5
+
+### 3.5.5
+* Fix mavlink message memset which cause wrong commands to be sent on ArduPilot GotoLocation.
+* Disable Pause when fixed wing is on landing approach.
+
+### 3.5.4
 * Update windows drivers
 * Add support for FMUK66 flashing/connection
 * Guard against null geometry coming from gstreamer which can cause crashes
 * Add .apj file selection support to custom firmware flash
 
-### 3.5.3 - Stable
+### 3.5.3
 * Change minimum RTK Survey-In limit to 0.01 meters
 * Change Windows driver detection logic
 * Fix crash when clicking on GeoFence polygon vertex
 * PX4: Fix missing ```MC_YAW_FF``` parameter in PID Tuning
 * ArduPilot: Fix parameter file save generating bad characters from git hash
 
-### 3.5.2 - Stable
+### 3.5.2
 * Fix Ubuntu AppImage startup failure
 
 ### 3.5.1

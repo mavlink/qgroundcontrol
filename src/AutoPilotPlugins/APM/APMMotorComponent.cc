@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "APMMotorComponent.h"
+#include "APMSubMotorComponentController.h"
 
 APMMotorComponent::APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     MotorComponent(vehicle, autopilot, parent),
@@ -22,6 +23,13 @@ QUrl APMMotorComponent::setupSource(void) const
     case MAV_TYPE_SUBMARINE:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSubMotorComponent.qml"));
     default:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/MotorComponent.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMMotorComponent.qml"));
     }
+}
+
+QString APMMotorComponent::motorIndexToLetter(int index)
+{
+    char letter = 'A';
+
+    return QString(letter + index);
 }

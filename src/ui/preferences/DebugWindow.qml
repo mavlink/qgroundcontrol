@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -277,6 +277,7 @@ Item {
     }
 
     Rectangle {
+        id:                 square
         width:              100
         height:             100
         color:              qgcPal.text
@@ -289,4 +290,41 @@ Item {
             color:  qgcPal.window
         }
     }
+
+    Component.onCompleted: {
+        for (var i = 10; i < 360; i = i + 60) {
+            var colorValue = Qt.hsla(i/360, 0.85, 0.5, 1);
+            seriesColors.push(colorValue)
+            colorListModel.append({"colorValue": colorValue.toString()})
+        }
+    }
+
+    property var seriesColors: []
+
+    ListModel {
+        id: colorListModel
+    }
+
+    Column {
+        width:              100
+        spacing:            0
+        anchors.right:      square.left
+        anchors.bottom:     parent.bottom
+        anchors.margins:    10
+        Repeater {
+            model: colorListModel
+            delegate: Rectangle {
+                width:      100
+                height:     100 / 6
+                color:      colorValue
+                Text {
+                    text:   colorValue
+                    color:  "#202020"
+                    font.pointSize:     _textMeasure.font.pointSize * 0.75
+                    anchors.centerIn:   parent
+                }
+            }
+        }
+    }
+
 }

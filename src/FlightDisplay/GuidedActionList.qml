@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,6 +14,7 @@ import QtQuick.Layouts  1.2
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FlightDisplay 1.0
 import QGroundControl.Palette       1.0
 
 /// Dialog showing list of available guided actions
@@ -24,14 +25,45 @@ Rectangle {
     radius:     _margins / 2
     color:      qgcPal.window
     opacity:    0.9
-    z:          guidedController.z
     visible:    false
 
     property var    guidedController
     property var    altitudeSlider
-    property alias  model:              actionRepeater.model
 
-    property real _margins: Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
+    function show() {
+        visible = true
+    }
+
+    property real _margins:             Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
+    property real _actionWidth:         ScreenTools.defaultFontPixelWidth * 25
+    property real _actionHorizSpacing:  ScreenTools.defaultFontPixelHeight * 2
+
+    property var _model: [
+        {
+            title:      guidedController.startMissionTitle,
+            text:       guidedController.startMissionMessage,
+            action:     guidedController.actionStartMission,
+            visible:    guidedController.showStartMission
+        },
+        {
+            title:      guidedController.continueMissionTitle,
+            text:       guidedController.continueMissionMessage,
+            action:     guidedController.actionContinueMission,
+            visible:    guidedController.showContinueMission
+        },
+        {
+            title:      guidedController.changeAltTitle,
+            text:       guidedController.changeAltMessage,
+            action:     guidedController.actionChangeAlt,
+            visible:    guidedController.showChangeAlt
+        },
+        {
+            title:      guidedController.landAbortTitle,
+            text:       guidedController.landAbortMessage,
+            action:     guidedController.actionLandAbort,
+            visible:    guidedController.showLandAbort
+        }
+    ]
 
     QGCPalette { id: qgcPal }
 
@@ -58,14 +90,15 @@ Rectangle {
             Layout.minimumWidth:    _width
             Layout.maximumWidth:    _width
 
-            property real _width: Math.min(_root.width * 0.8, actionRow.width)
+            property real _width: Math.min((_actionWidth * 2) + _actionHorizSpacing, actionRow.width)
 
             RowLayout {
                 id:         actionRow
-                spacing:    ScreenTools.defaultFontPixelHeight * 2
+                spacing:    _actionHorizSpacing
 
                 Repeater {
-                    id: actionRepeater
+                    id:     actionRepeater
+                    model:  _model
 
                     ColumnLayout {
                         spacing:            ScreenTools.defaultFontPixelHeight / 2
@@ -77,8 +110,8 @@ Rectangle {
                             text:                   modelData.text
                             horizontalAlignment:    Text.AlignHCenter
                             wrapMode:               Text.WordWrap
-                            Layout.minimumWidth:    _width
-                            Layout.maximumWidth:    _width
+                            Layout.minimumWidth:    _actionWidth
+                            Layout.maximumWidth:    _actionWidth
                             Layout.fillHeight:      true
 
                             property real _width: ScreenTools.defaultFontPixelWidth * 25

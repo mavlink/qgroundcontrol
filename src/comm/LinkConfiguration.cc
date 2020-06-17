@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /*!
     @file
        @brief Link specific configuration base class
-       @author Gus Grubba <mavlink@grubba.com>
+       @author Gus Grubba <gus@auterion.com>
 */
 
 #include "LinkConfiguration.h"
@@ -55,7 +55,7 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
 
 void LinkConfiguration::copyFrom(LinkConfiguration* source)
 {
-    Q_ASSERT(source != NULL);
+    Q_ASSERT(source != nullptr);
     _link       = source->link();
     _name       = source->name();
     _dynamic    = source->isDynamic();
@@ -118,26 +118,26 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
     switch(source->type()) {
 #ifndef NO_SERIAL_LINK
         case TypeSerial:
-            dupe = new SerialConfiguration(dynamic_cast<SerialConfiguration*>(source));
+            dupe = new SerialConfiguration(qobject_cast<SerialConfiguration*>(source));
             break;
 #endif
         case TypeUdp:
-            dupe = new UDPConfiguration(dynamic_cast<UDPConfiguration*>(source));
+            dupe = new UDPConfiguration(qobject_cast<UDPConfiguration*>(source));
             break;
         case TypeTcp:
-            dupe = new TCPConfiguration(dynamic_cast<TCPConfiguration*>(source));
+            dupe = new TCPConfiguration(qobject_cast<TCPConfiguration*>(source));
             break;
 #ifdef QGC_ENABLE_BLUETOOTH
         case TypeBluetooth:
-            dupe = new BluetoothConfiguration(dynamic_cast<BluetoothConfiguration*>(source));
+            dupe = new BluetoothConfiguration(qobject_cast<BluetoothConfiguration*>(source));
             break;
 #endif
         case TypeLogReplay:
-            dupe = new LogReplayLinkConfiguration(dynamic_cast<LogReplayLinkConfiguration*>(source));
+            dupe = new LogReplayLinkConfiguration(qobject_cast<LogReplayLinkConfiguration*>(source));
             break;
 #ifdef QT_DEBUG
         case TypeMock:
-            dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
+            dupe = new MockConfiguration(qobject_cast<MockConfiguration*>(source));
             break;
 #endif
         case TypeLast:

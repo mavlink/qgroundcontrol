@@ -70,25 +70,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
       <source>Frame Class</source>
-      <translation type="unfinished"/>
+      <translation>Gövde Sınıfı</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <source>Frame Type</source>
-      <translation type="unfinished"/>
+      <translation>Gövde Tipi</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="41"/>
       <source>Firmware Version</source>
-      <translation type="unfinished"/>
+      <translation>Firmware versiyonu</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="42"/>
       <source>Unknown</source>
-      <translation type="unfinished"/>
+      <translation>Bilinmeyen</translation>
     </message>
   </context>
   <context>
@@ -105,19 +105,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <source>Disabled</source>
-      <translation type="unfinished"/>
+      <translation>Devre Dışı</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <source>Channel </source>
-      <translation type="unfinished"/>
+      <translation>Kanal </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="221"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="221"/>
       <source>Gimbal </source>
-      <translation type="unfinished"/>
+      <translation>Gimbal </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="239"/>
@@ -135,19 +135,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <source>Output channel:</source>
-      <translation type="unfinished"/>
+      <translation>Çıkış kanalı:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="285"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="285"/>
       <source>Input channel:</source>
-      <translation type="unfinished"/>
+      <translation>Giriş kanalı:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
       <source>Gimbal angle limits:</source>
-      <translation type="unfinished"/>
+      <translation>Gimbal açısı limitleri:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="314"/>
@@ -169,54 +169,54 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="350"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="350"/>
       <source>Servo PWM limits:</source>
-      <translation type="unfinished"/>
+      <translation>Servo PWM limitleri:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="405"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="405"/>
       <source>Gimbal Settings</source>
-      <translation type="unfinished"/>
+      <translation>Gimbal Ayarları</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <source>Type:</source>
-      <translation type="unfinished"/>
+      <translation>Tip:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="444"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="444"/>
       <source>Gimbal Type changes takes affect next reboot of autopilot</source>
-      <translation type="unfinished"/>
+      <translation>Gimbal'de yapılan değişiklikler otopilotun yeniden başlatılması ile etkin hale gelir</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="452"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="452"/>
       <source>Default Mode:</source>
-      <translation type="unfinished"/>
+      <translation>Varsayılan Mod:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="472"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="472"/>
       <source>Tilt</source>
-      <translation type="unfinished"/>
+      <translation>Tilt</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="490"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="490"/>
       <source>Roll</source>
-      <translation type="unfinished"/>
+      <translation>Roll</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="508"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="508"/>
       <source>Pan</source>
-      <translation type="unfinished"/>
+      <translation>Pan</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.cc" line="20"/>
       <source>Camera</source>
-      <translation type="unfinished"/>
+      <translation>Kamera</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.cc" line="31"/>
@@ -341,7 +341,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="349"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="349"/>
       <source>Stabilize</source>
-      <translation type="unfinished"/>
+      <translation>Stabilize</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="367"/>
@@ -387,7 +387,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="483"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="483"/>
       <source>Gimbal Type changes takes affect next reboot of autopilot</source>
-      <translation type="unfinished"/>
+      <translation>Gimbal'da yapılan değişiklikler otopilotun yeniden başlatılması ile etkin hale gelir</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="491"/>
@@ -399,13 +399,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="512"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="512"/>
       <source>Tilt</source>
-      <translation type="unfinished"/>
+      <translation>Tilt</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="532"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="532"/>
       <source>Roll</source>
-      <translation type="unfinished"/>
+      <translation>Roll</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="552"/>
@@ -449,7 +449,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="983"/>
       <source>Unable to takeoff: Vehicle failed to arm.</source>
-      <translation type="unfinished"/>
+      <translation>Kalkış Yapılamıyor: Araç etkinleştirilemedi.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1001"/>
@@ -955,13 +955,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="254"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="254"/>
       <source>Calibrate</source>
-      <translation type="unfinished"/>
+      <translation>Kalibrasyon</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
       <source>Now perform these steps:</source>
-      <translation type="unfinished"/>
+      <translation>Şu anda bu adımlar gerçekleştiriliyor:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
@@ -973,7 +973,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="262"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="262"/>
       <source>- Disconnect USB and battery so flight controller powers down</source>
-      <translation type="unfinished"/>
+      <translation>- USB ve batarya bağlantısını kes, böylelikle uçuş kontrolcüsünün gücü kesilecek.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="263"/>
@@ -991,31 +991,31 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="265"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="265"/>
       <source>- If using a flight controller with a safety button press it until it displays solid red</source>
-      <translation type="unfinished"/>
+      <translation>- Eğer bir güvenlik butonu ile bir uçuş kartı kullanılıyorsa daimi kırmızı ışığı görene kadar butona bas.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="266"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="266"/>
       <source>- You will hear a musical tone then two beeps</source>
-      <translation type="unfinished"/>
+      <translation>- Bir müzikal ton ve ardından 2 bip sesi duyacaksınız.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="267"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="267"/>
       <source>- A few seconds later you should hear a number of beeps (one for each battery cell you’re using)</source>
-      <translation type="unfinished"/>
+      <translation>- Birkaç saniye sonra kullandığınız her batarya hücresi için bir kez bip sesi duymalısınız.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="268"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="268"/>
       <source>- And finally a single long beep indicating the end points have been set and the ESC is calibrated</source>
-      <translation type="unfinished"/>
+      <translation>- Ve son olarak, tek bir uzunca bip sesi son noktaların set edildiğini ve ESC'nin kalibre edildiğini bildirecektir.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="269"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="269"/>
       <source>- Disconnect the battery and power up again normally</source>
-      <translation type="unfinished"/>
+      <translation>- Batarya bağlantısını kes ve tekrar normal şekilde gücü aç.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="310"/>
@@ -2709,7 +2709,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="422"/>
       <source>Hold still in the current orientation and press Next when ready</source>
-      <translation type="unfinished"/>
+      <translation>Mevcut oryantasyonda hareketsiz bekle ve hazır olunca İleri'ye bas.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="581"/>
@@ -3073,19 +3073,19 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Roll</source>
-      <translation type="unfinished"/>
+      <translation>Roll (Yuvarlanma)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Pitch</source>
-      <translation type="unfinished"/>
+      <translation>Pitch (Yunuslama)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Yaw</source>
-      <translation type="unfinished"/>
+      <translation>Yaw (Dümen)</translation>
     </message>
   </context>
   <context>
@@ -3100,7 +3100,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="51"/>
       <source>Position Controller Parameters</source>
-      <translation type="unfinished"/>
+      <translation>Oryantasyon Kontrolcü Parametreleri</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="58"/>
@@ -3114,7 +3114,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirMapManager.cc" line="178"/>
       <source>AirMap Enabled</source>
-      <translation type="unfinished"/>
+      <translation>AirMap Aktif</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirMapManager.cc" line="186"/>
@@ -3124,7 +3124,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirMapManager.cc" line="198"/>
       <source>No API key for AirMap</source>
-      <translation type="unfinished"/>
+      <translation>AirMap için API anahtarı mevcut değil</translation>
     </message>
   </context>
   <context>
@@ -3252,7 +3252,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="41"/>
       <source>Custom Fw. Ver.</source>
-      <translation type="unfinished"/>
+      <translation>Özel Yapım Fw. Ver.</translation>
     </message>
   </context>
   <context>
@@ -3265,7 +3265,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="84"/>
       <source>Enable AirMap Services</source>
-      <translation type="unfinished"/>
+      <translation>AirMap Servisleri'ni aktif et</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="89"/>
@@ -3275,18 +3275,18 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="96"/>
       <source>Show Airspace on Map (Experimental)</source>
-      <translation type="unfinished"/>
+      <translation>Hava sahasını haritada göster (Deneysel)</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="104"/>
       <location filename="../src/Airmap/AirmapSettings.qml" line="113"/>
       <source>Clear Saved Answers</source>
-      <translation type="unfinished"/>
+      <translation>Kayıtlı cevapları temizle</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="114"/>
       <source>All saved ruleset answers will be cleared. Is this really what you want?</source>
-      <translation type="unfinished"/>
+      <translation>Tüm kayıtlı kuralset cevapları temizlenecek. Gerçekten bunu mu istiyorsun?</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="136"/>
@@ -3348,7 +3348,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="251"/>
       <source>Register for an AirMap Account</source>
-      <translation type="unfinished"/>
+      <translation>Bir AirMap hesabına kaydol</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="272"/>
@@ -3363,22 +3363,22 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="291"/>
       <source>John Doe</source>
-      <translation type="unfinished"/>
+      <translation>John Doe</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="293"/>
       <source>joe36</source>
-      <translation type="unfinished"/>
+      <translation>joe36</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="294"/>
       <source>Email:</source>
-      <translation type="unfinished"/>
+      <translation>E-posta:</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="295"/>
       <source>jonh@doe.com</source>
-      <translation type="unfinished"/>
+      <translation>john@doe.com</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="296"/>
@@ -3388,7 +3388,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="297"/>
       <source>+1 212 555 1212</source>
-      <translation type="unfinished"/>
+      <translation>+1 212 555 1212</translation>
     </message>
     <message>
       <location filename="../src/Airmap/AirmapSettings.qml" line="310"/>
@@ -5165,7 +5165,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/PlanView/FWLandingPatternEditor.qml" line="234"/>
       <source>- or -</source>
-      <translation type="unfinished"/>
+      <translation>veya</translation>
     </message>
   </context>
   <context>
@@ -5173,22 +5173,22 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/FactSystem/Fact.cc" line="247"/>
       <source>Unknown: %1</source>
-      <translation type="unfinished"/>
+      <translation>Bilinmiyor (%1)</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/Fact.cc" line="332"/>
       <source>true</source>
-      <translation type="unfinished"/>
+      <translation>olumlu</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/Fact.cc" line="332"/>
       <source>false</source>
-      <translation type="unfinished"/>
+      <translation>olumsuz</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/Fact.cc" line="745"/>
       <source>Change of parameter %1 requires a Vehicle reboot to take effect.</source>
-      <translation type="unfinished"/>
+      <translation>%1 Parametresinin değişmesi için aracın yeniden başlatılması gerekmektedir.</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/Fact.cc" line="747"/>
@@ -5481,17 +5481,17 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="413"/>
       <source>Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)</source>
-      <translation type="unfinished"/>
+      <translation>%1 için dekonpress edilmiş boyut, saklı boyut ile eşleşmiyor: beklenen (%1) mevcut (%2)</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="417"/>
       <source>Successfully decompressed %1</source>
-      <translation type="unfinished"/>
+      <translation>Başarıyla dekompres edildi %1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareImage.cc" line="445"/>
       <source>Unabled to open firmware file %1, %2</source>
-      <translation type="unfinished"/>
+      <translation>Firmware dosyası açılamıyor %1, %2</translation>
     </message>
   </context>
   <context>
@@ -5499,122 +5499,122 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="349"/>
       <source>Canon S100 PowerShot</source>
-      <translation type="unfinished"/>
+      <translation>Canon S100 PowerShot</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="363"/>
       <source>Canon EOS-M 22mm</source>
-      <translation type="unfinished"/>
+      <translation>Canon EOS-M 22mm</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="377"/>
       <source>Canon G9 X PowerShot</source>
-      <translation type="unfinished"/>
+      <translation>Canon S100 PowerShot</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="391"/>
       <source>Canon SX260 HS PowerShot</source>
-      <translation type="unfinished"/>
+      <translation>Canon S100 PowerShot</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="404"/>
       <source>GoPro Hero 4</source>
-      <translation type="unfinished"/>
+      <translation>GoPro Hero 4</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="418"/>
       <source>Parrot Sequioa RGB</source>
-      <translation type="unfinished"/>
+      <translation>Parrot Sequioa RGB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="432"/>
       <source>Parrot Sequioa Monochrome</source>
-      <translation type="unfinished"/>
+      <translation>Parrot Sequioa Monochrome</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="445"/>
       <source>RedEdge</source>
-      <translation type="unfinished"/>
+      <translation>Kırmızı Kenar</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="459"/>
       <source>Ricoh GR II</source>
-      <translation type="unfinished"/>
+      <translation>Ricoh GR II</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="472"/>
       <source>Sentera Double 4K Sensor</source>
-      <translation type="unfinished"/>
+      <translation>Sentera Double 4K sensörü</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="485"/>
       <source>Sentera NDVI Single Sensor</source>
-      <translation type="unfinished"/>
+      <translation>Sentera NDVI Tek Sensörü</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="500"/>
       <source>Sony a6000 16mm</source>
-      <translation type="unfinished"/>
+      <translation>Sony a6000 16mm</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="513"/>
       <source>Sony a6300 Zeiss 21mm f/2.8</source>
-      <translation type="unfinished"/>
+      <translation>Sony a6300 Zeiss 21mm f/2.8</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="526"/>
       <source>Sony a6300 Sony 28mm f/2.0</source>
-      <translation type="unfinished"/>
+      <translation>Sony a6300 Sony 28mm f/2.0</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="539"/>
       <source>Sony a7R II Zeiss 21mm f/2.8</source>
-      <translation type="unfinished"/>
+      <translation>Sony a7R II Zeiss 21mm f/2.8</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="552"/>
       <source>Sony a7R II Sony 28mm f/2.0</source>
-      <translation type="unfinished"/>
+      <translation>Sony a7R II Sony 28mm f/2.0</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="565"/>
       <source>Sony DSC-QX30U @ 4.3mm f/3.5</source>
-      <translation type="unfinished"/>
+      <translation>Sony DSC-QX30U @ 4.3mm f/3.5</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="581"/>
       <source>Sony ILCE-QX1</source>
-      <translation type="unfinished"/>
+      <translation>Sony ILCE-QX1</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="596"/>
       <source>Sony NEX-5R 20mm</source>
-      <translation type="unfinished"/>
+      <translation>Sony NEX-5R 20mm</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="610"/>
       <source>Sony RX100 II 28mm</source>
-      <translation type="unfinished"/>
+      <translation>Sony RX100 II 28mm</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="623"/>
       <source>Yuneec CGOET</source>
-      <translation type="unfinished"/>
+      <translation>Yuneec CGOET</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="636"/>
       <source>Yuneec E10T</source>
-      <translation type="unfinished"/>
+      <translation>Yuneec E10T</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="649"/>
       <source>Yuneec E50</source>
-      <translation type="unfinished"/>
+      <translation>Yuneec E50</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="662"/>
       <source>Yuneec E90</source>
-      <translation type="unfinished"/>
+      <translation>Yuneec E90</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="857"/>
@@ -5627,32 +5627,32 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="28"/>
       <source>Firmware</source>
-      <translation type="unfinished"/>
+      <translation>Yazılım</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="46"/>
       <source>Firmware Setup</source>
-      <translation type="unfinished"/>
+      <translation>Yazılım Kurulumu</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="49"/>
       <source>%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.</source>
-      <translation type="unfinished"/>
+      <translation>%1 Pixhawk cihazlarında, SiK Radios ve PX4 Flow smart kameralarda firmware güncellenebilir.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="50"/>
       <source>Update the autopilot firmware to the latest version</source>
-      <translation type="unfinished"/>
+      <translation>Otomatik pilot yazılımını son sürümüne güncelleyin</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="54"/>
       <source>All %1 connections to vehicles must be </source>
-      <translation type="unfinished"/>
+      <translation>Tüm %1 araçlara bağlantı yapılmalıdır.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="72"/>
       <source>Upgrade cancelled</source>
-      <translation type="unfinished"/>
+      <translation>Güncelleme iptal edildi</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="117"/>
@@ -5667,67 +5667,67 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="124"/>
       <source>Found device</source>
-      <translation type="unfinished"/>
+      <translation>Aygıt Bulundu</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="172"/>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="309"/>
       <source>PX4 Pro </source>
-      <translation type="unfinished"/>
+      <translation>PX4 Pro</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="233"/>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="267"/>
       <source>Standard Version (stable)</source>
-      <translation type="unfinished"/>
+      <translation>Kararlı Sürüm</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="237"/>
       <source>Beta Testing (beta)</source>
-      <translation type="unfinished"/>
+      <translation>Beta Testi (beta)</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="241"/>
       <source>Developer Build (master)</source>
-      <translation type="unfinished"/>
+      <translation>Ana Geliştirici Sürümü</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="245"/>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="271"/>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="284"/>
       <source>Custom firmware file...</source>
-      <translation type="unfinished"/>
+      <translation>Özgün firmware dosyası...</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="254"/>
       <source>PX4 Pro</source>
-      <translation type="unfinished"/>
+      <translation>PX4 Pro</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="258"/>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="322"/>
       <source>ArduPilot</source>
-      <translation type="unfinished"/>
+      <translation>ArduPilot</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="280"/>
       <source>Standard Version</source>
-      <translation type="unfinished"/>
+      <translation>Standart Sürüm</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="298"/>
       <source>Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:</source>
-      <translation type="unfinished"/>
+      <translation>PX4 Flow board tespit edildi. PX4 üzerinde kullandığınız firmware aracınız üzerindeki ArduPilot firmware türü ile uyumlu olmalıdır (eşleşmelidir). </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="299"/>
       <source>Detected Pixhawk board. You can select from the following flight stacks:</source>
-      <translation type="unfinished"/>
+      <translation>Pixhawk board tespit edildi. Uçuş setlerinden seçim yapabilirsiniz:</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="300"/>
       <source>Press Ok to upgrade your vehicle.</source>
-      <translation type="unfinished"/>
+      <translation>Taşıt sürümünü yükseltmek için Ok düğmesine basınız.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="303"/>
@@ -5742,52 +5742,52 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="373"/>
       <source>No Firmware Available</source>
-      <translation type="unfinished"/>
+      <translation>Herhangi bir Firmware mevcut değil</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="400"/>
       <source>Advanced settings</source>
-      <translation type="unfinished"/>
+      <translation>Gelişmiş ayarlar</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="422"/>
       <source>Select the standard version or one from the file system (previously downloaded):</source>
-      <translation type="unfinished"/>
+      <translation>Standart sürümü veya dosya sisteminden birisini seçiniz (önceden indirilmiş):</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="422"/>
       <source>Select which version of the firmware you would like to install:</source>
-      <translation type="unfinished"/>
+      <translation>Kurmak istediğiniz firmware sürümünü seçiniz:</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="422"/>
       <source>Select which version of the above flight stack you would like to install:</source>
-      <translation type="unfinished"/>
+      <translation>Yüklemek istediğiniz yukarıdaki uçuş listesinin versiyonunu seçin:</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="437"/>
       <source>WARNING: BETA FIRMWARE. </source>
-      <translation type="unfinished"/>
+      <translation>UYARI: BETA FIRMWARE</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="438"/>
       <source>This firmware version is ONLY intended for beta testers. </source>
-      <translation type="unfinished"/>
+      <translation>Bu firmware versiyonu sadece beta testi kullanıcılarına yöneliktir.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="439"/>
       <source>Although it has received FLIGHT TESTING, it represents actively changed code. </source>
-      <translation type="unfinished"/>
+      <translation>UÇUŞ TEST EDİLİYOR almış olsa da, aktif olarak değiştirilmiş kodu temsil ediyor. </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="440"/>
       <source>Do NOT use for normal operation.</source>
-      <translation type="unfinished"/>
+      <translation>Normal operasyonlar için KULLANMAYIN.</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="443"/>
       <source>WARNING: CONTINUOUS BUILD FIRMWARE. </source>
-      <translation type="unfinished"/>
+      <translation>UYARI: SÜREKLİ YAPILANDIRILAN FIRMWARE. </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgrade.qml" line="444"/>
@@ -6522,7 +6522,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="479"/>
       <source>Plan View</source>
-      <translation type="unfinished"/>
+      <translation>Plan Görseli</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="500"/>
@@ -6879,17 +6879,17 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="78"/>
       <source>ULog file (*.ulg)</source>
-      <translation type="unfinished"/>
+      <translation>ULog dosyası (*.ulg)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="78"/>
       <source>PX4 log file (*.px4log)</source>
-      <translation type="unfinished"/>
+      <translation>PX4 log dosyası (*.px4log)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="78"/>
       <source>All Files (*.*)</source>
-      <translation type="unfinished"/>
+      <translation>Tüm Dosyalar (*.*)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="96"/>
@@ -6905,7 +6905,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="131"/>
       <source>Select save directory</source>
-      <translation type="unfinished"/>
+      <translation>Kayıt dizini seçin</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagPage.qml" line="150"/>
@@ -7035,7 +7035,7 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="43"/>
       <source>Start Mission (MV)</source>
-      <translation type="unfinished"/>
+      <translation>Göreve (MV) Başla</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="44"/>
@@ -7784,27 +7784,27 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/comm/LinkManager.cc" line="696"/>
       <source>Serial</source>
-      <translation type="unfinished"/>
+      <translation>Seri</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="698"/>
       <source>UDP</source>
-      <translation type="unfinished"/>
+      <translation>UDP</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="699"/>
       <source>TCP</source>
-      <translation type="unfinished"/>
+      <translation>TCP</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="704"/>
       <source>Mock Link</source>
-      <translation type="unfinished"/>
+      <translation>Sahte Bağlantı</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="707"/>
       <source>Log Replay</source>
-      <translation type="unfinished"/>
+      <translation>Log Tekrarı</translation>
     </message>
     <message>
       <location filename="../src/comm/LinkManager.cc" line="940"/>
@@ -7857,17 +7857,17 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="180"/>
       <source>Edit Link Configuration Settings</source>
-      <translation type="unfinished"/>
+      <translation>Bağlantı yapılandırma ayarlarını düzenle</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="180"/>
       <source>Create New Link Configuration</source>
-      <translation type="unfinished"/>
+      <translation>Yeni bağlantı yapılandırması oluştur</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="214"/>
       <source>General</source>
-      <translation type="unfinished"/>
+      <translation>Genel</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="232"/>
@@ -7882,12 +7882,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="303"/>
       <source>Automatically Connect on Start</source>
-      <translation type="unfinished"/>
+      <translation>Başlangıçta otomatik bağlan</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="317"/>
       <source>High Latency</source>
-      <translation type="unfinished"/>
+      <translation>Yüksek gecikme süresi</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="377"/>
@@ -8094,7 +8094,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/comm/LogReplayLink.h" line="43"/>
       <source>Log Replay Link Settings</source>
-      <translation type="unfinished"/>
+      <translation>Günlük Yineleme Bağlantı Ayarları</translation>
     </message>
   </context>
   <context>
@@ -8122,7 +8122,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="425"/>
       <location filename="../src/AnalyzeView/MAVLinkInspectorController.cc" line="441"/>
       <source>Vehicle %1</source>
-      <translation type="unfinished"/>
+      <translation>Araç %1</translation>
     </message>
   </context>
   <context>
@@ -8130,7 +8130,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorPage.qml" line="40"/>
       <source>Inspect real time MAVLink messages.</source>
-      <translation type="unfinished"/>
+      <translation>Gerçek zamanlı MAVLink mesajlarını incele.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorPage.qml" line="89"/>
@@ -8150,7 +8150,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspectorPage.qml" line="111"/>
       <source>Message Fields:</source>
-      <translation type="unfinished"/>
+      <translation>Mesaj Alanları:</translation>
     </message>
   </context>
   <context>
@@ -8194,27 +8194,27 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="214"/>
       <source>There are still active connections to vehicles. Are you sure you want to exit?</source>
-      <translation type="unfinished"/>
+      <translation>Araçlara hâlâ etkin bağlantılar mevcut. Çıkmak istediğinizden emin misiniz?</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="241"/>
       <source>You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?</source>
-      <translation type="unfinished"/>
+      <translation>Kaydedilememiş/gönderilmemiş devam eden misyon düzenleme işleminiz bulunmaktadır. Eğer kapatırsanız değişiklikleri kaybedeceksiniz. Kapatmak istediğinize emin misiniz?</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="364"/>
       <source>No Messages</source>
-      <translation type="unfinished"/>
+      <translation>Mesaj Yok</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="471"/>
       <source>Parameters missing: %1</source>
-      <translation type="unfinished"/>
+      <translation>Parametre bulunamadı: %1</translation>
     </message>
     <message>
       <location filename="../src/ui/MainRootWindow.qml" line="475"/>
       <source>Fact error: %1</source>
-      <translation type="unfinished"/>
+      <translation>Durum hatası: %1</translation>
     </message>
   </context>
   <context>
@@ -8296,7 +8296,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AnalyzeView/MavlinkConsolePage.qml" line="118"/>
       <source>Send</source>
-      <translation type="unfinished"/>
+      <translation>Gönder</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MavlinkConsolePage.qml" line="126"/>
@@ -8339,57 +8339,57 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="169"/>
       <source>Telemetry Stream Rates (ArduPilot Only)</source>
-      <translation type="unfinished"/>
+      <translation>Telemetri Akış Oranları (Sadece ArduPilot)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="189"/>
       <source>All Streams Controlled By Vehicle Settings</source>
-      <translation type="unfinished"/>
+      <translation>Tüm akışlar araç ayarları tarafından kontrol edilir</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="198"/>
       <source>Raw Sensors</source>
-      <translation type="unfinished"/>
+      <translation>Raw Sensörleri</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="205"/>
       <source>Extended Status</source>
-      <translation type="unfinished"/>
+      <translation>Genişletilmiş Durum</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="212"/>
       <source>RC Channel</source>
-      <translation type="unfinished"/>
+      <translation>RC Kanal</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="219"/>
       <source>Position</source>
-      <translation type="unfinished"/>
+      <translation>Konum</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="226"/>
       <source>Extra 1</source>
-      <translation type="unfinished"/>
+      <translation>Ekstra 1</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="233"/>
       <source>Extra 2</source>
-      <translation type="unfinished"/>
+      <translation>Ekstra 2</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="240"/>
       <source>Extra 3</source>
-      <translation type="unfinished"/>
+      <translation>Ekstra 3</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="258"/>
       <source>MAVLink Link Status (Current Vehicle)</source>
-      <translation type="unfinished"/>
+      <translation>MAVLink Bağlantı Durumu (Mevcut Araç)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="279"/>
       <source>Total messages sent (computed):</source>
-      <translation type="unfinished"/>
+      <translation>Tüm mesajlar gönderildi (hesaplanan):</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="284"/>
@@ -8397,27 +8397,27 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="314"/>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="329"/>
       <source>Not Connected</source>
-      <translation type="unfinished"/>
+      <translation>Bağlı Değil</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="294"/>
       <source>Total messages received:</source>
-      <translation type="unfinished"/>
+      <translation>Total mesajlar alındı:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="309"/>
       <source>Total message loss:</source>
-      <translation type="unfinished"/>
+      <translation>Toplam mesaj kaybı:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="324"/>
       <source>Loss rate:</source>
-      <translation type="unfinished"/>
+      <translation>Kayıp oranı:</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="345"/>
       <source>MAVLink 2.0 Logging (PX4 Pro Only)</source>
-      <translation type="unfinished"/>
+      <translation>MAVLink 2.0 loglanıyor (Sadece PX4 Pro)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="368"/>
@@ -8442,7 +8442,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="408"/>
       <source>MAVLink 2.0 Log Uploads (PX4 Pro Only)</source>
-      <translation type="unfinished"/>
+      <translation>MAVLink 2.0 Logu Yükleniyor (Sadece PX4 Pro)</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="430"/>
@@ -8565,84 +8565,84 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="63"/>
       <source>General</source>
-      <translation type="unfinished"/>
+      <translation>Genel</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="80"/>
       <source>Enable Microhard</source>
-      <translation type="unfinished"/>
+      <translation>Microhard'ı Aktif Et</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="98"/>
       <source>Connection Status</source>
-      <translation type="unfinished"/>
+      <translation>Bağlantı Durumu</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="120"/>
       <source>Ground Unit:</source>
-      <translation type="unfinished"/>
+      <translation>Yer Birimi:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="124"/>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="132"/>
       <source>Connected</source>
-      <translation type="unfinished"/>
+      <translation>Bağlandı</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="124"/>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="132"/>
       <source>Not Connected</source>
-      <translation type="unfinished"/>
+      <translation>Bağlı değil</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="129"/>
       <source>Air Unit:</source>
-      <translation type="unfinished"/>
+      <translation>Hava Birimi:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="136"/>
       <source>Uplink RSSI:</source>
-      <translation type="unfinished"/>
+      <translation>Uplink RSSI:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="142"/>
       <source>Downlink RSSI:</source>
-      <translation type="unfinished"/>
+      <translation>Downlink RSSI:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="160"/>
       <source>Network Settings</source>
-      <translation type="unfinished"/>
+      <translation>Ağ Ayarları</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="182"/>
       <source>Local IP Address:</source>
-      <translation type="unfinished"/>
+      <translation>Yerel IP Adresi:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="193"/>
       <source>Remote IP Address:</source>
-      <translation type="unfinished"/>
+      <translation>Uzaktan Erişim IP Adresi:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="203"/>
       <source>Network Mask:</source>
-      <translation type="unfinished"/>
+      <translation>Ağ Maskesi:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="213"/>
       <source>Configuration password:</source>
-      <translation type="unfinished"/>
+      <translation>Parola Yapılandırması:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="223"/>
       <source>Encryption key:</source>
-      <translation type="unfinished"/>
+      <translation>Şifreleme anahtarı:</translation>
     </message>
     <message>
       <location filename="../src/Microhard/MicrohardSettings.qml" line="256"/>
       <source>Apply</source>
-      <translation type="unfinished"/>
+      <translation>Uygula</translation>
     </message>
   </context>
   <context>
@@ -8909,7 +8909,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/comm/MockLink.h" line="73"/>
       <source>Mock Link Settings</source>
-      <translation type="unfinished"/>
+      <translation>Sahte Bağlantı Ayarları</translation>
     </message>
   </context>
   <context>
@@ -8937,7 +8937,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="56"/>
       <source>APM ArduRover Vehicle</source>
-      <translation type="unfinished"/>
+      <translation>APM ArduRover Araç</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MockLink.qml" line="60"/>
@@ -9377,17 +9377,17 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="318"/>
       <source>Clipboard Values:</source>
-      <translation type="unfinished"/>
+      <translation>Pano Değerleri:</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="344"/>
       <source>Save To Clipboard</source>
-      <translation type="unfinished"/>
+      <translation>Panoya Kaydet</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="349"/>
       <source>Restore From Clipboard</source>
-      <translation type="unfinished"/>
+      <translation>Panodan Geri Yükle</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="356"/>
@@ -9412,17 +9412,17 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="379"/>
       <source>Automatic Flight Mode Switching</source>
-      <translation type="unfinished"/>
+      <translation>Otomatik Uçuş Modu Geçişi</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="385"/>
       <source>Switches to &apos;Stabilized&apos; when you click Start.</source>
-      <translation type="unfinished"/>
+      <translation>Başlat'a basınca &apos;Stabilize&apos;ye geçer.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="390"/>
       <source>Switches to &apos;%1&apos; when you click Stop.</source>
-      <translation type="unfinished"/>
+      <translation>Durdur'a basınca &apos;%1&apos;e geçer.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="426"/>
@@ -9732,7 +9732,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc" line="140"/>
       <source>Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle.</source>
-      <translation type="unfinished"/>
+      <translation>Uyarı: Döngü (HITL) simülasyonundaki donanım bu araç için aktif.</translation>
     </message>
   </context>
   <context>
@@ -9825,7 +9825,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="56"/>
       <source>Orbit</source>
-      <translation type="unfinished"/>
+      <translation>Yörünge</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="190"/>
@@ -10003,7 +10003,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="46"/>
       <source>Flaps</source>
-      <translation type="unfinished"/>
+      <translation>Flaplar</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="47"/>
@@ -10013,19 +10013,19 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="58"/>
       <source>Disabled</source>
-      <translation type="unfinished"/>
+      <translation>Kapalı</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
       <source>Aux1</source>
-      <translation type="unfinished"/>
+      <translation>Harici1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <source>Aux2</source>
-      <translation type="unfinished"/>
+      <translation>Harici2</translation>
     </message>
   </context>
   <context>
@@ -10034,25 +10034,25 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="74"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="74"/>
       <source>Flight Mode Settings</source>
-      <translation type="unfinished"/>
+      <translation>Uçuş Mod Ayarları</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <source>Mode channel:</source>
-      <translation type="unfinished"/>
+      <translation>Mod Kanalı:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="118"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="118"/>
       <source>Flight Mode %1</source>
-      <translation type="unfinished"/>
+      <translation>Uçuş Modu %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="138"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="138"/>
       <source>Switch Settings</source>
-      <translation type="unfinished"/>
+      <translation>Anahtar Ayarları</translation>
     </message>
   </context>
   <context>
@@ -10060,12 +10060,12 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponent.cc" line="17"/>
       <source>Tuning</source>
-      <translation type="unfinished"/>
+      <translation>Hassas Ayar</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponent.cc" line="28"/>
       <source>Tuning Setup is used to tune the flight characteristics of the Vehicle.</source>
-      <translation type="unfinished"/>
+      <translation>Ayarlama Sekmesi, aracın uçuş özelliklerini ayarlamak için kullanılır.</translation>
     </message>
   </context>
   <context>
@@ -10080,7 +10080,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="47"/>
       <source>Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center.</source>
-      <translation type="unfinished"/>
+      <translation>Yükselişin ortalama gazla olabilmesi için gazı ayarlayın. Yükseliş ortalama gazdan daha düşükse sola doğru kaydırın. Yükseliş ortalama gazdan daha fazla ise sağa doğru kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="55"/>
@@ -10092,7 +10092,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="56"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="56"/>
       <source>Slide to the left to start the motors with less idle power. Slide to the right if descending in manual flight becomes unstable.</source>
-      <translation type="unfinished"/>
+      <translation>Motorları daha az rölanti gücünde çalıştırmak için sola kaydırın. Şayet manuel uçuşta iniş kararsız duruma gelirse sağa kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
@@ -10125,7 +10125,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="46"/>
       <source>This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%.</source>
-      <translation type="unfinished"/>
+      <translation>Bu istenilen uçuş hızını elde etmek için gereken gaz kolu ayarıdır. Çoğu uçak için gereken; 50-60%.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
@@ -10158,7 +10158,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="29"/>
       <source>Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy.</source>
-      <translation type="unfinished"/>
+      <translation>Roll kontrolünü daha hızlı ve doğru yapmak için sola kaydırın. Roll titreşim yaparsa veya çok salınım yaparsa sağa kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="37"/>
@@ -10170,7 +10170,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="38"/>
       <source>Slide to the left to make pitch control faster and more accurate. Slide to the right if pitch oscillates or is too twitchy.</source>
-      <translation type="unfinished"/>
+      <translation>Roll kontrolünü daha hızlı ve doğru yapmak için sola kaydırın. Roll titreşim yaparsa veya çok salınım yaparsa sağa kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="46"/>
@@ -10182,7 +10182,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="47"/>
       <source>This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%.</source>
-      <translation type="unfinished"/>
+      <translation>İstenilen seyir hızını elde etmek için gerekli gaz ayarı budur. Çoğu uçak % 50-60'a gereksinim duyar.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="55"/>
@@ -10194,7 +10194,7 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="56"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="56"/>
       <source>Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center.</source>
-      <translation type="unfinished"/>
+      <translation>Yükselişin ortalama gazla olabilmesi için gazı ayarlayın. Yükseliş ortalama gazdan daha düşükse sola doğru kaydırın. Yükseliş ortalama gazdan daha fazla ise sağa doğru kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="64"/>
@@ -10206,19 +10206,19 @@ Emin misiniz?</translation>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="65"/>
       <source>Slide to the left to start the motors with less idle power. Slide to the right if descending in manual flight becomes unstable.</source>
-      <translation type="unfinished"/>
+      <translation>Motorları daha az rölanti gücünde çalıştırmak için sola kaydırın. Şayet manuel uçuşta iniş kararsız duruma gelirse sağa kaydırın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="73"/>
       <source>Plane Mission mode sensitivity</source>
-      <translation type="unfinished"/>
+      <translation>Uçak görev modu duyarlılık</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="74"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="74"/>
       <source>Slide to the left to make position control more accurate and more aggressive. Slide to the right to make flight in mission mode smoother and less twitchy.</source>
-      <translation type="unfinished"/>
+      <translation>Daha doğru pozisyon kontrolü yapmak için sola kaydırın. Uçuş görevi modunda daha yumuşak olması için sağa kaydırın.</translation>
     </message>
   </context>
   <context>
@@ -10241,7 +10241,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="86"/>
       <source>Show modified only</source>
-      <translation type="unfinished"/>
+      <translation>Sadece değiştirileni göster</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="99"/>
@@ -10256,7 +10256,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="111"/>
       <source>Reset all to firmware&apos;s defaults</source>
-      <translation type="unfinished"/>
+      <translation>Tümünü firmware varsayılanlarına resetle</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="113"/>
@@ -10267,7 +10267,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="116"/>
       <source>Reset to vehicle&apos;s configuration defaults</source>
-      <translation type="unfinished"/>
+      <translation>Aracın konfigürasyon varsayılanlarına resetle</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="122"/>
@@ -10323,7 +10323,7 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="340"/>
       <source>Select Reset to reset all parameters to the vehicle&apos;s configuration defaults.</source>
-      <translation type="unfinished"/>
+      <translation>Tüm parametreleri aracın konfigürasyon varsayılanlarına resetlemek için Reset&apos;i seç.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="357"/>
@@ -10336,12 +10336,12 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="26"/>
       <source>Component </source>
-      <translation type="unfinished"/>
+      <translation>Bileşen </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="63"/>
       <source>All</source>
-      <translation type="unfinished"/>
+      <translation>Tümü</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorController.cc" line="111"/>
@@ -10384,32 +10384,32 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="241"/>
       <source>Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. </source>
-      <translation type="unfinished"/>
+      <translation>Uyarı: Araç hareket halindeyken değerlerin değiştirilmesi, denge yitimine ve olası araç kayıplarına neden olabilir.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="242"/>
       <source>Make sure you know what you are doing and double-check your values before Save!</source>
-      <translation type="unfinished"/>
+      <translation>Kaydetmeden önce ne yaptığınızdan emin olunuz ve değerleri iki kere kontrol ediniz!</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="249"/>
       <source>Force save (dangerous!)</source>
-      <translation type="unfinished"/>
+      <translation>Zorla kaydet (tehlikeli!)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="266"/>
       <source>Advanced settings</source>
-      <translation type="unfinished"/>
+      <translation>Gelişmiş ayarlar</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="281"/>
       <source>Manual Entry</source>
-      <translation type="unfinished"/>
+      <translation>Manuel giriş</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditorDialog.qml" line="289"/>
       <source>Set RC to Param...</source>
-      <translation type="unfinished"/>
+      <translation>Paramı RC yap...</translation>
     </message>
   </context>
   <context>
@@ -10422,27 +10422,27 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="665"/>
       <source>Parameter read failed: veh:%1 comp:%2 param:%3</source>
-      <translation type="unfinished"/>
+      <translation>Parametre okuma hatası: veh:%1 comp:%2 param:%3</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="892"/>
       <source>Parameter cache CRC match failed</source>
-      <translation type="unfinished"/>
+      <translation>Parametre saklama CRC eşleşmesi başarısız</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1143"/>
       <source>%1 was unable to retrieve the full set of parameters from vehicle %2. This will cause %1 to be unable to display its full user interface. If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.</source>
-      <translation type="unfinished"/>
+      <translation>%1, %2 aracından tüm parametreleri alamadı. Bu, %1'in kullanıcı arabirimini tam olarak görüntüleyememesine neden olur. Değiştirilmiş firmware kullanıyorsanız, sorunu çözmek için herhangi bir araç başlatma hatasını çözmeniz gerekebilir. Standart bir firmware kullanıyorsanız, sorunu çözmek için daha yeni bir sürüme geçmeniz gerekebilir.</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1169"/>
       <source>Vehicle %1 did not respond to request for parameters. This will cause %2 to be unable to display its full user interface.</source>
-      <translation type="unfinished"/>
+      <translation>Araç %1 parametre isteklerine yanıt vermiyor. Bu durum %2 nin tüm kullanıcı arayüzünü göstermesine engel olacaktır.</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1515"/>
       <source>%1 key is not a json object</source>
-      <translation type="unfinished"/>
+      <translation>%1 anahtarı json objesi değil</translation>
     </message>
   </context>
   <context>
@@ -10450,94 +10450,94 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="176"/>
       <source>Internal error occurred during Mission Item communication: _ackTimeOut:_expectedAck == AckNone</source>
-      <translation type="unfinished"/>
+      <translation>Görev öğesi haberleşmesi esnasında iç hata oluştu: _ackTimeOut:_expectedAck == AckNone</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="181"/>
       <source>Mission request list failed, maximum retries exceeded.</source>
-      <translation type="unfinished"/>
+      <translation>Görev istek listesi başarısız oldu, maksimum yeniden deneme sayısı aşıldı.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="185"/>
       <source>Retrying %1 REQUEST_LIST retry Count</source>
-      <translation type="unfinished"/>
+      <translation>Tekrar deneniyor: %1REQUEST_LIST yeniden deneme sayısı</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="192"/>
       <source>Mission read failed, maximum retries exceeded.</source>
-      <translation type="unfinished"/>
+      <translation>Görev okuma başarısız oldu, maksimum yeniden deneme sayısı aşıldı.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="196"/>
       <source>Retrying %1 MISSION_REQUEST retry Count</source>
-      <translation type="unfinished"/>
+      <translation>Tekrar deneniyor: %1 MISSION_REQUEST yeniden deneme sayısı</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="204"/>
       <source>Mission write failed, vehicle failed to send final ack.</source>
-      <translation type="unfinished"/>
+      <translation>Görev yazma başarısız oldu, araç son onayı göndermekte başarısız oldu.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="209"/>
       <source>Mission write mission count failed, maximum retries exceeded.</source>
-      <translation type="unfinished"/>
+      <translation>Görev yazma görev sayma başarısız oldu, maksimum yeniden deneme sayısı aşıldı.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="218"/>
       <source>Vehicle did not request all items from ground station: %1</source>
-      <translation type="unfinished"/>
+      <translation>Araç yer istasyonundan tüm öğeler için istek göndermedi: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="226"/>
       <source>Mission remove all, maximum retries exceeded.</source>
-      <translation type="unfinished"/>
+      <translation>Görev tümünü sil, maksimum yeniden deneme sayısı aşıldı.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="230"/>
       <source>Retrying %1 MISSION_CLEAR_ALL retry Count</source>
-      <translation type="unfinished"/>
+      <translation>Tekrar deneniyor: %1 MISSION_CLEAR_ALL yeniden deneme sayısı</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="237"/>
       <source>Vehicle did not respond to mission item communication: %1</source>
-      <translation type="unfinished"/>
+      <translation>Araç görev öğesi haberleşmesine cevap vermedi: %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="515"/>
       <source>Vehicle requested item outside range, count:request %1:%2. Send to Vehicle failed.</source>
-      <translation type="unfinished"/>
+      <translation>Araç aralık dışı eleman talep etti, adet:talep %1:%2. Araca gönderimde hata oluştu. </translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="619"/>
       <location filename="../src/MissionManager/PlanManager.cc" line="624"/>
       <location filename="../src/MissionManager/PlanManager.cc" line="638"/>
       <source>Vehicle returned error: %1.</source>
-      <translation type="unfinished"/>
+      <translation>Araç hata döndü: %1.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="634"/>
       <source>Vehicle did not request all items during write sequence, missed count %1.</source>
-      <translation type="unfinished"/>
+      <translation>Tüm unsurlar yazma işlemi esnasında araç tarafından talep edilmedi, sayı %1.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="645"/>
       <source>Vehicle returned error: %1. Vehicle remove all failed.</source>
-      <translation type="unfinished"/>
+      <translation>Hata: %1.  Araç silme işlemi başarısız.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="655"/>
       <source>Vehicle returned error: %1. %2Vehicle did not accept guided item.</source>
-      <translation type="unfinished"/>
+      <translation>Araç hata döndürdü: %1. %2 araç güdümlü öğeyi kabul etmedi.</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="768"/>
       <source>Mission accepted (MAV_MISSION_ACCEPTED)</source>
-      <translation type="unfinished"/>
+      <translation>Görev kabul edildi (MAV_MISSION_ACCEPTED)</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="771"/>
       <source>Unspecified error (MAV_MISSION_ERROR)</source>
-      <translation type="unfinished"/>
+      <translation>Belirlenmemiş Hata (MAV_MISSION_ERROR)</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="774"/>
@@ -10666,68 +10666,68 @@ Emin misiniz?</translation>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="129"/>
       <source>Alt diff:</source>
-      <translation type="unfinished"/>
+      <translation>İrtifa farkı:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="138"/>
       <source>Azimuth:</source>
-      <translation type="unfinished"/>
+      <translation>Azimut:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="147"/>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="183"/>
       <source>Distance:</source>
-      <translation type="unfinished"/>
+      <translation>Mesafe:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="154"/>
       <source>Gradient:</source>
-      <translation type="unfinished"/>
+      <translation>Gradyan:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="163"/>
       <source>Heading:</source>
-      <translation type="unfinished"/>
+      <translation>Başlık:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="178"/>
       <source>Total Mission</source>
-      <translation type="unfinished"/>
+      <translation>Toplam Görev</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="192"/>
       <source>Max telem dist:</source>
-      <translation type="unfinished"/>
+      <translation>Max telemetri mesafesi:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="199"/>
       <source>Time:</source>
-      <translation type="unfinished"/>
+      <translation>Saat:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="215"/>
       <source>Battery</source>
-      <translation type="unfinished"/>
+      <translation>Batarya</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="220"/>
       <source>Batteries required:</source>
-      <translation type="unfinished"/>
+      <translation>Bataryalar gerekli:</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="245"/>
       <source>Upload Required</source>
-      <translation type="unfinished"/>
+      <translation>Yüklemeniz Gerekli</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="245"/>
       <source>Upload</source>
-      <translation type="unfinished"/>
+      <translation>Yükle</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="316"/>
       <source>Syncing Mission</source>
-      <translation type="unfinished"/>
+      <translation>Eşitleme Görevi</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanToolBarIndicators.qml" line="324"/>
@@ -13586,7 +13586,7 @@ Kalibrasyonu karta yüklemek için İleri düğmesine tıklayın. Şayet bu değ
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <source>Setup required</source>
-      <translation type="unfinished"/>
+      <translation>Kurulum gerekli </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="33"/>
@@ -13598,25 +13598,25 @@ Kalibrasyonu karta yüklemek için İleri düğmesine tıklayın. Şayet bu değ
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <source>Ready</source>
-      <translation type="unfinished"/>
+      <translation>Hazır</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="37"/>
       <source>Gyro:</source>
-      <translation type="unfinished"/>
+      <translation>Jiroskop</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
       <source>Accelerometer:</source>
-      <translation type="unfinished"/>
+      <translation>İvmeölçer</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <source>Airspeed:</source>
-      <translation type="unfinished"/>
+      <translation>Hava hızı</translation>
     </message>
   </context>
   <context>
@@ -13627,7 +13627,7 @@ Kalibrasyonu karta yüklemek için İleri düğmesine tıklayın. Şayet bu değ
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="42"/>
       <source>If the orientation is in the direction of flight, select ROTATION_NONE.</source>
-      <translation type="unfinished"/>
+      <translation>Eğer yönelim uçuş yönlerinden birisi ise ROTATION_NONE seçiniz.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="44"/>
@@ -13635,7 +13635,7 @@ Kalibrasyonu karta yüklemek için İleri düğmesine tıklayın. Şayet bu değ
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.
 
 Click Ok to start calibration.</source>
-      <translation type="unfinished"/>
+      <translation>Pusula kalibrasyonu için aracınızı bir dizi pozisyonda döndürmeniz gerekecek.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="45"/>
@@ -13643,7 +13643,7 @@ Click Ok to start calibration.</source>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
 
 Click Ok to start calibration.</source>
-      <translation type="unfinished"/>
+      <translation>Jiroskop kalibrasyonu için aracınızı bir yüzeye koymanız ve bırakmanız gerekir.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="46"/>
@@ -13651,61 +13651,61 @@ Click Ok to start calibration.</source>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.
 
 Click Ok to start calibration.</source>
-      <translation type="unfinished"/>
+      <translation>İvmeölçer kalibrasyonu için aracınızı altı kenarın tümünden kusursuz düz bir yüzeye yerleştirmeniz ve birkaç saniye boyunca herbir yönde tutmanız gerekecek.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="47"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press OK.</source>
-      <translation type="unfinished"/>
+      <translation>Ufuk seviyesini ayarlamak için aracı seviye uçuş pozisyonuna getirin ve tamam ı tıklayın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <source>For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</source>
-      <translation type="unfinished"/>
+      <translation>Hava Hızı kalibrasyonu için, hava hızı sensörünüzü rüzgârdan uzak tutarak sensöre doğru üflemeniz gerekecektir. Sensöre dokunmayın veya kalibrasyon sırasında herhangi bir deliği tıkamayın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="50"/>
       <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
-      <translation type="unfinished"/>
+      <translation>Soldaki düğmelerden birine tıklayarak kalibrasyon adımlarını tek tek başlatın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="134"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="134"/>
       <source>Compass Calibration Complete</source>
-      <translation type="unfinished"/>
+      <translation>Pusula Kalibrasyonu Tamamlandı</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="139"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="139"/>
       <source>Calibration Cancel</source>
-      <translation type="unfinished"/>
+      <translation>Kalibrasyon İptal</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <source>Sensor Calibration</source>
-      <translation type="unfinished"/>
+      <translation>Algılayıcı kalibrasyonu</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <source>Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead.</source>
-      <translation type="unfinished"/>
+      <translation>WiFi bağlantısı üzerinden sensör kalibrasyonu güvenlik açısından önerilmez. Bağlantınızı kesiniz ve kalibrasyonunuzu USB bağlantısı üzerinden yapınız.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="155"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="155"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
-      <translation type="unfinished"/>
+      <translation>Aracın İptal'e yanıt vermesi bekleniyor. Bu işlem bir kaç saniye sürebilir.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="204"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="204"/>
       <source>Set autopilot orientation before calibrating.</source>
-      <translation type="unfinished"/>
+      <translation>Kalibrasyondan önce otomatik pilot yönünü ayarlayın.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="210"/>
@@ -13713,61 +13713,61 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="210"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="278"/>
       <source>Autopilot Orientation:</source>
-      <translation type="unfinished"/>
+      <translation>Otomatik pilot Yönelimi:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="255"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="255"/>
       <source>Make sure to reboot the vehicle prior to flight.</source>
-      <translation type="unfinished"/>
+      <translation>Uçuş öncesinde aracın yeniden başlatıldığına emin olun.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="256"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="256"/>
       <source>Set your compass orientations below and the make sure to reboot the vehicle prior to flight.</source>
-      <translation type="unfinished"/>
+      <translation>Pusula yönelimlerinizi ayarlayın ve aracı uçuş öncesi yeniden başlattığınızdan emin olun.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="260"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="260"/>
       <source>Reboot Vehicle</source>
-      <translation type="unfinished"/>
+      <translation>Aracı yeniden başlat</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="297"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="297"/>
       <source>External Compass Orientation:</source>
-      <translation type="unfinished"/>
+      <translation>Harici pusula yönü (yönelimi)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
       <source>External Compass 1 Orientation:</source>
-      <translation type="unfinished"/>
+      <translation>Harici pusula 1 yönü (yönelimi)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="352"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="352"/>
       <source>Compass 2 Orientation</source>
-      <translation type="unfinished"/>
+      <translation>Pusula 2 Yönü (Yönelimi)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="389"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="389"/>
       <source>Compass</source>
-      <translation type="unfinished"/>
+      <translation>Pusula</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="396"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="396"/>
       <source>Calibrate Compass</source>
-      <translation type="unfinished"/>
+      <translation>Pusula kalibrasyonu</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="403"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="403"/>
       <source>Gyroscope</source>
-      <translation type="unfinished"/>
+      <translation>Jiroskop</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="410"/>
@@ -15476,7 +15476,7 @@ Confirm change?</source>
     <message>
       <location filename="../src/VehicleSetup/VehicleSummary.qml" line="88"/>
       <source>WARNING: Your vehicle requires setup prior to flight. Please resolve the items marked in red using the menu on the left.</source>
-      <translation type="unfinished"/>
+      <translation>UYARI: Aracınız uçuştan önce kurulum gerektirir. Lütfen soldaki menüden kırmızıyla işaretlenmiş öğeleri çözümleyin.</translation>
     </message>
   </context>
   <context>

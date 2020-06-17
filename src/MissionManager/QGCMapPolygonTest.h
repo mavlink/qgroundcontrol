@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,18 +17,19 @@
 class QGCMapPolygonTest : public UnitTest
 {
     Q_OBJECT
-    
+
 public:
     QGCMapPolygonTest(void);
 
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty(void);
     void _testVertexManipulation(void);
     void _testKMLLoad(void);
+    void _testSelectVertex(void);
 
 private:
     enum {

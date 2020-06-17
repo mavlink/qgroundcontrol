@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -83,9 +83,12 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
 
     connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
     connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &QGCFileDownload::_downloadError);
-
+#else
+    connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
+#endif
     return true;
 }
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -20,7 +20,6 @@
 #include <QPointer>
 
 #include "LinkInterface.h"
-#include "ProtocolInterface.h"
 
 #ifndef __mobile__
 class FileManager;
@@ -47,8 +46,6 @@ public:
 #ifndef __mobile__
     virtual FileManager* getFileManager() = 0;
 #endif
-
-    virtual QMap<int, QString> getComponents() = 0;
 
     enum StartCalibrationType {
         StartCalibrationRadio,
@@ -85,46 +82,7 @@ public slots:
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
 
-    /** @brief Send the full HIL state to the MAV */
-#ifndef __mobile__
-    virtual void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollspeed,
-                        float pitchspeed, float yawspeed, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc) = 0;
-
-    /** @brief RAW sensors for sensor HIL */
-    virtual void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
-                                float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed) = 0;
-
-    /** @brief Send raw GPS for sensor HIL */
-    virtual void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd, float cog, int satellites) = 0;
-
-    /** @brief Send Optical Flow sensor message for HIL, (arguments and units accoding to mavlink documentation*/
-    virtual void sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
-                            float flow_comp_m_y, quint8 quality, float ground_distance) = 0;
-#endif
-
-    /** @brief Send command to map a RC channel to a parameter */
-    virtual void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax) = 0;
-
-    /** @brief Send command to disable all bindings/maps between RC and parameters */
-    virtual void unsetRCToParameterMap() = 0;
-
 signals:
-    /**
-     * @brief Update the error count of a device
-     *
-     * The error count indicates how many errors occurred during the use of a device.
-     * Usually a random error from time to time is acceptable, e.g. through electromagnetic
-     * interferences on device lines like I2C and SPI. A constantly and rapidly increasing
-     * error count however can help to identify broken cables or misbehaving drivers.
-     *
-     * @param uasid System ID
-     * @param component Name of the component, e.g. "IMU"
-     * @param device Name of the device, e.g. "SPI0" or "I2C1"
-     * @param count Errors occurred since system startup
-     */
-    void errCountChanged(int uasid, QString component, QString device, int count);
-
     /** @brief The robot is connected **/
     void connected();
     /** @brief The robot is disconnected **/

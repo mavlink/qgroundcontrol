@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":                 "goodAttitudeEsimate",
@@ -128,3 +132,4 @@
     "default":              null
 }
 ]
+}

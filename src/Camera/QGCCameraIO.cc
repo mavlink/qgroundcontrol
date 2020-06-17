@@ -1,7 +1,7 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -76,7 +76,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
             break;
         default:
             qWarning() << "Unsupported fact type" << _fact->type() << "for" << _fact->name();
-            //-- Fall Through (screw clang)
+            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             _mavParamType = MAV_PARAM_EXT_TYPE_INT32;
             break;
@@ -176,7 +176,7 @@ QGCCameraParamIO::_sendParameter()
             break;
         default:
             qCritical() << "Unsupported fact type" << factType << "for" << _fact->name();
-            //-- Fall Through (screw clang)
+            [[fallthrough]];
         case FactMetaData::valueTypeInt32:
             union_value.param_int32 = static_cast<int32_t>(_fact->rawValue().toInt());
             break;
@@ -191,7 +191,7 @@ QGCCameraParamIO::_sendParameter()
         _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         &p);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     _paramWriteTimer.start();
 }
 
@@ -364,6 +364,6 @@ QGCCameraParamIO::paramRequest(bool reset)
         static_cast<uint8_t>(_control->compID()),
         param_id,
         -1);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     _paramRequestTimer.start();
 }

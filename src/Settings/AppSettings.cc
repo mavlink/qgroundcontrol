@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -39,22 +39,41 @@ DECLARE_SETTINGGROUP(App, "")
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
+    // virtualJoystickCentralized -> virtualJoystickAutoCenterThrottle
+    QSettings settings;
+    settings.beginGroup(_settingsGroup);
+    QString deprecatedVirtualJoystickCentralizedKey("virtualJoystickCentralized");
+    if (settings.contains(deprecatedVirtualJoystickCentralizedKey)) {
+        settings.setValue(virtualJoystickAutoCenterThrottleName, settings.value(deprecatedVirtualJoystickCentralizedKey));
+        settings.remove(deprecatedVirtualJoystickCentralizedKey);
+    }
+
     // Instantiate savePath so we can check for override and setup default path if needed
 
     SettingsFact* savePathFact = qobject_cast<SettingsFact*>(savePath());
     QString appName = qgcApp()->applicationName();
-    if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
-#ifdef __ios__
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    // Mobile builds always use the runtime generated location for savePath.
+    bool userHasModifiedSavePath = false;
 #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+    bool userHasModifiedSavePath = !savePathFact->rawValue().toString().isEmpty() || !_nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty();
 #endif
+
+    if (!userHasModifiedSavePath) {
+#ifdef __mobile__
+    #ifdef __ios__
+        // This will expose the directories directly to the File iOs app
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        savePathFact->setRawValue(rootDir.absolutePath());
+    #else
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+        savePathFact->setRawValue(rootDir.filePath(appName));
+    #endif
         savePathFact->setVisible(false);
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-#endif
         savePathFact->setRawValue(rootDir.filePath(appName));
+#endif
     }
 
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
@@ -79,12 +98,13 @@ DECLARE_SETTINGSFACT(AppSettings, telemetrySaveNotArmed)
 DECLARE_SETTINGSFACT(AppSettings, audioMuted)
 DECLARE_SETTINGSFACT(AppSettings, checkInternet)
 DECLARE_SETTINGSFACT(AppSettings, virtualJoystick)
-DECLARE_SETTINGSFACT(AppSettings, virtualJoystickCentralized)
+DECLARE_SETTINGSFACT(AppSettings, virtualJoystickAutoCenterThrottle)
 DECLARE_SETTINGSFACT(AppSettings, appFontPointSize)
 DECLARE_SETTINGSFACT(AppSettings, showLargeCompass)
 DECLARE_SETTINGSFACT(AppSettings, savePath)
 DECLARE_SETTINGSFACT(AppSettings, autoLoadMissions)
 DECLARE_SETTINGSFACT(AppSettings, useChecklist)
+DECLARE_SETTINGSFACT(AppSettings, enforceChecklist)
 DECLARE_SETTINGSFACT(AppSettings, mapboxToken)
 DECLARE_SETTINGSFACT(AppSettings, esriToken)
 DECLARE_SETTINGSFACT(AppSettings, defaultFirmwareType)
@@ -96,6 +116,11 @@ DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
 DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
 DECLARE_SETTINGSFACT(AppSettings, language)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
+DECLARE_SETTINGSFACT(AppSettings, usePairing)
+DECLARE_SETTINGSFACT(AppSettings, saveCsvTelemetry)
+DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
+DECLARE_SETTINGSFACT(AppSettings, forwardMavlink)
+DECLARE_SETTINGSFACT(AppSettings, forwardMavlinkHostName)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -213,4 +238,46 @@ MAV_TYPE AppSettings::offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleT
     } else {
         return MAV_TYPE_QUADROTOR;
     }
+}
+
+QList<int> AppSettings::firstRunPromptsIdsVariantToList(const QVariant& firstRunPromptIds)
+{
+    QList<int> rgIds;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    QStringList strIdList = firstRunPromptIds.toString().split(",", QString::SkipEmptyParts);
+#else
+    QStringList strIdList = firstRunPromptIds.toString().split(",", Qt::SkipEmptyParts);
+#endif
+
+    for (const QString& strId: strIdList) {
+        rgIds.append(strId.toInt());
+    }
+    return rgIds;
+}
+
+QVariant AppSettings::firstRunPromptsIdsListToVariant(const QList<int>& rgIds)
+{
+    QStringList strList;
+    for (int id: rgIds) {
+        strList.append(QString::number(id));
+    }
+    return QVariant(strList.join(","));
+}
+
+void AppSettings::firstRunPromptIdsMarkIdAsShown(int id)
+{
+    QList<int> rgIds = firstRunPromptsIdsVariantToList(firstRunPromptIdsShown()->rawValue());
+    if (!rgIds.contains(id)) {
+        rgIds.append(id);
+        firstRunPromptIdsShown()->setRawValue(firstRunPromptsIdsListToVariant(rgIds));
+    }
+}
+
+int AppSettings::_languageID(void)
+{
+    // Hack to provide language settings as early in the boot process as possible. Must be know
+    // prior to loading any json files.
+    QSettings settings;
+    return settings.value("language", 0).toInt();
 }

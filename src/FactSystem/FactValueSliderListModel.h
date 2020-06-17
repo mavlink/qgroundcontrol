@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,7 +19,7 @@ class FactValueSliderListModel : public QAbstractListModel
     Q_OBJECT
     
 public:
-    FactValueSliderListModel(Fact& fact, QObject* parent = NULL);
+    FactValueSliderListModel(Fact& fact, QObject* parent = nullptr);
     ~FactValueSliderListModel();
 
     /// The initial value of the Fact at the meta data specified decimal place precision

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,15 +29,17 @@ MapQuickItem {
 
     sourceItem:
         MissionItemIndexLabel {
-            id:             _label
-            checked:        _isCurrentItem
-            label:          missionItem ? missionItem.abbreviation : ""
-            index:          missionItem ? missionItem.sequenceNumber : 0
-            gimbalYaw:      missionItem.missionGimbalYaw
-            vehicleYaw:     missionItem.missionVehicleYaw
-            showGimbalYaw:  !isNaN(missionItem.missionGimbalYaw)
-            onClicked:      _item.clicked()
+            id:                 _label
+            checked:            _isCurrentItem
+            label:              missionItem.abbreviation
+            index:              missionItem.abbreviation.charAt(0) > 'A' && missionItem.abbreviation.charAt(0) < 'z' ? -1 : missionItem.sequenceNumber
+            gimbalYaw:          missionItem.missionGimbalYaw
+            vehicleYaw:         missionItem.missionVehicleYaw
+            showGimbalYaw:      !isNaN(missionItem.missionGimbalYaw)
+            highlightSelected:  true
+            onClicked:          _item.clicked()
+            opacity:            _item.opacity
 
-            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
+            property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem || missionItem.hasCurrentChildItem : false
         }
 }

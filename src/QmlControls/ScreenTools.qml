@@ -1,8 +1,8 @@
 pragma Singleton
 
-import QtQuick 2.3
+import QtQuick          2.12
 import QtQuick.Controls 1.2
-import QtQuick.Window 2.2
+import QtQuick.Window   2.2
 
 import QGroundControl                       1.0
 import QGroundControl.ScreenToolsController 1.0
@@ -31,6 +31,7 @@ Item {
     //-- The point and pixel font size values are computed at runtime
 
     property real defaultFontPointSize:     10
+    property real platformFontPointSize:    10
 
     /// You can use this property to position ui elements in a screen resolution independent manner. Using fixed positioning values should not
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
@@ -41,6 +42,12 @@ Item {
     /// be done. All positioning should be done using anchors or a ratio of the defaultFontPixelHeight and defaultFontPixelWidth values. This way
     /// your ui elements will reposition themselves appropriately on varying screen sizes and resolutions.
     property real defaultFontPixelWidth:    10
+
+    /// QFontMetrics::descent for default font at default point size
+    property real defaultFontDescent:       0
+
+    /// The default amount of space in between controls in a dialog
+    property real defaultDialogControlSpacing: defaultFontPixelHeight / 2
 
     property real smallFontPointSize:       10
     property real mediumFontPointSize:      10
@@ -90,7 +97,7 @@ Item {
     property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
-    property real comboBoxPadding:                  Math.round(defaultFontPixelWidth *  (isShortScreen ? 1 : 0.5))
+    property real comboBoxPadding:                  defaultFontPixelWidth
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
     // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
     property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
@@ -105,8 +112,7 @@ Item {
     Connections {
         target: QGroundControl.settingsManager.appSettings.appFontPointSize
         onValueChanged: {
-            if(ScreenToolsController.isDebug)
-                _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
+            _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
         }
     }
 
@@ -134,6 +140,7 @@ Item {
         defaultFontPointSize    = pointSize
         defaultFontPixelHeight  = Math.round(_textMeasure.fontHeight/2.0)*2
         defaultFontPixelWidth   = Math.round(_textMeasure.fontWidth/2.0)*2
+        defaultFontDescent      = ScreenToolsController.defaultFontDescent(defaultFontPointSize)
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
@@ -158,40 +165,36 @@ Item {
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
+            //-- First, compute platform, default size
+            if(ScreenToolsController.isMobile) {
+                //-- Check iOS really tiny screens (iPhone 4s/5/5s)
+                if(ScreenToolsController.isiOS) {
+                    if(ScreenToolsController.isiOS && Screen.width < 570) {
+                        // For iPhone 4s size we don't fit with additional tweaks to fit screen,
+                        // we will just drop point size to make things fit. Correct size not yet determined.
+                        platformFontPointSize = 12;  // This will be lowered in a future pull
+                    } else {
+                        platformFontPointSize = 14;
+                    }
+                } else if((Screen.width / realPixelDensity) < 120) {
+                    platformFontPointSize = 11;
+                // Other Android
+                } else {
+                    platformFontPointSize = 14;
+                }
+            } else {
+                platformFontPointSize = _defaultFont.font.pointSize;
+            }
+            //-- See if we are using a custom size
             var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
             var baseSize = _appFontPointSizeFact.value
-            //-- If this is the first time (not saved in settings)
+            //-- Sanity check
             if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
-                //-- Init base size base on the platform
-                if(ScreenToolsController.isMobile) {
-                    //-- Check iOS really tiny screens (iPhone 4s/5/5s)
-                    if(ScreenToolsController.isiOS) {
-                        if(ScreenToolsController.isiOS && Screen.width < 570) {
-                            // For iPhone 4s size we don't fit with additional tweaks to fit screen,
-                            // we will just drop point size to make things fit. Correct size not yet determined.
-                            baseSize = 12;  // This will be lowered in a future pull
-                        } else {
-                            baseSize = 14;
-                        }
-                    } else if((Screen.width / realPixelDensity) < 120) {
-                        baseSize = 11;
-                    // Other Android
-                    } else {
-                        baseSize = 14;
-                    }
-                } else {
-                    baseSize = _defaultFont.font.pointSize;
-                }
-                _appFontPointSizeFact._setIgnoreQGCRebootRequired(true)
+                baseSize = platformFontPointSize;
                 _appFontPointSizeFact.value = baseSize
-                _appFontPointSizeFact._setIgnoreQGCRebootRequired(false)
-                //-- Release build doesn't get signal
-                if(!ScreenToolsController.isDebug)
-                    _screenTools._setBasePointSize(baseSize);
-            } else {
-                //-- Set size saved in settings
-                _screenTools._setBasePointSize(baseSize);
             }
+            //-- Set size saved in settings
+            _screenTools._setBasePointSize(baseSize);
         }
     }
 }

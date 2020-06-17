@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -18,7 +18,7 @@ class QGCFileDownload : public QNetworkAccessManager
     Q_OBJECT
     
 public:
-    QGCFileDownload(QObject* parent = NULL);
+    QGCFileDownload(QObject* parent = nullptr);
     
     /// Download the specified remote file.
     ///     @param remoteFile File to download. Can be http address or file system path.

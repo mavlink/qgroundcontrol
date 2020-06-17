@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -21,7 +21,6 @@
 #include "LinkInterface.h"
 #include "QGCLoggingCategory.h"
 #include "QGCToolbox.h"
-#include "ProtocolInterface.h"
 #include "MAVLinkProtocol.h"
 #if !defined(__mobile__)
 #include "LogReplayLink.h"
@@ -45,7 +44,7 @@ class UDPConfiguration;
 class AutoConnectSettings;
 class LogReplayLink;
 
-/// Manage communication links
+/// @brief Manage communication links
 ///
 /// The Link Manager organizes the physical Links. It can manage arbitrary
 /// links and takes care of connecting them as well assigning the correct
@@ -55,7 +54,7 @@ class LinkManager : public QGCTool
 {
     Q_OBJECT
 
-    /// Unit Test has access to private constructor/destructor
+    // Unit Test has access to private constructor/destructor
     friend class LinkManagerTest;
 
 public:
@@ -69,7 +68,7 @@ public:
     Q_PROPERTY(QStringList          serialPortStrings   READ serialPortStrings                                                  NOTIFY commPortStringsChanged)
     Q_PROPERTY(QStringList          serialPorts         READ serialPorts                                                        NOTIFY commPortsChanged)
 
-    // Create/Edit Link Configuration
+    /// Create/Edit Link Configuration
     Q_INVOKABLE LinkConfiguration*  createConfiguration         (int type, const QString& name);
     Q_INVOKABLE LinkConfiguration*  startConfigurationEditing   (LinkConfiguration* config);
     Q_INVOKABLE void                cancelConfigurationEditing  (LinkConfiguration* config) { delete config; }
@@ -112,6 +111,9 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration name.
     LinkInterface* createConnectedLink(const QString& name);
+
+    /// Returns pointer to the mavlink forwarding link, or nullptr if it does not exist
+    SharedLinkInterfacePointer mavlinkForwardingLink();
 
     /// Disconnects all existing links
     void disconnectAll(void);
@@ -235,7 +237,8 @@ private:
     static const int    _activeLinkCheckTimeoutMSecs = 15000;   ///< Amount of time to wait for a heatbeat. Keep in mind ArduPilot stack heartbeat is slow to come.
 #endif
 
-    static const char*  _defaultUPDLinkName;
+    static const char*  _defaultUDPLinkName;
+    static const char*  _mavlinkForwardingLinkName;
     static const int    _autoconnectUpdateTimerMSecs;
     static const int    _autoconnectConnectDelayMSecs;
 

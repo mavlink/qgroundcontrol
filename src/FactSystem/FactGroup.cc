@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -53,29 +53,30 @@ void FactGroup::_setupTimer()
 
 Fact* FactGroup::getFact(const QString& name)
 {
-    Fact* fact = NULL;
-
     if (name.contains(".")) {
         QStringList parts = name.split(".");
         if (parts.count() != 2) {
             qWarning() << "Only single level of hierarchy supported";
-            return NULL;
+            return nullptr;
         }
 
         FactGroup * factGroup = getFactGroup(parts[0]);
         if (!factGroup) {
             qWarning() << "Unknown FactGroup" << parts[0];
-            return NULL;
+            return nullptr;
         }
 
         return factGroup->getFact(parts[1]);
     }
 
-    if (_nameToFactMap.contains(name)) {
-        fact = _nameToFactMap[name];
+    Fact*   fact =          nullptr;
+    QString camelCaseName = _camelCase(name);
+
+    if (_nameToFactMap.contains(camelCaseName)) {
+        fact = _nameToFactMap[camelCaseName];
         QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
     } else {
-        qWarning() << "Unknown Fact" << name;
+        qWarning() << "Unknown Fact" << camelCaseName;
     }
 
     return fact;
@@ -83,13 +84,14 @@ Fact* FactGroup::getFact(const QString& name)
 
 FactGroup* FactGroup::getFactGroup(const QString& name)
 {
-    FactGroup* factGroup = NULL;
+    FactGroup*  factGroup = nullptr;
+    QString     camelCaseName = _camelCase(name);
 
-    if (_nameToFactGroupMap.contains(name)) {
-        factGroup = _nameToFactGroupMap[name];
+    if (_nameToFactGroupMap.contains(camelCaseName)) {
+        factGroup = _nameToFactGroupMap[camelCaseName];
         QQmlEngine::setObjectOwnership(factGroup, QQmlEngine::CppOwnership);
     } else {
-        qWarning() << "Unknown FactGroup" << name;
+        qWarning() << "Unknown FactGroup" << camelCaseName;
     }
 
     return factGroup;
@@ -141,4 +143,10 @@ void FactGroup::setLiveUpdates(bool liveUpdates)
     for(Fact* fact: _nameToFactMap) {
         fact->setSendValueChangedSignals(liveUpdates);
     }
+}
+
+
+QString FactGroup::_camelCase(const QString& text)
+{
+    return text[0].toLower() + text.right(text.length() - 1);
 }

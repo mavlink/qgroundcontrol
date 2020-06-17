@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -152,6 +152,36 @@ Rectangle {
                         onClicked: {
                             QGroundControl.isVersionCheckEnabled = checked
                         }
+                    }
+
+                    FactCheckBox {
+                        id:         mavlinkForwardingChecked
+                        text:       qsTr("Enable MAVLink forwarding")
+                        fact:       QGroundControl.settingsManager.appSettings.forwardMavlink
+                        visible:    QGroundControl.settingsManager.appSettings.forwardMavlink.visible
+                    }
+
+                    Row {
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        QGCLabel {
+                            width:              _labelWidth
+                            anchors.baseline:   mavlinkForwardingHostNameField.baseline
+                            visible:            QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
+                            text:               qsTr("Host name:")
+                        }
+                        FactTextField {
+                            id:                     mavlinkForwardingHostNameField
+                            fact:                   QGroundControl.settingsManager.appSettings.forwardMavlinkHostName
+                            width:                  _valueWidth
+                            visible:                QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
+                            enabled:                QGroundControl.settingsManager.appSettings.forwardMavlink.rawValue
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                    }
+                   QGCLabel {
+                        text:       qsTr("<i> Changing the host name requires restart of application. </i>")
+                        visible:    QGroundControl.settingsManager.appSettings.forwardMavlinkHostName.visible
                     }
                 }
             }
@@ -513,6 +543,7 @@ Rectangle {
                             id:         windCombo
                             width:      _valueWidth
                             enabled:    !_disableDataPersistence
+                            textRole:   "text"
                             model: ListModel {
                                 id: windItems
                                 ListElement { text: "Please Select"; value: -1 }
@@ -550,6 +581,7 @@ Rectangle {
                             id:         ratingCombo
                             width:      _valueWidth
                             enabled:    !_disableDataPersistence
+                            textRole:   "text"
                             model: ListModel {
                                 id: ratingItems
                                 ListElement { text: "Please Select";            value: "notset"}

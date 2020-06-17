@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,15 +19,15 @@
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 
 SensorsComponentController::SensorsComponentController(void)
-    : _statusLog                                (NULL)
-    , _progressBar                              (NULL)
-    , _compassButton                            (NULL)
-    , _gyroButton                               (NULL)
-    , _accelButton                              (NULL)
-    , _airspeedButton                           (NULL)
-    , _levelButton                              (NULL)
-    , _cancelButton                             (NULL)
-    , _setOrientationsButton                    (NULL)
+    : _statusLog                                (nullptr)
+    , _progressBar                              (nullptr)
+    , _compassButton                            (nullptr)
+    , _gyroButton                               (nullptr)
+    , _accelButton                              (nullptr)
+    , _airspeedButton                           (nullptr)
+    , _levelButton                              (nullptr)
+    , _cancelButton                             (nullptr)
+    , _setOrientationsButton                    (nullptr)
     , _showOrientationCalArea                   (false)
     , _gyroCalInProgress                        (false)
     , _magCalInProgress                         (false)
@@ -179,7 +179,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showMessage(tr("Calibration failed. Calibration log will be displayed."));
+            qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
             break;
     }
     

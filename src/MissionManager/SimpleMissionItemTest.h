@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -42,7 +42,6 @@ private:
         rawEditChangedIndex,
         cameraSectionChangedIndex,
         speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedIndex,
         maxSignalIndex,
     };
 
@@ -54,7 +53,6 @@ private:
         rawEditChangedMask =                        1 << rawEditChangedIndex,
         cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
         speedSectionChangedMask =                   1 << speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedMask =  1 << coordinateHasRelativeAltitudeChangedIndex,
     };
 
     static const size_t cSimpleItemSignals = maxSignalIndex;

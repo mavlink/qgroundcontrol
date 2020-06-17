@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,6 +22,8 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property var vehicle    ///< Vehicle associated with this item
+    property var interactive: true    ///< Vehicle associated with this item
 
     signal clicked(int sequenceNumber)
 
@@ -33,7 +35,7 @@ Item {
             if (component.status === Component.Error) {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
-            _visualItem = component.createObject(map, { "map": _root.map })
+            _visualItem = component.createObject(map, { "map": _root.map, vehicle: _root.vehicle, 'opacity': Qt.binding(function() { return _root.opacity }), 'interactive': Qt.binding(function() { return _root.interactive }) })
             _visualItem.clicked.connect(_root.clicked)
         }
     }

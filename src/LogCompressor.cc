@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,9 +10,9 @@
 
 /**
  * @file
- *   @brief Implementation of class LogCompressor. This class reads in a file containing messages and translates it into a tab-delimited CSV file.
+ *   @brief Implementation of class LogCompressor.
+ *          This class reads in a file containing messages and translates it into a tab-delimited CSV file.
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
  */
 
 #include "LogCompressor.h"
@@ -55,7 +55,11 @@ void LogCompressor::run()
 
     QString outFileName;
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", QString::SkipEmptyParts);
+#else
+    QStringList parts = QFileInfo(infile.fileName()).absoluteFilePath().split(".", Qt::SkipEmptyParts);
+#endif
 
     parts.replace(0, parts.first() + "_compressed");
     parts.replace(parts.size()-1, "txt");

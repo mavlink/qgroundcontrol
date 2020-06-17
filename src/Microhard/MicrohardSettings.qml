@@ -37,7 +37,7 @@ Rectangle {
     property real _valueWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property Fact _microhardEnabledFact:        QGroundControl.settingsManager.appSettings.enableMicrohard
-    property bool _microhardEnabled:            _microhardEnabledFact.rawValue
+    property bool _microhardEnabled:            _microhardEnabledFact ? _microhardEnabledFact.rawValue : false
 
     readonly property real _internalWidthRatio:          0.8
 
@@ -80,7 +80,7 @@ Rectangle {
                                 text:       qsTr("Enable Microhard")
                                 fact:       _microhardEnabledFact
                                 enabled:    true
-                                visible:    _microhardEnabledFact.visible
+                                visible:    _microhardEnabledFact ? _microhardEnabledFact.visible : false
                             }
                         }
                     }

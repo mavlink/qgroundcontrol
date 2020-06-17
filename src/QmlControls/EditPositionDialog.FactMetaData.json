@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "Latitude",
@@ -40,5 +44,11 @@
     "type":             "uint8",
     "enumStrings":      "North,South",
     "enumValues":       "0,1"
+},
+{
+    "name":             "MGRS",
+    "shortDescription": "MGRS coordinate",
+    "type":             "string"
 }
 ]
+}

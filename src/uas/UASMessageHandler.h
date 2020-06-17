@@ -1,18 +1,11 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
-
-/*!
- * @file
- *   @brief Message Handler
- *   @author Gus Grubba <mavlink@grubba.com>
- */
 
 #pragma once
 
@@ -20,7 +13,6 @@
 #include <QVector>
 #include <QMutex>
 
-#include "Vehicle.h"
 #include "QGCToolbox.h"
 
 class Vehicle;

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -18,8 +18,8 @@
 #include "QGCApplication.h"
 
 LinkManagerTest::LinkManagerTest(void) :
-    _linkMgr(NULL),
-    _multiSpy(NULL)
+    _linkMgr(nullptr),
+    _multiSpy(nullptr)
 {
 }
 
@@ -27,8 +27,8 @@ void LinkManagerTest::init(void)
 {
     UnitTest::init();
     
-    Q_ASSERT(_linkMgr == NULL);
-    Q_ASSERT(_multiSpy == NULL);
+    Q_ASSERT(_linkMgr == nullptr);
+    Q_ASSERT(_multiSpy == nullptr);
     
     _linkMgr = qgcApp()->toolbox()->linkManager();
     Q_CHECK_PTR(_linkMgr);
@@ -47,8 +47,8 @@ void LinkManagerTest::cleanup(void)
     
     delete _multiSpy;
     
-    _linkMgr = NULL;
-    _multiSpy = NULL;
+    _linkMgr = nullptr;
+    _multiSpy = nullptr;
     
     UnitTest::cleanup();
 }
@@ -91,7 +91,7 @@ void LinkManagerTest::_addSignals_test(void)
     QList<QVariant> signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QObject* object = qvariant_cast<QObject *>(signalArgs[0]);
-    QVERIFY(object != NULL);
+    QVERIFY(object != nullptr);
     MockLink* signalLink = qobject_cast<MockLink*>(object);
     QCOMPARE(signalLink, _mockLink);
 }

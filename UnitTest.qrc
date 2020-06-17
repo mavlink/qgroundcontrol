@@ -1,18 +1,18 @@
 <RCC>
     <qresource prefix="/unittest">
-		<file alias="SectionTest.plan">src/MissionManager/UnitTest/SectionTest.plan</file>
-        <file alias="MavCmdInfoCommon.json">src/MissionManager/UnitTest/MavCmdInfoCommon.json</file>
-        <file alias="MavCmdInfoFixedWing.json">src/MissionManager/UnitTest/MavCmdInfoFixedWing.json</file>
-        <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/UnitTest/MavCmdInfoMultiRotor.json</file>
-        <file alias="MavCmdInfoRover.json">src/MissionManager/UnitTest/MavCmdInfoRover.json</file>
-        <file alias="MavCmdInfoSub.json">src/MissionManager/UnitTest/MavCmdInfoSub.json</file>
-        <file alias="MavCmdInfoVTOL.json">src/MissionManager/UnitTest/MavCmdInfoVTOL.json</file>
+	<file alias="SectionTest.plan">src/MissionManager/UnitTest/SectionTest.plan</file>
+        <file alias="UT-MavCmdInfoCommon.json">src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json</file>
+        <file alias="UT-MavCmdInfoFixedWing.json">src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json</file>
+        <file alias="UT-MavCmdInfoMultiRotor.json">src/MissionManager/UnitTest/UT-MavCmdInfoMultiRotor.json</file>
+        <file alias="UT-MavCmdInfoRover.json">src/MissionManager/UnitTest/UT-MavCmdInfoRover.json</file>
+        <file alias="UT-MavCmdInfoSub.json">src/MissionManager/UnitTest/UT-MavCmdInfoSub.json</file>
+        <file alias="UT-MavCmdInfoVTOL.json">src/MissionManager/UnitTest/UT-MavCmdInfoVTOL.json</file>
         <file alias="MissionPlanner.waypoints">src/MissionManager/UnitTest/MissionPlanner.waypoints</file>
         <file alias="OldFileFormat.mission">src/MissionManager/UnitTest/OldFileFormat.mission</file>
-		<file alias="PolygonAreaTest.kml">src/MissionManager/UnitTest/PolygonAreaTest.kml</file>
-		<file alias="PolygonGood.kml">src/MissionManager/UnitTest/PolygonGood.kml</file>
-		<file alias="PolygonMissingNode.kml">src/MissionManager/UnitTest/PolygonMissingNode.kml</file>
-		<file alias="PolygonBadXml.kml">src/MissionManager/UnitTest/PolygonBadXml.kml</file>
-		<file alias="PolygonBadCoordinatesNode.kml">src/MissionManager/UnitTest/PolygonBadCoordinatesNode.kml</file>
+	<file alias="PolygonAreaTest.kml">src/MissionManager/UnitTest/PolygonAreaTest.kml</file>
+	<file alias="PolygonGood.kml">src/MissionManager/UnitTest/PolygonGood.kml</file>
+	<file alias="PolygonMissingNode.kml">src/MissionManager/UnitTest/PolygonMissingNode.kml</file>
+	<file alias="PolygonBadXml.kml">src/MissionManager/UnitTest/PolygonBadXml.kml</file>
+	<file alias="PolygonBadCoordinatesNode.kml">src/MissionManager/UnitTest/PolygonBadCoordinatesNode.kml</file>
     </qresource>
 </RCC>

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -41,7 +41,6 @@ public:
     Q_INVOKABLE QStringList getGroupsForCategory(const QString& category);
     Q_INVOKABLE QStringList searchParameters(const QString& searchText, bool searchInName=true, bool searchInDescriptions=true);
 
-    Q_INVOKABLE void clearRCToParam(void);
     Q_INVOKABLE void saveToFile(const QString& filename);
     Q_INVOKABLE void loadFromFile(const QString& filename);
     Q_INVOKABLE void refresh(void);
@@ -71,7 +70,6 @@ private:
     QString             _currentGroup;
     QmlObjectListModel* _parameters;
     ParameterManager*   _parameterMgr;
-    QString             _componentCategoryPrefix;
     bool                _showModifiedOnly;
 };
 

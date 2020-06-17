@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "roll",
@@ -105,6 +109,18 @@
     "units":            "m"
 },
 {
+    "name":             "missionItemIndex",
+    "shortDescription": "Mission Item Index",
+    "type":             "uint16"
+},
+{
+    "name":             "headingToNextWP",
+    "shortDescription": "Next WP Heading",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "deg"
+},
+{
     "name":             "flightTime",
     "shortDescription": "Flight Time",
     "type":             "elapsedSeconds",
@@ -122,3 +138,4 @@
     "units":            "%"
 }
 ]
+}

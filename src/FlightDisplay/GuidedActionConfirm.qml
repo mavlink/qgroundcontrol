@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,7 +24,6 @@ Rectangle {
     color:          qgcPal.window
     border.color:   _emergencyAction ? "red" : qgcPal.windowShade
     border.width:   _emergencyAction ? 4 : 1
-    z:              guidedController.z
     visible:        false
 
     property var    guidedController

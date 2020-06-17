@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "Latitude",
@@ -12,10 +16,12 @@
     "decimalPlaces":    7
 },
 {
-    "name":             "Altitude",
+    "name":             "RelativeAltitude",
     "shortDescription": "Altitude of rally point position (home relative)",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "m",
+    "defaultValue":     0.0
 }
 ]
+}

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -316,10 +316,11 @@ SetupPage {
                                             }
 
                                             QGCComboBox {
-                                                id:           outputChan
-                                                width:        servoPWMMinField.width
-                                                model:        gimbalOutModel
-                                                currentIndex: gimbalOutIndex
+                                                id:             outputChan
+                                                width:          servoPWMMinField.width
+                                                model:          gimbalOutModel
+                                                textRole:       "text"
+                                                currentIndex:   gimbalOutIndex
 
                                                 onActivated: setRCFunction(gimbalOutModel.get(index).value, rcFunction)
                                             }

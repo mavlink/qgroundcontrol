@@ -15,41 +15,36 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
-//-----------------------------------------------------------------------------
 CustomAutoPilotPlugin::CustomAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
 {
+    // Whenever we go on/out of advanced mode the available list of settings pages will change
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &CustomAutoPilotPlugin::_advancedChanged);
 }
 
-//-----------------------------------------------------------------------------
-void
-CustomAutoPilotPlugin::_advancedChanged(bool)
+// This signals that when Advanced Mode changes the list of Vehicle Settings page also changed
+void CustomAutoPilotPlugin::_advancedChanged(bool)
 {
     _components.clear();
     emit vehicleComponentsChanged();
 }
 
-//-----------------------------------------------------------------------------
-const QVariantList&
-CustomAutoPilotPlugin::vehicleComponents()
+// This allows us to hide most Vehicle Setup pages unless we are in Advanced Mmode
+const QVariantList& CustomAutoPilotPlugin::vehicleComponents()
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {
             bool showAdvanced = qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
-            qDebug() << "Loading components:" << showAdvanced;
             if (_vehicle->parameterManager()->parametersReady()) {
-                if(showAdvanced) {
-                _airframeComponent = new AirframeComponent(_vehicle, this);
-                _airframeComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_airframeComponent)));
-                }
-                if (!_vehicle->hilMode()) {
+                if (showAdvanced) {
+                    _airframeComponent = new AirframeComponent(_vehicle, this);
+                    _airframeComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_airframeComponent)));
+
                     _sensorsComponent = new SensorsComponent(_vehicle, this);
                     _sensorsComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_sensorsComponent)));
-                }
-                if(showAdvanced) {
+
                     _radioComponent = new PX4RadioComponent(_vehicle, this);
                     _radioComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_radioComponent)));
@@ -71,7 +66,7 @@ CustomAutoPilotPlugin::vehicleComponents()
                 _safetyComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_safetyComponent)));
 
-                if(showAdvanced) {
+                if (showAdvanced) {
                     _tuningComponent = new PX4TuningComponent(_vehicle, this);
                     _tuningComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_tuningComponent)));
@@ -83,21 +78,8 @@ CustomAutoPilotPlugin::vehicleComponents()
                         _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_cameraComponent)));
                     }
                 }
-
-                //-- Is there an ESP8266 Connected?
-                if(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_UDP_BRIDGE, "SW_VER")) {
-                    _esp8266Component = new ESP8266Component(_vehicle, this);
-                    _esp8266Component->setupTriggerSignals();
-                    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_esp8266Component)));
-                }
             } else {
                 qWarning() << "Call to vehicleCompenents prior to parametersReady";
-            }
-
-            if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SLNK_RADIO_CHAN")) {
-                _syslinkComponent = new SyslinkComponent(_vehicle, this);
-                _syslinkComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_syslinkComponent)));
             }
         } else {
             qWarning() << "Internal error";

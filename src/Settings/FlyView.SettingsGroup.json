@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "guidedMinimumAltitude",
@@ -26,6 +30,24 @@
     "defaultValue":     false
 },
 {
+    "name":             "showAdditionalIndicatorsCompass",
+    "shortDescription": "Show additional heading indicators on Compass",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "lockNoseUpCompass",
+    "shortDescription": "Lock Compass Nose-Up",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "keepMapCenteredOnVehicle",
+    "shortDescription": "Keep map centered on vehicle",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "maxGoToLocationDistance",
     "shortDescription": "Maximum distance allowed for Go To Location.",
     "type":             "double",
@@ -34,3 +56,4 @@
     "min":              1
 }
 ]
+}

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,6 +10,7 @@
 #include "CameraSection.h"
 #include "SimpleMissionItem.h"
 #include "FirmwarePlugin.h"
+#include "PlanMasterController.h"
 
 QGC_LOGGING_CATEGORY(CameraSectionLog, "CameraSectionLog")
 
@@ -22,19 +23,19 @@ const char* CameraSection::_cameraModeName =                    "CameraMode";
 
 QMap<QString, FactMetaData*> CameraSection::_metaDataMap;
 
-CameraSection::CameraSection(Vehicle* vehicle, QObject* parent)
-    : Section(vehicle, parent)
-    , _available(false)
-    , _settingsSpecified(false)
-    , _specifyGimbal(false)
-    , _specifyCameraMode(false)
+CameraSection::CameraSection(PlanMasterController* masterController, QObject* parent)
+    : Section                           (masterController, parent)
+    , _available                        (false)
+    , _settingsSpecified                (false)
+    , _specifyGimbal                    (false)
+    , _specifyCameraMode                (false)
     , _gimbalYawFact                    (0, _gimbalYawName,                     FactMetaData::valueTypeDouble)
     , _gimbalPitchFact                  (0, _gimbalPitchName,                   FactMetaData::valueTypeDouble)
     , _cameraActionFact                 (0, _cameraActionName,                  FactMetaData::valueTypeDouble)
     , _cameraPhotoIntervalDistanceFact  (0, _cameraPhotoIntervalDistanceName,   FactMetaData::valueTypeDouble)
     , _cameraPhotoIntervalTimeFact      (0, _cameraPhotoIntervalTimeName,       FactMetaData::valueTypeUint32)
     , _cameraModeFact                   (0, _cameraModeName,                    FactMetaData::valueTypeUint32)
-    , _dirty(false)
+    , _dirty                            (false)
 {
     if (_metaDataMap.isEmpty()) {
         _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraSection.FactMetaData.json"), Q_NULLPTR /* metaDataParent */);
@@ -67,8 +68,6 @@ CameraSection::CameraSection(Vehicle* vehicle, QObject* parent)
     connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_setDirty);
     connect(this,                               &CameraSection::specifyCameraModeChanged,   this, &CameraSection::_setDirty);
 
-    connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_updateSpecifiedGimbalYaw);
-    connect(this,                               &CameraSection::specifyGimbalChanged,       this, &CameraSection::_updateSpecifiedGimbalPitch);
     connect(&_gimbalYawFact,                    &Fact::valueChanged,                        this, &CameraSection::_updateSpecifiedGimbalYaw);
     connect(&_gimbalPitchFact,                  &Fact::valueChanged,                        this, &CameraSection::_updateSpecifiedGimbalPitch);
 }
@@ -78,6 +77,8 @@ void CameraSection::setSpecifyGimbal(bool specifyGimbal)
     if (specifyGimbal != _specifyGimbal) {
         _specifyGimbal = specifyGimbal;
         emit specifyGimbalChanged(specifyGimbal);
+        emit specifiedGimbalYawChanged(specifiedGimbalYaw());
+        emit specifiedGimbalPitchChanged(specifiedGimbalPitch());
     }
 }
 
@@ -147,7 +148,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
     }
 
     if (_cameraActionFact.rawValue().toInt() != CameraActionNone) {
-        MissionItem* item = NULL;
+        MissionItem* item = nullptr;
 
         switch (_cameraActionFact.rawValue().toInt()) {
         case TakePhotosIntervalTime:
@@ -200,12 +201,13 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_IMAGE_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                                   // Reserved (Set to 0)
-                                   0,                                   // Interval (none)
-                                   1,                                   // Take 1 photo
-                                   qQNaN(), qQNaN(), qQNaN(), qQNaN(),  // reserved
-                                   true,                                // autoContinue
-                                   false,                               // isCurrentItem
+                                   0,                           // Reserved (Set to 0)
+                                   0,                           // Interval (none)
+                                   1,                           // Take 1 photo
+                                   0,                           // No sequence number specified
+                                   qQNaN(), qQNaN(), qQNaN(),   // reserved
+                                   true,                        // autoContinue
+                                   false,                       // isCurrentItem
                                    missionItemParent);
             break;
         }
@@ -578,7 +580,7 @@ void CameraSection::_cameraActionChanged(void)
 
 bool CameraSection::cameraModeSupported(void) const
 {
-    return _specifyCameraMode || _vehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
+    return _specifyCameraMode || _masterController->controllerVehicle()->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
 }
 
 void CameraSection::_dirtyIfSpecified(void)

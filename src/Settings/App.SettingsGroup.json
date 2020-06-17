@@ -1,3 +1,7 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "offlineEditingFirmwareType",
@@ -12,13 +16,13 @@
     "shortDescription": "Offline editing vehicle type",
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
-    "enumValues":       "1,2,19,10,12",
+    "enumValues":       "1,2,20,10,12",
     "defaultValue":     2
 },
 {
     "name":             "offlineEditingCruiseSpeed",
     "shortDescription": "Offline editing cruise speed",
-    "longDescription":  "This value defines the default cruising speed for forward flight vehicles for use in calculating mission statistics. It does not modify the flight speed for a specific flight plan.",
+    "longDescription":  "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
     "defaultValue":     15.0,
     "min":              1.0,
@@ -28,7 +32,7 @@
 {
     "name":             "offlineEditingHoverSpeed",
     "shortDescription": "Offline editing hover speed",
-    "longDescription":  "This value defines the default cruising speed for multi-rotor vehicles for use in calculating mission statistics. It does not modify the flight speed for a specific flight plan.",
+    "longDescription":  "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
     "defaultValue":     5.0,
     "min":              1.0,
@@ -111,9 +115,9 @@
     "defaultValue":     false
 },
 {
-    "name":             "virtualJoystickCentralized",
-    "shortDescription": "Set virtual joystick to be centralize throttle (spring-loaded).",
-    "longDescription":  "If this option is enabled the virtual joystick throttle stick will be centralized.",
+    "name":             "virtualJoystickAutoCenterThrottle",
+    "shortDescription": "Auto-Center Throttle",
+    "longDescription":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -139,6 +143,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "enforceChecklist",
+    "shortDescription": "Preflight checklist must pass before arming",
+    "longDescription":  "If this option is enabled the preflight checklist must pass before arming.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":                 "appFontPointSize",
     "shortDescription":     "Application font size",
     "longDescription":      "The point size for the default font used.",
@@ -146,8 +157,7 @@
     "units":                "pt",
     "min":                  6,
     "max":                  48,
-    "defaultValue":         0,
-    "qgcRebootRequired":    true
+    "defaultValue":         0
 },
 {
     "name":             "indoorPalette",
@@ -212,7 +222,7 @@
     "type":             "uint32",
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
     "enumValues":       "0,1,2",
-    "defaultValue":     0
+    "defaultValue":     2
 },
 {
     "name":                 "apmStartMavlinkStreams",
@@ -256,5 +266,40 @@
     "longDescription":  "If this option is set, nothing will be saved to disk.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "usePairing",
+    "shortDescription": "Use Pairing",
+    "longDescription":  "Use Link Pairing.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "saveCsvTelemetry",
+    "shortDescription": "Save CSV Telementry Logs",
+    "longDescription":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "firstRunPromptIdsShown",
+    "shortDescription": "Comma separated list of first run prompt ids which have already been shown.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "forwardMavlink",
+    "shortDescription": "Enable mavlink forwarding",
+    "longDescription":  "Enable mavlink forwarding",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "forwardMavlinkHostName",
+    "shortDescription": "Host name",
+    "longDescription":  "Host name to forward mavlink to. i.e: localhost:14445",
+    "type":             "string",
+    "defaultValue":     "localhost:14445"
 }
 ]
+}

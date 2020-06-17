@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -35,16 +35,23 @@ SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObjec
     _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData);
 
-    QVariant rawDefaultValue = metaData->rawDefaultValue();
-    if (_visible) {
-        QVariant typedValue;
-        QString errorString;
-        metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
-        _rawValue = typedValue;
-    } else {
-        // Setting is not visible, force to default value always
-        settings.setValue(_name, rawDefaultValue);
-        _rawValue = rawDefaultValue;
+    if (metaData->defaultValueAvailable()) {
+        QVariant rawDefaultValue = metaData->rawDefaultValue();
+        if (qgcApp()->runningUnitTests()) {
+            // Don't use saved settings
+            _rawValue = rawDefaultValue;
+        } else {
+            if (_visible) {
+                QVariant typedValue;
+                QString errorString;
+                metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
+                _rawValue = typedValue;
+            } else {
+                // Setting is not visible, force to default value always
+                settings.setValue(_name, rawDefaultValue);
+                _rawValue = rawDefaultValue;
+            }
+        }
     }
 
     connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);

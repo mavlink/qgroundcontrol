@@ -27,14 +27,15 @@ MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
     _loggedIn = false;
-    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::getStatus()
 {
-    if (_loggedIn) {
+    if (_loggedIn && _tcpSocket) {
         _tcpSocket->write("AT+MWSTATUS\n");
     }
 }
@@ -43,15 +44,24 @@ MicrohardSettings::getStatus()
 void
 MicrohardSettings::setEncryptionKey(QString key)
 {
+    if (!_tcpSocket) {
+        return;
+    }
     QString cmd = "AT+MWVENCRYPT=1," + key + "\n";
     _tcpSocket->write(cmd.toStdString().c_str());
-    qCDebug(MicrohardLog) << "Set encryption key.";
+    cmd = "AT&W\n";
+    _tcpSocket->write(cmd.toStdString().c_str());
+
+    qCDebug(MicrohardLog) << "Set encryption key: " << key;
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::_readBytes()
 {
+    if (!_tcpSocket) {
+        return;
+    }
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
     //qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
@@ -79,7 +89,7 @@ MicrohardSettings::_readBytes()
         emit connected(-1);
     } else if (bytesIn.contains("Entering")) {
         if (!loggedIn() && _setEncryptionKey) {
-            setEncryptionKey(qgcApp()->toolbox()->microhardManager()->encryptionKey());
+            qgcApp()->toolbox()->microhardManager()->setEncryptionKey();
         }
         _loggedIn = true;
         emit connected(1);

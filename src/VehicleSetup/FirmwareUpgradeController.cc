@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -319,6 +319,26 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_kakutef7_default.px4"},
     };
     
+    //////////////////////////////////// Durandal firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgDurandalV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/holybro_durandal-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_durandal-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_durandal-v1_default.px4"},
+    };
+
+    //////////////////////////////////// ModalAI FC v1 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgModalFCV1FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/modalai_fc-v1_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/modalai_fc-v1_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/modalai_fc-v1_default.px4"},
+    };
+    //////////////////////////////////// UVify FC firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgUVifyCoreFirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/uvify_core_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/uvify_core_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/uvify_core_default.px4"},
+    };
+
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
@@ -406,10 +426,28 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgKakuteF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgDurandalV1FirmwareArray)/sizeof(rgDurandalV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgDurandalV1FirmwareArray[i];
+        _rgDurandalV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgFMUK66V3FirmwareArray)/sizeof(rgFMUK66V3FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgFMUK66V3FirmwareArray[i];
         _rgFMUK66V3Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgModalFCV1FirmwareArray)/sizeof(rgModalFCV1FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgModalFCV1FirmwareArray[i];
+        _rgModalFCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
+    size = sizeof(rgUVifyCoreFirmwareArray)/sizeof(rgUVifyCoreFirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgUVifyCoreFirmwareArray[i];
+        _rgUVifyCoreFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
@@ -486,8 +524,17 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case Bootloader::boardIDKakuteF7:
         _rgFirmwareDynamic = _rgKakuteF7Firmware;
         break;
+    case Bootloader::boardIDDurandalV1:
+        _rgFirmwareDynamic = _rgDurandalV1Firmware;
+        break;
     case Bootloader::boardIDFMUK66V3:
         _rgFirmwareDynamic = _rgFMUK66V3Firmware;
+        break;
+    case Bootloader::boardIDModalFCV1:
+        _rgFirmwareDynamic = _rgModalFCV1Firmware;
+        break;
+    case Bootloader::boardIDUVifyCore:
+        _rgFirmwareDynamic = _rgUVifyCoreFirmware;
         break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;
@@ -692,47 +739,53 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
 #if !defined(NO_ARDUPILOT_DIALECT)
-    qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames";
 
-    bool                    chibios =       _apmChibiOSSetting->rawValue().toInt() == 0;
-    FirmwareVehicleType_t   vehicleType =   static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
+    bool                    chibios =           _apmChibiOSSetting->rawValue().toInt() == 0;
+    FirmwareVehicleType_t   vehicleType =       static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
+    QString                 boardDescription =  _foundBoardInfo.description();
+    quint16                 boardVID =          _foundBoardInfo.vendorIdentifier();
+    quint16                 boardPID =          _foundBoardInfo.productIdentifier();
+    uint32_t                rawBoardId =        _bootloaderBoardID == Bootloader::boardIDPX4FMUV3 ? Bootloader::boardIDPX4FMUV2 : _bootloaderBoardID;
+
+    qCDebug(FirmwareUpgradeLog) << QStringLiteral("_buildAPMFirmwareNames description(%1) vid(%2/0x%3) pid(%4/0x%5)").arg(boardDescription).arg(boardVID).arg(boardVID, 1, 16).arg(boardPID).arg(boardPID, 1, 16);
 
     _apmFirmwareNames.clear();
+    _apmFirmwareNamesBestIndex = -1;
     _apmFirmwareUrls.clear();
 
     QString apmDescriptionSuffix("-BL");
-    bool    bootloaderMatch = _foundBoardInfo.description().endsWith(apmDescriptionSuffix);
+    QString boardDescriptionPrefix;
+    bool    bootloaderMatch = boardDescription.endsWith(apmDescriptionSuffix);
 
+    int currentIndex = 0;
     for (const ManifestFirmwareInfo_t& firmwareInfo: _rgManifestFirmwareInfo) {
         bool match = false;
-        if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType) {
-            if (bootloaderMatch) {
-                if (firmwareInfo.rgBootloaderPortString.contains(_foundBoardInfo.description())) {
-                    qCDebug(FirmwareUpgradeLog) << "Bootloader match:" << firmwareInfo.friendlyName << _foundBoardInfo.description() << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
-                    match = true;
-                }
+        if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType && firmwareInfo.boardId == rawBoardId) {
+            if (firmwareInfo.fmuv2 && _bootloaderBoardID == Bootloader::boardIDPX4FMUV3) {
+                qCDebug(FirmwareUpgradeLog) << "Skipping fmuv2 manifest entry for fmuv3 board:" << firmwareInfo.friendlyName << boardDescription << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
             } else {
-                if (firmwareInfo.rgVID.contains(_foundBoardInfo.vendorIdentifier()) && firmwareInfo.rgPID.contains(_foundBoardInfo.productIdentifier())) {
-                    qCDebug(FirmwareUpgradeLog) << "Fallback match:" << firmwareInfo.friendlyName << _foundBoardInfo.vendorIdentifier() << _foundBoardInfo.productIdentifier() << _bootloaderBoardID << firmwareInfo.url << firmwareInfo.vehicleType;
-                    match = true;
+                qCDebug(FirmwareUpgradeLog) << "Board id match:" << firmwareInfo.friendlyName << boardDescription << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
+                match = true;
+                if (bootloaderMatch && _apmFirmwareNamesBestIndex == -1 && firmwareInfo.rgBootloaderPortString.contains(boardDescription)) {
+                    _apmFirmwareNamesBestIndex = currentIndex;
+                    qCDebug(FirmwareUpgradeLog) << "Bootloader best match:" << firmwareInfo.friendlyName << boardDescription << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
                 }
             }
-        }
-
-        // Do a final filter on fmuv2/fmuv3
-        if (match && _bootloaderBoardID == Bootloader::boardIDPX4FMUV3) {
-            match = !firmwareInfo.fmuv2;
         }
 
         if (match) {
             _apmFirmwareNames.append(firmwareInfo.friendlyName);
             _apmFirmwareUrls.append(firmwareInfo.url);
+            currentIndex++;
         }
     }
 
-    if (_apmFirmwareNames.count() > 1) {
-        _apmFirmwareNames.prepend(tr("Choose board type"));
-        _apmFirmwareUrls.prepend(QString());
+    if (_apmFirmwareNamesBestIndex == -1) {
+        _apmFirmwareNamesBestIndex++;
+        if (_apmFirmwareNames.count() > 1) {
+            _apmFirmwareNames.prepend(tr("Choose board type"));
+            _apmFirmwareUrls.prepend(QString());
+        }
     }
 
     emit apmFirmwareNamesChanged();

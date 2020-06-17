@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -67,14 +67,14 @@ Rectangle {
         QGCLabel {
             id:                         altField
             anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       newAltitudeAppUnits + " " + QGroundControl.appSettingsDistanceUnitsString
+            text:                       newAltitudeAppUnits + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
 
             property real   altGainRange:           Math.max(_sliderMaxAlt - _vehicleAltitude, 0)
             property real   altLossRange:           Math.max(_vehicleAltitude - _sliderMinAlt, 0)
             property real   altExp:                 Math.pow(altSlider.value, 3)
             property real   altLossGain:            altExp * (altSlider.value > 0 ? altGainRange : altLossRange)
             property real   newAltitudeMeters:      _vehicleAltitude + altLossGain
-            property string newAltitudeAppUnits:    QGroundControl.metersToAppSettingsDistanceUnits(newAltitudeMeters).toFixed(1)
+            property string newAltitudeAppUnits:    QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(newAltitudeMeters).toFixed(1)
 
             function setToMinimumTakeoff() {
                 altSlider.value = Math.pow(activeVehicle.minimumTakeoffAltitude() / altGainRange, 1.0/3.0)

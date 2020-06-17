@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,7 +26,7 @@ public:
                    bool             landscape,
                    bool             fixedOrientation,
                    double           minTriggerInterval,
-                   QObject*         parent = NULL);
+                   QObject*         parent = nullptr);
 
     Q_PROPERTY(QString  name                READ name               CONSTANT)   ///< Camera name
     Q_PROPERTY(double   sensorWidth         READ sensorWidth        CONSTANT)   ///< Sensor size in millimeters

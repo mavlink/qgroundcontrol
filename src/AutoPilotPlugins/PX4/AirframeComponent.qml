@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -111,7 +111,7 @@ SetupPage {
                     QGCLabel {
                         anchors.fill:   parent
                         wrapMode:       Text.WordWrap
-                        text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration.<br><br>\
+                        text:           qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
 All vehicle parameters other than Radio Calibration will be reset.<br><br>\
 Your vehicle will also be restarted in order to complete the process.")
                     }
@@ -130,7 +130,7 @@ Your vehicle will also be restarted in order to complete the process.")
                     text:           (controller.currentVehicleName != "" ?
                                          qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
                                          qsTr("Airframe is not set.")) +
-                                    qsTr("To change this configuration, select the desired airframe below then click “Apply and Restart”.")
+                                    qsTr("To change this configuration, select the desired airframe below then click 'Apply and Restart'.")
                     font.family:    ScreenTools.demiboldFontFamily
                     wrapMode:       Text.WordWrap
                 }
@@ -229,6 +229,7 @@ Your vehicle will also be restarted in order to complete the process.")
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 model:              modelData.airframes
+                                textRole:           "text"
 
                                 Component.onCompleted: {
                                     if (airframeCheckBox.checked) {

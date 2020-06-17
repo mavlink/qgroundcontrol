@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,6 +17,7 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
+#include "FollowMe.h"
 
 #include <QAbstractSocket>
 
@@ -92,7 +93,7 @@ public:
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeChange) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
-    void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) override;
+    void                adjustOutgoingMavlinkMessageThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) override;
     virtual void        initializeStreamRates           (Vehicle* vehicle);
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
@@ -104,12 +105,13 @@ public:
     QObject*            loadParameterMetaData           (const QString& metaDataFile) override;
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
-    bool                supportsTerrainFrame            (void) const override { return true; }
 
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
-    void setSupportedModes(QList<APMCustomMode> supportedModes);
+
+    void setSupportedModes  (QList<APMCustomMode> supportedModes);
+    void _sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
 
     bool                _coaxialMotors;
 
@@ -120,12 +122,12 @@ private:
     void _adjustSeverity(mavlink_message_t* message) const;
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
     static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
-    void _setInfoSeverity(mavlink_message_t* message, bool longVersion) const;
-    QString _getMessageText(mavlink_message_t* message, bool longVersion) const;
+    void _setInfoSeverity(mavlink_message_t* message) const;
+    QString _getMessageText(mavlink_message_t* message) const;
     void _handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message);
-    bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message, bool longVersion);
+    bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
-    void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
+    void _handleOutgoingParamSetThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
     void _soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware);
     bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
     void _handleRCChannels(Vehicle* vehicle, mavlink_message_t* message);
@@ -139,6 +141,8 @@ private:
     QList<APMCustomMode>    _supportedModes;
     QMap<int /* vehicle id */, QMap<int /* componentId */, bool /* true: component is part of ArduPilot stack */>> _ardupilotComponentMap;
 
+    QMutex _adjustOutgoingMavlinkMutex;
+
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;
 };
@@ -148,7 +152,7 @@ class APMFirmwarePluginInstanceData : public QObject
     Q_OBJECT
 
 public:
-    APMFirmwarePluginInstanceData(QObject* parent = NULL);
+    APMFirmwarePluginInstanceData(QObject* parent = nullptr);
 
     bool                    textSeverityAdjustmentNeeded;
 };

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,11 +24,11 @@ QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsCompone
 const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
 
 APMSensorsComponentController::APMSensorsComponentController(void)
-    : _sensorsComponent(NULL)
-    , _statusLog(NULL)
-    , _progressBar(NULL)
-    , _nextButton(NULL)
-    , _cancelButton(NULL)
+    : _sensorsComponent(nullptr)
+    , _statusLog(nullptr)
+    , _progressBar(nullptr)
+    , _nextButton(nullptr)
+    , _cancelButton(nullptr)
     , _showOrientationCalArea(false)
     , _calTypeInProgress(CalTypeNone)
     , _orientationCalDownSideDone(false)
@@ -196,7 +196,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     default:
         // Assume failed
         _hideAllCalAreas();
-        qgcApp()->showMessage(tr("Calibration failed. Calibration log will be displayed."));
+        qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
         break;
     }
     
@@ -704,7 +704,7 @@ void APMSensorsComponentController::nextClicked(void)
                                       0,    // target_system
                                       0);   // target_component
 
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
 
     if (_calTypeInProgress == CalTypeCompassMot) {
         _stopCalibration(StopCalibrationSuccess);

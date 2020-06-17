@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,7 +17,7 @@ PreFlightCheckButton {
     name:               qsTr("Sensors")
     telemetryFailure:   _unhealthySensors & _allCheckedSensors
 
-    property int    _unhealthySensors:  activeVehicle ? activeVehicle.sensorsUnhealthyBits : 0
+    property int    _unhealthySensors:  activeVehicle ? activeVehicle.sensorsUnhealthyBits : 1
     property int    _allCheckedSensors: Vehicle.SysStatusSensor3dMag |
                                         Vehicle.SysStatusSensor3dAccel |
                                         Vehicle.SysStatusSensor3dGyro |

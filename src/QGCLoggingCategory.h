@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,6 +26,8 @@ Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(GeotaggingLog)
 Q_DECLARE_LOGGING_CATEGORY(RTKGPSLog)
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
+Q_DECLARE_LOGGING_CATEGORY(LocalizationLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a

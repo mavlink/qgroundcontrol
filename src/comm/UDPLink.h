@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -112,6 +112,14 @@ public:
     void setLocalPort   (quint16 port);
 
     /*!
+     * @brief Set the UDP port to be transmit only. Receive buffer is set to zero.
+     *
+     */
+    void setTransmitOnly (bool state) { _transmitOnly = state; }
+
+    bool isTransmitOnly () { return _transmitOnly; }
+
+    /*!
      * @brief QML Interface
      */
     QStringList hostList    () { return _hostList; }
@@ -142,6 +150,7 @@ private:
     QList<UDPCLient*>   _targetHosts;
     QStringList         _hostList;      ///< Exposed to QML
     quint16             _localPort;
+    bool                _transmitOnly;
 };
 
 class UDPLink : public LinkInterface

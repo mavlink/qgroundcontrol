@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -70,23 +70,35 @@ typedef struct {
 } FrameToImageInfo_t;
 
 static const FrameToImageInfo_t s_rgFrameToImageCopter[] = {
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_PLUS,    "QuadRotorPlus" },
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_X,       "QuadRotorX" },
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_V,       "QuadRotorWide" },
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_H,       "QuadRotorH" },
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_V_TAIL,  "QuadRotorVTail" },
-    { FRAME_CLASS_QUAD,     FRAME_TYPE_A_TAIL,  "QuadRotorATail" },
-    { FRAME_CLASS_HEX,      FRAME_TYPE_PLUS,    "HexaRotorPlus" },
-    { FRAME_CLASS_HEX,      FRAME_TYPE_X,       "HexaRotorX" },
-    { FRAME_CLASS_OCTA,     FRAME_TYPE_PLUS,    "OctoRotorPlus" },
-    { FRAME_CLASS_OCTA,     FRAME_TYPE_X,       "OctoRotorX" },
-    { FRAME_CLASS_OCTAQUAD, FRAME_TYPE_PLUS,    "OctoRotorPlusCoaxial" },
-    { FRAME_CLASS_OCTAQUAD, FRAME_TYPE_X,       "OctoRotorXCoaxial" },
-    { FRAME_CLASS_Y6,       FRAME_TYPE_Y6B,     "Y6B" },
-    { FRAME_CLASS_Y6,       FRAME_TYPE_Y6F,     "AirframeUnknown" },
-    { FRAME_CLASS_Y6,       -1,                 "Y6A" },
-    { FRAME_CLASS_HELI,     -1,                 "Helicopter" },
-    { FRAME_CLASS_TRI,      -1,                 "YPlus" },
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_X,       "QuadRotorX" },             // Default
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_PLUS,    "QuadRotorPlus" },
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_V,       "QuadRotorWide" },
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_H,       "QuadRotorH" },
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_V_TAIL,  "QuadRotorVTail" },
+    { FRAME_CLASS_QUAD,         FRAME_TYPE_A_TAIL,  "QuadRotorATail" },
+
+    { FRAME_CLASS_HEX,          FRAME_TYPE_X,       "HexaRotorX" },             // Default
+    { FRAME_CLASS_HEX,          FRAME_TYPE_PLUS,    "HexaRotorPlus" },
+
+    { FRAME_CLASS_OCTA,         FRAME_TYPE_X,       "OctoRotorX" },             // Default
+    { FRAME_CLASS_OCTA,         FRAME_TYPE_PLUS,    "OctoRotorPlus" },
+    { FRAME_CLASS_OCTA,         FRAME_TYPE_V,       "AirframeUnknown" },
+    { FRAME_CLASS_OCTA,         FRAME_TYPE_H,       "AirframeUnknown" },
+
+    { FRAME_CLASS_OCTAQUAD,     FRAME_TYPE_X,       "OctoRotorXCoaxial" },      // Default
+    { FRAME_CLASS_OCTAQUAD,     FRAME_TYPE_PLUS,    "OctoRotorPlusCoaxial" },
+    { FRAME_CLASS_OCTAQUAD,     FRAME_TYPE_V,       "AirframeUnknown" },
+    { FRAME_CLASS_OCTAQUAD,     FRAME_TYPE_H,       "AirframeUnknown" },
+
+    { FRAME_CLASS_Y6,           FRAME_TYPE_Y6B,     "Y6B" },                    // Default
+    { FRAME_CLASS_Y6,           FRAME_TYPE_Y6F,     "AirframeUnknown" },
+    { FRAME_CLASS_Y6,           -1,                 "Y6A" },
+
+    { FRAME_CLASS_DODECAHEXA,   FRAME_TYPE_X,       "AirframeUnknown" },        // Default
+    { FRAME_CLASS_DODECAHEXA,   FRAME_TYPE_PLUS,    "AirframeUnknown" },
+
+    { FRAME_CLASS_HELI,         -1,                 "Helicopter" },
+    { FRAME_CLASS_TRI,          -1,                 "YPlus" },
 };
 
 static const FrameToImageInfo_t s_rgFrameToImageRover[] = {
@@ -94,14 +106,16 @@ static const FrameToImageInfo_t s_rgFrameToImageRover[] = {
     { FRAME_CLASS_BOAT,     -1, "Boat" },
 };
 
-static QString s_findImageResourceCopter(int frameClass, int frameType)
+/// Returns the image resource for the frameClass, frameType pair
+///     @param[in,out] frameType Specified frame type, or -1 to match first item in list (frameType found will be returned)
+static QString s_findImageResourceCopter(int frameClass, int& frameType)
 {
     for (size_t i=0; i<sizeof(s_rgFrameToImageCopter)/sizeof(s_rgFrameToImageCopter[0]); i++) {
         const FrameToImageInfo_t* pFrameToImageInfo = &s_rgFrameToImageCopter[i];
 
-        if (pFrameToImageInfo->frameClass == frameClass && pFrameToImageInfo->frameType == frameType) {
-            return pFrameToImageInfo->imageResource;
-        } else if (pFrameToImageInfo->frameClass == frameClass && pFrameToImageInfo->frameType == -1) {
+        if ((pFrameToImageInfo->frameClass == frameClass && frameType == -1) ||
+                (pFrameToImageInfo->frameClass == frameClass && pFrameToImageInfo->frameType == frameType)) {
+            frameType = pFrameToImageInfo->frameType;
             return pFrameToImageInfo->imageResource;
         }
     }
@@ -125,7 +139,7 @@ static QString s_findImageResourceRover(int frameClass, int frameType)
 }
 
 APMAirframeComponentController::APMAirframeComponentController(void)
-    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS")))
+    : _frameClassFact   (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_CLASS"), false /* reportMissing */))
     , _frameTypeFact    (getParameterFact(FactSystem::defaultComponentId, QStringLiteral("FRAME_TYPE"), false /* reportMissing */))
     , _frameClassModel  (new QmlObjectListModel(this))
 {
@@ -154,32 +168,19 @@ void APMAirframeComponentController::_fillFrameClasses()
         for (int i=1; i<_frameClassFact->enumStrings().count(); i++) {
             QString frameClassName =    _frameClassFact->enumStrings()[i];
             int     frameClass =        _frameClassFact->enumValues()[i].toInt();
-            int     defaultFrameType;
 
             if (frameClass == FRAME_CLASS_HELI) {
                 // Heli requires it's own firmware variant. You can't switch to Heli from a Copter variant firmware.
                 continue;
             }
 
-            if (frameTypeNotSupported.contains(frameClass)) {
-                defaultFrameType = -1;
-            } else {
-                defaultFrameType = FRAME_TYPE_X;
-            }
-            _frameClassModel->append(new APMFrameClass(frameClassName, true /* copter */, frameClass, _frameTypeFact, defaultFrameType, _frameClassModel));
+            _frameClassModel->append(new APMFrameClass(frameClassName, true /* copter */, frameClass, _frameTypeFact, _frameClassModel));
         }
     } else if (qobject_cast<ArduRoverFirmwarePlugin*>(fwPlugin)) {
         for (int i=1; i<_frameClassFact->enumStrings().count(); i++) {
             QString frameClassName =    _frameClassFact->enumStrings()[i];
             int     frameClass =        _frameClassFact->enumValues()[i].toInt();
-            int     defaultFrameType;
-
-            if (_frameTypeFact) {
-                defaultFrameType = FRAME_TYPE_UNDEFINED;
-            } else {
-                defaultFrameType = -1;
-            }
-            _frameClassModel->append(new APMFrameClass(frameClassName, false /* copter */, frameClass, _frameTypeFact, defaultFrameType, _frameClassModel));
+            _frameClassModel->append(new APMFrameClass(frameClassName, false /* copter */, frameClass, _frameTypeFact, _frameClassModel));
         }
     }
 }
@@ -253,7 +254,7 @@ void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteF
 
 void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)
 {
-    qgcApp()->showMessage(tr("Param file github json download failed: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
     qgcApp()->restoreOverrideCursor();
 }
 
@@ -266,23 +267,59 @@ void APMAirframeComponentController::_paramFileDownloadFinished(QString remoteFi
 
 void APMAirframeComponentController::_paramFileDownloadError(QString errorMsg)
 {
-    qgcApp()->showMessage(tr("Param file download failed: %1").arg(errorMsg));
+    qgcApp()->showAppMessage(tr("Param file download failed: %1").arg(errorMsg));
     qgcApp()->restoreOverrideCursor();
 }
 
-APMFrameClass::APMFrameClass(const QString& name, bool copter, int frameClass, Fact* frameTypeFact, int defaultFrameType, QObject* parent)
+APMFrameClass::APMFrameClass(const QString& name, bool copter, int frameClass, Fact* frameTypeFact, QObject* parent)
     : QObject               (parent)
     , _name                 (name)
     , _copter               (copter)
     , _frameClass           (frameClass)
-    , _defaultFrameType     (defaultFrameType)
-    , _frameTypeSupported   (defaultFrameType != -1)
+    , _defaultFrameType     (-1)
+    , _frameTypeSupported   (false)
     , _frameTypeFact        (frameTypeFact)
 {
     if (frameTypeFact) {
         connect(frameTypeFact, &Fact::rawValueChanged, this, &APMFrameClass::imageResourceChanged);
         connect(frameTypeFact, &Fact::rawValueChanged, this, &APMFrameClass::frameTypeChanged);
     }
+
+    if (copter) {
+        QList<int> rgSupportedFrameTypes;
+
+        for (size_t i=0; i<sizeof(s_rgFrameToImageCopter)/sizeof(s_rgFrameToImageCopter[0]); i++) {
+            const FrameToImageInfo_t* pFrameToImageInfo = &s_rgFrameToImageCopter[i];
+
+            if (pFrameToImageInfo->frameClass == frameClass) {
+                if (_defaultFrameType == -1) {
+                    // Default frame type/icon is the first item found to match frameClass
+                    _defaultFrameType = pFrameToImageInfo->frameType;
+                    _imageResourceDefault = QStringLiteral("/qmlimages/Airframe/%1").arg(pFrameToImageInfo->imageResource);
+                }
+
+                if (pFrameToImageInfo->frameType != -1) {
+                    // The list includes the supported frame types for the class
+                    rgSupportedFrameTypes.append(pFrameToImageInfo->frameType);
+                }
+            }
+        }
+        if (_imageResourceDefault.isEmpty()) {
+            _imageResourceDefault = QStringLiteral("/qmlimages/Airframe/AirframeUnknown");
+        }
+
+        // Filter the enums
+        for (const int frameType: rgSupportedFrameTypes) {
+            int index = frameTypeFact->enumValues().indexOf(frameType);
+            if (index != -1) {
+                _frameTypeEnumValues.append(frameType);
+                _frameTypeEnumStrings.append(frameTypeFact->enumStrings()[index]);
+            }
+        }
+    }
+
+    // If the frameClass is not in the list then frame type is not supported
+    _frameTypeSupported = _defaultFrameType != -1;
 }
 
 APMFrameClass::~APMFrameClass()

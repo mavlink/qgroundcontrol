@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,7 +14,6 @@
 #include "FactSystemTestGeneric.h"
 #include "FactSystemTestPX4.h"
 //#include "FileDialogTest.h"
-//#include "FlightGearTest.h"
 #include "GeoTest.h"
 #include "LinkManagerTest.h"
 //#include "MessageBoxTest.h"
@@ -49,7 +48,6 @@
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 //UT_REGISTER_TEST(FileDialogTest)
-//UT_REGISTER_TEST(FlightGearUnitTest)
 UT_REGISTER_TEST(GeoTest)
 UT_REGISTER_TEST(LinkManagerTest)
 //UT_REGISTER_TEST(MessageBoxTest)

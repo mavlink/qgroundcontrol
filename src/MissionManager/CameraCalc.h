@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,14 +12,14 @@
 #include "CameraSpec.h"
 #include "SettingsFact.h"
 
-class Vehicle;
+class PlanMasterController;
 
 class CameraCalc : public CameraSpec
 {
     Q_OBJECT
 
 public:
-    CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* parent = NULL);
+    CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent = nullptr);
 
     Q_PROPERTY(QString          customCameraName            READ customCameraName                                               CONSTANT)                                   ///< Camera name for custom camera setting
     Q_PROPERTY(QString          manualCameraName            READ manualCameraName                                               CONSTANT)                                   ///< Camera name for manual camera setting
@@ -33,6 +33,13 @@ public:
     Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                                                    CONSTANT)
     Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                                          CONSTANT)                                   ///< Side footprint adjusted down for overlap
     Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                                   ///< Frontal footprint adjusted down for overlap
+
+    // When we are creating a manual grid we still use CameraCalc to store the manual grid information. It's a bastardization of what
+    // CameraCalc is meant for but it greatly simplifies code and persistance of manual grids.
+    //  grid altitude -         distanceToSurface
+    //  grid altitude mode -    distanceToSurfaceRelative
+    //  trigger distance -      adjustedFootprintFrontal
+    //  transect spacing -      adjustedFootprintSide
     Q_PROPERTY(bool             distanceToSurfaceRelative   READ distanceToSurfaceRelative WRITE setDistanceToSurfaceRelative   NOTIFY distanceToSurfaceRelativeChanged)
 
     // The following values are calculated from the camera properties
@@ -70,7 +77,7 @@ public:
     void setDistanceToSurfaceRelative   (bool distanceToSurfaceRelative);
 
     void save(QJsonObject& json) const;
-    bool load(const QJsonObject& json, bool forPresets, bool cameraSpecInPreset, QString& errorString);
+    bool load(const QJsonObject& json, QString& errorString);
 
     static const char* cameraNameName;
     static const char* valueSetIsDistanceName;
@@ -97,7 +104,6 @@ private slots:
     void _cameraNameChanged                 (void);
 
 private:
-    Vehicle*        _vehicle;
     bool            _dirty;
     bool            _disableRecalc;
     bool            _distanceToSurfaceRelative;

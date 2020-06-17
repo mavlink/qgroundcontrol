@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -35,6 +35,7 @@ class FileManager : public QObject
     
 public:
     FileManager(QObject* parent, Vehicle* vehicle);
+    FileManager(QObject* parent, LinkInterface *link, uint8_t systemIdQGC, uint8_t systemIdServer);
     
     /// These methods are only used for testing purposes.
     bool _sendCmdTestAck(void) { return _sendOpcodeOnlyCmd(kCmdNone, kCOAck); };
@@ -42,9 +43,14 @@ public:
     
     /// Timeout in msecs to wait for an Ack time come back. This is public so we can write unit tests which wait long enough
     /// for the FileManager to timeout.
-    static const int ackTimerTimeoutMsecs = 50;
+    static const int ackTimerTimeoutMsecs = 5000;
 
     static const int ackTimerMaxRetries = 6;
+
+    int _ackTimerTimeoutMsecs = ackTimerTimeoutMsecs;
+
+    int _ackTimerMaxRetries = ackTimerMaxRetries;
+
 
 	/// Downloads the specified file.
 	///     @param from File to download from UAS, fully qualified path
@@ -84,6 +90,9 @@ signals:
     /// Signalled during a lengthy command to show progress
     ///     @param value Amount of progress: 0.0 = none, 1.0 = complete
     void commandProgress(int value);
+
+    /// Used internally to move sendMessage call to main thread
+    void _sendMessageOnLinkOnThread(LinkInterface* link, mavlink_message_t message);
 
 public slots:
     void receiveMessage(mavlink_message_t message);
@@ -189,6 +198,7 @@ private:
     void _emitListEntry(const QString& entry);
     void _sendRequest(Request* request);
     void _sendRequestNoAck(Request* request);
+    void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
     void _fillRequestWithString(Request* request, const QString& str);
     void _openAckResponse(Request* openAck);
     void _downloadAckResponse(Request* readAck, bool readFile);

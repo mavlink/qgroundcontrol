@@ -1,3 +1,4 @@
+add_subdirectory(APM)
 
 add_library(FirmwarePlugin
 	CameraMetaData.cc

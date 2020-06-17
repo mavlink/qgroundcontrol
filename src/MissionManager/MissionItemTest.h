@@ -1,20 +1,19 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-
-#ifndef MissionItemTest_H
-#define MissionItemTest_H
+#pragma once
 
 #include "UnitTest.h"
 #include "MultiSignalSpy.h"
 #include "MissionItem.h"
 #include "Vehicle.h"
+#include "PlanMasterController.h"
 
 /// Unit test for the MissionItem Object
 class MissionItemTest : public UnitTest
@@ -46,8 +45,6 @@ private:
     QJsonObject _createV2Json(void);
     QJsonObject _createV3Json(bool allNaNs = false);
 
-    int         _seq = 10;
-    Vehicle*    _offlineVehicle;
+    int                     _seq = 10;
+    PlanMasterController*   _masterController = nullptr;
 };
-
-#endif
