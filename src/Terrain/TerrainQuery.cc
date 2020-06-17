@@ -813,7 +813,7 @@ const UnitTestTerrainQuery::Flat10Region UnitTestTerrainQuery::flat10Region{{
           pointNemo.longitude() + UnitTestTerrainQuery::regionExtentDeg
       }
 }};
-const double UnitTestTerrainQuery::Flat10Region::elevationMts;
+const double UnitTestTerrainQuery::Flat10Region::elevationMts = 10;
 
 const UnitTestTerrainQuery::LinearSlopeRegion UnitTestTerrainQuery::linearSlopeRegion{{
     flat10Region.topRight(),
@@ -822,9 +822,9 @@ const UnitTestTerrainQuery::LinearSlopeRegion UnitTestTerrainQuery::linearSlopeR
         flat10Region.topRight().longitude() + UnitTestTerrainQuery::regionExtentDeg
     }
 }};
-const double UnitTestTerrainQuery::LinearSlopeRegion::minElevationMts;
-const double UnitTestTerrainQuery::LinearSlopeRegion::maxElevationMts;
-const double UnitTestTerrainQuery::LinearSlopeRegion::dElevationMts;
+const double UnitTestTerrainQuery::LinearSlopeRegion::minElevationMts = -100;
+const double UnitTestTerrainQuery::LinearSlopeRegion::maxElevationMts = 1000;
+const double UnitTestTerrainQuery::LinearSlopeRegion::dElevationMts   = maxElevationMts-minElevationMts;
 
 UnitTestTerrainQuery::UnitTestTerrainQuery(TerrainQueryInterface* parent)
 :TerrainQueryInterface(parent)

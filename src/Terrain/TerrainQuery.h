@@ -319,7 +319,7 @@ public:
         :QGeoRectangle(region)
         {}
 
-        static constexpr double elevationMts = 10;
+        static const double elevationMts;
     };
     static const Flat10Region flat10Region;
 
@@ -331,9 +331,9 @@ public:
         :QGeoRectangle(region)
         {}
 
-        static constexpr double minElevationMts = -100;
-        static constexpr double maxElevationMts = 1000;
-        static constexpr double dElevationMts = maxElevationMts-minElevationMts;
+        static const double minElevationMts;
+        static const double maxElevationMts;
+        static const double dElevationMts;
     };
     static const LinearSlopeRegion linearSlopeRegion;
 
