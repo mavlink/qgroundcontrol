@@ -4724,8 +4724,8 @@ Setting this parameter to 0 disables the filter</short_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="2." name="MPC_LAND_VEL_XY" type="FLOAT">
-      <short_desc>Maximum horizontal velocity during landing
+    <parameter default="10.0" name="MPC_LAND_VEL_XY" type="FLOAT">
+      <short_desc>Maximum horizontal position mode velocity when close to ground/home altitude
 Set the value higher than the otherwise expected maximum to disable any slowdown</short_desc>
       <min>0</min>
       <unit>m/s</unit>
