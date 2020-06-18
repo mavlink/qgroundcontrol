@@ -871,10 +871,10 @@ QPair<QList<QGeoCoordinate>, QList<double>> UnitTestTerrainQuery::requestPathHei
     coordinates.push_back(fromCoord);
 
     //cast to pixels
-    long x0 = fromCoord.longitude()/one_second_deg;
-    long x1 = toCoord.longitude()/one_second_deg;
-    long y0 = fromCoord.latitude()/one_second_deg;
-    long y1 = toCoord.latitude()/one_second_deg;
+    long x0 = std::floor(fromCoord.longitude()/one_second_deg);
+    long x1 = std::floor(toCoord.longitude()/one_second_deg);
+    long y0 = std::floor(fromCoord.latitude()/one_second_deg);
+    long y1 = std::floor(toCoord.latitude()/one_second_deg);
 
     //bresenham line algo
     long dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
