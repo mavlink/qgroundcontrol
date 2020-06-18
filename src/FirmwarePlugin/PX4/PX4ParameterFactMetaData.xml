@@ -10204,15 +10204,6 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="TC_A0_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="TC_A0_SCL_0" type="FLOAT">
-      <short_desc>Accelerometer scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A0_SCL_1" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A0_SCL_2" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Z axis</short_desc>
-    </parameter>
     <parameter category="System" default="100.0" name="TC_A0_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
     </parameter>
@@ -10261,15 +10252,6 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="TC_A1_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="TC_A1_SCL_0" type="FLOAT">
-      <short_desc>Accelerometer scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A1_SCL_1" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A1_SCL_2" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Z axis</short_desc>
-    </parameter>
     <parameter category="System" default="100.0" name="TC_A1_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
     </parameter>
@@ -10317,15 +10299,6 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter category="System" default="0" name="TC_A2_ID" type="INT32">
       <short_desc>ID of Accelerometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A2_SCL_0" type="FLOAT">
-      <short_desc>Accelerometer scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A2_SCL_1" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_A2_SCL_2" type="FLOAT">
-      <short_desc>Accelerometer scale factor - Z axis</short_desc>
     </parameter>
     <parameter category="System" default="100.0" name="TC_A2_TMAX" type="FLOAT">
       <short_desc>Accelerometer calibration maximum temperature</short_desc>
@@ -10379,9 +10352,6 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="TC_B0_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="TC_B0_SCL" type="FLOAT">
-      <short_desc>Barometer scale factor - X axis</short_desc>
-    </parameter>
     <parameter category="System" default="75.0" name="TC_B0_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
     </parameter>
@@ -10412,9 +10382,6 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="TC_B1_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="TC_B1_SCL" type="FLOAT">
-      <short_desc>Barometer scale factor - X axis</short_desc>
-    </parameter>
     <parameter category="System" default="75.0" name="TC_B1_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
     </parameter>
@@ -10444,9 +10411,6 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter category="System" default="0" name="TC_B2_ID" type="INT32">
       <short_desc>ID of Barometer that the calibration is for</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_B2_SCL" type="FLOAT">
-      <short_desc>Barometer scale factor - X axis</short_desc>
     </parameter>
     <parameter category="System" default="75.0" name="TC_B2_TMAX" type="FLOAT">
       <short_desc>Barometer calibration maximum temperature</short_desc>
@@ -10481,15 +10445,6 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter category="System" default="0" name="TC_G0_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G0_SCL_0" type="FLOAT">
-      <short_desc>Gyro scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G0_SCL_1" type="FLOAT">
-      <short_desc>Gyro scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G0_SCL_2" type="FLOAT">
-      <short_desc>Gyro scale factor - Z axis</short_desc>
     </parameter>
     <parameter category="System" default="100.0" name="TC_G0_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
@@ -10539,15 +10494,6 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="TC_G1_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter category="System" default="1.0" name="TC_G1_SCL_0" type="FLOAT">
-      <short_desc>Gyro scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G1_SCL_1" type="FLOAT">
-      <short_desc>Gyro scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G1_SCL_2" type="FLOAT">
-      <short_desc>Gyro scale factor - Z axis</short_desc>
-    </parameter>
     <parameter category="System" default="100.0" name="TC_G1_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
     </parameter>
@@ -10595,15 +10541,6 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter category="System" default="0" name="TC_G2_ID" type="INT32">
       <short_desc>ID of Gyro that the calibration is for</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G2_SCL_0" type="FLOAT">
-      <short_desc>Gyro scale factor - X axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G2_SCL_1" type="FLOAT">
-      <short_desc>Gyro scale factor - Y axis</short_desc>
-    </parameter>
-    <parameter category="System" default="1.0" name="TC_G2_SCL_2" type="FLOAT">
-      <short_desc>Gyro scale factor - Z axis</short_desc>
     </parameter>
     <parameter category="System" default="100.0" name="TC_G2_TMAX" type="FLOAT">
       <short_desc>Gyro calibration maximum temperature</short_desc>
