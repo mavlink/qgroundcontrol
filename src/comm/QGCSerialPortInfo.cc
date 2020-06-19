@@ -313,12 +313,14 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
                 if (cubeOrangeAlreadySeen) {
                     continue;
                 }
+                qCDebug(QGCSerialPortInfoLog) << "Skipping secondary port on Cube Orange" << portInfo.portName();
                 cubeOrangeAlreadySeen = true;
             }
             if (portInfo.vendorIdentifier() == hexCubeVID && portInfo.productIdentifier() == hexCubeYellowPID) {
                 if (cubeYellowAlreadySeen) {
                     continue;
                 }
+                qCDebug(QGCSerialPortInfoLog) << "Skipping secondary port on Cube Yellow" << portInfo.portName();
                 cubeYellowAlreadySeen = true;
             }
             list << *((QGCSerialPortInfo*)&portInfo);
