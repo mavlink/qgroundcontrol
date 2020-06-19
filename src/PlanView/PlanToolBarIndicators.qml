@@ -72,7 +72,7 @@ Item {
 
     // Progress bar
     Connections {
-        target: _controllerValid ? _planMasterController.missionController : undefined
+        target: _controllerValid ? _planMasterController.missionController : null
         onProgressPctChanged: {
             if (_controllerProgressPct === 1) {
                 missionStats.visible = false
