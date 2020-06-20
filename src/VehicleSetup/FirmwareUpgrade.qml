@@ -28,8 +28,6 @@ SetupPage {
     pageName:       qsTr("Firmware")
     showAdvanced:   activeVehicle && activeVehicle.apmFirmware
 
-    signal cancelDialog
-
     Component {
         id: firmwarePageComponent
 
@@ -135,15 +133,20 @@ SetupPage {
                     } else {
                         // We end up here when we detect a board plugged in after we've started upgrade
                         statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
-                        if (controller.pixhawkBoard || controller.px4FlowBoard) {
+                        if (controller.px4FlowBoard) {
                             mainWindow.showComponentDialog(pixhawkFirmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                         }
                     }
                 }
 
+                onBootloaderFound: {
+                    if (controller.pixhawkBoard) {
+                        mainWindow.showComponentDialog(pixhawkFirmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    }
+                }
+
                 onError: {
                     statusTextArea.append(flashFailText)
-                    firmwarePage.cancelDialog()
                 }
             }
 
@@ -189,6 +192,11 @@ SetupPage {
                         firmwarePage.advanced = false
                         firmwarePage.showAdvanced = false
                         updatePX4VersionDisplay()
+                    }
+
+                    Connections {
+                        target:     controller
+                        onError:    reject()
                     }
 
                     function accept() {
