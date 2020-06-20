@@ -156,6 +156,7 @@ public:
 
 signals:
     void boardFound                     (void);
+    void bootloaderFound                (void);
     void noBoardFound                   (void);
     void boardGone                      (void);
     void flashComplete                  (void);
