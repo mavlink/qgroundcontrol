@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Shapes   1.12
-import QtQuick.Layouts  1.2
-import QtCharts         2.3
+import QtQuick  2.12
+import QtCharts 2.3
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
