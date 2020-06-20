@@ -294,10 +294,35 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
 
 QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
 {
+    // Cube Orange/Yellow are composite devices which expose two usb ports over a single usb connection.
+    // The first port is the mavlink connection, the second is the SLCAN connection by default.
+    // We don't expose the second port as being available to QGC.
+
+    static const int hexCubeVID = 11694;
+    static const int hexCubeOrangePID = 4118;
+    static const int hexCubeYellowPID = 4114;
+
+    bool cubeOrangeAlreadySeen = false;
+    bool cubeYellowAlreadySeen = false;
+
     QList<QGCSerialPortInfo>    list;
 
     for(QSerialPortInfo portInfo: QSerialPortInfo::availablePorts()) {
         if (!isSystemPort(&portInfo)) {
+            if (portInfo.vendorIdentifier() == hexCubeVID && portInfo.productIdentifier() == hexCubeOrangePID) {
+                if (cubeOrangeAlreadySeen) {
+                    continue;
+                }
+                qCDebug(QGCSerialPortInfoLog) << "Skipping secondary port on Cube Orange" << portInfo.portName();
+                cubeOrangeAlreadySeen = true;
+            }
+            if (portInfo.vendorIdentifier() == hexCubeVID && portInfo.productIdentifier() == hexCubeYellowPID) {
+                if (cubeYellowAlreadySeen) {
+                    continue;
+                }
+                qCDebug(QGCSerialPortInfoLog) << "Skipping secondary port on Cube Yellow" << portInfo.portName();
+                cubeYellowAlreadySeen = true;
+            }
             list << *((QGCSerialPortInfo*)&portInfo);
         }
     }
