@@ -245,6 +245,8 @@ void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boar
     if (_rgManifestFirmwareInfo.count()) {
         _buildAPMFirmwareNames();
     }
+
+    emit bootloaderFound();
 }
 
 

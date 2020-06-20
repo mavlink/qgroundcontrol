@@ -91,6 +91,7 @@ SetupPage {
                 case _calTypeCompass:
                     _orientationsDialogShowCompass = true
                     _orientationDialogHelp = orientationHelpCal
+                    _singleCompassSettingsComponentShowPriority = false
                     dialogTitle = qsTr("Calibrate Compass")
                     buttons |= StandardButton.Cancel
                     break
@@ -108,6 +109,28 @@ SetupPage {
                 }
 
                 mainWindow.showComponentDialog(orientationsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, buttons)
+            }
+
+            function compassLabel(index) {
+                var label = qsTr("Compass %1 ").arg(index+1)
+                var addOpenParan = true
+                var addComma = false
+                if (sensorParams.compassPrimaryFactAvailable) {
+                    label += sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")
+                    addComma = true
+                    addOpenParan = false
+                }
+                if (sensorParams.rgCompassExternalParamAvailable[index]) {
+                    if (addOpenParan) {
+                        label += "("
+                    }
+                    if (addComma) {
+                        label += qsTr(", ")
+                    }
+                    label += sensorParams.rgCompassExternal[index] ? qsTr("external") : qsTr("internal")
+                }
+                label += ")"
+                return label
             }
 
             APMSensorParams {
@@ -142,6 +165,7 @@ SetupPage {
                         mainWindow.showComponentDialog(postCalibrationComponent, qsTr("Compass calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
+                        _singleCompassSettingsComponentShowPriority = true
                         mainWindow.showComponentDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     }
@@ -189,6 +213,8 @@ SetupPage {
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
                     visible:        sensorParams.rgCompassAvailable[index] && sensorParams.rgCompassUseFact[index].value
 
+                    property int _index: index
+
                     property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
                     property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
                     property real fitnessRange:        25 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
@@ -230,26 +256,13 @@ SetupPage {
                         }
                     }
 
-                    Column {
+                    Loader {
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
+                        sourceComponent:    singleCompassSettingsComponent
 
-                        QGCLabel {
-                            text: qsTr("Compass ") + (index+1) + " " +
-                                  (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")) +
-                                  (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                       (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal" )) :
-                                       "") +
-                                  ")"
-                        }
-
-                        FactCheckBox {
-                            text:       qsTr("Use Compass")
-                            fact:       sensorParams.rgCompassUseFact[index]
-                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
-                        }
+                        property int index: _index
                     }
                 }
             }
@@ -314,11 +327,12 @@ SetupPage {
                                 controller.vehicle.rebootVehicle()
                                 hideDialog()
                             }
-                       }
+                        }
                     }
                 }
             }
 
+            property bool _singleCompassSettingsComponentShowPriority: true
             Component {
                 id: singleCompassSettingsComponent
 
@@ -327,12 +341,7 @@ SetupPage {
                     visible: sensorParams.rgCompassAvailable[index]
 
                     QGCLabel {
-                        text: qsTr("Compass ") + (index+1) + " " +
-                              (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") :qsTr( "(secondary")) +
-                              (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                   (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal") ) :
-                                   "") +
-                              ")"
+                        text: compassLabel(index)
                     }
 
                     Column {
@@ -340,10 +349,46 @@ SetupPage {
                         anchors.left:       parent.left
                         spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
 
-                        FactCheckBox {
-                            text:       qsTr("Use Compass")
-                            fact:       sensorParams.rgCompassUseFact[index]
-                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            FactCheckBox {
+                                id:         useCompassCheckBox
+                                text:       qsTr("Use Compass")
+                                fact:       sensorParams.rgCompassUseFact[index]
+                                visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                            }
+
+                            QGCComboBox {
+                                model:      [ qsTr("Priority 1"), qsTr("Priority 2"), qsTr("Priority 3"), qsTr("Not Set") ]
+                                visible:    _singleCompassSettingsComponentShowPriority && sensorParams.compassPrioFactsAvailable && useCompassCheckBox.visible && useCompassCheckBox.checked
+
+                                property int _compassIndex: index
+
+                                function selectPriorityfromParams() {
+                                    if (visible) {
+                                        currentIndex = 3
+                                        var compassId = sensorParams.rgCompassId[_compassIndex].rawValue
+                                        for (var prioIndex=0; prioIndex<3; prioIndex++) {
+                                            if (compassId == sensorParams.rgCompassPrio[prioIndex].rawValue) {
+                                                currentIndex = prioIndex
+                                                break
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Component.onCompleted: selectPriorityfromParams()
+
+                                onActivated: {
+                                    if (index == 3) {
+                                        // User cannot select Not Set
+                                        selectPriorityfromParams()
+                                    } else {
+                                        sensorParams.rgCompassPrio[index].rawValue = sensorParams.rgCompassId[_compassIndex].rawValue
+                                    }
+                                }
+                            }
                         }
 
                         Column {
