@@ -129,13 +129,6 @@
     "defaultValue":     0
 },
 {
-    "name":             "autoLoadMissions",
-    "shortDescription": "AutoLoad mission on vehicle connect",
-    "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
-    "type":             "bool",
-    "defaultValue":     false
-},
-{
     "name":             "useChecklist",
     "shortDescription": "Use preflight checklist",
     "longDescription":  "If this option is enabled the preflight checklist will be used.",
