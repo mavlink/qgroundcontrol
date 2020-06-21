@@ -186,10 +186,14 @@ before_script:
     fi
     
   # Install signing cert into OSX keychain
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
-        export CODESIGN=codesign &&
-        openssl aes-256-cbc -K $MAC_CERT_KEY -iv $MAC_CERT_IV -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d &&
-        ./deploy/MacImportCert.sh;
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
+        export CODESIGN=codesign;
+    fi
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
+        openssl aes-256-cbc -K $MAC_CERT_KEY -iv $MAC_CERT_IV -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d;
+    fi
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
+        source deploy/MacImportCert.sh;
     fi
 
 script:
