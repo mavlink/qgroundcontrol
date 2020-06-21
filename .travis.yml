@@ -5,10 +5,8 @@ language: cpp
 env:
   global:
     - JOBS=4
-    # QT_FATAL_WARNINGS is turned off because Qt 5.11.3 throws a speech dispatcher not working warning when running unit tests
-    #- QT_FATAL_WARNINGS=1
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
-    # ANDROID_STOREPASS
+    - CODESIGN=nocodesign
     - secure: RGovyUnMw3fp/bHZi058JvANT1rYmNqrsuSYew0cIgirO6YbMHr/rsjwCm1FTYpBl8s1zgr+u2b8ftYnfnCz2YT+Aip4NWrVYpVU0FEmfytGILrnUS0pjlt8m7fU9AKR1ElOSll7yw7e1kftynN39Q321etvwbLZcXon6zz0suE=
 
 jobs:
@@ -186,6 +184,13 @@ before_script:
         git fetch --tags origin master &&
         ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};
     fi
+    
+  # Install signing cert into OSX keychain
+  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
+        export CODESIGN=codesign &&
+        openssl aes-256-cbc -K $MAC_CERT_KEY -iv $MAC_CERT_IV -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d &&
+        ./deploy/MacImportCert.sh;
+    fi
 
 script:
   # run qmake
@@ -197,7 +202,7 @@ script:
         echo "Daily build" &&
         export STABLE_OR_DAILY=DailyBuild;
     fi
-  - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} -spec ${SPEC};
+  - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} CONFIG+=${CODESIGN} -spec ${SPEC};
 
   # compile
   - if [ "${SPEC}" != "macx-ios-clang" ]; then
