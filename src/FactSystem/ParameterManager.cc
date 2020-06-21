@@ -112,18 +112,6 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
 
     // Ensure the cache directory exists
     QFileInfo(QSettings().fileName()).dir().mkdir("ParamCache");
-
-    if (_vehicle->highLatencyLink()) {
-        // High latency links don't load parameters
-        _parametersReady = true;
-        _missingParameters = true;
-        _initialLoadComplete = true;
-        _waitingForDefaultComponent = false;
-        emit parametersReadyChanged(_parametersReady);
-        emit missingParametersChanged(_missingParameters);
-    } else if (!_logReplay){
-        refreshAllParameters();
-    }
 }
 
 ParameterManager::~ParameterManager()
@@ -494,8 +482,14 @@ void ParameterManager::_valueUpdated(const QVariant& value)
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
-    if (_logReplay) {
-        return;
+    if (_vehicle->highLatencyLink() || _logReplay) {
+        // These links don't load params
+        _parametersReady = true;
+        _missingParameters = true;
+        _initialLoadComplete = true;
+        _waitingForDefaultComponent = false;
+        emit parametersReadyChanged(_parametersReady);
+        emit missingParametersChanged(_missingParameters);
     }
 
     _dataMutex.lock();
