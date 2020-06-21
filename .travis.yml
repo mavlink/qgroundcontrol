@@ -186,6 +186,12 @@ before_script:
         git fetch --tags origin master &&
         ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};
     fi
+    
+  # Install signing cert into OSX keychain
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
+        openssl aes-256-cbc -K $MAC_CERT_KEY -iv $MAC_CERT_IV -in deploy/MacCertificates.p12.enc -out deploy/MacCertificates.p12 -d &&
+        ./deploy/MacImportCert.sh;
+    fi
 
 script:
   # run qmake
@@ -197,7 +203,7 @@ script:
         echo "Daily build" &&
         export STABLE_OR_DAILY=DailyBuild;
     fi
-  - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} -spec ${SPEC};
+  - qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=${STABLE_OR_DAILY} CONFIG+=codesign -spec ${SPEC};
 
   # compile
   - if [ "${SPEC}" != "macx-ios-clang" ]; then
