@@ -32,8 +32,9 @@ installer {
         QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
         codesign {
-            QMAKE_POST_LINK += && echo codesign
-            QMAKE_POST_LINK += && codesign --deep $${TARGET}.app -s WQREC9W69J
+            # Disabled for now since it's not working correctly yet
+            #QMAKE_POST_LINK += && echo codesign
+            #QMAKE_POST_LINK += && codesign --deep $${TARGET}.app -s WQREC9W69J
         }
 
         # Create package
