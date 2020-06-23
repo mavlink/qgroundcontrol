@@ -198,6 +198,7 @@ private:
     void _handleLogRequestList          (const mavlink_message_t& msg);
     void _handleLogRequestData          (const mavlink_message_t& msg);
     void _handleParamMapRC              (const mavlink_message_t& msg);
+    bool _handleRequestMessage          (const mavlink_command_long_t& request);
     float _floatUnionForParam           (int componentId, const QString& paramName);
     void _setParamFloatUnionIntoMap     (int componentId, const QString& paramName, float paramFloat);
     void _sendHomePosition              (void);
@@ -212,6 +213,8 @@ private:
     void _logDownloadWorker             (void);
     void _sendADSBVehicles              (void);
     void _moveADSBVehicle               (void);
+    void _sendVersionMetaData           (void);
+    void _sendParameterMetaData         (void);
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);

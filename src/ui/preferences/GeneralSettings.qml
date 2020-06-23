@@ -296,14 +296,6 @@ Rectangle {
                                     property Fact _checkInternet: QGroundControl.settingsManager.appSettings.checkInternet
                                 }
 
-                                FactCheckBox {
-                                    text:       qsTr("AutoLoad Missions")
-                                    fact:       _autoLoad
-                                    visible:    _autoLoad && _autoLoad.visible
-
-                                    property Fact _autoLoad: QGroundControl.settingsManager.appSettings.autoLoadMissions
-                                }
-
                                 QGCCheckBox {
                                     id:         clearCheck
                                     text:       qsTr("Clear all settings on next start")
