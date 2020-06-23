@@ -44,7 +44,6 @@ public:
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)
     DEFINE_SETTINGFACT(savePath)
-    DEFINE_SETTINGFACT(autoLoadMissions)
     DEFINE_SETTINGFACT(useChecklist)
     DEFINE_SETTINGFACT(enforceChecklist)
     DEFINE_SETTINGFACT(mapboxToken)

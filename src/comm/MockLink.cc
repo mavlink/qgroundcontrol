@@ -476,47 +476,36 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
         case MAVLINK_MSG_ID_HEARTBEAT:
             _handleHeartBeat(msg);
             break;
-
         case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             _handleParamRequestList(msg);
             break;
-
         case MAVLINK_MSG_ID_SET_MODE:
             _handleSetMode(msg);
             break;
-
         case MAVLINK_MSG_ID_PARAM_SET:
             _handleParamSet(msg);
             break;
-
         case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
             _handleParamRequestRead(msg);
             break;
-
         case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
             _handleFTP(msg);
             break;
-
         case MAVLINK_MSG_ID_COMMAND_LONG:
             _handleCommandLong(msg);
             break;
-
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
             _handleManualControl(msg);
             break;
-
         case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
             _handleLogRequestList(msg);
             break;
-
         case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
             _handleLogRequestData(msg);
             break;
-
         case MAVLINK_MSG_ID_PARAM_MAP_RC:
             _handleParamMapRC(msg);
             break;
-
         default:
             break;
         }
@@ -944,6 +933,11 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:
         commandResult = MAV_RESULT_ACCEPTED;
         _respondWithAutopilotVersion();
+        break;
+    case MAV_CMD_REQUEST_MESSAGE:
+        if (request.param1 == MAVLINK_MSG_ID_COMPONENT_INFORMATION && _handleRequestMessage(request)) {
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
         break;
     case MAV_CMD_USER_1:
         // Test command which always returns MAV_RESULT_ACCEPTED
@@ -1464,5 +1458,61 @@ void MockLink::_sendADSBVehicles(void)
                                        ADSB_FLAGS_VALID_COORDS | ADSB_FLAGS_VALID_ALTITUDE | ADSB_FLAGS_VALID_HEADING | ADSB_FLAGS_VALID_CALLSIGN | ADSB_FLAGS_SIMULATED,
                                        0);                                          // Squawk code
 
+    respondWithMavlinkMessage(responseMsg);
+}
+
+bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request)
+{
+    if (request.param1 != MAVLINK_MSG_ID_COMPONENT_INFORMATION) {
+        return false;
+    }
+
+    switch (static_cast<int>(request.param2)) {
+    case COMP_METADATA_TYPE_VERSION:
+        _sendVersionMetaData();
+        return true;
+    case COMP_METADATA_TYPE_PARAMETER:
+        _sendParameterMetaData();
+        return true;
+    }
+
+    return false;
+}
+
+void MockLink::_sendVersionMetaData(void)
+{
+    mavlink_message_t   responseMsg;
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN] =       "mavlinkftp://version.json";
+    char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
+
+    mavlink_msg_component_information_pack_chan(_vehicleSystemId,
+                                                _vehicleComponentId,
+                                                _mavlinkChannel,
+                                                &responseMsg,
+                                                0,                          // time_boot_ms
+                                                COMP_METADATA_TYPE_VERSION,
+                                                1,                          // comp_metadata_uid
+                                                metaDataURI,
+                                                0,                          // comp_translation_uid
+                                                translationURI);
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_sendParameterMetaData(void)
+{
+    mavlink_message_t   responseMsg;
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN] =       "mavlinkftp://parameter.json";
+    char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
+
+    mavlink_msg_component_information_pack_chan(_vehicleSystemId,
+                                                _vehicleComponentId,
+                                                _mavlinkChannel,
+                                                &responseMsg,
+                                                0,                              // time_boot_ms
+                                                COMP_METADATA_TYPE_PARAMETER,
+                                                1,                              // comp_metadata_uid
+                                                metaDataURI,
+                                                0,                              // comp_translation_uid
+                                                translationURI);
     respondWithMavlinkMessage(responseMsg);
 }
