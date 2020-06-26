@@ -389,21 +389,25 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
     case MAV_AUTOPILOT_GENERIC:
         _mockLink = MockLink::startGenericMockLink(false);
         break;
+    case MAV_AUTOPILOT_INVALID:
+        _mockLink = MockLink::startNoInitialConnectMockLink(false);
+        break;
     default:
         qWarning() << "Type not supported";
         break;
     }
 
     // Wait for the Vehicle to get created
-    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
+    QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged);
     QCOMPARE(spyVehicle.wait(10000), true);
-    QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
 
-    // Wait for initial connect sequence to complete
-    QSignalSpy spyPlan(_vehicle, SIGNAL(initialConnectComplete()));
-    QCOMPARE(spyPlan.wait(10000), true);
+    if (autopilot != MAV_AUTOPILOT_INVALID) {
+        // Wait for initial connect sequence to complete
+        QSignalSpy spyPlan(_vehicle, &Vehicle::initialConnectComplete);
+        QCOMPARE(spyPlan.wait(30000), true);
+    }
 }
 
 void UnitTest::_disconnectMockLink(void)

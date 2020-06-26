@@ -7,25 +7,22 @@
  *
  ****************************************************************************/
 
-
-#ifndef SendMavCommandTest_H
-#define SendMavCommandTest_H
+#pragma once
 
 #include "UnitTest.h"
 
-class SendMavCommandTest : public UnitTest
+class SendMavCommandWithSignallingTest : public UnitTest
 {
     Q_OBJECT
     
 private slots:
-    void _noFailure(void);
-    void _failureShowError(void);
-    void _failureNoShowError(void);
-    void _noFailureAfterRetry(void);
-    void _failureAfterRetry(void);
-    void _failureAfterNoReponse(void);
+    void _noFailure             (void);
+    void _failureShowError      (void);
+    void _failureNoShowError    (void);
+    void _noFailureAfterRetry   (void);
+    void _failureAfterRetry     (void);
+    void _failureAfterNoReponse (void);
+    void _unexpectedAck         (void);
 
 private:
 };
-
-#endif

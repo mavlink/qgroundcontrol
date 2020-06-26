@@ -120,6 +120,7 @@ protected slots:
 
 protected:
     void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
+    void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_INVALID); }
     void _disconnectMockLink(void);
     void _createMainWindow(void);
     void _closeMainWindow(bool cancelExpected = false);
