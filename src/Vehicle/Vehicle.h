@@ -14,6 +14,7 @@
 #include <QVariantList>
 #include <QGeoCoordinate>
 #include <QTime>
+#include <QQueue>
 
 #include "FactGroup.h"
 #include "LinkInterface.h"
@@ -24,7 +25,6 @@
 #include "SettingsFact.h"
 #include "QGCMapCircle.h"
 #include "TerrainFactGroup.h"
-#include "ComponentInformation.h"
 
 class UAS;
 class UASInterface;
@@ -43,6 +43,9 @@ class Joystick;
 class VehicleObjectAvoidance;
 class TrajectoryPoints;
 class TerrainProtocolHandler;
+class ComponentInformationManager;
+class MAVLinkFTPManager;
+class InitialConnectStateMachine;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -1004,31 +1007,29 @@ public:
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
-    ParameterManager*       parameterManager() { return _parameterManager; }
-    ParameterManager*       parameterManager() const { return _parameterManager; }
-    VehicleObjectAvoidance* objectAvoidance()  { return _objectAvoidance; }
+    ParameterManager*       parameterManager    () { return _parameterManager; }
+    ParameterManager*       parameterManager    () const { return _parameterManager; }
+    MAVLinkFTPManager*      mavlinkFTPManager   () { return _mavlinkFTPManager; }
+    VehicleObjectAvoidance* objectAvoidance     () { return _objectAvoidance; }
 
     static const int cMaxRcChannels = 18;
 
     bool containsLink(LinkInterface* link) { return _links.contains(link); }
 
-    typedef void (*MavCmdResultHandler)(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle);
-
     /// Sends the specified MAV_CMD to the vehicle. If no Ack is received command will be retried. If a sendMavCommand is already in progress
     /// the command will be queued and sent when the previous command completes.
-    ///     @param component Component to send to
+    ///     @param compId Component to send to.
     ///     @param command MAV_CMD to send
     ///     @param showError true: Display error to user if command failed, false:  no error shown
     /// Signals: mavCommandResult on success or failure
-    void sendMavCommand(int component, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
-    void sendMavCommand(int component, MAV_CMD command, MavCmdResultHandler errorHandler, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
-    void sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
+    void sendMavCommand(int compId, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+    void sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     /// Same as sendMavCommand but available from Qml.
-    Q_INVOKABLE void sendCommand(int component, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0)
+    Q_INVOKABLE void sendCommand(int compId, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0)
     {
         sendMavCommand(
-            component, static_cast<MAV_CMD>(command),
+            compId, static_cast<MAV_CMD>(command),
             showError,
             static_cast<float>(param1),
             static_cast<float>(param2),
@@ -1038,6 +1039,36 @@ public:
             static_cast<float>(param6),
             static_cast<float>(param7));
     }
+
+    /// Callback for sendMavCommandWithHandle
+    ///     @param resultHandleData     Opaque data passed in to sendMavCommand call
+    ///     @param commandResult        Ack result for command send
+    ///     @param noReponseFromVehicle true: The vehicle did not responsed to the COMMAND_LONG message
+    typedef void (*MavCmdResultHandler)(void* resultHandlerData, int compId, MAV_RESULT commandResult, bool noResponsefromVehicle);
+
+    /// Sends the command and calls the callback with the result
+    ///     @param resultHandler    Callback for result, nullptr for no callback
+    ///     @param resultHandleData Opaque data passed through callback
+    void sendMavCommandWithHandler(MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+
+    typedef enum {
+        RequestMessageNoFailure,
+        RequestMessageFailureCommandError,
+        RequestMessageFailureCommandNotAcked,
+        RequestMessageFailureMessageNotReceived,
+    } RequestMessageResultHandlerFailureCode_t;
+
+    /// Callback for requestMessage
+    ///     @param resultHandlerData    Opaque data which was passed in to requestMessage call
+    ///     @param commandResult        Result from ack to REQUEST_MESSAGE command
+    ///     @param noResponseToCommand  true: Vehicle never acked the REQUEST_MESSAGE command
+    ///     @param messageNotReceived   true: Vehicle never sent requested message
+    typedef void (*RequestMessageResultHandler)(void* resultHandlerData, MAV_RESULT commandResult, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+
+    /// Requests the vehicle to send the specified message. Will retry a number of times.
+    ///     @param resultHandler Callback for result
+    ///     @param resultHandlerData Opaque data passed back to resultHandler
+    void requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f);
 
     int firmwareMajorVersion() const { return _firmwareMajorVersion; }
     int firmwareMinorVersion() const { return _firmwareMinorVersion; }
@@ -1414,23 +1445,6 @@ private:
 
     QGCCameraManager* _cameras;
 
-    typedef struct {
-        int                 component;
-        bool                commandInt; // true: use COMMAND_INT, false: use COMMAND_LONG
-        MAV_CMD             command;
-        MAV_FRAME           frame;
-        double              rgParam[7];
-        bool                showError;
-        MavCmdResultHandler resultHandler;
-    } MavCommandQueueEntry_t;
-
-    QList<MavCommandQueueEntry_t>   _mavCommandQueue;
-    QTimer                          _mavCommandAckTimer;
-    int                             _mavCommandRetryCount;
-    static const int                _mavCommandMaxRetryCount =              3;
-    static const int                _mavCommandAckTimeoutMSecs =            3000;
-    static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
-
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
     static const int    _prearmErrorTimeoutMSecs = 35 * 1000;   ///< Take away prearm error after 35 seconds
@@ -1445,8 +1459,11 @@ private:
     GeoFenceManager*    _geoFenceManager;
     RallyPointManager*  _rallyPointManager;
 
-    ParameterManager*       _parameterManager   = nullptr;
-    VehicleObjectAvoidance* _objectAvoidance    = nullptr;
+    ParameterManager*               _parameterManager               = nullptr;
+    MAVLinkFTPManager*              _mavlinkFTPManager              = nullptr;
+    ComponentInformationManager*    _componentInformationManager    = nullptr;
+    InitialConnectStateMachine*     _initialConnectStateMachine     = nullptr;
+    VehicleObjectAvoidance*         _objectAvoidance                = nullptr;
 
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceVehicleManager* _airspaceVehicleManager;
@@ -1544,53 +1561,58 @@ private:
     QMap<uint8_t /* compId */, ChunkedStatusTextInfo_t> _chunkedStatusTextInfoMap;
     QTimer _chunkedStatusTextTimer;
 
-    ComponentInformation _componentInformation;
-
-    typedef void (*WaitForMavlinkMessageTimeoutHandler)(Vehicle* vehicle);
-    typedef void (*WaitForMavlinkMessageMessageHandler)(Vehicle* vehicle, const mavlink_message_t& message);
+    /// Callback for waitForMavlinkMessage
+    ///     @param resultHandleData     Opaque data passed in to waitForMavlinkMessage call
+    ///     @param commandResult        Ack result for command send
+    ///     @param noReponseFromVehicle true: The vehicle did not responsed to the COMMAND_LONG message
+    typedef void (*WaitForMavlinkMessageResultHandler)(void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
     /// Waits for the specified msecs for the message to be received. Calls timeoutHandler if not received.
-    void _waitForMavlinkMessage     (int messageId, int timeoutMsecs, WaitForMavlinkMessageMessageHandler messageHandler, WaitForMavlinkMessageTimeoutHandler timeoutHandler);
+    void _waitForMavlinkMessage     (WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs);
     void _waitForMavlinkMessageClear(void);
 
-    int                                 _waitForMavlinkMessageId =              0;
-    int                                 _waitForMavlinkMessageTimeoutMsecs =    0;
+    int                                 _waitForMavlinkMessageId                = 0;
+    bool                                _waitForMavlinkMessageTimeoutActive     = false;
+    int                                 _waitForMavlinkMessageTimeoutMsecs      = 0;
     QElapsedTimer                       _waitForMavlinkMessageElapsed;
-    WaitForMavlinkMessageTimeoutHandler _waitForMavlinkMessageTimeoutHandler =  nullptr;
-    WaitForMavlinkMessageMessageHandler _waitForMavlinkMessageMessageHandler =  nullptr;
+    WaitForMavlinkMessageResultHandler  _waitForMavlinkMessageResultHandler     = nullptr;
+    void*                               _waitForMavlinkMessageResultHandlerData = nullptr;
 
-    // Initial connection state machine
-    typedef void (*StateFn)(Vehicle* vehicle);
-    static const int _cInitialConnectStateEntries = 9;
-    static const StateFn _rgInitialConnectStates[_cInitialConnectStateEntries];
-    int _currentInitialConnectState = -1;
-    void _advanceInitialConnectStateMachine(void);
-    void _advanceInitialConnectStateMachine(StateFn stateFn);
+    void _waitForMavlinkMessageMessageReceived(const mavlink_message_t& message);
 
-    static void _stateRequestCapabilities           (Vehicle* vehicle);
-    static void _stateRequestProtocolVersion        (Vehicle* vehicle);
-    static void _stateRequestCompInfoVersion        (Vehicle* vehicle);
-    static void _stateRequestCompInfoParam          (Vehicle* vehicle);
-    static void _stateRequestParameters             (Vehicle* vehicle);
-    static void _stateRequestMission                (Vehicle* vehicle);
-    static void _stateRequestGeoFence               (Vehicle* vehicle);
-    static void _stateRequestRallyPoints            (Vehicle* vehicle);
-    static void _stateSignalInitialConnectComplete  (Vehicle* vehicle);
+    // requestMessage handling
+    typedef struct {
+        bool                        commandAckReceived  = false;    // We keep track of the ack/message being received since the order in which this will come in is random
+        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        int                         msgId               = 0;
+        int                         compId              = 0;
+        RequestMessageResultHandler resultHandler       = nullptr;
+        void*                       resultHandlerData   = nullptr;
+    } RequestMessageInfo_t;
 
-    static void _capabilitiesCmdResultHandler   (Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle);
-    static void _protocolVersionCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle);
-    static void _compInfoVersionCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle);
-    static void _compInfoParamCmdResultHandler  (Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle);
+    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, bool noResponsefromVehicle);
+    static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
-    static void _waitForAutopilotVersionMessageHandler  (Vehicle* vehicle, const mavlink_message_t& message);
-    static void _waitForProtocolVersionMessageHandler   (Vehicle* vehicle, const mavlink_message_t& message);
-    static void _waitForCompInfoVersionMessageHandler   (Vehicle* vehicle, const mavlink_message_t& message);
-    static void _waitForCompInfoParamMessageHandler     (Vehicle* vehicle, const mavlink_message_t& message);
+    typedef struct {
+        int                 compId;
+        bool                commandInt;     // true: use COMMAND_INT, false: use COMMAND_LONG
+        MAV_CMD             command;
+        MAV_FRAME           frame;
+        float               rgParam[7];
+        bool                showError;
+        bool                requestMessage; // true: this is from a requestMessage call
+        MavCmdResultHandler resultHandler;
+        void*               resultHandlerData;
+    } MavCommandQueueEntry_t;
 
-    static void _waitForAutopilotVersionTimeoutHandler  (Vehicle* vehicle);
-    static void _waitForProtocolVersionTimeoutHandler   (Vehicle* vehicle);
-    static void _waitForCompInfoVersionTimeoutHandler   (Vehicle* vehicle);
-    static void _waitForCompInfoParamTimeoutHandler     (Vehicle* vehicle);
+    QQueue<MavCommandQueueEntry_t>  _mavCommandQueue;
+    QTimer                          _mavCommandAckTimer;
+    int                             _mavCommandRetryCount;
+    static const int                _mavCommandMaxRetryCount =              3;
+    static const int                _mavCommandAckTimeoutMSecs =            3000;
+    static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
+
+    void _sendMavCommandWorker(bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
 
     // FactGroup facts
 
@@ -1666,4 +1688,6 @@ private:
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickEnabledSettingsKey;
+
+    friend class InitialConnectStateMachine;
 };

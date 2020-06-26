@@ -135,6 +135,13 @@ void MockLinkFileServer::_openCommand(uint8_t senderSystemId, uint8_t senderComp
             break;
         }
     }
+
+    if (!found) {
+        if (path == "/version.json") {
+            qDebug() << "Requesting version json";
+        }
+    }
+
     if (!found) {
         _sendNak(senderSystemId, senderComponentId, FileManager::kErrFail, outgoingSeqNumber, FileManager::kCmdOpenFileRO);
         return;

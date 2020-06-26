@@ -60,3 +60,23 @@ bool QGCMAVLink::isVTOL(MAV_TYPE mavType)
         return false;
     }
 }
+
+QString  QGCMAVLink::mavResultToString(MAV_RESULT result)
+{
+    switch (result) {
+    case MAV_RESULT_ACCEPTED:
+        return QStringLiteral("MAV_RESULT_ACCEPTED");
+    case MAV_RESULT_TEMPORARILY_REJECTED:
+        return QStringLiteral("MAV_RESULT_TEMPORARILY_REJECTED");
+    case MAV_RESULT_DENIED:
+        return QStringLiteral("MAV_RESULT_DENIED");
+    case MAV_RESULT_UNSUPPORTED:
+        return QStringLiteral("MAV_RESULT_UNSUPPORTED");
+    case MAV_RESULT_FAILED:
+        return QStringLiteral("MAV_RESULT_FAILED");
+    case MAV_RESULT_IN_PROGRESS:
+        return QStringLiteral("MAV_RESULT_IN_PROGRESS");
+    default:
+        return QStringLiteral("MAV_RESULT unknown %1").arg(result);
+    }
+}

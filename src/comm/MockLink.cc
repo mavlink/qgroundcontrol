@@ -367,18 +367,18 @@ void MockLink::_sendSysStatus(void)
     }
     mavlink_message_t   msg;
     mavlink_msg_sys_status_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        static_cast<uint8_t>(_mavlinkChannel),
-        &msg,
-        0,          // onboard_control_sensors_present
-        0,          // onboard_control_sensors_enabled
-        0,          // onboard_control_sensors_health
-        250,        // load
-        4200 * 4,   // voltage_battery
-        8000,       // current_battery
-        _batteryRemaining, // battery_remaining
-        0,0,0,0,0,0);
+                _vehicleSystemId,
+                _vehicleComponentId,
+                static_cast<uint8_t>(_mavlinkChannel),
+                &msg,
+                0,          // onboard_control_sensors_present
+                0,          // onboard_control_sensors_enabled
+                0,          // onboard_control_sensors_health
+                250,        // load
+                4200 * 4,   // voltage_battery
+                8000,       // current_battery
+                _batteryRemaining, // battery_remaining
+                0,0,0,0,0,0);
     respondWithMavlinkMessage(msg);
 }
 
@@ -429,7 +429,6 @@ void MockLink::_writeBytesQueued(const QByteArray bytes)
 
         _handleIncomingMavlinkBytes((uint8_t *)bytes.constData(), bytes.count());
     }
-
 }
 
 /// @brief Handle incoming bytes which are meant to be interpreted by the NuttX shell
@@ -909,6 +908,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
     static bool firstCmdUser3 = true;
     static bool firstCmdUser4 = true;
 
+    bool noAck = false;
     mavlink_command_long_t request;
     uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
@@ -935,19 +935,22 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         _respondWithAutopilotVersion();
         break;
     case MAV_CMD_REQUEST_MESSAGE:
-        if (request.param1 == MAVLINK_MSG_ID_COMPONENT_INFORMATION && _handleRequestMessage(request)) {
+        if (_handleRequestMessage(request, noAck)) {
+            if (noAck) {
+                return;
+            }
             commandResult = MAV_RESULT_ACCEPTED;
         }
         break;
-    case MAV_CMD_USER_1:
+    case MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED:
         // Test command which always returns MAV_RESULT_ACCEPTED
         commandResult = MAV_RESULT_ACCEPTED;
         break;
-    case MAV_CMD_USER_2:
+    case MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED:
         // Test command which always returns MAV_RESULT_FAILED
         commandResult = MAV_RESULT_FAILED;
         break;
-    case MAV_CMD_USER_3:
+    case MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED:
         // Test command which returns MAV_RESULT_ACCEPTED on second attempt
         if (firstCmdUser3) {
             firstCmdUser3 = false;
@@ -957,7 +960,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
             commandResult = MAV_RESULT_ACCEPTED;
         }
         break;
-    case MAV_CMD_USER_4:
+    case MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED:
         // Test command which returns MAV_RESULT_FAILED on second attempt
         if (firstCmdUser4) {
             firstCmdUser4 = false;
@@ -967,7 +970,7 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
             commandResult = MAV_RESULT_FAILED;
         }
         break;
-    case MAV_CMD_USER_5:
+    case MAV_CMD_MOCKLINK_NO_RESPONSE:
         // No response
         return;
         break;
@@ -980,6 +983,22 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
                                       &commandAck,
                                       request.command,
                                       commandResult,
+                                      0,    // progress
+                                      0,    // result_param2
+                                      0,    // target_system
+                                      0);   // target_component
+    respondWithMavlinkMessage(commandAck);
+}
+
+void MockLink::sendUnexpectedCommandAck(MAV_CMD command, MAV_RESULT ackResult)
+{
+    mavlink_message_t commandAck;
+    mavlink_msg_command_ack_pack_chan(_vehicleSystemId,
+                                      _vehicleComponentId,
+                                      _mavlinkChannel,
+                                      &commandAck,
+                                      command,
+                                      ackResult,
                                       0,    // progress
                                       0,    // result_param2
                                       0,    // target_system
@@ -1147,7 +1166,7 @@ void MockLink::_sendStatusTextMessages(void)
     { MAV_SEVERITY_NOTICE,      "Status text notice" },
     { MAV_SEVERITY_INFO,        "Status text info" },
     { MAV_SEVERITY_DEBUG,       "Status text debug" },
-    };
+};
 
     mavlink_message_t msg;
 
@@ -1274,6 +1293,11 @@ MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::Fa
 MockLink*  MockLink::startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
     return _startMockLinkWorker("Generic MockLink", MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
+}
+
+MockLink* MockLink::startNoInitialConnectMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+{
+    return _startMockLinkWorker("No Initial Connect MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_GENERIC, sendStatusText, failureMode);
 }
 
 MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
@@ -1461,18 +1485,44 @@ void MockLink::_sendADSBVehicles(void)
     respondWithMavlinkMessage(responseMsg);
 }
 
-bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request)
+bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool& noAck)
 {
-    if (request.param1 != MAVLINK_MSG_ID_COMPONENT_INFORMATION) {
-        return false;
-    }
+    noAck = false;
 
-    switch (static_cast<int>(request.param2)) {
-    case COMP_METADATA_TYPE_VERSION:
-        _sendVersionMetaData();
-        return true;
-    case COMP_METADATA_TYPE_PARAMETER:
-        _sendParameterMetaData();
+    switch ((int)request.param1) {
+    case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
+        switch (static_cast<int>(request.param2)) {
+        case COMP_METADATA_TYPE_VERSION:
+            _sendVersionMetaData();
+            return true;
+        case COMP_METADATA_TYPE_PARAMETER:
+            _sendParameterMetaData();
+            return true;
+        }
+        break;
+    case MAVLINK_MSG_ID_DEBUG:
+        switch (_requestMessageFailureMode) {
+        case FailRequestMessageNone:
+            break;
+        case FailRequestMessageCommandAcceptedMsgNotSent:
+            return true;
+        case FailRequestMessageCommandUnsupported:
+            return false;
+        case FailRequestMessageCommandNoResponse:
+            noAck = true;
+            return true;
+        case FailRequestMessageCommandAcceptedSecondAttempMsgSent:
+            return true;
+        }
+    {
+        mavlink_message_t   responseMsg;
+        mavlink_msg_debug_pack_chan(_vehicleSystemId,
+                                    _vehicleComponentId,
+                                    _mavlinkChannel,
+                                    &responseMsg,
+                                    0, 0, 0);
+        respondWithMavlinkMessage(responseMsg);
+    }
         return true;
     }
 
