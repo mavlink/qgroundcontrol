@@ -45,6 +45,9 @@
 #include "QGCGeo.h"
 #include "TerrainProtocolHandler.h"
 #include "ParameterManager.h"
+#include "MAVLinkFTPManager.h"
+#include "ComponentInformationManager.h"
+#include "InitialConnectStateMachine.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -92,18 +95,6 @@ const char* Vehicle::_clockFactGroupName =              "clock";
 const char* Vehicle::_distanceSensorFactGroupName =     "distanceSensor";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
-
-const Vehicle::StateFn Vehicle::_rgInitialConnectStates[_cInitialConnectStateEntries] = {
-    Vehicle::_stateRequestCapabilities,
-    Vehicle::_stateRequestProtocolVersion,
-    Vehicle::_stateRequestCompInfoVersion,
-    Vehicle::_stateRequestCompInfoParam,
-    Vehicle::_stateRequestParameters,
-    Vehicle::_stateRequestMission,
-    Vehicle::_stateRequestGeoFence,
-    Vehicle::_stateRequestRallyPoints,
-    Vehicle::_stateSignalInitialConnectComplete
-};
 
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
@@ -199,7 +190,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
     , _pidTuningWaitingForRates(false)
-    , _componentInformation(this)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -277,7 +267,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
     connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageReceived,      this, &Vehicle::_handletextMessageReceived);
 
-    _advanceInitialConnectStateMachine();
+    // MAV_TYPE_GENERIC is used by unit test for creating a vehicle which doesn't do the connect sequence. This
+    // way we can test the methods that are used within the connect sequence.
+    if (!qgcApp()->runningUnitTests() || _vehicleType != MAV_TYPE_GENERIC) {
+        _initialConnectStateMachine->start();
+    }
 
     _firmwarePlugin->initializeVehicle(this);
     for(auto& factName: factNames()) {
@@ -386,7 +380,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
     , _pidTuningWaitingForRates(false)
-    , _componentInformation(this)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -471,6 +464,10 @@ void Vehicle::_commonInit()
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
+
+    _componentInformationManager    = new ComponentInformationManager(this);
+    _initialConnectStateMachine     = new InitialConnectStateMachine(this);
+    _mavlinkFTPManager              = new MAVLinkFTPManager(this);
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
@@ -719,17 +716,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         return;
     }
 
-    if (_waitForMavlinkMessageId != 0) {
-        if (_waitForMavlinkMessageId == message.msgid) {
-            WaitForMavlinkMessageMessageHandler handler = _waitForMavlinkMessageMessageHandler;
-            _waitForMavlinkMessageClear();
-            (*handler)(this, message);
-        } else if (_waitForMavlinkMessageElapsed.elapsed() > _waitForMavlinkMessageTimeoutMsecs) {
-            WaitForMavlinkMessageTimeoutHandler handler = _waitForMavlinkMessageTimeoutHandler;
-            _waitForMavlinkMessageClear();
-            (*handler)(this);
-        }
-    }
+    _waitForMavlinkMessageMessageReceived(message);
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
@@ -2573,13 +2560,13 @@ void Vehicle::_updateFlightTime()
 void Vehicle::_firstMissionLoadComplete()
 {
     disconnect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_firstMissionLoadComplete);
-    _advanceInitialConnectStateMachine();
+    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_firstGeoFenceLoadComplete()
 {
     disconnect(_geoFenceManager, &GeoFenceManager::loadComplete,   this, &Vehicle::_firstGeoFenceLoadComplete);
-    _advanceInitialConnectStateMachine();
+    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_firstRallyPointLoadComplete()
@@ -2587,19 +2574,21 @@ void Vehicle::_firstRallyPointLoadComplete()
     disconnect(_rallyPointManager, &RallyPointManager::loadComplete,   this, &Vehicle::_firstRallyPointLoadComplete);
     _initialPlanRequestComplete = true;
     emit initialPlanRequestCompleteChanged(true);
-    _advanceInitialConnectStateMachine();
+    _initialConnectStateMachine->advance();
 }
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
     qDebug() << "_parametersReady" << parametersReady;
+
     // Try to set current unix time to the vehicle
     _sendQGCTimeToVehicle();
     // Send time twice, more likely to get to the vehicle on a noisy link
     _sendQGCTimeToVehicle();
     if (parametersReady) {
+        disconnect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
         _setupAutoDisarmSignalling();
-        _advanceInitialConnectStateMachine();
+        _initialConnectStateMachine->advance();
     }
 }
 
@@ -3151,75 +3140,66 @@ void Vehicle::setCurrentMissionSequence(int seq)
     sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
-void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::sendMavCommand(int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-    MavCommandQueueEntry_t entry;
-
-    entry.commandInt = false;
-    entry.component = component;
-    entry.command = command;
-    entry.showError = showError;
-    entry.resultHandler = nullptr;
-    entry.rgParam[0] = static_cast<double>(param1);
-    entry.rgParam[1] = static_cast<double>(param2);
-    entry.rgParam[2] = static_cast<double>(param3);
-    entry.rgParam[3] = static_cast<double>(param4);
-    entry.rgParam[4] = static_cast<double>(param5);
-    entry.rgParam[5] = static_cast<double>(param6);
-    entry.rgParam[6] = static_cast<double>(param7);
-
-    _mavCommandQueue.append(entry);
-
-    if (_mavCommandQueue.count() == 1) {
-        _mavCommandRetryCount = 0;
-        _sendMavCommandAgain();
-    }
+    _sendMavCommandWorker(false,            // commandInt
+                          false,            // requestMessage
+                          showError,
+                          nullptr,          // resultHandler
+                          nullptr,          // resultHandlerData
+                          compId,
+                          command,
+                          MAV_FRAME_GLOBAL,
+                          param1, param2, param3, param4, param5, param6, param7);
 }
 
-void Vehicle::sendMavCommand(int component, MAV_CMD command, MavCmdResultHandler resultHandler, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Vehicle::sendMavCommandWithHandler(MavCmdResultHandler resultHandler, void *resultHandlerData, int compId, MAV_CMD command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-    MavCommandQueueEntry_t entry;
-
-    entry.commandInt = false;
-    entry.component = component;
-    entry.command = command;
-    entry.showError = false;
-    entry.resultHandler = resultHandler;
-    entry.rgParam[0] = static_cast<double>(param1);
-    entry.rgParam[1] = static_cast<double>(param2);
-    entry.rgParam[2] = static_cast<double>(param3);
-    entry.rgParam[3] = static_cast<double>(param4);
-    entry.rgParam[4] = static_cast<double>(param5);
-    entry.rgParam[5] = static_cast<double>(param6);
-    entry.rgParam[6] = static_cast<double>(param7);
-
-    _mavCommandQueue.append(entry);
-
-    if (_mavCommandQueue.count() == 1) {
-        _mavCommandRetryCount = 0;
-        _sendMavCommandAgain();
-    }
+    _sendMavCommandWorker(false,                // commandInt
+                          false,                // requestMessage,
+                          false,                // showError
+                          resultHandler,
+                          resultHandlerData,
+                          compId,
+                          command,
+                          MAV_FRAME_GLOBAL,
+                          param1, param2, param3, param4, param5, param6, param7);
 }
 
-void Vehicle::sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+void Vehicle::sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    _sendMavCommandWorker(true,         // commandInt
+                          false,        // requestMessage
+                          showError,
+                          nullptr,      // resultHandler
+                          nullptr,      // resultHandlerData
+                          compId,
+                          command,
+                          frame,
+                          param1, param2, param3, param4, param5, param6, param7);
+}
+
+void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
     MavCommandQueueEntry_t entry;
 
-    entry.commandInt = true;
-    entry.component = component;
-    entry.command = command;
-    entry.frame = frame;
-    entry.showError = showError;
-    entry.resultHandler = nullptr;
-    entry.rgParam[0] = static_cast<double>(param1);
-    entry.rgParam[1] = static_cast<double>(param2);
-    entry.rgParam[2] = static_cast<double>(param3);
-    entry.rgParam[3] = static_cast<double>(param4);
-    entry.rgParam[4] = param5;
-    entry.rgParam[5] = param6;
-    entry.rgParam[6] = static_cast<double>(param7);
+    entry.commandInt        = commandInt;
+    entry.compId            = compId;
+    entry.command           = command;
+    entry.frame             = frame;
+    entry.showError         = showError;
+    entry.requestMessage    = requestMessage;
+    entry.resultHandler     = resultHandler;
+    entry.resultHandlerData = resultHandlerData;
+    entry.rgParam[0]        = param1;
+    entry.rgParam[1]        = param2;
+    entry.rgParam[2]        = param3;
+    entry.rgParam[3]        = param4;
+    entry.rgParam[4]        = param5;
+    entry.rgParam[5]        = param6;
+    entry.rgParam[6]        = param7;
 
-    _mavCommandQueue.append(entry);
+    _mavCommandQueue.enqueue(entry);
 
     if (_mavCommandQueue.count() == 1) {
         _mavCommandRetryCount = 0;
@@ -3229,23 +3209,25 @@ void Vehicle::sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame,
 
 void Vehicle::_sendMavCommandAgain()
 {
-    if(!_mavCommandQueue.size()) {
+    if(_mavCommandQueue.isEmpty()) {
         qWarning() << "Command resend with no commands in queue";
         _mavCommandAckTimer.stop();
         return;
     }
 
-    MavCommandQueueEntry_t& queuedCommand = _mavCommandQueue[0];
+    MavCommandQueueEntry_t& queuedCommand   = _mavCommandQueue[0];
+    QString                 rawCommandName  =_toolbox->missionCommandTree()->rawName(queuedCommand.command);
 
-    if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
-        emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
+    if (_mavCommandRetryCount++ >= _mavCommandMaxRetryCount) {
         if (queuedCommand.resultHandler) {
-            (*queuedCommand.resultHandler)(this, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
+            (*queuedCommand.resultHandler)(queuedCommand.resultHandlerData, queuedCommand.compId, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
+        } else {
+            emit mavCommandResult(_id, queuedCommand.compId, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
         }
         if (queuedCommand.showError) {
-            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(_toolbox->missionCommandTree()->friendlyName(queuedCommand.command)));
+            qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
         }
-        _mavCommandQueue.removeFirst();
+        _mavCommandQueue.dequeue();
         _sendNextQueuedMavCommand();
         return;
     }
@@ -3256,12 +3238,17 @@ void Vehicle::_sendMavCommandAgain()
             // we aren't really sure whether they are correct or not.
             return;
         }
-        qCDebug(VehicleLog) << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << queuedCommand.command << _mavCommandRetryCount;
+        qCDebug(VehicleLog) << "Vehicle::_sendMavCommandAgain retrying command:_mavCommandRetryCount" << rawCommandName << _mavCommandRetryCount;
     }
 
     _mavCommandAckTimer.start();
 
-    qCDebug(VehicleLog) << "_sendMavCommandAgain sending" << queuedCommand.command;
+    if (queuedCommand.requestMessage) {
+        RequestMessageInfo_t* pInfo = static_cast<RequestMessageInfo_t*>(queuedCommand.resultHandlerData);
+        _waitForMavlinkMessage(_requestMessageWaitForMessageResultHandler, pInfo, pInfo->msgId, 1000);
+    }
+
+    qCDebug(VehicleLog) << "_sendMavCommandAgain sending name:retry" << rawCommandName << _mavCommandRetryCount;
 
     mavlink_message_t       msg;
     if (queuedCommand.commandInt) {
@@ -3269,7 +3256,7 @@ void Vehicle::_sendMavCommandAgain()
 
         memset(&cmd, 0, sizeof(cmd));
         cmd.target_system =     _id;
-        cmd.target_component =  queuedCommand.component;
+        cmd.target_component =  queuedCommand.compId;
         cmd.command =           queuedCommand.command;
         cmd.frame =             queuedCommand.frame;
         cmd.param1 =            queuedCommand.rgParam[0];
@@ -3289,7 +3276,7 @@ void Vehicle::_sendMavCommandAgain()
 
         memset(&cmd, 0, sizeof(cmd));
         cmd.target_system =     _id;
-        cmd.target_component =  queuedCommand.component;
+        cmd.target_component =  queuedCommand.compId;
         cmd.command =           queuedCommand.command;
         cmd.confirmation =      0;
         cmd.param1 =            queuedCommand.rgParam[0];
@@ -3311,7 +3298,7 @@ void Vehicle::_sendMavCommandAgain()
 
 void Vehicle::_sendNextQueuedMavCommand()
 {
-    if (_mavCommandQueue.count()) {
+    if (!_mavCommandQueue.isEmpty()) {
         _mavCommandRetryCount = 0;
         _sendMavCommandAgain();
     }
@@ -3322,7 +3309,8 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_command_ack_t ack;
     mavlink_msg_command_ack_decode(&message, &ack);
 
-    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(ack.command).arg(ack.result);
+    QString rawCommandName  =_toolbox->missionCommandTree()->rawName(static_cast<MAV_CMD>(ack.command));
+    qCDebug(VehicleLog) << QStringLiteral("_handleCommandAck command(%1) result(%2)").arg(rawCommandName).arg(QGCMAVLink::mavResultToString(static_cast<MAV_RESULT>(ack.result)));
 
     if (ack.command == MAV_CMD_DO_SET_ROI_LOCATION) {
         if (ack.result == MAV_RESULT_ACCEPTED) {
@@ -3344,41 +3332,147 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 #endif
 
-    bool                showError =     false;
-    MavCmdResultHandler resultHandler = nullptr;
-    if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
+    if (!_mavCommandQueue.isEmpty() && ack.command == _mavCommandQueue.head().command) {
+        bool                    sendNextCommand = false;
+        MavCommandQueueEntry_t  commandEntry = _mavCommandQueue.head();
         _mavCommandAckTimer.stop();
-        showError = _mavCommandQueue[0].showError;
-        resultHandler = _mavCommandQueue[0].resultHandler;
-        _mavCommandQueue.removeFirst();
-        _sendNextQueuedMavCommand();
-    }
 
-    emit mavCommandResult(_id, message.compid, ack.command, ack.result, false /* noResponsefromVehicle */);
-    if (resultHandler) {
-        (*resultHandler)(this, static_cast<MAV_RESULT>(ack.result), false /* noResponsefromVehicle */);
-    }
+        if (commandEntry.requestMessage) {
+            RequestMessageInfo_t* pInfo = static_cast<RequestMessageInfo_t*>(commandEntry.resultHandlerData);
+            pInfo->commandAckReceived = true;
+            if (ack.result == MAV_RESULT_ACCEPTED) {
+                if (pInfo->messageReceived) {
+                    delete pInfo;
+                    sendNextCommand = true;
+                } else {
+                    // We dont set sendNextCommand because we wait for the message wait to complete before sending next message
+                    _waitForMavlinkMessageTimeoutActive = true;
+                    _waitForMavlinkMessageElapsed.restart();
+                }
+            } else {
+                sendNextCommand = true;
+                if (pInfo->messageReceived) {
+                    qCWarning(VehicleLog) << "Internal Error: _handleCommandAck for requestMessage with result failure, but message already received";
+                } else {
+                    _waitForMavlinkMessageClear();
+                    (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), false /* noResponsefromVehicle */);
+                }
+            }
+        } else {
+            if (commandEntry.resultHandler) {
+                (*commandEntry.resultHandler)(commandEntry.resultHandlerData, message.compid, static_cast<MAV_RESULT>(ack.result), false /* noResponsefromVehicle */);
+            } else {
+                if (commandEntry.showError) {
+                    switch (ack.result) {
+                    case MAV_RESULT_TEMPORARILY_REJECTED:
+                        qgcApp()->showAppMessage(tr("%1 command temporarily rejected").arg(rawCommandName));
+                        break;
+                    case MAV_RESULT_DENIED:
+                        qgcApp()->showAppMessage(tr("%1 command denied").arg(rawCommandName));
+                        break;
+                    case MAV_RESULT_UNSUPPORTED:
+                        qgcApp()->showAppMessage(tr("%1 command not supported").arg(rawCommandName));
+                        break;
+                    case MAV_RESULT_FAILED:
+                        qgcApp()->showAppMessage(tr("%1 command failed").arg(rawCommandName));
+                        break;
+                    default:
+                        // Do nothing
+                        break;
+                    }
+                }
+                emit mavCommandResult(_id, message.compid, ack.command, ack.result, false /* noResponsefromVehicle */);
+            }
+            sendNextCommand = true;
+        }
 
-    if (showError) {
-        QString commandName = _toolbox->missionCommandTree()->friendlyName(static_cast<MAV_CMD>(ack.command));
-        switch (ack.result) {
-        case MAV_RESULT_TEMPORARILY_REJECTED:
-            qgcApp()->showAppMessage(tr("%1 command temporarily rejected").arg(commandName));
-            break;
-        case MAV_RESULT_DENIED:
-            qgcApp()->showAppMessage(tr("%1 command denied").arg(commandName));
-            break;
-        case MAV_RESULT_UNSUPPORTED:
-            qgcApp()->showAppMessage(tr("%1 command not supported").arg(commandName));
-            break;
-        case MAV_RESULT_FAILED:
-            qgcApp()->showAppMessage(tr("%1 command failed").arg(commandName));
-            break;
-        default:
-            // Do nothing
-            break;
+        _mavCommandQueue.dequeue();
+        if (sendNextCommand) {
+            _sendNextQueuedMavCommand();
+        }
+    } else {
+        qCDebug(VehicleLog) << "_handleCommandAck Ack not in queue" << rawCommandName;
+    }
+}
+
+void Vehicle::_waitForMavlinkMessage(WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs)
+{
+    qCDebug(VehicleLog) << "_waitForMavlinkMessage msg:timeout" << messageId << timeoutMsecs;
+    _waitForMavlinkMessageResultHandler     = resultHandler;
+    _waitForMavlinkMessageResultHandlerData = resultHandlerData;
+    _waitForMavlinkMessageId                = messageId;
+    _waitForMavlinkMessageTimeoutActive     = false;
+    _waitForMavlinkMessageTimeoutMsecs      = timeoutMsecs;
+}
+
+void Vehicle::_waitForMavlinkMessageClear(void)
+{
+    qCDebug(VehicleLog) << "_waitForMavlinkMessageClear";
+    _waitForMavlinkMessageResultHandler     = nullptr;
+    _waitForMavlinkMessageResultHandlerData = nullptr;
+    _waitForMavlinkMessageId                = 0;
+}
+
+void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
+{
+    if (_waitForMavlinkMessageId != 0) {
+        if (_waitForMavlinkMessageId == message.msgid) {
+            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
+            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
+            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message received" << _waitForMavlinkMessageId;
+            _waitForMavlinkMessageClear();
+            (*resultHandler)(resultHandlerData, false /* noResponseFromVehicle */, message);
+        } else if (_waitForMavlinkMessageTimeoutActive && _waitForMavlinkMessageElapsed.elapsed() > _waitForMavlinkMessageTimeoutMsecs) {
+            WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
+            void*                               resultHandlerData   = _waitForMavlinkMessageResultHandlerData;
+            qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived message timed out" << _waitForMavlinkMessageId;
+            _waitForMavlinkMessageClear();
+            (*resultHandler)(resultHandlerData, true /* noResponseFromVehicle */, message);
         }
     }
+}
+
+void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* resultHandlerData, int compId, int messageId, float param1, float param2, float param3, float param4, float param5)
+{
+    RequestMessageInfo_t* pInfo = new RequestMessageInfo_t;
+
+    pInfo->msgId                = messageId;
+    pInfo->compId               = compId;
+    pInfo->resultHandler        = resultHandler;
+    pInfo->resultHandlerData    = resultHandlerData;
+
+    _sendMavCommandWorker(false,                                    // commandInt
+                          true,                                     // requestMessage,
+                          false,                                    // showError
+                          _requestMessageCmdResultHandler,
+                          pInfo,
+                          compId,
+                          MAV_CMD_REQUEST_MESSAGE,
+                          MAV_FRAME_GLOBAL,
+                          messageId,
+                          param1, param2, param3, param4, param5, 0);
+}
+
+void Vehicle::_requestMessageCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, bool noResponsefromVehicle)
+{
+    RequestMessageInfo_t* pInfo   = static_cast<RequestMessageInfo_t*>(resultHandlerData);
+
+    pInfo->commandAckReceived = true;
+    if (result != MAV_RESULT_ACCEPTED) {
+        mavlink_message_t message;
+        (*pInfo->resultHandler)(pInfo->resultHandlerData, result,  noResponsefromVehicle ? RequestMessageFailureCommandNotAcked : RequestMessageFailureCommandError, message);
+    }
+    if (pInfo->messageReceived) {
+        delete pInfo;
+    }
+}
+
+void Vehicle::_requestMessageWaitForMessageResultHandler(void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message)
+{
+    RequestMessageInfo_t* pInfo = static_cast<RequestMessageInfo_t*>(resultHandlerData);
+
+    pInfo->messageReceived = true;
+    (*pInfo->resultHandler)(pInfo->resultHandlerData, noResponsefromVehicle ? MAV_RESULT_FAILED : MAV_RESULT_ACCEPTED, noResponsefromVehicle ? RequestMessageFailureMessageNotReceived : RequestMessageNoFailure, message);
 }
 
 void Vehicle::setPrearmError(const QString& prearmError)
@@ -4233,328 +4327,6 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 static_cast<int16_t>(newYawCommand),
                 buttons);
     sendMessageOnLinkThreadSafe(priorityLink(), message);
-}
-
-void Vehicle::_advanceInitialConnectStateMachine(void)
-{
-    _currentInitialConnectState++;
-    if (_currentInitialConnectState < _cInitialConnectStateEntries) {
-        (*_rgInitialConnectStates[_currentInitialConnectState])(this);
-    }
-}
-
-void Vehicle::_advanceInitialConnectStateMachine(StateFn stateFn)
-{
-    for (int i=0; i<_cInitialConnectStateEntries; i++) {
-        if (_rgInitialConnectStates[i] == stateFn) {
-            _currentInitialConnectState = i;
-            (*_rgInitialConnectStates[_currentInitialConnectState])(this);
-            break;
-        }
-    }
-}
-
-void Vehicle::_waitForMavlinkMessage(int messageId, int timeoutMsecs, WaitForMavlinkMessageMessageHandler messageHandler, WaitForMavlinkMessageTimeoutHandler timeoutHandler)
-{
-    _waitForMavlinkMessageId =              messageId;
-    _waitForMavlinkMessageTimeoutMsecs =    timeoutMsecs;
-    _waitForMavlinkMessageTimeoutHandler =  timeoutHandler;
-    _waitForMavlinkMessageMessageHandler =  messageHandler;
-    _waitForMavlinkMessageElapsed.restart();
-}
-
-void Vehicle::_waitForMavlinkMessageClear(void)
-{
-    _waitForMavlinkMessageId =              0;
-    _waitForMavlinkMessageTimeoutMsecs =    0;
-    _waitForMavlinkMessageTimeoutHandler =  nullptr;
-    _waitForMavlinkMessageMessageHandler =  nullptr;
-}
-
-void Vehicle::_stateRequestCapabilities(Vehicle* vehicle)
-{
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(VehicleLog) << "Skipping capability request due to link type";
-        vehicle->_advanceInitialConnectStateMachine();
-    } else {
-        qCDebug(VehicleLog) << "Requesting capabilities";
-        vehicle->_waitForMavlinkMessage(MAVLINK_MSG_ID_AUTOPILOT_VERSION, 1000, _waitForAutopilotVersionMessageHandler, _waitForAutopilotVersionTimeoutHandler);
-        vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                                MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
-                                _capabilitiesCmdResultHandler,
-                                1);                                      // Request firmware version
-    }
-}
-
-void Vehicle::_capabilitiesCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle)
-{
-    if (result != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(VehicleLog) << "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES no response from vehicle";
-        } else {
-            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES error(%1)").arg(result);
-        }
-        qCDebug(VehicleLog) << "Setting no capabilities";
-        vehicle->_setCapabilities(0);
-        vehicle->_waitForMavlinkMessageClear();
-        vehicle->_advanceInitialConnectStateMachine(_stateRequestProtocolVersion);
-    }
-}
-
-void Vehicle::_waitForAutopilotVersionMessageHandler(Vehicle* vehicle, const mavlink_message_t& message)
-{
-    qCDebug(VehicleLog) << "AUTOPILOT_VERSION received";
-
-    mavlink_autopilot_version_t autopilotVersion;
-    mavlink_msg_autopilot_version_decode(&message, &autopilotVersion);
-
-    vehicle->_uid = (quint64)autopilotVersion.uid;
-    emit vehicle->vehicleUIDChanged();
-
-    if (autopilotVersion.flight_sw_version != 0) {
-        int majorVersion, minorVersion, patchVersion;
-        FIRMWARE_VERSION_TYPE versionType;
-
-        majorVersion = (autopilotVersion.flight_sw_version >> (8*3)) & 0xFF;
-        minorVersion = (autopilotVersion.flight_sw_version >> (8*2)) & 0xFF;
-        patchVersion = (autopilotVersion.flight_sw_version >> (8*1)) & 0xFF;
-        versionType = (FIRMWARE_VERSION_TYPE)((autopilotVersion.flight_sw_version >> (8*0)) & 0xFF);
-        vehicle->setFirmwareVersion(majorVersion, minorVersion, patchVersion, versionType);
-    }
-
-    if (vehicle->px4Firmware()) {
-        // Lower 3 bytes is custom version
-        int majorVersion, minorVersion, patchVersion;
-        majorVersion = autopilotVersion.flight_custom_version[2];
-        minorVersion = autopilotVersion.flight_custom_version[1];
-        patchVersion = autopilotVersion.flight_custom_version[0];
-        vehicle->setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
-
-        // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
-        vehicle->_gitHash = "";
-        for (int i = 7; i >= 0; i--) {
-            vehicle->_gitHash.append(QString("%1").arg(autopilotVersion.flight_custom_version[i], 2, 16, QChar('0')));
-        }
-    } else {
-        // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
-        char nullStr[9];
-        strncpy(nullStr, (char*)autopilotVersion.flight_custom_version, 8);
-        nullStr[8] = 0;
-        vehicle->_gitHash = nullStr;
-    }
-    if (vehicle->_toolbox->corePlugin()->options()->checkFirmwareVersion() && !vehicle->_checkLatestStableFWDone) {
-        vehicle->_checkLatestStableFWDone = true;
-        vehicle->_firmwarePlugin->checkIfIsLatestStable(vehicle);
-    }
-    emit vehicle->gitHashChanged(vehicle->_gitHash);
-
-    vehicle->_setCapabilities(autopilotVersion.capabilities);
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-void Vehicle::_waitForAutopilotVersionTimeoutHandler(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "AUTOPILOT_VERSION timeout";
-    qCDebug(VehicleLog) << "Setting no capabilities";
-    vehicle->_setCapabilities(0);
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-void Vehicle::_stateRequestProtocolVersion(Vehicle* vehicle)
-{
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(VehicleLog) << "Skipping protocol version request due to link type";
-        vehicle->_advanceInitialConnectStateMachine();
-    } else {
-        qCDebug(VehicleLog) << "Requesting protocol version";
-        vehicle->_waitForMavlinkMessage(MAVLINK_MSG_ID_PROTOCOL_VERSION, 1000, _waitForProtocolVersionMessageHandler, _waitForProtocolVersionTimeoutHandler);
-        vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                                MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                                _protocolVersionCmdResultHandler,
-                                1);                                      // Request protocol version
-    }
-}
-
-void Vehicle::_protocolVersionCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle)
-{
-    if (result != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(VehicleLog) << "MAV_CMD_REQUEST_PROTOCOL_VERSION no response from vehicle";
-        } else {
-            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_REQUEST_PROTOCOL_VERSION error(%1)").arg(result);
-        }
-
-        // _mavlinkProtocolRequestMaxProtoVersion stays at 0 to indicate unknown
-        vehicle->_mavlinkProtocolRequestComplete = true;
-        vehicle->_setMaxProtoVersionFromBothSources();
-        vehicle->_waitForMavlinkMessageClear();
-        vehicle->_advanceInitialConnectStateMachine(_stateRequestCompInfoVersion);
-    }
-}
-
-void Vehicle::_waitForProtocolVersionMessageHandler(Vehicle* vehicle, const mavlink_message_t& message)
-{
-    mavlink_protocol_version_t protoVersion;
-    mavlink_msg_protocol_version_decode(&message, &protoVersion);
-
-    qCDebug(VehicleLog) << "PROTOCOL_VERSION received mav_version:" << protoVersion.max_version;
-    vehicle->_mavlinkProtocolRequestMaxProtoVersion = protoVersion.max_version;
-    vehicle->_mavlinkProtocolRequestComplete = true;
-    vehicle->_setMaxProtoVersionFromBothSources();
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-
-void Vehicle::_waitForProtocolVersionTimeoutHandler(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "PROTOCOL_VERSION timeout";
-    // The PROTOCOL_VERSION message didn't make it through the pipe from Vehicle->QGC.
-    // This means although the vehicle may support mavlink 2, the pipe does not.
-    qCDebug(VehicleLog) << QStringLiteral("Setting _maxProtoVersion to 100 due to timeout on receiving PROTOCOL_VERSION message.");
-    vehicle->_mavlinkProtocolRequestMaxProtoVersion = 100;
-    vehicle->_mavlinkProtocolRequestComplete = true;
-    vehicle->_setMaxProtoVersionFromBothSources();
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-
-void Vehicle::_stateRequestCompInfoVersion(Vehicle* vehicle)
-{
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(VehicleLog) << "Skipping version component information request due to link type";
-        vehicle->_advanceInitialConnectStateMachine();
-    } else {
-        qCDebug(VehicleLog) << "Requesting version component information";
-        vehicle->_waitForMavlinkMessage(MAVLINK_MSG_ID_COMPONENT_INFORMATION, 1000, _waitForCompInfoVersionMessageHandler, _waitForCompInfoVersionTimeoutHandler);
-        vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                                MAV_CMD_REQUEST_MESSAGE,
-                                _compInfoVersionCmdResultHandler,
-                                MAVLINK_MSG_ID_COMPONENT_INFORMATION,
-                                COMP_METADATA_TYPE_VERSION);
-    }
-}
-
-void Vehicle::_compInfoVersionCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle)
-{
-    if (result != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(VehicleLog) << "MAV_CMD_REQUEST_MESSAGE COMPONENT_INFORMATION COMP_METADATA_TYPE_VERSION no response from vehicle";
-        } else {
-            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_REQUEST_MESSAGE COMPONENT_INFORMATION COMP_METADATA_TYPE_VERSION error(%1)").arg(result);
-        }
-        vehicle->_waitForMavlinkMessageClear();
-        vehicle->_advanceInitialConnectStateMachine(_stateRequestParameters);
-    }
-}
-
-void Vehicle::_waitForCompInfoVersionMessageHandler(Vehicle* vehicle, const mavlink_message_t& message)
-{
-    qCDebug(VehicleLog) << "COMPONENT_INFORMATION COMP_METADATA_TYPE_VERSION received";
-    vehicle->_componentInformation.componentInformationReceived(message);
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-void Vehicle::_waitForCompInfoVersionTimeoutHandler(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "COMPONENT_INFORMATION COMP_METADATA_TYPE_VERSION timeout";
-    vehicle->_advanceInitialConnectStateMachine(_stateRequestParameters);
-}
-
-void Vehicle::_stateRequestCompInfoParam(Vehicle* vehicle)
-{
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(VehicleLog) << "Skipping parameter component information request due to link type";
-        vehicle->_advanceInitialConnectStateMachine();
-    } else {
-        if (vehicle->_componentInformation.metaDataTypeSupported(COMP_METADATA_TYPE_PARAMETER)) {
-            qCDebug(VehicleLog) << "Requesting parameter component information";
-            vehicle->_waitForMavlinkMessage(MAVLINK_MSG_ID_COMPONENT_INFORMATION, 1000, _waitForCompInfoParamMessageHandler, _waitForCompInfoParamTimeoutHandler);
-            vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
-                                    MAV_CMD_REQUEST_MESSAGE,
-                                    _compInfoParamCmdResultHandler,
-                                    MAVLINK_MSG_ID_COMPONENT_INFORMATION,
-                                    COMP_METADATA_TYPE_PARAMETER);
-        } else {
-            qCDebug(VehicleLog) << "Skipping parameter component information request due to lack of support";
-            vehicle->_advanceInitialConnectStateMachine(_stateRequestParameters);
-        }
-    }
-}
-
-void Vehicle::_compInfoParamCmdResultHandler(Vehicle* vehicle, MAV_RESULT result, bool noResponsefromVehicle)
-{
-    if (result != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(VehicleLog) << "MAV_CMD_REQUEST_MESSAGE COMPONENT_INFORMATION COMP_METADATA_TYPE_PARAMETER no response from vehicle";
-        } else {
-            qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_REQUEST_MESSAGE COMPONENT_INFORMATION COMP_METADATA_TYPE_PARAMETER error(%1)").arg(result);
-        }
-        vehicle->_waitForMavlinkMessageClear();
-        vehicle->_advanceInitialConnectStateMachine(_stateRequestParameters);
-    }
-}
-
-void Vehicle::_waitForCompInfoParamMessageHandler(Vehicle* vehicle, const mavlink_message_t& message)
-{
-    qCDebug(VehicleLog) << "COMPONENT_INFORMATION COMP_METADATA_TYPE_PARAMETER received";
-    vehicle->_componentInformation.componentInformationReceived(message);
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-void Vehicle::_waitForCompInfoParamTimeoutHandler(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "COMPONENT_INFORMATION COMP_METADATA_TYPE_PARAMETER timeout";
-    vehicle->_advanceInitialConnectStateMachine();
-}
-
-void Vehicle::_stateRequestParameters(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "Requesting parameters";
-    vehicle->_parameterManager->refreshAllParameters();
-}
-
-void Vehicle::_stateRequestMission(Vehicle* vehicle)
-{
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(VehicleLog) << "Skipping first mission load request due to link type";
-        vehicle->_firstMissionLoadComplete();
-    } else {
-        qCDebug(VehicleLog) << "Requesting first mission load";
-        vehicle->_missionManager->loadFromVehicle();
-    }
-}
-
-void Vehicle::_stateRequestGeoFence(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "Requesting first geofence load";
-    if (vehicle->_geoFenceManager->supported()) {
-        vehicle->_geoFenceManager->loadFromVehicle();
-    } else {
-        qCDebug(VehicleLog) << "Geofence load skipped";
-        vehicle->_firstGeoFenceLoadComplete();
-    }
-}
-
-void Vehicle::_stateRequestRallyPoints(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "Requesting first rally point load";
-    if (vehicle->_rallyPointManager->supported()) {
-        vehicle->_rallyPointManager->loadFromVehicle();
-    } else {
-        qCDebug(VehicleLog) << "Rally Point load skipped";
-        vehicle->_firstRallyPointLoadComplete();
-    }
-}
-
-void Vehicle::_stateSignalInitialConnectComplete(Vehicle* vehicle)
-{
-    qCDebug(VehicleLog) << "Signalling initialConnectComplete";
-    emit vehicle->initialConnectComplete();
 }
 
 //-----------------------------------------------------------------------------

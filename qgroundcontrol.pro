@@ -498,7 +498,9 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/qgcunittest/TCPLinkTest.h \
         src/qgcunittest/TCPLoopBackServer.h \
         src/qgcunittest/UnitTest.h \
-        src/Vehicle/SendMavCommandTest.h \
+        src/Vehicle/RequestMessageTest.h \
+        src/Vehicle/SendMavCommandWithHandlerTest.h \
+        src/Vehicle/SendMavCommandWithSignallingTest.h \
         #src/qgcunittest/RadioConfigTest.h \
         #src/AnalyzeView/LogDownloadTest.h \
         #src/qgcunittest/FileDialogTest.h \
@@ -541,7 +543,9 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/qgcunittest/TCPLoopBackServer.cc \
         src/qgcunittest/UnitTest.cc \
         src/qgcunittest/UnitTestList.cc \
-        src/Vehicle/SendMavCommandTest.cc \
+        src/Vehicle/RequestMessageTest.cc \
+        src/Vehicle/SendMavCommandWithHandlerTest.cc \
+        src/Vehicle/SendMavCommandWithSignallingTest.cc \
         #src/qgcunittest/RadioConfigTest.cc \
         #src/AnalyzeView/LogDownloadTest.cc \
         #src/qgcunittest/FileDialogTest.cc \
@@ -674,10 +678,13 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
-    src/Vehicle/ComponentInformation.h \
+    src/Vehicle/ComponentInformationManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
+    src/Vehicle/InitialConnectStateMachine.h \
+    src/Vehicle/MAVLinkFTPManager.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/StateMachine.h \
     src/Vehicle/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
     src/Vehicle/TrajectoryPoints.h \
@@ -887,10 +894,13 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
-    src/Vehicle/ComponentInformation.cc \
+    src/Vehicle/ComponentInformationManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
+    src/Vehicle/InitialConnectStateMachine.cc \
+    src/Vehicle/MAVLinkFTPManager.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/StateMachine.cc \
     src/Vehicle/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
     src/Vehicle/TrajectoryPoints.cc \
