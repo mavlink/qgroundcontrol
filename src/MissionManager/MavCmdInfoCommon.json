@@ -1005,6 +1005,8 @@
         { "id": 500, "rawName": "MAV_CMD_START_RX_PAIR", "friendlyName": "Bind Spektrum receiver" },
         { "id": 510, "rawName": "MAV_CMD_GET_MESSAGE_INTERVAL", "friendlyName": "Get message interval" },
         { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },
+        { "id": 512, "rawName": "MAV_CMD_REQUEST_MESSAGE" },
+        { "id": 519, "rawName": "MAV_CMD_REQUEST_PROTOCOL_VERSION" },
         { "id": 520, "rawName": "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES", "friendlyName": "Get capabilities" },
         {
             "id":           530,
