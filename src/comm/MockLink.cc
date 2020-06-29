@@ -96,7 +96,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
     _mavCustomMode = px4_cm.data;
 
-    _fileServer = new MockLinkFileServer(_vehicleSystemId, _vehicleComponentId, this);
+    _fileServer = new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this);
     Q_CHECK_PTR(_fileServer);
 
     moveToThread(this);
@@ -1532,7 +1532,7 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
 void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN] =       "mavlinkftp://version.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json";
     char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
@@ -1551,7 +1551,7 @@ void MockLink::_sendVersionMetaData(void)
 void MockLink::_sendParameterMetaData(void)
 {
     mavlink_message_t   responseMsg;
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN] =       "mavlinkftp://parameter.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://parameter.json";
     char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
