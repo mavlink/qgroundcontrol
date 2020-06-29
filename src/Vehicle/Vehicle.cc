@@ -45,7 +45,7 @@
 #include "QGCGeo.h"
 #include "TerrainProtocolHandler.h"
 #include "ParameterManager.h"
-#include "MAVLinkFTPManager.h"
+#include "FTPManager.h"
 #include "ComponentInformationManager.h"
 #include "InitialConnectStateMachine.h"
 
@@ -465,9 +465,9 @@ void Vehicle::_commonInit()
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
-    _componentInformationManager    = new ComponentInformationManager(this);
-    _initialConnectStateMachine     = new InitialConnectStateMachine(this);
-    _mavlinkFTPManager              = new MAVLinkFTPManager(this);
+    _componentInformationManager    = new ComponentInformationManager   (this);
+    _initialConnectStateMachine     = new InitialConnectStateMachine    (this);
+    _ftpManager                     = new FTPManager                    (this);
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
@@ -715,6 +715,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     if (!_terrainProtocolHandler->mavlinkMessageReceived(message)) {
         return;
     }
+    _ftpManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
 

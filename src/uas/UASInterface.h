@@ -21,10 +21,6 @@
 
 #include "LinkInterface.h"
 
-#ifndef __mobile__
-class FileManager;
-#endif
-
 /**
  * @brief Interface for all robots.
  *
@@ -42,10 +38,6 @@ public:
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
-
-#ifndef __mobile__
-    virtual FileManager* getFileManager() = 0;
-#endif
 
     enum StartCalibrationType {
         StartCalibrationRadio,

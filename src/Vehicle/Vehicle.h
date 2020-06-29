@@ -44,7 +44,7 @@ class VehicleObjectAvoidance;
 class TrajectoryPoints;
 class TerrainProtocolHandler;
 class ComponentInformationManager;
-class MAVLinkFTPManager;
+class FTPManager;
 class InitialConnectStateMachine;
 
 #if defined(QGC_AIRMAP_ENABLED)
@@ -1009,7 +1009,7 @@ public:
 
     ParameterManager*       parameterManager    () { return _parameterManager; }
     ParameterManager*       parameterManager    () const { return _parameterManager; }
-    MAVLinkFTPManager*      mavlinkFTPManager   () { return _mavlinkFTPManager; }
+    FTPManager*             ftpManager          () { return _ftpManager; }
     VehicleObjectAvoidance* objectAvoidance     () { return _objectAvoidance; }
 
     static const int cMaxRcChannels = 18;
@@ -1460,7 +1460,7 @@ private:
     RallyPointManager*  _rallyPointManager;
 
     ParameterManager*               _parameterManager               = nullptr;
-    MAVLinkFTPManager*              _mavlinkFTPManager              = nullptr;
+    FTPManager*                     _ftpManager                     = nullptr;
     ComponentInformationManager*    _componentInformationManager    = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine     = nullptr;
     VehicleObjectAvoidance*         _objectAvoidance                = nullptr;

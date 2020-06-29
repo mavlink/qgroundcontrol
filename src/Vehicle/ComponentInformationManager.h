@@ -18,27 +18,44 @@ Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 class Vehicle;
 class ComponentInformationManager;
 
+typedef struct {
+    uint32_t        metadataUID;
+    QString         metadataURI;
+    uint32_t        translationUID;
+    QString         translationURI;
+} ComponentInformation_t;
+
 class RequestMetaDataTypeStateMachine : public StateMachine
 {
+    Q_OBJECT
+
 public:
     RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr);
 
-    void request(COMP_METADATA_TYPE type);
-    ComponentInformationManager* compMgr(void) { return _compMgr; }
-    QString typeToString(void);
+    void                            request                     (COMP_METADATA_TYPE type);
+    QString                         typeToString                (void);
+    ComponentInformationManager*    compMgr                     (void) { return _compMgr; }
+    void                            handleComponentInformation  (const mavlink_message_t& message);
 
     // Overrides from StateMachine
     int             stateCount      (void) const final;
     const StateFn*  rgStates        (void) const final;
     void            statesCompleted (void) const final;
 
+private slots:
+    void _downloadComplete(const QString& file, const QString& errorMsg);
+
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
     static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
     static void _stateRequestTranslationJson    (StateMachine* stateMachine);
+    static bool _uriIsFTP                       (const QString& uri);
+
 
     ComponentInformationManager*    _compMgr;
-    COMP_METADATA_TYPE              _type = COMP_METADATA_TYPE_VERSION;
+    COMP_METADATA_TYPE              _type               = COMP_METADATA_TYPE_VERSION;
+    bool                            _compInfoAvailable  = false;
+    ComponentInformation_t          _compInfo;
 
     static StateFn                  _rgStates[];
     static int                      _cStates;
@@ -46,30 +63,23 @@ private:
 
 class ComponentInformationManager : public StateMachine
 {
+    Q_OBJECT
+
 public:
     ComponentInformationManager(Vehicle* vehicle);
-
-    typedef struct {
-        uint32_t        metadataUID;
-        QString         metadataURI;
-        uint32_t        translationUID;
-        QString         translationURI;
-    } ComponentInformation_t;
 
     typedef void (*RequestAllCompleteFn)(void* requestAllCompleteFnData);
 
     void        requestAllComponentInformation  (RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
     Vehicle*    vehicle                         (void) { return _vehicle; }
 
-    // These methods should only be called by RequestMetaDataTypeStateMachine
-    void _componentInformationReceived(const mavlink_message_t& message);
-    void _stateRequestCompInfoComplete(void);
-
     // Overrides from StateMachine
     int             stateCount  (void) const final;
     const StateFn*  rgStates    (void) const final;
 
 private:
+    void _stateRequestCompInfoComplete(void);
+
     static void _stateRequestCompInfoVersion        (StateMachine* stateMachine);
     static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
     static void _stateRequestAllCompInfoComplete    (StateMachine* stateMachine);
@@ -86,4 +96,6 @@ private:
 
     static StateFn                  _rgStates[];
     static int                      _cStates;
+
+    friend class RequestMetaDataTypeStateMachine;
 };

@@ -9,8 +9,12 @@
 
 #pragma once
 
-class StateMachine
+#include <QObject>
+
+class StateMachine : public QObject
 {
+    Q_OBJECT
+
 public:
     typedef void (*StateFn)(StateMachine* stateMachine);
 
