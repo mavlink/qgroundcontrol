@@ -17,7 +17,7 @@ QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManage
 
 ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
     ComponentInformationManager::_stateRequestCompInfoVersion,
-    ComponentInformationManager::_stateRequestCompInfoParam,
+    //ComponentInformationManager::_stateRequestCompInfoParam,
     ComponentInformationManager::_stateRequestAllCompInfoComplete
 };
 
@@ -173,7 +173,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
 
 void RequestMetaDataTypeStateMachine::_downloadComplete(const QString& file, const QString& errorMsg)
 {
-    qDebug() << "RequestMetaDataTypeStateMachine::_downloadComplete" << file << errorMsg;
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadComplete" << file << errorMsg;
     advance();
 }
 
