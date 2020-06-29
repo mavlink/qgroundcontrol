@@ -331,6 +331,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
             }
         }
     }
+    newItem->setMissionFlightStatus(_missionFlightStatus);
     if (visualItemIndex == -1) {
         _visualItems->append(newItem);
     } else {
@@ -371,6 +372,7 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
             newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
         }
     }
+    newItem->setMissionFlightStatus(_missionFlightStatus);
     if (visualItemIndex == -1) {
         _visualItems->append(newItem);
     } else {
@@ -1884,9 +1886,8 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     connect(visualItem, &VisualMissionItem::specifiedVehicleYawChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::additionalTimeDelayChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
-    connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
-    visualItem->setMissionFlightStatus(_missionFlightStatus);
+    connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
     if (visualItem->isSimpleItem()) {
         // We need to track commandChanged on simple item since recalc has special handling for takeoff command
