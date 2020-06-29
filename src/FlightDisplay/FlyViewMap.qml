@@ -542,15 +542,9 @@ FlightMap {
             if (guidedActionsController.showGotoLocation && (guidedActionsController.showOrbit || guidedActionsController.showROI)) {
                 clickMenu.coord = clickCoord
                 clickMenu.popup()
-            } else if (guidedActionsController.showGotoLocation) {
-                gotoLocationItem.show(clickCoord)
-                guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickCoord)
-            } else if (guidedActionsController.showOrbit) {
-                orbitMapCircle.show(clickCoord)
-                guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickCoord)
-            }else if (guidedActionsController.showROI) {
-                orbitMapCircle.show(clickCoord)
-                guidedActionsController.confirmAction(guidedActionsController.actionROI, clickCoord)
+            }else if (guidedActionsController.showGotoLocation) {
+               gotoLocationItem.show(clickCoord)
+               guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickCoord)
             }
         }
     }
