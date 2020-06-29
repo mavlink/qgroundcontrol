@@ -20,10 +20,6 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 
-#ifndef __mobile__
-#include "FileManager.h"
-#endif
-
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
 class Vehicle;
@@ -109,10 +105,6 @@ public:
         temperature_var = var;
     }
 
-#ifndef __mobile__
-    friend class FileManager;
-#endif
-
 protected:
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
@@ -137,10 +129,6 @@ protected:
 
     /// POSITION
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
-
-#ifndef __mobile__
-    FileManager   fileManager;
-#endif
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -181,10 +169,6 @@ protected:
 public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
-
-#ifndef __mobile__
-    virtual FileManager* getFileManager() { return &fileManager; }
-#endif
 
     QImage getImage();
     void requestImage();
