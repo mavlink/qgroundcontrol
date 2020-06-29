@@ -16,7 +16,7 @@
 #include <QGeoCoordinate>
 
 #include "MockLinkMissionItemHandler.h"
-#include "MockLinkFileServer.h"
+#include "MockLinkFTP.h"
 #include "LinkManager.h"
 #include "QGCMAVLink.h"
 
@@ -119,7 +119,7 @@ public:
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t& msg);
 
-    MockLinkFileServer* getFileServer(void) { return _fileServer; }
+    MockLinkFTP* getFileServer(void) { return _fileServer; }
 
     // Overrides from LinkInterface
     QString getName             (void) const override { return _name; }
@@ -266,7 +266,7 @@ private:
     double              _vehicleLongitude;
     double              _vehicleAltitude;
 
-    MockLinkFileServer* _fileServer;
+    MockLinkFTP* _fileServer;
 
     bool _sendStatusText;
     bool _apmSendHomePositionOnEmptyList;

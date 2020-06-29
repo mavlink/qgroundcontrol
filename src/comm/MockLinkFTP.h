@@ -8,24 +8,22 @@
  ****************************************************************************/
 
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #pragma once
 
-#include "FileManager.h"
+#include "QGCMAVLink.h"
 
 #include <QStringList>
+#include <QFile>
 
 class MockLink;
 
 /// Mock implementation of Mavlink FTP server.
-class MockLinkFileServer : public QObject
+class MockLinkFTP : public QObject
 {
     Q_OBJECT
     
 public:
-    MockLinkFileServer(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink);
+    MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink* mockLink);
     
     /// @brief Sets the list of files returned by the List command. Prepend names with F or D
     /// to indicate (F)ile or (D)irectory.
@@ -54,7 +52,7 @@ public:
     
     /// Called to handle an FTP message
     void handleFTPMessage(const mavlink_message_t& message);
-    
+
     /// @brief Used to represent a single test case for download testing.
     struct FileTestCase {
         const char* filename;               ///< Filename to download
@@ -79,33 +77,34 @@ signals:
     void resetCommandReceived(void);
     
 private:
-	void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, FileManager::Opcode reqOpcode);
-    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, FileManager::ErrorCode error, uint16_t seqNumber, FileManager::Opcode reqOpcode);
-    void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, FileManager::Request* request, uint16_t seqNumber);
-    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
-    void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
-    void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
-	void _streamCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
-    void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, FileManager::Request* request, uint16_t seqNumber);
-    void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
-    uint16_t _nextSeqNumber(uint16_t seqNumber);
+    void        _sendAck                (uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void        _sendNak                (uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void        _sendNakErrno           (uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void        _sendResponse           (uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _listCommand            (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _openCommand            (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _readCommand            (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _burstReadCommand          (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _terminateCommand       (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
+    void        _resetCommand           (uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
+    uint16_t    _nextSeqNumber          (uint16_t seqNumber);
+    QString     _createTestCaseTempFile (const FileTestCase& testCase);
     
     /// if request is a string, this ensures it's null-terminated
-    static void ensureNullTemination(FileManager::Request* request);
+    static void ensureNullTemination(MavlinkFTP::Request* request);
 
     QStringList _fileList;  ///< List of files returned by List command
     
-    static const uint8_t    _sessionId;
-    uint8_t                 _readFileLength;    ///< Length of active file being read
-    ErrorMode_t             _errMode;           ///< Currently set error mode, as specified by setErrorMode
-    const uint8_t           _systemIdServer;    ///< System ID for server
-    const uint8_t           _componentIdServer; ///< Component ID for server
-    MockLink*               _mockLink;          ///< MockLink to communicate through
+    QFile                   _currentFile;
+    ErrorMode_t             _errMode            = errModeNone;  ///< Currently set error mode, as specified by setErrorMode
+    const uint8_t           _systemIdServer;                    ///< System ID for server
+    const uint8_t           _componentIdServer;                 ///< Component ID for server
+    MockLink*               _mockLink;                          ///< MockLink to communicate through
+    bool                    _lastReplyValid     = false;
+    uint16_t                _lastReplySequence  = 0;
+    mavlink_message_t       _lastReply;
+    bool                    _randomDropsEnabled = false;
 
-    bool _lastReplyValid;
-    uint16_t _lastReplySequence;
-    mavlink_message_t _lastReply;
-
-    bool _randomDropsEnabled;
+    static const uint8_t    _sessionId          = 1;    ///< We only support a single fixed session
 };
 
