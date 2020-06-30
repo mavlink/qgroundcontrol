@@ -185,7 +185,7 @@ protected:
     double          _complexDistance =  qQNaN();
     int             _cameraShots =      0;
     double          _timeBetweenShots = 0;
-    double          _cruiseSpeed =      0;
+    double          _vehicleSpeed =     5;
     CameraCalc      _cameraCalc;
     bool            _followTerrain =    false;
     double          _minAMSLAltitude =  qQNaN();
