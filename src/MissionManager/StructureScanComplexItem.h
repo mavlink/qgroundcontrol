@@ -151,7 +151,7 @@ private:
     double          _scanDistance;
     int             _cameraShots;
     double          _timeBetweenShots;
-    double          _cruiseSpeed;
+    double          _vehicleSpeed;
     CameraCalc      _cameraCalc;
 
 
