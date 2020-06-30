@@ -31,6 +31,10 @@
 #include "PositionManager.h"
 #endif
 
+#ifdef QT_DEBUG
+#include "MockLink.h"
+#endif
+
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 

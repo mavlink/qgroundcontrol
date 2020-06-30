@@ -119,7 +119,7 @@ public:
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t& msg);
 
-    MockLinkFTP* getFileServer(void) { return _fileServer; }
+    MockLinkFTP* mockLinkFTP(void) { return _mockLinkFTP; }
 
     // Overrides from LinkInterface
     QString getName             (void) const override { return _name; }
@@ -132,7 +132,7 @@ public:
     bool connect(void);
     bool disconnect(void);
 
-    /// Sets a failure mode for unit testing
+    /// Sets a failure mode for unit testingqgcm
     ///     @param failureMode Type of failure to simulate
     ///     @param failureAckResult Error to send if one the ack error modes
     void setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult);
@@ -266,7 +266,7 @@ private:
     double              _vehicleLongitude;
     double              _vehicleAltitude;
 
-    MockLinkFTP* _fileServer;
+    MockLinkFTP* _mockLinkFTP = nullptr;
 
     bool _sendStatusText;
     bool _apmSendHomePositionOnEmptyList;
