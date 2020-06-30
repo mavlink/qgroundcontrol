@@ -32,10 +32,6 @@
     #include "SerialLink.h"
 #endif
 
-#ifdef QT_DEBUG
-    #include "MockLink.h"
-#endif
-
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 

@@ -16,14 +16,18 @@ class FTPManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _performTestCases(void);
+    void _performSizeBasedTestCases (void);
+    void _performTestCases          (void);
+    void _testLostPackets           (void);
 
 private:
     typedef struct {
         const char* file;
     } TestCase_t;
 
-    void _testCaseWorker(const TestCase_t& testCase);
+    void _testCaseWorker            (const TestCase_t& testCase);
+    void _sizeTestCaseWorker        (int fileSize);
+    void _verifyFileSizeAndDelete   (const QString& filename, int expectedSize);
 
     static const TestCase_t _rgTestCases[];
 };

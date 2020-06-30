@@ -19,6 +19,7 @@
 #include "Vehicle.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
+#include "MockLink.h"
 
 #include <QRandomGenerator>
 #include <QTemporaryFile>
@@ -36,15 +37,15 @@ enum UnitTest::FileDialogType UnitTest::_fileDialogExpectedType = getOpenFileNam
 int UnitTest::_missedFileDialogCount = 0;
 
 UnitTest::UnitTest(void)
-    : _linkManager(nullptr)
-    , _mockLink(nullptr)
-    , _mainWindow(nullptr)
-    , _vehicle(nullptr)
-    , _expectMissedFileDialog(false)
-    , _expectMissedMessageBox(false)
-    , _unitTestRun(false)
-    , _initCalled(false)
-    , _cleanupCalled(false)
+    : _linkManager              (nullptr)
+    , _mockLink                 (nullptr)
+    , _mainWindow               (nullptr)
+    , _vehicle                  (nullptr)
+    , _expectMissedFileDialog   (false)
+    , _expectMissedMessageBox   (false)
+    , _unitTestRun              (false)
+    , _initCalled               (false)
+    , _cleanupCalled            (false)
 {    
 
 }
