@@ -935,7 +935,7 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
 
 void SimpleMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
-    // If user has not already set speed/gimbal, set defaults from previous items.
+    // If speed and/or gimbal are not specifically set on this item. Then use the flight status values as initial defaults should a user turn them on.
     VisualMissionItem::setMissionFlightStatus(missionFlightStatus);
     if (_speedSection->available() && !_speedSection->specifyFlightSpeed() && !qFuzzyCompare(_speedSection->flightSpeed()->rawValue().toDouble(), missionFlightStatus.vehicleSpeed)) {
         _speedSection->flightSpeed()->setRawValue(missionFlightStatus.vehicleSpeed);
