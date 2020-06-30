@@ -78,30 +78,30 @@ private slots:
 	void _ackTimeout(void);
 
 private:
-    bool    _sendOpcodeOnlyCmd     (MavlinkFTP::OpCode_t opcode, MavlinkFTP::OpCode_t newWaitState);
-    void    _setupAckTimeout       (void);
-    void    _clearAckTimeout       (void);
-    void    _emitErrorMessage      (const QString& msg);
-    void    _emitListEntry         (const QString& entry);
-    void    _sendRequestExpectAck  (MavlinkFTP::Request* request);
-    void    _sendRequestNoAck      (MavlinkFTP::Request* request);
-    void    _sendMessageOnLink     (LinkInterface* link, mavlink_message_t message);
-    void    _fillRequestWithString (MavlinkFTP::Request* request, const QString& str);
-    void    _handlOpenFileROAck    (MavlinkFTP::Request* ack);
-    void    _handleReadFileAck     (MavlinkFTP::Request* ack, bool burstReadFile);
-    void    _listAckResponse       (MavlinkFTP::Request* listAck);
-    void    _createAckResponse     (MavlinkFTP::Request* createAck);
-    void    _writeAckResponse      (MavlinkFTP::Request* writeAck);
-    void    _writeFileDatablock    (void);
-    void    _sendListCommand       (void);
-    void    _sendResetCommand      (void);
-    void    _downloadComplete      (const QString& errorMsg);
-    void    _uploadComplete        (const QString& errorMsg);
-    bool    _downloadWorker        (const QString& from, const QString& toDir, bool burstReadFile);
-    void    _requestMissingData    (void);
-    
+    bool    _sendOpcodeOnlyCmd      (MavlinkFTP::OpCode_t opcode, MavlinkFTP::OpCode_t newWaitState);
+    void    _emitErrorMessage       (const QString& msg);
+    void    _emitListEntry          (const QString& entry);
+    void    _sendRequestExpectAck   (MavlinkFTP::Request* request);
+    void    _sendRequestNoAck       (MavlinkFTP::Request* request);
+    void    _sendMessageOnLink      (LinkInterface* link, mavlink_message_t message);
+    void    _fillRequestWithString  (MavlinkFTP::Request* request, const QString& str);
+    void    _handlOpenFileROAck     (MavlinkFTP::Request* ack);
+    void    _handleReadFileAck      (MavlinkFTP::Request* ack);
+    void    _handleBurstReadFileAck (MavlinkFTP::Request* ack);
+    void    _listAckResponse        (MavlinkFTP::Request* listAck);
+    void    _createAckResponse      (MavlinkFTP::Request* createAck);
+    void    _writeAckResponse       (MavlinkFTP::Request* writeAck);
+    void    _writeFileDatablock     (void);
+    void    _sendListCommand        (void);
+    void    _sendResetCommand       (void);
+    void    _downloadComplete       (const QString& errorMsg);
+    void    _uploadComplete         (const QString& errorMsg);
+    bool    _downloadWorker         (const QString& from, const QString& toDir);
+    void    _requestMissingBurstData(void);
+    void    _handleAck              (MavlinkFTP::Request* ack);
+    void    _handleNak              (MavlinkFTP::Request* nak);
+
     MavlinkFTP::OpCode_t    _waitState              = MavlinkFTP::kCmdNone;     ///< Current operation of state machine
-    MavlinkFTP::OpCode_t    _openFileType           = MavlinkFTP::kCmdReadFile; ///< Type of read to use after open file succeeds
     QTimer                  _ackTimer;                                          ///< Used to signal a timeout waiting for an ack
     int                     _ackNumTries;                                       ///< current number of tries
     Vehicle*                _vehicle;
@@ -117,17 +117,34 @@ private:
     uint32_t    _writeFileSize;             ///< Size of file being uploaded
     QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
     
-    struct MissingData {
+    typedef struct  {
         uint32_t offset;
-        uint32_t size;
-    };
-    uint32_t            _requestedDownloadOffset;               ///< current download offset
-    QByteArray          _readFileAccumulator;                   ///< Holds file being downloaded
-    QDir                _readFileDownloadDir;                   ///< Directory to download file to
-    QString             _readFileDownloadFilename;              ///< Filename (no path) for download file
-    int                 _downloadFileSize;                      ///< Size of file being downloaded
+        uint32_t cBytes;
+    } MissingData_t;
 
-    static const int _ackTimerTimeoutMsecs = 5000;
-    static const int _ackTimerMaxRetries = 6;
+    struct {
+        uint32_t                expectedBurstOffset;    ///< offset which should be coming next in a burst sequence
+        uint32_t                expectedReadOffset;     ///< offset which should be coming from a hole filling read request
+        uint32_t                bytesWritten;
+        QList<MissingData_t>    missingData;
+        QDir                    toDir;                  ///< Directory to download file to
+        QString                 fileName;               ///< Filename (no path) for download file
+        uint32_t                fileSize;               ///< Size of file being downloaded
+        QFile                   file;
+        int                     retryCount;
+
+        void reset() {
+            expectedBurstOffset = 0;
+            expectedReadOffset  = 0;
+            bytesWritten        = 0;
+            retryCount          = 0;
+            missingData.clear();
+            file.close();
+        }
+    } _downloadState;
+
+    static const int _ackTimerTimeoutMsecs  = 1000;
+    static const int _ackTimerMaxRetries    = 6;
+    static const int _maxRetry              = 5;
 };
 

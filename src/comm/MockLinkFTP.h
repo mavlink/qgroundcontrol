@@ -51,23 +51,11 @@ public:
     static const size_t cFailureModes;
     
     /// Called to handle an FTP message
-    void handleFTPMessage(const mavlink_message_t& message);
+    void mavlinkMessageReceived(const mavlink_message_t& message);
 
-    /// @brief Used to represent a single test case for download testing.
-    struct FileTestCase {
-        const char* filename;               ///< Filename to download
-        uint8_t     length;                 ///< Length of file in bytes
-		int			packetCount;			///< Number of packets required for data
-        bool        exactFit;				///< true: last packet is exact fit, false: last packet is partially filled
-    };
-    
-    /// @brief The numbers of test cases in the rgFileTestCases array.
-    static const size_t cFileTestCases = 3;
-    
-    /// @brief The set of files supported by the mock server for testing purposes. Each one represents a different edge case for testing.
-    static const FileTestCase rgFileTestCases[cFileTestCases];
-    
     void enableRandromDrops(bool enable) { _randomDropsEnabled = enable; }
+
+    static const char* sizeFilenamePrefix;
 
 signals:
     /// You can connect to this signal to be notified when the server receives a Terminate command.
@@ -88,7 +76,7 @@ private:
     void        _terminateCommand       (uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber);
     void        _resetCommand           (uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
     uint16_t    _nextSeqNumber          (uint16_t seqNumber);
-    QString     _createTestCaseTempFile (const FileTestCase& testCase);
+    QString     _createTestTempFile     (int size);
     
     /// if request is a string, this ensures it's null-terminated
     static void ensureNullTemination(MavlinkFTP::Request* request);

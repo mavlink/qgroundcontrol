@@ -70,7 +70,6 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _vehicleLatitude                      (_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))     // Slight offset for each vehicle
     , _vehicleLongitude                     (_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleAltitude                      (_defaultVehicleAltitude)
-    , _fileServer                           (nullptr)
     , _sendStatusText                       (false)
     , _apmSendHomePositionOnEmptyList       (false)
     , _failureMode                          (MockConfiguration::FailNone)
@@ -96,8 +95,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     px4_cm.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
     _mavCustomMode = px4_cm.data;
 
-    _fileServer = new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this);
-    Q_CHECK_PTR(_fileServer);
+    _mockLinkFTP = new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this);
 
     moveToThread(this);
 
@@ -899,8 +897,7 @@ void MockLink::emitRemoteControlChannelRawChanged(int channel, uint16_t raw)
 
 void MockLink::_handleFTP(const mavlink_message_t& msg)
 {
-    Q_ASSERT(_fileServer);
-    _fileServer->handleFTPMessage(msg);
+    _mockLinkFTP->mavlinkMessageReceived(msg);
 }
 
 void MockLink::_handleCommandLong(const mavlink_message_t& msg)
