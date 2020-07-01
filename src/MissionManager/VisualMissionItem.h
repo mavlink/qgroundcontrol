@@ -271,8 +271,6 @@ protected:
     VisualMissionItem*      _parentItem =               nullptr;
     QGCGeoBoundingCube      _boundingCube;                          ///< The bounding "cube" of this element.
 
-    MissionController::MissionFlightStatus_t    _missionFlightStatus;
-
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
     QmlObjectListModel  _childItems;
 
