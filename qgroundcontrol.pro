@@ -644,6 +644,7 @@ HEADERS += \
     src/QGCQGeoCoordinate.h \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
+    src/QGCZlib.h \
     src/QmlControls/AppMessages.h \
     src/QmlControls/EditPositionDialogController.h \
     src/QmlControls/FlightPathSegment.h \
@@ -859,6 +860,7 @@ SOURCES += \
     src/QGCQGeoCoordinate.cc \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
+    src/QGCZlib.cc \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/EditPositionDialogController.cc \
     src/QmlControls/FlightPathSegment.cc \
