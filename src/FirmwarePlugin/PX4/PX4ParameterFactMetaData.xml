@@ -1227,6 +1227,14 @@ Set -1 to disable the check</short_desc>
       <unit>s</unit>
       <increment>0.1</increment>
     </parameter>
+    <parameter default="3.0" name="COM_LKDOWN_TKO" type="FLOAT">
+      <short_desc>Timeout for detecting a failure after takeoff</short_desc>
+      <long_desc>A non-zero, positive value specifies the timeframe in seconds within failure detector is allowed to put the vehicle into a lockdown state if attitude exceeds the limits defined in FD_FAIL_P and FD_FAIL_R. The check is not executed for flight modes that do support acrobatic maneuvers, e.g: Acro (MC/FW), Rattitude and Manual (FW). A zero or negative value means that the check is disabled.</long_desc>
+      <min>-1.0</min>
+      <max>5.0</max>
+      <unit>s</unit>
+      <decimal>3</decimal>
+    </parameter>
     <parameter default="0" name="COM_LOW_BAT_ACT" type="INT32">
       <short_desc>Battery failsafe mode</short_desc>
       <long_desc>Action the system takes at critical battery. See also BAT_CRIT_THR and BAT_EMERGEN_THR for definition of battery states.</long_desc>
@@ -3152,6 +3160,12 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
   </group>
   <group name="Failure Detector">
+    <parameter default="1" name="FD_ESCS_EN" type="INT32">
+      <short_desc>Enable checks on ESCs that report their arming state.
+If enabled, failure detector will verify that all the ESCs have successfully armed when the vehicle has transitioned to the armed state.
+Timeout for receiving an acknowledgement from the ESCs is 0.3s, if no feedback is received the failure detector will auto disarm the vehicle</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="FD_EXT_ATS_EN" type="INT32">
       <short_desc>Enable PWM input on AUX5 or MAIN5 (depending on board) for engaging failsafe from an external
 automatic trigger system (ATS)</short_desc>
