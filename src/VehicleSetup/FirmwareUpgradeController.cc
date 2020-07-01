@@ -15,7 +15,8 @@
 #include "QGCCorePlugin.h"
 #include "FirmwareUpgradeSettings.h"
 #include "SettingsManager.h"
-#include "QGCTemporaryFile.h"
+#include "QGCZlib.h"
+#include "JsonHelper.h"
 
 #include <QStandardPaths>
 #include <QRegularExpression>
@@ -892,67 +893,18 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
 
     qCDebug(FirmwareUpgradeLog) << "_ardupilotManifestDownloadFinished" << remoteFile << localFile;
 
-    QFile inputFile(localFile);
-    if (!inputFile.open(QIODevice::ReadOnly)) {
-        qCWarning(FirmwareUpgradeLog) << "Unable to open ArduPilot firmware manifest file for reading" << localFile << inputFile.errorString();
-        QFile::remove(localFile);
+    QString jsonFileName(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath("ArduPilot.Manifest.json"));
+    if (!QGCZlib::inflateGzipFile(localFile, jsonFileName)) {
+        qCWarning(FirmwareUpgradeLog) << "Inflate of compressed manifest failed" << localFile;
         return;
     }
 
-    int             ret;
-    const int       cBuffer = 1024 * 5;
-    unsigned char   inputBuffer[cBuffer];
-    unsigned char   outputBuffer[cBuffer];
-    z_stream        strm;
-    QByteArray      jsonBytes;
-
-    strm.zalloc     = nullptr;
-    strm.zfree      = nullptr;
-    strm.opaque     = nullptr;
-    strm.avail_in   = 0;
-    strm.next_in    = nullptr;
-
-    ret = inflateInit2(&strm, 16+MAX_WBITS);
-    if (ret != Z_OK) {
-        qCWarning(FirmwareUpgradeLog) << "inflateInit2 failed:" << ret;
-        QFile::remove(localFile);
+    QString         errorString;
+    QJsonDocument   doc;
+    if (JsonHelper::isJsonFile(jsonFileName, doc, errorString)) {
+        qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
         return;
     }
-
-    do {
-        strm.avail_in = static_cast<unsigned>(inputFile.read((char*)inputBuffer, cBuffer));
-        if (strm.avail_in == 0) {
-            break;
-        }
-        strm.next_in = inputBuffer;
-
-        do {
-            strm.avail_out  = cBuffer;
-            strm.next_out   = outputBuffer;
-
-            ret = inflate(&strm, Z_NO_FLUSH);
-            if (ret != Z_OK && ret != Z_STREAM_END) {
-                qCWarning(FirmwareUpgradeLog) << "Inflate failed" << ret;
-                inflateEnd(&strm);
-                QFile::remove(localFile);
-                return;
-            }
-
-            unsigned cBytesInflated = cBuffer - strm.avail_out;
-            jsonBytes.append((char*)outputBuffer, static_cast<int>(cBytesInflated));
-        } while (strm.avail_out == 0);
-    } while (ret != Z_STREAM_END);
-
-    inflateEnd(&strm);
-    inputFile.close();
-    QFile::remove(localFile);
-
-    QJsonParseError jsonParseError;
-    QJsonDocument doc = QJsonDocument::fromJson(jsonBytes, &jsonParseError);
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        qCWarning(FirmwareUpgradeLog) <<  "Unable to open ArduPilot manifest json document" << localFile << jsonParseError.errorString();
-    }
-
 
     QJsonObject json =          doc.object();
     QJsonArray  rgFirmware =    json[_manifestFirmwareJsonKey].toArray();
