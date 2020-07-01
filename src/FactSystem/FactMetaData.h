@@ -194,6 +194,7 @@ public:
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
+    static QString typeToString(ValueType_t type);
     static size_t typeToSize(ValueType_t type);
 
     static const char* qgcFileType;
@@ -341,6 +342,9 @@ private:
     static const BuiltInTranslation_s _rgBuiltInTranslations[];
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
+
+    static const char*          _rgKnownTypeStrings[];
+    static const ValueType_t    _rgKnownValueTypes[];
 
     static const char* _nameJsonKey;
     static const char* _decimalPlacesJsonKey;
