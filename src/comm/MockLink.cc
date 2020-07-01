@@ -1529,7 +1529,7 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
 void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json.gz";
     char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
