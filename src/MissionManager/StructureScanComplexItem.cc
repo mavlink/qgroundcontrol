@@ -474,8 +474,8 @@ int StructureScanComplexItem::cameraShots(void) const
 void StructureScanComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
-    if (!qFuzzyCompare(_cruiseSpeed, missionFlightStatus.vehicleSpeed)) {
-        _cruiseSpeed = missionFlightStatus.vehicleSpeed;
+    if (!qFuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
+        _vehicleSpeed = missionFlightStatus.vehicleSpeed;
         emit timeBetweenShotsChanged();
     }
 }
@@ -499,7 +499,7 @@ void StructureScanComplexItem::_polygonDirtyChanged(bool dirty)
 
 double StructureScanComplexItem::timeBetweenShots(void)
 {
-    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintSide()->rawValue().toDouble() / _cruiseSpeed;
+    return _vehicleSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintSide()->rawValue().toDouble() / _vehicleSpeed;
 }
 
 QGeoCoordinate StructureScanComplexItem::coordinate(void) const

@@ -353,7 +353,7 @@ CorridorScanComplexItem::ReadyForSaveState CorridorScanComplexItem::readyForSave
 
 double CorridorScanComplexItem::timeBetweenShots(void)
 {
-    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _cruiseSpeed;
+    return _vehicleSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _vehicleSpeed;
 }
 
 double CorridorScanComplexItem::_calcTransectSpacing(void) const

@@ -152,12 +152,11 @@ void VisualMissionItem::setAzimuth(double azimuth)
 
 void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
-    _missionFlightStatus = missionFlightStatus;
-    if (qIsNaN(_missionFlightStatus.gimbalYaw) && qIsNaN(_missionGimbalYaw)) {
+    if (qIsNaN(missionFlightStatus.gimbalYaw) && qIsNaN(_missionGimbalYaw)) {
         return;
     }
-    if (!qFuzzyCompare(_missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
-        _missionGimbalYaw = _missionFlightStatus.gimbalYaw;
+    if (!qFuzzyCompare(missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
+        _missionGimbalYaw = missionFlightStatus.gimbalYaw;
         emit missionGimbalYawChanged(_missionGimbalYaw);
     }
 }

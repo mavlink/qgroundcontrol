@@ -32,11 +32,6 @@ void CorridorScanComplexItemTest::init(void)
     int expectedTransectCount = _expectedTransectCount;
     QCOMPARE(_corridorItem->_transectCount(), expectedTransectCount);
 
-    // vehicleSpeed need for terrain calcs
-    MissionController::MissionFlightStatus_t missionFlightStatus;
-    missionFlightStatus.vehicleSpeed = 5;
-    _corridorItem->setMissionFlightStatus(missionFlightStatus);
-
     _corridorItem->setDirty(false);
 
     _rgCorridorPolygonSignals[corridorPolygonPathChangedIndex] = SIGNAL(pathChanged());

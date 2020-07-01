@@ -331,7 +331,6 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
             }
         }
     }
-    newItem->setMissionFlightStatus(_missionFlightStatus);
     if (visualItemIndex == -1) {
         _visualItems->append(newItem);
     } else {
@@ -372,7 +371,6 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
             newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
         }
     }
-    newItem->setMissionFlightStatus(_missionFlightStatus);
     if (visualItemIndex == -1) {
         _visualItems->append(newItem);
     } else {

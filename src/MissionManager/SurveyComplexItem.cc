@@ -1416,7 +1416,7 @@ void SurveyComplexItem::rotateEntryPoint(void)
 
 double SurveyComplexItem::timeBetweenShots(void)
 {
-    return _cruiseSpeed == 0 ? 0 : triggerDistance() / _cruiseSpeed;
+    return _vehicleSpeed == 0 ? 0 : triggerDistance() / _vehicleSpeed;
 }
 
 double SurveyComplexItem::additionalTimeDelay (void) const
