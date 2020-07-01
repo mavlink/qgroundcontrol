@@ -10,14 +10,21 @@
 #include "ComponentInformationManager.h"
 #include "Vehicle.h"
 #include "FTPManager.h"
+#include "QGCZlib.h"
+#include "JsonHelper.h"
 
 #include <QStandardPaths>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 
+const char* ComponentInformationManager::_jsonVersionKey                    = "version";
+const char* ComponentInformationManager::_jsonSupportedCompMetadataTypesKey = "supportedCompMetadataTypes";
+
 ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
     ComponentInformationManager::_stateRequestCompInfoVersion,
-    //ComponentInformationManager::_stateRequestCompInfoParam,
+    ComponentInformationManager::_stateRequestCompInfoParam,
     ComponentInformationManager::_stateRequestAllCompInfoComplete
 };
 
@@ -27,6 +34,7 @@ RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgSta
     RequestMetaDataTypeStateMachine::_stateRequestCompInfo,
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson,
     RequestMetaDataTypeStateMachine::_stateRequestTranslationJson,
+    RequestMetaDataTypeStateMachine::_stateRequestComplete,
 };
 
 int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataTypeStateMachine::_rgStates) / sizeof(RequestMetaDataTypeStateMachine::_rgStates[0]);
@@ -69,7 +77,12 @@ void ComponentInformationManager::_stateRequestCompInfoComplete(void)
 void ComponentInformationManager::_stateRequestCompInfoParam(StateMachine* stateMachine)
 {
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
-    compMgr->_requestTypeStateMachine.request(COMP_METADATA_TYPE_PARAMETER);
+
+    if (compMgr->_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER)) {
+        compMgr->_requestTypeStateMachine.request(COMP_METADATA_TYPE_PARAMETER);
+    } else {
+
+    }
 }
 
 void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine* stateMachine)
@@ -78,6 +91,41 @@ void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine*
     (*compMgr->_requestAllCompleteFn)(compMgr->_requestAllCompleteFnData);
     compMgr->_requestAllCompleteFn      = nullptr;
     compMgr->_requestAllCompleteFnData  = nullptr;
+}
+
+void ComponentInformationManager::_compInfoJsonAvailable(const QString& metadataJsonFileName, const QString& translationsJsonFileName)
+{
+    qCDebug(ComponentInformationManagerLog) << "_compInfoJsonAvailable metadata:translation" << metadataJsonFileName << translationsJsonFileName;
+
+    if (!metadataJsonFileName.isEmpty()) {
+        QString         errorString;
+        QJsonDocument   jsonDoc;
+        if (!JsonHelper::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
+            qCWarning(ComponentInformationManagerLog) << "Version json file read failed" << errorString;
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+
+        if (currentState() == _stateRequestCompInfoVersion) {
+            QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+                { _jsonVersionKey,                      QJsonValue::Double, true },
+                { _jsonSupportedCompMetadataTypesKey,   QJsonValue::Array,  true },
+            };
+            if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {
+                qCWarning(ComponentInformationManagerLog) << "Version json validation failed:" << errorString;
+                return;
+            }
+
+            for (const QJsonValue& idValue: jsonObj[_jsonSupportedCompMetadataTypesKey].toArray()) {
+                _supportedMetaDataTypes.append(static_cast<COMP_METADATA_TYPE>(idValue.toInt()));
+            }
+        }
+    }
+}
+
+bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type)
+{
+    return _supportedMetaDataTypes.contains(type);
 }
 
 RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr)
@@ -91,6 +139,8 @@ void RequestMetaDataTypeStateMachine::request(COMP_METADATA_TYPE type)
     _compInfoAvailable  = false;
     _type               = type;
     _stateIndex         = -1;
+    _jsonMetadataFileName.clear();
+    _jsonTranslationFileName.clear();
 
     start();
 }
@@ -171,9 +221,47 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
     }
 }
 
-void RequestMetaDataTypeStateMachine::_downloadComplete(const QString& file, const QString& errorMsg)
+QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName, const QString& inflatedFileName)
 {
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadComplete" << file << errorMsg;
+    QString outputFileName = fileName;
+
+    if (fileName.endsWith(".gz", Qt::CaseInsensitive)) {
+        outputFileName = (QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(inflatedFileName));
+        if (QGCZlib::inflateGzipFile(fileName, outputFileName)) {
+            QFile(fileName).remove();
+        } else {
+            qCWarning(ComponentInformationManagerLog) << "Inflate of compressed json failed" << inflatedFileName;
+            outputFileName.clear();
+        }
+    } else {
+        outputFileName = fileName;
+    }
+
+    return outputFileName;
+}
+
+void RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson(const QString& fileName, const QString& errorMsg)
+{
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson fileName:errorMsg" << fileName << errorMsg;
+
+    if (errorMsg.isEmpty()) {
+        _jsonMetadataFileName = _downloadCompleteJsonWorker(fileName, "metadata.json");
+    }
+
+    advance();
+}
+
+void RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson(const QString& fileName, const QString& errorMsg)
+{
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson fileName:errorMsg" << fileName << errorMsg;
+
+    QString jsonTranslationFileName;
+    if (errorMsg.isEmpty()) {
+        jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
+    }
+
+    _compMgr->_compInfoJsonAvailable(_jsonMetadataFileName, jsonTranslationFileName);
+
     advance();
 }
 
@@ -186,9 +274,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
     if (requestMachine->_compInfoAvailable) {
         ComponentInformation_t& compInfo = requestMachine->_compInfo;
 
-        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo.translationURI;
+        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo.metadataURI;
         if (_uriIsFTP(compInfo.metadataURI)) {
-            connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadComplete);
+            connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson);
             ftpManager->download(compInfo.metadataURI, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         } else {
             // FIXME: NYI
@@ -214,7 +302,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
         } else {
             qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo.translationURI;
             if (_uriIsFTP(compInfo.translationURI)) {
-                connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadComplete);
+                connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson);
                 ftpManager->download(compInfo.metadataURI, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
             } else {
                 // FIXME: NYI
@@ -225,6 +313,14 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
         qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. Component informatiom not available";
         requestMachine->advance();
     }
+}
+
+void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateMachine)
+{
+    RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
+
+    requestMachine->compMgr()->_compInfoJsonAvailable(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
+    requestMachine->advance();
 }
 
 bool RequestMetaDataTypeStateMachine::_uriIsFTP(const QString& uri)

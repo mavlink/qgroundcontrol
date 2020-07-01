@@ -29,6 +29,8 @@ public:
     /// Move the state machine to the specified state and call the state function
     void move(StateFn stateFn);
 
+    StateFn currentState(void);
+
     /// @return The number of states in the rgStates array
     virtual int stateCount(void) const = 0;
 
