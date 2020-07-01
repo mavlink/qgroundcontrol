@@ -43,12 +43,15 @@ public:
     void            statesCompleted (void) const final;
 
 private slots:
-    void _downloadComplete(const QString& file, const QString& errorMsg);
+    void    _downloadCompleteMetaDataJson   (const QString& file, const QString& errorMsg);
+    void    _downloadCompleteTranslationJson(const QString& file, const QString& errorMsg);
+    QString _downloadCompleteJsonWorker     (const QString& jsonFileName, const QString& inflatedFileName);
 
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
     static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
     static void _stateRequestTranslationJson    (StateMachine* stateMachine);
+    static void _stateRequestComplete           (StateMachine* stateMachine);
     static bool _uriIsFTP                       (const QString& uri);
 
 
@@ -56,6 +59,8 @@ private:
     COMP_METADATA_TYPE              _type               = COMP_METADATA_TYPE_VERSION;
     bool                            _compInfoAvailable  = false;
     ComponentInformation_t          _compInfo;
+    QString                         _jsonMetadataFileName;
+    QString                         _jsonTranslationFileName;
 
     static StateFn                  _rgStates[];
     static int                      _cStates;
@@ -78,7 +83,9 @@ public:
     const StateFn*  rgStates    (void) const final;
 
 private:
-    void _stateRequestCompInfoComplete(void);
+    void _stateRequestCompInfoComplete  (void);
+    void _compInfoJsonAvailable         (const QString& metadataJsonFileName, const QString& translationsJsonFileName);
+    bool _isCompTypeSupported           (COMP_METADATA_TYPE type);
 
     static void _stateRequestCompInfoVersion        (StateMachine* stateMachine);
     static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
@@ -96,6 +103,9 @@ private:
 
     static StateFn                  _rgStates[];
     static int                      _cStates;
+
+    static const char*              _jsonVersionKey;
+    static const char*              _jsonSupportedCompMetadataTypesKey;
 
     friend class RequestMetaDataTypeStateMachine;
 };
