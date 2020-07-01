@@ -109,6 +109,14 @@ SOURCES += \
     libs/shapelib/safileio.c
 
 #
+# [REQUIRED] zlib library
+Windows {
+    INCLUDEPATH +=  $$SOURCE_DIR/libszlib/windows/include
+    LIBS += -L$$SOURCE_DIR/libszlib/windows/lib
+}
+LIBS += -lz
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
@@ -143,7 +151,7 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
         exists(/usr/local/Cellar/openssl/1.0.2t/include) {
             INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
             LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
-            LIBS += -lcrypto -lz
+            LIBS += -lcrypto
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
             # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
@@ -153,7 +161,7 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
         #- Pairing is not supported on Windows
         DEFINES -= QGC_ENABLE_PAIRING
     } else {
-        LIBS += -lcrypto -lz
+        LIBS += -lcrypto
         AndroidBuild {
             contains(QT_ARCH, arm) {
                 LIBS += $$ANDROID_EXTRA_LIBS
