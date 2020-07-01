@@ -900,17 +900,17 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
     }
 
     int             ret;
-    int             cBuffer = 1024 * 5;
+    const int       cBuffer = 1024 * 5;
     unsigned char   inputBuffer[cBuffer];
     unsigned char   outputBuffer[cBuffer];
     z_stream        strm;
     QByteArray      jsonBytes;
 
-    strm.zalloc     = Z_NULL;
-    strm.zfree      = Z_NULL;
-    strm.opaque     = Z_NULL;
+    strm.zalloc     = nullptr;
+    strm.zfree      = nullptr;
+    strm.opaque     = nullptr;
     strm.avail_in   = 0;
-    strm.next_in    = Z_NULL;
+    strm.next_in    = nullptr;
 
     ret = inflateInit2(&strm, 16+MAX_WBITS);
     if (ret != Z_OK) {
@@ -920,7 +920,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
     }
 
     do {
-        strm.avail_in = inputFile.read((char *)inputBuffer, cBuffer);
+        strm.avail_in = static_cast<unsigned>(inputFile.read((char*)inputBuffer, cBuffer));
         if (strm.avail_in == 0) {
             break;
         }
@@ -939,7 +939,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
             }
 
             unsigned cBytesInflated = cBuffer - strm.avail_out;
-            jsonBytes.append((char*)outputBuffer, cBytesInflated);
+            jsonBytes.append((char*)outputBuffer, static_cast<int>(cBytesInflated));
         } while (strm.avail_out == 0);
     } while (ret != Z_STREAM_END);
 
