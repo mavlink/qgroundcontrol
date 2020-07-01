@@ -109,6 +109,10 @@ SOURCES += \
     libs/shapelib/safileio.c
 
 #
+# [REQUIRED] zlib library
+LIBS += -lz
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
