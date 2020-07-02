@@ -26,8 +26,8 @@ class FactGroup : public QObject
     Q_OBJECT
     
 public:
-    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = nullptr);
-    FactGroup(int updateRateMsecs, QObject* parent = nullptr);
+    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = nullptr, bool ignoreCamelCase = false);
+    FactGroup(int updateRateMsecs, QObject* parent = nullptr, bool ignoreCamelCase = false);
 
     Q_PROPERTY(QStringList factNames        READ factNames      CONSTANT)
     Q_PROPERTY(QStringList factGroupNames   READ factGroupNames CONSTANT)
@@ -63,6 +63,7 @@ private:
     void    _setupTimer (void);
     QString _camelCase  (const QString& text);
 
+    bool    _ignoreCamelCase = false;
     QTimer  _updateTimer;
 };
 
