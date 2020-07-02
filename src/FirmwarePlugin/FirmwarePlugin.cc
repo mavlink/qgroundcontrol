@@ -203,7 +203,7 @@ QString FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     }
 }
 
-void FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+void FirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
     Q_UNUSED(metaDataFile);
     majorVersion = -1;

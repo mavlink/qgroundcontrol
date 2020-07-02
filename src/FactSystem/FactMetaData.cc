@@ -131,6 +131,9 @@ const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
+const char* FactMetaData::_categoryJsonKey =            "category";
+const char* FactMetaData::_groupJsonKey =               "group";
+const char* FactMetaData::_volatileJsonKey =            "volatile";
 
 FactMetaData::FactMetaData(QObject* parent)
     : QObject               (parent)
@@ -1233,14 +1236,6 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
 {
     QString         errorString;
 
-    // Make sure we have the required keys
-    QStringList requiredKeys;
-    requiredKeys << _nameJsonKey << _typeJsonKey;
-    if (!JsonHelper::validateRequiredKeys(json, requiredKeys, errorString)) {
-        qWarning() << errorString;
-        return new FactMetaData(valueTypeUint32, metaDataParent);
-    }
-
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { _nameJsonKey,                 QJsonValue::String, true },
         { _typeJsonKey,                 QJsonValue::String, true },
@@ -1252,6 +1247,9 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         { _maxJsonKey,                  QJsonValue::Double, false },
         { _hasControlJsonKey,           QJsonValue::Bool,   false },
         { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
+        { _categoryJsonKey,             QJsonValue::String, false },
+        { _groupJsonKey,                QJsonValue::String, false },
+        { _volatileJsonKey,             QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         qWarning() << errorString;
@@ -1361,16 +1359,30 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         }
     }
 
+    bool hasControlJsonKey = true;
     if (json.contains(_hasControlJsonKey)) {
-        metaData->setHasControl(json[_hasControlJsonKey].toBool());
-    } else {
-        metaData->setHasControl(true);
+        hasControlJsonKey = json[_hasControlJsonKey].toBool();
+    }
+    metaData->setHasControl(hasControlJsonKey);
+
+    bool qgcRebootRequired = false;
+    if (json.contains(_qgcRebootRequiredJsonKey)) {
+        qgcRebootRequired = json[_qgcRebootRequiredJsonKey].toBool();
+    }
+    metaData->setQGCRebootRequired(qgcRebootRequired);
+
+    bool volatileValue = false;
+    if (json.contains(_volatileJsonKey)) {
+        volatileValue = json[_volatileJsonKey].toBool();
+    }
+    metaData->setVolatileValue(volatileValue);
+
+    if (json.contains(_groupJsonKey)) {
+        metaData->setGroup(json[_groupJsonKey].toString());
     }
 
-    if (json.contains(_qgcRebootRequiredJsonKey)) {
-        metaData->setQGCRebootRequired(json[_qgcRebootRequiredJsonKey].toBool());
-    } else {
-        metaData->setQGCRebootRequired(false);
+    if (json.contains(_categoryJsonKey)) {
+        metaData->setCategory(json[_categoryJsonKey].toString());
     }
 
     return metaData;

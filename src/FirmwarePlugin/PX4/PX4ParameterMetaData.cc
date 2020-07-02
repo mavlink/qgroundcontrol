@@ -25,7 +25,6 @@ static const char* kInvalidConverstion = "Internal Error: No support for string 
 QGC_LOGGING_CATEGORY(PX4ParameterMetaDataLog, "PX4ParameterMetaDataLog")
 
 PX4ParameterMetaData::PX4ParameterMetaData(void)
-    : _parameterMetaDataLoaded(false)
 {
 
 }
@@ -480,7 +479,7 @@ void PX4ParameterMetaData::_generateParameterJson()
         if (metaData->volatileValue()) {
             _jsonWriteLine(jsonFile, indentLevel, "\"volatile\": true,");
         }
-        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"decimalPlaces\": \"%1\",").arg(metaData->decimalPlaces()));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"decimalPlaces\": %1,").arg(metaData->decimalPlaces()));
         _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"minValue\": %1,").arg(metaData->rawMin().toDouble()));
         _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"maxValue\": %1").arg(metaData->rawMax().toDouble()));
         _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(++keyIndex == _mapParameterName2FactMetaData.keys().count() ? "" : ","));
@@ -491,24 +490,17 @@ void PX4ParameterMetaData::_generateParameterJson()
 }
 #endif
 
-FactMetaData* PX4ParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType)
+FactMetaData* PX4ParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
 {
     Q_UNUSED(vehicleType)
 
-    if (_mapParameterName2FactMetaData.contains(name)) {
-        return _mapParameterName2FactMetaData[name];
-    } else {
-        return nullptr;
+    if (!_mapParameterName2FactMetaData.contains(name)) {
+        qCDebug(PX4ParameterMetaDataLog) << "No metaData for " << name << "using generic metadata";
+        FactMetaData* metaData = new FactMetaData(type, this);
+        _mapParameterName2FactMetaData[name] = metaData;
     }
-}
 
-void PX4ParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
-{
-    Q_UNUSED(vehicleType)
-
-    if (_mapParameterName2FactMetaData.contains(fact->name())) {
-        fact->setMetaData(_mapParameterName2FactMetaData[fact->name()]);
-    }
+    return _mapParameterName2FactMetaData[name];
 }
 
 void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
