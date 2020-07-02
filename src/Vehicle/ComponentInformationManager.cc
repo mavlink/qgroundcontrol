@@ -12,15 +12,14 @@
 #include "FTPManager.h"
 #include "QGCZlib.h"
 #include "JsonHelper.h"
+#include "CompInfoVersion.h"
+#include "CompInfoParam.h"
 
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonArray>
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
-
-const char* ComponentInformationManager::_jsonVersionKey                    = "version";
-const char* ComponentInformationManager::_jsonSupportedCompMetadataTypesKey = "supportedCompMetadataTypes";
 
 ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
     ComponentInformationManager::_stateRequestCompInfoVersion,
@@ -43,7 +42,8 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)
 {
-
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION]    = new CompInfoVersion   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
 }
 
 int ComponentInformationManager::stateCount(void) const
@@ -66,7 +66,7 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
 void ComponentInformationManager::_stateRequestCompInfoVersion(StateMachine* stateMachine)
 {
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
-    compMgr->_requestTypeStateMachine.request(COMP_METADATA_TYPE_VERSION);
+    compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION]);
 }
 
 void ComponentInformationManager::_stateRequestCompInfoComplete(void)
@@ -79,9 +79,10 @@ void ComponentInformationManager::_stateRequestCompInfoParam(StateMachine* state
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
 
     if (compMgr->_isCompTypeSupported(COMP_METADATA_TYPE_PARAMETER)) {
-        compMgr->_requestTypeStateMachine.request(COMP_METADATA_TYPE_PARAMETER);
+        compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]);
     } else {
-
+        qCDebug(ComponentInformationManagerLog) << "_stateRequestCompInfoParam skipping, not supported";
+        compMgr->advance();
     }
 }
 
@@ -93,39 +94,19 @@ void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine*
     compMgr->_requestAllCompleteFnData  = nullptr;
 }
 
-void ComponentInformationManager::_compInfoJsonAvailable(const QString& metadataJsonFileName, const QString& translationsJsonFileName)
-{
-    qCDebug(ComponentInformationManagerLog) << "_compInfoJsonAvailable metadata:translation" << metadataJsonFileName << translationsJsonFileName;
-
-    if (!metadataJsonFileName.isEmpty()) {
-        QString         errorString;
-        QJsonDocument   jsonDoc;
-        if (!JsonHelper::isJsonFile(metadataJsonFileName, jsonDoc, errorString)) {
-            qCWarning(ComponentInformationManagerLog) << "Version json file read failed" << errorString;
-            return;
-        }
-        QJsonObject jsonObj = jsonDoc.object();
-
-        if (currentState() == _stateRequestCompInfoVersion) {
-            QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-                { _jsonVersionKey,                      QJsonValue::Double, true },
-                { _jsonSupportedCompMetadataTypesKey,   QJsonValue::Array,  true },
-            };
-            if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {
-                qCWarning(ComponentInformationManagerLog) << "Version json validation failed:" << errorString;
-                return;
-            }
-
-            for (const QJsonValue& idValue: jsonObj[_jsonSupportedCompMetadataTypesKey].toArray()) {
-                _supportedMetaDataTypes.append(static_cast<COMP_METADATA_TYPE>(idValue.toInt()));
-            }
-        }
-    }
-}
-
 bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type)
 {
-    return _supportedMetaDataTypes.contains(type);
+    return qobject_cast<CompInfoVersion*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION])->isMetaDataTypeSupported(type);
+}
+
+CompInfoParam* ComponentInformationManager::compInfoParam(uint8_t compId)
+{
+    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_PARAMETER) ? qobject_cast<CompInfoParam*>(_compInfoMap[compId][COMP_METADATA_TYPE_PARAMETER]) : nullptr;
+}
+
+CompInfoVersion* ComponentInformationManager::compInfoVersion(uint8_t compId)
+{
+    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_VERSION) ? qobject_cast<CompInfoVersion*>(_compInfoMap[compId][COMP_METADATA_TYPE_VERSION]) : nullptr;
 }
 
 RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr)
@@ -134,11 +115,10 @@ RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInform
 
 }
 
-void RequestMetaDataTypeStateMachine::request(COMP_METADATA_TYPE type)
+void RequestMetaDataTypeStateMachine::request(CompInfo* compInfo)
 {
-    _compInfoAvailable  = false;
-    _type               = type;
-    _stateIndex         = -1;
+    _compInfo   = compInfo;
+    _stateIndex = -1;
     _jsonMetadataFileName.clear();
     _jsonTranslationFileName.clear();
 
@@ -162,19 +142,7 @@ void RequestMetaDataTypeStateMachine::statesCompleted(void) const
 
 QString RequestMetaDataTypeStateMachine::typeToString(void)
 {
-    return _type == COMP_METADATA_TYPE_VERSION ? "COMP_METADATA_TYPE_VERSION" : "COMP_METADATA_TYPE_PARAM";
-}
-
-void RequestMetaDataTypeStateMachine::handleComponentInformation(const mavlink_message_t& message)
-{
-    mavlink_component_information_t componentInformation;
-    mavlink_msg_component_information_decode(&message, &componentInformation);
-
-    _compInfo.metadataUID       = componentInformation.metadata_uid;
-    _compInfo.metadataURI       = componentInformation.metadata_uri;
-    _compInfo.translationUID    = componentInformation.translation_uid;
-    _compInfo.translationURI    = componentInformation.translation_uri;
-    _compInfoAvailable          = true;
+    return _compInfo->type == COMP_METADATA_TYPE_VERSION ? "COMP_METADATA_TYPE_VERSION" : "COMP_METADATA_TYPE_PARAM";
 }
 
 static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message)
@@ -182,7 +150,7 @@ static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT res
     RequestMetaDataTypeStateMachine* requestMachine = static_cast<RequestMetaDataTypeStateMachine*>(resultHandlerData);
 
     if (result == MAV_RESULT_ACCEPTED) {
-        requestMachine->handleComponentInformation(message);
+        requestMachine->compInfo()->setMessage(message);
     } else {
         switch (failureCode) {
         case Vehicle::RequestMessageFailureCommandError:
@@ -217,7 +185,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
                     stateMachine,
                     MAV_COMP_ID_AUTOPILOT1,
                     MAVLINK_MSG_ID_COMPONENT_INFORMATION,
-                    requestMachine->_type);
+                    requestMachine->_compInfo->type);
     }
 }
 
@@ -260,7 +228,7 @@ void RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson(const QSt
         jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
     }
 
-    _compMgr->_compInfoJsonAvailable(_jsonMetadataFileName, jsonTranslationFileName);
+    _compInfo->setJson(_jsonMetadataFileName, jsonTranslationFileName);
 
     advance();
 }
@@ -268,22 +236,20 @@ void RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson(const QSt
 void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* stateMachine)
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
-    Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    FTPManager*                         ftpManager      = vehicle->ftpManager();
+    CompInfo*                           compInfo        = requestMachine->compInfo();
+    FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
 
-    if (requestMachine->_compInfoAvailable) {
-        ComponentInformation_t& compInfo = requestMachine->_compInfo;
-
-        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo.metadataURI;
-        if (_uriIsFTP(compInfo.metadataURI)) {
+    if (compInfo->available) {
+        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData;
+        if (_uriIsFTP(compInfo->uriMetaData)) {
             connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson);
-            ftpManager->download(compInfo.metadataURI, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+            ftpManager->download(compInfo->uriMetaData, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         } else {
             // FIXME: NYI
             qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. http download NYI";
         }
     } else {
-        qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. Component informatiom not available";
+        qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. Component information not available";
         requestMachine->advance();
     }
 }
@@ -291,26 +257,25 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
 void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine* stateMachine)
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
-    Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    FTPManager*                         ftpManager      = vehicle->ftpManager();
+    CompInfo*                           compInfo        = requestMachine->compInfo();
+    FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
 
-    if (requestMachine->_compInfoAvailable) {
-        ComponentInformation_t& compInfo = requestMachine->_compInfo;
-        if (compInfo.translationURI.isEmpty()) {
+    if (compInfo->available) {
+        if (compInfo->uriTranslation.isEmpty()) {
             qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. No translation json specified";
             requestMachine->advance();
         } else {
-            qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo.translationURI;
-            if (_uriIsFTP(compInfo.translationURI)) {
+            qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation;
+            if (_uriIsFTP(compInfo->uriTranslation)) {
                 connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson);
-                ftpManager->download(compInfo.metadataURI, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+                ftpManager->download(compInfo->uriTranslation, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
             } else {
                 // FIXME: NYI
                 qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. http download NYI";
             }
         }
     } else {
-        qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. Component informatiom not available";
+        qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. Component information not available";
         requestMachine->advance();
     }
 }
@@ -318,8 +283,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
 void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateMachine)
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
+    CompInfo*                           compInfo        = requestMachine->compInfo();
 
-    requestMachine->compMgr()->_compInfoJsonAvailable(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
+    compInfo->setJson(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
     requestMachine->advance();
 }
 

@@ -1007,9 +1007,10 @@ public:
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
-    ParameterManager*       parameterManager    () { return _parameterManager; }
-    ParameterManager*       parameterManager    () const { return _parameterManager; }
-    FTPManager*             ftpManager          () { return _ftpManager; }
+    ParameterManager*               parameterManager    () { return _parameterManager; }
+    ParameterManager*               parameterManager    () const { return _parameterManager; }
+    FTPManager*                     ftpManager          () { return _ftpManager; }
+    ComponentInformationManager*    compInfoManager     () { return _componentInformationManager; }
     VehicleObjectAvoidance* objectAvoidance     () { return _objectAvoidance; }
 
     static const int cMaxRcChannels = 18;

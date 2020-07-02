@@ -214,24 +214,28 @@ public:
 
     /// Returns the parameter set version info pulled from inside the meta data file. -1 if not found.
     /// Note: The implementation for this must not vary by vehicle type.
-    virtual void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
+    /// Important: Only CompInfoParam code should use this method
+    virtual void _getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
 
     /// Returns the internal resource parameter meta date file.
-    virtual QString internalParameterMetaDataFile(Vehicle* /*vehicle*/) { return QString(); }
+    /// Important: Only CompInfoParam code should use this method
+    virtual QString _internalParameterMetaDataFile(Vehicle* /*vehicle*/) { return QString(); }
 
     /// Loads the specified parameter meta data file.
     /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
     ///         call deleteParameterMetaData when no longer needed.
-    virtual QObject* loadParameterMetaData(const QString& /*metaDataFile*/) { return nullptr; }
+    /// Important: Only CompInfoParam code should use this method
+    virtual QObject* _loadParameterMetaData(const QString& /*metaDataFile*/) { return nullptr; }
 
     /// Returns the FactMetaData associated with the parameter name
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    ///     @param name Parameter name
-    virtual FactMetaData* getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return nullptr; }
+    /// Important: Only CompInfoParam code should use this method
+    virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) { return nullptr; }
 
-    /// Adds the parameter meta data to the Fact
+    /// Returns the FactMetaData associated with the parameter name
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    virtual void addMetaDataToFact(QObject* /*parameterMetaData*/, Fact* /*fact*/, MAV_TYPE /*vehicleType*/) { return; }
+    /// Important: Only CompInfoParam code should use this method
+    virtual bool _isParameterVolatile(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return false; }
 
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(void);

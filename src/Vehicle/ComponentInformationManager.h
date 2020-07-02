@@ -17,13 +17,9 @@ Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
 class Vehicle;
 class ComponentInformationManager;
-
-typedef struct {
-    uint32_t        metadataUID;
-    QString         metadataURI;
-    uint32_t        translationUID;
-    QString         translationURI;
-} ComponentInformation_t;
+class CompInfo;
+class CompInfoParam;
+class CompInfoVersion;
 
 class RequestMetaDataTypeStateMachine : public StateMachine
 {
@@ -32,10 +28,9 @@ class RequestMetaDataTypeStateMachine : public StateMachine
 public:
     RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr);
 
-    void                            request                     (COMP_METADATA_TYPE type);
-    QString                         typeToString                (void);
-    ComponentInformationManager*    compMgr                     (void) { return _compMgr; }
-    void                            handleComponentInformation  (const mavlink_message_t& message);
+    void        request     (CompInfo* compInfo);
+    QString     typeToString(void);
+    CompInfo*   compInfo    (void) { return _compInfo; }
 
     // Overrides from StateMachine
     int             stateCount      (void) const final;
@@ -55,15 +50,13 @@ private:
     static bool _uriIsFTP                       (const QString& uri);
 
 
-    ComponentInformationManager*    _compMgr;
-    COMP_METADATA_TYPE              _type               = COMP_METADATA_TYPE_VERSION;
-    bool                            _compInfoAvailable  = false;
-    ComponentInformation_t          _compInfo;
+    ComponentInformationManager*    _compMgr                    = nullptr;
+    CompInfo*                       _compInfo                   = nullptr;
     QString                         _jsonMetadataFileName;
     QString                         _jsonTranslationFileName;
 
-    static StateFn                  _rgStates[];
-    static int                      _cStates;
+    static StateFn  _rgStates[];
+    static int      _cStates;
 };
 
 class ComponentInformationManager : public StateMachine
@@ -75,8 +68,10 @@ public:
 
     typedef void (*RequestAllCompleteFn)(void* requestAllCompleteFnData);
 
-    void        requestAllComponentInformation  (RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
-    Vehicle*    vehicle                         (void) { return _vehicle; }
+    void                requestAllComponentInformation  (RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
+    Vehicle*            vehicle                         (void) { return _vehicle; }
+    CompInfoParam*      compInfoParam                   (uint8_t compId);
+    CompInfoVersion*    compInfoVersion                 (uint8_t compId);
 
     // Overrides from StateMachine
     int             stateCount  (void) const final;
@@ -84,7 +79,6 @@ public:
 
 private:
     void _stateRequestCompInfoComplete  (void);
-    void _compInfoJsonAvailable         (const QString& metadataJsonFileName, const QString& translationsJsonFileName);
     bool _isCompTypeSupported           (COMP_METADATA_TYPE type);
 
     static void _stateRequestCompInfoVersion        (StateMachine* stateMachine);
@@ -93,19 +87,13 @@ private:
 
     Vehicle*                        _vehicle                    = nullptr;
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
-    bool                            _versionCompInfoAvailable   = false;
-    ComponentInformation_t          _versionCompInfo;
-    bool                            _paramCompInfoAvailable     = false;
-    ComponentInformation_t          _parameterCompInfo;
-    QList<COMP_METADATA_TYPE>       _supportedMetaDataTypes;
     RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
     void*                           _requestAllCompleteFnData   = nullptr;
 
+    QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
+
     static StateFn                  _rgStates[];
     static int                      _cStates;
-
-    static const char*              _jsonVersionKey;
-    static const char*              _jsonSupportedCompMetadataTypesKey;
 
     friend class RequestMetaDataTypeStateMachine;
 };
