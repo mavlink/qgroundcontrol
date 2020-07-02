@@ -84,6 +84,40 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "g",      "lbs",      FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsLbs,                FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
 };
 
+const char* FactMetaData::_rgKnownTypeStrings[] = {
+    "Uint8",
+    "Int8",
+    "Uint16",
+    "Int16",
+    "Uint32",
+    "Int32",
+    "Uint64",
+    "Int64",
+    "Float",
+    "Double",
+    "String",
+    "Bool",
+    "ElapsedSeconds",
+    "Custom",
+};
+
+const  FactMetaData::ValueType_t FactMetaData::_rgKnownValueTypes[] = {
+    valueTypeUint8,
+    valueTypeInt8,
+    valueTypeUint16,
+    valueTypeInt16,
+    valueTypeUint32,
+    valueTypeInt32,
+    valueTypeUint64,
+    valueTypeInt64,
+    valueTypeFloat,
+    valueTypeDouble,
+    valueTypeString,
+    valueTypeBool,
+    valueTypeElapsedTimeInSeconds,
+    valueTypeCustom,
+};
+
 const char* FactMetaData::_decimalPlacesJsonKey =       "decimalPlaces";
 const char* FactMetaData::_nameJsonKey =                "name";
 const char* FactMetaData::_typeJsonKey =                "type";
@@ -880,50 +914,28 @@ void FactMetaData::setRawUnits(const QString& rawUnits)
 
 FactMetaData::ValueType_t FactMetaData::stringToType(const QString& typeString, bool& unknownType)
 {
-    QStringList         knownTypeStrings;
-    QList<ValueType_t>  knownTypes;
-
     unknownType = false;
 
-    knownTypeStrings << QStringLiteral("Uint8")
-                     << QStringLiteral("Int8")
-                     << QStringLiteral("Uint16")
-                     << QStringLiteral("Int16")
-                     << QStringLiteral("Uint32")
-                     << QStringLiteral("Int32")
-                     << QStringLiteral("Uint64")
-                     << QStringLiteral("Int64")
-                     << QStringLiteral("Float")
-                     << QStringLiteral("Double")
-                     << QStringLiteral("String")
-                     << QStringLiteral("Bool")
-                     << QStringLiteral("ElapsedSeconds")
-                     << QStringLiteral("Custom");
-
-    knownTypes << valueTypeUint8
-               << valueTypeInt8
-               << valueTypeUint16
-               << valueTypeInt16
-               << valueTypeUint32
-               << valueTypeInt32
-               << valueTypeUint64
-               << valueTypeInt64
-               << valueTypeFloat
-               << valueTypeDouble
-               << valueTypeString
-               << valueTypeBool
-               << valueTypeElapsedTimeInSeconds
-               << valueTypeCustom;
-
-    for (int i=0; i<knownTypeStrings.count(); i++) {
-        if (knownTypeStrings[i].compare(typeString, Qt::CaseInsensitive) == 0) {
-            return knownTypes[i];
+    for (size_t i=0; i<sizeof(_rgKnownTypeStrings)/sizeof(_rgKnownTypeStrings[0]); i++) {
+        if (typeString.compare(_rgKnownTypeStrings[i], Qt::CaseInsensitive) == 0) {
+            return _rgKnownValueTypes[i];
         }
     }
 
     unknownType = true;
 
     return valueTypeDouble;
+}
+
+QString FactMetaData::typeToString(ValueType_t type)
+{
+    for (size_t i=0; i<sizeof(_rgKnownTypeStrings)/sizeof(_rgKnownTypeStrings[0]); i++) {
+        if (type == _rgKnownValueTypes[i]) {
+            return _rgKnownTypeStrings[i];
+        }
+    }
+
+    return QStringLiteral("UnknownType%1").arg(type);
 }
 
 size_t FactMetaData::typeToSize(ValueType_t type)

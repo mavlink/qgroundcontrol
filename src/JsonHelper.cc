@@ -225,9 +225,25 @@ bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QSt
     if (parseError.error == QJsonParseError::NoError) {
         return true;
     } else {
+        int startPos = qMax(0, parseError.offset - 100);
+        int length = qMin(bytes.count() - startPos, 200);
+        qDebug() << QStringLiteral("Json read error '%1'").arg(bytes.mid(startPos, length).constData());
         errorString = parseError.errorString();
         return false;
     }
+}
+
+bool JsonHelper::isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString)
+{
+    QFile jsonFile(fileName);
+    if (!jsonFile.open(QFile::ReadOnly)) {
+        errorString = tr("File open failed: file:error %1 %2").arg(jsonFile.fileName()).arg(jsonFile.errorString());
+        return false;
+    }
+    QByteArray jsonBytes = jsonFile.readAll();
+    jsonFile.close();
+
+    return isJsonFile(jsonBytes, jsonDoc, errorString);
 }
 
 bool JsonHelper::validateInternalQGCJsonFile(const QJsonObject& jsonObject,
