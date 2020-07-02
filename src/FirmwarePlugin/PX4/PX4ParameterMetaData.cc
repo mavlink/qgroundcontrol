@@ -401,7 +401,95 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
         }
         xml.readNext();
     }
+
+#ifdef GENERATE_PARAMETER_JSON
+    _generateParameterJson();
+#endif
 }
+
+#ifdef GENERATE_PARAMETER_JSON
+void _jsonWriteLine(QFile& file, int indent, const QString& line)
+{
+    while (indent--) {
+        file.write("  ");
+    }
+    file.write(line.toLocal8Bit().constData());
+    file.write("\n");
+}
+
+void PX4ParameterMetaData::_generateParameterJson()
+{
+    qCDebug(ParameterManagerLog) << "PX4ParameterMetaData::_generateParameterJson";
+
+    int indentLevel = 0;
+    QFile jsonFile(QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)).absoluteFilePath("parameter.json"));
+    jsonFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text);
+
+    _jsonWriteLine(jsonFile, indentLevel++, "{");
+    _jsonWriteLine(jsonFile, indentLevel, "\"version\": 1,");
+    _jsonWriteLine(jsonFile, indentLevel, "\"uid\": 1,");
+    _jsonWriteLine(jsonFile, indentLevel, "\"scope\": \"Firmware\",");
+    _jsonWriteLine(jsonFile, indentLevel++, "\"parameters\": [");
+
+    int keyIndex = 0;
+    for (const QString& paramName: _mapParameterName2FactMetaData.keys()) {
+        const FactMetaData* metaData = _mapParameterName2FactMetaData[paramName];
+        _jsonWriteLine(jsonFile, indentLevel++, "{");
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"name\": \"%1\",").arg(paramName));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"type\": \"%1\",").arg(metaData->typeToString(metaData->type())));
+        if (!metaData->group().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"group\": \"%1\",").arg(metaData->group()));
+        }
+        if (!metaData->category().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"category\": \"%1\",").arg(metaData->category()));
+        }
+        if (!metaData->shortDescription().isEmpty()) {
+            QString text = metaData->shortDescription();
+            text.replace("\"", "\\\"");
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"shortDescription\": \"%1\",").arg(text));
+        }
+        if (!metaData->longDescription().isEmpty()) {
+            QString text = metaData->longDescription();
+            text.replace("\"", "\\\"");
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"longDescription\": \"%1\",").arg(text));
+        }
+        if (!metaData->rawUnits().isEmpty()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"units\": \"%1\",").arg(metaData->rawUnits()));
+        }
+        if (metaData->defaultValueAvailable()) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"defaultValue\": %1,").arg(metaData->rawDefaultValue().toDouble()));
+        }
+        if (!qIsNaN(metaData->rawIncrement())) {
+            _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"increment\": %1,").arg(metaData->rawIncrement()));
+        }
+        if (metaData->enumValues().count()) {
+            _jsonWriteLine(jsonFile, indentLevel++, "\"values\": [");
+            for (int i=0; i<metaData->enumValues().count(); i++) {
+                _jsonWriteLine(jsonFile, indentLevel++, "{");
+                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"value\": %1,").arg(metaData->enumValues()[i].toDouble()));
+                QString text = metaData->enumStrings()[i];
+                text.replace("\"", "\\\"");
+                _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"description\": \"%1\"").arg(text));
+                _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(i == metaData->enumValues().count() - 1 ? "" : ","));
+            }
+            _jsonWriteLine(jsonFile, --indentLevel, "],");
+        }
+        if (metaData->vehicleRebootRequired()) {
+            _jsonWriteLine(jsonFile, indentLevel, "\"rebootRequired\": true,");
+        }
+        if (metaData->volatileValue()) {
+            _jsonWriteLine(jsonFile, indentLevel, "\"volatile\": true,");
+        }
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"decimalPlaces\": \"%1\",").arg(metaData->decimalPlaces()));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"minValue\": %1,").arg(metaData->rawMin().toDouble()));
+        _jsonWriteLine(jsonFile, indentLevel, QStringLiteral("\"maxValue\": %1").arg(metaData->rawMax().toDouble()));
+        _jsonWriteLine(jsonFile, --indentLevel, QStringLiteral("}%1").arg(++keyIndex == _mapParameterName2FactMetaData.keys().count() ? "" : ","));
+    }
+
+    _jsonWriteLine(jsonFile, --indentLevel, "]");
+    _jsonWriteLine(jsonFile, --indentLevel, "}");
+}
+#endif
 
 FactMetaData* PX4ParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType)
 {

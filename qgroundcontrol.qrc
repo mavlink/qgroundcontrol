@@ -337,5 +337,7 @@
         <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>
         <file alias="PX4MockLink.params">src/comm/PX4MockLink.params</file>
         <file alias="Version.MetaData.json">src/comm/MockLink.Version.MetaData.json</file>
+        <file alias="Version.MetaData.json.gz">src/comm/MockLink.Version.MetaData.json.gz</file>
+        <file alias="Parameter.MetaData.json">src/comm/MockLink.Parameter.MetaData.json</file>
     </qresource>
 </RCC>
