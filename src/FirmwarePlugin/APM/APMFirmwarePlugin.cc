@@ -702,15 +702,17 @@ bool APMFirmwarePlugin::sendHomePositionToVehicle(void)
     return true;
 }
 
-void APMFirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
+FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType)
 {
     APMParameterMetaData* apmMetaData = qobject_cast<APMParameterMetaData*>(parameterMetaData);
 
     if (apmMetaData) {
-        apmMetaData->addMetaDataToFact(fact, vehicleType);
+        return apmMetaData->getMetaDataForFact(name, vehicleType, type);
     } else {
         qWarning() << "Internal error: pointer passed to APMFirmwarePlugin::addMetaDataToFact not APMParameterMetaData";
     }
+
+    return nullptr;
 }
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
@@ -771,7 +773,7 @@ QString APMFirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     }
 }
 
-QObject* APMFirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
+QObject* APMFirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
 {
     Q_UNUSED(metaDataFile);
 
@@ -806,7 +808,7 @@ void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketErr
     qgcApp()->showAppMessage(tr("Error during Solo video link setup: %1").arg(socketError));
 }
 
-QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
+QString APMFirmwarePlugin::_internalParameterMetaDataFile(Vehicle* vehicle)
 {
     switch (vehicle->vehicleType()) {
     case MAV_TYPE_QUADROTOR:

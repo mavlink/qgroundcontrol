@@ -250,12 +250,12 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-FactMetaData* PX4FirmwarePlugin::getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType)
+FactMetaData* PX4FirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType)
 {
     PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
 
     if (px4MetaData) {
-        return px4MetaData->getMetaDataForFact(name, vehicleType);
+        return px4MetaData->getMetaDataForFact(name, vehicleType, type);
     } else {
         qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::getMetaDataForFact not PX4ParameterMetaData";
     }
@@ -263,18 +263,7 @@ FactMetaData* PX4FirmwarePlugin::getMetaDataForFact(QObject* parameterMetaData, 
     return nullptr;
 }
 
-void PX4FirmwarePlugin::addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType)
-{
-    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
-
-    if (px4MetaData) {
-        px4MetaData->addMetaDataToFact(fact, vehicleType);
-    } else {
-        qWarning() << "Internal error: pointer passed to PX4FirmwarePlugin::addMetaDataToFact not PX4ParameterMetaData";
-    }
-}
-
-void PX4FirmwarePlugin::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
+void PX4FirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
     return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
 }
@@ -329,7 +318,7 @@ QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     }
 }
 
-QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
+QObject* PX4FirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
 {
     PX4ParameterMetaData* metaData = new PX4ParameterMetaData;
     if (!metaDataFile.isEmpty()) {
