@@ -1331,6 +1331,7 @@ private:
     void _handleScaledPressure          (mavlink_message_t& message);
     void _handleScaledPressure2         (mavlink_message_t& message);
     void _handleScaledPressure3         (mavlink_message_t& message);
+    void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleAttitudeWorker          (double rollRadians, double pitchRadians, double yawRadians);
     void _handleAttitude                (mavlink_message_t& message);

@@ -801,6 +801,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
         _handleADSBVehicle(message);
         break;
+    case MAVLINK_MSG_ID_HIGH_LATENCY:
+        _handleHighLatency(message);
+        break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
@@ -1294,6 +1297,63 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
     }
+}
+
+void Vehicle::_handleHighLatency(mavlink_message_t& message)
+{
+    mavlink_high_latency_t highLatency;
+    mavlink_msg_high_latency_decode(&message, &highLatency);
+
+    QString previousFlightMode;
+    if (_base_mode != 0 || _custom_mode != 0){
+        // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
+        // bad modes while unit testing.
+        previousFlightMode = flightMode();
+    }
+    _base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    _custom_mode = _firmwarePlugin->highLatencyCustomModeTo32Bits(highLatency.custom_mode);
+    if (previousFlightMode != flightMode()) {
+        emit flightModeChanged(flightMode());
+    }
+
+    // Assume armed since we don't know
+    if (_armed != true) {
+        _armed = true;
+        emit armedChanged(_armed);
+    }
+
+    struct {
+        const double latitude;
+        const double longitude;
+        const double altitude;
+    } coordinate {
+        highLatency.latitude  / (double)1E7,
+        highLatency.longitude  / (double)1E7,
+        static_cast<double>(highLatency.altitude_amsl)
+    };
+
+    _coordinate.setLatitude(coordinate.latitude);
+    _coordinate.setLongitude(coordinate.longitude);
+    _coordinate.setAltitude(coordinate.altitude);
+    emit coordinateChanged(_coordinate);
+
+    _airSpeedFact.setRawValue((double)highLatency.airspeed / 5.0);
+    _groundSpeedFact.setRawValue((double)highLatency.groundspeed / 5.0);
+    _climbRateFact.setRawValue((double)highLatency.climb_rate / 10.0);
+    _headingFact.setRawValue((double)highLatency.heading * 2.0);
+    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeAMSLFact.setRawValue(coordinate.altitude);
+
+    _windFactGroup.speed()->setRawValue((double)highLatency.airspeed / 5.0);
+
+    _battery1FactGroup.percentRemaining()->setRawValue(highLatency.battery_remaining);
+
+    _temperatureFactGroup.temperature1()->setRawValue(highLatency.temperature_air);
+
+    _gpsFactGroup.lat()->setRawValue(coordinate.latitude);
+    _gpsFactGroup.lon()->setRawValue(coordinate.longitude);
+    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(coordinate.latitude, coordinate.longitude)));
+    _gpsFactGroup.count()->setRawValue(0);
 }
 
 void Vehicle::_handleHighLatency2(mavlink_message_t& message)
