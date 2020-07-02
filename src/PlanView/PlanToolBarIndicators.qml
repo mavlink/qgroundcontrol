@@ -38,7 +38,7 @@ Item {
     property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
     property real   _distance:                  _statusValid && _currentMissionItem ? _currentMissionItem.distance : NaN
     property real   _altDifference:             _statusValid && _currentMissionItem ? _currentMissionItem.altDifference : NaN
-    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? (Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) * (180.0/Math.PI)) : NaN
+    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? 100 * _currentMissionItem.altDifference / _currentMissionItem.distance : NaN
     property real   _azimuth:                   _statusValid && _currentMissionItem ? _currentMissionItem.azimuth : NaN
     property real   _heading:                   _statusValid && _currentMissionItem ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
