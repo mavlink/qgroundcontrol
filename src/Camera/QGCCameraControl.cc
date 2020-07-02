@@ -154,7 +154,7 @@ read_value(QDomNode& element, const char* tagName, QString& target)
 
 //-----------------------------------------------------------------------------
 QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
-    : FactGroup(0, parent)
+    : FactGroup(0, parent, true /* ignore camel case */)
     , _vehicle(vehicle)
     , _compID(compID)
 {
