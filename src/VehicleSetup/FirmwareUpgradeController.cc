@@ -901,7 +901,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
 
     QString         errorString;
     QJsonDocument   doc;
-    if (JsonHelper::isJsonFile(jsonFileName, doc, errorString)) {
+    if (!JsonHelper::isJsonFile(jsonFileName, doc, errorString)) {
         qCWarning(FirmwareUpgradeLog) << "Json file read failed" << errorString;
         return;
     }
