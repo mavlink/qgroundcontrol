@@ -19,6 +19,7 @@
 #include <QSerialPortInfo>
 #include <QDebug>
 #include <QTime>
+#include <QElapsedTimer>
 
 #include "QGC.h"
 
@@ -51,33 +52,27 @@ bool Bootloader::_write(QSerialPort* port, const uint8_t byte)
     return _write(port, buf, 1);
 }
 
-bool Bootloader::_read(QSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout)
+bool Bootloader::_read(QSerialPort* port, uint8_t* data, qint64 cBytesExpected, int readTimeout)
 {
-    qint64 bytesAlreadyRead = 0;
-    
-    while (bytesAlreadyRead < maxSize) {
-        QTime timeout;
-        timeout.start();
-        while (port->bytesAvailable() < 1) {
-            if (timeout.elapsed() > readTimeout) {
-                _errorString = tr("Timeout waiting for bytes to be available");
-                return false;
-            }
-            port->waitForReadyRead(100);
-        }
-        
-        qint64 bytesRead;
-        bytesRead = port->read((char*)&data[bytesAlreadyRead], maxSize);
-        
-        if (bytesRead == -1) {
-            _errorString = tr("Read failed: error: %1").arg(port->errorString());
+    QElapsedTimer timeout;
+
+    timeout.start();
+    while (port->bytesAvailable() < cBytesExpected) {
+        if (timeout.elapsed() > readTimeout) {
+            _errorString = tr("Timeout waiting for bytes to be available");
             return false;
-        } else {
-            Q_ASSERT(bytesRead != 0);
-            bytesAlreadyRead += bytesRead;
         }
+        port->waitForReadyRead(100);
     }
-    
+
+    qint64 bytesRead;
+    bytesRead = port->read((char *)data, cBytesExpected);
+
+    if (bytesRead != cBytesExpected) {
+        _errorString = tr("Read failed: error: %1").arg(port->errorString());
+        return false;
+    }
+
     return true;
 }
 
