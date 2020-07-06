@@ -96,7 +96,7 @@ private:
     bool _write(QSerialPort* port, const uint8_t* data, qint64 maxSize);
     bool _write(QSerialPort* port, const uint8_t byte);
     
-    bool _read(QSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout = _readTimout);
+    bool _read(QSerialPort* port, uint8_t* data, qint64 cBytesExpected, int readTimeout = _readTimout);
     
     bool _sendCommand(QSerialPort* port, uint8_t cmd, int responseTimeout = _responseTimeout);
     bool _getCommandResponse(QSerialPort* port, const int responseTimeout = _responseTimeout);
