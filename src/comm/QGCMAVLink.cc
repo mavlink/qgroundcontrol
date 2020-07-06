@@ -61,6 +61,23 @@ bool QGCMAVLink::isVTOL(MAV_TYPE mavType)
     }
 }
 
+MAV_TYPE QGCMAVLink::vehicleClass(MAV_TYPE mavType)
+{
+    if (isFixedWing(mavType)) {
+        return MAV_TYPE_FIXED_WING;
+    } else if (isRover(mavType)) {
+        return MAV_TYPE_GROUND_ROVER;
+    } else if (isSub(mavType)) {
+        return MAV_TYPE_SUBMARINE;
+    } else if (isMultiRotor(mavType)) {
+        return MAV_TYPE_QUADROTOR;
+    } else if (isVTOL(mavType)) {
+        return MAV_TYPE_VTOL_QUADROTOR;
+    }
+
+    return MAV_TYPE_GENERIC;
+}
+
 QString  QGCMAVLink::mavResultToString(MAV_RESULT result)
 {
     switch (result) {
