@@ -245,11 +245,6 @@ SetupPage {
                         cancelFlash()
                     }
 
-                    Connections {
-                        target:         firmwarePage
-                        onCancelDialog: reject()
-                    }
-
                     ListModel {
                         id: firmwareBuildTypeList
 
