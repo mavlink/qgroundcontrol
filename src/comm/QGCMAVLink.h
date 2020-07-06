@@ -53,6 +53,7 @@ public:
     static bool     isSub               (MAV_TYPE mavType);
     static bool     isMultiRotor        (MAV_TYPE mavType);
     static bool     isVTOL              (MAV_TYPE mavType);
+    static MAV_TYPE vehicleClass        (MAV_TYPE mavType);
     static QString  mavResultToString   (MAV_RESULT result);
 };
 
