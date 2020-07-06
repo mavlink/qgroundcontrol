@@ -71,7 +71,7 @@ private:
     bool    _write              (const uint8_t* data, qint64 maxSize);
     bool    _write              (const uint8_t byte);
     bool    _write              (const char* data);
-    bool    _read               (uint8_t* data, qint64 maxSize, int readTimeout = _readTimout);
+    bool    _read               (uint8_t* data, qint64 cBytesExpected, int readTimeout = _readTimout);
     bool    _sendCommand        (uint8_t cmd, int responseTimeout = _responseTimeout);
     bool    _getCommandResponse (const int responseTimeout = _responseTimeout);
     bool    _protoGetDevice     (uint8_t param, uint32_t& value);
