@@ -84,8 +84,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBoard,             this, &FirmwareUpgradeController::_foundBoard);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::noBoardFound,           this, &FirmwareUpgradeController::_noBoardFound);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::boardGone,              this, &FirmwareUpgradeController::_boardGone);
-    connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBootloader,        this, &FirmwareUpgradeController::_foundBootloader);
-    connect(_threadController, &PX4FirmwareUpgradeThreadController::bootloaderSyncFailed,   this, &FirmwareUpgradeController::_bootloaderSyncFailed);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::foundBoardInfo,         this, &FirmwareUpgradeController::_foundBoardInfo);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::error,                  this, &FirmwareUpgradeController::_error);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::status,                 this, &FirmwareUpgradeController::_status);
@@ -193,15 +192,15 @@ QStringList FirmwareUpgradeController::availableBoardsName(void)
 
 void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType, QString boardName)
 {
-    _foundBoardInfo =       info;
-    _foundBoardType =       static_cast<QGCSerialPortInfo::BoardType_t>(boardType);
-    _foundBoardTypeName =   boardName;
+    _boardInfo      = info;
+    _boardType      = static_cast<QGCSerialPortInfo::BoardType_t>(boardType);
+    _boardTypeName  = boardName;
 
     qDebug() << info.manufacturer() << info.description();
 
     _startFlashWhenBootloaderFound = false;
 
-    if (_foundBoardType == QGCSerialPortInfo::BoardTypeSiKRadio) {
+    if (_boardType == QGCSerialPortInfo::BoardTypeSiKRadio) {
         if (!firstAttempt) {
             // Radio always flashes latest firmware, so we can start right away without
             // any further user input.
@@ -212,7 +211,7 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
         }
     }
     
-    qCDebug(FirmwareUpgradeLog) << _foundBoardType << _foundBoardTypeName;
+    qCDebug(FirmwareUpgradeLog) << _boardType << _boardTypeName;
     emit boardFound();
 }
 
@@ -229,12 +228,12 @@ void FirmwareUpgradeController::_boardGone(void)
 
 /// @brief Called when the bootloader is connected to by the findBootloader process. Moves the state machine
 ///         to the next step.
-void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boardID, int flashSize)
+void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int boardID, int flashSize)
 {
-    _bootloaderFound = true;
-    _bootloaderVersion = static_cast<uint32_t>(bootloaderVersion);
-    _bootloaderBoardID = static_cast<uint32_t>(boardID);
-    _bootloaderBoardFlashSize = static_cast<uint32_t>(flashSize);
+    _bootloaderFound            = true;
+    _bootloaderVersion          = static_cast<uint32_t>(bootloaderVersion);
+    _bootloaderBoardID          = static_cast<uint32_t>(boardID);
+    _bootloaderBoardFlashSize   = static_cast<uint32_t>(flashSize);
     
     _appendStatusLog(tr("Connected to bootloader:"));
     _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
@@ -747,9 +746,9 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 
     bool                    chibios =           _apmChibiOSSetting->rawValue().toInt() == 0;
     FirmwareVehicleType_t   vehicleType =       static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
-    QString                 boardDescription =  _foundBoardInfo.description();
-    quint16                 boardVID =          _foundBoardInfo.vendorIdentifier();
-    quint16                 boardPID =          _foundBoardInfo.productIdentifier();
+    QString                 boardDescription =  _boardInfo.description();
+    quint16                 boardVID =          _boardInfo.vendorIdentifier();
+    quint16                 boardPID =          _boardInfo.productIdentifier();
     uint32_t                rawBoardId =        _bootloaderBoardID == Bootloader::boardIDPX4FMUV3 ? Bootloader::boardIDPX4FMUV2 : _bootloaderBoardID;
 
     qCDebug(FirmwareUpgradeLog) << QStringLiteral("_buildAPMFirmwareNames description(%1) vid(%2/0x%3) pid(%4/0x%5)").arg(boardDescription).arg(boardVID).arg(boardVID, 1, 16).arg(boardPID).arg(boardPID, 1, 16);
