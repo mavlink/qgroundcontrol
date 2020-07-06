@@ -89,7 +89,7 @@ public:
     Q_PROPERTY(bool                 downloadingFirmwareList     MEMBER _downloadingFirmwareList                                     NOTIFY downloadingFirmwareListChanged)
     Q_PROPERTY(QString              boardPort                   READ boardPort                                                      NOTIFY boardFound)
     Q_PROPERTY(QString              boardDescription            READ boardDescription                                               NOTIFY boardFound)
-    Q_PROPERTY(QString              boardType                   MEMBER _foundBoardTypeName                                          NOTIFY boardFound)
+    Q_PROPERTY(QString              boardType                   MEMBER _boardTypeName                                               NOTIFY boardFound)
     Q_PROPERTY(bool                 pixhawkBoard                READ pixhawkBoard                                                   NOTIFY boardFound)
     Q_PROPERTY(bool                 px4FlowBoard                READ px4FlowBoard                                                   NOTIFY boardFound)
     Q_PROPERTY(FirmwareBuildType_t  selectedFirmwareBuildType   READ selectedFirmwareBuildType  WRITE setSelectedFirmwareBuildType  NOTIFY selectedFirmwareBuildTypeChanged)
@@ -134,8 +134,8 @@ public:
     QQuickItem* statusLog(void) { return _statusLog; }
     void setStatusLog(QQuickItem* statusLog) { _statusLog = statusLog; }
     
-    QString boardPort(void) { return _foundBoardInfo.portName(); }
-    QString boardDescription(void) { return _foundBoardInfo.description(); }
+    QString boardPort(void) { return _boardInfo.portName(); }
+    QString boardDescription(void) { return _boardInfo.description(); }
 
     FirmwareBuildType_t selectedFirmwareBuildType(void) { return _selectedFirmwareBuildType; }
     void setSelectedFirmwareBuildType(FirmwareBuildType_t firmwareType);
@@ -144,8 +144,8 @@ public:
     QString     px4StableVersion    (void) { return _px4StableVersion; }
     QString     px4BetaVersion  (void) { return _px4BetaVersion; }
 
-    bool pixhawkBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePixhawk; }
-    bool px4FlowBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePX4Flow; }
+    bool pixhawkBoard(void) const { return _boardType == QGCSerialPortInfo::BoardTypePixhawk; }
+    bool px4FlowBoard(void) const { return _boardType == QGCSerialPortInfo::BoardTypePX4Flow; }
 
     /**
      * @brief Return a human friendly string of available boards
@@ -175,7 +175,7 @@ private slots:
     void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound(void);
     void _boardGone();
-    void _foundBootloader(int bootloaderVersion, int boardID, int flashSize);
+    void _foundBoardInfo(int bootloaderVersion, int boardID, int flashSize);
     void _error(const QString& errorString);
     void _status(const QString& statusString);
     void _bootloaderSyncFailed(void);
@@ -266,13 +266,13 @@ private:
     
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
     
-    QSerialPortInfo                 _foundBoardInfo;
-    QGCSerialPortInfo::BoardType_t  _foundBoardType;
-    QString                         _foundBoardTypeName;
+    QSerialPortInfo                 _boardInfo;
+    QGCSerialPortInfo::BoardType_t  _boardType;
+    QString                         _boardTypeName;
 
-    FirmwareBuildType_t                  _selectedFirmwareBuildType;
+    FirmwareBuildType_t             _selectedFirmwareBuildType;
 
-    FirmwareImage*  _image;
+    FirmwareImage*                  _image;
 
     QString _px4StableVersion;  // Version strange for latest PX4 stable
     QString _px4BetaVersion;    // Version strange for latest PX4 beta
