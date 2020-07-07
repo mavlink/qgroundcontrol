@@ -705,16 +705,13 @@ bool Bootloader::_syncWorker(void)
 
 bool Bootloader::_sync(void)
 {
-    if (_sikRadio) {
-        _port.readAll();
-        bool success = false;
-        for (int i=0; i<3; i++) {
-            success = _syncWorker();
-        }
-        return success;
-    } else {
-        return _syncWorker();
+    // Sometimes getting sync is flaky, try 3 times
+    _port.readAll();
+    bool success = false;
+    for (int i=0; i<3; i++) {
+        success = _syncWorker();
     }
+    return success;
 }
 
 bool Bootloader::_get3DRRadioBoardId(uint32_t& boardID)
