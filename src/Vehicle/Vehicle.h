@@ -1232,7 +1232,7 @@ signals:
     void gitHashChanged                 (QString hash);
     void vehicleUIDChanged              ();
 
-    /// New RC channel values
+    /// New RC channel values coming from RC_CHANNELS message
     ///     @param channelCount Number of available channels, cMaxRcChannels max
     ///     @param pwmValues -1 signals channel not available
     void rcChannelsChanged              (int channelCount, int pwmValues[cMaxRcChannels]);
@@ -1317,7 +1317,6 @@ private:
     void _handleHeartbeat               (mavlink_message_t& message);
     void _handleRadioStatus             (mavlink_message_t& message);
     void _handleRCChannels              (mavlink_message_t& message);
-    void _handleRCChannelsRaw           (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);
     void _handleSysStatus               (mavlink_message_t& message);
     void _handleWindCov                 (mavlink_message_t& message);

@@ -732,9 +732,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_RC_CHANNELS:
         _handleRCChannels(message);
         break;
-    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-        _handleRCChannelsRaw(message);
-        break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
         break;
@@ -1876,51 +1873,6 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 
     emit remoteControlRSSIChanged(channels.rssi);
     emit rcChannelsChanged(channels.chancount, pwmValues);
-}
-
-void Vehicle::_handleRCChannelsRaw(mavlink_message_t& message)
-{
-    // We handle both RC_CHANNLES and RC_CHANNELS_RAW since different firmware will only
-    // send one or the other.
-
-    mavlink_rc_channels_raw_t channels;
-
-    mavlink_msg_rc_channels_raw_decode(&message, &channels);
-
-    uint16_t* _rgChannelvalues[cMaxRcChannels] = {
-        &channels.chan1_raw,
-        &channels.chan2_raw,
-        &channels.chan3_raw,
-        &channels.chan4_raw,
-        &channels.chan5_raw,
-        &channels.chan6_raw,
-        &channels.chan7_raw,
-        &channels.chan8_raw,
-    };
-
-    int pwmValues[cMaxRcChannels];
-    int channelCount = 0;
-
-    for (int i=0; i<cMaxRcChannels; i++) {
-        pwmValues[i] = -1;
-    }
-
-    for (int i=0; i<8; i++) {
-        uint16_t channelValue = *_rgChannelvalues[i];
-
-        if (channelValue == UINT16_MAX) {
-            pwmValues[i] = -1;
-        } else {
-            channelCount = i + 1;
-            pwmValues[i] = channelValue;
-        }
-    }
-    for (int i=9; i<18; i++) {
-        pwmValues[i] = -1;
-    }
-
-    emit remoteControlRSSIChanged(channels.rssi);
-    emit rcChannelsChanged(channelCount, pwmValues);
 }
 
 // Pop warnings ignoring for mavlink headers for both GCC/Clang and MSVC
