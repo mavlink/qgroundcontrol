@@ -90,12 +90,11 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
                         emit foundBoardInfo(bootloaderVersion, boardId, flashSize);
                     } else {
                         emit error(_bootloader->errorString());
-                        return;
                     }
                 } else {
                     emit error(_bootloader->errorString());
-                    return;
                 }
+                return;
             }
         }
     } else {
