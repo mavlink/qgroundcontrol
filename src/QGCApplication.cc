@@ -866,46 +866,44 @@ void QGCApplication::_checkForNewVersion()
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
             QString versionCheckFile = toolbox()->corePlugin()->stableVersionCheckFileUrl();
             if (!versionCheckFile.isEmpty()) {
-                _currentVersionDownload = new QGCFileDownload(this);
-                connect(_currentVersionDownload, &QGCFileDownload::downloadFinished, this, &QGCApplication::_currentVersionDownloadFinished);
-                connect(_currentVersionDownload, &QGCFileDownload::error, this, &QGCApplication::_currentVersionDownloadError);
-                _currentVersionDownload->download(versionCheckFile);
+                QGCFileDownload* download = new QGCFileDownload(this);
+                connect(download, &QGCFileDownload::downloadComplete, this, &QGCApplication::_qgcCurrentStableVersionDownloadComplete);
+                download->download(versionCheckFile);
             }
         }
     }
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadFinished(QString /*remoteFile*/, QString localFile)
+void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
 #ifdef __mobile__
-    Q_UNUSED(localFile);
+    Q_UNUSED(localFile)
+    Q_UNUSED(errorMsg)
 #else
-    QFile versionFile(localFile);
-    if (versionFile.open(QIODevice::ReadOnly)) {
-        QTextStream textStream(&versionFile);
-        QString version = textStream.readLine();
+    if (errorMsg.isEmpty()) {
+        QFile versionFile(localFile);
+        if (versionFile.open(QIODevice::ReadOnly)) {
+            QTextStream textStream(&versionFile);
+            QString version = textStream.readLine();
 
-        qDebug() << version;
+            qDebug() << version;
 
-        int majorVersion, minorVersion, buildVersion;
-        if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
-            if (_majorVersion < majorVersion ||
-                    (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
-                    (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                //-- TODO
-                ///QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
+            int majorVersion, minorVersion, buildVersion;
+            if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
+                if (_majorVersion < majorVersion ||
+                        (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
+                        (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
+                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()), tr("New Version Available"));
+                }
             }
         }
+    } else {
+        qDebug() << "Download QGC stable version failed" << errorMsg;
     }
 
-    _currentVersionDownload->deleteLater();
+    sender()->deleteLater();
 #endif
-}
-
-void QGCApplication::_currentVersionDownloadError(QString /*errorMsg*/)
-{
-    _currentVersionDownload->deleteLater();
 }
 
 bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)

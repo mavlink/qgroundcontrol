@@ -31,29 +31,6 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
         return false;
     }
     
-    // Split out filename from path
-    QString remoteFileName = QFileInfo(remoteFile).fileName();
-    if (remoteFileName.isEmpty()) {
-        qWarning() << "Unabled to parse filename from downloadFile" << remoteFile;
-        return false;
-    }
-
-    // Strip out parameters from remote filename
-    int parameterIndex = remoteFileName.indexOf("?");
-    if (parameterIndex != -1) {
-        remoteFileName  = remoteFileName.left(parameterIndex);
-    }
-
-    // Determine location to download file to
-    QString localFile = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    if (localFile.isEmpty()) {
-        localFile = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-        if (localFile.isEmpty()) {
-            qDebug() << "Unabled to find writable download location. Tried downloads and temp directory.";
-            return false;
-        }
-    }
-    localFile += "/"  + remoteFileName;
 
     QUrl remoteUrl;
     if (remoteFile.startsWith("http:") || remoteFile.startsWith("https:")) {
@@ -72,9 +49,6 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     tProxy.setType(QNetworkProxy::DefaultProxy);
     setProxy(tProxy);
     
-    // Store local file location in user attribute so we can retrieve when the download finishes
-    networkRequest.setAttribute(QNetworkRequest::User, localFile);
-
     QNetworkReply* networkReply = get(networkRequest);
     if (!networkReply) {
         qWarning() << "QNetworkAccessManager::get failed";
@@ -84,8 +58,7 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     connect(networkReply, &QNetworkReply::downloadProgress, this, &QGCFileDownload::downloadProgress);
     connect(networkReply, &QNetworkReply::finished, this, &QGCFileDownload::_downloadFinished);
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-            this, &QGCFileDownload::_downloadError);
+    connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCFileDownload::_downloadError);
 #else
     connect(networkReply, &QNetworkReply::errorOccurred, this, &QGCFileDownload::_downloadError);
 #endif
@@ -95,10 +68,10 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
 void QGCFileDownload::_downloadFinished(void)
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    
+
     // When an error occurs or the user cancels the download, we still end up here. So bail out in
     // those cases.
-    if (reply->error() != QNetworkReply::NoError) {        
+    if (reply->error() != QNetworkReply::NoError) {
         reply->deleteLater();
         return;
     }
@@ -112,25 +85,46 @@ void QGCFileDownload::_downloadFinished(void)
         return;
     }
 
-    // Download file location is in user attribute
-    QString downloadFilename = reply->request().attribute(QNetworkRequest::User).toString();
+    // Split out filename from path
+    QString remoteFileName = QFileInfo(reply->url().toString()).fileName();
+    if (remoteFileName.isEmpty()) {
+        qWarning() << "Unabled to parse filename from remote url" << reply->url().toString();
+        remoteFileName = "DownloadedFile";
+    }
+
+    // Strip out http parameters from remote filename
+    int parameterIndex = remoteFileName.indexOf("?");
+    if (parameterIndex != -1) {
+        remoteFileName  = remoteFileName.left(parameterIndex);
+    }
+
+    // Determine location to download file to
+    QString downloadFilename = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    if (downloadFilename.isEmpty()) {
+        downloadFilename = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+        if (downloadFilename.isEmpty()) {
+            emit downloadComplete(_originalRemoteFile, QString(), tr("Unabled to find writable download location. Tried downloads and temp directory."));
+            return;
+        }
+    }
+    downloadFilename += "/"  + remoteFileName;
 
     if (!downloadFilename.isEmpty()) {
         // Store downloaded file in download location
         QFile file(downloadFilename);
-        if (!file.open(QIODevice::WriteOnly)) {
-            emit error(tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            emit downloadComplete(_originalRemoteFile, downloadFilename, tr("Could not save downloaded file to %1. Error: %2").arg(downloadFilename).arg(file.errorString()));
             return;
         }
 
         file.write(reply->readAll());
         file.close();
 
-        emit downloadFinished(_originalRemoteFile, downloadFilename);
+        emit downloadComplete(_originalRemoteFile, downloadFilename, QString());
     } else {
         QString errorMsg = "Internal error";
         qWarning() << errorMsg;
-        emit error(errorMsg);
+        emit downloadComplete(_originalRemoteFile, downloadFilename, errorMsg);
     }
 
     reply->deleteLater();
@@ -151,5 +145,5 @@ void QGCFileDownload::_downloadError(QNetworkReply::NetworkError code)
         errorMsg = tr("Error during download. Error: %1").arg(code);
     }
 
-    emit error(errorMsg);
+    emit downloadComplete(_originalRemoteFile, QString(), errorMsg);
 }
