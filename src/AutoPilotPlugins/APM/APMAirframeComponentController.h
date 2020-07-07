@@ -35,10 +35,8 @@ public:
     Q_INVOKABLE void loadParameters(const QString& paramFile);
 
 private slots:
-    void _githubJsonDownloadFinished(QString remoteFile, QString localFile);
-    void _githubJsonDownloadError(QString errorMsg);
-    void _paramFileDownloadFinished(QString remoteFile, QString localFile);
-    void _paramFileDownloadError(QString errorMsg);
+    void _githubJsonDownloadComplete(QString remoteFile, QString localFile, QString errorMsg);
+    void _paramFileDownloadComplete(QString remoteFile, QString localFile, QString errorMsg);
 
 private:
     void _fillFrameClasses(void);
