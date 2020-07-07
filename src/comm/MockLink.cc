@@ -1529,7 +1529,11 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
 void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
+#if 1
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json.gz";
+#else
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
+#endif
     char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
@@ -1548,7 +1552,11 @@ void MockLink::_sendVersionMetaData(void)
 void MockLink::_sendParameterMetaData(void)
 {
     mavlink_message_t   responseMsg;
+#if 1
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://parameter.json";
+#else
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/2ZKRIRE";
+#endif
     char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,

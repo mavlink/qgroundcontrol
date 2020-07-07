@@ -41,7 +41,6 @@
 class QQmlApplicationEngine;
 class QGCSingleton;
 class QGCToolbox;
-class QGCFileDownload;
 
 /**
  * @brief The main application and management class.
@@ -166,15 +165,14 @@ public:
     bool _checkTelemetrySavePath(bool useMessageBox);
 
 private slots:
-    void _missingParamsDisplay          (void);
-    void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
-    void _currentVersionDownloadError   (QString errorMsg);
-    bool _parseVersionText              (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
-    void _onGPSConnect                  (void);
-    void _onGPSDisconnect               (void);
-    void _gpsSurveyInStatus             (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
-    void _gpsNumSatellites              (int numSatellites);
-    void _showDelayedAppMessages        (void);
+    void _missingParamsDisplay                      (void);
+    void _qgcCurrentStableVersionDownloadComplete   (QString remoteFile, QString localFile, QString errorMsg);
+    bool _parseVersionText                          (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect                              (void);
+    void _onGPSDisconnect                           (void);
+    void _gpsSurveyInStatus                         (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites                          (int numSatellites);
+    void _showDelayedAppMessages                    (void);
 
 private:
     QObject*    _rootQmlObject          ();
@@ -194,7 +192,6 @@ private:
     int                 _majorVersion           = 0;
     int                 _minorVersion           = 0;
     int                 _buildVersion           = 0;
-    QGCFileDownload*    _currentVersionDownload = nullptr;
     GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
     QGCToolbox*         _toolbox                = nullptr;
     QQuickItem*         _mainRootWindow         = nullptr;

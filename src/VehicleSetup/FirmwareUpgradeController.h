@@ -169,30 +169,27 @@ signals:
     void downloadingFirmwareListChanged (bool downloadingFirmwareList);
 
 private slots:
-    void _firmwareDownloadProgress(qint64 curr, qint64 total);
-    void _firmwareDownloadFinished(QString remoteFile, QString localFile);
-    void _firmwareDownloadError(QString errorMsg);
-    void _foundBoard(bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
-    void _noBoardFound(void);
-    void _boardGone();
-    void _foundBoardInfo(int bootloaderVersion, int boardID, int flashSize);
-    void _error(const QString& errorString);
-    void _status(const QString& statusString);
-    void _bootloaderSyncFailed(void);
-    void _flashComplete(void);
-    void _updateProgress(int curr, int total);
-    void _eraseStarted(void);
-    void _eraseComplete(void);
-    void _eraseProgressTick(void);
-    void _px4ReleasesGithubDownloadFinished(QString remoteFile, QString localFile);
-    void _px4ReleasesGithubDownloadError(QString errorMsg);
-    void _ardupilotManifestDownloadFinished(QString remoteFile, QString localFile);
-    void _ardupilotManifestDownloadError(QString errorMsg);
-    void _buildAPMFirmwareNames(void);
+    void _firmwareDownloadProgress          (qint64 curr, qint64 total);
+    void _firmwareDownloadComplete          (QString remoteFile, QString localFile, QString errorMsg);
+    void _foundBoard                        (bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
+    void _noBoardFound                      (void);
+    void _boardGone                         (void);
+    void _foundBoardInfo                    (int bootloaderVersion, int boardID, int flashSize);
+    void _error                             (const QString& errorString);
+    void _status                            (const QString& statusString);
+    void _bootloaderSyncFailed              (void);
+    void _flashComplete                     (void);
+    void _updateProgress                    (int curr, int total);
+    void _eraseStarted                      (void);
+    void _eraseComplete                     (void);
+    void _eraseProgressTick                 (void);
+    void _px4ReleasesGithubDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    void _ardupilotManifestDownloadComplete (QString remoteFile, QString localFile, QString errorMsg);
+    void _buildAPMFirmwareNames             (void);
 
 private:
     QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
-    void _getFirmwareFile(FirmwareIdentifier firmwareId);
+    void _getFirmwareFile           (FirmwareIdentifier firmwareId);
     void _initFirmwareHash          (void);
     void _downloadFirmware          (void);
     void _appendStatusLog           (const QString& text, bool critical = false);
