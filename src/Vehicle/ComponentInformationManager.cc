@@ -14,6 +14,7 @@
 #include "JsonHelper.h"
 #include "CompInfoVersion.h"
 #include "CompInfoParam.h"
+#include "QGCFileDownload.h"
 
 #include <QStandardPaths>
 #include <QJsonDocument>
@@ -208,7 +209,7 @@ QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QStri
     return outputFileName;
 }
 
-void RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson(const QString& fileName, const QString& errorMsg)
+void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson(const QString& fileName, const QString& errorMsg)
 {
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson fileName:errorMsg" << fileName << errorMsg;
 
@@ -219,13 +220,38 @@ void RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson(const QStrin
     advance();
 }
 
-void RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson(const QString& fileName, const QString& errorMsg)
+void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson(const QString& fileName, const QString& errorMsg)
 {
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson fileName:errorMsg" << fileName << errorMsg;
 
     QString jsonTranslationFileName;
     if (errorMsg.isEmpty()) {
         jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
+    }
+
+    _compInfo->setJson(_jsonMetadataFileName, jsonTranslationFileName);
+
+    advance();
+}
+
+void RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson(QString remoteFile, QString localFile, QString errorMsg)
+{
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
+
+    if (errorMsg.isEmpty()) {
+        _jsonMetadataFileName = _downloadCompleteJsonWorker(localFile, "metadata.json");
+    }
+
+    advance();
+}
+
+void RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson(QString remoteFile, QString localFile, QString errorMsg)
+{
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
+
+    QString jsonTranslationFileName;
+    if (errorMsg.isEmpty()) {
+        jsonTranslationFileName = _downloadCompleteJsonWorker(localFile, "translation.json");
     }
 
     _compInfo->setJson(_jsonMetadataFileName, jsonTranslationFileName);
@@ -242,11 +268,12 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
     if (compInfo->available) {
         qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData;
         if (_uriIsFTP(compInfo->uriMetaData)) {
-            connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson);
+            connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
             ftpManager->download(compInfo->uriMetaData, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         } else {
-            // FIXME: NYI
-            qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. http download NYI";
+            QGCFileDownload* download = new QGCFileDownload(requestMachine);
+            connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
+            download->download(compInfo->uriMetaData);
         }
     } else {
         qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. Component information not available";
@@ -267,11 +294,12 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
         } else {
             qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation;
             if (_uriIsFTP(compInfo->uriTranslation)) {
-                connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson);
+                connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
                 ftpManager->download(compInfo->uriTranslation, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
             } else {
-                // FIXME: NYI
-                qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. http download NYI";
+                QGCFileDownload* download = new QGCFileDownload(requestMachine);
+                connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
+                download->download(compInfo->uriTranslation);
             }
         }
     } else {

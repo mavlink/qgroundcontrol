@@ -38,9 +38,11 @@ public:
     void            statesCompleted (void) const final;
 
 private slots:
-    void    _downloadCompleteMetaDataJson   (const QString& file, const QString& errorMsg);
-    void    _downloadCompleteTranslationJson(const QString& file, const QString& errorMsg);
-    QString _downloadCompleteJsonWorker     (const QString& jsonFileName, const QString& inflatedFileName);
+    void    _ftpDownloadCompleteMetaDataJson    (const QString& file, const QString& errorMsg);
+    void    _ftpDownloadCompleteTranslationJson (const QString& file, const QString& errorMsg);
+    void    _httpDownloadCompleteMetaDataJson   (QString remoteFile, QString localFile, QString errorMsg);
+    void    _httpDownloadCompleteTranslationJson(QString remoteFile, QString localFile, QString errorMsg);
+    QString _downloadCompleteJsonWorker         (const QString& jsonFileName, const QString& inflatedFileName);
 
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
