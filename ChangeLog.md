@@ -4,13 +4,15 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.9 - Not yet released
+## 4.0.10 - Not yet release
+
+## 4.0.9 - Stable
 
 * Don't auto-connect to second Cube Orange/Yellow composite port
 * Plan: Fix bugs associated with mission commands which specify and altitude but no lat/lon
 * Fix bug which could prevent view switching from working after altitude mode warning dialog would pop up
 
-## 4.0.8 - Stable
+## 4.0.8
 
 * iOS: Modify QGC file storage location to support new Files app
 * Mobile: Fix Log Replay status bar file selection
