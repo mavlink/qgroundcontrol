@@ -4,7 +4,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.10 - Not yet release
+## 4.0.10 - Not yet released
 
 ## 4.0.9 - Stable
 
