@@ -136,9 +136,9 @@ Item {
     property int    _missionItemCount:      missionController.missionItemCount
     property int    _currentMissionIndex:   missionController.currentMissionIndex
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
-    property bool   _hideEmergenyStop:      !_corePluginOptions.flyView.guidedBarShowEmergencyStop
-    property bool   _hideOrbit:             !_corePluginOptions.flyView.guidedBarShowOrbit
-    property bool   _hideROI:               !_corePluginOptions.flyView.guidedBarShowROI
+    property bool   _hideEmergenyStop:      false   // This core plugin option doesn't exist in stable
+    property bool   _hideOrbit:             false   // This core plugin option doesn't exist in stable
+    property bool   _hideROI:               false   // This core plugin option doesn't exist in stable
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
