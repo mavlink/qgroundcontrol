@@ -507,7 +507,6 @@ FlightMap {
 
                 onTriggered: {
                     gotoLocationItem.show(clickMenu.coord)
-                    orbitMapCircle.hide()
                     guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickMenu.coord, gotoLocationItem)
                 }
             }
@@ -517,7 +516,6 @@ FlightMap {
 
                 onTriggered: {
                     orbitMapCircle.show(clickMenu.coord)
-                    gotoLocationItem.hide()
                     guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickMenu.coord, orbitMapCircle)
                 }
             }
@@ -527,27 +525,18 @@ FlightMap {
 
                 onTriggered: {
                     roiLocationItem.show(clickMenu.coord)
-                    guidedActionsController.confirmAction(guidedActionsController.actionROI, clickMenu.coord, orbitMapCircle)
+                    guidedActionsController.confirmAction(guidedActionsController.actionROI, clickMenu.coord, roiLocationItem)
                 }
             }
         }
 
         onClicked: {
-            if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
-                return
-            }
-            orbitMapCircle.hide()
-            gotoLocationItem.hide()
-            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-            if (guidedActionsController.showGotoLocation && guidedActionsController.showOrbit) {
+            if (!guidedActionsController.guidedUIVisible && (guidedActionsController.showGotoLocation || guidedActionsController.showOrbit || guidedActionsController.showROI)) {
+                orbitMapCircle.hide()
+                gotoLocationItem.hide()
+                var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                 clickMenu.coord = clickCoord
                 clickMenu.popup()
-            } else if (guidedActionsController.showGotoLocation) {
-                gotoLocationItem.show(clickCoord)
-                guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickCoord)
-            } else if (guidedActionsController.showOrbit) {
-                orbitMapCircle.show(clickCoord)
-                guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickCoord)
             }
         }
     }
