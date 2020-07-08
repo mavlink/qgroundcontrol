@@ -112,8 +112,8 @@ Item {
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
-    property bool showOrbit:            _guidedActionsEnabled && !_hideOrbit && _vehicleFlying && activeVehicle.orbitModeSupported && !_missionActive
-    property bool showROI:              _guidedActionsEnabled && !_hideROI && _vehicleFlying && activeVehicle.roiModeSupported && !_missionActive
+    property bool showOrbit:            _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive
+    property bool showROI:              _guidedActionsEnabled && _vehicleFlying && __roiSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
     property bool showActionList:       _guidedActionsEnabled && (showStartMission || showResumeMission || showChangeAlt || showLandAbort)
@@ -124,7 +124,8 @@ Item {
     property bool guidedUIVisible:      confirmDialog.visible || actionList.visible
 
     property var    _corePlugin:            QGroundControl.corePlugin
-    property bool   _guidedActionsEnabled:  (!ScreenTools.isDebug && QGroundControl.corePlugin.options.guidedActionsRequireRCRSSI && activeVehicle) ? _rcRSSIAvailable : activeVehicle
+    property var    _corePluginOptions:     QGroundControl.corePlugin.options
+    property bool   _guidedActionsEnabled:  (!ScreenTools.isDebug && _corePluginOptions.guidedActionsRequireRCRSSI && activeVehicle) ? _rcRSSIAvailable : activeVehicle
     property string _flightMode:            activeVehicle ? activeVehicle.flightMode : ""
     property bool   _missionAvailable:      missionController.containsItems
     property bool   _missionActive:         activeVehicle ? _vehicleArmed && (_vehicleInLandMode || _vehicleInRTLMode || _vehicleInMissionMode) : false
@@ -138,9 +139,9 @@ Item {
     property int    _missionItemCount:      missionController.missionItemCount
     property int    _currentMissionIndex:   missionController.currentMissionIndex
     property int    _resumeMissionIndex:    missionController.resumeMissionIndex
-    property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
-    property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
-    property bool   _hideROI:               !QGroundControl.corePlugin.options.guidedBarShowOrbit
+    property bool   _hideEmergenyStop:      !_corePluginOptions.flyView.guidedBarShowEmergencyStop
+    property bool   _hideOrbit:             !_corePluginOptions.flyView.guidedBarShowOrbit
+    property bool   _hideROI:               !_corePluginOptions.flyView.guidedBarShowROI
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       activeVehicle ? activeVehicle.rcRSSI > 0 && activeVehicle.rcRSSI <= 100 : false
     property bool   _fixedWingOnApproach:   activeVehicle ? activeVehicle.fixedWing && _vehicleLanding : false
@@ -148,11 +149,13 @@ Item {
     // You can turn on log output for GuidedActionsController by turning on GuidedActionsControllerLog category
     property bool __guidedModeSupported:    activeVehicle ? activeVehicle.guidedModeSupported : false
     property bool __pauseVehicleSupported:  activeVehicle ? activeVehicle.pauseVehicleSupported : false
+    property bool __roiSupported:           activeVehicle ? !_hideROI && activeVehicle.roiModeSupported : false
+    property bool __orbitSupported:         activeVehicle ? !_hideOrbit && activeVehicle.orbitModeSupported : false
     property bool __flightMode:             _flightMode
 
     function _outputState() {
         if (_corePlugin.guidedActionsControllerLogging()) {
-            console.log(qsTr("activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10)").arg(activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_missionItemCount))
+            console.log(qsTr("activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleWasFlying(%5) _vehicleInRTLMode(%6) pauseVehicleSupported(%7) _vehiclePaused(%8) _flightMode(%9) _missionItemCount(%10) roiSupported(%11) orbitSupported(%12) _missionActive(%13) _hideROI(%14) _hideOrbit(%15)").arg(activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleWasFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode).arg(_missionItemCount).arg(__roiSupported).arg(__orbitSupported).arg(_missionActive).arg(_hideROI).arg(_hideOrbit))
         }
     }
 
@@ -170,7 +173,10 @@ Item {
     on__FlightModeChanged:              _outputState()
     on__GuidedModeSupportedChanged:     _outputState()
     on__PauseVehicleSupportedChanged:   _outputState()
+    on__RoiSupportedChanged:            _outputState()
+    on__OrbitSupportedChanged:          _outputState()
     on_MissionItemCountChanged:         _outputState()
+    on_MissionActiveChanged:            _outputState()
 
     on_CurrentMissionIndexChanged: {
         if (_corePlugin.guidedActionsControllerLogging()) {
@@ -215,6 +221,24 @@ Item {
     onShowChangeAltChanged: {
         if (_corePlugin.guidedActionsControllerLogging()) {
             console.log("showChangeAlt", showChangeAlt)
+        }
+        _outputState()
+    }
+    onShowROIChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showROI", showROI)
+        }
+        _outputState()
+    }
+    onShowOrbitChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showOrbit", showOrbit)
+        }
+        _outputState()
+    }
+    onShowGotoLocationChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showGotoLocation", showGotoLocation)
         }
         _outputState()
     }
