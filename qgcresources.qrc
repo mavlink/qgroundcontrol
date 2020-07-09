@@ -22,6 +22,7 @@
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="helicoptericon.svg">resources/helicoptericon.svg</file>
+        <file alias="BingNoTileBytes.dat">resources/BingNoTileBytes.dat</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
         <file alias="land.svg">resources/land.svg</file>

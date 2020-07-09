@@ -222,6 +222,15 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 QString
 QGCMapEngine::getTileHash(QString type, int x, int y, int z)
 {
+#if 0
+    int maxCachedZoom = 15;
+    if (z > maxCachedZoom) {
+        double unZoomFactor = qPow(2, z - maxCachedZoom);
+        x = (double)x / unZoomFactor;
+        y = (double)y / unZoomFactor;
+        z = maxCachedZoom;
+    }
+#endif
     return QString::asprintf("%010d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
 
