@@ -862,6 +862,8 @@ Item {
                             }
                             _missionController.setCurrentPlanViewSeqNum(removeIndex, true)
                         }
+                        onInsertWaypoint:           insertSimpleItemAfterCurrent(editorMap.center)
+                        onInsertComplexItem:        insertComplexItemAfterCurrent(complexItemName)
                         onSelectNextNotReadyItem:   selectNextNotReady()
                     }
                 }

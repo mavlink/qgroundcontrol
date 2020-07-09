@@ -30,6 +30,8 @@ Rectangle {
 
     signal clicked
     signal remove
+    signal insertWaypoint
+    signal insertComplexItem(string complexItemName)
     signal selectNextNotReadyItem
 
     property var    _masterController:          masterController
