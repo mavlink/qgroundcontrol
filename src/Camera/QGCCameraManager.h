@@ -65,6 +65,7 @@ protected slots:
     virtual void    _stepStream             (int direction);
     virtual void    _cameraTimeout          ();
     virtual void    _triggerCamera          ();
+    virtual void    _toggleCameraMode       ();
     virtual void    _startVideoRecording    ();
     virtual void    _stopVideoRecording     ();
     virtual void    _toggleVideoRecording   ();

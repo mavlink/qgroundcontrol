@@ -412,6 +412,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         disconnect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera);
         disconnect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream);
         disconnect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera);
+        disconnect(_activeJoystick, &Joystick::toggleCameraMode,    this, &QGCCameraManager::_toggleCameraMode);
         disconnect(_activeJoystick, &Joystick::startVideoRecord,    this, &QGCCameraManager::_startVideoRecording);
         disconnect(_activeJoystick, &Joystick::stopVideoRecord,     this, &QGCCameraManager::_stopVideoRecording);
         disconnect(_activeJoystick, &Joystick::toggleVideoRecord,   this, &QGCCameraManager::_toggleVideoRecording);
@@ -428,6 +429,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         connect(_activeJoystick, &Joystick::stepCamera,             this, &QGCCameraManager::_stepCamera);
         connect(_activeJoystick, &Joystick::stepStream,             this, &QGCCameraManager::_stepStream);
         connect(_activeJoystick, &Joystick::triggerCamera,          this, &QGCCameraManager::_triggerCamera);
+        connect(_activeJoystick, &Joystick::toggleCameraMode,       this, &QGCCameraManager::_toggleCameraMode);
         connect(_activeJoystick, &Joystick::startVideoRecord,       this, &QGCCameraManager::_startVideoRecording);
         connect(_activeJoystick, &Joystick::stopVideoRecord,        this, &QGCCameraManager::_stopVideoRecording);
         connect(_activeJoystick, &Joystick::toggleVideoRecord,      this, &QGCCameraManager::_toggleVideoRecording);
@@ -445,6 +447,16 @@ QGCCameraManager::_triggerCamera()
     QGCCameraControl* pCamera = currentCameraInstance();
     if(pCamera) {
         pCamera->takePhoto();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_toggleCameraMode()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->toggleMode();
     }
 }
 
