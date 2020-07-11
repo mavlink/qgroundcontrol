@@ -26,6 +26,7 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QFile>
+#include <QSettings>
 
 #include "time.h"
 
@@ -120,6 +121,7 @@ QGCCacheWorker::run()
         _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
         _valid = _db->open();
     }
+    _deleteBingNoTileTiles();
     while(true) {
         QGCMapTask* task;
         if(_taskQueue.count()) {
@@ -203,6 +205,49 @@ QGCCacheWorker::run()
         QSqlDatabase::removeDatabase(kSession);
     }
 }
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_deleteBingNoTileTiles()
+{
+    QSettings settings;
+    static const char* alreadyDoneKey = "_deleteBingNoTileTilesDone";
+
+    if (settings.value(alreadyDoneKey, false).toBool()) {
+        return;
+    }
+    settings.setValue(alreadyDoneKey, true);
+
+    // Previously we would store these empty tile graphics in the cache. This prevented the ability to zoom beyong the level
+    // of available tiles. So we need to remove only of these still hanging around to make higher zoom levels work.
+    QFile file(":/res/BingNoTileBytes.dat");
+    file.open(QFile::ReadOnly);
+    QByteArray noTileBytes = file.readAll();
+    file.close();
+
+    QSqlQuery query(*_db);
+    QString s;
+    //-- Select tiles in default set only, sorted by oldest.
+    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.count());
+    QList<quint64> idsToDelete;
+    if (query.exec(s)) {
+        while(query.next()) {
+            if (query.value(1).toByteArray() == noTileBytes) {
+                idsToDelete.append(query.value(0).toULongLong());
+                qCDebug(QGCTileCacheLog) << "_deleteBingNoTileTiles HASH:" << query.value(2).toString();
+            }
+        }
+        for (const quint64 tileId: idsToDelete) {
+            s = QString("DELETE FROM Tiles WHERE tileID = %1").arg(tileId);
+            if (!query.exec(s)) {
+                qCWarning(QGCTileCacheLog) << "Delete failed";
+            }
+        }
+    } else {
+        qCWarning(QGCTileCacheLog) << "_deleteBingNoTileTiles query failed";
+    }
+}
+
 //-----------------------------------------------------------------------------
 bool
 QGCCacheWorker::_findTileSetID(const QString name, quint64& setID)
