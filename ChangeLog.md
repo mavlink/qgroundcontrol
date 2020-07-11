@@ -4,6 +4,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* Maps: Support zoom up to level 23 even if map provider doesn't provide tiles that high
 * Settings/Mavlink: Add ability to forward mavlink traffic out specified UDP port
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
 * Fly: New instrument values display/editing support
