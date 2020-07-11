@@ -48,6 +48,7 @@ public:
 
     int getIdFromType(QString type);
     QString getTypeFromId(int id);
+    MapProvider* getMapProviderFromId(int id);
 
     QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
                             double bottomRightLon, double bottomRightLat,
