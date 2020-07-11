@@ -89,10 +89,6 @@ int MapProvider::lat2tileY(const double lat, const int z) const {
         2.0 * pow(2.0, z)));
 }
 
-bool MapProvider::_isElevationProvider() const {
-    return false;
-}
-
 QGCTileSet MapProvider::getTileCount(const int zoom, const double topleftLon,
                                      const double topleftLat, const double bottomRightLon,
                                      const double bottomRightLat) const {
