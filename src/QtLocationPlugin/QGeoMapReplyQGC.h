@@ -81,6 +81,7 @@ private:
     QByteArray              _badMapbox;
     QByteArray              _badTile;
     QTimer                  _timer;
+    static QByteArray       _bingNoTileImage;
     static int              _requestCount;
 };
 
