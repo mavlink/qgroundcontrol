@@ -45,7 +45,8 @@ public:
 
     virtual int lat2tileY(const double lat, const int z) const;
 
-    virtual bool _isElevationProvider() const;
+    virtual bool _isElevationProvider() const { return false; }
+    virtual bool _isBingProvider() const { return false; }
 
     virtual QGCTileSet getTileCount(const int zoom, const double topleftLon,
                                      const double topleftLat, const double bottomRightLon,
