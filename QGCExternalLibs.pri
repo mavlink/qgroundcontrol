@@ -111,8 +111,8 @@ SOURCES += \
 #
 # [REQUIRED] zlib library
 Windows {
-    INCLUDEPATH +=  $$SOURCE_DIR/libszlib/windows/include
-    LIBS += -L$$SOURCE_DIR/libszlib/windows/lib
+    INCLUDEPATH +=  $$SOURCE_DIR/libs/zlib/windows/include
+    LIBS += -L$$SOURCE_DIR/libs/zlib/windows/lib
 }
 LIBS += -lz
 
