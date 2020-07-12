@@ -726,14 +726,17 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
     emit altitudeModeChanged();
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
-    if (specifiesAltitude() || isStandaloneCoordinate()) {
+    if (specifiesAltitude()) {
         double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
         _altitudeFact.setRawValue(defaultAlt);
         _missionItem._param7Fact.setRawValue(defaultAlt);
-        setAltitudeMode(_missionController->globalAltitudeModeDefault());
+        // Note that setAltitudeMode will also set MAV_FRAME correctly through signalling
+        // Takeoff items always use relative alt since that is the highest quality data to base altitude from
+        setAltitudeMode(isTakeoffItem() ? QGroundControlQmlGlobal::AltitudeModeRelative : _missionController->globalAltitudeModeDefault());
     } else {
         _altitudeFact.setRawValue(0);
         _missionItem._param7Fact.setRawValue(0);
+        _missionItem.setFrame(MAV_FRAME_MISSION);
     }
 
     MAV_CMD command = static_cast<MAV_CMD>(this->command());
@@ -759,7 +762,6 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
     }
 
     _missionItem.setAutoContinue(true);
-    _missionItem.setFrame(specifiesAltitude() ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_MISSION);
     setRawEdit(false);
 }
 

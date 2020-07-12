@@ -327,7 +327,10 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
 
             if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
                 newItem->altitude()->setRawValue(prevAltitude);
-                newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
+                if (globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeNone) {
+                    // We are in mixed altitude modes, so copy from previous. Otherwise alt mode will be set from global setting.
+                    newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
+                }
             }
         }
     }
