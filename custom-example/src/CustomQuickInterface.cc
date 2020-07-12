@@ -63,8 +63,7 @@ CustomQuickInterface::~CustomQuickInterface()
 //-----------------------------------------------------------------------------
 void
 CustomQuickInterface::initSettings() {
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-    _settings.reset(new QSettings(QString(QGC_ORG_NAME), QString(QGC_APPLICATION_NAME)));
+    _settings.reset(new QSettings(QSettings::IniFormat, QSettings::UserScope, QString(QGC_ORG_NAME), QString(QGC_APPLICATION_NAME)));
     _settings->beginGroup(kGroupName);
     _showGimbalControl = _settings->value(kShowGimbalCtl, false).toBool();
     _useEmbeddedGimbal = _settings->value(kUseEmbeddedGimbal, true).toBool();
