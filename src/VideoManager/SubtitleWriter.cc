@@ -39,7 +39,8 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile)
     _values = settings.value("large").toStringList().replaceInStrings(QStringLiteral("Vehicle."), QString());
     _values += settings.value("small").toStringList().replaceInStrings(QStringLiteral("Vehicle."), QString());
 
-    _startTime = QDateTime::currentDateTime();
+    // One subtitle always starts where the previous ended
+    _lastEndTime = QTime(0, 0);
 
     QFileInfo videoFileInfo(videoFile);
     QString subtitleFilePath = QStringLiteral("%1/%2.ass").arg(videoFileInfo.path(), videoFileInfo.completeBaseName());
@@ -108,10 +109,11 @@ void SubtitleWriter::_captureTelemetry()
     }
 
     // The time to start displaying this subtitle text
-    QTime start = QTime(0, 0).addMSecs(_startTime.time().msecsTo(QDateTime::currentDateTime().time()));
+    QTime start = _lastEndTime;
 
     // The time to stop displaying this subtitle text
     QTime end = start.addMSecs(1000/_sampleRate);
+    _lastEndTime = end;
 
     // This splits the screen in N parts and uses the N-1 internal parts to align the subtitles to.
     // Should we try to get the resolution from the pipeline? This seems to work fine with other resolutions too.
