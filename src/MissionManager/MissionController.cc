@@ -1258,6 +1258,9 @@ void MissionController::_recalcFlightPathSegments(void)
     _directionArrows.clear();
     _incompleteComplexItemLines.clearAndDeleteContents();
 
+    // Mission Settings item needs to start with no segment
+    lastFlyThroughVI->setSimpleFlighPathSegment(nullptr);
+
     // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
 
     for (int i=1; i<_visualItems->count(); i++) {
@@ -1490,9 +1493,10 @@ void MissionController::_recalcMissionFlightStatus()
     // both relative altitude.
 
     // No values for first item
-    lastFlyThroughVI->setAltDifference(0.0);
-    lastFlyThroughVI->setAzimuth(0.0);
-    lastFlyThroughVI->setDistance(0.0);
+    lastFlyThroughVI->setAltDifference(0);
+    lastFlyThroughVI->setAzimuth(0);
+    lastFlyThroughVI->setDistance(0);
+    lastFlyThroughVI->setDistanceFromStart(0);
 
     _minAMSLAltitude = _maxAMSLAltitude = _settingsItem->coordinate().altitude();
 
@@ -1514,8 +1518,9 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Assume the worst
-        item->setAzimuth(0.0);
-        item->setDistance(0.0);
+        item->setAzimuth(0);
+        item->setDistance(0);
+        item->setDistanceFromStart(0);
 
         // Look for speed changed
         double newSpeed = item->specifiedFlightSpeed();
