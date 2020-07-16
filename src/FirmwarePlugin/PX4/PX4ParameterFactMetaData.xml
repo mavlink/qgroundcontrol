@@ -11083,9 +11083,8 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <short_desc>EXFW_ROLL_P</short_desc>
     </parameter>
     <parameter default="0" name="MPC_LAND_RC_HELP" type="INT32">
-      <short_desc>Enable user assisted descent speed for autonomous land routine.
-When enabled, descent speed will be equal to MPC_LAND_SPEED at half throttle,
-MPC_Z_VEL_MAX_DN at zero throttle, and 0.5 * MPC_LAND_SPEED at full throttle</short_desc>
+      <short_desc>Enable user assisted descent speed for autonomous land routine</short_desc>
+      <long_desc>When enabled, descent speed will be: stick full up - 0 stick centered - MPC_LAND_SPEED stick full down - 2 * MPC_LAND_SPEED</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
