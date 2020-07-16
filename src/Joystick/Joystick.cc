@@ -59,6 +59,7 @@ const char* Joystick::_buttonActionPreviousStream =     QT_TR_NOOP("Previous Vid
 const char* Joystick::_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
 const char* Joystick::_buttonActionPreviousCamera =     QT_TR_NOOP("Previous Camera");
 const char* Joystick::_buttonActionTriggerCamera =      QT_TR_NOOP("Trigger Camera");
+const char* Joystick::_buttonActionToggleCameraMode =   QT_TR_NOOP("Toggle Camera Mode");
 const char* Joystick::_buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
 const char* Joystick::_buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
 const char* Joystick::_buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
@@ -1852,6 +1853,8 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit stepCamera(action == _buttonActionNextCamera ? 1 : -1);
     } else if(action == _buttonActionTriggerCamera) {
         if (buttonDown) emit triggerCamera();
+    } else if(action == _buttonActionToggleCameraMode) {
+        if (buttonDown) emit toggleCameraMode();
     } else if(action == _buttonActionStartVideoRecord) {
         if (buttonDown) emit startVideoRecord();
     } else if(action == _buttonActionStopVideoRecord) {
@@ -1976,6 +1979,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionNextCamera));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionPreviousCamera));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionTriggerCamera));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleCameraMode));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStartVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStopVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleVideoRecord));
