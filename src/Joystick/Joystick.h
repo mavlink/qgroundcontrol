@@ -317,6 +317,7 @@ signals:
     void stepCamera                 (int direction);
     void stepStream                 (int direction);
     void triggerCamera              ();
+    void toggleCameraMode           ();
     void startVideoRecord           ();
     void stopVideoRecord            ();
     void toggleVideoRecord          ();
@@ -464,6 +465,7 @@ private:
     static const char* _buttonActionNextCamera;
     static const char* _buttonActionPreviousCamera;
     static const char* _buttonActionTriggerCamera;
+    static const char* _buttonActionToggleCameraMode;
     static const char* _buttonActionStartVideoRecord;
     static const char* _buttonActionStopVideoRecord;
     static const char* _buttonActionToggleVideoRecord;
