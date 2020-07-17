@@ -8907,6 +8907,14 @@ How often the sensor is readout</short_desc>
       <unit>hPa</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter default="20.0" name="SENS_BARO_RATE" type="FLOAT">
+      <short_desc>Baro max rate</short_desc>
+      <long_desc>Barometric air data maximum publication rate. This is an upper bound, actual barometric data rate is still dependant on the sensor.</long_desc>
+      <min>1</min>
+      <max>200</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="SENS_BOARD_ROT" type="INT32">
       <short_desc>Board rotation</short_desc>
       <long_desc>This parameter defines the rotation of the FMU board relative to the platform.</long_desc>
