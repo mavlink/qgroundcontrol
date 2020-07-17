@@ -26,8 +26,8 @@ public:
 
     DEFINE_SETTING_NAME_GROUP()
 
-    DEFINE_SETTINGFACT(offlineEditingFirmwareType)
-    DEFINE_SETTINGFACT(offlineEditingVehicleType)
+    DEFINE_SETTINGFACT(offlineEditingFirmwareClass)
+    DEFINE_SETTINGFACT(offlineEditingVehicleClass)
     DEFINE_SETTINGFACT(offlineEditingCruiseSpeed)
     DEFINE_SETTINGFACT(offlineEditingHoverSpeed)
     DEFINE_SETTINGFACT(offlineEditingAscentSpeed)
@@ -93,9 +93,6 @@ public:
     static QList<int> firstRunPromptsIdsVariantToList   (const QVariant& firstRunPromptIds);
     static QVariant   firstRunPromptsIdsListToVariant   (const QList<int>& rgIds);
     Q_INVOKABLE void  firstRunPromptIdsMarkIdAsShown    (int id);
-
-    static MAV_AUTOPILOT    offlineEditingFirmwareTypeFromFirmwareType  (MAV_AUTOPILOT firmwareType);
-    static MAV_TYPE         offlineEditingVehicleTypeFromVehicleType    (MAV_TYPE vehicleType);
 
     // Application wide file extensions
     static const char* parameterFileExtension;

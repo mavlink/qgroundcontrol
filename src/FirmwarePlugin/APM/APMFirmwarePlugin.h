@@ -97,7 +97,7 @@ public:
     virtual void        initializeStreamRates           (Vehicle* vehicle);
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
-    QString             missionCommandOverrides         (MAV_TYPE vehicleType) const override;
+    QString             missionCommandOverrides         (QGCMAVLink::VehicleClass_t vehicleClass) const override;
     QString             getVersionParam                 (void) override { return QStringLiteral("SYSID_SW_MREV"); }
     QString             _internalParameterMetaDataFile  (Vehicle* vehicle) override;
     FactMetaData*       _getMetaDataForFact             (QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) override;

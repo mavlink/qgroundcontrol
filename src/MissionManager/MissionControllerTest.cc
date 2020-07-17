@@ -50,7 +50,7 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
 
     // Master controller pulls offline vehicle info from settings
-    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->setRawValue(firmwareType);
+    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
     _masterController = new PlanMasterController(this);
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
