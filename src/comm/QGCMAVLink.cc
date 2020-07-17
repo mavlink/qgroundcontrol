@@ -9,45 +9,91 @@
 
 #include "QGCMAVLink.h"
 
-bool QGCMAVLink::isFixedWing(MAV_TYPE mavType)
+constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
+constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
+constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
+
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassFixedWing;
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassRoverBoat;
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassSub;
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassMultiRotor;
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassVTOL;
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassGeneric;
+
+QList<QGCMAVLink::FirmwareClass_t> QGCMAVLink::allFirmwareClasses(void)
 {
-    return mavType == MAV_TYPE_FIXED_WING;
+    static const QList<QGCMAVLink::FirmwareClass_t> classes = {
+        FirmwareClassPX4,
+        FirmwareClassArduPilot,
+        FirmwareClassGeneric
+    };
+
+    return classes;
 }
 
-bool QGCMAVLink::isRover(MAV_TYPE mavType)
+QList<QGCMAVLink::VehicleClass_t> QGCMAVLink::allVehicleClasses(void)
 {
-    switch (mavType) {
-    case MAV_TYPE_GROUND_ROVER:
-    case MAV_TYPE_SURFACE_BOAT:
-        return true;
-    default:
-        return false;
+    static const QList<QGCMAVLink::VehicleClass_t> classes = {
+        VehicleClassFixedWing,
+        VehicleClassRoverBoat,
+        VehicleClassSub,
+        VehicleClassMultiRotor,
+        VehicleClassVTOL,
+        VehicleClassGeneric,
+    };
+
+    return classes;
+}
+
+QGCMAVLink::FirmwareClass_t QGCMAVLink::firmwareClass(MAV_AUTOPILOT autopilot)
+{
+    if (isPX4FirmwareClass(autopilot)) {
+        return FirmwareClassPX4;
+    } else if (isArduPilotFirmwareClass(autopilot)) {
+        return FirmwareClassArduPilot;
+    } else {
+        return FirmwareClassGeneric;
     }
+}
+
+bool QGCMAVLink::isFixedWing(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassFixedWing;
+}
+
+bool QGCMAVLink::isRoverBoat(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassRoverBoat;
 }
 
 bool QGCMAVLink::isSub(MAV_TYPE mavType)
 {
-    return mavType == MAV_TYPE_SUBMARINE;
+    return vehicleClass(mavType) == VehicleClassSub;
 }
 
 bool QGCMAVLink::isMultiRotor(MAV_TYPE mavType)
 {
+    return vehicleClass(mavType) == VehicleClassMultiRotor;
+}
+
+bool QGCMAVLink::isVTOL(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassVTOL;
+}
+
+QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
+{
     switch (mavType) {
+    case MAV_TYPE_GROUND_ROVER:
+    case MAV_TYPE_SURFACE_BOAT:
+        return VehicleClassRoverBoat;
     case MAV_TYPE_QUADROTOR:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
     case MAV_TYPE_HEXAROTOR:
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
-        return true;
-    default:
-        return false;
-    }
-}
-
-bool QGCMAVLink::isVTOL(MAV_TYPE mavType)
-{
-    switch (mavType) {
+        return VehicleClassMultiRotor;
     case MAV_TYPE_VTOL_DUOROTOR:
     case MAV_TYPE_VTOL_QUADROTOR:
     case MAV_TYPE_VTOL_TILTROTOR:
@@ -55,27 +101,12 @@ bool QGCMAVLink::isVTOL(MAV_TYPE mavType)
     case MAV_TYPE_VTOL_RESERVED3:
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
-        return true;
+        return VehicleClassVTOL;
+    case MAV_TYPE_FIXED_WING:
+        return VehicleClassFixedWing;
     default:
-        return false;
+        return VehicleClassGeneric;
     }
-}
-
-MAV_TYPE QGCMAVLink::vehicleClass(MAV_TYPE mavType)
-{
-    if (isFixedWing(mavType)) {
-        return MAV_TYPE_FIXED_WING;
-    } else if (isRover(mavType)) {
-        return MAV_TYPE_GROUND_ROVER;
-    } else if (isSub(mavType)) {
-        return MAV_TYPE_SUBMARINE;
-    } else if (isMultiRotor(mavType)) {
-        return MAV_TYPE_QUADROTOR;
-    } else if (isVTOL(mavType)) {
-        return MAV_TYPE_VTOL_QUADROTOR;
-    }
-
-    return MAV_TYPE_GENERIC;
 }
 
 QString  QGCMAVLink::mavResultToString(MAV_RESULT result)

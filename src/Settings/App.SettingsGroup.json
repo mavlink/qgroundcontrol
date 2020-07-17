@@ -4,19 +4,19 @@
     "QGC.MetaData.Facts":
 [
 {
-    "name":             "offlineEditingFirmwareType",
-    "shortDescription": "Offline editing firmware type",
+    "name":             "offlineEditingFirmwareClass",
+    "shortDescription": "Offline editing firmware class",
     "type":             "uint32",
     "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
     "enumValues":       "3,12,0",
     "defaultValue":     12
 },
 {
-    "name":             "offlineEditingVehicleType",
-    "shortDescription": "Offline editing vehicle type",
+    "name":             "offlineEditingVehicleClass",
+    "shortDescription": "Offline editing vehicle class",
     "type":             "uint32",
-    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
-    "enumValues":       "1,2,20,10,12",
+    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic",
+    "enumValues":       "1,2,20,10,12,0",
     "defaultValue":     2
 },
 {

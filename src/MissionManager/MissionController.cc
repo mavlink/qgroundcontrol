@@ -725,16 +725,16 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
     // Get the firmware/vehicle type from the plan file
     MAV_AUTOPILOT   planFileFirmwareType =  static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt());
-    MAV_TYPE        planFileVehicleType =   static_cast<MAV_TYPE>       (appSettings->offlineEditingVehicleType()->rawValue().toInt());
+    MAV_TYPE        planFileVehicleType =   static_cast<MAV_TYPE>     (QGCMAVLink::vehicleClassToMavType(appSettings->offlineEditingVehicleClass()->rawValue().toInt()));
     if (json.contains(_jsonVehicleTypeKey)) {
         planFileVehicleType = static_cast<MAV_TYPE>(json[_jsonVehicleTypeKey].toInt());
     }
 
     // Update firmware/vehicle offline settings if we aren't connect to a vehicle
     if (_masterController->offline()) {
-        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType(static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt())));
+        appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt())));
         if (json.contains(_jsonVehicleTypeKey)) {
-            appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(static_cast<MAV_TYPE>(json[_jsonVehicleTypeKey].toInt())));
+            appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(planFileVehicleType));
         }
     }
 
