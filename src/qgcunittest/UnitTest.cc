@@ -110,8 +110,8 @@ void UnitTest::init(void)
 
     // Force offline vehicle back to defaults
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-    appSettings->offlineEditingFirmwareType()->setRawValue(appSettings->offlineEditingFirmwareType()->rawDefaultValue());
-    appSettings->offlineEditingVehicleType()->setRawValue(appSettings->offlineEditingVehicleType()->rawDefaultValue());
+    appSettings->offlineEditingFirmwareClass()->setRawValue(appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
+    appSettings->offlineEditingVehicleClass()->setRawValue(appSettings->offlineEditingVehicleClass()->rawDefaultValue());
     
     _messageBoxRespondedTo = false;
     _missedMessageBoxCount = 0;

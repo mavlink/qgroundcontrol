@@ -27,8 +27,7 @@ class MissionCommandList : public QObject
     Q_OBJECT
     
 public:
-    /// @param jsonFilename Json file which contains commands
-    /// @param baseCommandList true: bottomost level of mission command hierarchy (partial not allowed), false: mid-level of command hierarchy
+    /// @param baseCommandList true: bottomost level of mission command hierarchy (partial spec allowed), false: override level of hierarchy
     MissionCommandList(const QString& jsonFilename, bool baseCommandList, QObject* parent = nullptr);
 
     /// Returns list of categories in this list
