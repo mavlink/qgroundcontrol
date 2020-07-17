@@ -297,23 +297,23 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
     return cmds;
 }
 
-QString PX4FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
+QString PX4FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const
 {
-    switch (vehicleType) {
-    case MAV_TYPE_GENERIC:
+    switch (vehicleClass) {
+    case QGCMAVLink::VehicleClassGeneric:
         return QStringLiteral(":/json/PX4-MavCmdInfoCommon.json");
-    case MAV_TYPE_FIXED_WING:
+    case QGCMAVLink::VehicleClassFixedWing:
         return QStringLiteral(":/json/PX4-MavCmdInfoFixedWing.json");
-    case MAV_TYPE_QUADROTOR:
+    case QGCMAVLink::VehicleClassMultiRotor:
         return QStringLiteral(":/json/PX4-MavCmdInfoMultiRotor.json");
-    case MAV_TYPE_VTOL_QUADROTOR:
+    case QGCMAVLink::VehicleClassVTOL:
         return QStringLiteral(":/json/PX4-MavCmdInfoVTOL.json");
-    case MAV_TYPE_SUBMARINE:
+    case QGCMAVLink::VehicleClassSub:
         return QStringLiteral(":/json/PX4-MavCmdInfoSub.json");
-    case MAV_TYPE_GROUND_ROVER:
+    case QGCMAVLink::VehicleClassRoverBoat:
         return QStringLiteral(":/json/PX4-MavCmdInfoRover.json");
     default:
-        qWarning() << "PX4FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
+        qWarning() << "PX4FirmwarePlugin::missionCommandOverrides called with bad VehicleClass_t:" << vehicleClass;
         return QString();
     }
 }

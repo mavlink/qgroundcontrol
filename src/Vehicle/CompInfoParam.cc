@@ -103,7 +103,7 @@ bool CompInfoParam::_isParameterVolatile(const QString& name)
 FirmwarePlugin* CompInfoParam::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
 {
     FirmwarePluginManager*  pluginMgr               = qgcApp()->toolbox()->firmwarePluginManager();
-    MAV_TYPE                anySupportedVehicleType = pluginMgr->supportedVehicleTypes(firmwareType)[0];
+    MAV_TYPE                anySupportedVehicleType = QGCMAVLink::vehicleClassToMavType(pluginMgr->supportedVehicleClasses(QGCMAVLink::firmwareClass(firmwareType))[0]);
 
     return pluginMgr->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
 }

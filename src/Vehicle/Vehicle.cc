@@ -424,17 +424,17 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)
 {
-    connect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    connect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingFirmwareClass(), &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    connect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 
-    _offlineFirmwareTypeSettingChanged(_settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue());
-    _offlineVehicleTypeSettingChanged(_settingsManager->appSettings()->offlineEditingVehicleType()->rawValue());
+    _offlineFirmwareTypeSettingChanged(_settingsManager->appSettings()->offlineEditingFirmwareClass()->rawValue());
+    _offlineVehicleTypeSettingChanged(_settingsManager->appSettings()->offlineEditingVehicleClass()->rawValue());
 }
 
 void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 {
-    disconnect(_settingsManager->appSettings()->offlineEditingFirmwareType(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
-    disconnect(_settingsManager->appSettings()->offlineEditingVehicleType(),   &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
+    disconnect(_settingsManager->appSettings()->offlineEditingFirmwareClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineFirmwareTypeSettingChanged);
+    disconnect(_settingsManager->appSettings()->offlineEditingVehicleClass(),  &Fact::rawValueChanged, this, &Vehicle::_offlineVehicleTypeSettingChanged);
 }
 
 void Vehicle::_commonInit()
@@ -588,9 +588,9 @@ void Vehicle::prepareDelete()
     }
 }
 
-void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
+void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
 {
-    _firmwareType = static_cast<MAV_AUTOPILOT>(value.toInt());
+    _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         _capabilityBits |= MAV_PROTOCOL_CAPABILITY_TERRAIN;
@@ -601,9 +601,9 @@ void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
     emit capabilityBitsChanged(_capabilityBits);
 }
 
-void Vehicle::_offlineVehicleTypeSettingChanged(QVariant value)
+void Vehicle::_offlineVehicleTypeSettingChanged(QVariant varVehicleType)
 {
-    _vehicleType = static_cast<MAV_TYPE>(value.toInt());
+    _vehicleType = static_cast<MAV_TYPE>(varVehicleType.toInt());
     emit vehicleTypeChanged();
 }
 
@@ -2721,7 +2721,7 @@ bool Vehicle::fixedWing() const
 
 bool Vehicle::rover() const
 {
-    return QGCMAVLink::isRover(vehicleType());
+    return QGCMAVLink::isRoverBoat(vehicleType());
 }
 
 bool Vehicle::sub() const
@@ -2736,7 +2736,7 @@ bool Vehicle::multiRotor() const
 
 bool Vehicle::vtol() const
 {
-    return _firmwarePlugin->isVtol(this);
+    return QGCMAVLink::isVTOL(vehicleType());
 }
 
 bool Vehicle::supportsThrottleModeCenterZero() const

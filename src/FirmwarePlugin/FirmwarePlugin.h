@@ -241,8 +241,8 @@ public:
     virtual QList<MAV_CMD> supportedMissionCommands(void);
 
     /// Returns the name of the mission command json override file for the specified vehicle type.
-    ///     @param vehicleType Vehicle type to return file for, MAV_TYPE_GENERIC is a request for overrides for all vehicle types
-    virtual QString missionCommandOverrides(MAV_TYPE vehicleType) const;
+    ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all vehicle types
+    virtual QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
     virtual const remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const;
@@ -316,9 +316,6 @@ public:
     /// @return true: vehicle has gimbal, false: gimbal support unknown
     virtual bool hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitchSupported, bool& yawSupported);
 
-    /// Returns true if the vehicle is a VTOL
-    virtual bool isVtol(const Vehicle* vehicle) const;
-
     /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
     virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
 
@@ -383,11 +380,11 @@ public:
     /// @return Singleton FirmwarePlugin instance for the specified MAV_AUTOPILOT.
     virtual FirmwarePlugin* firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) = 0;
 
-    /// @return List of firmware types this plugin supports.
-    virtual QList<MAV_AUTOPILOT> supportedFirmwareTypes(void) const = 0;
+    /// @return List of firmware classes this plugin supports.
+    virtual QList<QGCMAVLink::FirmwareClass_t> supportedFirmwareClasses(void) const = 0;
 
-    /// @return List of vehicle types this plugin supports.
-    virtual QList<MAV_TYPE> supportedVehicleTypes(void) const;
+    /// @return List of vehicle classes this plugin supports.
+    virtual QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses(void) const;
 };
 
 class FirmwarePluginFactoryRegister : public QObject

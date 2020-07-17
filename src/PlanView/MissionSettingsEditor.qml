@@ -26,8 +26,8 @@ Rectangle {
     property bool   _vehicleHasHomePosition:        _controllerVehicle.homePosition.isValid
     property bool   _showCruiseSpeed:               !_controllerVehicle.multiRotor
     property bool   _showHoverSpeed:                _controllerVehicle.multiRotor || _controllerVehicle.vtol
-    property bool   _multipleFirmware:              QGroundControl.supportedFirmwareCount > 2
-    property bool   _multipleVehicleTypes:          QGroundControl.supportedVehicleCount > 1
+    property bool   _multipleFirmware:              !QGroundControl.singleFirmwareSupport
+    property bool   _multipleVehicleTypes:          !QGroundControl.singleVehicleSupport
     property real   _fieldWidth:                    ScreenTools.defaultFontPixelWidth * 16
     property bool   _mobile:                        ScreenTools.isMobile
     property var    _savePath:                      QGroundControl.settingsManager.appSettings.missionSavePath
@@ -194,7 +194,7 @@ Rectangle {
                     visible:            _multipleFirmware
                 }
                 FactComboBox {
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
+                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareClass
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _multipleFirmware && _noMissionItemsAdded
@@ -210,7 +210,7 @@ Rectangle {
                     visible:            _multipleVehicleTypes
                 }
                 FactComboBox {
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
+                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
                     visible:                _multipleVehicleTypes && _noMissionItemsAdded

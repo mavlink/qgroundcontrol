@@ -40,7 +40,6 @@ Rectangle {
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
     property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
     property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
 
     readonly property real  _editFieldWidth:    Math.min(width - _innerMargin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -160,6 +159,7 @@ Rectangle {
                 id: commandDialog
 
                 MissionCommandDialog {
+                    vehicle:                    masterController.controllerVehicle
                     missionItem:                _root.missionItem
                     map:                        _root.map
                     // FIXME: Disabling fly through commands doesn't work since you may need to change from an RTL to something else
@@ -207,6 +207,8 @@ Rectangle {
                     visible:        missionItem.specifiesCoordinate
                     enabled:        _activeVehicle
                     onTriggered:    missionItem.coordinate = _activeVehicle.coordinate
+
+                    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
                 }
 
                 QGCMenuItem {

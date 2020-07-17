@@ -34,11 +34,9 @@ FirmwarePluginFactory::FirmwarePluginFactory(void)
     FirmwarePluginFactoryRegister::instance()->registerPluginFactory(this);
 }
 
-QList<MAV_TYPE> FirmwarePluginFactory::supportedVehicleTypes(void) const
+QList<QGCMAVLink::VehicleClass_t> FirmwarePluginFactory::supportedVehicleClasses(void) const
 {
-    QList<MAV_TYPE> vehicleTypes;
-    vehicleTypes << MAV_TYPE_FIXED_WING << MAV_TYPE_QUADROTOR << MAV_TYPE_VTOL_QUADROTOR << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE;
-    return vehicleTypes;
+    return QGCMAVLink::allVehicleClasses();
 }
 
 FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
@@ -182,23 +180,23 @@ QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(void)
     return QList<MAV_CMD>();
 }
 
-QString FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
+QString FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const
 {
-    switch (vehicleType) {
-    case MAV_TYPE_GENERIC:
+    switch (vehicleClass) {
+    case QGCMAVLink::VehicleClassGeneric:
         return QStringLiteral(":/json/MavCmdInfoCommon.json");
-    case MAV_TYPE_FIXED_WING:
+    case QGCMAVLink::VehicleClassFixedWing:
         return QStringLiteral(":/json/MavCmdInfoFixedWing.json");
-    case MAV_TYPE_QUADROTOR:
+    case QGCMAVLink::VehicleClassMultiRotor:
         return QStringLiteral(":/json/MavCmdInfoMultiRotor.json");
-    case MAV_TYPE_VTOL_QUADROTOR:
+    case QGCMAVLink::VehicleClassVTOL:
         return QStringLiteral(":/json/MavCmdInfoVTOL.json");
-    case MAV_TYPE_SUBMARINE:
+    case QGCMAVLink::VehicleClassSub:
         return QStringLiteral(":/json/MavCmdInfoSub.json");
-    case MAV_TYPE_GROUND_ROVER:
+    case QGCMAVLink::VehicleClassRoverBoat:
         return QStringLiteral(":/json/MavCmdInfoRover.json");
     default:
-        qWarning() << "FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
+        qWarning() << "FirmwarePlugin::missionCommandOverrides called with bad VehicleClass_t:" << vehicleClass;
         return QString();
     }
 }
@@ -785,22 +783,6 @@ bool FirmwarePlugin::hasGimbal(Vehicle* vehicle, bool& rollSupported, bool& pitc
     pitchSupported = false;
     yawSupported = false;
     return false;
-}
-
-bool FirmwarePlugin::isVtol(const Vehicle* vehicle) const
-{
-    switch (vehicle->vehicleType()) {
-    case MAV_TYPE_VTOL_DUOROTOR:
-    case MAV_TYPE_VTOL_QUADROTOR:
-    case MAV_TYPE_VTOL_TILTROTOR:
-    case MAV_TYPE_VTOL_RESERVED2:
-    case MAV_TYPE_VTOL_RESERVED3:
-    case MAV_TYPE_VTOL_RESERVED4:
-    case MAV_TYPE_VTOL_RESERVED5:
-        return true;
-    default:
-        return false;
-    }
 }
 
 QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
