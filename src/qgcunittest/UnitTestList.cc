@@ -48,6 +48,7 @@
 #include "RequestMessageTest.h"
 #include "InitialConnectTest.h"
 #include "FTPManagerTest.h"
+#include "MissionCommandTreeEditorTest.h"
 
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
@@ -83,6 +84,7 @@ UT_REGISTER_TEST(TransectStyleComplexItemTest)
 UT_REGISTER_TEST(QGCMapPolylineTest)
 UT_REGISTER_TEST(CameraCalcTest)
 UT_REGISTER_TEST(FWLandingPatternTest)
+UT_REGISTER_TEST_STANDALONE(MissionCommandTreeEditorTest)
 
 // List of unit test which are currently disabled.
 // If disabling a new test, include reason in comment.

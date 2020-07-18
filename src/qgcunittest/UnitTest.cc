@@ -37,15 +37,6 @@ enum UnitTest::FileDialogType UnitTest::_fileDialogExpectedType = getOpenFileNam
 int UnitTest::_missedFileDialogCount = 0;
 
 UnitTest::UnitTest(void)
-    : _linkManager              (nullptr)
-    , _mockLink                 (nullptr)
-    , _mainWindow               (nullptr)
-    , _vehicle                  (nullptr)
-    , _expectMissedFileDialog   (false)
-    , _expectMissedMessageBox   (false)
-    , _unitTestRun              (false)
-    , _initCalled               (false)
-    , _cleanupCalled            (false)
 {    
 
 }
@@ -59,9 +50,9 @@ UnitTest::~UnitTest()
     }
 }
 
-void UnitTest::_addTest(QObject* test)
+void UnitTest::_addTest(UnitTest* test)
 {
-	QList<QObject*>& tests = _testList();
+    QList<UnitTest*>& tests = _testList();
 
     Q_ASSERT(!tests.contains(test));
     
@@ -74,9 +65,9 @@ void UnitTest::_unitTestCalled(void)
 }
 
 /// @brief Returns the list of unit tests.
-QList<QObject*>& UnitTest::_testList(void)
+QList<UnitTest*>& UnitTest::_testList(void)
 {
-	static QList<QObject*> tests;
+    static QList<UnitTest*> tests;
 	return tests;
 }
 
@@ -84,8 +75,11 @@ int UnitTest::run(QString& singleTest)
 {
     int ret = 0;
     
-    for (QObject* test: _testList()) {
+    for (UnitTest* test: _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
+            if (test->standalone() && singleTest.isEmpty()) {
+                continue;
+            }
             QStringList args;
             args << "*" << "-maxwarnings" << "0";
             ret += QTest::qExec(test, args);
@@ -136,7 +130,6 @@ void UnitTest::cleanup(void)
     _cleanupCalled = true;
 
     _disconnectMockLink();
-    _closeMainWindow();
 
     // Keep in mind that any code below these QCOMPARE may be skipped if the compare fails
     if (_expectMissedMessageBox) {
@@ -431,36 +424,6 @@ void UnitTest::_linkDeleted(LinkInterface* link)
     if (link == _mockLink) {
         _mockLink = nullptr;
     }
-}
-
-void UnitTest::_createMainWindow(void)
-{
-    //-- TODO
-#if 0
-    _mainWindow = MainWindow::_create();
-    Q_CHECK_PTR(_mainWindow);
-#endif
-}
-
-void UnitTest::_closeMainWindow(bool cancelExpected)
-{
-    //-- TODO
-#if 0
-    if (_mainWindow) {
-        QSignalSpy  mainWindowSpy(_mainWindow, SIGNAL(mainWindowClosed()));
-
-        _mainWindow->close();
-
-        mainWindowSpy.wait(2000);
-        QCOMPARE(mainWindowSpy.count(), cancelExpected ? 0 : 1);
-
-        // This leaves enough time for any dangling Qml components to get cleaned up.
-        // This prevents qWarning from bad references in Qml
-        QTest::qWait(1000);
-    }
-#else
-    Q_UNUSED(cancelExpected);
-#endif
 }
 
 QString UnitTest::createRandomFile(uint32_t byteCount)

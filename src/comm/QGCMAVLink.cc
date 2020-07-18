@@ -9,6 +9,8 @@
 
 #include "QGCMAVLink.h"
 
+#include <QtGlobal>
+
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
@@ -53,6 +55,20 @@ QGCMAVLink::FirmwareClass_t QGCMAVLink::firmwareClass(MAV_AUTOPILOT autopilot)
         return FirmwareClassArduPilot;
     } else {
         return FirmwareClassGeneric;
+    }
+}
+
+QString QGCMAVLink::firmwareClassToString(FirmwareClass_t firmwareClass)
+{
+    switch (firmwareClass) {
+    case FirmwareClassPX4:
+        return QT_TRANSLATE_NOOP("Firmware Class", "PX4 Pro");
+    case FirmwareClassArduPilot:
+        return QT_TRANSLATE_NOOP("Firmware Class", "ArduPilot");
+    case FirmwareClassGeneric:
+        return QT_TRANSLATE_NOOP("Firmware Class", "Generic");
+    default:
+        return QT_TRANSLATE_NOOP("Firmware Class", "Unknown");
     }
 }
 
@@ -106,6 +122,26 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
         return VehicleClassFixedWing;
     default:
         return VehicleClassGeneric;
+    }
+}
+
+QString QGCMAVLink::vehicleClassToString(VehicleClass_t vehicleClass)
+{
+    switch (vehicleClass) {
+    case VehicleClassFixedWing:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Fixed Wing");
+    case VehicleClassRoverBoat:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Rover-Boat");
+    case VehicleClassSub:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Sub");
+    case VehicleClassMultiRotor:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Multi-Rotor");
+    case VehicleClassVTOL:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "VTOL");
+    case VehicleClassGeneric:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Generic");
+    default:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Unknown");
     }
 }
 
