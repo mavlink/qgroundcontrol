@@ -23,6 +23,7 @@ Rectangle {
     property bool _supportsTerrainFrame:    _controllerVehicle.supportsTerrainFrame
     property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
     property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeNone
+    property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
 
     property string _altModeRelativeHelpText:       qsTr("Altitude relative to launch altitude")
     property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
@@ -54,6 +55,8 @@ Rectangle {
         target:                 missionItem
         onAltitudeModeChanged:  updateAltitudeModeText()
     }
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Column {
         id:                 editorColumn
@@ -119,37 +122,6 @@ Rectangle {
             anchors.right:      parent.right
             spacing:            _margin
             visible:            !missionItem.wizardMode
-
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columns:        2
-
-                Repeater {
-                    model: missionItem.comboboxFacts
-
-                    QGCLabel {
-                        text:           object.name
-                        visible:        object.name !== ""
-                        Layout.column:  0
-                        Layout.row:     index
-                    }
-                }
-
-                Repeater {
-                    model: missionItem.comboboxFacts
-
-                    FactComboBox {
-                        indexModel:         false
-                        model:              object.enumStrings
-                        fact:               object
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        Layout.column:      1
-                        Layout.row:         index
-                        Layout.fillWidth:   true
-                    }
-                }
-            }
 
             // This control needs to morph between a simple altitude entry field to a more complex alt mode picker based on the global plan alt mode
             Rectangle {
@@ -254,6 +226,34 @@ Rectangle {
                         wrapMode:           Text.WordWrap
                         font.pointSize:     ScreenTools.smallFontPointSize
                         visible:            _globalAltModeIsMixed
+                    }
+                }
+            }
+
+            ColumnLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+
+                Repeater {
+                    model: missionItem.comboboxFacts
+
+                    ColumnLayout {
+                        Layout.fillWidth:   true
+                        spacing:            0
+
+                        QGCLabel {
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            text:           object.name
+                            visible:        object.name !== ""
+                        }
+
+                        FactComboBox {
+                            Layout.fillWidth:   true
+                            indexModel:         false
+                            model:              object.enumStrings
+                            fact:               object
+                        }
                     }
                 }
             }
