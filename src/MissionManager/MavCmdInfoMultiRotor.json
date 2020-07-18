@@ -1,8 +1,28 @@
 {
-    "comment":      "Any Firmware, Multi Rotor",
-    "version":      1,
-    "fileType":  "MavCmdInfo",
+    "comment":  "Any Firmware, Multi Rotor",
+    "version":  1,
+    "fileType": "MavCmdInfo",
 
     "mavCmdInfo": [
+        {
+            "id":           17,
+            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
+            "paramRemove":  "3"
+        },
+        {
+            "id":           19,
+            "comment":      "MAV_CMD_NAV_LOITER_TIME",
+            "paramRemove":  "2,3,4"
+        },
+        {
+            "id":           22,
+            "comment":      "MAV_CMD_NAV_TAKEOFF",
+            "paramRemove":  "1"
+        },
+        {
+            "id":           31,
+            "comment":      "MAV_CMD_NAV_LOITER_TO_ALT",
+            "paramRemove":  "1,2,4"
+        }
     ]
 }
