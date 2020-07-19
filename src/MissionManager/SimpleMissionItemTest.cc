@@ -38,8 +38,8 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoi
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterTime[] = {
-    { "Radius",     30.1234567 },
-    { "Hold",       10.1234567 },
+    { "Radius",         30.1234567 },
+    { "Loiter Time",    10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesTakeoff[] = {
@@ -57,7 +57,7 @@ const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpect
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    70.1234567, QGroundControlQmlGlobal::AltitudeModeRelative },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute },
-    { 0,                                                                                                                        nullptr,                                               70.1234567, QGroundControlQmlGlobal::AltitudeModeRelative },
+    { 0,                                                                                                                        nullptr,                                            70.1234567, QGroundControlQmlGlobal::AltitudeModeRelative },
     { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         qQNaN(),    QGroundControlQmlGlobal::AltitudeModeRelative },
 };

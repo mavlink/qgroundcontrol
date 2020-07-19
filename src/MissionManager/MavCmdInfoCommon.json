@@ -41,11 +41,11 @@
             "param2": {
                 "label":            "Acceptance",
                 "units":            "m",
-                "default":          3,
+                "default":          0,
                 "decimalPlaces":    2
             },
             "param3": {
-                "label":            "PassThru",
+                "label":            "Pass Radius",
                 "units":            "m",
                 "default":          0,
                 "decimalPlaces":    2
@@ -62,7 +62,7 @@
             "id":                   17,
             "rawName":              "MAV_CMD_NAV_LOITER_UNLIM",
             "friendlyName":         "Loiter",
-            "description":          "Travel to a position and Loiter around the specified radius indefinitely.",
+            "description":          "Travel to a position and Loiter around the specified position indefinitely.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Loiter",
@@ -84,12 +84,19 @@
             "id":                   18,
             "rawName":              "MAV_CMD_NAV_LOITER_TURNS",
             "friendlyName":         "Loiter (turns)",
-            "description":          "Travel to a position and Loiter around the specified radius for a number of turns.",
+            "description":          "Travel to a position and Loiter around the specified position for a number of turns.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
                 "label":            "Turns",
+                "default":          1,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Leave Loiter",
+                "enumStrings":      "Direction of next waypoint,Any direction",
+                "enumValues":       "1,0",
                 "default":          1,
                 "decimalPlaces":    0
             },
@@ -100,25 +107,32 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Yaw",
-                "units":            "deg",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
+                "label":            "Exit loiter from",
+                "enumStrings":      "Center,Tangent",
+                "enumValues":       "0,1",
+                "default":          1,
+                "decimalPlaces":    0
             }
         },
         {
             "id":                   19,
             "rawName":              "MAV_CMD_NAV_LOITER_TIME",
             "friendlyName":         "Loiter (time)",
-            "description":          "Travel to a position and Loiter around the specified radius for an amount of time.",
+            "description":          "Travel to a position and Loiter around the specified position for an amount of time.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
-                "label":            "Hold",
+                "label":            "Loiter Time",
                 "units":            "secs",
                 "default":          30,
+                "decimalPlaces":    0
+            },
+            "param2": {
+                "label":            "Leave Loiter",
+                "enumStrings":      "Direction of next waypoint,Current direction",
+                "enumValues":       "1,0",
+                "default":          1,
                 "decimalPlaces":    0
             },
             "param3": {
@@ -128,11 +142,11 @@
                 "decimalPlaces":    2
             },
             "param4": {
-                "label":            "Yaw",
-                "units":            "deg",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
+                "label":            "Exit loiter from",
+                "enumStrings":      "Center,Tangent",
+                "enumValues":       "0,1",
+                "default":          1,
+                "decimalPlaces":    0
             }
         },
         {
@@ -155,6 +169,14 @@
             "param1": {
                 "label":            "Abort Alt",
                 "units":            "m",
+                "default":          0,
+                "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Precision Land",
+                "units":            "m",
+                "enumStrings":      "Disabled,Opportunistic,Required",
+                "enumValues":       "0,1,2",
                 "default":          0,
                 "decimalPlaces":    2
             },
@@ -218,10 +240,10 @@
             "friendlyEdit":         true,
             "category":             "Loiter",
             "param1": {
-                "label":            "Heading wait",
-                "enumStrings":      "False,True",
-                "enumValues":       "0,1",
-                "default":          0,
+                "label":            "Leave Loiter",
+                "enumStrings":      "Direction of next waypoint,Any direction",
+                "enumValues":       "1,0",
+                "default":          1,
                 "decimalPlaces":    0
             },
             "param2": {
@@ -294,6 +316,14 @@
             "isTakeoffCommand":     true,
             "friendlyEdit":         true,
             "category":             "Basic",
+            "param2": {
+                "label":            "Transition Heading",
+                "units":            "m",
+                "enumStrings":      "Default,Next waypoint,Takeoff,Specified,Any",
+                "enumValues":       "0,1,2,3,4",
+                "default":          0,
+                "decimalPlaces":    0
+            },
             "param4": {
                 "label":            "Yaw",
                 "units":            "deg",
@@ -311,6 +341,13 @@
             "isLandCommand":        true,
             "friendlyEdit":         true,
             "category":             "Basic",
+            "param3": {
+                "label":            "Approach Alt",
+                "units":            "m",
+                "nanUnchanged":     true,
+                "default":          null,
+                "decimalPlaces":    2
+            },
             "param4": {
                 "label":            "Yaw",
                 "units":            "deg",
@@ -326,7 +363,7 @@
             "description":  "Enable/Disabled guided mode.",
             "param1": {
                 "label":            "Enable",
-                "enumStrings":      "Disable,Enable",
+                "enumStrings":      "On,Off",
                 "enumValues":       "0,1",
                 "default":          1,
                 "decimalPlaces":    0
@@ -367,14 +404,14 @@
             "friendlyEdit": true,
             "category":     "Basic",
             "param1": {
-                "label":            "Hold",
+                "label":            "Delay",
                 "units":            "secs",
                 "default":          30,
                 "decimalPlaces":    0
             }
         },
         {
-            "id":                           113,
+            "id":                       113,
             "rawName":                  "MAV_CMD_CONDITION_CHANGE_ALT",
             "description":              "Delay the mission until the specified altitide is reached.",
             "friendlyName":             "Wait for altitude",
@@ -405,10 +442,10 @@
             "id":           115,
             "rawName":      "MAV_CMD_CONDITION_YAW",
             "friendlyName": "Wait for Yaw",
-            "description":  "Delay the mission until the specified yaw is reached.",
+            "description":  "Delay the mission until the specified heading is reached.",
             "category":     "Conditionals",
             "param1": {
-                "label":            "Yaw",
+                "label":            "Heading",
                 "units":            "deg",
                 "default":          0,
                 "decimalPlaces":    1
@@ -1071,7 +1108,7 @@
         },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
         {
-            "id": 3000,
+            "id":           3000,
             "rawName":      "MAV_CMD_DO_VTOL_TRANSITION",
             "friendlyName": "VTOL Transition",
             "description":  "Perform flight mode transition.",
@@ -1079,7 +1116,7 @@
             "param1": {
                 "label":            "Mode",
                 "default":          3,
-                "enumStrings":      "Hover Mode,Plane Mode",
+                "enumStrings":      "Multi Rotor,Fixed Wing",
                 "enumValues":       "3,4"
             }
         },
