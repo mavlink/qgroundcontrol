@@ -4,29 +4,5 @@
     "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
-        {
-            "id":           17,
-            "comment":      "MAV_CMD_NAV_LOITER_UNLIM",
-            "description":  "Travel to a position and Loiter indefinitely.",
-            "paramRemove":  "3"
-        },
-        {
-            "id":           18,
-            "comment":      "MAV_CMD_NAV_LOITER_TURNS",
-            "description":  "Travel to a position and Loiter for a number of turns.",
-            "paramRemove":  "3"
-        },
-        {
-            "id":           19,
-            "comment":      "MAV_CMD_NAV_LOITER_TIME",
-            "description":  "Travel to a position and Loiter for an amount of time.",
-            "paramRemove":  "3"
-        },
-        {
-            "id":           22,
-            "comment":      "MAV_CMD_NAV_TAKEOFF",
-            "paramRemove":  "1",
-            "description":  "Hover straight up to specified altitude. Then travel to specified position."
-        }
     ]
 }

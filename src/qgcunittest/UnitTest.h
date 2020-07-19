@@ -26,13 +26,13 @@
 #include "Fact.h"
 #include "MissionItem.h"
 
-#define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(#className);
+#define UT_REGISTER_TEST(className)             static UnitTestWrapper<className> className(#className, false);
+#define UT_REGISTER_TEST_STANDALONE(className)  static UnitTestWrapper<className> className(#className, true);
 
 class QGCMessageBox;
 class QGCQFileDialog;
 class LinkManager;
 class MockLink;
-class MainWindow;
 class Vehicle;
 
 class UnitTest : public QObject
@@ -82,8 +82,11 @@ public:
     //          @param Expected failure response flags
     void checkExpectedFileDialog(int expectFailFlags = expectFailNoFailure);
 
+    bool standalone(void) { return _standalone; }
+    void setStandalone(bool standalone) { _standalone = standalone; }
+
     /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
-    static void _addTest(QObject* test);
+    static void _addTest(UnitTest* test);
 
     /// Creates a file with random contents of the specified size.
     /// @return Fully qualified path to created file
@@ -122,17 +125,14 @@ protected:
     void _connectMockLink(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
     void _connectMockLinkNoInitialConnectSequence(void) { _connectMockLink(MAV_AUTOPILOT_INVALID); }
     void _disconnectMockLink(void);
-    void _createMainWindow(void);
-    void _closeMainWindow(bool cancelExpected = false);
     void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
 
-    LinkManager*    _linkManager;
-    MockLink*       _mockLink;
-    MainWindow*     _mainWindow;
-    Vehicle*        _vehicle;
+    LinkManager*    _linkManager    = nullptr;
+    MockLink*       _mockLink       = nullptr;
+    Vehicle*        _vehicle        = nullptr;
 
-    bool _expectMissedFileDialog;   // true: expect a missed file dialog, used for internal testing
-    bool _expectMissedMessageBox;   // true: expect a missed message box, used for internal testing
+    bool _expectMissedFileDialog = false;   // true: expect a missed file dialog, used for internal testing
+    bool _expectMissedMessageBox = false;   // true: expect a missed message box, used for internal testing
 
 private slots:
     void _linkDeleted(LinkInterface* link);
@@ -185,7 +185,7 @@ private:
     friend class QGCQFileDialog;
 
     void _unitTestCalled(void);
-	static QList<QObject*>& _testList(void);
+    static QList<UnitTest*>& _testList(void);
 
     // Catch QGCMessageBox calls
     static bool                         _messageBoxRespondedTo;     ///< Message box was responded to
@@ -200,18 +200,20 @@ private:
     static enum FileDialogType _fileDialogExpectedType; ///< type of file dialog expected to show
     static int          _missedFileDialogCount;         ///< Count of file dialogs not checked with call to UnitTest::fileDialogWasDisplayed
 
-    bool _unitTestRun;              ///< true: Unit Test was run
-    bool _initCalled;               ///< true: UnitTest::_init was called
-    bool _cleanupCalled;            ///< true: UnitTest::_cleanup was called
+    bool _unitTestRun   = false;    ///< true: Unit Test was run
+    bool _initCalled    = false;    ///< true: UnitTest::_init was called
+    bool _cleanupCalled = false;    ///< true: UnitTest::_cleanup was called
+    bool _standalone    = false;    ///< true: Only run when requested specifically from command line
 };
 
 template <class T>
 class UnitTestWrapper {
 public:
-    UnitTestWrapper(const QString& name) :
-        _unitTest(new T)
+    UnitTestWrapper(const QString& name, bool standalone)
+        : _unitTest(new T)
     {
         _unitTest->setObjectName(name);
+        _unitTest->setStandalone(standalone);
         UnitTest::_addTest(_unitTest.data());
     }
 
