@@ -32,128 +32,137 @@ T.VerticalFactValueGrid {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    RowLayout {
-        id:     topLevelRowLayout
-        width:  parent.width
+    QGCFlickable {
+        width:              parent.width
+        height:             topLevelRowLayout.height
+        flickableDirection: QGCFlickable.HorizontalFlick
+        contentWidth:       topLevelRowLayout.width
 
-        ColumnLayout {
-            Layout.fillWidth: true
+        RowLayout {
+            id:         topLevelRowLayout
+            spacing:    0
 
-            GridLayout {
-                id:                     valueGrid
-                Layout.preferredWidth:  _root.width
-                rows:                   _root.rows.count * 2
-                rowSpacing:             0
+            ColumnLayout {
+                spacing: 0
 
-                Repeater {
-                    model: _root.rows
+                GridLayout {
+                    id:                     valueGrid
+                    Layout.minimumWidth:    _root.width - (columnButtons.visible? columnButtons.width + columnSpacing : 0)
+                    rows:                   _root.rows.count * 2
+                    rowSpacing:             0
+                    columnSpacing:          5
 
                     Repeater {
-                        id:     labelRepeater
-                        model:  object
+                        model: _root.rows
 
-                        property real _index: index
+                        Repeater {
+                            id:     labelRepeater
+                            model:  object
 
-                        InstrumentValueLabel {
-                            Layout.row:             labelRepeater._index * 2
-                            Layout.column:          index
-                            Layout.fillWidth:       true
-                            Layout.alignment:       Qt.AlignHCenter
-                            instrumentValueData:    object
+                            property real _index: index
+
+                            InstrumentValueLabel {
+                                Layout.row:             labelRepeater._index * 2
+                                Layout.column:          index
+                                Layout.fillWidth:       true
+                                Layout.alignment:       Qt.AlignHCenter
+                                instrumentValueData:    object
+                            }
+                        }
+                    }
+
+                    Repeater {
+                        model: _root.rows
+
+                        Repeater {
+                            id:     valueRepeater
+                            model:  object
+
+                            property real _index: index
+
+                            InstrumentValueValue {
+                                Layout.row:             valueRepeater._index * 2 + 1
+                                Layout.column:          index
+                                Layout.fillWidth:       true
+                                Layout.alignment:       Qt.AlignHCenter
+                                instrumentValueData:    object
+                            }
                         }
                     }
                 }
 
-                Repeater {
-                    model: _root.rows
+                RowLayout {
+                    id:                 rowButtons
+                    height:             ScreenTools.minTouchPixels / 2
+                    Layout.fillWidth:   true
+                    spacing:            1
+                    visible:            settingsUnlocked
 
-                    Repeater {
-                        id:     valueRepeater
-                        model:  object
+                    QGCButton {
+                        Layout.fillWidth:       true
+                        Layout.preferredHeight: parent.height
+                        text:                   qsTr("+")
+                        onClicked:              appendRow()
+                    }
 
-                        property real _index: index
-
-                        InstrumentValueValue {
-                            Layout.row:             valueRepeater._index * 2 + 1
-                            Layout.column:          index
-                            Layout.fillWidth:       true
-                            Layout.alignment:       Qt.AlignHCenter
-                            instrumentValueData:    object
-                        }
+                    QGCButton {
+                        Layout.fillWidth:       true
+                        Layout.preferredHeight: parent.height
+                        text:                   qsTr("-")
+                        enabled:                _root.rows.count > 1
+                        onClicked:              deleteLastRow()
                     }
                 }
             }
 
-            RowLayout {
-                id:                 rowButtons
-                height:             ScreenTools.minTouchPixels / 2
-                Layout.fillWidth:   true
-                spacing:            1
-                visible:            settingsUnlocked
+            ColumnLayout {
+                id:                     columnButtons
+                Layout.fillHeight:      true
+                Layout.bottomMargin:    rowButtons.height
+                width:                  ScreenTools.minTouchPixels / 2
+                spacing:                1
+                visible:                settingsUnlocked
 
                 QGCButton {
-                    Layout.fillWidth:       true
-                    Layout.preferredHeight: parent.height
+                    Layout.fillHeight:      true
+                    Layout.preferredHeight: ScreenTools.minTouchPixels
+                    Layout.preferredWidth:  parent.width
                     text:                   qsTr("+")
-                    onClicked:              appendRow()
+                    onClicked:              appendColumn()
                 }
 
                 QGCButton {
-                    Layout.fillWidth:       true
-                    Layout.preferredHeight: parent.height
+                    Layout.fillHeight:      true
+                    Layout.preferredHeight: ScreenTools.minTouchPixels
+                    Layout.preferredWidth:  parent.width
                     text:                   qsTr("-")
-                    enabled:                _root.rows.count > 1
-                    onClicked:              deleteLastRow()
+                    enabled:                _root.columnCount > 1
+                    onClicked:              deleteLastColumn()
                 }
             }
         }
 
-        ColumnLayout {
-            Layout.fillHeight:      true
-            Layout.bottomMargin:    rowButtons.height
-            width:                  ScreenTools.minTouchPixels / 2
-            spacing:                1
-            visible:                settingsUnlocked
-
-            QGCButton {
-                Layout.fillHeight:      true
-                Layout.preferredHeight: ScreenTools.minTouchPixels
-                Layout.preferredWidth:  parent.width
-                text:                   qsTr("+")
-                onClicked:              appendColumn()
+        QGCMouseArea {
+            x:          valueGrid.x
+            y:          valueGrid.y
+            width:      valueGrid.width
+            height:     valueGrid.height
+            visible:    settingsUnlocked
+            onClicked: {
+                var item = valueGrid.childAt(mouse.x, mouse.y)
+                //console.log(item, item ? item.instrumentValueData : "null", item && item.parent ? item.parent.instrumentValueData : "null")
+                if (item && item.instrumentValueData !== undefined) {
+                    mainWindow.showPopupDialogFromComponent(valueEditDialog, { instrumentValueData: item.instrumentValueData })
+                }
             }
 
-            QGCButton {
-                Layout.fillHeight:      true
-                Layout.preferredHeight: ScreenTools.minTouchPixels
-                Layout.preferredWidth:  parent.width
-                text:                   qsTr("-")
-                enabled:                _root.columnCount > 1
-                onClicked:              deleteLastColumn()
-            }
-        }
-    }
-
-    QGCMouseArea {
-        x:          valueGrid.x
-        y:          valueGrid.y
-        width:      valueGrid.width
-        height:     valueGrid.height
-        visible:    settingsUnlocked
-        onClicked: {
-            var item = valueGrid.childAt(mouse.x, mouse.y)
-            //console.log(item, item ? item.instrumentValueData : "null", item && item.parent ? item.parent.instrumentValueData : "null")
-            if (item && item.instrumentValueData !== undefined) {
-                mainWindow.showPopupDialogFromComponent(valueEditDialog, { instrumentValueData: item.instrumentValueData })
-            }
-        }
-
-        /*Rectangle {
+            /*Rectangle {
             anchors.fill: parent
             border.color: "green"
             border.width: 1
             color: "transparent"
         }*/
+        }
     }
 
     Component {
