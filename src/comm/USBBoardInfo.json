@@ -68,6 +68,7 @@
         { "regExp": "^Crazyflie BL",        "boardClass": "Pixhawk" },
         { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
         { "regExp": "^fmuv[2345]$",         "boardClass": "Pixhawk" },
+        { "regExp": "^mRoControlZeroF7",    "boardClass": "Pixhawk" },
         { "regExp": "PX4.*Flow",            "boardClass": "PX4 Flow" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
