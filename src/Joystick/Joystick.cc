@@ -265,6 +265,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
         _buttonActionArray.append(nullptr);
     }
 
+    _activeVehicleChanged(_multiVehicleManager->activeVehicle());
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
     emit buttonActionsChanged();
 }
