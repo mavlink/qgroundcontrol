@@ -336,6 +336,14 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/modalai_fc-v1_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/modalai_fc-v1_default.px4"},
     };
+
+    //////////////////////////////////// mRo Control Zero firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgmRoCtrlZero[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/mro_ctrl-zero-f7_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/mro_ctrl-zero-f7_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/mro_ctrl-zero-f7_default.px4"},
+    };
+
     //////////////////////////////////// UVify FC firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgUVifyCoreFirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/uvify_core_default.px4"},
@@ -448,6 +456,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgModalFCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
+    size = sizeof(rgmRoCtrlZero)/sizeof(rgmRoCtrlZero[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgmRoCtrlZero[i];
+        _rgmRoCtrlZeroF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgUVifyCoreFirmwareArray)/sizeof(rgUVifyCoreFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgUVifyCoreFirmwareArray[i];
@@ -536,6 +550,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardIDModalFCV1:
         _rgFirmwareDynamic = _rgModalFCV1Firmware;
+        break;
+    case Bootloader::boardIDmRoCtrlZeroF7:
+        _rgFirmwareDynamic = _rgmRoCtrlZeroF7Firmware;
         break;
     case Bootloader::boardIDUVifyCore:
         _rgFirmwareDynamic = _rgUVifyCoreFirmware;
