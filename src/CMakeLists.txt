@@ -119,6 +119,8 @@ add_library(qgc
 	QGCTemporaryFile.h
 	QGCToolbox.cc
 	QGCToolbox.h
+	QGCZlib.cc
+	QGCZlib.h
 	RunGuard.cc
 	RunGuard.h
 	ShapeFileHelper.cc
@@ -168,6 +170,7 @@ target_link_libraries(qgc
 	PRIVATE
 		shp
                 Qt5::QuickControls2
+                z # zlib
 
 	PUBLIC
 		Qt5::QuickWidgets
