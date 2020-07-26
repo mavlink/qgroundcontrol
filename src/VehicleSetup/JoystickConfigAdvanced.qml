@@ -135,13 +135,13 @@ Item {
             visible:            advancedSettings.checked
         }
         QGCTextField {
-            text:               _activeJoystick.axisFrequency
+            text:               _activeJoystick.axisFrequencyHz
             enabled:            advancedSettings.checked
-            validator:          DoubleValidator { bottom: 0.25; top: 50.0; }
+            validator:          DoubleValidator { bottom: _activeJoystick.minAxisFrequencyHz; top: _activeJoystick.maxAxisFrequencyHz; }
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
             Layout.alignment:   Qt.AlignVCenter
             onEditingFinished: {
-                _activeJoystick.axisFrequency = parseFloat(text)
+                _activeJoystick.axisFrequencyHz = parseFloat(text)
             }
             visible:            advancedSettings.checked
         }
@@ -153,13 +153,13 @@ Item {
             visible:            advancedSettings.checked
         }
         QGCTextField {
-            text:               _activeJoystick.buttonFrequency
+            text:               _activeJoystick.buttonFrequencyHz
             enabled:            advancedSettings.checked
-            validator:          DoubleValidator { bottom: 0.25; top: 50.0; }
+            validator:          DoubleValidator { bottom: _activeJoystick.minButtonFrequencyHz; top: _activeJoystick.maxButtonFrequencyHz; }
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
             Layout.alignment:   Qt.AlignVCenter
             onEditingFinished: {
-                _activeJoystick.buttonFrequency = parseFloat(text)
+                _activeJoystick.buttonFrequencyHz = parseFloat(text)
             }
             visible:            advancedSettings.checked
         }
