@@ -193,6 +193,6 @@ private:
     bool                    _connectState;
     QList<UDPCLient*>       _sessionTargets;
     QMutex                  _sessionTargetsMutex;
-    QList<QHostAddress>     _localAddress;
+    QList<QHostAddress>     _localAddresses;
 };
 
