@@ -170,8 +170,12 @@ void UDPLink::_writeBytes(const QByteArray data)
         return;
     }
     emit bytesSent(this, data);
+
+    QMutexLocker locker(&_sessionTargetsMutex);
+
     // Send to all manually targeted systems
-    for(UDPCLient* target: _udpConfig->targetHosts()) {
+    for (int i=0; i<_udpConfig->targetHosts().count(); i++) {
+        UDPCLient* target = _udpConfig->targetHosts()[i];
         // Skip it if it's part of the session clients below
         if(!contains_target(_sessionTargets, target->address, target->port)) {
             _writeDataGram(data, target);
@@ -229,11 +233,13 @@ void UDPLink::readBytes()
         if(_isIpLocal(sender)) {
             asender = QHostAddress(QString("127.0.0.1"));
         }
-        if(!contains_target(_sessionTargets, asender, senderPort)) {
+        QMutexLocker locker(&_sessionTargetsMutex);
+        if (!contains_target(_sessionTargets, asender, senderPort)) {
             qDebug() << "Adding target" << asender << senderPort;
             UDPCLient* target = new UDPCLient(asender, senderPort);
             _sessionTargets.append(target);
         }
+        locker.unlock();
     }
     //-- Send whatever is left
     if(databuffer.size()) {

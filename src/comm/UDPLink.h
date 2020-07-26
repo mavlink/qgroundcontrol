@@ -7,14 +7,6 @@
  *
  ****************************************************************************/
 
-
-/*!
- * @file
- *   @brief UDP connection (server) for unmanned vehicles
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
 #pragma once
 
 #include <QString>
@@ -22,7 +14,7 @@
 #include <QMap>
 #include <QMutex>
 #include <QUdpSocket>
-#include <QMutexLocker>
+#include <QMutex>
 #include <QQueue>
 #include <QByteArray>
 
@@ -200,7 +192,7 @@ private:
     UDPConfiguration*       _udpConfig;
     bool                    _connectState;
     QList<UDPCLient*>       _sessionTargets;
+    QMutex                  _sessionTargetsMutex;
     QList<QHostAddress>     _localAddress;
-
 };
 
