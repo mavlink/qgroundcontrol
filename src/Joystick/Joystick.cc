@@ -77,6 +77,13 @@ const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
 
 int Joystick::_transmitterMode = 2;
 
+const float Joystick::_defaultAxisFrequencyHz   = 25.0f;
+const float Joystick::_defaultButtonFrequencyHz = 5.0f;
+const float Joystick::_minAxisFrequencyHz       = 0.25f;
+const float Joystick::_maxAxisFrequencyHz       = 200.0f;
+const float Joystick::_minButtonFrequencyHz     = 0.25f;
+const float Joystick::_maxButtonFrequencyHz     = 50.0f;
+
 AssignedButtonAction::AssignedButtonAction(QObject* parent, const QString name)
     : QObject(parent)
     , action(name)
@@ -156,14 +163,14 @@ void Joystick::_setDefaultCalibration(void) {
     _rgFunctionAxis[gimbalPitchFunction]= 4;
     _rgFunctionAxis[gimbalYawFunction]  = 5;
 
-    _exponential    = 0;
-    _accumulator    = false;
-    _deadband       = false;
-    _axisFrequency  = 25.0f;
-    _buttonFrequency= 5.0f;
-    _throttleMode   = ThrottleModeDownZero;
-    _calibrated     = true;
-    _circleCorrection = false;
+    _exponential        = 0;
+    _accumulator        = false;
+    _deadband           = false;
+    _axisFrequencyHz    = _defaultAxisFrequencyHz;
+    _buttonFrequencyHz  = _defaultButtonFrequencyHz;
+    _throttleMode       = ThrottleModeDownZero;
+    _calibrated         = true;
+    _circleCorrection   = false;
 
     _saveSettings();
 }
@@ -218,14 +225,14 @@ void Joystick::_loadSettings()
 
     qCDebug(JoystickLog) << "_loadSettings " << _name;
 
-    _calibrated     = settings.value(_calibratedSettingsKey, false).toBool();
-    _exponential    = settings.value(_exponentialSettingsKey, 0).toFloat();
-    _accumulator    = settings.value(_accumulatorSettingsKey, false).toBool();
-    _deadband       = settings.value(_deadbandSettingsKey, false).toBool();
-    _axisFrequency  = settings.value(_axisFrequencySettingsKey, 25.0f).toFloat();
-    _buttonFrequency= settings.value(_buttonFrequencySettingsKey, 5.0f).toFloat();
-    _circleCorrection = settings.value(_circleCorrectionSettingsKey, false).toBool();
-    _gimbalEnabled  = settings.value(_gimbalSettingsKey, false).toBool();
+    _calibrated         = settings.value(_calibratedSettingsKey,        false).toBool();
+    _exponential        = settings.value(_exponentialSettingsKey,       0).toFloat();
+    _accumulator        = settings.value(_accumulatorSettingsKey,       false).toBool();
+    _deadband           = settings.value(_deadbandSettingsKey,          false).toBool();
+    _axisFrequencyHz    = settings.value(_axisFrequencySettingsKey,     _defaultAxisFrequencyHz).toFloat();
+    _buttonFrequencyHz  = settings.value(_buttonFrequencySettingsKey,   _defaultButtonFrequencyHz).toFloat();
+    _circleCorrection   = settings.value(_circleCorrectionSettingsKey,  false).toBool();
+    _gimbalEnabled      = settings.value(_gimbalSettingsKey,            false).toBool();
 
     _throttleMode   = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
     badSettings |= !convertOk;
@@ -326,8 +333,8 @@ void Joystick::_saveSettings()
     settings.setValue(_exponentialSettingsKey,      _exponential);
     settings.setValue(_accumulatorSettingsKey,      _accumulator);
     settings.setValue(_deadbandSettingsKey,         _deadband);
-    settings.setValue(_axisFrequencySettingsKey,    _axisFrequency);
-    settings.setValue(_buttonFrequencySettingsKey,  _buttonFrequency);
+    settings.setValue(_axisFrequencySettingsKey,    _axisFrequencyHz);
+    settings.setValue(_buttonFrequencySettingsKey,  _buttonFrequencyHz);
     settings.setValue(_throttleModeSettingsKey,     _throttleMode);
     settings.setValue(_gimbalSettingsKey,           _gimbalEnabled);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
@@ -470,7 +477,7 @@ void Joystick::run()
         _update();
         _handleButtons();
         _handleAxis();
-        QGC::SLEEP::msleep(20);
+        QGC::SLEEP::msleep(qMin(static_cast<int>(1000.0f / _maxAxisFrequencyHz), static_cast<int>(1000.0f / _maxButtonFrequencyHz)) / 2);
     }
     _close();
 }
@@ -544,7 +551,7 @@ void Joystick::_handleButtons()
                     }
                 } else {
                     //-- Process repeat buttons
-                    int buttonDelay = static_cast<int>(1000.0f / _buttonFrequency);
+                    int buttonDelay = static_cast<int>(1000.0f / _buttonFrequencyHz);
                     if(_buttonActionArray[buttonIndex]->buttonTime.elapsed() > buttonDelay) {
                         _buttonActionArray[buttonIndex]->buttonTime.start();
                         qCDebug(JoystickLog) << "Repeat button triggered" << buttonIndex << buttonAction;
@@ -574,7 +581,7 @@ void Joystick::_handleButtons()
 void Joystick::_handleAxis()
 {
     //-- Get frequency
-    int axisDelay = static_cast<int>(1000.0f / _axisFrequency);
+    int axisDelay = static_cast<int>(1000.0f / _axisFrequencyHz);
     //-- Check elapsed time since last run
     if(_axisTime.elapsed() > axisDelay) {
         _axisTime.start();
@@ -938,21 +945,21 @@ void Joystick::setGimbalEnabled(bool set)
 void Joystick::setAxisFrequency(float val)
 {
     //-- Arbitrary limits
-    if(val < 0.25f) val = 0.25f;
-    if(val > 50.0f) val = 50.0f;
-    _axisFrequency = val;
+    val = qMin(_minAxisFrequencyHz, val);
+    val = qMax(_maxAxisFrequencyHz, val);
+    _axisFrequencyHz = val;
     _saveSettings();
-    emit axisFrequencyChanged();
+    emit axisFrequencyHzChanged();
 }
 
 void Joystick::setButtonFrequency(float val)
 {
     //-- Arbitrary limits
-    if(val < 0.25f) val = 0.25f;
-    if(val > 50.0f) val = 50.0f;
-    _buttonFrequency = val;
+    val = qMin(_minButtonFrequencyHz, val);
+    val = qMax(_maxButtonFrequencyHz, val);
+    _buttonFrequencyHz = val;
     _saveSettings();
-    emit buttonFrequencyChanged();
+    emit buttonFrequencyHzChanged();
 }
 
 void Joystick::setCalibrationMode(bool calibrating)
