@@ -73,17 +73,19 @@ public:
     Q_PROPERTY(Fact* rotationYaw315     READ rotationYaw315     CONSTANT)
     Q_PROPERTY(Fact* rotationPitch90    READ rotationPitch90    CONSTANT)
     Q_PROPERTY(Fact* rotationPitch270   READ rotationPitch270   CONSTANT)
+    Q_PROPERTY(Fact* maxDistance        READ maxDistance        CONSTANT)
 
     Fact* rotationNone      () { return &_rotationNoneFact; }
     Fact* rotationYaw45     () { return &_rotationYaw45Fact; }
     Fact* rotationYaw90     () { return &_rotationYaw90Fact; }
-    Fact* rotationYaw135    () { return &_rotationYaw90Fact; }
+    Fact* rotationYaw135    () { return &_rotationYaw135Fact; }
     Fact* rotationYaw180    () { return &_rotationYaw180Fact; }
-    Fact* rotationYaw225    () { return &_rotationYaw180Fact; }
+    Fact* rotationYaw225    () { return &_rotationYaw225Fact; }
     Fact* rotationYaw270    () { return &_rotationYaw270Fact; }
     Fact* rotationYaw315    () { return &_rotationYaw315Fact; }
     Fact* rotationPitch90   () { return &_rotationPitch90Fact; }
     Fact* rotationPitch270  () { return &_rotationPitch270Fact; }
+    Fact* maxDistance       () { return &_maxDistanceFact; }
 
     static const char* _rotationNoneFactName;
     static const char* _rotationYaw45FactName;
@@ -95,6 +97,7 @@ public:
     static const char* _rotationYaw315FactName;
     static const char* _rotationPitch90FactName;
     static const char* _rotationPitch270FactName;
+    static const char* _maxDistanceFactName;
 
 private:
     Fact _rotationNoneFact;
@@ -107,6 +110,7 @@ private:
     Fact _rotationYaw315Fact;
     Fact _rotationPitch90Fact;
     Fact _rotationPitch270Fact;
+    Fact _maxDistanceFact;
 };
 
 class VehicleSetpointFactGroup : public FactGroup
@@ -698,6 +702,7 @@ public:
     Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
     Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup* distanceSensors   READ distanceSensorFactGroup    CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
