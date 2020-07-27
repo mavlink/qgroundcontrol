@@ -76,9 +76,9 @@ public:
     Fact* rotationNone      () { return &_rotationNoneFact; }
     Fact* rotationYaw45     () { return &_rotationYaw45Fact; }
     Fact* rotationYaw90     () { return &_rotationYaw90Fact; }
-    Fact* rotationYaw135    () { return &_rotationYaw90Fact; }
+    Fact* rotationYaw135    () { return &_rotationYaw135Fact; }
     Fact* rotationYaw180    () { return &_rotationYaw180Fact; }
-    Fact* rotationYaw225    () { return &_rotationYaw180Fact; }
+    Fact* rotationYaw225    () { return &_rotationYaw225Fact; }
     Fact* rotationYaw270    () { return &_rotationYaw270Fact; }
     Fact* rotationYaw315    () { return &_rotationYaw315Fact; }
     Fact* rotationPitch90   () { return &_rotationPitch90Fact; }
@@ -694,6 +694,7 @@ public:
     Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
     Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup* distanceSensors   READ distanceSensorFactGroup    NOTIFY DistanceSensorReadingsChange) //####
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -1226,6 +1227,7 @@ signals:
     void sensorsHealthBitsChanged       (int sensorsHealthBits);
     void sensorsUnhealthyBitsChanged    (int sensorsUnhealthyBits);
     void orbitActiveChanged             (bool orbitActive);
+    void DistanceSensorReadingsChange ();//#####
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
