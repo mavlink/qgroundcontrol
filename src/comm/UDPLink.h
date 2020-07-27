@@ -209,7 +209,7 @@ private:
     UDPConfiguration*       _udpConfig;
     bool                    _connectState;
     QList<UDPCLient*>       _sessionTargets;
-    QList<QHostAddress>     _localAddress;
-
+    QMutex                  _sessionTargetsMutex;
+    QList<QHostAddress>     _localAddresses;
 };
 
