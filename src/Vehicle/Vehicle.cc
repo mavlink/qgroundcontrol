@@ -1142,6 +1142,7 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
             orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
         }
     }
+    //emit DistanceSensorReadingsChange();
 }
 
 // Ignore warnings from mavlink headers for both GCC/Clang and MSVC
