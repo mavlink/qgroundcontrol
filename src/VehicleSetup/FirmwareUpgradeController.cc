@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -390,6 +390,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v2"));
     }
 
+    QString px4CUAVX7Url          ("http://px4-travis.s3.amazonaws.com/Firmware/%1/cuav_%2_default.px4");
+    for (const FirmwareBuildType_t& firmwareType: px4MapFirmwareTypeToDir.keys()) {
+        QString dir = px4MapFirmwareTypeToDir[firmwareType];
+        _rgPX4CUAVX7Fireware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4CUAVX7Url.arg(dir).arg("x7pro"));
+    }
+
     int size = sizeof(rgAeroCoreFirmwareArray)/sizeof(rgAeroCoreFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgAeroCoreFirmwareArray[i];
@@ -559,6 +565,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;
+        break;
+    case Bootloader::boardIDCUAVX7:
+        _rgFirmwareDynamic = _rgPX4CUAVX7Fireware;
         break;
     default:
         // Unknown board id

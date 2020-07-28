@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -224,6 +224,7 @@ private:
     QHash<FirmwareIdentifier, QString> _rgUVifyCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
+    QHash<FirmwareIdentifier, QString> _rgPX4CUAVX7Fireware;
 
     // Hash map for ArduPilot ChibiOS lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;

@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  *
  * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
@@ -55,6 +55,7 @@ public:
     static const int boardIDmRoCtrlZeroF7 = 141;    ///< mRo Control Zero F7 board, as from USB PID
     static const int boardIDModalFCV1   = 41775;    ///< ModalAI FC V1 board, as from USB PID
     static const int boardIDUVifyCore   = 20;       ///< UVify Core board, as from USB PID
+    static const int boardIDCUAVX7      = 1010;     ///< CUAV X7(Pro) board, as from USB PID
 
     /// Simulated board id for V3 which is a V2 board which supports larger flash space
     /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids
