@@ -53,6 +53,7 @@ Item {
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
+    property bool   _promptForPlanUsageShowing:         false
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -135,6 +136,53 @@ Item {
     }
 
     Component {
+        id: promptForPlanUsageOnVehicleChangePopupComponent
+        QGCPopupDialog {
+            title:      _planMasterController.managerVehicle.isOfflineEditingVehicle ? qsTr("Plan View - Vehicle Disconnected") : qsTr("Plan View - Vehicle Changed")
+            buttons:    StandardButton.NoButton
+
+            ColumnLayout {
+                QGCLabel {
+                    Layout.maximumWidth:    parent.width
+                    wrapMode:               QGCLabel.WordWrap
+                    text:                   _planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                                qsTr("The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?") :
+                                                qsTr("The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?")
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    text:               _planMasterController.dirty ?
+                                            (_planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                                 qsTr("Discard Unsaved Changes") :
+                                                 qsTr("Discard Unsaved Changes, Load New Plan From Vehicle")) :
+                                            qsTr("Load New Plan From Vehicle")
+                    onClicked: {
+                        _planMasterController.showPlanFromManagerVehicle()
+                        _promptForPlanUsageShowing = false
+                        hideDialog();
+                    }
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    text:               _planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                            qsTr("Keep Current Plan") :
+                                            qsTr("Keep Current Plan, Don't Update From Vehicle")
+                    onClicked: {
+                        if (!_planMasterController.managerVehicle.isOfflineEditingVehicle) {
+                            _planMasterController.dirty = true
+                        }
+                        _promptForPlanUsageShowing = false
+                        hideDialog()
+                    }
+                }
+            }
+        }
+    }
+
+
+    Component {
         id: firmwareOrVehicleMismatchUploadDialogComponent
         QGCViewMessage {
             message: qsTr("This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. " +
@@ -171,6 +219,13 @@ Item {
             _planMasterController.start()
             _missionController.setCurrentPlanViewSeqNum(0, true)
             mainWindow.planMasterControllerPlanView = _planMasterController
+        }
+
+        onPromptForPlanUsageOnVehicleChange: {
+            if (!_promptForPlanUsageShowing) {
+                _promptForPlanUsageShowing = true
+                mainWindow.showPopupDialogFromComponent(promptForPlanUsageOnVehicleChangePopupComponent)
+            }
         }
 
         function waitingOnIncompleteDataMessage(save) {
