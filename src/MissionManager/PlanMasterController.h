@@ -64,6 +64,9 @@ public:
     /// a nightmare of circular header dependency problems.
     Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
 
+    /// Replaces any current plan with the plan from the manager vehicle even if offline.
+    Q_INVOKABLE void showPlanFromManagerVehicle(void);
+
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
     ///     @param[in] filename Plan file to load
@@ -108,13 +111,14 @@ public:
     static const char*  kJsonRallyPointsObjectKey;
 
 signals:
-    void containsItemsChanged   (bool containsItems);
-    void syncInProgressChanged  (void);
-    void dirtyChanged           (bool dirty);
-    void offlineChanged  		(bool offlineEditing);
-    void currentPlanFileChanged ();
-    void planCreatorsChanged    (QmlObjectListModel* planCreators);
-    void managerVehicleChanged  (Vehicle* managerVehicle);
+    void containsItemsChanged               (bool containsItems);
+    void syncInProgressChanged              (void);
+    void dirtyChanged                       (bool dirty);
+    void offlineChanged                     (bool offlineEditing);
+    void currentPlanFileChanged             (void);
+    void planCreatorsChanged                (QmlObjectListModel* planCreators);
+    void managerVehicleChanged              (Vehicle* managerVehicle);
+    void promptForPlanUsageOnVehicleChange  (void);
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);

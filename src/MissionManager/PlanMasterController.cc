@@ -155,36 +155,58 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
 
+    _offline = newOffline;
+    emit offlineChanged(offline());
     emit managerVehicleChanged(_managerVehicle);
 
-    // Vehicle changed so we need to signal everything
-    _offline = newOffline;
-    emit containsItemsChanged(containsItems());
-    emit syncInProgressChanged();
-    emit dirtyChanged(dirty());
-    emit offlineChanged(offline());
-
-    if (!_flyView) {
-        if (!offline()) {
-            // We are in Plan view and we have a newly connected vehicle:
-            //  - If there is no plan available in Plan view show the one from the vehicle
-            //  - Otherwise leave the current plan alone
-            if (!containsItems()) {
-                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan view is empty so loading from manager";
-                _showPlanFromManagerVehicle();
-            }
-        }
-    } else {
-        if (offline()) {
-            // No more active vehicle, clear mission
-            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is offline clearing plan";
+    if (_flyView) {
+        // We are in the Fly View
+        if (newOffline) {
+            // No active vehicle, clear mission
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly View - No active vehicle, clearing stale plan";
             removeAll();
         } else {
             // Fly view has changed to a new active vehicle, update to show correct mission
-            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is online so loading from manager";
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly View - New active vehicle, loading new plan from manager vehicle";
             _showPlanFromManagerVehicle();
         }
+    } else {
+        // We are in the Plan view.
+        if (containsItems()) {
+            // The plan view has a stale plan in it
+            if (dirty()) {
+                // Plan is dirty, the user must decide what to do in all cases
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous dirty plan exists, no new active vehicle, sending promptForPlanUsageOnVehicleChange signal";
+                emit promptForPlanUsageOnVehicleChange();
+            } else {
+                // Plan is not dirty
+                if (newOffline) {
+                    // The active vehicle went away with no new active vehicle
+                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, no new active vehicle, clear stale plan";
+                    removeAll();
+                } else {
+                    // We are transitioning from one active vehicle to another. Show the plan from the new vehicle.
+                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, new active vehicle, loading from new manager vehicle";
+                    _showPlanFromManagerVehicle();
+                }
+            }
+        } else {
+            // There is no previous Plan in the view
+            if (newOffline) {
+                // Nothing special to do in this case
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, no longer connected to vehicle, nothing to do";
+            } else {
+                // Just show the plan from the new vehicle
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, new active vehicle, loading from new manager vehicle";
+                _showPlanFromManagerVehicle();
+            }
+        }
     }
+
+    // Vehicle changed so we need to signal everything
+    emit containsItemsChanged(containsItems());
+    emit syncInProgressChanged();
+    emit dirtyChanged(dirty());
 
     _updatePlanCreatorsList();
 }
@@ -619,5 +641,18 @@ void PlanMasterController::_updatePlanCreatorsList(void)
                 _planCreators->append(new StructureScanPlanCreator(this, this));
             }
         }
+    }
+}
+
+void PlanMasterController::showPlanFromManagerVehicle(void)
+{
+    if (offline()) {
+        // There is no new vehicle so clear any previous plan
+        qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - No new vehicle, clear any previous plan";
+        removeAll();
+    } else {
+        // We have a new active vehicle, show the plan from that
+        qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - New vehicle available, show plan from new manager vehicle";
+        _showPlanFromManagerVehicle();
     }
 }
