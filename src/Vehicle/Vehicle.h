@@ -1424,8 +1424,9 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
-    bool            _gpsRawIntMessageAvailable;
-    bool            _globalPositionIntMessageAvailable;
+    bool            _gpsRawIntMessageAvailable          = false;
+    bool            _globalPositionIntMessageAvailable  = false;
+    bool            _altitudeMessageAvailable           = false;
     double          _defaultCruiseSpeed;
     double          _defaultHoverSpeed;
     int             _telemetryRRSSI;
