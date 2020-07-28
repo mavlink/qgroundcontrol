@@ -196,52 +196,18 @@ ApplicationWindow {
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
     function showComponentDialog(component, title, charWidth, buttons) {
-        if (mainWindowDialog.visible) {
-            console.warn(("showComponentDialog called while dialog is already visible"))
-            return
-        }
         var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
-        mainWindowDialog.width = dialogWidth
-        mainWindowDialog.dialogComponent = component
-        mainWindowDialog.dialogTitle = title
-        mainWindowDialog.dialogButtons = buttons
+        var dialog = dialogDrawerComponent.createObject(mainWindow, { width: dialogWidth, dialogComponent: component, dialogTitle: title, dialogButtons: buttons })
         mainWindow.pushPreventViewSwitch()
-        mainWindowDialog.open()
-        if (buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
-            mainWindowDialog.closePolicy = Popup.NoAutoClose;
-            mainWindowDialog.interactive = false;
-        } else {
-            mainWindowDialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
-            mainWindowDialog.interactive = true;
-        }
+        dialog.open()
     }
 
-    Drawer {
-        id:             mainWindowDialog
-        y:              mainWindow.header.height
-        height:         mainWindow.height - mainWindow.header.height
-        edge:           Qt.RightEdge
-        interactive:    false
-        background: Rectangle {
-            color:  qgcPal.windowShadeDark
-        }
-        property var    dialogComponent: null
-        property var    dialogButtons: null
-        property string dialogTitle: ""
-        Loader {
-            id:             dlgLoader
-            anchors.fill:   parent
-            onLoaded: {
-                item.setupDialogButtons()
-            }
-        }
-        onOpened: {
-            dlgLoader.source = "QGCViewDialogContainer.qml"
-        }
-        onClosed: {
-            //console.log("View switch ok")
-            mainWindow.popPreventViewSwitch()
-            dlgLoader.source = ""
+    Component {
+        id: dialogDrawerComponent
+        QGCViewDialogContainer {
+            y:          mainWindow.header.height
+            height:     mainWindow.height - mainWindow.header.height
+            onClosed:   mainWindow.popPreventViewSwitch()
         }
     }
 
