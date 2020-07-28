@@ -138,8 +138,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _gpsRawIntMessageAvailable(false)
-    , _globalPositionIntMessageAvailable(false)
     , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _telemetryRRSSI(0)
@@ -332,8 +330,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _onboardControlSensorsEnabled(0)
     , _onboardControlSensorsHealth(0)
     , _onboardControlSensorsUnhealthy(0)
-    , _gpsRawIntMessageAvailable(false)
-    , _globalPositionIntMessageAvailable(false)
     , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
     , _mavlinkProtocolRequestComplete(true)
@@ -1260,7 +1256,9 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
                 _coordinate = newPosition;
                 emit coordinateChanged(_coordinate);
             }
-            _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
+            if (!_altitudeMessageAvailable) {
+                _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
+            }
         }
     }
 
@@ -1279,8 +1277,10 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
-    _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
-    _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
+    if (!_altitudeMessageAvailable) {
+        _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
+        _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
+    }
 
     // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has no gps signal
     // Apparently, this is in order to transport relative altitude information.
@@ -1438,13 +1438,10 @@ void Vehicle::_handleAltitude(mavlink_message_t& message)
     mavlink_altitude_t altitude;
     mavlink_msg_altitude_decode(&message, &altitude);
 
-    // If data from GPS is available it takes precedence over ALTITUDE message
-    if (!_globalPositionIntMessageAvailable) {
-        _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
-        if (!_gpsRawIntMessageAvailable) {
-            _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
-        }
-    }
+    // Data from ALTITUDE message takes precedence over gps messages
+    _altitudeMessageAvailable = true;
+    _altitudeRelativeFact.setRawValue(altitude.altitude_relative);
+    _altitudeAMSLFact.setRawValue(altitude.altitude_amsl);
 }
 
 void Vehicle::_setCapabilities(uint64_t capabilityBits)
