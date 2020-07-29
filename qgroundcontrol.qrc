@@ -77,7 +77,6 @@
         <file alias="PX4FlowSensor.qml">src/VehicleSetup/PX4FlowSensor.qml</file>
         <file alias="QGCInstrumentWidget.qml">src/FlightMap/Widgets/QGCInstrumentWidget.qml</file>
         <file alias="QGCInstrumentWidgetAlternate.qml">src/FlightMap/Widgets/QGCInstrumentWidgetAlternate.qml</file>
-        <file alias="QGCViewDialogContainer.qml">src/QmlControls/QGCViewDialogContainer.qml</file>
         <file alias="QGroundControl/Controls/AnalyzePage.qml">src/AnalyzeView/AnalyzePage.qml</file>
         <file alias="QGroundControl/Controls/AppMessages.qml">src/QmlControls/AppMessages.qml</file>
         <file alias="QGroundControl/Controls/AxisMonitor.qml">src/QmlControls/AxisMonitor.qml</file>
@@ -162,6 +161,7 @@
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/QGCToolInsets.qml">src/QmlControls/QGCToolInsets.qml</file>
         <file alias="QGroundControl/Controls/QGCViewDialog.qml">src/QmlControls/QGCViewDialog.qml</file>
+        <file alias="QGroundControl/Controls/QGCViewDialogContainer.qml">src/QmlControls/QGCViewDialogContainer.qml</file>
         <file alias="QGroundControl/Controls/QGCViewMessage.qml">src/QmlControls/QGCViewMessage.qml</file>
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/QGroundControl/Controls/qmldir</file>
         <file alias="QGroundControl/Controls/RallyPointEditorHeader.qml">src/PlanView/RallyPointEditorHeader.qml</file>
