@@ -134,9 +134,10 @@ AndroidBuild {
 contains(DEFINES, QGC_ENABLE_PAIRING) {
     MacBuild {
         #- Pairing is generally not supported on macOS. This is here solely for development.
-        exists(/usr/local/Cellar/openssl/1.0.2t/include) {
-            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
-            LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
+        OSSLDIR = /usr/local/Cellar/openssl@1.1/1.1.1g
+        exists($$OSSLDIR/include) {
+            INCLUDEPATH += $$OSSLDIR/include
+            LIBS += -L$$OSSLDIR/lib
             LIBS += -lcrypto -lz
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.

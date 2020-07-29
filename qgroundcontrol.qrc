@@ -79,6 +79,8 @@
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
         <file alias="QGroundControl/Controls/ClickableColor.qml">src/QmlControls/ClickableColor.qml</file>
         <file alias="QGroundControl/Controls/CorridorScanMapVisual.qml">src/PlanView/CorridorScanMapVisual.qml</file>
+        <file alias="QGroundControl/Controls/QGCPopupDialog.qml">src/QmlControls/QGCPopupDialog.qml</file>
+        <file alias="QGroundControl/Controls/QGCPopupDialogContainer.qml">src/QmlControls/QGCPopupDialogContainer.qml</file>
         <file alias="QGroundControl/Controls/DeadMouseArea.qml">src/QmlControls/DeadMouseArea.qml</file>
         <file alias="QGroundControl/Controls/DropButton.qml">src/QmlControls/DropButton.qml</file>
         <file alias="QGroundControl/Controls/DropPanel.qml">src/QmlControls/DropPanel.qml</file>
