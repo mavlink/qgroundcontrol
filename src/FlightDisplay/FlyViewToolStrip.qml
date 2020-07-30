@@ -17,9 +17,6 @@ ToolStrip {
     id:     _root
     title:  qsTr("Fly")
 
-    property var  guidedActionsController
-    property var  guidedActionList
-
     signal displayPreFlightChecklist
 
     FlyViewToolStripActionList {

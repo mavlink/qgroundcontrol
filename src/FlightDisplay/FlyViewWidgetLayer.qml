@@ -42,6 +42,7 @@ Item {
     property var    _missionController:     _planMasterController.missionController
     property var    _geoFenceController:    _planMasterController.geoFenceController
     property var    _rallyPointController:  _planMasterController.rallyPointController
+    property var    _guidedController:      mainWindow.guidedControllerFlyView
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
@@ -67,7 +68,6 @@ Item {
         missionController:      _missionController
         geoFenceController:     _geoFenceController
         rallyPointController:   _rallyPointController
-        guidedController:       _root.guidedActionsController
     }
 
     FlyViewInstrumentPanel {
@@ -79,7 +79,6 @@ Item {
         width:                      _rightPanelWidth
         spacing:                    _toolsMargin
         visible:                    QGroundControl.corePlugin.options.flyView.showInstrumentPanel
-        guidedActionsController:    _guidedController
         availableHeight:            parent.height - y - _toolsMargin
 
         property real rightInset: visible ? parent.width - x : 0
@@ -104,16 +103,14 @@ Item {
     }
 
     FlyViewToolStrip {
-        id:                         toolStrip
-        anchors.leftMargin:         _toolsMargin + parentToolInsets.leftEdgeCenterInset
-        anchors.topMargin:          _toolsMargin + parentToolInsets.leftEdgeTopInset
-        anchors.left:               parent.left
-        anchors.top:                parent.top
-        z:                          QGroundControl.zOrderWidgets
-        maxHeight:                  parent.height - y - parentToolInsets.leftEdgeBottomInset - _toolsMargin
-        guidedActionsController:    _guidedController
-        guidedActionList:           _guidedActionList
-        visible:                    !QGroundControl.videoManager.fullScreen
+        id:                     toolStrip
+        anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
+        anchors.topMargin:      _toolsMargin + parentToolInsets.leftEdgeTopInset
+        anchors.left:           parent.left
+        anchors.top:            parent.top
+        z:                      QGroundControl.zOrderWidgets
+        maxHeight:              parent.height - y - parentToolInsets.leftEdgeBottomInset - _toolsMargin
+        visible:                !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: preFlightChecklistPopup.open()
 

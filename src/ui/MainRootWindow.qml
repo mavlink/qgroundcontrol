@@ -75,15 +75,15 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
 
-    /// Current active Vehicle
     property var                activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
     property string             formatedMessage:                activeVehicle ? activeVehicle.formatedMessage : ""
     /// Indicates usable height between toolbar and footer
     property real               availableHeight:                mainWindow.height - mainWindow.header.height - mainWindow.footer.height
 
-    property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlanView:   null
-    property var                planMasterControllerFlyView:    null
+    property var                currentPlanMissionItem:         planMasterControllerPlanView ? planMasterControllerPlanView.missionController.currentPlanViewItem : null
+    property var                planMasterControllerFlyView:    flightView.planController
+    property var                guidedControllerFlyView:        flightView.guidedController
 
     readonly property string    navButtonWidth:                 ScreenTools.defaultFontPixelWidth * 24
     readonly property real      defaultTextHeight:              ScreenTools.defaultFontPixelHeight
