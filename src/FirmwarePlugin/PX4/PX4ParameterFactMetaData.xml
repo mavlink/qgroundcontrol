@@ -9033,7 +9033,7 @@ How often the sensor is readout</short_desc>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_PAW3902" type="INT32">
-      <short_desc>PAW3902 Optical Flow</short_desc>
+      <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SENS_EN_PGA460" type="INT32">
