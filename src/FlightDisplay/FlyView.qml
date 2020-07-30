@@ -32,13 +32,14 @@ import QGroundControl.Vehicle       1.0
 Item {
     id: _root
 
+    // These should only be used by MainRootWindow
+    property var planController:    _planController
+    property var guidedController:  _guidedController
+
     PlanMasterController {
-        id:         _planController
-        flyView:    true
-        Component.onCompleted: {
-            start()
-            mainWindow.planMasterControllerFlyView = _planController
-        }
+        id:                     _planController
+        flyView:                true
+        Component.onCompleted:  start()
     }
 
     property bool   _mainWindowIsMap:       mapControl.pipState.state === mapControl.pipState.fullState
@@ -138,12 +139,11 @@ Item {
     }
 
     FlyViewMap {
-        id:                         mapControl
-        guidedActionsController:    _guidedController
-        planMasterController:       _planController
-        rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
-        pipMode:                    !_mainWindowIsMap
-        toolInsets:                 customOverlay.totalToolInsets
+        id:                     mapControl
+        planMasterController:   _planController
+        rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
+        pipMode:                !_mainWindowIsMap
+        toolInsets:             customOverlay.totalToolInsets
         mapName:                    "FlightDisplayView"
     }
 

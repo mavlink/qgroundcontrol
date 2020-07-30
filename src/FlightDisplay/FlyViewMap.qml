@@ -38,7 +38,6 @@ FlightMap {
         isDark:     _isFullWindowItemDark
     }
 
-    property var    guidedActionsController
     property var    rightPanelWidth
     property var    planMasterController
     property bool   pipMode:                    false   // true: map is shown in a small pip mode
@@ -433,7 +432,7 @@ FlightMap {
             return _mapCircle.radius.rawValue
         }
 
-        Component.onCompleted: guidedActionsController.orbitMapCircle = orbitMapCircle
+        Component.onCompleted: mainWindow.guidedControllerFlyView.orbitMapCircle = orbitMapCircle
 
         QGCMapCircle {
             id:                 _mapCircle
@@ -503,35 +502,35 @@ FlightMap {
             property var coord
             QGCMenuItem {
                 text:           qsTr("Go to location")
-                visible:        guidedActionsController.showGotoLocation
+                visible:        mainWindow.guidedControllerFlyView.showGotoLocation
 
                 onTriggered: {
                     gotoLocationItem.show(clickMenu.coord)
-                    guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickMenu.coord, gotoLocationItem)
+                    mainWindow.guidedControllerFlyView.confirmAction(mainWindow.guidedControllerFlyView.actionGoto, clickMenu.coord, gotoLocationItem)
                 }
             }
             QGCMenuItem {
                 text:           qsTr("Orbit at location")
-                visible:        guidedActionsController.showOrbit
+                visible:        mainWindow.guidedControllerFlyView.showOrbit
 
                 onTriggered: {
                     orbitMapCircle.show(clickMenu.coord)
-                    guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickMenu.coord, orbitMapCircle)
+                    mainWindow.guidedControllerFlyView.confirmAction(mainWindow.guidedControllerFlyView.actionOrbit, clickMenu.coord, orbitMapCircle)
                 }
             }
             QGCMenuItem {
                 text:           qsTr("ROI at location")
-                visible:        guidedActionsController.showROI
+                visible:        mainWindow.guidedControllerFlyView.showROI
 
                 onTriggered: {
                     roiLocationItem.show(clickMenu.coord)
-                    guidedActionsController.confirmAction(guidedActionsController.actionROI, clickMenu.coord, roiLocationItem)
+                    mainWindow.guidedControllerFlyView.confirmAction(mainWindow.guidedControllerFlyView.actionROI, clickMenu.coord, roiLocationItem)
                 }
             }
         }
 
         onClicked: {
-            if (!guidedActionsController.guidedUIVisible && (guidedActionsController.showGotoLocation || guidedActionsController.showOrbit || guidedActionsController.showROI)) {
+            if (!mainWindow.guidedControllerFlyView.guidedUIVisible && (mainWindow.guidedControllerFlyView.showGotoLocation || mainWindow.guidedControllerFlyView.showOrbit || mainWindow.guidedControllerFlyView.showROI)) {
                 orbitMapCircle.hide()
                 gotoLocationItem.hide()
                 var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
