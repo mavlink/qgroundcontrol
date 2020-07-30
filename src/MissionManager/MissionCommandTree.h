@@ -59,7 +59,7 @@ public:
 
     Q_INVOKABLE QStringList categoriesForVehicle(Vehicle* vehicle) { return _availableCategoriesForVehicle(vehicle); }
 
-    const MissionCommandUIInfo* getUIInfo(Vehicle* vehicle, MAV_CMD command);
+    const MissionCommandUIInfo* getUIInfo(Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode, MAV_CMD command);
 
     /// @param showFlyThroughCommands - true: all commands shows, false: filter out commands which the vehicle flies through (specifiedCoordinate=true, standaloneCoordinate=false)
     Q_INVOKABLE QVariantList getCommandsForCategory(Vehicle* vehicle, const QString& category, bool showFlyThroughCommands);
@@ -69,9 +69,9 @@ public:
 
 private:
     void                        _collapseHierarchy              (const MissionCommandList* cmdList, QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree);
-    void                        _buildAllCommands               (Vehicle* vehicle);
+    void                        _buildAllCommands               (Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode);
     QStringList                 _availableCategoriesForVehicle  (Vehicle* vehicle);
-    void                        _firmwareAndVehicleClassInfo    (Vehicle* vehicle, QGCMAVLink::FirmwareClass_t& firmwareClass, QGCMAVLink::VehicleClass_t& vehicleClass) const;
+    void                        _firmwareAndVehicleClassInfo    (Vehicle* vehicle, QGCMAVLink::VehicleClass_t vtolMode, QGCMAVLink::FirmwareClass_t& firmwareClass, QGCMAVLink::VehicleClass_t& vehicleClass) const;
 
 private:
     QString             _allCommandsCategory;   ///< Category which contains all available commands

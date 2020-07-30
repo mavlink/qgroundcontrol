@@ -7,7 +7,7 @@
         {
             "id":           16,
             "comment":      "MAV_CMD_NAV_WAYPOINT",
-            "paramRemove":  "4"
+            "paramRemove":  "1,4"
         },
         {
             "id":           17,

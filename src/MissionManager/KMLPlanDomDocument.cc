@@ -51,7 +51,7 @@ void KMLPlanDomDocument::_addFlightPath(Vehicle* vehicle, QList<MissionItem*> rg
     QList<QGeoCoordinate> rgFlightCoords;
     QGeoCoordinate homeCoord = rgMissionItems[0]->coordinate();
     for (const MissionItem* item : rgMissionItems) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, item->command());
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, item->command());
         if (uiInfo) {
             double altAdjustment = item->frame() == MAV_FRAME_GLOBAL ? 0 : homeCoord.altitude(); // Used to convert to amsl
             if (uiInfo->isTakeoffCommand() && !vehicle->fixedWing()) {
