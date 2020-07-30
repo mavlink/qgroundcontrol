@@ -188,12 +188,12 @@ void MissionCommandTreeTest::testOverride(void)
 {
     // Generic/Generic should not have any overrides
     Vehicle* vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC, qgcApp()->toolbox()->firmwarePluginManager());
-    _checkBaseValues(_commandTree->getUIInfo(vehicle, (MAV_CMD)4), 4);
+    _checkBaseValues(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)4), 4);
     delete vehicle;
 
     // Generic/FixedWing should have overrides
     vehicle = new Vehicle(MAV_AUTOPILOT_GENERIC, MAV_TYPE_FIXED_WING, qgcApp()->toolbox()->firmwarePluginManager());
-    _checkOverrideValues(_commandTree->getUIInfo(vehicle, (MAV_CMD)4), 4);
+    _checkOverrideValues(_commandTree->getUIInfo(vehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)4), 4);
     delete vehicle;
 }
 
@@ -214,7 +214,7 @@ void MissionCommandTreeTest::testAllTrees(void)
             }
             qDebug() << firmwareType << vehicleType;
             Vehicle* vehicle = new Vehicle(firmwareType, vehicleType, qgcApp()->toolbox()->firmwarePluginManager());
-            QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, MAV_CMD_NAV_WAYPOINT) != nullptr);
+            QVERIFY(qgcApp()->toolbox()->missionCommandTree()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor, MAV_CMD_NAV_WAYPOINT) != nullptr);
             delete vehicle;
         }
     }
