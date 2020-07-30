@@ -22,13 +22,11 @@ Column {
     z:          QGroundControl.zOrderWidgets
 
     property real availableHeight
-    property var guidedActionsController
 
     MultiVehiclePanel {
-        id:                         multiVehiclePanel
-        width:                      parent.width
-        availableHeight:            parent.height - y
-        guidedActionsController:    _root.guidedActionsController
+        id:                 multiVehiclePanel
+        width:              parent.width
+        availableHeight:    parent.height - y
     }
 
     AirspaceControl {
