@@ -25,7 +25,6 @@ Item {
 
     property alias  singleVehiclePanel:     singleVehicleView.checked
     property real   availableHeight
-    property var    guidedActionsController
 
     QGCMapPalette { id: mapPal; lightColors: true }
 
@@ -47,11 +46,10 @@ Item {
     }
 
     MultiVehicleList {
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:                selectorRow.bottom
-        anchors.bottom:             parent.bottom
-        width:                      parent.width
-        visible:                    !singleVehiclePanel && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.showMultiVehicleList
-        guidedActionsController:    _root.guidedActionsController
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
+        anchors.top:        selectorRow.bottom
+        anchors.bottom:     parent.bottom
+        width:              parent.width
+        visible:            !singleVehiclePanel && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.showMultiVehicleList
     }
 }
