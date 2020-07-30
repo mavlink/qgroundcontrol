@@ -32,11 +32,12 @@ public:
 private slots:
     void cleanup(void);
 
-    void _testGimbalRecalc              (void);
     void _testLoadJsonSectionAvailable  (void);
     void _testEmptyVehicleAPM           (void);
     void _testEmptyVehiclePX4           (void);
     void _testGlobalAltMode             (void);
+    void _testGimbalRecalc              (void);
+    void _testVehicleYawRecalc          (void);
 
 private:
 #if 0

@@ -167,17 +167,68 @@ void MissionControllerTest::_testGimbalRecalc(void)
         QVERIFY(qIsNaN(visualItem->missionGimbalYaw()));
     }
 
-#if 0
-    // FIXME: No longer works due to signal compression
-    // Specify gimbal yaw on settings item should generate yaw on all items
-    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
-    settingsItem->cameraSection()->setSpecifyGimbal(true);
-    settingsItem->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    // Specify gimbal yaw on settings item should generate yaw on all subsequent items
+    const int yawIndex = 2;
+    SimpleMissionItem* item = _missionController->visualItems()->value<SimpleMissionItem*>(yawIndex);
+    item->cameraSection()->setSpecifyGimbal(true);
+    item->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
+        //qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
-        QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
+        if (i >= yawIndex) {
+            QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
+        } else {
+            QVERIFY(qIsNaN(visualItem->missionGimbalYaw()));
+        }
     }
-#endif
+}
+
+void MissionControllerTest::_testVehicleYawRecalc(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    double wpDistance   = 1000;
+    double wpAngleInc   = 45;
+    double wpAngle      = 0;
+
+    int cMissionItems = 4;
+    QGeoCoordinate currentCoord(0, 0);
+    _missionController->insertSimpleMissionItem(currentCoord, 1);
+    for (int i=2; i<=cMissionItems; i++) {
+        wpAngle += wpAngleInc;
+        currentCoord = currentCoord.atDistanceAndAzimuth(wpDistance, wpAngle);
+        _missionController->insertSimpleMissionItem(currentCoord, i);
+    }
+
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+
+    // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
+    double expectedVehicleYaw = wpAngleInc;
+    for (int i=2; i<cMissionItems; i++) {
+        //qDebug() << i;
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QCOMPARE(visualItem->missionVehicleYaw(), expectedVehicleYaw);
+        if (i <= cMissionItems - 1) {
+            expectedVehicleYaw += wpAngleInc;
+        }
+    }
+
+    SimpleMissionItem* simpleItem = _missionController->visualItems()->value<SimpleMissionItem*>(3);
+    simpleItem->missionItem().setParam4(66);
+
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+
+    // All item should track vehicle path except for the one changed
+    expectedVehicleYaw = wpAngleInc;
+    for (int i=2; i<cMissionItems; i++) {
+        //qDebug() << i;
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QCOMPARE(visualItem->missionVehicleYaw(), i == 3 ? 66.0 : expectedVehicleYaw);
+        if (i <= cMissionItems - 1) {
+            expectedVehicleYaw += wpAngleInc;
+        }
+    }
 }
 
 void MissionControllerTest::_testLoadJsonSectionAvailable(void)
