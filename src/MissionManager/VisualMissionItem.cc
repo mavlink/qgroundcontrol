@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include <QStringList>
 #include <QDebug>
 
@@ -18,6 +17,7 @@
 #include "TerrainQuery.h"
 #include "TakeoffMissionItem.h"
 #include "PlanMasterController.h"
+#include "QGC.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
@@ -152,12 +152,13 @@ void VisualMissionItem::setAzimuth(double azimuth)
 
 void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
-    if (qIsNaN(missionFlightStatus.gimbalYaw) && qIsNaN(_missionGimbalYaw)) {
-        return;
-    }
-    if (!qFuzzyCompare(missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
+    if (!QGC::fuzzyCompare(missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
         _missionGimbalYaw = missionFlightStatus.gimbalYaw;
         emit missionGimbalYawChanged(_missionGimbalYaw);
+    }
+    if (missionFlightStatus.vtolMode != _previousVTOLMode) {
+        _previousVTOLMode = missionFlightStatus.vtolMode;
+        emit previousVTOLModeChanged();
     }
 }
 

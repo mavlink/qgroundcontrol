@@ -81,6 +81,7 @@ public:
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                                  NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
     Q_PROPERTY(bool             flyView                             READ flyView                                                            CONSTANT)
     Q_PROPERTY(bool             wizardMode                          READ wizardMode                         WRITE setWizardMode             NOTIFY wizardModeChanged)
+    Q_PROPERTY(int              previousVTOLMode                    MEMBER _previousVTOLMode                                                NOTIFY previousVTOLModeChanged)                     ///< Current VTOL mode (VehicleClass_t) prior to executing this item
 
     Q_PROPERTY(PlanMasterController*    masterController    READ masterController                                                   CONSTANT)
     Q_PROPERTY(ReadyForSaveState        readyForSaveState   READ readyForSaveState                                                  NOTIFY readyForSaveStateChanged)
@@ -238,6 +239,8 @@ signals:
     void parentItemChanged              (VisualMissionItem* parentItem);
     void amslEntryAltChanged            (double alt);
     void amslExitAltChanged             (double alt);
+    void previousVTOLModeChanged        (void);
+    void currentVTOLModeChanged         (void);                             ///< Signals that this item has changed the VTOL mode (MAV_CMD_DO_VTOL_TRANSITION)
 
     void exitCoordinateSameAsEntryChanged           (bool exitCoordinateSameAsEntry);
 
@@ -246,29 +249,30 @@ protected slots:
     void _amslExitAltChanged(void);     // signals new amslExitAlt value
 
 protected:
-    bool     _flyView    =               false;
-    bool    _isCurrentItem =            false;
-    bool    _hasCurrentChildItem =      false;
-    bool    _dirty =                    false;
-    bool    _homePositionSpecialCase =  false;      ///< true: This item is being used as a ui home position indicator
-    bool    _wizardMode =               false;      ///< true: Item editor is showing wizard completion panel
-    double  _terrainAltitude =          qQNaN();    ///< Altitude of terrain at coordinate position, NaN for not known
-    double  _altDifference =            0;          ///< Difference in altitude from previous waypoint
-    double  _altPercent =               0;          ///< Percent of total altitude change in mission
-    double  _terrainPercent =           qQNaN();    ///< Percent of terrain altitude for coordinate
-    bool    _terrainCollision =         false;      ///< true: item collides with terrain
-    double  _azimuth =                  0;          ///< Azimuth to previous waypoint
-    double  _distance =                 0;          ///< Distance to previous waypoint
-    double  _distanceFromStart =        0;          ///< Flight path cumalative horizontal distance from home point to this item
-    QString _editorQml;                             ///< Qml resource for editing item
-    double  _missionGimbalYaw =         qQNaN();
-    double  _missionVehicleYaw =        qQNaN();
+    bool                         _flyView                   = false;
+    bool                        _isCurrentItem              = false;
+    bool                        _hasCurrentChildItem        = false;
+    bool                        _dirty                      = false;
+    bool                        _homePositionSpecialCase    = false;                            ///< true: This item is being used as a ui home position indicator
+    bool                        _wizardMode                 = false;                            ///< true: Item editor is showing wizard completion panel
+    double                      _terrainAltitude            = qQNaN();                          ///< Altitude of terrain at coordinate position, NaN for not known
+    double                      _altDifference              = 0;                                ///< Difference in altitude from previous waypoint
+    double                      _altPercent                 = 0;                                ///< Percent of total altitude change in mission
+    double                      _terrainPercent             = qQNaN();                          ///< Percent of terrain altitude for coordinate
+    bool                        _terrainCollision           = false;                            ///< true: item collides with terrain
+    double                      _azimuth                    = 0;                                ///< Azimuth to previous waypoint
+    double                      _distance                   = 0;                                ///< Distance to previous waypoint
+    double                      _distanceFromStart          = 0;                                ///< Flight path cumalative horizontal distance from home point to this item
+    QString                     _editorQml;                                                     ///< Qml resource for editing item
+    double                      _missionGimbalYaw           = qQNaN();
+    double                      _missionVehicleYaw          = qQNaN();
+    QGCMAVLink::VehicleClass_t  _previousVTOLMode           = QGCMAVLink::VehicleClassGeneric;  ///< Generic == unknown
 
-    PlanMasterController*   _masterController =         nullptr;
-    MissionController*      _missionController =        nullptr;
-    Vehicle*                _controllerVehicle =        nullptr;
-    FlightPathSegment *     _simpleFlightPathSegment =  nullptr;    ///< The simple item flight segment (if any) which starts with this visual item.
-    VisualMissionItem*      _parentItem =               nullptr;
+    PlanMasterController*   _masterController           = nullptr;
+    MissionController*      _missionController          = nullptr;
+    Vehicle*                _controllerVehicle          = nullptr;
+    FlightPathSegment *     _simpleFlightPathSegment    = nullptr;  ///< The simple item flight segment (if any) which starts with this visual item.
+    VisualMissionItem*      _parentItem                 = nullptr;
     QGCGeoBoundingCube      _boundingCube;                          ///< The bounding "cube" of this element.
 
     /// This is used to reference any subsequent mission items which do not specify a coordinate.
