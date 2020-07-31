@@ -318,7 +318,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, command);
+        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, command);
         if (!uiInfo->isLandCommand()) {
             double  prevAltitude;
             int     prevAltitudeMode;
@@ -1672,9 +1672,9 @@ void MissionController::_recalcMissionFlightStatus()
             case MAV_CMD_DO_VTOL_TRANSITION:
             {
                 int transitionState = simpleItem->missionItem().param1();
-                if (transitionState == MAV_VTOL_STATE_TRANSITION_TO_MC) {
+                if (transitionState == MAV_VTOL_STATE_MC) {
                     _missionFlightStatus.vtolMode = QGCMAVLink::VehicleClassMultiRotor;
-                } else if (transitionState == MAV_VTOL_STATE_TRANSITION_TO_FW) {
+                } else if (transitionState == MAV_VTOL_STATE_FW) {
                     _missionFlightStatus.vtolMode = QGCMAVLink::VehicleClassFixedWing;
                 }
             }
@@ -1901,7 +1901,7 @@ void MissionController::_initVisualItem(VisualMissionItem* visualItem)
     connect(visualItem, &VisualMissionItem::specifiedVehicleYawChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::terrainAltitudeChanged,                     this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::additionalTimeDelayChanged,                 this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
-
+    connect(visualItem, &VisualMissionItem::currentVTOLModeChanged,                     this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(visualItem, &VisualMissionItem::lastSequenceNumberChanged,                  this, &MissionController::_recalcSequence);
 
     if (visualItem->isSimpleItem()) {

@@ -1125,9 +1125,6 @@ public:
     QGCCameraManager*           dynamicCameras      () { return _cameras; }
     QString                     hobbsMeter          ();
 
-    /// @true: When flying a mission the vehicle is always facing towards the next waypoint
-    bool vehicleYawsToNextWaypointInMission() const;
-
     /// The vehicle is responsible for making the initial request for the Plan.
     /// @return: true: initial request is complete, false: initial request is still in progress;
     bool initialPlanRequestComplete() const { return _initialPlanRequestComplete; }

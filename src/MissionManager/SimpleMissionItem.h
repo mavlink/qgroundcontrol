@@ -139,20 +139,21 @@ signals:
     void altitudeModeChanged        (void);
 
 private slots:
-    void _setDirty                          (void);
-    void _sectionDirtyChanged               (bool dirty);
-    void _sendCommandChanged                (void);
-    void _sendCoordinateChanged             (void);
-    void _sendFriendlyEditAllowedChanged    (void);
-    void _altitudeChanged                   (void);
-    void _altitudeModeChanged               (void);
-    void _terrainAltChanged                 (void);
-    void _updateLastSequenceNumber          (void);
-    void _rebuildFacts                      (void);
-    void _rebuildTextFieldFacts             (void);
-    void _possibleAdditionalTimeDelayChanged(void);
-    void _setDefaultsForCommand             (void);
-    void _possibleVehicleYawChanged         (void);
+    void _setDirty                              (void);
+    void _sectionDirtyChanged                   (bool dirty);
+    void _sendCommandChanged                    (void);
+    void _sendCoordinateChanged                 (void);
+    void _sendFriendlyEditAllowedChanged        (void);
+    void _altitudeChanged                       (void);
+    void _altitudeModeChanged                   (void);
+    void _terrainAltChanged                     (void);
+    void _updateLastSequenceNumber              (void);
+    void _rebuildFacts                          (void);
+    void _rebuildTextFieldFacts                 (void);
+    void _possibleAdditionalTimeDelayChanged    (void);
+    void _setDefaultsForCommand                 (void);
+    void _possibleVehicleYawChanged             (void);
+    void _signalIfVTOLTransitionCommand         (void);
 
 private:
     void _connectSignals        (void);
