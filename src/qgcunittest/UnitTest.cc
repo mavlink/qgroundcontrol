@@ -494,19 +494,6 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
     return true;
 }
 
-bool UnitTest::doubleNaNCompare(double value1, double value2)
-{
-    if (qIsNaN(value1) && qIsNaN(value2)) {
-        return true;
-    } else {
-        bool ret = qFuzzyCompare(value1, value2);
-        if (!ret) {
-            qDebug() << value1 << value2;
-        }
-        return ret;
-    }
-}
-
 void UnitTest::changeFactValue(Fact* fact,double increment)
 {
     if (fact->typeIsBool()) {
@@ -525,13 +512,13 @@ void UnitTest::_missionItemsEqual(MissionItem& actual, MissionItem& expected)
     QCOMPARE(static_cast<int>(actual.frame()),      static_cast<int>(expected.frame()));
     QCOMPARE(actual.autoContinue(),                 expected.autoContinue());
 
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param1(), expected.param1()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param2(), expected.param2()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param3(), expected.param3()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param4(), expected.param4()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param5(), expected.param5()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param6(), expected.param6()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param7(), expected.param7()));
+    QVERIFY(QGC::fuzzyCompare(actual.param1(), expected.param1()));
+    QVERIFY(QGC::fuzzyCompare(actual.param2(), expected.param2()));
+    QVERIFY(QGC::fuzzyCompare(actual.param3(), expected.param3()));
+    QVERIFY(QGC::fuzzyCompare(actual.param4(), expected.param4()));
+    QVERIFY(QGC::fuzzyCompare(actual.param5(), expected.param5()));
+    QVERIFY(QGC::fuzzyCompare(actual.param6(), expected.param6()));
+    QVERIFY(QGC::fuzzyCompare(actual.param7(), expected.param7()));
 }
 
 bool UnitTest::fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordinate& coord2)

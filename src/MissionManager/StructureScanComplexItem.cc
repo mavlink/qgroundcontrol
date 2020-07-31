@@ -474,7 +474,7 @@ int StructureScanComplexItem::cameraShots(void) const
 void StructureScanComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
-    if (!qFuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
+    if (!QGC::fuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
         _vehicleSpeed = missionFlightStatus.vehicleSpeed;
         emit timeBetweenShotsChanged();
     }
@@ -645,7 +645,7 @@ void StructureScanComplexItem::_recalcScanDistance()
                                              << " scanDistance: " << _scanDistance;
     }
 
-    if (!qFuzzyCompare(_scanDistance, scanDistance)) {
+    if (!QGC::fuzzyCompare(_scanDistance, scanDistance)) {
         _scanDistance = scanDistance;
         emit complexDistanceChanged();
     }

@@ -880,7 +880,7 @@ void Vehicle::_handleOrbitExecutionStatus(const mavlink_message_t& message)
     mavlink_msg_orbit_execution_status_decode(&message, &orbitStatus);
 
     double newRadius =  qAbs(static_cast<double>(orbitStatus.radius));
-    if (!qFuzzyCompare(_orbitMapCircle.radius()->rawValue().toDouble(), newRadius)) {
+    if (!QGC::fuzzyCompare(_orbitMapCircle.radius()->rawValue().toDouble(), newRadius)) {
         _orbitMapCircle.radius()->setRawValue(newRadius);
     }
 

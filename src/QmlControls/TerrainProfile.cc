@@ -309,7 +309,8 @@ QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     emit widthChanged();
     emit pixelsPerMeterChanged();
 
-    double newMaxAMSLAlt = qMax(_missionController->maxAMSLAltitude(), maxTerrainHeight);    if (!qFuzzyCompare(newMaxAMSLAlt, _maxAMSLAlt)) {
+    double newMaxAMSLAlt = qMax(_missionController->maxAMSLAltitude(), maxTerrainHeight);
+    if (!QGC::fuzzyCompare(newMaxAMSLAlt, _maxAMSLAlt)) {
         _maxAMSLAlt = newMaxAMSLAlt;
         emit maxAMSLAltChanged();
     }
