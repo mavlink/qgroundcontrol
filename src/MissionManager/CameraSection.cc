@@ -580,7 +580,7 @@ void CameraSection::_cameraActionChanged(void)
 
 bool CameraSection::cameraModeSupported(void) const
 {
-    return _specifyCameraMode || _masterController->controllerVehicle()->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
+    return _specifyCameraMode || _masterController->controllerVehicle()->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric).contains(MAV_CMD_SET_CAMERA_MODE);
 }
 
 void CameraSection::_dirtyIfSpecified(void)

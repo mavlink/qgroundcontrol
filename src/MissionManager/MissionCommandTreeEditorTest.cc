@@ -29,13 +29,13 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     PlanMasterController* masterController = new PlanMasterController();
 
     FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
-    if (firmwarePlugin->supportedMissionCommands().count() == 0) {
+    if (firmwarePlugin->supportedMissionCommands(vehicleClass).count() == 0) {
         firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(QGCMAVLink::FirmwareClassPX4), QGCMAVLink::vehicleClassToMavType(vehicleClass));
     }
-    int cColumns = firmwarePlugin->supportedMissionCommands().count();
+    int cColumns = firmwarePlugin->supportedMissionCommands(vehicleClass).count();
 
     QVariantList varSimpleItems;
-    for (MAV_CMD command: firmwarePlugin->supportedMissionCommands()) {
+    for (MAV_CMD command: firmwarePlugin->supportedMissionCommands(vehicleClass)) {
         SimpleMissionItem* simpleItem = new SimpleMissionItem(masterController, false /* flyView */, false /* forLoad */, this);
         simpleItem->setCommand(command);
         varSimpleItems.append(QVariant::fromValue(simpleItem));

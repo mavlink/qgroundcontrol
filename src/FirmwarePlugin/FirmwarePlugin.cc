@@ -174,7 +174,7 @@ bool FirmwarePlugin::sendHomePositionToVehicle(void)
     return false;
 }
 
-QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(void)
+QList<MAV_CMD> FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
     // Generic supports all commands
     return QList<MAV_CMD>();

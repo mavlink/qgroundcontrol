@@ -238,7 +238,7 @@ public:
     virtual bool _isParameterVolatile(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return false; }
 
     /// List of supported mission commands. Empty list for all commands supported.
-    virtual QList<MAV_CMD> supportedMissionCommands(void);
+    virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass);
 
     /// Returns the name of the mission command json override file for the specified vehicle type.
     ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all vehicle types
