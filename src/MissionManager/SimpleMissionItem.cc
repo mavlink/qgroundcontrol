@@ -501,10 +501,6 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
                 if (!firmwareVehicle) {
                     firmwareVehicle = _controllerVehicle;
                 }
-                bool hideWaypointHeading = (command == MAV_CMD_NAV_WAYPOINT || command == MAV_CMD_NAV_TAKEOFF) && (i == 4) && firmwareVehicle->firmwarePlugin()->vehicleYawsToNextWaypointInMission(firmwareVehicle);
-                if (hideWaypointHeading) {
-                    continue;
-                }
 
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];

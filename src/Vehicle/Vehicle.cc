@@ -3835,11 +3835,6 @@ const QVariantList& Vehicle::staticCameraList() const
     return emptyList;
 }
 
-bool Vehicle::vehicleYawsToNextWaypointInMission() const
-{
-    return _firmwarePlugin->vehicleYawsToNextWaypointInMission(this);
-}
-
 void Vehicle::_setupAutoDisarmSignalling()
 {
     QString param = _firmwarePlugin->autoDisarmParameter(this);

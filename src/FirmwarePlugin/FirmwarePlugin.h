@@ -297,9 +297,6 @@ public:
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*>* factGroups(void);
 
-    /// @true: When flying a mission the vehicle is always facing towards the next waypoint
-    virtual bool vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const;
-
     /// Returns the data needed to do battery consumption calculations
     ///     @param[out] mAhBattery Battery milliamp-hours rating (0 for no battery data available)
     ///     @param[out] hoverAmps Current draw in amps during hover

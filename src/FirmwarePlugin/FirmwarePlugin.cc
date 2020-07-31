@@ -698,11 +698,6 @@ QMap<QString, FactGroup*>* FirmwarePlugin::factGroups(void) {
     return nullptr;
 }
 
-bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
-{
-    return vehicle->multiRotor() ? false : true;
-}
-
 bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
 {
     if (vehicle->armed()) {
