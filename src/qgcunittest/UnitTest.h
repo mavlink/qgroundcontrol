@@ -96,10 +96,6 @@ public:
     /// @return true: files are alike, false: files differ
     static bool fileCompare(const QString& file1, const QString& file2);
 
-    /// Fuzzy compare on two doubles, where NaN is a possible value
-    /// @return true: equal
-    static bool doubleNaNCompare(double value1, double value2);
-
     /// Changes the Facts rawValue such that it emits a valueChanged signal.
     ///     @param increment 0 use standard increment, other increment by specified amount if double value
     void changeFactValue(Fact* fact, double increment = 0);
