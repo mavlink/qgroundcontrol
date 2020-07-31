@@ -327,7 +327,7 @@ double TransectStyleComplexItem::greatestDistanceTo(const QGeoCoordinate &other)
 void TransectStyleComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
-    if (!qFuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
+    if (!QGC::fuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
         _vehicleSpeed = missionFlightStatus.vehicleSpeed;
         // Vehicle speed change affects max climb/descent rates calcs for terrain so we need to re-adjust
         _rebuildTransects();
