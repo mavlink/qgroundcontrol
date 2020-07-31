@@ -114,7 +114,7 @@ void MissionCommandTree::_buildAllCommands(Vehicle* vehicle, QGCMAVLink::Vehicle
     }
 
     // Build category list from supported commands
-    QList<MAV_CMD> supportedCommands = vehicle->firmwarePlugin()->supportedMissionCommands();
+    QList<MAV_CMD> supportedCommands = vehicle->firmwarePlugin()->supportedMissionCommands(vehicleClass);
     for (MAV_CMD cmd: collapsedTree.keys()) {
         if (supportedCommands.contains(cmd)) {
             QString newCategory = collapsedTree[cmd]->category();
@@ -193,15 +193,14 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     // vehicle can be null in which case _firmwareAndVehicleClassInfo will tell of the firmware/vehicle type for the offline editing vehicle.
     // We then use that to get a firmware plugin so we can get the list of supported commands.
     FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(QGCMAVLink::firmwareClassToAutopilot(firmwareClass), QGCMAVLink::vehicleClassToMavType(vehicleClass));
-    QList<MAV_CMD>  supportedCommands = firmwarePlugin->supportedMissionCommands();
+    QList<MAV_CMD>  supportedCommands = firmwarePlugin->supportedMissionCommands(vehicleClass);
 
     QVariantList list;
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _allCommands[firmwareClass][vehicleClass];
     for (MAV_CMD command: commandMap.keys()) {
-        if (supportedCommands.contains(command)) {
+        if (supportedCommands.isEmpty() || supportedCommands.contains(command)) {
             MissionCommandUIInfo* uiInfo = commandMap[command];
-            if ((uiInfo->category() == category || category == _allCommandsCategory) &&
-                    (showFlyThroughCommands || !uiInfo->specifiesCoordinate() || uiInfo->isStandaloneCoordinate())) {
+            if ((uiInfo->category() == category || category == _allCommandsCategory) && (showFlyThroughCommands || !uiInfo->specifiesCoordinate() || uiInfo->isStandaloneCoordinate())) {
                 list.append(QVariant::fromValue(uiInfo));
             }
         }
