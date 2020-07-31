@@ -686,7 +686,7 @@ void SimpleMissionItem::_terrainAltChanged(void)
         } else {
             double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
             double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
-            if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
+            if (!QGC::fuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
                 _missionItem._param7Fact.setRawValue(newAboveTerrain);
                 _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
             }
@@ -941,14 +941,14 @@ void SimpleMissionItem::setMissionFlightStatus(MissionController::MissionFlightS
     VisualMissionItem::setMissionFlightStatus(missionFlightStatus);
 
     // If speed and/or gimbal are not specifically set on this item. Then use the flight status values as initial defaults should a user turn them on.
-    if (_speedSection->available() && !_speedSection->specifyFlightSpeed() && !qFuzzyCompare(_speedSection->flightSpeed()->rawValue().toDouble(), missionFlightStatus.vehicleSpeed)) {
+    if (_speedSection->available() && !_speedSection->specifyFlightSpeed() && !QGC::fuzzyCompare(_speedSection->flightSpeed()->rawValue().toDouble(), missionFlightStatus.vehicleSpeed)) {
         _speedSection->flightSpeed()->setRawValue(missionFlightStatus.vehicleSpeed);
     }
     if (_cameraSection->available() && !_cameraSection->specifyGimbal()) {
-        if (!qIsNaN(missionFlightStatus.gimbalYaw) && !qFuzzyCompare(_cameraSection->gimbalYaw()->rawValue().toDouble(), missionFlightStatus.gimbalYaw)) {
+        if (!qIsNaN(missionFlightStatus.gimbalYaw) && !QGC::fuzzyCompare(_cameraSection->gimbalYaw()->rawValue().toDouble(), missionFlightStatus.gimbalYaw)) {
             _cameraSection->gimbalYaw()->setRawValue(missionFlightStatus.gimbalYaw);
         }
-        if (!qIsNaN(missionFlightStatus.gimbalPitch) && !qFuzzyCompare(_cameraSection->gimbalPitch()->rawValue().toDouble(), missionFlightStatus.gimbalPitch)) {
+        if (!qIsNaN(missionFlightStatus.gimbalPitch) && !QGC::fuzzyCompare(_cameraSection->gimbalPitch()->rawValue().toDouble(), missionFlightStatus.gimbalPitch)) {
             _cameraSection->gimbalPitch()->setRawValue(missionFlightStatus.gimbalPitch);
         }
     }

@@ -2236,7 +2236,7 @@ void MissionController::applyDefaultMissionAltitude(void)
 
 void MissionController::_progressPctChanged(double progressPct)
 {
-    if (!qFuzzyCompare(progressPct, _progressPct)) {
+    if (!QGC::fuzzyCompare(progressPct, _progressPct)) {
         _progressPct = progressPct;
         emit progressPctChanged(progressPct);
     }

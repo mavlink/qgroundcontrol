@@ -327,7 +327,7 @@ void InstrumentValueData::_updateOpacity(void)
         newOpacity = _rangeOpacities[rangeIndex].toDouble();
     }
 
-    if (!qFuzzyCompare(newOpacity, _currentOpacity)) {
+    if (!QGC::fuzzyCompare(newOpacity, _currentOpacity)) {
         _currentOpacity = newOpacity;
         emit currentOpacityChanged(newOpacity);
     }
