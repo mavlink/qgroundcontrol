@@ -3510,30 +3510,6 @@ Value 0 turns the functionality off</short_desc>
       <unit>m</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="2.0" name="LNDMC_FFALL_THR" type="FLOAT">
-      <short_desc>Multicopter specific force threshold</short_desc>
-      <long_desc>Multicopter threshold on the specific force measured by accelerometers in m/s^2 for free-fall detection</long_desc>
-      <min>0.1</min>
-      <max>10</max>
-      <unit>m/s^2</unit>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter default="0.3" name="LNDMC_FFALL_TTRI" type="FLOAT">
-      <short_desc>Multicopter free-fall trigger time</short_desc>
-      <long_desc>Seconds (decimal) that freefall conditions have to met before triggering a freefall. Minimal value is limited by LAND_DETECTOR_UPDATE_RATE=50Hz in landDetector.h</long_desc>
-      <min>0.02</min>
-      <max>5</max>
-      <unit>s</unit>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter default="0.3" name="LNDMC_LOW_T_THR" type="FLOAT">
-      <short_desc>Low throttle detection threshold</short_desc>
-      <long_desc>Defines the commanded throttle value below which the land detector considers the vehicle to have "low thrust". This is one condition that is used to detect the ground contact state. The value is calculated as val = (MPC_THR_HOVER - MPC_THR_MIN) * LNDMC_LOW_T_THR + MPC_THR_MIN Increase this value if the system takes long time to detect landing.</long_desc>
-      <min>0.1</min>
-      <max>0.9</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-    </parameter>
     <parameter default="20.0" name="LNDMC_ROT_MAX" type="FLOAT">
       <short_desc>Multicopter max rotation</short_desc>
       <long_desc>Maximum allowed angular velocity around each axis allowed in the landed state.</long_desc>
