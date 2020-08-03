@@ -5,49 +5,49 @@
 [
 {
     "name":             "cameraTilt",
-    "shortDescription": "Camera Tilt",
+    "shortDesc": "Camera Tilt",
     "type":             "int16",
     "units":            "%"
 },
 {
     "name":             "tetherTurns",
-    "shortDescription": "Tether Turns",
+    "shortDesc": "Tether Turns",
     "type":             "int16",
     "units":            "clockwise"
 },
 {
     "name":             "lights1",
-    "shortDescription": "Lights 1 level",
+    "shortDesc": "Lights 1 level",
     "type":             "int16",
     "units":            "%"
 },
 {
     "name":             "lights2",
-    "shortDescription": "Lights 2 level",
+    "shortDesc": "Lights 2 level",
     "type":             "int16",
     "units":            "%"
 },
 {
     "name":             "pilotGain",
-    "shortDescription": "Pilot Gain",
+    "shortDesc": "Pilot Gain",
     "type":             "int16",
     "units":            "%"
 },
 {
     "name":             "inputHold",
-    "shortDescription": "Input Hold",
+    "shortDesc": "Input Hold",
     "type":             "int16",
     "enumStrings":      "Disabled,Enabled",
     "enumValues":       "0,1"
 },
 {    "name":            "rangefinderDistance",
-    "shortDescription": "Rangefinder",
+    "shortDesc": "Rangefinder",
     "type":             "float",
     "decimalPlaces":    2,
     "units":            "meters"
 },
 {   "name":             "rollPitchToggle",
-    "shortDescription": "Roll/Pitch Toggle",
+    "shortDesc": "Roll/Pitch Toggle",
     "type":             "int16",
     "enumStrings":      "Disabled,Enabled,Unavailable",
     "enumValues":       "0,1,2"

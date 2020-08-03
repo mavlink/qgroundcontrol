@@ -5,33 +5,33 @@
 [
 {
     "name":             "displayPresetsTabFirst",
-    "shortDescription": "Display the presets tab at start",
+    "shortDesc": "Display the presets tab at start",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "showMissionItemStatus",
-    "shortDescription": "Show/Hide the mission item status display",
+    "shortDesc": "Show/Hide the mission item status display",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "takeoffItemNotRequired",
-    "shortDescription": "Allow missions to not require a takeoff item",
+    "shortDesc": "Allow missions to not require a takeoff item",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "useConditionGate",
-    "shortDescription": "Use MAV_CMD_CONDITION_GATE for pattern generation",
+    "shortDesc": "Use MAV_CMD_CONDITION_GATE for pattern generation",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "showGimbalOnlyWhenSet",
-    "shortDescription": "Show gimbal yaw visual only when set explicitly for the waypoint",
+    "shortDesc": "Show gimbal yaw visual only when set explicitly for the waypoint",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 }
 ]
 }

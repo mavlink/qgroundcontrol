@@ -5,51 +5,51 @@
 [
 {
     "name":             "usePersonalApiKey",
-    "shortDescription": "Use Personal AirMap API Key",
+    "shortDesc": "Use Personal AirMap API Key",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "apiKey",
-    "shortDescription": "AirMap API Key",
+    "shortDesc": "AirMap API Key",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "clientID",
-    "shortDescription": "AirMap Client ID",
+    "shortDesc": "AirMap Client ID",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "userName",
-    "shortDescription": "AirMap User Name",
+    "shortDesc": "AirMap User Name",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "password",
-    "shortDescription": "AirMap Password",
+    "shortDesc": "AirMap Password",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "enableAirMap",
-    "shortDescription": "Enable AirMap",
+    "shortDesc": "Enable AirMap",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "enableAirspace",
-    "shortDescription": "Show Airspace on Map (Experimental)",
+    "shortDesc": "Show Airspace on Map (Experimental)",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "enableTelemetry",
-    "shortDescription": "Enable AirMap Telemetry",
+    "shortDesc": "Enable AirMap Telemetry",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 }
 ]
 }

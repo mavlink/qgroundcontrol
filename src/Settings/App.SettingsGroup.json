@@ -5,294 +5,294 @@
 [
 {
     "name":             "offlineEditingFirmwareClass",
-    "shortDescription": "Offline editing firmware class",
+    "shortDesc": "Offline editing firmware class",
     "type":             "uint32",
     "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
     "enumValues":       "3,12,0",
-    "defaultValue":     12
+    "default":     12
 },
 {
     "name":             "offlineEditingVehicleClass",
-    "shortDescription": "Offline editing vehicle class",
+    "shortDesc": "Offline editing vehicle class",
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic",
     "enumValues":       "1,2,20,10,12,0",
-    "defaultValue":     2
+    "default":     2
 },
 {
     "name":             "offlineEditingCruiseSpeed",
-    "shortDescription": "Offline editing cruise speed",
-    "longDescription":  "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
+    "shortDesc": "Offline editing cruise speed",
+    "longDesc":  "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
-    "defaultValue":     15.0,
+    "default":     15.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
 },
 {
     "name":             "offlineEditingHoverSpeed",
-    "shortDescription": "Offline editing hover speed",
-    "longDescription":  "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
+    "shortDesc": "Offline editing hover speed",
+    "longDesc":  "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
-    "defaultValue":     5.0,
+    "default":     5.0,
     "min":              1.0,
     "units":            "m/s",
     "decimalPlaces":    2
 },
 {
     "name":             "offlineEditingAscentSpeed",
-    "shortDescription": "Offline editing ascent speed",
-    "longDescription":  "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
+    "shortDesc": "Offline editing ascent speed",
+    "longDesc":  "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
     "type":             "double",
-    "defaultValue":     3.0,
+    "default":     3.0,
     "min":              0.1,
     "units":            "m/s",
     "decimalPlaces":    2
 },
 {
     "name":             "offlineEditingDescentSpeed",
-    "shortDescription": "Offline editing descent speed",
-    "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
+    "shortDesc": "Offline editing descent speed",
+    "longDesc":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
     "type":             "double",
-    "defaultValue":     1.0,
+    "default":     1.0,
     "min":              0.1,
     "units":            "m/s",
     "decimalPlaces":    2
 },
 {
     "name":             "batteryPercentRemainingAnnounce",
-    "shortDescription": "Announce battery remaining percent",
-    "longDescription":  "Announce the remaining battery percent when it falls below the specified percentage.",
+    "shortDesc": "Announce battery remaining percent",
+    "longDesc":  "Announce the remaining battery percent when it falls below the specified percentage.",
     "type":             "uint32",
-    "defaultValue":     30,
+    "default":     30,
     "units":            "%",
     "min":              0,
     "max":              100
 },
 {
     "name":             "defaultMissionItemAltitude",
-    "shortDescription": "Default value for altitude",
-    "longDescription":  "This value specifies the default altitude for new items added to a mission.",
+    "shortDesc": "Default value for altitude",
+    "longDesc":  "This value specifies the default altitude for new items added to a mission.",
     "type":             "double",
-    "defaultValue":     50.0,
+    "default":     50.0,
     "min":              0.0,
     "units":            "m",
     "decimalPlaces":    1
 },
 {
     "name":             "telemetrySave",
-    "shortDescription": "Save telemetry Log after each flight",
-    "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
+    "shortDesc": "Save telemetry Log after each flight",
+    "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "telemetrySaveNotArmed",
-    "shortDescription": "Save telemetry log even if vehicle was not armed",
-    "longDescription":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
+    "shortDesc": "Save telemetry log even if vehicle was not armed",
+    "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "audioMuted",
-    "shortDescription": "Mute audio output",
-    "longDescription":  "If this option is enabled all audio output will be muted.",
+    "shortDesc": "Mute audio output",
+    "longDesc":  "If this option is enabled all audio output will be muted.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "checkInternet",
-    "shortDescription": "Check Internet connection",
-    "longDescription":  "Check Internet connection before accessing Internet resources.",
+    "shortDesc": "Check Internet connection",
+    "longDesc":  "Check Internet connection before accessing Internet resources.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "virtualJoystick",
-    "shortDescription": "Show virtual joystick",
-    "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
+    "shortDesc": "Show virtual joystick",
+    "longDesc":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "virtualJoystickAutoCenterThrottle",
-    "shortDescription": "Auto-Center Throttle",
-    "longDescription":  "If enabled the throttle stick will snap back to center when released.",
+    "shortDesc": "Auto-Center Throttle",
+    "longDesc":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "gstDebugLevel",
-    "shortDescription": "Video streaming debug",
-    "longDescription":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
+    "shortDesc": "Video streaming debug",
+    "longDesc":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
     "type":             "uint8",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "useChecklist",
-    "shortDescription": "Use preflight checklist",
-    "longDescription":  "If this option is enabled the preflight checklist will be used.",
+    "shortDesc": "Use preflight checklist",
+    "longDesc":  "If this option is enabled the preflight checklist will be used.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "enforceChecklist",
-    "shortDescription": "Preflight checklist must pass before arming",
-    "longDescription":  "If this option is enabled the preflight checklist must pass before arming.",
+    "shortDesc": "Preflight checklist must pass before arming",
+    "longDesc":  "If this option is enabled the preflight checklist must pass before arming.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":                 "appFontPointSize",
-    "shortDescription":     "Application font size",
-    "longDescription":      "The point size for the default font used.",
+    "shortDesc":     "Application font size",
+    "longDesc":      "The point size for the default font used.",
     "type":                 "uint32",
     "units":                "pt",
     "min":                  6,
     "max":                  48,
-    "defaultValue":         0
+    "default":         0
 },
 {
     "name":             "indoorPalette",
-    "shortDescription": "Application color scheme",
-    "longDescription":  "The color scheme for the user interface.",
+    "shortDesc": "Application color scheme",
+    "longDesc":  "The color scheme for the user interface.",
     "type":             "uint32",
     "enumStrings":      "Indoor,Outdoor",
     "enumValues":       "1,0",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "showLargeCompass",
-    "shortDescription": "Show large compass",
-    "longDescription":  "Show large compass on instrument panel",
+    "shortDesc": "Show large compass",
+    "longDesc":  "Show large compass on instrument panel",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "savePath",
-    "shortDescription": "Application save directory",
-    "longDescription":  "Directory to which all data files  are saved/loaded from",
+    "shortDesc": "Application save directory",
+    "longDesc":  "Directory to which all data files  are saved/loaded from",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "userBrandImageIndoor",
-    "shortDescription": "User-selected brand image",
-    "longDescription":  "Location in file system of user-selected brand image (indoor)",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (indoor)",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "userBrandImageOutdoor",
-    "shortDescription": "User-selected brand image",
-    "longDescription":  "Location in file system of user-selected brand image (outdoor)",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "mapboxToken",
-    "shortDescription": "Access token to Mapbox maps",
-    "longDescription":  "Your personal access token for Mapbox maps",
+    "shortDesc": "Access token to Mapbox maps",
+    "longDesc":  "Your personal access token for Mapbox maps",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "esriToken",
-    "shortDescription": "Access token to Esri maps",
-    "longDescription":  "Your personal access token for Esri maps",
+    "shortDesc": "Access token to Esri maps",
+    "longDesc":  "Your personal access token for Esri maps",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "defaultFirmwareType",
-    "shortDescription": "Default firmware type for flashing",
+    "shortDesc": "Default firmware type for flashing",
     "type":             "uint32",
-    "defaultValue":     12
+    "default":     12
 },
 {
     "name":             "followTarget",
-    "shortDescription": "Stream GCS' coordinates to Autopilot",
+    "shortDesc": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
     "enumValues":       "0,1,2",
-    "defaultValue":     2
+    "default":     2
 },
 {
     "name":                 "apmStartMavlinkStreams",
-    "shortDescription":     "Request start of MAVLink telemetry streams (ArduPilot only)",
+    "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
     "type":                 "bool",
-    "defaultValue":         true,
+    "default":         true,
     "qgcRebootRequired":    true
 },
 {
     "name":             "enableTaisync",
-    "shortDescription": "Enable Taisync Module Support",
-    "longDescription":  "Enable Taisync Module Support",
+    "shortDesc": "Enable Taisync Module Support",
+    "longDesc":  "Enable Taisync Module Support",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "enableTaisyncVideo",
-    "shortDescription": "Enable Taisync Video Support",
-    "longDescription":  "Enable Taisync Video Support",
+    "shortDesc": "Enable Taisync Video Support",
+    "longDesc":  "Enable Taisync Video Support",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "enableMicrohard",
-    "shortDescription": "Enable Microhard Module Support",
-    "longDescription":  "Enable Microhard Module Support",
+    "shortDesc": "Enable Microhard Module Support",
+    "longDesc":  "Enable Microhard Module Support",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "language",
-    "shortDescription": "Language",
+    "shortDesc": "Language",
     "type":             "uint32",
     "enumStrings":      "System,български (Bulgarian),中文 (Chinese),Nederlands (Dutch),English,Suomi (Finnish),Français (French),Deutsche (German),Ελληνικά (Greek), עברית (Hebrew),Italiano (Italian),日本人 (Japanese),한국어 (Korean),Norsk (Norwegian),Polskie (Polish),Português (Portuguese),Pусский (Russian),Español (Spanish),Svenska (Swedish),Türk (Turkish)",
     "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "disableAllPersistence",
-    "shortDescription": "Disable all data persistence",
-    "longDescription":  "If this option is set, nothing will be saved to disk.",
+    "shortDesc": "Disable all data persistence",
+    "longDesc":  "If this option is set, nothing will be saved to disk.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "usePairing",
-    "shortDescription": "Use Pairing",
-    "longDescription":  "Use Link Pairing.",
+    "shortDesc": "Use Pairing",
+    "longDesc":  "Use Link Pairing.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "saveCsvTelemetry",
-    "shortDescription": "Save CSV Telementry Logs",
-    "longDescription":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
+    "shortDesc": "Save CSV Telementry Logs",
+    "longDesc":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "firstRunPromptIdsShown",
-    "shortDescription": "Comma separated list of first run prompt ids which have already been shown.",
+    "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "forwardMavlink",
-    "shortDescription": "Enable mavlink forwarding",
-    "longDescription":  "Enable mavlink forwarding",
+    "shortDesc": "Enable mavlink forwarding",
+    "longDesc":  "Enable mavlink forwarding",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "forwardMavlinkHostName",
-    "shortDescription": "Host name",
-    "longDescription":  "Host name to forward mavlink to. i.e: localhost:14445",
+    "shortDesc": "Host name",
+    "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
-    "defaultValue":     "localhost:14445"
+    "default":     "localhost:14445"
 }
 ]
 }
