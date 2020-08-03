@@ -268,14 +268,13 @@ void PX4FirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaData
     return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
 }
 
-QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
+QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
-    QList<MAV_CMD> cmds = {
+    QList<MAV_CMD> supportedCommands = {
         MAV_CMD_NAV_WAYPOINT,
-        MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TIME, MAV_CMD_NAV_LOITER_TO_ALT,
-        MAV_CMD_NAV_LAND, MAV_CMD_NAV_TAKEOFF, MAV_CMD_NAV_RETURN_TO_LAUNCH,
+        MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TIME,
+        MAV_CMD_NAV_RETURN_TO_LAUNCH,
         MAV_CMD_DO_JUMP,
-        MAV_CMD_DO_VTOL_TRANSITION, MAV_CMD_NAV_VTOL_TAKEOFF, MAV_CMD_NAV_VTOL_LAND,
         MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_DO_SET_SERVO,
@@ -288,13 +287,33 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
         MAV_CMD_IMAGE_START_CAPTURE, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_CMD_VIDEO_START_CAPTURE, MAV_CMD_VIDEO_STOP_CAPTURE,
         MAV_CMD_NAV_DELAY,
         MAV_CMD_CONDITION_YAW,
+        MAV_CMD_NAV_LOITER_TO_ALT,
     };
 
-    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
-        cmds.append(MAV_CMD_CONDITION_GATE);
+    QList<MAV_CMD> vtolCommands = {
+        MAV_CMD_DO_VTOL_TRANSITION, MAV_CMD_NAV_VTOL_TAKEOFF, MAV_CMD_NAV_VTOL_LAND,
+    };
+
+    QList<MAV_CMD> flightCommands = {
+        MAV_CMD_NAV_LAND, MAV_CMD_NAV_TAKEOFF,
+    };
+
+    if (vehicleClass == QGCMAVLink::VehicleClassGeneric) {
+        supportedCommands   += vtolCommands;
+        supportedCommands   += flightCommands;
+    }
+    if (vehicleClass == QGCMAVLink::VehicleClassVTOL) {
+        supportedCommands += vtolCommands;
+        supportedCommands += flightCommands;
+    } else if (vehicleClass == QGCMAVLink::VehicleClassFixedWing || vehicleClass == QGCMAVLink::VehicleClassMultiRotor) {
+        supportedCommands += flightCommands;
     }
 
-    return cmds;
+    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
+        supportedCommands.append(MAV_CMD_CONDITION_GATE);
+    }
+
+    return supportedCommands;
 }
 
 QString PX4FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const
