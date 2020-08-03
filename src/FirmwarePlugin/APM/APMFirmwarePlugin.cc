@@ -715,12 +715,19 @@ FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
     return nullptr;
 }
 
-QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
+QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
     return {
+#if 0
+    // Waiting for module update
+        MAV_CMD_DO_SET_REVERSE,
+#endif
+    };
+
+    QList<MAV_CMD> supportedCommands = {
         MAV_CMD_NAV_WAYPOINT,
         MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TURNS, MAV_CMD_NAV_LOITER_TIME,
-        MAV_CMD_NAV_RETURN_TO_LAUNCH, MAV_CMD_NAV_LAND, MAV_CMD_NAV_TAKEOFF,
+        MAV_CMD_NAV_RETURN_TO_LAUNCH,
         MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT,
         MAV_CMD_NAV_LOITER_TO_ALT,
         MAV_CMD_NAV_SPLINE_WAYPOINT,
@@ -744,12 +751,32 @@ QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(void)
         MAV_CMD_DO_GRIPPER,
         MAV_CMD_DO_GUIDED_LIMITS,
         MAV_CMD_DO_AUTOTUNE_ENABLE,
-        MAV_CMD_NAV_VTOL_TAKEOFF, MAV_CMD_NAV_VTOL_LAND, MAV_CMD_DO_VTOL_TRANSITION,
-#if 0
-    // Waiting for module update
-        MAV_CMD_DO_SET_REVERSE,
-#endif
     };
+
+    QList<MAV_CMD> vtolCommands = {
+        MAV_CMD_NAV_VTOL_TAKEOFF, MAV_CMD_NAV_VTOL_LAND, MAV_CMD_DO_VTOL_TRANSITION,
+    };
+
+    QList<MAV_CMD> flightCommands = {
+        MAV_CMD_NAV_LAND, MAV_CMD_NAV_TAKEOFF,
+    };
+
+    if (vehicleClass == QGCMAVLink::VehicleClassGeneric) {
+        supportedCommands   += vtolCommands;
+        supportedCommands   += flightCommands;
+    }
+    if (vehicleClass == QGCMAVLink::VehicleClassVTOL) {
+        supportedCommands += vtolCommands;
+        supportedCommands += flightCommands;
+    } else if (vehicleClass == QGCMAVLink::VehicleClassFixedWing || vehicleClass == QGCMAVLink::VehicleClassMultiRotor) {
+        supportedCommands += flightCommands;
+    }
+
+    if (qgcApp()->toolbox()->settingsManager()->planViewSettings()->useConditionGate()->rawValue().toBool()) {
+        supportedCommands.append(MAV_CMD_CONDITION_GATE);
+    }
+
+    return supportedCommands;
 }
 
 QString APMFirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const
