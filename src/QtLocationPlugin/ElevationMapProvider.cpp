@@ -4,6 +4,7 @@
 #include <QStandardPaths>
 #endif
 #include "QGCMapEngine.h"
+#include "TerrainTile.h"
 
 ElevationProvider::ElevationProvider(const QString& imageFormat, quint32 averageSize, QGeoMapType::MapStyle mapType, QObject* parent)
     : MapProvider(QStringLiteral("https://api.airmap.com/"), imageFormat, averageSize, mapType, parent) {}
@@ -11,23 +12,23 @@ ElevationProvider::ElevationProvider(const QString& imageFormat, quint32 average
 //-----------------------------------------------------------------------------
 int AirmapElevationProvider::long2tileX(const double lon, const int z) const {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lon + 180.0) / srtm1TileSize));
+    return static_cast<int>(floor((lon + 180.0) / TerrainTile::tileSizeDegrees));
 }
 
 //-----------------------------------------------------------------------------
 int AirmapElevationProvider::lat2tileY(const double lat, const int z) const {
     Q_UNUSED(z)
-    return static_cast<int>(floor((lat + 90.0) / srtm1TileSize));
+    return static_cast<int>(floor((lat + 90.0) / TerrainTile::tileSizeDegrees));
 }
 
 QString AirmapElevationProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager)
     Q_UNUSED(zoom)
     return QString("https://api.airmap.com/elevation/v1/ele/carpet?points=%1,%2,%3,%4")
-        .arg(static_cast<double>(y) * srtm1TileSize - 90.0)
-        .arg(static_cast<double>(x) * srtm1TileSize - 180.0)
-        .arg(static_cast<double>(y + 1) * srtm1TileSize - 90.0)
-        .arg(static_cast<double>(x + 1) * srtm1TileSize - 180.0);
+        .arg(static_cast<double>(y) * TerrainTile::tileSizeDegrees - 90.0)
+        .arg(static_cast<double>(x) * TerrainTile::tileSizeDegrees - 180.0)
+        .arg(static_cast<double>(y + 1) * TerrainTile::tileSizeDegrees - 90.0)
+        .arg(static_cast<double>(x + 1) * TerrainTile::tileSizeDegrees - 180.0);
 }
 
 QGCTileSet AirmapElevationProvider::getTileCount(const int zoom, const double topleftLon,
