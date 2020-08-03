@@ -5,83 +5,83 @@
 [
 {
     "name":             "autoConnectUDP",
-    "shortDescription": "Automatically open a connection over UDP",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
+    "shortDesc": "Automatically open a connection over UDP",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectPixhawk",
-    "shortDescription": "Automatically connect to a Pixhawk board",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
+    "shortDesc": "Automatically connect to a Pixhawk board",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectSiKRadio",
-    "shortDescription": "Automatically connect to a SiK Radio",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
+    "shortDesc": "Automatically connect to a SiK Radio",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectPX4Flow",
-    "shortDescription": "Automatically connect to a P4 Flow",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a PX4 Flow board which is connected via USB.",
+    "shortDesc": "Automatically connect to a P4 Flow",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a PX4 Flow board which is connected via USB.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectRTKGPS",
-    "shortDescription": "Automatically connect to an RTK GPS",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+    "shortDesc": "Automatically connect to an RTK GPS",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectLibrePilot",
-    "shortDescription": "Automatically connect to a LibrePilot",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
+    "shortDesc": "Automatically connect to a LibrePilot",
+    "longDesc":  "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "autoConnectNmeaPort",
-    "shortDescription": "NMEA GPS device for GCS position",
-    "longDescription":  "NMEA GPS device for GCS position",
+    "shortDesc": "NMEA GPS device for GCS position",
+    "longDesc":  "NMEA GPS device for GCS position",
     "type":             "string",
-    "defaultValue":     "Disabled"
+    "default":     "Disabled"
 },
 {
     "name":             "autoConnectNmeaBaud",
-    "shortDescription": "NMEA GPS Baudrate",
-    "longDescription":  "NMEA GPS Baudrate",
+    "shortDesc": "NMEA GPS Baudrate",
+    "longDesc":  "NMEA GPS Baudrate",
     "type":             "uint32",
-    "defaultValue":     4800
+    "default":     4800
 },
 {
     "name":             "udpListenPort",
-    "shortDescription": "UDP port for autoconnect",
+    "shortDesc": "UDP port for autoconnect",
     "type":             "uint32",
-    "defaultValue":     14550
+    "default":     14550
 },
 {
     "name":             "udpTargetHostIP",
-    "shortDescription": "UDP target host IP for autoconnect",
+    "shortDesc": "UDP target host IP for autoconnect",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "udpTargetHostPort",
-    "shortDescription": "UDP target host port for autoconnect",
+    "shortDesc": "UDP target host port for autoconnect",
     "type":             "uint32",
-    "defaultValue":     14550
+    "default":     14550
 },
 {
     "name":             "nmeaUdpPort",
-    "shortDescription": "Udp port to receive NMEA streams",
+    "shortDesc": "Udp port to receive NMEA streams",
     "type":             "uint32",
-    "defaultValue":     14401
+    "default":     14401
 }
 ]
 }

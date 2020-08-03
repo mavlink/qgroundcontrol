@@ -5,56 +5,56 @@
 [
 {
     "name":             "voltage",
-    "shortDescription": "Voltage",
+    "shortDesc": "Voltage",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "v"
 },
 {
     "name":             "percentRemaining",
-    "shortDescription": "Percent",
+    "shortDesc": "Percent",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "%"
 },
 {
     "name":             "mahConsumed",
-    "shortDescription": "Consumed",
+    "shortDesc": "Consumed",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "mAh"
 },
 {
     "name":             "current",
-    "shortDescription": "Current",
+    "shortDesc": "Current",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "A"
 },
 {
     "name":             "temperature",
-    "shortDescription": "Temperature",
+    "shortDesc": "Temperature",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "C"
 },
 {
     "name":             "instantPower",
-    "shortDescription": "Watts",
+    "shortDesc": "Watts",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "W"
 },
 {
     "name":             "timeRemaining",
-    "shortDescription": "Time Remaining",
+    "shortDesc": "Time Remaining",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "s"
 },
 {
     "name":             "chargeState",
-    "shortDescription": "Charge State",
+    "shortDesc": "Charge State",
     "type":             "uint8",
     "enumStrings":      "n/a,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy",
     "enumValues":       "0,1,2,3,4,5,6",
