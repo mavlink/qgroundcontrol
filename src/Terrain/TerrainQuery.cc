@@ -370,7 +370,7 @@ void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInt
     QList<QGeoCoordinate> coordinates;
     double lat = startPoint.latitude();
     double lon = startPoint.longitude();
-    double steps = ceil(endPoint.distanceTo(startPoint) / TerrainTile::terrainAltitudeSpacing);
+    double steps = ceil(endPoint.distanceTo(startPoint) / TerrainTile::tileValueSpacingMeters);
     double latDiff = endPoint.latitude() - lat;
     double lonDiff = endPoint.longitude() - lon;
 
