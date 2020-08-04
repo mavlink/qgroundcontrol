@@ -14,6 +14,7 @@
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
+#include "QGC.h"
 
 #include <QPolygonF>
 
@@ -54,9 +55,13 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
     _editorQml = "qrc:/qml/VTOLLandingPatternEditor.qml";
     _isIncomplete = false;
 
-    QGeoCoordinate homePositionCoordinate = masterController->missionController()->plannedHomePosition();
-    if (homePositionCoordinate.isValid()) {
-        setLandingCoordinate(homePositionCoordinate);
+    // We adjust landing distance meta data to Plan View settings unless there was a custom build override
+    if (QGC::fuzzyCompare(_landingDistanceFact.rawValue().toDouble(), _landingDistanceFact.rawDefaultValue().toDouble())) {
+        Fact* vtolTransitionDistanceFact = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance();
+        double vtolTransitionDistance = vtolTransitionDistanceFact->rawValue().toDouble();
+        _landingDistanceFact.metaData()->setRawDefaultValue(vtolTransitionDistance);
+        _landingDistanceFact.setRawValue(vtolTransitionDistance);
+        _landingDistanceFact.metaData()->setRawMin(vtolTransitionDistanceFact->metaData()->rawMin());
     }
 
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact);
@@ -535,21 +540,15 @@ void VTOLLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
 
     if (!_ignoreRecalcSignals && _landingCoordSet) {
         // These are our known values
-        double radius = _loiterRadiusFact.rawValue().toDouble();
-        double landToTangentDistance = _landingDistanceFact.rawValue().toDouble();
-        double heading = _landingHeadingFact.rawValue().toDouble();
+        double radius                   = _loiterRadiusFact.rawValue().toDouble();
+        double landToTangentDistance    = _landingDistanceFact.rawValue().toDouble();
+        double heading                  = _landingHeadingFact.rawValue().toDouble();
 
-        // Calculate loiter tangent coordinate
+        // Heading is from loiter to land, hence +180
         _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
 
-        // Calculate the distance and angle to the loiter coordinate
-        QGeoCoordinate tangent = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, 0);
-        QGeoCoordinate loiter = tangent.atDistanceAndAzimuth(radius, 90);
-        double loiterDistance = _landingCoordinate.distanceTo(loiter);
-        double loiterAzimuth = _landingCoordinate.azimuthTo(loiter) * (_loiterClockwise ? -1 : 1);
-
-        // Use those values to get the new loiter point which takes heading into acount
-        _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(loiterDistance, heading + 180 + loiterAzimuth);
+        // Loiter coord is 90 degrees counter clockwise from tangent coord
+        _loiterCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 - 90);
         _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
 
         _ignoreRecalcSignals = true;

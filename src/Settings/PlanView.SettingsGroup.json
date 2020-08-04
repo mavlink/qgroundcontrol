@@ -1,37 +1,45 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
+    "version":  1,
+    "fileType": "FactMetaData",
     "QGC.MetaData.Facts":
 [
 {
-    "name":             "displayPresetsTabFirst",
-    "shortDesc": "Display the presets tab at start",
-    "type":             "bool",
-    "default":     false
+    "name":         "displayPresetsTabFirst",
+    "shortDesc":    "Display the presets tab at start",
+    "type":         "bool",
+    "default":      false
 },
 {
-    "name":             "showMissionItemStatus",
-    "shortDesc": "Show/Hide the mission item status display",
-    "type":             "bool",
-    "default":     true
+    "name":         "showMissionItemStatus",
+    "shortDesc":    "Show/Hide the mission item status display",
+    "type":         "bool",
+    "default":      true
 },
 {
-    "name":             "takeoffItemNotRequired",
-    "shortDesc": "Allow missions to not require a takeoff item",
-    "type":             "bool",
-    "default":     false
+    "name":         "takeoffItemNotRequired",
+    "shortDesc":    "Allow missions to not require a takeoff item",
+    "type":         "bool",
+    "default":      false
 },
 {
-    "name":             "useConditionGate",
-    "shortDesc": "Use MAV_CMD_CONDITION_GATE for pattern generation",
-    "type":             "bool",
-    "default":     false
+    "name":         "useConditionGate",
+    "shortDesc":    "Use MAV_CMD_CONDITION_GATE for pattern generation",
+    "type":         "bool",
+    "default":      false
 },
 {
-    "name":             "showGimbalOnlyWhenSet",
-    "shortDesc": "Show gimbal yaw visual only when set explicitly for the waypoint",
-    "type":             "bool",
-    "default":     false
+    "name":         "showGimbalOnlyWhenSet",
+    "shortDesc":    "Show gimbal yaw visual only when set explicitly for the waypoint",
+    "type":         "bool",
+    "default":      false
+},
+{
+    "name":         "vtolTransitionDistance",
+    "shortDesc":    "Amount of distance required for vehicle to complete a transition",
+    "type":         "double",
+    "default":      300.0,
+    "units":        "m",
+    "min":          100.0
 }
 ]
 }
