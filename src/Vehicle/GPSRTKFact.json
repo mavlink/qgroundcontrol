@@ -5,13 +5,13 @@
 [
 {
     "name":             "connected",
-    "shortDescription": "Connected",
+    "shortDesc": "Connected",
     "type":             "bool",
     "default":          false
 },
 {
     "name":             "currentAccuracy",
-    "shortDescription": "Current Survey-In Accuracy",
+    "shortDesc": "Current Survey-In Accuracy",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m",
@@ -19,28 +19,28 @@
 },
 {
     "name":             "currentLatitude",
-    "shortDescription": "Current Survey-In Latitude",
+    "shortDesc": "Current Survey-In Latitude",
     "type":             "double",
     "decimalPlaces":    7,
     "default":          null
 },
 {
     "name":             "currentLongitude",
-    "shortDescription": "Current Survey-In Longitude",
+    "shortDesc": "Current Survey-In Longitude",
     "type":             "double",
     "decimalPlaces":    7,
     "default":          null
 },
 {
     "name":             "currentAltitude",
-    "shortDescription": "Current Survey-In Altitude",
+    "shortDesc": "Current Survey-In Altitude",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
 },
 {
     "name":             "currentDuration",
-    "shortDescription": "Current Survey-In Duration",
+    "shortDesc": "Current Survey-In Duration",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "s",
@@ -48,19 +48,19 @@
 },
 {
     "name":             "valid",
-    "shortDescription": "Survey-In Valid",
+    "shortDesc": "Survey-In Valid",
     "type":             "bool",
     "default":          false
 },
 {
     "name":             "active",
-    "shortDescription": "Survey-In Active",
+    "shortDesc": "Survey-In Active",
     "type":             "bool",
     "default":          false
 },
 {
     "name":             "numSatellites",
-    "shortDescription": "Number of Satellites",
+    "shortDesc": "Number of Satellites",
     "type":             "int32",
     "default":          0
 }

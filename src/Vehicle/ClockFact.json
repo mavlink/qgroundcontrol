@@ -5,12 +5,12 @@
 [
 {
     "name":             "currentTime",
-    "shortDescription": "Time",
+    "shortDesc": "Time",
     "type":             "string"
 },
 {
     "name":             "currentDate",
-    "shortDescription": "Date",
+    "shortDesc": "Date",
     "type":             "string"
 }
 ]

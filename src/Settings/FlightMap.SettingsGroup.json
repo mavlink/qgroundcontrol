@@ -5,15 +5,15 @@
 [
 {
     "name":             "mapProvider",
-    "shortDescription": "Currently selected map provider for flight maps",
+    "shortDesc": "Currently selected map provider for flight maps",
     "type":             "string",
-    "defaultValue":     "Bing"
+    "default":     "Bing"
 },
 {
     "name":             "mapType",
-    "shortDescription": "Currently selected map type for flight maps",
+    "shortDesc": "Currently selected map type for flight maps",
     "type":             "string",
-    "defaultValue":     "Hybrid"
+    "default":     "Hybrid"
 }
 ]
 }

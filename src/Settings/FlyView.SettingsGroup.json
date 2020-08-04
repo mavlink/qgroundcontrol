@@ -5,54 +5,54 @@
 [
 {
     "name":             "guidedMinimumAltitude",
-    "shortDescription": "Minimum altitude for guided actions altitude slider.",
+    "shortDesc": "Minimum altitude for guided actions altitude slider.",
     "type":             "double",
     "units":            "m",
-    "defaultValue":     2
+    "default":     2
 },
 {
     "name":             "guidedMaximumAltitude",
-    "shortDescription": "Maximum altitude for guided actions altitude slider.",
+    "shortDesc": "Maximum altitude for guided actions altitude slider.",
     "type":             "double",
     "units":            "m",
-    "defaultValue":     121.92
+    "default":     121.92
 },
 {
     "name":             "showLogReplayStatusBar",
-    "shortDescription": "Show/Hide Log Replay status bar",
+    "shortDesc": "Show/Hide Log Replay status bar",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "alternateInstrumentPanel",
-    "shortDescription": "Use Vertical Instrument Panel instead of the default one",
+    "shortDesc": "Use Vertical Instrument Panel instead of the default one",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "showAdditionalIndicatorsCompass",
-    "shortDescription": "Show additional heading indicators on Compass",
+    "shortDesc": "Show additional heading indicators on Compass",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "lockNoseUpCompass",
-    "shortDescription": "Lock Compass Nose-Up",
+    "shortDesc": "Lock Compass Nose-Up",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "keepMapCenteredOnVehicle",
-    "shortDescription": "Keep map centered on vehicle",
+    "shortDesc": "Keep map centered on vehicle",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "maxGoToLocationDistance",
-    "shortDescription": "Maximum distance allowed for Go To Location.",
+    "shortDesc": "Maximum distance allowed for Go To Location.",
     "type":             "double",
     "units":            "m",
-    "defaultValue":     1000,
+    "default":     1000,
     "min":              1
 }
 ]
