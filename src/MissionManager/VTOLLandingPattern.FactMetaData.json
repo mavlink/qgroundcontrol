@@ -5,59 +5,59 @@
 [
 {
     "name":             "LandingDistance",
-    "shortDesc": "Distance between landing and loiter points.",
+    "shortDesc":        "Distance between landing and loiter points.",
     "type":             "double",
     "units":            "m",
     "min":              10,
     "decimalPlaces":    1,
-    "default":     30.0
+    "default":          300.0
 },
 {
     "name":             "LandingHeading",
-    "shortDesc": "Heading from loiter point to land point.",
+    "shortDesc":        "Heading from loiter point to land point.",
     "type":             "double",
     "units":            "deg",
     "min":              0.0,
     "max":              360.0,
     "decimalPlaces":    0,
-    "default":     270.0
+    "default":          270.0
 },
 {
     "name":             "LoiterAltitude",
-    "shortDesc": "Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will fly to land point at current altitude.",
+    "shortDesc":        "Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will fly to land point at current altitude.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
-    "default":     40.0
+    "default":          30.0
 },
 {
     "name":             "LoiterRadius",
-    "shortDesc": "Loiter radius.",
+    "shortDesc":        "Loiter radius.",
     "type":             "double",
     "decimalPlaces":    1,
     "min":              1,
     "units":            "m",
-    "default":     75.0
+    "default":          75.0
 },
 {
     "name":             "LandingAltitude",
-    "shortDesc": "Altitude for landing point on ground.",
+    "shortDesc":        "Altitude for landing point on ground.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
-    "default":     0.0
+    "default":          0.0
 },
 {
-    "name":             "StopTakingPhotos",
-    "shortDesc": "Stop taking photos",
-    "type":             "bool",
-    "default":     true
+    "name":         "StopTakingPhotos",
+    "shortDesc":    "Stop taking photos",
+    "type":         "bool",
+    "default":      true
 },
 {
-    "name":             "StopTakingVideo",
-    "shortDesc": "Stop taking video",
-    "type":             "bool",
-    "default":     true
+    "name":         "StopTakingVideo",
+    "shortDesc":    "Stop taking video",
+    "type":         "bool",
+    "default":      true
 }
 ]
 }

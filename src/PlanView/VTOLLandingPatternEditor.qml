@@ -32,9 +32,9 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property var    _masterControler:               masterController
-    property var    _missionController:             _masterControler.missionController
-    property var    _missionVehicle:                _masterControler.controllerVehicle
+    property var    _masterControler:           masterController
+    property var    _missionController:         _masterControler.missionController
+    property var    _missionVehicle:            _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
@@ -50,6 +50,14 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
         visible:            !editorColumnNeedLandingPoint.visible
+
+        QGCLabel {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            wrapMode:       Text.WordWrap
+            font.pointSize: ScreenTools.smallFontPointSize
+            text:           qsTr("Loiter down to specified altitude. Fly to land point while transitioning. Hover straight down to land.")
+        }
 
         SectionHeader {
             id:             loiterPointSection
@@ -216,6 +224,15 @@ Rectangle {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 text:                   qsTr("* Avoid tailwind from loiter to land.")
             }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                color:                  qgcPal.warningText
+                font.pointSize:         ScreenTools.smallFontPointSize
+                text:                   qsTr("* Ensure landing distance is enough to complete transition.")
+            }
         }
     }
 
@@ -287,8 +304,6 @@ Rectangle {
                 onClicked: {
                     missionItem.wizardMode = false
                     missionItem.landingDragAngleOnly = false
-                    // Trial of no auto select next item
-                    //editorRoot.selectNextNotReadyItem()
                 }
             }
         }

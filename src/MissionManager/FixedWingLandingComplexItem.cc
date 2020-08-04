@@ -574,17 +574,11 @@ void FixedWingLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         double landToTangentDistance = _landingDistanceFact.rawValue().toDouble();
         double heading = _landingHeadingFact.rawValue().toDouble();
 
-        // Calculate loiter tangent coordinate
+        // Heading is from loiter to land, hence +180
         _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
 
-        // Calculate the distance and angle to the loiter coordinate
-        QGeoCoordinate tangent = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, 0);
-        QGeoCoordinate loiter = tangent.atDistanceAndAzimuth(radius, 90);
-        double loiterDistance = _landingCoordinate.distanceTo(loiter);
-        double loiterAzimuth = _landingCoordinate.azimuthTo(loiter) * (_loiterClockwise ? -1 : 1);
-
-        // Use those values to get the new loiter point which takes heading into acount
-        _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(loiterDistance, heading + 180 + loiterAzimuth);
+        // Loiter coord is 90 degrees counter clockwise from tangent coord
+        _loiterCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 - 90);
         _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
