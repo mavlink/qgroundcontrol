@@ -9,59 +9,59 @@
     "QGC.MetaData.Facts": [
         {
             "name":             "streamRateRawSensors",
-            "shortDescription": "Stream rate for MAVLink Raw Sensors telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Raw Sensors telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     2
+            "default":     2
         },
         {
             "name":             "streamRateExtendedStatus",
-            "shortDescription": "Stream rate for MAVLink Extended Status telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Extended Status telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     2
+            "default":     2
         },
         {
             "name":             "streamRateRCChannels",
-            "shortDescription": "Stream rate for MAVLink RC Channels telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink RC Channels telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     2
+            "default":     2
         },
         {
             "name":             "streamRatePosition",
-            "shortDescription": "Stream rate for MAVLink Position telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Position telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     3
+            "default":     3
         },
         {
             "name":             "streamRateExtra1",
-            "shortDescription": "Stream rate for MAVLink Extra1 telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Extra1 telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     10
+            "default":     10
         },
         {
             "name":             "streamRateExtra2",
-            "shortDescription": "Stream rate for MAVLink Extra2 telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Extra2 telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     10
+            "default":     10
         },
         {
             "name":             "streamRateExtra3",
-            "shortDescription": "Stream rate for MAVLink Extra3 telemetry stream.",
+            "shortDesc": "Stream rate for MAVLink Extra3 telemetry stream.",
             "type":             "int32",
             "enumStrings":      "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues":       "QGC.MetaData.Defines.StreamRateEnumValues",
-            "defaultValue":     3
+            "default":     3
         }
     ]
 }

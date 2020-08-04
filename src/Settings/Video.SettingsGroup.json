@@ -5,129 +5,129 @@
 [
 {
     "name":             "videoSource",
-    "shortDescription": "Video source",
-    "longDescription":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+    "shortDesc": "Video source",
+    "longDesc":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "udpPort",
-    "shortDescription": "Video UDP Port",
-    "longDescription":  "UDP port to bind to for video stream.",
+    "shortDesc": "Video UDP Port",
+    "longDesc":  "UDP port to bind to for video stream.",
     "type":             "uint16",
     "min":              1025,
-    "defaultValue":     5600
+    "default":     5600
 },
 {
     "name":             "rtspUrl",
-    "shortDescription": "Video RTSP Url",
-    "longDescription":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "shortDesc": "Video RTSP Url",
+    "longDesc":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "tcpUrl",
-    "shortDescription": "Video TCP Url",
-    "longDescription":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
+    "shortDesc": "Video TCP Url",
+    "longDesc":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "videoSavePath",
-    "shortDescription": "Video save directory",
-    "longDescription":  "Directory to save videos to.",
+    "shortDesc": "Video save directory",
+    "longDesc":  "Directory to save videos to.",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "aspectRatio",
-    "shortDescription": "Video Aspect Ratio",
-    "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "shortDesc": "Video Aspect Ratio",
+    "longDesc":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
     "type":             "float",
     "decimalPlaces":    6,
-    "defaultValue":     1.777777
+    "default":     1.777777
 },
 {
     "name":             "gridLines",
-    "shortDescription": "Video Grid Lines",
-    "longDescription":  "Displays a grid overlaid over the video view.",
+    "shortDesc": "Video Grid Lines",
+    "longDesc":  "Displays a grid overlaid over the video view.",
     "type":             "uint32",
     "enumStrings":      "Hide,Show",
     "enumValues":       "1,0",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "videoFit",
-    "shortDescription": "Video Display Fit",
-    "longDescription":  "Handle Video Aspect Ratio.",
+    "shortDesc": "Video Display Fit",
+    "longDesc":  "Handle Video Aspect Ratio.",
     "type":             "uint32",
     "enumStrings":      "Fit Width,Fit Height,Stretch",
     "enumValues":       "0,1,2",
-    "defaultValue":     1
+    "default":     1
 },
 {
     "name":             "showRecControl",
-    "shortDescription": "Show Video Record Control",
-    "longDescription":  "Show recording control in the UI.",
+    "shortDesc": "Show Video Record Control",
+    "longDesc":  "Show recording control in the UI.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "recordingFormat",
-    "shortDescription": "Video Recording Format",
-    "longDescription":  "Video recording file format.",
+    "shortDesc": "Video Recording Format",
+    "longDesc":  "Video recording file format.",
     "type":             "uint32",
     "enumStrings":      "mkv,mov,mp4",
     "enumValues":       "0,1,2",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "maxVideoSize",
-    "shortDescription": "Max Video Storage Usage",
-    "longDescription":  "Maximum amount of disk space used by video recording.",
+    "shortDesc": "Max Video Storage Usage",
+    "longDesc":  "Maximum amount of disk space used by video recording.",
     "type":             "uint32",
     "min":              100,
     "units":            "MB",
-    "defaultValue":     10240,
-    "mobileDefaultValue":   2048
+    "default":     10240,
+    "mobileDefault":   2048
 },
 {
     "name":             "enableStorageLimit",
-    "shortDescription": "Enable/Disable Limits on Storage Usage",
-    "longDescription":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
+    "shortDesc": "Enable/Disable Limits on Storage Usage",
+    "longDesc":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
     "type":             "bool",
-    "defaultValue":     false,
-    "mobileDefaultValue":   true
+    "default":     false,
+    "mobileDefault":   true
 },
 {
     "name":             "rtspTimeout",
-    "shortDescription": "RTSP Video Timeout",
-    "longDescription":  "How long to wait before assuming RTSP link is gone.",
+    "shortDesc": "RTSP Video Timeout",
+    "longDesc":  "How long to wait before assuming RTSP link is gone.",
     "type":             "uint32",
     "min":              1,
     "units":            "s",
-    "defaultValue":     2
+    "default":     2
 },
 {
     "name":             "streamEnabled",
-    "shortDescription": "Video Stream Enabled",
-    "longDescription":  "Start/Stop Video Stream.",
+    "shortDesc": "Video Stream Enabled",
+    "longDesc":  "Start/Stop Video Stream.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "disableWhenDisarmed",
-    "shortDescription": "Video Stream Disnabled When Armed",
-    "longDescription":  "Disable Video Stream when disarmed.",
+    "shortDesc": "Video Stream Disnabled When Armed",
+    "longDesc":  "Disable Video Stream when disarmed.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "lowLatencyMode",
-    "shortDescription": "Tweaks video for lower latency",
-    "longDescription":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+    "shortDesc": "Tweaks video for lower latency",
+    "longDesc":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 }
 ]
 }

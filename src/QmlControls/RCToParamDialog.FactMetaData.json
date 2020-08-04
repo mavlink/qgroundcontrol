@@ -5,16 +5,16 @@
 [
 {
     "name":             "Scale",
-    "shortDescription": "Scale the RC range",
+    "shortDesc": "Scale the RC range",
     "type":             "double",
     "min":              -1,
     "max":              1,
-    "defaultValue":     1,
+    "default":     1,
     "decimalPlaces":    1
 },
 {
     "name":             "CenterValue",
-    "shortDescription": "Parameter value when RC output is 0",
+    "shortDesc": "Parameter value when RC output is 0",
     "type":             "double",
     "min":              -180.0,
     "max":              180.0,
@@ -22,13 +22,13 @@
 },
 {
     "name":             "MinValue",
-    "shortDescription": "Minimum parameter value",
+    "shortDesc": "Minimum parameter value",
     "type":             "double",
     "decimalPlaces":    7
 },
 {
     "name":             "MaxValue",
-    "shortDescription": "Maximum parameter value",
+    "shortDesc": "Maximum parameter value",
     "type":             "double",
     "decimalPlaces":    7
 }
