@@ -317,8 +317,6 @@ Rectangle {
                 onClicked: {
                     missionItem.wizardMode = false
                     missionItem.landingDragAngleOnly = false
-                    // Trial of no auto select next item
-                    //editorRoot.selectNextNotReadyItem()
                 }
             }
         }

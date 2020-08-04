@@ -4,6 +4,8 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* VTOL: General setting for transition distance which affects Plan takeoff, landing pattern creation
+* VTOL: Much better VTOL support throughout QGC
 * Maps: Support zoom up to level 23 even if map provider doesn't provide tiles that high
 * Settings/Mavlink: Add ability to forward mavlink traffic out specified UDP port
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.

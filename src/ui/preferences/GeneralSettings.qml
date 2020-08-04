@@ -348,14 +348,21 @@ Rectangle {
                             anchors.horizontalCenter:   parent.horizontalCenter
                             spacing:                    _margins
 
-                            RowLayout {
-                                spacing:    ScreenTools.defaultFontPixelWidth
-                                visible:    QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
+                            GridLayout {
+                                columns:            2
+                                columnSpacing:      ScreenTools.defaultFontPixelWidth
+                                visible:            QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
 
                                 QGCLabel { text: qsTr("Default Mission Altitude") }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
                                     fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                                }
+
+                                QGCLabel { text: qsTr("VTOL TransitionDistance") }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.planViewSettings.vtolTransitionDistance
                                 }
                             }
 

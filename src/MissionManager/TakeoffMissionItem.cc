@@ -175,12 +175,12 @@ void TakeoffMissionItem::setLaunchCoordinate(const QGeoCoordinate& launchCoordin
         if (_launchTakeoffAtSameLocation) {
             takeoffCoordinate = launchCoordinate;
         } else {
-            double distance = 30.0; // Default distance is VTOL transition to takeoff point distance
+            double distance = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance()->rawValue().toDouble(); // Default distance is VTOL transition to takeoff point distance
             if (_controllerVehicle->fixedWing()) {
                 double altitude = this->altitude()->rawValue().toDouble();
 
                 if (altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) {
-                    // Offset for fixed wing climb out of 30 degrees
+                    // Offset for fixed wing climb out of 30 degrees to specified altitude
                     if (altitude != 0.0) {
                         distance = altitude / tan(qDegreesToRadians(30.0));
                     }
