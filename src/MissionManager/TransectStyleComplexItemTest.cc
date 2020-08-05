@@ -20,7 +20,7 @@ void TransectStyleComplexItemTest::init(void)
 
     _transectStyleItem = new TestTransectStyleItem(_masterController, this);
     _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
-    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
+    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalCustomCameraName());
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(100);
     _transectStyleItem->setDirty(false);
@@ -192,9 +192,9 @@ void TransectStyleComplexItemTest::_testAltMode(void)
 
     // Manual camera allows non-relative altitudes, validate that changing back to known
     // camera switches back to relative
-    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->manualCameraName());
+    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
     _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
-    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
+    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalCustomCameraName());
     QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
 
     // When you turn off terrain following mode make sure that the altitude mode changed back to relative altitudes
