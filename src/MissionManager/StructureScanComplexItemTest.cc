@@ -85,7 +85,7 @@ void StructureScanComplexItemTest::_initItem(void)
         mapPolygon->appendVertex(vertex);
     }
 
-    _structureScanItem->cameraCalc()->cameraName()->setRawValue(CameraCalc::manualCameraName());
+    _structureScanItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
     _structureScanItem->layers()->setCookedValue(2);
     _structureScanItem->setDirty(false);
 
