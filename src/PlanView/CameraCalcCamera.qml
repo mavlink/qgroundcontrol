@@ -17,42 +17,13 @@ Column {
     property var    cameraCalc
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property string _cameraName:        cameraCalc.cameraName.value
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _cameraList:        [ ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property var    _vehicleCameraList: _vehicle ? _vehicle.staticCameraList : []
-    property bool   _cameraComboFilled: false
 
-    readonly property int _gridTypeManual:          0
-    readonly property int _gridTypeCustomCamera:    1
-    readonly property int _gridTypeCamera:          2
-
-    Component.onCompleted: _fillCameraCombo()
-
-    on_CameraNameChanged: _updateSelectedCamera()
-
-    function _fillCameraCombo() {
-        _cameraComboFilled = true
-        _cameraList.push(cameraCalc.manualCameraName)
-        _cameraList.push(cameraCalc.customCameraName)
-        for (var i=0; i<_vehicle.staticCameraList.length; i++) {
-            _cameraList.push(_vehicle.staticCameraList[i].name)
-        }
-        gridTypeCombo.model = _cameraList
-        _updateSelectedCamera()
-    }
-
-    function _updateSelectedCamera() {
-        if (_cameraComboFilled) {
-            var knownCameraIndex = gridTypeCombo.find(_cameraName)
-            if (knownCameraIndex !== -1) {
-                gridTypeCombo.currentIndex = knownCameraIndex
-            } else {
-                console.log("Internal error: Known camera not found", _cameraName)
-                gridTypeCombo.currentIndex = _gridTypeCustomCamera
-            }
-        }
+    Component.onCompleted:{
+        cameraBrandCombo.selectCurrentBrand()
+        cameraModelCombo.selectCurrentModel()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -67,13 +38,41 @@ Column {
         spacing:        _margin
 
         QGCComboBox {
-            id:             gridTypeCombo
+            id:             cameraBrandCombo
             anchors.left:   parent.left
             anchors.right:  parent.right
-            model:          _cameraList
-            currentIndex:   -1
-            onActivated:    cameraCalc.cameraName.value = gridTypeCombo.textAt(index)
-        } // QGCComboxBox
+            model:          cameraCalc.cameraBrandList
+            onModelChanged: selectCurrentBrand()
+            onActivated:    cameraCalc.cameraBrand = currentText
+
+            Connections {
+                target:                 cameraCalc
+                onCameraBrandChanged:   cameraBrandCombo.selectCurrentBrand()
+            }
+
+            function selectCurrentBrand() {
+                currentIndex = cameraBrandCombo.find(cameraCalc.cameraBrand)
+            }
+        }
+
+        QGCComboBox {
+            id:             cameraModelCombo
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            model:          cameraCalc.cameraModelList
+            visible:        !cameraCalc.isManualCamera && !cameraCalc.isCustomCamera
+            onModelChanged: selectCurrentModel()
+            onActivated:    cameraCalc.cameraModel = currentText
+
+            Connections {
+                target:                 cameraCalc
+                onCameraModelChanged:   cameraModelCombo.selectCurrentModel()
+            }
+
+            function selectCurrentModel() {
+                currentIndex = cameraModelCombo.find(cameraCalc.cameraModel)
+            }
+        }
 
         // Camera based grid ui
         Column {
@@ -108,7 +107,7 @@ Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        cameraCalc.isCustomCamera
+                enabled:        cameraCalc.isCustomCamera
 
                 RowLayout {
                     anchors.left:   parent.left

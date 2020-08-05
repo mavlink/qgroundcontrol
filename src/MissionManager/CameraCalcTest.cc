@@ -23,7 +23,7 @@ void CameraCalcTest::init(void)
     _masterController = new PlanMasterController(this);
     _controllerVehicle = _masterController->controllerVehicle();
     _cameraCalc = new CameraCalc(_masterController, "CameraCalcUnitTest" /* settingsGroup */, this);
-    _cameraCalc->cameraName()->setRawValue(_cameraCalc->customCameraName());
+    _cameraCalc->setCameraBrand(CameraCalc::canonicalCustomCameraName());
     _cameraCalc->setDirty(false);
 
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
@@ -87,7 +87,7 @@ void CameraCalcTest::_testDirty(void)
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
 
-    _cameraCalc->cameraName()->setRawValue(_cameraCalc->manualCameraName());
+    _cameraCalc->setCameraBrand(CameraCalc::canonicalManualCameraName());
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
 }

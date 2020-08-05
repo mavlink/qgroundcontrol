@@ -1,57 +1,57 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
+    "version":  1,
+    "fileType": "FactMetaData",
     "QGC.MetaData.Facts":
 [
 {
-    "name":             "CameraName",
-    "shortDesc": "Camera name.",
-    "type":             "string",
-    "default":     "Manual (no camera specs)"
+    "name":         "CameraName",
+    "shortDesc":    "Camera name.",
+    "type":         "string",
+    "default":      "Manual (no camera specs)"
 },
 {
-    "name":             "ValueSetIsDistance",
-    "shortDesc": "Value specified is distance to surface.",
-    "type":             "bool",
-    "default":     1
+    "name":         "ValueSetIsDistance",
+    "shortDesc":    "Value specified is distance to surface.",
+    "type":         "bool",
+    "default":      1
 },
 {
     "name":             "DistanceToSurface",
-    "shortDesc": "Distance vehicle is away from surface.",
+    "shortDesc":        "Distance vehicle is away from surface.",
     "type":             "double",
     "min":              0.1,
     "units":            "m",
     "decimalPlaces":    2,
-    "default":     50.0
+    "default":          50.0
 },
 {
     "name":             "ImageDensity",
-    "shortDesc": "Image desity at surface.",
+    "shortDesc":        "Image desity at surface.",
     "type":             "double",
     "min":              0,
     "units":            "cm/px",
     "decimalPlaces":    1,
-    "default":     1.2
+    "default":          1.2
 },
 {
     "name":             "FrontalOverlap",
-    "shortDesc": "Amount of overlap between images in the forward facing direction.",
+    "shortDesc":        "Amount of overlap between images in the forward facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
     "min":              0,
     "max":              85,
     "units":            "%",
-    "default":     70
+    "default":          70
 },
 {
     "name":             "SideOverlap",
-    "shortDesc": "Amount of overlap between images in the side facing direction.",
+    "shortDesc":        "Amount of overlap between images in the side facing direction.",
     "type":             "double",
     "decimalPlaces":    0,
     "min":              0,
     "max":              85,
     "units":            "%",
-    "default":     70
+    "default":          70
 },
 {
     "name":             "AdjustedFootprintFrontal",
@@ -59,7 +59,7 @@
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m",
-    "default":     25
+    "default":          25
 },
 {
     "name":             "AdjustedFootprintSide",
@@ -67,7 +67,7 @@
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m",
-    "default":     25
+    "default":          25
 }
 ]
 }
