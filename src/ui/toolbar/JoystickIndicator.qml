@@ -91,7 +91,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, joystickInfo)
+            mainWindow.showIndicatorPopup(_root, joystickInfo)
         }
     }
 }

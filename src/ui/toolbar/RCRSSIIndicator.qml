@@ -95,7 +95,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, rcRSSIInfo)
+            mainWindow.showIndicatorPopup(_root, rcRSSIInfo)
         }
     }
 }

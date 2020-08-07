@@ -758,20 +758,20 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Indicator Popups
 
-    function showPopUp(item, dropItem) {
-        indicatorDropdown.currentIndicator = dropItem
-        indicatorDropdown.currentItem = item
-        indicatorDropdown.open()
+    function showIndicatorPopup(item, dropItem) {
+        indicatorPopup.currentIndicator = dropItem
+        indicatorPopup.currentItem = item
+        indicatorPopup.open()
     }
 
-    function hidePopUp() {
-        indicatorDropdown.close()
-        indicatorDropdown.currentItem = null
-        indicatorDropdown.currentIndicator = null
+    function hideIndicatorPopup() {
+        indicatorPopup.close()
+        indicatorPopup.currentItem = null
+        indicatorPopup.currentIndicator = null
     }
 
     Popup {
-        id:             indicatorDropdown
+        id:             indicatorPopup
         padding:        ScreenTools.defaultFontPixelWidth * 0.75
         modal:          true
         focus:          true
@@ -786,19 +786,19 @@ ApplicationWindow {
         Loader {
             id:             loader
             onLoaded: {
-                var centerX = mainWindow.contentItem.mapFromItem(indicatorDropdown.currentItem, 0, 0).x - (loader.width * 0.5)
-                if((centerX + indicatorDropdown.width) > (mainWindow.width - ScreenTools.defaultFontPixelWidth)) {
-                    centerX = mainWindow.width - indicatorDropdown.width - ScreenTools.defaultFontPixelWidth
+                var centerX = mainWindow.contentItem.mapFromItem(indicatorPopup.currentItem, 0, 0).x - (loader.width * 0.5)
+                if((centerX + indicatorPopup.width) > (mainWindow.width - ScreenTools.defaultFontPixelWidth)) {
+                    centerX = mainWindow.width - indicatorPopup.width - ScreenTools.defaultFontPixelWidth
                 }
-                indicatorDropdown.x = centerX
+                indicatorPopup.x = centerX
             }
         }
         onOpened: {
-            loader.sourceComponent = indicatorDropdown.currentIndicator
+            loader.sourceComponent = indicatorPopup.currentIndicator
         }
         onClosed: {
             loader.sourceComponent = null
-            indicatorDropdown.currentIndicator = null
+            indicatorPopup.currentIndicator = null
         }
     }
 }

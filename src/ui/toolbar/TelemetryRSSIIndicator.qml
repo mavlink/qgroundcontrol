@@ -86,7 +86,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            mainWindow.showPopUp(_root, telemRSSIInfo)
+            mainWindow.showIndicatorPopup(_root, telemRSSIInfo)
         }
     }
 }

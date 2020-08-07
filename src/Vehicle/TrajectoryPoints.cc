@@ -59,7 +59,6 @@ void TrajectoryPoints::start(void)
 
 void TrajectoryPoints::stop(void)
 {
-    qDebug() << "Stop" << _points.count();
     disconnect(_vehicle, &Vehicle::coordinateChanged, this, &TrajectoryPoints::_vehicleCoordinateChanged);
 }
 
