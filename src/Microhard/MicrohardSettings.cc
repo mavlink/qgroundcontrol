@@ -10,7 +10,9 @@
 #include "MicrohardSettings.h"
 #include "MicrohardManager.h"
 #include "SettingsManager.h"
+#ifdef QGC_ENABLE_PAIRING
 #include "PairingManager.h"
+#endif
 #include "QGCApplication.h"
 #include "VideoManager.h"
 

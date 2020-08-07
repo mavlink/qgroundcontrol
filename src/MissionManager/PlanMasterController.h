@@ -34,6 +34,7 @@ public:
     Q_PROPERTY(GeoFenceController*      geoFenceController      READ geoFenceController                     CONSTANT)
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController                   CONSTANT)
     Q_PROPERTY(Vehicle*                 controllerVehicle       MEMBER _controllerVehicle                   CONSTANT)
+    Q_PROPERTY(Vehicle*                 managerVehicle          READ managerVehicle                         NOTIFY managerVehicleChanged)   ///< Either active vehicle or _controllerVehicle if no active vehicle
     Q_PROPERTY(bool                     offline                 READ offline                                NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool                     containsItems           READ containsItems                          NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
@@ -56,6 +57,9 @@ public:
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
     /// a nightmare of circular header dependency problems.
     Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
+
+    /// Replaces any current plan with the plan from the manager vehicle even if offline.
+    Q_INVOKABLE void showPlanFromManagerVehicle(void);
 
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
@@ -99,12 +103,14 @@ public:
     static const char*  kJsonRallyPointsObjectKey;
 
 signals:
-    void containsItemsChanged   (bool containsItems);
-    void syncInProgressChanged  (void);
-    void dirtyChanged           (bool dirty);
-    void offlineChanged  		(bool offlineEditing);
-    void currentPlanFileChanged ();
-    void planCreatorsChanged    (QmlObjectListModel* planCreators);
+    void containsItemsChanged       (bool containsItems);
+    void syncInProgressChanged      (void);
+    void dirtyChanged               (bool dirty);
+    void offlineChanged             (bool offlineEditing);
+    void currentPlanFileChanged     ();
+    void planCreatorsChanged        (QmlObjectListModel* planCreators);
+    void managerVehicleChanged      (Vehicle* managerVehicle);
+    void promptForPlanUsageOnVehicleChange  (void);
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
