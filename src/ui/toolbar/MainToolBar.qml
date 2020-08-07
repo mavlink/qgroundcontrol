@@ -32,16 +32,15 @@ Rectangle {
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
 
-    Component.onCompleted: _viewButtonClicked(flyButton)
+    Component.onCompleted: toolbar.viewButtonClicked(flyButton)
 
-    function _viewButtonClicked(button) {
+    function viewButtonClicked(button) {
         if (mainWindow.preventViewSwitch()) {
             return false
         }
-        viewButtonSelectRow.visible = false
-        buttonSelectHideTimer.stop()
-        currentButton.icon.source = button.icon.source
-        currentButton.logo = button.logo
+        viewSelectDrawer.visible = false
+        currentButton.icon.source = button.imageResource
+        currentButton.logo = button.imageColor == "transparent"
         return true
     }
 
@@ -50,7 +49,7 @@ Rectangle {
         target: setupWindow
         onVisibleChanged: {
             if (setupWindow.visible) {
-                _viewButtonClicked(setupButton)
+                toolbar.viewButtonClicked(setupButton)
             }
         }
     }
@@ -77,122 +76,7 @@ Rectangle {
         QGCToolBarButton {
             id:                 currentButton
             Layout.fillHeight:  true
-            visible:            !viewButtonSelectRow.visible
-
-            onClicked: {
-                viewButtonSelectRow.visible = !viewButtonSelectRow.visible
-                if (viewButtonSelectRow.visible) {
-                    buttonSelectHideTimer.start()
-                } else {
-                    buttonSelectHideTimer.stop()
-                }
-            }
-        }
-
-        //---------------------------------------------
-        // Toolbar Row
-        RowLayout {
-            id:                 viewButtonSelectRow
-            Layout.fillHeight:  true
-            spacing:            0
-            visible:            false
-
-            Timer {
-                id:             buttonSelectHideTimer
-                interval:       5000
-                repeat:         false
-                onTriggered:    viewButtonSelectRow.visible = false
-            }
-
-            QGCToolBarButton {
-                id:                 settingsButton
-                Layout.fillHeight:  true
-                icon.source:        "/res/QGCLogoFull"
-                logo:               true
-                visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                onClicked: {
-                    if (_viewButtonClicked(this)) {
-                        mainWindow.showSettingsView()
-                    }
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 setupButton
-                Layout.fillHeight:  true
-                icon.source:        "/qmlimages/Gears.svg"
-                onClicked: {
-                    if (_viewButtonClicked(this)) {
-                        mainWindow.showSetupView()
-                    }
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 planButton
-                Layout.fillHeight:  true
-                icon.source:        "/qmlimages/Plan.svg"
-                onClicked: {
-                    if (_viewButtonClicked(this)) {
-                        mainWindow.showPlanView()
-                    }
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 flyButton
-                Layout.fillHeight:  true
-                icon.source:        "/qmlimages/PaperPlane.svg"
-                onClicked: {
-                    if (_viewButtonClicked(this)) {
-                        mainWindow.showFlyView()
-                        // Easter Egg mechanism
-                        _clickCount++
-                        eggTimer.restart()
-                        if (_clickCount == 5) {
-                            if(!QGroundControl.corePlugin.showAdvancedUI) {
-                                advancedModeConfirmation.open()
-                            } else {
-                                QGroundControl.corePlugin.showAdvancedUI = false
-                            }
-                        } else if (_clickCount == 7) {
-                            QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                        }
-                    }
-                }
-
-                property int _clickCount: 0
-
-                Timer {
-                    id:             eggTimer
-                    interval:       1000
-                    repeat:         false
-                    onTriggered:    parent._clickCount = 0
-                }
-
-                MessageDialog {
-                    id:                 advancedModeConfirmation
-                    title:              qsTr("Advanced Mode")
-                    text:               QGroundControl.corePlugin.showAdvancedUIMessage
-                    standardButtons:    StandardButton.Yes | StandardButton.No
-                    onYes: {
-                        QGroundControl.corePlugin.showAdvancedUI = true
-                        advancedModeConfirmation.close()
-                    }
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 analyzeButton
-                Layout.fillHeight:  true
-                icon.source:        "/qmlimages/Analyze.svg"
-                visible:            QGroundControl.corePlugin.showAdvancedUI
-                onClicked: {
-                    if (_viewButtonClicked(this)) {
-                        mainWindow.showAnalyzeView()
-                    }
-                }
-            }
+            onClicked:          viewSelectDrawer.visible = true
         }
     }
 

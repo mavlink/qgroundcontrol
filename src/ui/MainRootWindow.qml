@@ -325,6 +325,164 @@ ApplicationWindow {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
 
+    Drawer {
+        id:             viewSelectDrawer
+        height:         mainWindow.height
+        edge:           Qt.LeftEdge
+        interactive:    true
+        dragMargin:     0
+        visible:        false
+
+        property var    _mainWindow:       mainWindow
+        property real   _toolButtonHeight: ScreenTools.defaultFontPixelHeight * 3
+
+        Rectangle {
+            width:  mainLayout.width + (mainLayout.anchors.margins * 2)
+            height: parent.height
+            color:  qgcPal.window
+
+            QGCFlickable {
+                anchors.top:        parent.top
+                anchors.bottom:     qgcVersionLayout.top
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                contentHeight:      mainLayout.height + (mainLayout.anchors.margins * 2)
+                flickableDirection: QGCFlickable.VerticalFlick
+
+                ColumnLayout {
+                    id:                 mainLayout
+                    anchors.margins:    ScreenTools.defaultFontPixelWidth
+                    anchors.left:       parent.left
+                    anchors.top:        parent.top
+                    spacing:            ScreenTools.defaultFontPixelWidth
+
+                    SubMenuButton {
+                        id:                 flyButton
+                        height:             viewSelectDrawer._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Fly View")
+                        imageResource:      "/qmlimages/PaperPlane.svg"
+                        imageColor:         qgcPal.text
+                        onClicked: {
+                            if (toolbar.viewButtonClicked(this)) {
+                                mainWindow.showFlyView()
+                            }
+                        }
+
+                    }
+
+                    SubMenuButton {
+                        id:                 planButton
+                        height:             viewSelectDrawer._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Plan View")
+                        imageResource:      "/qmlimages/Plan.svg"
+                        imageColor:         qgcPal.text
+                        onClicked: {
+                            if (toolbar.viewButtonClicked(this)) {
+                                mainWindow.showPlanView()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 analyzeButton
+                        height:             viewSelectDrawer._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Analyze Tools")
+                        imageResource:      "/qmlimages/Analyze.svg"
+                        imageColor:         qgcPal.text
+                        visible:            QGroundControl.corePlugin.showAdvancedUI
+                        onClicked: {
+                            if (toolbar.viewButtonClicked(this)) {
+                                mainWindow.showAnalyzeView()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 setupButton
+                        height:             viewSelectDrawer._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Vehicle Setup")
+                        imageColor:         qgcPal.text
+                        imageResource:      "/qmlimages/Gears.svg"
+                        onClicked: {
+                            if (toolbar.viewButtonClicked(this)) {
+                                mainWindow.showSetupView()
+                            }
+                        }
+                    }
+
+                    SubMenuButton {
+                        id:                 settingsButton
+                        height:             viewSelectDrawer._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("Application Settings")
+                        imageResource:      "/res/QGCLogoFull"
+                        imageColor:         "transparent"
+                        visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                        onClicked: {
+                            if (toolbar.viewButtonClicked(this)) {
+                                mainWindow.showSettingsView()
+                            }
+                        }
+                    }
+                }
+            }
+
+            ColumnLayout {
+                id:             qgcVersionLayout
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.bottom: parent.bottom
+                spacing:        0
+
+                QGCLabel {
+                    text:                   qsTr("%1 Version").arg(QGroundControl.appName)
+                    font.pointSize:         ScreenTools.smallFontPointSize
+                    wrapMode:               QGCLabel.WordWrap
+                    Layout.maximumWidth:    parent.width
+                    Layout.alignment:       Qt.AlignHCenter
+                }
+                QGCLabel {
+                    text:                   QGroundControl.qgcVersion
+                    font.pointSize:         ScreenTools.smallFontPointSize
+                    wrapMode:               QGCLabel.WrapAnywhere
+                    Layout.maximumWidth:    parent.width
+                    Layout.alignment:       Qt.AlignHCenter
+                }
+            }
+
+            QGCMouseArea {
+                anchors.fill: qgcVersionLayout
+
+                onClicked: {
+                    if (mouse.modifiers & Qt.ShiftModifier) {
+                        QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
+                    } else {
+                        if(!QGroundControl.corePlugin.showAdvancedUI) {
+                            advancedModeConfirmation.open()
+                        } else {
+                            QGroundControl.corePlugin.showAdvancedUI = false
+                        }
+                    }
+                }
+
+                MessageDialog {
+                    id:                 advancedModeConfirmation
+                    title:              qsTr("Advanced Mode")
+                    text:               QGroundControl.corePlugin.showAdvancedUIMessage
+                    standardButtons:    StandardButton.Yes | StandardButton.No
+                    onYes: {
+                        QGroundControl.corePlugin.showAdvancedUI = true
+                        advancedModeConfirmation.close()
+                    }
+                }
+            }
+        }
+    }
+
     //-------------------------------------------------------------------------
     /// Fly View
     FlyView {

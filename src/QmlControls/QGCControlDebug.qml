@@ -16,10 +16,11 @@ Rectangle {
     color:          "transparent"
 
     property string name
-    property color  borderColor
+    property color  borderColor: "red"
 
     function logEverything() {
-        console.log(qsTr("%1 x:%2 y:%3 width:%4 height:%5 visible: %6 enabled: %7 z:%8 parent:%9 implicitWidth/Height:%10:%11", "Do not translate").arg(name).arg(parent.x).arg(parent.y).arg(parent.width).arg(parent.height).arg(parent.visible).arg(parent.enabled).arg(parent.z).arg(parent.parent))
+        console.log(qsTr("%1 x:%2 y:%3 width:%4 height:%5 visible:%6 enabled:%7 z:%8 parent:%9 implicitWidth/Height:%10:%11", "Do not translate")
+                    .arg(name).arg(parent.x).arg(parent.y).arg(parent.width).arg(parent.height).arg(parent.visible).arg(parent.enabled).arg(parent.z).arg(parent.parent).arg(implicitHeight).arg(implicitWidth))
     }
 
     Component.onCompleted: logEverything()
