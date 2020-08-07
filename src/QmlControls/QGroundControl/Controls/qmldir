@@ -47,6 +47,8 @@ QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
 QGCComboBox             1.0 QGCComboBox.qml
+QGCPopupDialog          1.0 QGCPopupDialog.qml
+QGCPopupDialogContainer 1.0 QGCPopupDialogContainer.qml
 QGCDynamicObjectManager 1.0 QGCDynamicObjectManager.qml
 QGCFileDialog           1.0 QGCFileDialog.qml
 QGCFlickable            1.0 QGCFlickable.qml

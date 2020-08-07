@@ -414,6 +414,20 @@ Item {
     }
 } // qtkHelper
 
+
+
+
+    function showPopupDialogFromComponent(component, properties) {
+        var dialog = popupDialogContainerComponent.createObject(mainWindow, { dialogComponent: component, dialogProperties: properties })
+        dialog.open()
+        return dialog
+    }
+
+    Component {
+        id: popupDialogContainerComponent
+        QGCPopupDialogContainer { }
+    }
+
     //-------------------------------------------------------------------------
     //-- Vehicle Messages
 
