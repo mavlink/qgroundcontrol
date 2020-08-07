@@ -63,25 +63,26 @@ public:
     static constexpr VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_QUADROTOR;
     static constexpr VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
 
-    static bool                     isPX4FirmwareClass      (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
-    static bool                     isArduPilotFirmwareClass(MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA; }
-    static bool                     isGenericFirmwareClass  (MAV_AUTOPILOT autopilot) { return !isPX4FirmwareClass(autopilot) && ! isArduPilotFirmwareClass(autopilot); }
-    static FirmwareClass_t          firmwareClass           (MAV_AUTOPILOT autopilot);
-    static MAV_AUTOPILOT            firmwareClassToAutopilot(FirmwareClass_t firmwareClass) { return static_cast<MAV_AUTOPILOT>(firmwareClass); }
-    static QString                  firmwareClassToString   (FirmwareClass_t firmwareClass);
-    static QList<FirmwareClass_t>   allFirmwareClasses      (void);
+    static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
+    static bool                     isArduPilotFirmwareClass    (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA; }
+    static bool                     isGenericFirmwareClass      (MAV_AUTOPILOT autopilot) { return !isPX4FirmwareClass(autopilot) && ! isArduPilotFirmwareClass(autopilot); }
+    static FirmwareClass_t          firmwareClass               (MAV_AUTOPILOT autopilot);
+    static MAV_AUTOPILOT            firmwareClassToAutopilot    (FirmwareClass_t firmwareClass) { return static_cast<MAV_AUTOPILOT>(firmwareClass); }
+    static QString                  firmwareClassToString       (FirmwareClass_t firmwareClass);
+    static QList<FirmwareClass_t>   allFirmwareClasses          (void);
 
-    static bool                     isFixedWing             (MAV_TYPE mavType);
-    static bool                     isRoverBoat             (MAV_TYPE mavType);
-    static bool                     isSub                   (MAV_TYPE mavType);
-    static bool                     isMultiRotor            (MAV_TYPE mavType);
-    static bool                     isVTOL                  (MAV_TYPE mavType);
-    static VehicleClass_t           vehicleClass            (MAV_TYPE mavType);
-    static MAV_TYPE                 vehicleClassToMavType   (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
-    static QString                  vehicleClassToString    (VehicleClass_t vehicleClass);
-    static QList<VehicleClass_t>    allVehicleClasses       (void);
+    static bool                     isFixedWing                 (MAV_TYPE mavType);
+    static bool                     isRoverBoat                 (MAV_TYPE mavType);
+    static bool                     isSub                       (MAV_TYPE mavType);
+    static bool                     isMultiRotor                (MAV_TYPE mavType);
+    static bool                     isVTOL                      (MAV_TYPE mavType);
+    static VehicleClass_t           vehicleClass                (MAV_TYPE mavType);
+    static MAV_TYPE                 vehicleClassToMavType       (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
+    static QString                  vehicleClassToString        (VehicleClass_t vehicleClass);
+    static QList<VehicleClass_t>    allVehicleClasses           (void);
 
-    static QString                  mavResultToString       (MAV_RESULT result);
+    static QString                  mavResultToString           (MAV_RESULT result);
+    static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
 };
 
 class MavlinkFTP {

@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.11
+import QtQuick          2.12
 import QtQuick.Controls 2.4
 import QtQuick.Layouts  1.11
 import QtQuick.Dialogs  1.3
@@ -31,6 +31,7 @@ Rectangle {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
+    property color  _mainStatusBGColor: qgcPal.brandingPurple
 
     Component.onCompleted: toolbar.viewButtonClicked(flyButton)
 
@@ -66,6 +67,18 @@ Rectangle {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
+    Rectangle {
+        anchors.fill:   viewButtonRow
+        visible:        currentToolbar === flyViewToolbar
+
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0;                                     color: _mainStatusBGColor }
+            GradientStop { position: currentButton.x + currentButton.width; color: _mainStatusBGColor }
+            GradientStop { position: 1;                                     color: _root.color }
+        }
+    }
+
     RowLayout {
         id:                     viewButtonRow
         anchors.bottomMargin:   1
@@ -78,26 +91,29 @@ Rectangle {
             Layout.fillHeight:  true
             onClicked:          viewSelectDrawer.visible = true
         }
-    }
 
-    Rectangle {
-        id:                 separator1
-        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.left:       viewButtonRow.right
-        width:              1
-        color:              qgcPal.text
+        MainStatusIndicator {
+            Layout.fillHeight:  true
+            visible:            currentToolbar === flyViewToolbar
+        }
+
+        QGCButton {
+            id:                 disconnectButton
+            Layout.alignment:   Qt.AlignVCenter
+            text:               qsTr("Disconnect")
+            onClicked:          _activeVehicle.disconnectInactiveVehicle()
+            visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
+        }
     }
 
     QGCFlickable {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
-        anchors.left:           separator1.right
+        anchors.left:           viewButtonRow.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        anchors.right:          connectionStatus.visible ? connectionStatus.left : parent.right
+        anchors.right:          parent.right
         contentWidth:           indicatorLoader.x + indicatorLoader.width
         flickableDirection:     Flickable.HorizontalFlick
         clip:                   !valueArea.settingsUnlocked
@@ -230,49 +246,6 @@ Rectangle {
         MouseArea {
             anchors.fill:   parent
             onClicked:      largeProgressBar._userHide = true
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Waiting for a vehicle
-    QGCLabel {
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.right:          parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        text:                   qsTr("Waiting For Vehicle Connection")
-        font.pointSize:         ScreenTools.mediumFontPointSize
-        font.family:            ScreenTools.demiboldFontFamily
-        color:                  qgcPal.colorRed
-        visible:                currentToolbar !== planViewToolbar && !_activeVehicle
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Connection Status
-    Row {
-        id:                     connectionStatus
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        layoutDirection:        Qt.RightToLeft
-        spacing:                ScreenTools.defaultFontPixelWidth
-        visible:                currentToolbar !== planViewToolbar && _activeVehicle && _communicationLost
-
-        QGCButton {
-            id:                     disconnectButton
-            anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("Disconnect")
-            primary:                true
-            onClicked:              _activeVehicle.disconnectInactiveVehicle()
-        }
-
-        QGCLabel {
-            id:                     connectionLost
-            anchors.verticalCenter: parent.verticalCenter
-            text:                   qsTr("COMMUNICATION LOST")
-            font.pointSize:         ScreenTools.largeFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  qgcPal.colorRed
         }
     }
 }

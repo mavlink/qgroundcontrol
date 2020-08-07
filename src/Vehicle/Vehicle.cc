@@ -1429,7 +1429,6 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
         _onboardControlSensorsEnabled = newOnboardControlSensorsEnabled;
         _onboardControlSensorsPresent = newOnboardControlSensorsEnabled;
         _onboardControlSensorsUnhealthy = 0;
-        emit unhealthySensorsChanged();
     }
 }
 
@@ -1652,6 +1651,27 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     mavlink_sys_status_t sysStatus;
     mavlink_msg_sys_status_decode(&message, &sysStatus);
 
+    _sysStatusSensorInfo.update(sysStatus);
+
+    if (sysStatus.onboard_control_sensors_enabled & MAV_SYS_STATUS_PREARM_CHECK) {
+        if (!_readyToFlyAvailable) {
+            _readyToFlyAvailable = true;
+            emit readyToFlyAvailableChanged(true);
+        }
+
+        bool newReadyToFly = sysStatus.onboard_control_sensors_health & MAV_SYS_STATUS_PREARM_CHECK;
+        if (newReadyToFly != _readyToFly) {
+            _readyToFly = newReadyToFly;
+            emit readyToFlyChanged(_readyToFly);
+        }
+    }
+
+    bool newAllSensorsHealthy = (sysStatus.onboard_control_sensors_enabled & sysStatus.onboard_control_sensors_health) == sysStatus.onboard_control_sensors_enabled;
+    if (newAllSensorsHealthy != _allSensorsHealthy) {
+        _allSensorsHealthy = newAllSensorsHealthy;
+        emit allSensorsHealthyChanged(_allSensorsHealthy);
+    }
+
     if (_onboardControlSensorsPresent != sysStatus.onboard_control_sensors_present) {
         _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
         emit sensorsPresentBitsChanged(_onboardControlSensorsPresent);
@@ -1675,7 +1695,6 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     uint32_t newSensorsUnhealthy = _onboardControlSensorsEnabled & ~_onboardControlSensorsHealth;
     if (newSensorsUnhealthy != _onboardControlSensorsUnhealthy) {
         _onboardControlSensorsUnhealthy = newSensorsUnhealthy;
-        emit unhealthySensorsChanged();
         emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
 
@@ -3577,58 +3596,6 @@ QString Vehicle::brandImageIndoor() const
 QString Vehicle::brandImageOutdoor() const
 {
     return _firmwarePlugin->brandImageOutdoor(this);
-}
-
-QStringList Vehicle::unhealthySensors() const
-{
-    QStringList sensorList;
-
-    struct sensorInfo_s {
-        uint32_t    bit;
-        QString     sensorName;
-    };
-
-    static const sensorInfo_s rgSensorInfo[] = {
-        { MAV_SYS_STATUS_SENSOR_3D_GYRO,                tr("Gyro") },
-        { MAV_SYS_STATUS_SENSOR_3D_ACCEL,               tr("Accelerometer") },
-        { MAV_SYS_STATUS_SENSOR_3D_MAG,                 tr("Magnetometer") },
-        { MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,      tr("Absolute pressure") },
-        { MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,  tr("Differential pressure") },
-        { MAV_SYS_STATUS_SENSOR_GPS,                    tr("GPS") },
-        { MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,           tr("Optical flow") },
-        { MAV_SYS_STATUS_SENSOR_VISION_POSITION,        tr("Computer vision position") },
-        { MAV_SYS_STATUS_SENSOR_LASER_POSITION,         tr("Laser based position") },
-        { MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,  tr("External ground truth") },
-        { MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,   tr("Angular rate control") },
-        { MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION, tr("Attitude stabilization") },
-        { MAV_SYS_STATUS_SENSOR_YAW_POSITION,           tr("Yaw position") },
-        { MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,     tr("Z/altitude control") },
-        { MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,    tr("X/Y position control") },
-        { MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,          tr("Motor outputs / control") },
-        { MAV_SYS_STATUS_SENSOR_RC_RECEIVER,            tr("RC receiver") },
-        { MAV_SYS_STATUS_SENSOR_3D_GYRO2,               tr("Gyro 2") },
-        { MAV_SYS_STATUS_SENSOR_3D_ACCEL2,              tr("Accelerometer 2") },
-        { MAV_SYS_STATUS_SENSOR_3D_MAG2,                tr("Magnetometer 2") },
-        { MAV_SYS_STATUS_GEOFENCE,                      tr("GeoFence") },
-        { MAV_SYS_STATUS_AHRS,                          tr("AHRS") },
-        { MAV_SYS_STATUS_TERRAIN,                       tr("Terrain") },
-        { MAV_SYS_STATUS_REVERSE_MOTOR,                 tr("Motors reversed") },
-        { MAV_SYS_STATUS_LOGGING,                       tr("Logging") },
-        { MAV_SYS_STATUS_SENSOR_BATTERY,                tr("Battery") },
-        { MAV_SYS_STATUS_SENSOR_PROXIMITY,              tr("Proximity") },
-        { MAV_SYS_STATUS_SENSOR_SATCOM,                 tr("Satellite Communication") },
-        { MAV_SYS_STATUS_PREARM_CHECK,                  tr("Pre-Arm Check") },
-        { MAV_SYS_STATUS_OBSTACLE_AVOIDANCE,            tr("Avoidance/collision prevention") },
-    };
-
-    for (size_t i=0; i<sizeof(rgSensorInfo)/sizeof(sensorInfo_s); i++) {
-        const sensorInfo_s* pSensorInfo = &rgSensorInfo[i];
-        if ((_onboardControlSensorsEnabled & pSensorInfo->bit) && !(_onboardControlSensorsHealth & pSensorInfo->bit)) {
-            sensorList << pSensorInfo->sensorName;
-        }
-    }
-
-    return sensorList;
 }
 
 void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)

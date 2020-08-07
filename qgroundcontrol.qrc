@@ -49,7 +49,6 @@
         <file alias="FWLandingPatternEditor.qml">src/PlanView/FWLandingPatternEditor.qml</file>
         <file alias="GeneralSettings.qml">src/ui/preferences/GeneralSettings.qml</file>
         <file alias="GeoTagPage.qml">src/AnalyzeView/GeoTagPage.qml</file>
-        <file alias="HealthPageWidget.qml">src/FlightMap/Widgets/HealthPageWidget.qml</file>
         <file alias="HelpSettings.qml">src/ui/preferences/HelpSettings.qml</file>
         <file alias="JoystickConfig.qml">src/VehicleSetup/JoystickConfig.qml</file>
         <file alias="JoystickConfigAdvanced.qml">src/VehicleSetup/JoystickConfigAdvanced.qml</file>
@@ -106,6 +105,7 @@
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
         <file alias="QGroundControl/Controls/KMLOrSHPFileDialog.qml">src/QmlControls/KMLOrSHPFileDialog.qml</file>
         <file alias="QGroundControl/Controls/LogReplayStatusBar.qml">src/QmlControls/LogReplayStatusBar.qml</file>
+        <file alias="QGroundControl/Controls/MainStatusIndicator.qml">src/ui/toolbar/MainStatusIndicator.qml</file>
         <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="QGroundControl/Controls/MainWindowSavedState.qml">src/QmlControls/MainWindowSavedState.qml</file>
         <file alias="QGroundControl/Controls/MAVLinkChart.qml">src/QmlControls/MAVLinkChart.qml</file>
