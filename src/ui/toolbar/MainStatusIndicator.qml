@@ -84,14 +84,12 @@ Item {
                     return mainStatusLabel._commLostText
                 }
                 if (_activeVehicle.armed) {
+                    _mainStatusBGColor = "green"
                     if (_activeVehicle.flying) {
-                        _mainStatusBGColor = qgcPal.brandingPurple
                         return mainStatusLabel._flyingText
                     } else if (_activeVehicle.landing) {
-                        _mainStatusBGColor = qgcPal.brandingPurple
                         return mainStatusLabel._landingText
                     } else {
-                        _mainStatusBGColor = qgcPal.brandingPurple
                         return mainStatusLabel._armedText
                     }
                 } else {
