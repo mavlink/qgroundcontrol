@@ -87,19 +87,18 @@ Rectangle {
         spacing:                ScreenTools.defaultFontPixelWidth / 2
 
         QGCToolBarButton {
-            id:                 currentButton
-            Layout.fillHeight:  true
-            onClicked:          viewSelectDrawer.visible = true
+            id:                     currentButton
+            Layout.preferredHeight: viewButtonRow.height
+            onClicked:              viewSelectDrawer.visible = true
         }
 
         MainStatusIndicator {
-            Layout.fillHeight:  true
-            visible:            currentToolbar === flyViewToolbar
+            Layout.preferredHeight: viewButtonRow.height
+            visible:                currentToolbar === flyViewToolbar
         }
 
         QGCButton {
             id:                 disconnectButton
-            Layout.alignment:   Qt.AlignVCenter
             text:               qsTr("Disconnect")
             onClicked:          _activeVehicle.disconnectInactiveVehicle()
             visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
