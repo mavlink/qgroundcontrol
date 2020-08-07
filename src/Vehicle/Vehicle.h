@@ -25,6 +25,7 @@
 #include "SettingsFact.h"
 #include "QGCMapCircle.h"
 #include "TerrainFactGroup.h"
+#include "SysStatusSensorInfo.h"
 
 class UAS;
 class UASInterface;
@@ -596,7 +597,6 @@ public:
     Q_PROPERTY(bool                 isOfflineEditingVehicle READ isOfflineEditingVehicle                                CONSTANT)
     Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                                       NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                                      NOTIFY firmwareTypeChanged)
-    Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
     Q_PROPERTY(int                  sensorsPresentBits      READ sensorsPresentBits                                     NOTIFY sensorsPresentBitsChanged)
     Q_PROPERTY(int                  sensorsEnabledBits      READ sensorsEnabledBits                                     NOTIFY sensorsEnabledBitsChanged)
     Q_PROPERTY(int                  sensorsHealthBits       READ sensorsHealthBits                                      NOTIFY sensorsHealthBitsChanged)
@@ -643,6 +643,10 @@ public:
     Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
     Q_PROPERTY(bool                 isROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState          READ checkListState         WRITE setCheckListState         NOTIFY checkListStateChanged)
+    Q_PROPERTY(bool                 readyToFlyAvailable     READ readyToFlyAvailable                                    NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
+    Q_PROPERTY(bool                 readyToFly              READ readyToFly                                             NOTIFY readyToFlyChanged)
+    Q_PROPERTY(QObject*             sysStatusSensorInfo     READ sysStatusSensorInfo                                    CONSTANT)
+    Q_PROPERTY(bool                 allSensorsHealthy       READ allSensorsHealthy                                      NOTIFY allSensorsHealthyChanged)    //< true: all sensors in SYS_STATUS reported as healthy
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -940,7 +944,6 @@ public:
     bool            isOfflineEditingVehicle () const { return _offlineEditingVehicle; }
     QString         brandImageIndoor        () const;
     QString         brandImageOutdoor       () const;
-    QStringList     unhealthySensors        () const;
     int             sensorsPresentBits      () const { return static_cast<int>(_onboardControlSensorsPresent); }
     int             sensorsEnabledBits      () const { return static_cast<int>(_onboardControlSensorsEnabled); }
     int             sensorsHealthBits       () const { return static_cast<int>(_onboardControlSensorsHealth); }
@@ -968,6 +971,10 @@ public:
     bool            highLatencyLink         () const { return _highLatencyLink; }
     bool            orbitActive             () const { return _orbitActive; }
     QGCMapCircle*   orbitMapCircle          () { return &_orbitMapCircle; }
+    bool            readyToFlyAvailable     () { return _readyToFlyAvailable; }
+    bool            readyToFly              () { return _readyToFly; }
+    bool            allSensorsHealthy       () { return _allSensorsHealthy; }
+    QObject*        sysStatusSensorInfo     () { return &_sysStatusSensorInfo; }
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
@@ -1178,7 +1185,6 @@ signals:
     void vtolInFwdFlightChanged         (bool vtolInFwdFlight);
     void prearmErrorChanged             (const QString& prearmError);
     void soloFirmwareChanged            (bool soloFirmware);
-    void unhealthySensorsChanged        ();
     void defaultCruiseSpeedChanged      (double cruiseSpeed);
     void defaultHoverSpeedChanged       (double hoverSpeed);
     void firmwareTypeChanged            ();
@@ -1223,6 +1229,9 @@ signals:
     void sensorsHealthBitsChanged       (int sensorsHealthBits);
     void sensorsUnhealthyBitsChanged    (int sensorsUnhealthyBits);
     void orbitActiveChanged             (bool orbitActive);
+    void readyToFlyAvailableChanged     (bool readyToFlyAvailable);
+    void readyToFlyChanged              (bool readyToFy);
+    void allSensorsHealthyChanged       (bool allSensorsHealthy);
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
@@ -1421,9 +1430,9 @@ private:
     uint32_t        _onboardControlSensorsEnabled;
     uint32_t        _onboardControlSensorsHealth;
     uint32_t        _onboardControlSensorsUnhealthy;
-    bool            _gpsRawIntMessageAvailable          = false;
-    bool            _globalPositionIntMessageAvailable  = false;
-    bool            _altitudeMessageAvailable           = false;
+    bool            _gpsRawIntMessageAvailable              = false;
+    bool            _globalPositionIntMessageAvailable      = false;
+    bool            _altitudeMessageAvailable               = false;
     double          _defaultCruiseSpeed;
     double          _defaultHoverSpeed;
     int             _telemetryRRSSI;
@@ -1433,14 +1442,19 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
-    bool            _mavlinkProtocolRequestComplete =           false;
-    unsigned        _mavlinkProtocolRequestMaxProtoVersion =    0;
-    unsigned        _maxProtoVersion =                          0;
-    bool            _capabilityBitsKnown =                      false;
+    bool            _mavlinkProtocolRequestComplete         = false;
+    unsigned        _mavlinkProtocolRequestMaxProtoVersion  = 0;
+    unsigned        _maxProtoVersion                        = 0;
+    bool            _capabilityBitsKnown                    = false;
     uint64_t        _capabilityBits;
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
-    CheckList       _checkListState = CheckListNotSetup;
+    CheckList       _checkListState                         = CheckListNotSetup;
+    bool            _readyToFlyAvailable                    = false;
+    bool            _readyToFly                             = false;
+    bool            _allSensorsHealthy                      = true;
+
+    SysStatusSensorInfo _sysStatusSensorInfo;
 
     QGCCameraManager* _cameras;
 

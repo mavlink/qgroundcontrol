@@ -100,7 +100,6 @@ public:
     QmlComponentInfo*   valuesPageWidgetInfo    = nullptr;
     QmlComponentInfo*   cameraPageWidgetInfo    = nullptr;
     QmlComponentInfo*   videoPageWidgetInfo     = nullptr;
-    QmlComponentInfo*   healthPageWidgetInfo    = nullptr;
     QmlComponentInfo*   vibrationPageWidgetInfo = nullptr;
 
     QGCOptions*         defaultOptions          = nullptr;
@@ -206,10 +205,6 @@ void QGCCorePlugin::_resetInstrumentPages()
         _p->videoPageWidgetInfo = nullptr;
     }
 #endif
-    if(_p->healthPageWidgetInfo) {
-        _p->healthPageWidgetInfo->deleteLater();
-        _p->healthPageWidgetInfo = nullptr;
-    }
     if(_p->vibrationPageWidgetInfo) {
         _p->vibrationPageWidgetInfo->deleteLater();
         _p->vibrationPageWidgetInfo = nullptr;
@@ -287,7 +282,6 @@ QVariantList& QGCCorePlugin::instrumentPages()
             _p->videoPageWidgetInfo = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
         }
 #endif
-        _p->healthPageWidgetInfo    = new QmlComponentInfo(tr("Health"),    QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
         _p->vibrationPageWidgetInfo = new QmlComponentInfo(tr("Vibration"), QUrl::fromUserInput("qrc:/qml/VibrationPageWidget.qml"));
 
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->valuesPageWidgetInfo));
@@ -295,7 +289,6 @@ QVariantList& QGCCorePlugin::instrumentPages()
 #if defined(QGC_GST_STREAMING)
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->videoPageWidgetInfo));
 #endif
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->healthPageWidgetInfo));
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
     }
     return _p->instrumentPageWidgetList;

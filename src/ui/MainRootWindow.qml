@@ -527,15 +527,6 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //   @brief Loader helper for any child, no matter how deep, to display elements
-    //   on top of the main window.
-    //   This is DEPRECATED. Use Popup instead.
-    Loader {
-        id: rootLoader
-        anchors.centerIn: parent
-    }
-
-    //-------------------------------------------------------------------------
     //-- Vehicle Messages
 
     function formatMessage(message) {
@@ -781,7 +772,7 @@ ApplicationWindow {
 
     Popup {
         id:             indicatorDropdown
-        y:              ScreenTools.defaultFontPixelHeight
+        padding:        ScreenTools.defaultFontPixelWidth * 0.75
         modal:          true
         focus:          true
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside

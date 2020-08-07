@@ -23,12 +23,12 @@ QGCOptions::QGCOptions(QObject* parent)
 
 QColor QGCOptions::toolbarBackgroundLight() const
 {
-    return QColor(255,255,255,204);
+    return QColor(255,255,255);
 }
 
 QColor QGCOptions::toolbarBackgroundDark() const
 {
-    return QColor(0,0,0,192);
+    return QColor(0,0,0);
 }
 
 QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
