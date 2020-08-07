@@ -106,20 +106,10 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        id:                 separator1
-        anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.left:       viewButtonRow.right
-        width:              1
-        color:              qgcPal.text
-    }
-
     QGCFlickable {
         id:                     toolsFlickable
         anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
-        anchors.left:           separator1.right
+        anchors.left:           viewButtonRow.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
