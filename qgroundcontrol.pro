@@ -695,6 +695,7 @@ HEADERS += \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/StateMachine.h \
+    src/Vehicle/SysStatusSensorInfo.h \
     src/Vehicle/TerrainFactGroup.h \
     src/Vehicle/TerrainProtocolHandler.h \
     src/Vehicle/TrajectoryPoints.h \
@@ -914,6 +915,7 @@ SOURCES += \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/StateMachine.cc \
+    src/Vehicle/SysStatusSensorInfo.cc \
     src/Vehicle/TerrainFactGroup.cc \
     src/Vehicle/TerrainProtocolHandler.cc \
     src/Vehicle/TrajectoryPoints.cc \
