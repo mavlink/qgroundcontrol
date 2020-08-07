@@ -61,7 +61,7 @@ Item {
                     onClicked: {
                         if(activeVehicle)
                             activeVehicle.stopGuidedModeROI()
-                        mainWindow.hidePopUp()
+                        mainWindow.hideIndicatorPopup()
                     }
                 }
             }
@@ -83,7 +83,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, roiInfo)
+            mainWindow.showIndicatorPopup(_root, roiInfo)
         }
     }
 }

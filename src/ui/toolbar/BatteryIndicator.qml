@@ -120,7 +120,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, batteryInfo)
+            mainWindow.showIndicatorPopup(_root, batteryInfo)
         }
     }
 }

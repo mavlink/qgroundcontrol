@@ -109,7 +109,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, gpsInfo)
+            mainWindow.showIndicatorPopup(_root, gpsInfo)
         }
     }
 }
