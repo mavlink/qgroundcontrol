@@ -3446,6 +3446,7 @@ void Vehicle::requestMessage(RequestMessageResultHandler resultHandler, void* re
 {
     RequestMessageInfo_t* pInfo = new RequestMessageInfo_t;
 
+    *pInfo                      = { };
     pInfo->msgId                = messageId;
     pInfo->compId               = compId;
     pInfo->resultHandler        = resultHandler;

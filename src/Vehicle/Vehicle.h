@@ -1581,12 +1581,12 @@ private:
 
     // requestMessage handling
     typedef struct {
-        bool                        commandAckReceived  = false;    // We keep track of the ack/message being received since the order in which this will come in is random
-        bool                        messageReceived     = false;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
-        int                         msgId               = 0;
-        int                         compId              = 0;
-        RequestMessageResultHandler resultHandler       = nullptr;
-        void*                       resultHandlerData   = nullptr;
+        bool                        commandAckReceived; // We keep track of the ack/message being received since the order in which this will come in is random
+        bool                        messageReceived;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
+        int                         msgId;
+        int                         compId;
+        RequestMessageResultHandler resultHandler;
+        void*                       resultHandlerData;
     } RequestMessageInfo_t;
 
     static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, bool noResponsefromVehicle);
