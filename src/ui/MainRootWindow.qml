@@ -124,11 +124,10 @@ ApplicationWindow {
     }
 
     function viewSwitch(currentToolbar) {
-        settingsWindow.visible  = false
-        setupWindow.visible     = false
-        analyzeWindow.visible   = false
+        toolDrawer.visible      = false
+        toolDrawer.source       = ""
         flightView.visible      = false
-        planViewLoader.visible  = false
+        planView.visible        = false
         toolbar.currentToolbar  = currentToolbar
     }
 
@@ -142,22 +141,25 @@ ApplicationWindow {
 
     function showPlanView() {
         viewSwitch(toolbar.planViewToolbar)
-        planViewLoader.visible = true
+        planView.visible = true
     }
 
     function showAnalyzeView() {
-        viewSwitch(toolbar.simpleToolbar)
-        analyzeWindow.visible = true
+        toolDrawer.source   = "AnalyzeView.qml"
+        toolDrawer.title    = qsTr("Analyze Tools")
+        toolDrawer.visible  = true
     }
 
     function showSetupView() {
-        viewSwitch(toolbar.simpleToolbar)
-        setupWindow.visible = true
+        toolDrawer.source   = "SetupView.qml"
+        toolDrawer.title    = qsTr("Vehicle Setup")
+        toolDrawer.visible  = true
     }
 
     function showSettingsView() {
-        viewSwitch(toolbar.simpleToolbar)
-        settingsWindow.visible = true
+        toolDrawer.source   = "AppSettings.qml"
+        toolDrawer.title    = qsTr("Application Settings")
+        toolDrawer.visible  = true
     }
 
     //-------------------------------------------------------------------------
@@ -326,11 +328,12 @@ ApplicationWindow {
     }
 
     Drawer {
-        id:             viewSelectDrawer
+        id:             toolSelectDrawer
         height:         mainWindow.height
         edge:           Qt.LeftEdge
         interactive:    true
         dragMargin:     0
+        closePolicy:    Drawer.NoAutoClose
         visible:        false
 
         property var    _mainWindow:       mainWindow
@@ -357,74 +360,48 @@ ApplicationWindow {
                     spacing:            ScreenTools.defaultFontPixelWidth
 
                     SubMenuButton {
-                        id:                 flyButton
-                        height:             viewSelectDrawer._toolButtonHeight
+                        id:                 setupButton
+                        height:             toolSelectDrawer._toolButtonHeight
                         Layout.fillWidth:   true
-                        text:               qsTr("Fly View")
-                        imageResource:      "/qmlimages/PaperPlane.svg"
+                        text:               qsTr("Vehicle Setup")
                         imageColor:         qgcPal.text
+                        imageResource:      "/qmlimages/Gears.svg"
                         onClicked: {
-                            if (toolbar.viewButtonClicked(this)) {
-                                mainWindow.showFlyView()
-                            }
-                        }
-
-                    }
-
-                    SubMenuButton {
-                        id:                 planButton
-                        height:             viewSelectDrawer._toolButtonHeight
-                        Layout.fillWidth:   true
-                        text:               qsTr("Plan Mission")
-                        imageResource:      "/qmlimages/Plan.svg"
-                        imageColor:         qgcPal.text
-                        onClicked: {
-                            if (toolbar.viewButtonClicked(this)) {
-                                mainWindow.showPlanView()
+                            if (!mainWindow.preventViewSwitch()) {
+                                mainWindow.showSetupView()
+                                toolSelectDrawer.visible = false
                             }
                         }
                     }
 
                     SubMenuButton {
                         id:                 analyzeButton
-                        height:             viewSelectDrawer._toolButtonHeight
+                        height:             toolSelectDrawer._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Analyze Tools")
                         imageResource:      "/qmlimages/Analyze.svg"
                         imageColor:         qgcPal.text
                         visible:            QGroundControl.corePlugin.showAdvancedUI
                         onClicked: {
-                            if (toolbar.viewButtonClicked(this)) {
+                            if (!mainWindow.preventViewSwitch()) {
                                 mainWindow.showAnalyzeView()
-                            }
-                        }
-                    }
-
-                    SubMenuButton {
-                        id:                 setupButton
-                        height:             viewSelectDrawer._toolButtonHeight
-                        Layout.fillWidth:   true
-                        text:               qsTr("Vehicle Setup")
-                        imageColor:         qgcPal.text
-                        imageResource:      "/qmlimages/Gears.svg"
-                        onClicked: {
-                            if (toolbar.viewButtonClicked(this)) {
-                                mainWindow.showSetupView()
+                                toolSelectDrawer.visible = false
                             }
                         }
                     }
 
                     SubMenuButton {
                         id:                 settingsButton
-                        height:             viewSelectDrawer._toolButtonHeight
+                        height:             toolSelectDrawer._toolButtonHeight
                         Layout.fillWidth:   true
                         text:               qsTr("Application Settings")
                         imageResource:      "/res/QGCLogoFull"
                         imageColor:         "transparent"
                         visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
                         onClicked: {
-                            if (toolbar.viewButtonClicked(this)) {
+                            if (!mainWindow.preventViewSwitch()) {
                                 mainWindow.showSettingsView()
+                                toolSelectDrawer.visible = false
                             }
                         }
                     }
@@ -454,13 +431,18 @@ ApplicationWindow {
                 }
             }
 
+            DeadMouseArea {
+                anchors.fill: easterEggMouseArea
+            }
+
             QGCMouseArea {
-                anchors.fill: qgcVersionLayout
+                id:             easterEggMouseArea
+                anchors.fill:   qgcVersionLayout
 
                 onClicked: {
-                    if (mouse.modifiers & Qt.ShiftModifier) {
+                    if (mouse.modifiers & Qt.ControlModifier) {
                         QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
-                    } else {
+                    } else if (mouse.modifiers & Qt.ShiftModifier) {
                         if(!QGroundControl.corePlugin.showAdvancedUI) {
                             advancedModeConfirmation.open()
                         } else {
@@ -483,47 +465,64 @@ ApplicationWindow {
         }
     }
 
-    //-------------------------------------------------------------------------
-    /// Fly View
     FlyView {
         id:             flightView
         anchors.fill:   parent
     }
 
-    //-------------------------------------------------------------------------
-    /// Plan View
-    Loader {
-        id:             planViewLoader
+    PlanView {
+        id:             planView
         anchors.fill:   parent
         visible:        false
-        source:         "PlanView.qml"
     }
 
-    //-------------------------------------------------------------------------
-    /// Settings
-    Loader {
-        id:             settingsWindow
-        anchors.fill:   parent
+    Drawer {
+        id:             toolDrawer
+        width:          mainWindow.width
+        height:         mainWindow.height
+        edge:           Qt.LeftEdge
+        dragMargin:     0
         visible:        false
-        source:         "AppSettings.qml"
-    }
 
-    //-------------------------------------------------------------------------
-    /// Setup
-    Loader {
-        id:             setupWindow
-        anchors.fill:   parent
-        visible:        false
-        source:         "SetupView.qml"
-    }
+        property alias title:   toolbarDrawerText.text
+        property alias source:  toolDrawerLoader.source
 
-    //-------------------------------------------------------------------------
-    /// Analyze
-    Loader {
-        id:             analyzeWindow
-        anchors.fill:   parent
-        visible:        false
-        source:         "AnalyzeView.qml"
+        Rectangle {
+            id:             toolDrawerToolbar
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            anchors.top:    parent.top
+            height:         ScreenTools.toolbarHeight
+            color:          qgcPal.toolbarBackground
+
+            QGCLabel {
+                id:                     toolbarDrawerText
+                anchors.margins:        ScreenTools.defaultFontPixelWidth
+                anchors.left:           parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                font.pointSize:         ScreenTools.largeFontPointSize
+            }
+
+            QGCButton {
+                anchors.margins:        ScreenTools.defaultFontPixelWidth
+                anchors.right:          parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text:                   qsTr("Close")
+                enabled:                !mainWindow.preventViewSwitch()
+                onClicked: {
+                    toolDrawer.visible = false
+                    toolDrawer.source = ""
+                }
+            }
+        }
+
+        Loader {
+            id:             toolDrawerLoader
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            anchors.top:    toolDrawerToolbar.bottom
+            anchors.bottom: parent.bottom
+        }
     }
 
     //-------------------------------------------------------------------------

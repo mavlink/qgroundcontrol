@@ -82,15 +82,6 @@ Rectangle {
                 }
             }
 
-            QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
-                text:                   qsTr("Analyze")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !ScreenTools.isShortScreen
-            }
-
             Repeater {
                 id:                     buttonRepeater
                 model:                  QGroundControl.corePlugin ? QGroundControl.corePlugin.analyzePages : []
