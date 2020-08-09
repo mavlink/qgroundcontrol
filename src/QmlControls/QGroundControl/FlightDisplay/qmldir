@@ -30,4 +30,5 @@ PreFlightRCCheck                1.0 PreFlightRCCheck.qml
 PreFlightSensorsHealthCheck     1.0 PreFlightSensorsHealthCheck.qml
 PreFlightSoundCheck             1.0 PreFlightSoundCheck.qml
 TerrainProgress                 1.0 TerrainProgress.qml
+TelemetryValuesBar              1.0 TelemetryValuesBar.qml
 VehicleWarnings                 1.0 VehicleWarnings.qml

@@ -65,8 +65,10 @@ public:
     Q_INVOKABLE void                appendColumn        (void);
     Q_INVOKABLE void                deleteLastColumn    (void);
 
-    FontSize    fontSize    (void) const { return _fontSize; }
-    QStringList iconNames   (void) const { return _iconNames; }
+    QmlObjectListModel*         rows        (void) const { return _rows; }
+    FontSize                    fontSize    (void) const { return _fontSize; }
+    QStringList                 iconNames   (void) const { return _iconNames; }
+    QGCMAVLink::VehicleClass_t  vehicleClass(void) const { return _vehicleClass; }
 
     void setFontSize(FontSize fontSize);
 
@@ -81,22 +83,25 @@ signals:
     void columnCountChanged         (int columnCount);
 
 protected:
-
     Q_DISABLE_COPY(FactValueGrid)
 
-    QString                 _defaultSettingsGroup;              // Settings group to read from if the user has not modified from the default settings
-    QString                 _userSettingsGroup;                 // Settings group to read from for user modified settings
-    Orientation             _orientation =          VerticalOrientation;
-    FontSize                _fontSize =             DefaultFontSize;
-    bool                    _preventSaveSettings =  false;
-    QmlObjectListModel*     _rows =                 nullptr;
-    int                     _columnCount =          0;
+    QGCMAVLink::VehicleClass_t  _vehicleClass           = QGCMAVLink::VehicleClassGeneric;
+    QString                     _defaultSettingsGroup;                                      // Settings group to read from if the user has not modified from the default settings
+    QString                     _userSettingsGroup;                                         // Settings group to read from for user modified settings
+    Orientation                 _orientation            = VerticalOrientation;
+    FontSize                    _fontSize               = DefaultFontSize;
+    bool                        _preventSaveSettings    = false;
+    QmlObjectListModel*         _rows                   = nullptr;
+    int                         _columnCount            = 0;
+
+private slots:
+    void _offlineVehicleTypeChanged(void);
 
 private:
     InstrumentValueData*    _createNewInstrumentValueWorker (QObject* parent);
     void                    _saveSettings                   (void);
     void                    _loadSettings                   (void);
-    void                    _connectSignals                 (void);
+    void                    _init                           (void);
     void                    _connectSaveSignals             (InstrumentValueData* value);
     QString                 _pascalCase                     (const QString& text);
     void                    _saveValueData                  (QSettings& settings, InstrumentValueData* value);

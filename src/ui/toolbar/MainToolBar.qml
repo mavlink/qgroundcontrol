@@ -21,7 +21,7 @@ import QGroundControl.Controllers           1.0
 
 Rectangle {
     id:     _root
-    color:  qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
+    color:  qgcPal.toolbarBackground
 
     property int currentToolbar: flyViewToolbar
 
@@ -115,39 +115,11 @@ Rectangle {
         anchors.right:          parent.right
         contentWidth:           indicatorLoader.x + indicatorLoader.width
         flickableDirection:     Flickable.HorizontalFlick
-        clip:                   !valueArea.settingsUnlocked
-
-        HorizontalFactValueGrid {
-            id:                     valueArea
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            userSettingsGroup:      toolbarUserSettingsGroup
-            defaultSettingsGroup:   toolbarDefaultSettingsGroup
-            visible:                currentToolbar !== planViewToolbar
-
-            QGCMouseArea {
-                anchors.fill:   parent
-                visible:        !parent.settingsUnlocked
-                onClicked:      parent.settingsUnlocked = true
-            }
-        }
-
-        Rectangle {
-            id:                     separator2
-            anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
-            anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight / 2 - 1
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            anchors.left:           valueArea.right
-            width:                  1
-            color:                  qgcPal.text
-            visible:                currentToolbar == flyViewToolbar
-        }
 
         Loader {
             id:                 indicatorLoader
             anchors.leftMargin: currentToolbar !== planViewToolbar ? ScreenTools.defaultFontPixelHeight / 2 : 0
-            anchors.left:       currentToolbar !== planViewToolbar ? separator2.right : parent.left
+            anchors.left:       parent.left//currentToolbar !== planViewToolbar ? valueArea.right : parent.left
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             currentToolbar === flyViewToolbar ?

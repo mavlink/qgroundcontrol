@@ -14,8 +14,8 @@
 
 #include <QSettings>
 
-const QString HorizontalFactValueGrid::_toolbarUserSettingsGroup    ("ToolbarUserSettings2");
-const QString HorizontalFactValueGrid::toolbarDefaultSettingsGroup  ("ToolbarDefaultSettings2");
+const QString HorizontalFactValueGrid::_toolbarUserSettingsGroup        ("TelemetryBarUserSettingsWIP0");
+const QString HorizontalFactValueGrid::telemetryBarDefaultSettingsGroup ("TelemetryBarDefaultSettingsWIP0");
 
 HorizontalFactValueGrid::HorizontalFactValueGrid(QQuickItem* parent)
     : FactValueGrid(parent)

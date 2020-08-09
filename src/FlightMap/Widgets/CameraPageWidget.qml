@@ -91,7 +91,7 @@ Column {
         id:         camMode
         width:      _hasModes ? ScreenTools.defaultFontPixelWidth * 8 : 0
         height:     _hasModes ? ScreenTools.defaultFontPixelWidth * 4 : 0
-        color:      qgcPal.button
+        color:      qgcPal.windowShadeLight
         radius:     height * 0.5
         visible:    _hasModes
         anchors.horizontalCenter: parent.horizontalCenter
@@ -99,7 +99,7 @@ Column {
         Rectangle {
             width:  parent.height
             height: parent.height
-            color:  _cameraVideoMode ? qgcPal.window : qgcPal.button
+            color:  _cameraVideoMode ? qgcPal.window : qgcPal.windowShadeLight
             radius: height * 0.5
             anchors.left: parent.left
             border.color: qgcPal.text
@@ -126,7 +126,7 @@ Column {
         Rectangle {
             width:  parent.height
             height: parent.height
-            color:  _cameraPhotoMode ? qgcPal.window : qgcPal.button
+            color:  _cameraPhotoMode ? qgcPal.window : qgcPal.windowShadeLight
             radius: height * 0.5
             anchors.right: parent.right
             border.color: qgcPal.text
