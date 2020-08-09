@@ -205,14 +205,6 @@ Rectangle {
             id:         buttonColumn
             spacing:    _defaultTextHeight / 2
 
-            QGCLabel {
-                Layout.fillWidth:       true
-                text:                   qsTr("Vehicle Setup")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !ScreenTools.isShortScreen
-            }
-
             Repeater {
                 model:                  _corePlugin ? _corePlugin.settingsPages : []
                 visible:                _corePlugin && _corePlugin.options.combineSettingsAndSetup

@@ -624,14 +624,14 @@ Item {
             maxHeight:          parent.height - toolStrip.y
             title:              qsTr("Plan")
 
-            //readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      0
-            readonly property int takeoffButtonIndex:   1
-            readonly property int waypointButtonIndex:  2
-            readonly property int roiButtonIndex:       3
-            readonly property int patternButtonIndex:   4
-            readonly property int landButtonIndex:      5
-            readonly property int centerButtonIndex:    6
+            readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      1
+            readonly property int takeoffButtonIndex:   2
+            readonly property int waypointButtonIndex:  3
+            readonly property int roiButtonIndex:       4
+            readonly property int patternButtonIndex:   5
+            readonly property int landButtonIndex:      6
+            readonly property int centerButtonIndex:    7
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
@@ -639,6 +639,11 @@ Item {
             ToolStripActionList {
                 id: toolStripActionList
                 model: [
+                    ToolStripAction {
+                        text:           qsTr("Fly")
+                        iconSource:     "/qmlimages/PaperPlane.svg"
+                        onTriggered:    mainWindow.showFlyView()
+                    },
                     ToolStripAction {
                         text:                   qsTr("File")
                         enabled:                !_planMasterController.syncInProgress
