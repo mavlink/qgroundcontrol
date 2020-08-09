@@ -33,28 +33,6 @@ Rectangle {
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
 
-    Component.onCompleted: toolbar.viewButtonClicked(flyButton)
-
-    function viewButtonClicked(button) {
-        if (mainWindow.preventViewSwitch()) {
-            return false
-        }
-        viewSelectDrawer.visible = false
-        currentButton.icon.source = button.imageResource
-        currentButton.logo = button.imageColor == "transparent"
-        return true
-    }
-
-    //-- Setup can be invoked from c++ side
-    Connections {
-        target: setupWindow
-        onVisibleChanged: {
-            if (setupWindow.visible) {
-                toolbar.viewButtonClicked(setupButton)
-            }
-        }
-    }
-
     QGCPalette { id: qgcPal }
 
     /// Bottom single pixel divider
@@ -89,7 +67,9 @@ Rectangle {
         QGCToolBarButton {
             id:                     currentButton
             Layout.preferredHeight: viewButtonRow.height
-            onClicked:              viewSelectDrawer.visible = true
+            icon.source:            "/res/QGCLogoFull"
+            logo:                   true
+            onClicked:              toolSelectDrawer.visible = true
         }
 
         MainStatusIndicator {

@@ -57,14 +57,6 @@ Rectangle {
 
             property real _maxButtonWidth: 0
 
-            QGCLabel {
-                Layout.fillWidth:       true
-                text:                   qsTr("Application Settings")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !ScreenTools.isShortScreen
-            }
-
             Repeater {
                 model:  QGroundControl.corePlugin.settingsPages
                 QGCButton {
