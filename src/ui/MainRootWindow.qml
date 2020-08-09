@@ -375,7 +375,7 @@ ApplicationWindow {
                         id:                 planButton
                         height:             viewSelectDrawer._toolButtonHeight
                         Layout.fillWidth:   true
-                        text:               qsTr("Plan View")
+                        text:               qsTr("Plan Mission")
                         imageResource:      "/qmlimages/Plan.svg"
                         imageColor:         qgcPal.text
                         onClicked: {
