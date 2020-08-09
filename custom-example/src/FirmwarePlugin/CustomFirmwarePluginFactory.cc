@@ -22,11 +22,18 @@ CustomFirmwarePluginFactory::CustomFirmwarePluginFactory()
 
 }
 
-QList<MAV_AUTOPILOT> CustomFirmwarePluginFactory::supportedFirmwareTypes() const
+QList<QGCMAVLink::FirmwareClass_t> CustomFirmwarePluginFactory::supportedFirmwareClasses() const
 {
-    QList<MAV_AUTOPILOT> list;
-    list.append(MAV_AUTOPILOT_PX4);
-    return list;
+    QList<QGCMAVLink::FirmwareClass_t> firmwareClasses;
+    firmwareClasses.append(QGCMAVLink::FirmwareClassPX4);
+    return firmwareClasses;
+}
+
+QList<QGCMAVLink::VehicleClass_t> CustomFirmwarePluginFactory::supportedVehicleClasses(void) const
+{
+    QList<QGCMAVLink::VehicleClass_t> vehicleClasses;
+    vehicleClasses.append(QGCMAVLink::VehicleClassMultiRotor);
+    return vehicleClasses;
 }
 
 FirmwarePlugin* CustomFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE /*vehicleType*/)
@@ -38,12 +45,4 @@ FirmwarePlugin* CustomFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTO
         return _pluginInstance;
     }
     return nullptr;
-}
-
-
-QList<MAV_TYPE> CustomFirmwarePluginFactory::supportedVehicleTypes(void) const
-{
-    QList<MAV_TYPE> mavTypes;
-    mavTypes.append(MAV_TYPE_QUADROTOR);
-    return mavTypes;
 }

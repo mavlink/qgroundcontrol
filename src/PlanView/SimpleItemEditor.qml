@@ -130,7 +130,7 @@ Rectangle {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 height:         altColumn.y + altColumn.height + _margin
-                color:          _globalAltModeIsMixed ? qgcPal.windowShade: qgcPal.window
+                color:          _globalAltModeIsMixed ? qgcPal.windowShadeLight : qgcPal.windowShadeDark
                 visible:        _specifiesAltitude
 
                 ColumnLayout {

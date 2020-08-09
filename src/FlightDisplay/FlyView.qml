@@ -52,7 +52,6 @@ Item {
     property var    _guidedController:      guidedActionsController
     property var    _guidedActionList:      guidedActionList
     property var    _guidedAltSlider:       guidedAltSlider
-    property var    _guidedConfirm:         guidedActionConfirm
     property real   _toolsMargin:           ScreenTools.defaultFontPixelWidth * 0.75
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
@@ -77,7 +76,6 @@ Item {
 
     FlyViewWidgetLayer {
         id:                     widgetLayer
-        anchors.rightMargin:    _toolsMargin
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         anchors.left:           parent.left
@@ -100,12 +98,11 @@ Item {
     GuidedActionsController {
         id:                 guidedActionsController
         missionController:  _missionController
-        confirmDialog:      _guidedConfirm
         actionList:         _guidedActionList
         altitudeSlider:     _guidedAltSlider
     }
 
-    GuidedActionConfirm {
+    /*GuidedActionConfirm {
         id:                         guidedActionConfirm
         anchors.margins:            _margins
         anchors.bottom:             parent.bottom
@@ -113,7 +110,7 @@ Item {
         z:                          QGroundControl.zOrderTopMost
         guidedController:           _guidedController
         altitudeSlider:             _guidedAltSlider
-    }
+    }*/
 
     GuidedActionList {
         id:                         guidedActionList
@@ -144,7 +141,7 @@ Item {
         rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
         pipMode:                !_mainWindowIsMap
         toolInsets:             customOverlay.totalToolInsets
-        mapName:                    "FlightDisplayView"
+        mapName:                "FlightDisplayView"
     }
 
     FlyViewVideo {

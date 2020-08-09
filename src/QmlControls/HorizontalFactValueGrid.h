@@ -24,10 +24,10 @@ public:
     HorizontalFactValueGrid(QQuickItem *parent = nullptr);
     HorizontalFactValueGrid(const QString& defaultSettingsGroup);
 
-    Q_PROPERTY(QString toolbarDefaultSettingsGroup MEMBER toolbarDefaultSettingsGroup  CONSTANT)
-    Q_PROPERTY(QString toolbarUserSettingsGroup    MEMBER _toolbarUserSettingsGroup    CONSTANT)
+    Q_PROPERTY(QString telemetryBarDefaultSettingsGroup MEMBER telemetryBarDefaultSettingsGroup  CONSTANT)
+    Q_PROPERTY(QString telemetryBarUserSettingsGroup    MEMBER _toolbarUserSettingsGroup    CONSTANT)
 
-    static const QString toolbarDefaultSettingsGroup;
+    static const QString telemetryBarDefaultSettingsGroup;
 
 private:
     Q_DISABLE_COPY(HorizontalFactValueGrid)

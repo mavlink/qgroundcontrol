@@ -113,6 +113,7 @@ public:
     Q_PROPERTY(QStringList  colors              READ colors             CONSTANT)
 
     DEFINE_QGC_COLOR(window,                        setWindow)
+    DEFINE_QGC_COLOR(windowShadeLight,              setWindowShadeLight)
     DEFINE_QGC_COLOR(windowShade,                   setWindowShade)
     DEFINE_QGC_COLOR(windowShadeDark,               setWindowShadeDark)
     DEFINE_QGC_COLOR(text,                          setText)
@@ -149,6 +150,8 @@ public:
     DEFINE_QGC_COLOR(statusPendingText,             setstatusPendingText)
     DEFINE_QGC_COLOR(surveyPolygonInterior,         setSurveyPolygonInterior)
     DEFINE_QGC_COLOR(surveyPolygonTerrainCollision, setSurveyPolygonTerrainCollision)
+    DEFINE_QGC_COLOR(toolbarBackground,             setToolbarBackground)
+    DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();

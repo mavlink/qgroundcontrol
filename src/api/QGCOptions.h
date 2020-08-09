@@ -55,8 +55,6 @@ public:
     Q_PROPERTY(double                   toolbarHeightMultiplier         READ toolbarHeightMultiplier        CONSTANT)
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(QUrl                     preFlightChecklistUrl           READ preFlightChecklistUrl          CONSTANT)
-    Q_PROPERTY(QColor                   toolbarBackgroundLight          READ toolbarBackgroundLight         CONSTANT)
-    Q_PROPERTY(QColor                   toolbarBackgroundDark           READ toolbarBackgroundDark          CONSTANT)
     Q_PROPERTY(bool                     showSensorCalibrationCompass    READ showSensorCalibrationCompass   NOTIFY showSensorCalibrationCompassChanged)
     Q_PROPERTY(bool                     showSensorCalibrationGyro       READ showSensorCalibrationGyro      NOTIFY showSensorCalibrationGyroChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAccel      READ showSensorCalibrationAccel     NOTIFY showSensorCalibrationAccelChanged)
