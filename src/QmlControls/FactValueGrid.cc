@@ -51,7 +51,7 @@ FactValueGrid::FactValueGrid(QQuickItem* parent)
         _iconNames = iconDir.entryList();
     }
 
-    _connectSignals();
+    _init();
 }
 
 FactValueGrid::FactValueGrid(const QString& defaultSettingsGroup)
@@ -59,12 +59,28 @@ FactValueGrid::FactValueGrid(const QString& defaultSettingsGroup)
     , _defaultSettingsGroup (defaultSettingsGroup)
     , _rows                 (new QmlObjectListModel(this))
 {
-    _connectSignals();
+    _init();
 }
 
-void FactValueGrid::_connectSignals(void)
+void FactValueGrid::_init(void)
 {
-    connect(this, &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
+    Vehicle* offlineVehicle  = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+
+    connect(offlineVehicle, &Vehicle::vehicleTypeChanged,       this, &FactValueGrid::_offlineVehicleTypeChanged);
+    connect(this,           &FactValueGrid::fontSizeChanged,    this, &FactValueGrid::_saveSettings);
+
+    _vehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
+}
+
+void FactValueGrid::_offlineVehicleTypeChanged(void)
+{
+    Vehicle*                    offlineVehicle  = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
+    QGCMAVLink::VehicleClass_t  newVehicleClass = QGCMAVLink::vehicleClass(offlineVehicle->vehicleType());
+
+    if (newVehicleClass != _vehicleClass) {
+        _vehicleClass = newVehicleClass;
+        _loadSettings();
+    }
 }
 
 void FactValueGrid::componentComplete(void)
@@ -243,14 +259,15 @@ void FactValueGrid::_saveSettings(void)
         return;
     }
 
-    QSettings settings;
+    QSettings   settings;
+    QString     groupNameFormat("%1-%2");
     if (_userSettingsGroup.isEmpty()) {
         // This means we are setting up default settings
-        settings.beginGroup(_defaultSettingsGroup);
+        settings.beginGroup(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
     } else {
         // This means we are saving user modifications
-        settings.remove(_defaultSettingsGroup);
-        settings.beginGroup(_userSettingsGroup);
+        settings.remove(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
+        settings.beginGroup(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass));
     }
 
     settings.remove(""); // Remove any previous settings
@@ -280,21 +297,25 @@ void FactValueGrid::_saveSettings(void)
 
 void FactValueGrid::_loadSettings(void)
 {
-    _rows->deleteLater();
-    _rows = new QmlObjectListModel(this);
-    emit rowsChanged(_rows);
+    _preventSaveSettings = true;
 
-    QSettings settings;
-    if (!settings.childGroups().contains(_userSettingsGroup)) {
+    _rows->deleteLater();
+
+    _rows           = new QmlObjectListModel(this);
+    _columnCount    = 0;
+
+    QSettings   settings;
+    QString     groupNameFormat("%1-%2");
+
+    if (!settings.childGroups().contains(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass))) {
         qgcApp()->toolbox()->corePlugin()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
     }
 
-    _preventSaveSettings = true;
 
-    if (settings.childGroups().contains(_defaultSettingsGroup)) {
-        settings.beginGroup(_defaultSettingsGroup);
+    if (settings.childGroups().contains(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass))) {
+        settings.beginGroup(groupNameFormat.arg(_defaultSettingsGroup).arg(_vehicleClass));
     } else {
-        settings.beginGroup(_userSettingsGroup);
+        settings.beginGroup(groupNameFormat.arg(_userSettingsGroup).arg(_vehicleClass));
     }
 
     int version = settings.value(_versionKey, 0).toInt();
@@ -333,11 +354,7 @@ void FactValueGrid::_loadSettings(void)
     }
     settings.endArray();
 
-    _preventSaveSettings = false;
+    emit rowsChanged(_rows);
 
-    // Use defaults if nothing there
-    if (_rows->count() == 0) {
-        _rows->deleteLater();
-        emit rowsChanged(_rows);
-    }
+    _preventSaveSettings = false;
 }

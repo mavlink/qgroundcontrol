@@ -18,6 +18,7 @@ import QtQuick.Window           2.2
 import QtQml.Models             2.1
 
 import QGroundControl               1.0
+import QGroundControl.Controls      1.0
 import QGroundControl.Airspace      1.0
 import QGroundControl.Airmap        1.0
 import QGroundControl.Controllers   1.0
@@ -50,18 +51,18 @@ Item {
 
     QGCToolInsets {
         id:                     _totalToolInsets
-        leftEdgeCenterInset:    toolStrip.leftInset
         leftEdgeTopInset:       toolStrip.leftInset
+        leftEdgeCenterInset:    toolStrip.leftInset
         leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
-        rightEdgeCenterInset:   instrumentPanel.rightInset
-        rightEdgeTopInset:      instrumentPanel.rightInset
-        rightEdgeBottomInset:   instrumentPanel.rightInset
-        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
+        rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
+        rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
+        rightEdgeBottomInset:   parentToolInsets.rightEdgeBottomInset
         topEdgeLeftInset:       parentToolInsets.topEdgeLeftInset
+        topEdgeCenterInset:     parentToolInsets.topEdgeCenterInset
         topEdgeRightInset:      parentToolInsets.topEdgeRightInset
-        bottomEdgeCenterInset:  mapScale.centerInset
         bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
-        bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
+        bottomEdgeCenterInset:  mapScale.centerInset
+        bottomEdgeRightInset:   telemetryPanel.bottomInset
     }
 
     FlyViewMissionCompleteDialog {
@@ -82,6 +83,30 @@ Item {
         availableHeight:            parent.height - y - _toolsMargin
 
         property real rightInset: visible ? parent.width - x : 0
+    }
+
+    TelemetryValuesBar {
+        id:                 telemetryPanel
+        x:                  recalcXPosition()
+        anchors.margins:    _toolsMargin
+        anchors.bottom:     parent.bottom
+
+        function recalcXPosition() {
+            // First try centered
+            var halfRootWidth   = _root.width / 2
+            var halfPanelWidth  = telemetryPanel.width / 2
+            var leftX           = (halfRootWidth - halfPanelWidth) - _toolsMargin
+            var rightX          = (halfRootWidth + halfPanelWidth) + _toolsMargin
+            if (leftX >= parentToolInsets.leftEdgeBottomInset || rightX <= parentToolInsets.rightEdgeBottomInset ) {
+                // It will fit in the horizontalCenter
+                return halfRootWidth - halfPanelWidth
+            } else {
+                // Anchor to left edge
+                return parentToolInsets.leftEdgeBottomInset + _toolsMargin
+            }
+        }
+
+        property real bottomInset: height
     }
 
     //-- Virtual Joystick
@@ -105,11 +130,11 @@ Item {
     FlyViewToolStrip {
         id:                     toolStrip
         anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
-        anchors.topMargin:      _toolsMargin + parentToolInsets.leftEdgeTopInset
+        anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
-        maxHeight:              parent.height - y - parentToolInsets.leftEdgeBottomInset - _toolsMargin
+        maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: preFlightChecklistPopup.open()
@@ -131,14 +156,13 @@ Item {
     }
 
     MapScale {
-        id:                     mapScale
-        anchors.leftMargin:     parentToolInsets.leftEdgeBottomInset + _toolsMargin
-        anchors.bottomMargin:   parentToolInsets.bottomEdgeCenterInset + _toolsMargin
-        anchors.left:           parent.left
-        anchors.bottom:         parent.bottom
-        mapControl:             _mapControl
-        buttonsOnLeft:          true
-        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state !== mapControl.pipState.pipState
+        id:                 mapScale
+        anchors.margins:    _toolsMargin
+        anchors.left:       toolStrip.right
+        anchors.top:        parent.top
+        mapControl:         _mapControl
+        buttonsOnLeft:      false
+        visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state !== mapControl.pipState.pipState
 
         property real centerInset: visible ? parent.height - y : 0
     }
