@@ -18,6 +18,11 @@ ToolStripActionList {
     signal displayPreFlightChecklist
 
     model: [
+        ToolStripAction {
+            text:           qsTr("Plan")
+            iconSource:     "/qmlimages/Plan.svg"
+            onTriggered:    mainWindow.showPlanView()
+        },
         PreFlightCheckListShowAction { onTriggered: displayPreFlightChecklist() },
         GuidedActionTakeoff { },
         GuidedActionLand { },
