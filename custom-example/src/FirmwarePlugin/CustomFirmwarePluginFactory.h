@@ -26,9 +26,9 @@ class CustomFirmwarePluginFactory : public FirmwarePluginFactory
     Q_OBJECT
 public:
     CustomFirmwarePluginFactory();
-    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      () const final;
-    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
-    QList<MAV_TYPE>         supportedVehicleTypes       (void) const final;
+    QList<QGCMAVLink::FirmwareClass_t>  supportedFirmwareClasses(void) const final;
+    QList<QGCMAVLink::VehicleClass_t>   supportedVehicleClasses(void) const final;
+    FirmwarePlugin*                     firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
 
 private:
     CustomFirmwarePlugin*   _pluginInstance;
