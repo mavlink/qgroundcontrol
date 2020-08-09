@@ -55,14 +55,6 @@ RESOURCES += \
 QML_IMPORT_PATH += \
    $$PWD/res
 
-LinuxBuild {
-
-    # Our QT_INSTALL_LIBS
-    QT_LIB_LIST += \
-        libQt5VirtualKeyboard.so.5 \
-
-}
-
 # Our own, custom sources
 SOURCES += \
     $$PWD/src/CustomPlugin.cc \
