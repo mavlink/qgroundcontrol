@@ -745,7 +745,7 @@
       <output name="MAIN0">Speed of left wheels</output>
       <output name="MAIN1">Speed of right wheels</output>
     </airframe>
-    <airframe id="50004" maintainer="Katrin Moritz" name="DF Robot GPX:Asurada">
+    <airframe id="50004" maintainer="Katrin Moritz" name="NXP Cup car: DF Robot GPX">
       <class>Rover</class>
       <maintainer>Katrin Moritz</maintainer>
       <type>Rover</type>
