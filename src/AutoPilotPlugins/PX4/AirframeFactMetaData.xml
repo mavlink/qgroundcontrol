@@ -2,6 +2,16 @@
   <version>1</version>
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
+  <airframe_group image="Airship" name="Airship">
+    <airframe id="2507" maintainer="John Doe &lt;john@example.com&gt;" name="Cloudship">
+      <class>Airship</class>
+      <type>Airship</type>
+      <output name="MAIN1">starboard thruster</output>
+      <output name="MAIN2">port thruster</output>
+      <output name="MAIN3">thrust tilt</output>
+      <output name="MAIN4">tail thruster</output>
+    </airframe>
+  </airframe_group>
   <airframe_group image="Autogyro" name="Autogyro">
     <airframe id="17002" maintainer="ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;" name="ThunderFly Auto-G2">
       <class>Autogyro</class>
