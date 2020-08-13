@@ -93,6 +93,7 @@ const char* Vehicle::_vibrationFactGroupName =          "vibration";
 const char* Vehicle::_temperatureFactGroupName =        "temperature";
 const char* Vehicle::_clockFactGroupName =              "clock";
 const char* Vehicle::_distanceSensorFactGroupName =     "distanceSensor";
+const char* Vehicle::_escStatusFactGroupName =          "escStatus";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
 
@@ -216,6 +217,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _temperatureFactGroup(this)
     , _clockFactGroup(this)
     , _distanceSensorFactGroup(this)
+    , _escStatusFactGroup(this)
     , _estimatorStatusFactGroup(this)
     , _terrainFactGroup(this)
     , _terrainProtocolHandler(new TerrainProtocolHandler(this, &_terrainFactGroup, this))
@@ -512,6 +514,7 @@ void Vehicle::_commonInit()
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
     _addFactGroup(&_clockFactGroup,             _clockFactGroupName);
     _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
+    _addFactGroup(&_escStatusFactGroup,         _escStatusFactGroupName);
     _addFactGroup(&_estimatorStatusFactGroup,   _estimatorStatusFactGroupName);
     _addFactGroup(&_terrainFactGroup,           _terrainFactGroupName);
 
@@ -812,6 +815,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_DISTANCE_SENSOR:
         _handleDistanceSensor(message);
         break;
+    case MAVLINK_MSG_ID_ESC_STATUS:
+        _handleEscStatus(message);
+        break;
     case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
         _handleEstimatorStatus(message);
         break;
@@ -1050,6 +1056,17 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
     _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
+}
+
+void Vehicle::_handleEscStatus(mavlink_message_t& message)
+{
+    mavlink_esc_status_t content;
+    mavlink_msg_esc_status_decode(&message, &content);
+
+    _escStatusFactGroup.rpmFirst()->setRawValue(content.rpm[0]);
+    _escStatusFactGroup.rpmSecond()->setRawValue(content.rpm[1]);
+    _escStatusFactGroup.rpmThird()->setRawValue(content.rpm[2]);
+    _escStatusFactGroup.rpmFourth()->setRawValue(content.rpm[3]);
 }
 
 void Vehicle::_handleEstimatorStatus(mavlink_message_t& message)
@@ -4521,6 +4538,24 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _rotationYaw270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _rotationPitch90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _rotationPitch270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* VehicleEscStatusFactGroup::_rpmFirstFactName =                          "rpm1";
+const char* VehicleEscStatusFactGroup::_rpmSecondFactName =                         "rpm2";
+const char* VehicleEscStatusFactGroup::_rpmThirdFactName =                          "rpm3";
+const char* VehicleEscStatusFactGroup::_rpmFourthFactName =                         "rpm4";
+
+VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
+    : FactGroup                         (500, ":/json/Vehicle/EsсStatusFactGroup.json", parent)
+    , _rpmFirstFact                     (0, _rpmFirstFactName,                      FactMetaData::valueTypeFloat)
+    , _rpmSecondFact                    (0, _rpmSecondFactName,                     FactMetaData::valueTypeFloat)
+    , _rpmThirdFact                     (0, _rpmThirdFactName,                      FactMetaData::valueTypeFloat)
+    , _rpmFourthFact                    (0, _rpmFourthFactName,                     FactMetaData::valueTypeFloat)
+{
+    _addFact(&_rpmFirstFact,            _rpmFirstFactName);
+    _addFact(&_rpmSecondFact,           _rpmSecondFactName);
+    _addFact(&_rpmThirdFact,            _rpmThirdFactName);
+    _addFact(&_rpmFourthFact,           _rpmFourthFactName);
 }
 
 const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";

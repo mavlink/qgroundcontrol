@@ -1,0 +1,35 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "rpmFirst",
+    "shortDesc":        "rotation per minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmSecond",
+    "shortDesc":        "rotation per minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmThird",
+    "shortDesc":        "rotation per minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmFourth",
+    "shortDesc":        "rotation per minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+}
+]
+}

@@ -355,6 +355,35 @@ private:
     Fact            _currentDateFact;
 };
 
+class VehicleEscStatusFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleEscStatusFactGroup(QObject* parent = nullptr);
+
+    Q_PROPERTY(Fact* rpmFirst           READ rpmFirst           CONSTANT)
+    Q_PROPERTY(Fact* rpmSecond          READ rpmSecond          CONSTANT)
+    Q_PROPERTY(Fact* rpmThird           READ rpmThird           CONSTANT)
+    Q_PROPERTY(Fact* rpmFourth          READ rpmFourth          CONSTANT)
+
+    Fact* rpmFirst                      () { return &_rpmFirstFact; }
+    Fact* rpmSecond                     () { return &_rpmSecondFact; }
+    Fact* rpmThird                      () { return &_rpmThirdFact; }
+    Fact* rpmFourth                     () { return &_rpmFourthFact; }
+
+    static const char* _rpmFirstFactName;
+    static const char* _rpmSecondFactName;
+    static const char* _rpmThirdFactName;
+    static const char* _rpmFourthFactName;
+
+private:
+    Fact _rpmFirstFact;
+    Fact _rpmSecondFact;
+    Fact _rpmThirdFact;
+    Fact _rpmFourthFact;
+};
+
 class VehicleEstimatorStatusFactGroup : public FactGroup
 {
     Q_OBJECT
@@ -696,6 +725,7 @@ public:
     Q_PROPERTY(FactGroup* temperature       READ temperatureFactGroup       CONSTANT)
     Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
     Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* escStatus         READ escStatusFactGroup         CONSTANT)
     Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
     Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
 
@@ -1009,6 +1039,7 @@ public:
     FactGroup* clockFactGroup               () { return &_clockFactGroup; }
     FactGroup* setpointFactGroup            () { return &_setpointFactGroup; }
     FactGroup* distanceSensorFactGroup      () { return &_distanceSensorFactGroup; }
+    FactGroup* escStatusFactGroup           () { return &_escStatusFactGroup; }
     FactGroup* estimatorStatusFactGroup     () { return &_estimatorStatusFactGroup; }
     FactGroup* terrainFactGroup             () { return &_terrainFactGroup; }
 
@@ -1344,6 +1375,7 @@ private:
     void _handleAttitudeQuaternion      (mavlink_message_t& message);
     void _handleAttitudeTarget          (mavlink_message_t& message);
     void _handleDistanceSensor          (mavlink_message_t& message);
+    void _handleEscStatus               (mavlink_message_t& message);
     void _handleEstimatorStatus         (mavlink_message_t& message);
     void _handleStatusText              (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
@@ -1659,6 +1691,7 @@ private:
     VehicleClockFactGroup           _clockFactGroup;
     VehicleSetpointFactGroup        _setpointFactGroup;
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
+    VehicleEscStatusFactGroup       _escStatusFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
     TerrainFactGroup                _terrainFactGroup;
 
@@ -1693,6 +1726,7 @@ private:
     static const char* _temperatureFactGroupName;
     static const char* _clockFactGroupName;
     static const char* _distanceSensorFactGroupName;
+    static const char* _escStatusFactGroupName;
     static const char* _estimatorStatusFactGroupName;
     static const char* _terrainFactGroupName;
 
