@@ -1063,10 +1063,22 @@ void Vehicle::_handleEscStatus(mavlink_message_t& message)
     mavlink_esc_status_t content;
     mavlink_msg_esc_status_decode(&message, &content);
 
+    _escStatusFactGroup.index()->setRawValue(content.index);
+
     _escStatusFactGroup.rpmFirst()->setRawValue(content.rpm[0]);
     _escStatusFactGroup.rpmSecond()->setRawValue(content.rpm[1]);
     _escStatusFactGroup.rpmThird()->setRawValue(content.rpm[2]);
     _escStatusFactGroup.rpmFourth()->setRawValue(content.rpm[3]);
+
+    _escStatusFactGroup.currentFirst()->setRawValue(content.current[0]);
+    _escStatusFactGroup.currentSecond()->setRawValue(content.current[1]);
+    _escStatusFactGroup.currentThird()->setRawValue(content.current[2]);
+    _escStatusFactGroup.currentFourth()->setRawValue(content.current[3]);
+
+    _escStatusFactGroup.voltageFirst()->setRawValue(content.voltage[0]);
+    _escStatusFactGroup.voltageSecond()->setRawValue(content.voltage[1]);
+    _escStatusFactGroup.voltageThird()->setRawValue(content.voltage[2]);
+    _escStatusFactGroup.voltageFourth()->setRawValue(content.voltage[3]);
 }
 
 void Vehicle::_handleEstimatorStatus(mavlink_message_t& message)
@@ -4540,22 +4552,58 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _rotationPitch270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
+const char* VehicleEscStatusFactGroup::_indexFactName =                             "index";
+
 const char* VehicleEscStatusFactGroup::_rpmFirstFactName =                          "rpm1";
 const char* VehicleEscStatusFactGroup::_rpmSecondFactName =                         "rpm2";
 const char* VehicleEscStatusFactGroup::_rpmThirdFactName =                          "rpm3";
 const char* VehicleEscStatusFactGroup::_rpmFourthFactName =                         "rpm4";
 
+const char* VehicleEscStatusFactGroup::_currentFirstFactName =                      "current1";
+const char* VehicleEscStatusFactGroup::_currentSecondFactName =                     "current2";
+const char* VehicleEscStatusFactGroup::_currentThirdFactName =                      "current3";
+const char* VehicleEscStatusFactGroup::_currentFourthFactName =                     "current4";
+
+const char* VehicleEscStatusFactGroup::_voltageFirstFactName =                      "voltage1";
+const char* VehicleEscStatusFactGroup::_voltageSecondFactName =                     "voltage2";
+const char* VehicleEscStatusFactGroup::_voltageThirdFactName =                      "voltage3";
+const char* VehicleEscStatusFactGroup::_voltageFourthFactName =                     "voltage4";
+
 VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
-    : FactGroup                         (500, ":/json/Vehicle/EsсStatusFactGroup.json", parent)
+    : FactGroup                         (1000, ":/json/Vehicle/EsсStatusFactGroup.json", parent)
+    , _indexFact                        (0, _indexFactName,                         FactMetaData::valueTypeUint8)
+
     , _rpmFirstFact                     (0, _rpmFirstFactName,                      FactMetaData::valueTypeFloat)
     , _rpmSecondFact                    (0, _rpmSecondFactName,                     FactMetaData::valueTypeFloat)
     , _rpmThirdFact                     (0, _rpmThirdFactName,                      FactMetaData::valueTypeFloat)
     , _rpmFourthFact                    (0, _rpmFourthFactName,                     FactMetaData::valueTypeFloat)
+
+    , _currentFirstFact                 (0, _currentFirstFactName,                  FactMetaData::valueTypeFloat)
+    , _currentSecondFact                (0, _currentSecondFactName,                 FactMetaData::valueTypeFloat)
+    , _currentThirdFact                 (0, _currentThirdFactName,                  FactMetaData::valueTypeFloat)
+    , _currentFourthFact                (0, _currentFourthFactName,                 FactMetaData::valueTypeFloat)
+
+    , _voltageFirstFact                 (0, _voltageFirstFactName,                  FactMetaData::valueTypeFloat)
+    , _voltageSecondFact                (0, _voltageSecondFactName,                 FactMetaData::valueTypeFloat)
+    , _voltageThirdFact                 (0, _voltageThirdFactName,                  FactMetaData::valueTypeFloat)
+    , _voltageFourthFact                (0, _voltageFourthFactName,                 FactMetaData::valueTypeFloat)
 {
+    _addFact(&_indexFact,               _indexFactName);
+
     _addFact(&_rpmFirstFact,            _rpmFirstFactName);
     _addFact(&_rpmSecondFact,           _rpmSecondFactName);
     _addFact(&_rpmThirdFact,            _rpmThirdFactName);
     _addFact(&_rpmFourthFact,           _rpmFourthFactName);
+
+    _addFact(&_currentFirstFact,        _currentFirstFactName);
+    _addFact(&_currentSecondFact,       _currentSecondFactName);
+    _addFact(&_currentThirdFact,        _currentThirdFactName);
+    _addFact(&_currentFourthFact,       _currentFourthFactName);
+
+    _addFact(&_voltageFirstFact,        _voltageFirstFactName);
+    _addFact(&_voltageSecondFact,       _voltageSecondFactName);
+    _addFact(&_voltageThirdFact,        _voltageThirdFactName);
+    _addFact(&_voltageFourthFact,       _voltageFourthFactName);
 }
 
 const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";

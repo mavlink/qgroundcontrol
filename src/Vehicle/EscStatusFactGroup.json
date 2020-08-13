@@ -4,6 +4,13 @@
     "QGC.MetaData.Facts":
 [
 {
+    "name":             "index",
+    "shortDesc":        "Index of the first ESC in this message",
+    "type":             "uint8_t",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
     "name":             "rpmFirst",
     "shortDesc":        "rotation per minute",
     "type":             "float",
@@ -27,6 +34,62 @@
 {
     "name":             "rpmFourth",
     "shortDesc":        "rotation per minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentFirst",
+    "shortDesc":        "current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentSecond",
+    "shortDesc":        "current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentThird",
+    "shortDesc":        "current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentFourth",
+    "shortDesc":        "current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "voltageFirst",
+    "shortDesc":        "voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "voltageSecond",
+    "shortDesc":        "voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "voltageThird",
+    "shortDesc":        "voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "voltageFourth",
+    "shortDesc":        "voltage",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
