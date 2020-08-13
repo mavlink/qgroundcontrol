@@ -49,7 +49,12 @@ public:
     Q_PROPERTY(double           hfov                    READ    hfov                                        NOTIFY aspectRatioChanged)
     Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
-    Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
+    Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY decodingChanged)
+    Q_PROPERTY(QString          imageFile               READ    imageFile                                   NOTIFY imageFileChanged)
+    Q_PROPERTY(bool             streaming               READ    streaming                                   NOTIFY streamingChanged)
+    Q_PROPERTY(bool             decoding                READ    decoding                                    NOTIFY decodingChanged)
+    Q_PROPERTY(bool             recording               READ    recording                                   NOTIFY recordingChanged)
+    Q_PROPERTY(QSize            videoSize               READ    videoSize                                   NOTIFY videoSizeChanged)
 
     virtual bool        hasVideo            ();
     virtual bool        isGStreamer         ();
@@ -62,10 +67,29 @@ public:
     virtual double      thermalHfov         ();
     virtual bool        autoStreamConfigured();
     virtual bool        hasThermal          ();
-    virtual void        restartVideo        ();
+    virtual QString     imageFile           ();
 
-    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
-    virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
+    bool streaming(void) {
+        return _streaming;
+    }
+
+    bool decoding(void) {
+        return _decoding;
+    }
+
+    bool recording(void) {
+        return _recording;
+    }
+
+    QSize videoSize(void) {
+        const quint32 size = _videoSize;
+        return QSize((size >> 16) & 0xFFFF, size & 0xFFFF);
+    }
+
+// FIXME: AV: they should be removed after finishing multiple video stream support
+// new arcitecture does not assume direct access to video receiver from QML side, even if it works for now
+    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver[0]; }
+    virtual VideoReceiver*  thermalVideoReceiver    () { return _videoReceiver[1]; }
 
 #if defined(QGC_DISABLE_UVC)
     virtual bool        uvcEnabled          () { return false; }
@@ -82,6 +106,11 @@ public:
     Q_INVOKABLE void startVideo     ();
     Q_INVOKABLE void stopVideo      ();
 
+    Q_INVOKABLE void startRecording (const QString& videoFile = QString());
+    Q_INVOKABLE void stopRecording  ();
+
+    Q_INVOKABLE void grabImage(const QString& imageFile);
+
 signals:
     void hasVideoChanged            ();
     void isGStreamerChanged         ();
@@ -91,12 +120,19 @@ signals:
     void isTaisyncChanged           ();
     void aspectRatioChanged         ();
     void autoStreamConfiguredChanged();
+    void imageFileChanged           ();
+    void streamingChanged           ();
+    void decodingChanged            ();
+    void recordingChanged           ();
+    void recordingStarted           ();
+    void videoSizeChanged           ();
 
 protected slots:
     void _videoSourceChanged        ();
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
+    void _lowLatencyModeChanged     ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
@@ -104,22 +140,39 @@ protected slots:
 
 protected:
     friend class FinishVideoInitialization;
-#if defined(QGC_GST_STREAMING)
-    static gboolean _videoSinkQuery (GstPad* pad, GstObject* parent, GstQuery* query);
-    GstElement*     _makeVideoSink  (gpointer widget);
-#endif
+
     void _initVideo                 ();
-    void _updateSettings            ();
+    bool _updateSettings            (unsigned id);
+    bool _updateVideoUri            (unsigned id, const QString& uri);
+    void _cleanupOldVideos          ();
+    void _restartAllVideos          ();
+    void _restartVideo              (unsigned id);
+    void _startReceiver             (unsigned id);
+    void _stopReceiver              (unsigned id);
 
 protected:
-    SubtitleWriter  _subtitleWriter;
-    bool            _isTaisync              = false;
-    VideoReceiver*  _videoReceiver          = nullptr;
-    VideoReceiver*  _thermalVideoReceiver   = nullptr;
-    VideoSettings*  _videoSettings          = nullptr;
-    QString         _videoSourceID;
-    bool            _fullScreen             = false;
-    Vehicle*        _activeVehicle          = nullptr;
+    QString                 _videoFile;
+    QString                 _imageFile;
+    SubtitleWriter          _subtitleWriter;
+    bool                    _isTaisync              = false;
+    VideoReceiver*          _videoReceiver[2]       = { nullptr, nullptr };
+    void*                   _videoSink[2]           = { nullptr, nullptr };
+    QString                 _videoUri[2];
+    // FIXME: AV: _videoStarted seems to be access from 3 different threads, from time to time
+    // 1) Video Receiver thread
+    // 2) Video Manager/main app thread
+    // 3) Qt rendering thread (during video sink creation process which should happen in this thread)
+    // It works for now but...
+    bool                    _videoStarted[2]        = { false, false };
+    bool                    _lowLatencyStreaming[2] = { false, false };
+    QAtomicInteger<bool>    _streaming              = false;
+    QAtomicInteger<bool>    _decoding               = false;
+    QAtomicInteger<bool>    _recording              = false;
+    QAtomicInteger<quint32> _videoSize              = 0;
+    VideoSettings*          _videoSettings          = nullptr;
+    QString                 _videoSourceID;
+    bool                    _fullScreen             = false;
+    Vehicle*                _activeVehicle          = nullptr;
 };
 
 #endif

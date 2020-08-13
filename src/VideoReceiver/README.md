@@ -39,7 +39,7 @@ gst-launch-1.0 videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! 
 
 On the receiving end, if you want to test it from the command line, you can use something like:
 ```
-gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
+gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
 ```
 
 ### Additional Protocols
@@ -50,13 +50,14 @@ QGC also supports RTSP, TCP-MPEG2 and MPEG-TS (h.264) pipelines.
 
 Use apt-get to install GStreamer 1.0
 ```
-list=$(apt-cache --names-only search ^gstreamer1.0-* | awk '{ print $1 }' | grep -v gstreamer1.0-hybris)
+list=$(apt-cache --names-only search ^gstreamer1.0-* | awk '{ print $1 }' | sed -e /-doc/d | grep -v gstreamer1.0-hybris)
 ```
 ```
 sudo apt-get install $list
 ```
 ```
 sudo apt-get install libgstreamer-plugins-base1.0-dev
+sudo apt-get install libgstreamer-plugins-bad1.0-dev 
 ```
 
 The build system is setup to use pkgconfig and it will find the necessary headers and libraries automatically.

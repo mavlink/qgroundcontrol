@@ -16,7 +16,10 @@
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
 #include "VideoManager.h"
+#if defined(QGC_GST_STREAMING)
+#include "GStreamer.h"
 #include "VideoReceiver.h"
+#endif
 #include "QGCLoggingCategory.h"
 #include "QGCCameraManager.h"
 
@@ -445,7 +448,32 @@ VideoManager* QGCCorePlugin::createVideoManager(QGCApplication *app, QGCToolbox 
 
 VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
 {
-    return new VideoReceiver(parent);
+#if defined(QGC_GST_STREAMING)
+    return GStreamer::createVideoReceiver(parent);
+#else
+    Q_UNUSED(parent)
+    return nullptr;
+#endif
+}
+
+void* QGCCorePlugin::createVideoSink(QObject* parent, QQuickItem* widget)
+{
+#if defined(QGC_GST_STREAMING)
+    return GStreamer::createVideoSink(parent, widget);
+#else
+    Q_UNUSED(parent)
+    Q_UNUSED(widget)
+    return nullptr;
+#endif
+}
+
+void QGCCorePlugin::releaseVideoSink(void* sink)
+{
+#if defined(QGC_GST_STREAMING)
+    GStreamer::releaseVideoSink(sink);
+#else
+    Q_UNUSED(sink)
+#endif
 }
 
 bool QGCCorePlugin::guidedActionsControllerLogging() const

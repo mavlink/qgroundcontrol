@@ -398,7 +398,7 @@ QGCCameraControl::takePhoto()
                 QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
                 QDir().mkpath(photoPath);
                 photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-                qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+                qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
             }
             if(vendor() == "NextVision") {
                 // Hack: NV doesn't respond to taking capture
@@ -1605,7 +1605,7 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
             QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
             QDir().mkpath(photoPath);
             photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-            qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+            qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
         }
     }
 }

@@ -580,7 +580,6 @@ HEADERS += \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
-    src/FlightDisplay/VideoManager.h \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
@@ -789,7 +788,6 @@ SOURCES += \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
-    src/FlightDisplay/VideoManager.cc \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
@@ -1309,17 +1307,15 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
 # Video Streaming
 
 INCLUDEPATH += \
-    src/VideoStreaming
+    src/VideoManager
 
 HEADERS += \
-    src/VideoStreaming/VideoReceiver.h \
-    src/VideoStreaming/VideoStreaming.h \
-    src/VideoStreaming/SubtitleWriter.h \
+    src/VideoManager/SubtitleWriter.h \
+    src/VideoManager/VideoManager.h
 
 SOURCES += \
-    src/VideoStreaming/VideoReceiver.cc \
-    src/VideoStreaming/VideoStreaming.cc \
-    src/VideoStreaming/SubtitleWriter.cc \
+    src/VideoManager/SubtitleWriter.cc \
+    src/VideoManager/VideoManager.cc
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
@@ -1327,7 +1323,19 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from user_config.pri)")
 } else {
-    include(src/VideoStreaming/VideoStreaming.pri)
+    include(src/VideoReceiver/VideoReceiver.pri)
+}
+
+!VideoEnabled {
+    INCLUDEPATH += \
+        src/VideoReceiver
+
+    HEADERS += \
+        src/VideoManager/GLVideoItemStub.h \
+        src/VideoReceiver/VideoReceiver.h
+
+    SOURCES += \
+        src/VideoManager/GLVideoItemStub.cc
 }
 
 #-------------------------------------------------------------------------------------

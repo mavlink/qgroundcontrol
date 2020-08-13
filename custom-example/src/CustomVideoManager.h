@@ -14,6 +14,7 @@
 #include <QTime>
 #include <QUrl>
 
+#include "GStreamer.h"
 #include "VideoManager.h"
 
 class CustomVideoManager : public VideoManager

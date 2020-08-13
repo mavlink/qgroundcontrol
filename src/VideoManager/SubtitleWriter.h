@@ -17,7 +17,6 @@
 #pragma once
 
 #include "QGCLoggingCategory.h"
-#include "VideoReceiver.h"
 #include <QObject>
 #include <QTimer>
 #include <QDateTime>
@@ -33,25 +32,19 @@ public:
     explicit SubtitleWriter(QObject* parent = nullptr);
     ~SubtitleWriter() = default;
 
-    void setVideoReceiver(VideoReceiver* videoReceiver);
+    // starts capturing vehicle telemetry.
+    void startCapturingTelemetry(const QString& videoFile);
+    void stopCapturingTelemetry();
 
 private slots:
-    // Fires with every "videoRecordingChanged() signal, stops capturing telemetry if video stopped."
-    void _onVideoRecordingChanged();
-
     // Captures a snapshot of telemetry data from vehicle into the subtitles file.
     void _captureTelemetry();
-
-    // starts capturing vehicle telemetry.
-    void _startCapturingTelemetry();
 
 private:
     QTimer _timer;
     QStringList _values;
     QDateTime _startTime;
     QFile _file;
-
-    VideoReceiver* _videoReceiver;
 
     static const int _sampleRate;
 };

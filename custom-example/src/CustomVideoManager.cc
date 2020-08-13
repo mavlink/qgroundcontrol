@@ -24,6 +24,7 @@ CustomVideoManager::_updateSettings()
 {
     if(!_videoSettings || !_videoReceiver)
         return;
-    VideoManager::_updateSettings();
+    VideoManager::_updateSettings(0);
+    VideoManager::_updateSettings(1);
 }
 
