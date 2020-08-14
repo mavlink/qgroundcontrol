@@ -522,6 +522,12 @@ ApplicationWindow {
             anchors.right:  parent.right
             anchors.top:    toolDrawerToolbar.bottom
             anchors.bottom: parent.bottom
+
+            Connections {
+                target:                 toolDrawerLoader.item
+                ignoreUnknownSignals:   true
+                onPopout:               toolDrawer.visible = false
+            }
         }
     }
 
