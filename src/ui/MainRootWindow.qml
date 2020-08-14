@@ -333,7 +333,6 @@ ApplicationWindow {
         edge:           Qt.LeftEdge
         interactive:    true
         dragMargin:     0
-        closePolicy:    Drawer.NoAutoClose
         visible:        false
 
         property var    _mainWindow:       mainWindow
@@ -482,6 +481,8 @@ ApplicationWindow {
         height:         mainWindow.height
         edge:           Qt.LeftEdge
         dragMargin:     0
+        closePolicy:    Drawer.NoAutoClose
+        interactive:    false
         visible:        false
 
         property alias title:   toolbarDrawerText.text
