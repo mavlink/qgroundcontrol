@@ -152,6 +152,12 @@ public:
     DEFINE_QGC_COLOR(surveyPolygonTerrainCollision, setSurveyPolygonTerrainCollision)
     DEFINE_QGC_COLOR(toolbarBackground,             setToolbarBackground)
     DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
+    DEFINE_QGC_COLOR(itemBackground,                setItemBackground)
+    DEFINE_QGC_COLOR(itemText,                      setItemText)
+    DEFINE_QGC_COLOR(itemFocusedBackground,         setItemFocusedBackground)
+    DEFINE_QGC_COLOR(itemFocusedText,               setItemFocusedText)
+    DEFINE_QGC_COLOR(itemSelectedBackground,        setItemSelectedBackground)
+    DEFINE_QGC_COLOR(itemSelectedText,              setItemSelectedText)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();

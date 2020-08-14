@@ -82,6 +82,12 @@ void QGCPalette::_buildMap()
     DECLARE_QGC_COLOR(statusPassedText,     "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(statusPendingText,    "#9d9d9d", "#000000", "#707070", "#ffffff")
     DECLARE_QGC_COLOR(toolbarBackground,    "#ffffff", "#ffffff", "#222222", "#222222")
+    DECLARE_QGC_COLOR(itemBackground,         "#ffffff", "#ffffff", "#707070", "#626270")
+    DECLARE_QGC_COLOR(itemText,               "#9d9d9d", "#000000", "#A6A6A6", "#ffffff")
+    DECLARE_QGC_COLOR(itemFocusedBackground,  "#e4e4e4", "#946120", "#3a3a3a", "#fff291")
+    DECLARE_QGC_COLOR(itemFocusedText,        "#2c2c2c", "#ffffff", "#2c2c2c", "#000000")
+    DECLARE_QGC_COLOR(itemSelectedBackground, "#585858", "#8cb3be", "#585858", "#8cb3be")
+    DECLARE_QGC_COLOR(itemSelectedText,       "#2c2c2c", "#000000", "#2c2c2c", "#000000")
 
     // Colors not affecting by theming
     //                                              Disabled    Enabled
