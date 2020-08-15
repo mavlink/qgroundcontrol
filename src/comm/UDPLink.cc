@@ -160,8 +160,12 @@ void UDPLink::_writeBytes(const QByteArray data)
         return;
     }
     emit bytesSent(this, data);
+
+    QMutexLocker locker(&_sessionTargetsMutex);
+
     // Send to all manually targeted systems
-    for(UDPCLient* target: _udpConfig->targetHosts()) {
+    for (int i=0; i<_udpConfig->targetHosts().count(); i++) {
+        UDPCLient* target = _udpConfig->targetHosts()[i];
         // Skip it if it's part of the session clients below
         if(!contains_target(_sessionTargets, target->address, target->port)) {
             _writeDataGram(data, target);
@@ -219,11 +223,13 @@ void UDPLink::readBytes()
         if(_isIpLocal(sender)) {
             asender = QHostAddress(QString("127.0.0.1"));
         }
-        if(!contains_target(_sessionTargets, asender, senderPort)) {
+        QMutexLocker locker(&_sessionTargetsMutex);
+        if (!contains_target(_sessionTargets, asender, senderPort)) {
             qDebug() << "Adding target" << asender << senderPort;
             UDPCLient* target = new UDPCLient(asender, senderPort);
             _sessionTargets.append(target);
         }
+        locker.unlock();
     }
     //-- Send whatever is left
     if (databuffer.size()) {
@@ -280,16 +286,13 @@ bool UDPLink::_hardwareConnect()
     if (_connectState) {
         _socket->joinMulticastGroup(QHostAddress("224.0.0.1"));
         //-- Make sure we have a large enough IO buffers
-
 #ifdef __mobile__
-        int bufferSizeMultiplier = 1;
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
 #else
-        int bufferSizeMultiplier = 4;
+        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    256 * 1024);
+        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
 #endif
-        int receiveBufferSize = _udpConfig->isTransmitOnly() ? 0 : 512 * 1024;
-        _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     bufferSizeMultiplier * 64 * 1024);
-        _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, bufferSizeMultiplier * receiveBufferSize);
-
         _registerZeroconf(_udpConfig->localPort(), kZeroconfRegistration);
         QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         emit connected();
@@ -361,9 +364,7 @@ void UDPLink::_deregisterZeroconf()
 //--------------------------------------------------------------------------
 //-- UDPConfiguration
 
-UDPConfiguration::UDPConfiguration(const QString& name)
-    : LinkConfiguration(name)
-    , _transmitOnly(false)
+UDPConfiguration::UDPConfiguration(const QString& name) : LinkConfiguration(name)
 {
     AutoConnectSettings* settings = qgcApp()->toolbox()->settingsManager()->autoConnectSettings();
     _localPort = settings->udpListenPort()->rawValue().toInt();
@@ -373,9 +374,7 @@ UDPConfiguration::UDPConfiguration(const QString& name)
     }
 }
 
-UDPConfiguration::UDPConfiguration(UDPConfiguration* source)
-    : LinkConfiguration(source)
-    , _transmitOnly(false)
+UDPConfiguration::UDPConfiguration(UDPConfiguration* source) : LinkConfiguration(source)
 {
     _copyFrom(source);
 }
