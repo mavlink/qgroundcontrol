@@ -35,6 +35,7 @@ Item {
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
+    readonly property string forceArmTitle:                 qsTr("Force Arm")
     readonly property string disarmTitle:                   qsTr("Disarm")
     readonly property string rtlTitle:                      qsTr("Return")
     readonly property string takeoffTitle:                  qsTr("Takeoff")
@@ -55,6 +56,7 @@ Item {
     readonly property string actionListTitle:               qsTr("Action")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
+    readonly property string forceArmMessage:                   qsTr("WARNING: This will force arming of the vehicle bypassing any safety checks.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
     readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
     readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
@@ -97,6 +99,7 @@ Item {
     readonly property int actionVtolTransitionToMRFlight:   21
     readonly property int actionROI:                        22
     readonly property int actionActionList:                 23
+    readonly property int actionForceArm:                   24
 
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
     property bool   _enforceChecklist:          _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
@@ -104,6 +107,7 @@ Item {
 
     property bool showEmergenyStop:     _guidedActionsEnabled && !_hideEmergenyStop && _vehicleArmed && _vehicleFlying
     property bool showArm:              _guidedActionsEnabled && !_vehicleArmed && _canArm
+    property bool showForceArm:         _guidedActionsEnabled && !_vehicleArmed
     property bool showDisarm:           _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
     property bool showRTL:              _guidedActionsEnabled && _vehicleArmed && activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
     property bool showTakeoff:          _guidedActionsEnabled && activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canArm
@@ -274,6 +278,7 @@ Item {
     Connections {
         target:                             mainWindow
         onArmVehicleRequest:                armVehicleRequest()
+        onForceArmVehicleRequest:           forceArmVehicleRequest()
         onDisarmVehicleRequest:             disarmVehicleRequest()
         onVtolTransitionToFwdFlightRequest: vtolTransitionToFwdFlightRequest()
         onVtolTransitionToMRFlightRequest:  vtolTransitionToMRFlightRequest()
@@ -281,6 +286,10 @@ Item {
 
     function armVehicleRequest() {
         confirmAction(actionArm)
+    }
+
+    function forceArmVehicleRequest() {
+        confirmAction(actionForceArm)
     }
 
     function disarmVehicleRequest() {
@@ -324,6 +333,11 @@ Item {
             confirmDialog.title = armTitle
             confirmDialog.message = armMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showArm })
+            break;
+        case actionForceArm:
+            confirmDialog.title = forceArmTitle
+            confirmDialog.message = forceArmMessage
+            confirmDialog.hideTrigger = Qt.binding(function() { return !showForceArm })
             break;
         case actionDisarm:
             if (_vehicleFlying) {
@@ -479,6 +493,9 @@ Item {
             break
         case actionArm:
             activeVehicle.armed = true
+            break
+        case actionForceArm:
+            activeVehicle.forceArm()
             break
         case actionDisarm:
             activeVehicle.armed = false
