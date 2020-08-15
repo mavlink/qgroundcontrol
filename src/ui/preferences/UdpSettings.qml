@@ -28,8 +28,6 @@ Column {
 
     property string _currentHost: ""
 
-    ExclusiveGroup { id: linkGroup }
-
     Row {
         spacing:    ScreenTools.defaultFontPixelWidth
         QGCLabel {
@@ -81,10 +79,10 @@ Column {
                     model: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeUdp ? subEditConfig.hostList : ""
                     delegate:
                     QGCButton {
-                        text:   modelData
-                        width:  _secondColumn
+                        text:               modelData
+                        width:              _secondColumn
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                        exclusiveGroup: linkGroup
+                        autoExclusive:      true
                         onClicked: {
                             checked = true
                             _udpSetting._currentHost = modelData

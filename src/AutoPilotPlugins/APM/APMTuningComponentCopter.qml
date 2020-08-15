@@ -59,10 +59,6 @@ SetupPage {
 
             property bool _loadComplete: false
 
-            ExclusiveGroup { id: fenceActionRadioGroup }
-            ExclusiveGroup { id: landLoiterRadioGroup }
-            ExclusiveGroup { id: returnAltRadioGroup }
-
             Component.onCompleted: {
                 // We use QtCharts only on Desktop platforms
                 showAdvanced = !ScreenTools.isMobile
