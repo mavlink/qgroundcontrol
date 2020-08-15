@@ -188,8 +188,6 @@ Item {
                         }
                     }
 
-                    ExclusiveGroup { id: buttonGroup }
-
                     Repeater {
                         model: categoryHeader.checked ? controller.getGroupsForCategory(category) : 0
 
@@ -198,7 +196,7 @@ Item {
                             text:           groupName
                             height:         _rowHeight
                             checked:        controller.currentGroup === text
-                            exclusiveGroup: buttonGroup
+                            autoExclusive:  true
 
                             readonly property string groupName: modelData
 

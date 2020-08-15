@@ -61,8 +61,6 @@ SetupPage {
             property real _margins:     ScreenTools.defaultFontPixelHeight
             property bool _showIcon:    !ScreenTools.isTinyScreen
 
-            ExclusiveGroup { id: fenceActionRadioGroup }
-
             Column {
                 spacing: _margins / 2
 
