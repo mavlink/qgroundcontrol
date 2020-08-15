@@ -40,6 +40,8 @@ public:
     Q_PROPERTY(QGeoCoordinate   landingCoordinate       READ    landingCoordinate           WRITE setLandingCoordinate      NOTIFY landingCoordinateChanged)
     Q_PROPERTY(bool             landingCoordSet         MEMBER _landingCoordSet                                             NOTIFY landingCoordSetChanged)
 
+    Q_INVOKABLE void setLandingHeadingToTakeoffHeading();
+
     virtual Fact* loiterAltitude          (void) = 0;
     virtual Fact* loiterRadius            (void) = 0;
     virtual Fact* landingAltitude         (void) = 0;
