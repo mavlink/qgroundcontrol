@@ -5,94 +5,102 @@
 [
 {
     "name":             "index",
-    "shortDesc":        "Index of the first ESC in this message",
-    "type":             "uint8_t",
-    "decimalPlaces":    2,
+    "shortDesc":        "Index Of The First ESC In This Message",
+    "type":             "uint8",
     "default":          null
 },
 {
     "name":             "rpmFirst",
-    "shortDesc":        "rotation per minute",
+    "shortDesc":        "Rotation Per Minute",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
 },
 {
     "name":             "rpmSecond",
-    "shortDesc":        "rotation per minute",
+    "shortDesc":        "Rotation Per Minute",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
 },
 {
     "name":             "rpmThird",
-    "shortDesc":        "rotation per minute",
+    "shortDesc":        "Rotation Per Minute",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
 },
 {
     "name":             "rpmFourth",
-    "shortDesc":        "rotation per minute",
+    "shortDesc":        "Rotation Per Minute",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
 },
 {
     "name":             "currentFirst",
-    "shortDesc":        "current",
+    "shortDesc":        "Current",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "A"
+
 },
 {
     "name":             "currentSecond",
-    "shortDesc":        "current",
+    "shortDesc":        "Current",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "A"
 },
 {
     "name":             "currentThird",
-    "shortDesc":        "current",
+    "shortDesc":        "Current",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "A"
 },
 {
     "name":             "currentFourth",
-    "shortDesc":        "current",
+    "shortDesc":        "Current",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "A"
 },
 {
     "name":             "voltageFirst",
-    "shortDesc":        "voltage",
+    "shortDesc":        "Voltage",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "v"
 },
 {
     "name":             "voltageSecond",
-    "shortDesc":        "voltage",
+    "shortDesc":        "Voltage",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "v"
 },
 {
     "name":             "voltageThird",
-    "shortDesc":        "voltage",
+    "shortDesc":        "Voltage",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "v"
 },
 {
     "name":             "voltageFourth",
-    "shortDesc":        "voltage",
+    "shortDesc":        "Voltage",
     "type":             "float",
     "decimalPlaces":    2,
-    "default":          null
+    "default":          null,
+    "units":            "v"
 }
 ]
 }
