@@ -156,7 +156,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(QObject *parent, mavlink_message_t* message
     _message = *message;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
     if (!msgInfo) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message->msgid);
+        qCWarning(MAVLinkInspectorLog) << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message->msgid);
         return;
     }
     _name = QString(msgInfo->name);
@@ -179,7 +179,6 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(QObject *parent, mavlink_message_t* message
         QGCMAVLinkMessageField* f = new QGCMAVLinkMessageField(this, msgInfo->fields[i].name, type);
         _fields.append(f);
     }
-    update(message);
 }
 
 //-----------------------------------------------------------------------------
@@ -218,23 +217,41 @@ QGCMAVLinkMessage::updateFreq()
     emit freqChanged();
 }
 
+void QGCMAVLinkMessage::setSelected(bool sel)
+{
+    if (_selected != sel) {
+        _selected = sel;
+        _updateFields();
+        emit selectedChanged();
+    }
+}
+
 //-----------------------------------------------------------------------------
 void
 QGCMAVLinkMessage::update(mavlink_message_t* message)
 {
     _count++;
-
     _message = *message;
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
+
+    if (_selected) {
+        // Don't update field info unless selected to reduce perf hit of message processing
+        _updateFields();
+    }
+    emit countChanged();
+}
+
+void QGCMAVLinkMessage::_updateFields(void)
+{
+    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(&_message);
     if (!msgInfo) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage::update NULL msgInfo msgid(%1)").arg(message->msgid);
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update NULL msgInfo msgid(%1)").arg(_message.msgid);
         return;
     }
     if(_fields.count() != static_cast<int>(msgInfo->num_fields)) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage::update msgInfo field count mismatch msgid(%1)").arg(message->msgid);
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update msgInfo field count mismatch msgid(%1)").arg(_message.msgid);
         return;
     }
-    uint8_t* m = reinterpret_cast<uint8_t*>(&message->payload64[0]);
+    uint8_t* m = reinterpret_cast<uint8_t*>(&_message.payload64[0]);
     for (unsigned int i = 0; i < msgInfo->num_fields; ++i) {
         QGCMAVLinkMessageField* f = qobject_cast<QGCMAVLinkMessageField*>(_fields.get(static_cast<int>(i)));
         if(f) {
@@ -448,7 +465,6 @@ QGCMAVLinkMessage::update(mavlink_message_t* message)
             }
         }
     }
-    emit messageChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -547,17 +563,12 @@ QGCMAVLinkSystem::append(QGCMAVLinkMessage* message)
     }
     _messages.append(message);
     //-- Sort messages by id and then cid
-    if(_messages.count() > 0) {
+    if (_messages.count() > 0) {
+        _messages.beginReset();
         std::sort(_messages.objectList()->begin(), _messages.objectList()->end(), messages_sort);
-        for(int i = 0; i < _messages.count(); i++) {
-            QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
-            if(m) {
-                emit m->indexChanged();
-            }
-        }
+        _messages.endReset();
         _checkCompID(message);
     }
-    emit messagesChanged();
     //-- Remember selected message
     if(selectedMsg) {
         int idx = findMessage(selectedMsg);
@@ -829,7 +840,6 @@ MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
     QGCMAVLinkSystem* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
     if(v) {
         v->messages()->clearAndDeleteContents();
-        emit v->messagesChanged();
     } else {
         v = new QGCMAVLinkSystem(this, static_cast<uint8_t>(vehicle->id()));
         _systems.append(v);
