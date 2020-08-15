@@ -90,12 +90,12 @@ private:
 class QGCMAVLinkMessage : public QObject {
     Q_OBJECT
 public:
-    Q_PROPERTY(quint32              id              READ id             NOTIFY indexChanged)
-    Q_PROPERTY(quint32              cid             READ cid            NOTIFY indexChanged)
-    Q_PROPERTY(QString              name            READ name           NOTIFY indexChanged)
+    Q_PROPERTY(quint32              id              READ id             CONSTANT)
+    Q_PROPERTY(quint32              cid             READ cid            CONSTANT)
+    Q_PROPERTY(QString              name            READ name           CONSTANT)
     Q_PROPERTY(qreal                messageHz       READ messageHz      NOTIFY freqChanged)
-    Q_PROPERTY(quint64              count           READ count          NOTIFY messageChanged)
-    Q_PROPERTY(QmlObjectListModel*  fields          READ fields         NOTIFY indexChanged)
+    Q_PROPERTY(quint64              count           READ count          NOTIFY countChanged)
+    Q_PROPERTY(QmlObjectListModel*  fields          READ fields         CONSTANT)
     Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
     Q_PROPERTY(bool                 selected        READ selected       NOTIFY selectedChanged)
 
@@ -115,24 +115,25 @@ public:
     void                updateFieldSelection();
     void                update          (mavlink_message_t* message);
     void                updateFreq      ();
-    void                setSelected     (bool sel) { _selected = sel; }
+    void                setSelected     (bool sel);
 
 signals:
-    void messageChanged                 ();
+    void countChanged                   ();
     void freqChanged                    ();
-    void indexChanged                   ();
     void fieldSelectedChanged           ();
     void selectedChanged                ();
 
 private:
+    void _updateFields(void);
+
     QmlObjectListModel  _fields;
     QString             _name;
-    qreal               _messageHz  = 0.0;
-    uint64_t            _count      = 0;
-    uint64_t            _lastCount  = 0;
-    mavlink_message_t   _message;   //-- List of QGCMAVLinkMessageField
-    bool                _fieldSelected   = false;
-    bool                _selected   = false;
+    qreal               _messageHz      = 0.0;
+    uint64_t            _count          = 1;
+    uint64_t            _lastCount      = 0;
+    mavlink_message_t   _message;
+    bool                _fieldSelected  = false;
+    bool                _selected       = false;
 };
 
 //-----------------------------------------------------------------------------
@@ -140,11 +141,10 @@ private:
 class QGCMAVLinkSystem : public QObject {
     Q_OBJECT
 public:
-    Q_PROPERTY(quint8               id              READ id             CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  messages        READ messages       NOTIFY messagesChanged)
-    Q_PROPERTY(QList<int>           compIDs         READ compIDs        NOTIFY compIDsChanged)
-    Q_PROPERTY(QStringList          compIDsStr      READ compIDsStr     NOTIFY compIDsChanged)
-
+    Q_PROPERTY(quint8               id              READ id                                 CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  messages        READ messages                           CONSTANT)
+    Q_PROPERTY(QList<int>           compIDs         READ compIDs                            NOTIFY compIDsChanged)
+    Q_PROPERTY(QStringList          compIDsStr      READ compIDsStr                         NOTIFY compIDsChanged)
     Q_PROPERTY(int                  selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
 
     QGCMAVLinkSystem   (QObject* parent, quint8 id);
@@ -162,7 +162,6 @@ public:
     void                append          (QGCMAVLinkMessage* message);
 
 signals:
-    void messagesChanged                ();
     void compIDsChanged                 ();
     void selectedChanged                ();
 
