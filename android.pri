@@ -7,9 +7,13 @@ exists($$PWD/custom/android) {
     message("Merging $$PWD/custom/android/ -> $$PWD/android/")
     ANDROID_PACKAGE_SOURCE_DIR = $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR
 
-    system($$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR)
-    system($$QMAKE_COPY_DIR $$PWD/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR)
-    system($$QMAKE_COPY_DIR $$PWD/custom/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR)
+    javaforce.target = custom_android
+    javaforce.commands = $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
+                         $$QMAKE_COPY_DIR $$PWD/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
+                         $$QMAKE_COPY_DIR $$PWD/custom/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR
+    javaforce.depends = FORCE
+    PRE_TARGETDEPS += $$javaforce.target
+    QMAKE_EXTRA_TARGETS += javaforce
 }
 
 exists($$PWD/custom/android/AndroidManifest.xml) {
