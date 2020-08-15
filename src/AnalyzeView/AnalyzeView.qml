@@ -7,11 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Setup View
-///     @author Don Gagne <don@thegagnes.com>
-
 import QtQuick          2.3
 import QtQuick.Window   2.2
 import QtQuick.Controls 1.2
@@ -23,9 +18,11 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 Rectangle {
-    id:     setupView
+    id:     _root
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
+
+    signal popout()
 
     ExclusiveGroup { id: setupButtonGroup }
 
@@ -147,7 +144,8 @@ Rectangle {
             panelLoader.source = ""
             buttonRepeater.itemAt(_curIndex).loader.source = source
             buttonRepeater.itemAt(_curIndex).visible = false
-            buttonRepeater.itemAt(_curIndex).loader.item.poped = true
+            buttonRepeater.itemAt(_curIndex).loader.item.popped = true
+            _root.popout()
         }
     }
 
