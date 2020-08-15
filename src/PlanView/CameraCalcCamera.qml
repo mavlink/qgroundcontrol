@@ -28,10 +28,6 @@ Column {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ExclusiveGroup {
-        id: cameraOrientationGroup
-    }
-
     Column {
         anchors.left:   parent.left
         anchors.right:  parent.right

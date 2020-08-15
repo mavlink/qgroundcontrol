@@ -2397,6 +2397,15 @@ void Vehicle::setArmed(bool armed)
                    armed ? 1.0f : 0.0f);
 }
 
+void Vehicle::forceArm(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_COMPONENT_ARM_DISARM,
+                   true,    // show error if fails
+                   1.0f,    // arm
+                   2989);   // force arm
+}
+
 bool Vehicle::flightModeSetAvailable()
 {
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::SetFlightModeCapability);
