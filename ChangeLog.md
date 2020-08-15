@@ -4,6 +4,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* Fly: Press and hold on arm button will change it to Force Arm. Click again to force arm.
 * VTOL: General setting for transition distance which affects Plan takeoff, landing pattern creation
 * VTOL: Much better VTOL support throughout QGC
 * Maps: Support zoom up to level 23 even if map provider doesn't provide tiles that high
