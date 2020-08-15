@@ -5,24 +5,20 @@
     <name>APMAirframeComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="74"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="74"/>
       <source>Airframe is currently not set.</source>
       <translation>기체유형이 설정되지 않음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="75"/>
       <source>Currently set to frame class &apos;%1&apos;</source>
       <translation>현재 프레임 클래스 &apos;%1&apos;와</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="76"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="76"/>
       <source> and frame type &apos;%2&apos;</source>
       <translation> 프레임 유형 &apos;%2&apos;으로 설정되었습니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="77"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="77"/>
       <source>.</source>
       <comment>period for end of sentence</comment>
@@ -30,12 +26,10 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="78"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="78"/>
       <source> To change this configuration, select the desired frame class below and frame type.</source>
       <translation> 설정을 변경하기 위해, 아래 프레임 유형 중 원하시는 기체를 선택하십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="160"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponent.qml" line="160"/>
       <source>Frame Type</source>
       <translation>프레임 유형</translation>
@@ -68,24 +62,20 @@
     <name>APMAirframeComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="29"/>
       <source>Frame Class</source>
       <translation>기체 종류</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="35"/>
       <source>Frame Type</source>
       <translation>기체 유형:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="41"/>
       <source>Firmware Version</source>
       <translation>펌웨어 버전</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml" line="42"/>
       <source>Unknown</source>
       <translation>알 수 없음</translation>
@@ -104,55 +94,45 @@
     <name>APMCameraComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="175"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="183"/>
       <source>Channel </source>
       <translation>채널</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="221"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="221"/>
       <source>Gimbal </source>
       <translation>짐벌 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="239"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="239"/>
       <source>Stabilize</source>
       <translation>수평유지모드</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="251"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="251"/>
       <source>Servo reverse</source>
       <translation>서보 역전</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="265"/>
       <source>Output channel:</source>
       <translation>출력 채널:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="285"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="285"/>
       <source>Input channel:</source>
       <translation>입력 채널:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
       <source>Gimbal angle limits:</source>
       <translation>짐벌 각도 제한:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="314"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="358"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="314"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="358"/>
       <source>min</source>
@@ -161,55 +141,45 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="332"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="377"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="332"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="377"/>
       <source>max</source>
       <translation>최대</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="350"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="350"/>
       <source>Servo PWM limits:</source>
       <translation>서보 PWM 한계:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="405"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="405"/>
       <source>Gimbal Settings</source>
       <translation>짐벌 세팅</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <source>Type:</source>
       <translation>유형:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="444"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="444"/>
       <source>Gimbal Type changes takes affect next reboot of autopilot</source>
       <translation>짐벌 유형의 변경은 비행 컨트롤러가 재부팅된 후에 적용됩니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="452"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="452"/>
       <source>Default Mode:</source>
       <translation>기본 모드:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="472"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="472"/>
       <source>Tilt</source>
       <translation>카메라 기울기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="490"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="490"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="508"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="508"/>
       <source>Pan</source>
       <translation>팬</translation>
@@ -230,24 +200,20 @@
     <name>APMCameraComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="27"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="27"/>
       <source>Gimbal type</source>
       <translation>짐벌 유형</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="32"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="32"/>
       <source>Tilt input channel</source>
       <translation>기울기 입력 채널</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="37"/>
       <source>Pan input channel</source>
       <translation>팬 입력 채널</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponentSummary.qml" line="42"/>
       <source>Roll input channel</source>
       <translation>롤 입력 채널</translation>
@@ -257,103 +223,85 @@
     <name>APMCameraSubComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="183"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="183"/>
       <source>Disabled</source>
       <translation>비활성화됨</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="184"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="184"/>
       <source>Channel 5</source>
       <translation>채널 5</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="185"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="185"/>
       <source>Channel 6</source>
       <translation>채널 6</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="186"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="186"/>
       <source>Channel 7</source>
       <translation>채널 7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="187"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="187"/>
       <source>Channel 8</source>
       <translation>채널 8</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="188"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="188"/>
       <source>Channel 9</source>
       <translation>채널 9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="189"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="189"/>
       <source>Channel 10</source>
       <translation>채널 10</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="190"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="190"/>
       <source>Channel 11</source>
       <translation>채널 11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="191"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="191"/>
       <source>Channel 12</source>
       <translation>채널 12</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="192"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="192"/>
       <source>Channel 13</source>
       <translation>채널 13</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="193"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="193"/>
       <source>Channel 14</source>
       <translation>채널 14</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="282"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="282"/>
       <source>Gimbal </source>
       <translation>짐벌 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="315"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="315"/>
       <source>Output channel:</source>
       <translation>출력 채널:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="339"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="339"/>
       <source>Servo reverse</source>
       <translation>서보 역전</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="349"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="349"/>
       <source>Stabilize</source>
       <translation>수평유지</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="367"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="367"/>
       <source>Servo PWM limits:</source>
       <translation>서보 PWM 한계:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="373"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="408"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="373"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="408"/>
       <source>min</source>
@@ -362,55 +310,45 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="383"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="418"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="383"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="418"/>
       <source>max</source>
       <translation>최대</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="403"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="403"/>
       <source>Gimbal angle limits:</source>
       <translation>짐벌 각도 제한:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="444"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="444"/>
       <source>Gimbal Settings</source>
       <translation>짐벌 세팅</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="461"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="461"/>
       <source>Type:</source>
       <translation>유형:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="483"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="483"/>
       <source>Gimbal Type changes takes affect next reboot of autopilot</source>
       <translation>짐벌 유형의 변경은 비행 컨트롤러가 재부팅된 후에 적용됩니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="491"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="491"/>
       <source>Default Mode:</source>
       <translation>기본 모드:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="512"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="512"/>
       <source>Tilt</source>
       <translation>틸트</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="532"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="532"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="552"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraSubComponent.qml" line="552"/>
       <source>Pan</source>
       <translation>팬</translation>
@@ -474,108 +412,90 @@
     <name>APMFlightModesComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
       <source>Flight Mode Settings</source>
       <translation>비행 모드 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="58"/>
       <source> (Channel 5)</source>
       <translation> (채널 5)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="82"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="82"/>
       <source>Flight mode channel:</source>
       <translation>비행 모드 채널:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
       <source>Not assigned</source>
       <translation>할당되지 않음</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
       <source>Channel 1</source>
       <translation>채널 1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="88"/>
       <source>Channel 2</source>
       <translation>채널 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
       <source>Channel 3</source>
       <translation>채널 3</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
       <source>Channel 4</source>
       <translation>채널 4</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="89"/>
       <source>Channel 5</source>
       <translation>채널 5</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
       <source>Channel 6</source>
       <translation>채널</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
       <source>Channel 7</source>
       <translation>채널 7</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="90"/>
       <source>Channel 8</source>
       <translation>채널 8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="106"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="106"/>
       <source>Flight Mode </source>
       <translation>비행 모드 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="127"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="127"/>
       <source>Simple</source>
       <translation>단순</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="142"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="142"/>
       <source>Super-Simple</source>
       <translation>매우 단순</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="168"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="168"/>
       <source>Simple Mode</source>
       <translation>단순 모드</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="185"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="185"/>
       <source>Switch Options</source>
       <translation>옵션 변경</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="213"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="213"/>
       <source>Channel option %1 :</source>
       <translation>채널 옵션 %1 :</translation>
@@ -618,36 +538,30 @@
     <name>APMFlightModesComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="27"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="27"/>
       <source>Flight Mode 1</source>
       <translation>비행 모드 1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="32"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="32"/>
       <source>Flight Mode 2</source>
       <translation>비행 모드 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="37"/>
       <source>Flight Mode 3</source>
       <translation>비행 모드 3</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="42"/>
       <source>Flight Mode 4</source>
       <translation>비행 모드 4</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="47"/>
       <source>Flight Mode 5</source>
       <translation>비행 모드 5</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml" line="52"/>
       <source>Flight Mode 6</source>
       <translation>비행 모드 6</translation>
@@ -657,84 +571,70 @@
     <name>APMHeliComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="71"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="71"/>
       <source>Servo Setup</source>
       <translation>서보 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="76"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="76"/>
       <source>Servo</source>
       <translation>서보</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="77"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="77"/>
       <source>Function</source>
       <translation>기능</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="78"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="78"/>
       <source>Min</source>
       <translation>최소</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="79"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="79"/>
       <source>Max</source>
       <translation>최대</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="80"/>
       <source>Trim</source>
       <translation>트림</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="81"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="81"/>
       <source>Reversed</source>
       <translation>역순</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="83"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="83"/>
       <source>1</source>
       <translation>1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="106"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="106"/>
       <source>2</source>
       <translation>2</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="129"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="129"/>
       <source>3</source>
       <translation>3</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="152"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="152"/>
       <source>4</source>
       <translation>4</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="178"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="178"/>
       <source>Swash Setup</source>
       <translation>스와시(Swash) 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="231"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="231"/>
       <source>Throttle Setup</source>
       <translation>스로틀 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="275"/>
       <location filename="../src/AutoPilotPlugins/APM/APMHeliComponent.qml" line="275"/>
       <source>Collective Curve Setup</source>
       <translation>콜렉티브 커브 설정</translation>
@@ -754,36 +654,30 @@
     <name>APMLightsComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="137"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="137"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="145"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="145"/>
       <source>Channel </source>
       <translation>채널 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="169"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="169"/>
       <source>Light Output Channels</source>
       <translation>조명 출력 채널</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="186"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="186"/>
       <source>Lights 1:</source>
       <translation>조명 1:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="206"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="206"/>
       <source>Lights 2:</source>
       <translation>조명 2:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="226"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponent.qml" line="226"/>
       <source>Brightness Steps:</source>
       <translation>밝기 단계:</translation>
@@ -803,78 +697,65 @@
     <name>APMLightsComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="63"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="64"/>
       <source>Channel 5</source>
       <translation>채널 5</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="65"/>
       <source>Channel 6</source>
       <translation>채널 6</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="66"/>
       <source>Channel 7</source>
       <translation>채널 7</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="67"/>
       <source>Channel 8</source>
       <translation>채널 8</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="68"/>
       <source>Channel 9</source>
       <translation>채널 9</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="69"/>
       <source>Channel 10</source>
       <translation>채널 10</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="70"/>
       <source>Channel 11</source>
       <translation>채널 11</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="71"/>
       <source>Channel 12</source>
       <translation>채널 12</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="72"/>
       <source>Channel 13</source>
       <translation>채널 13</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="73"/>
       <source>Channel 14</source>
       <translation>채널 14</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="89"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="89"/>
       <source>Lights Output 1</source>
       <translation>조명 출력 1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml" line="94"/>
       <source>Lights Output 2</source>
       <translation>조명 출력 2</translation>
@@ -892,7 +773,6 @@
     <name>APMNotSupported</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMNotSupported.qml" line="17"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMNotSupported.qml" line="17"/>
       <source>Not supported</source>
       <translation>지원하지 않음</translation>
     </message>
@@ -901,13 +781,10 @@
     <name>APMPowerComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="50"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="50"/>
       <source>Requires vehicle reboot</source>
       <translation>기체 리부팅이 필요합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="60"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="109"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="109"/>
       <source>Battery 1</source>
@@ -915,13 +792,10 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="80"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="80"/>
       <source>Battery1 monitor:</source>
       <translation>배터리1 모니터:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="94"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="178"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="178"/>
       <source>Reboot vehicle</source>
@@ -930,158 +804,130 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="144"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="193"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="144"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="193"/>
       <source>Battery 2</source>
       <translation>배터리 2</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="164"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="164"/>
       <source>Battery2 monitor:</source>
       <translation>배터리2 모니터:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="227"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="227"/>
       <source>ESC Calibration</source>
       <translation>ESC 캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="246"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="246"/>
       <source>WARNING: Remove props prior to calibration!</source>
       <translation>경고: 캘리브레이션 전 프로펠러를 제거하십시오!</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="254"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="254"/>
       <source>Calibrate</source>
       <translation>캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
       <source>Now perform these steps:</source>
       <translation>다음 단계를 수행하십시오:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="261"/>
       <source>Click Calibrate to start, then:</source>
       <translation>시작하려면 캘리브레이션을 클릭하십시오:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="262"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="262"/>
       <source>- Disconnect USB and battery so flight controller powers down</source>
       <translation>- 비행 컨트롤러의 전원이 꺼지도록 USB와 배터리를 분리하십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="263"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="263"/>
       <source>- Connect the battery</source>
       <translation>- 배터리를 연결하십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="264"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="264"/>
       <source>- The arming tone will be played (if the vehicle has a buzzer attached)</source>
       <translation>- 시동음이 재생됩니다 (버저가 장착되어 있는 경우)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="265"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="265"/>
       <source>- If using a flight controller with a safety button press it until it displays solid red</source>
       <translation>- 안전 버튼이 있는 비행 컨트롤러를 사용중이라면, 빨간 불빛이 나올 때 까지 누르십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="266"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="266"/>
       <source>- You will hear a musical tone then two beeps</source>
       <translation>- 음악이 들린 다음, 두 번의 비프음이 들립니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="267"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="267"/>
       <source>- A few seconds later you should hear a number of beeps (one for each battery cell you’re using)</source>
       <translation>- 몇 초 후에 여러 번의 비프음이 들립니다 (각각의 비프음은 사용 중인 배터리 셀을 나타냅니다)</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="268"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="268"/>
       <source>- And finally a single long beep indicating the end points have been set and the ESC is calibrated</source>
       <translation>- 마지막을 나타내는 한 번의 긴 비프음이 들리고, ESC 캘리브레이션이 완료됩니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="269"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="269"/>
       <source>- Disconnect the battery and power up again normally</source>
       <translation>- 배터리를 분리하고 다시 연결하십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="310"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="310"/>
       <source>Power Module 90A</source>
       <translation>전원 모듈 90A</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="318"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="318"/>
       <source>Power Module HV</source>
       <translation>전원 모듈 HV</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="326"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="326"/>
       <source>3DR Iris</source>
       <translation>3DR Iris</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="334"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="334"/>
       <source>Other</source>
       <translation>기타</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="344"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="344"/>
       <source>Battery monitor:</source>
       <translation>배터리 모니터:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="355"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="355"/>
       <source>Battery capacity:</source>
       <translation>배터리 용량</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="367"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="367"/>
       <source>Minimum arming voltage:</source>
       <translation>최소 시동 전압:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="379"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="379"/>
       <source>Power sensor:</source>
       <translation>전원 센서:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="402"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="402"/>
       <source>Current pin:</source>
       <translation>현재 pin:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="416"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="416"/>
       <source>Voltage pin:</source>
       <translation>전압 pin:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="430"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="534"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="430"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="534"/>
       <source>Voltage multiplier:</source>
@@ -1090,19 +936,15 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="441"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="473"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="441"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="473"/>
       <source>Calculate</source>
       <translation>계산하기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="447"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="447"/>
       <source>Calculate Voltage Multiplier</source>
       <translation>전압 배율 계산하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="457"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="457"/>
       <source>If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. Click the Calculate button for help with calculating a new value.</source>
       <translation>외부 전압계로 측정한 전압과 기체로부터 전송된 전압 차이가 크다면, 전압 배수값을 조정하여 해결할 수 있습니다. 배수값을 계산하는데 필요한 도움말이 필요하다면 계산 버튼을 눌러주십시오.</translation>
@@ -1110,37 +952,30 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="596"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="462"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="596"/>
       <source>Amps per volt:</source>
       <translation>볼트 당 암페어:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="479"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="479"/>
       <source>Calculate Amps per Volt</source>
       <translation>볼트 당 암페어 계산</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="488"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="488"/>
       <source>If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. Click the Calculate button for help with calculating a new value.</source>
       <translation>외부 전압계로 측정한 전류와 기체가 표시한 전류의 차이가 크다면, 볼트 당 암페어 값을 조정하여 해결할 수 있습니다. 배수값을 계산하는데 필요한 도움말이 필요하다면 계산 버튼을 눌러주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="518"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="518"/>
       <source>Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new adjusted voltage multiplier.</source>
       <translation>외부 전압계를 이용해 배터리를 측정하고, 그 값을 아래에 입력하십시오. 계산하기를 눌러 새로 캘리브레이션된 배전압을 설정하십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="527"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="527"/>
       <source>Measured voltage:</source>
       <translation>측정 전압:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="531"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="531"/>
       <source>Vehicle voltage:</source>
       <translation>기체 전압:</translation>
@@ -1148,25 +983,20 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="539"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="601"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="539"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="601"/>
       <source>Calculate And Set</source>
       <translation>계산하고 설정하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="580"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="580"/>
       <source>Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.</source>
       <translation>전류계로 배터리의 전류를 측정하여 아래에 입력해주십시오. 계산하기를 눌러 볼트 당 암페어를 설정하십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="589"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="589"/>
       <source>Measured current:</source>
       <translation>측정 전류:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="593"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="593"/>
       <source>Vehicle current:</source>
       <translation>기체 전류:</translation>
@@ -1186,24 +1016,20 @@
     <name>APMPowerComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="37"/>
       <source>Batt1 monitor</source>
       <translation>배터리1 모니터</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="42"/>
       <source>Batt1 capacity</source>
       <translation>배터리1 용량</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="48"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="48"/>
       <source>Batt2 monitor</source>
       <translation>배터리2 모니터</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="54"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="54"/>
       <source>Batt2 capacity</source>
       <translation>배터리2 용량</translation>
@@ -1226,15 +1052,10 @@
     <name>APMRadioComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="25"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="25"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="26"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="31"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="26"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="31"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
@@ -1247,27 +1068,20 @@
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="31"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="26"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="31"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="41"/>
       <source>Channel %1</source>
       <translation>채널 %1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="30"/>
       <source>Pitch</source>
       <translation>피치</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="35"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="35"/>
       <source>Yaw</source>
       <translation>요</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="40"/>
       <source>Throttle</source>
       <translation>스로틀</translation>
@@ -1277,60 +1091,50 @@
     <name>APMSafetyComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="63"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="63"/>
       <source>Requires vehicle reboot</source>
       <translation>기체 재부팅이 필요합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="76"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="76"/>
       <source>Low action:</source>
       <translation>방전 시 동작:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="83"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="83"/>
       <source>Critical action:</source>
       <translation>전압 임계값 동작:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="90"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="90"/>
       <source>Low voltage threshold:</source>
       <translation>저전압 임계값:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="98"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="98"/>
       <source>Critical voltage threshold:</source>
       <translation>임계전압 임계값:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="105"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="105"/>
       <source>Low mAh threshold:</source>
       <translation>방전 mAh 임계값":</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="112"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="112"/>
       <source>Critical mAh threshold:</source>
       <translation>경고 mAh 임계값:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="133"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="133"/>
       <source>Reboot vehicle</source>
       <translation>기체 재부팅</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="144"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="144"/>
       <source>Battery1 Failsafe Triggers</source>
       <translation>Battery1 안전장치 트리거</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="178"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="178"/>
       <source>Battery2 Failsafe Triggers</source>
       <translation>Battery2 안전장치 트리거</translation>
@@ -1338,26 +1142,20 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="217"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="276"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="217"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="276"/>
       <source>Failsafe Triggers</source>
       <translation>안전장치 트리거</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="235"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="235"/>
       <source>Throttle PWM threshold:</source>
       <translation>스로틀 PWM 경계값:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="249"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="249"/>
       <source>GCS failsafe</source>
       <translation>지상국(GCS) 안전장치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="293"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="363"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="293"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="363"/>
       <source>Ground Station failsafe:</source>
@@ -1366,14 +1164,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="300"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="370"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="300"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="370"/>
       <source>Throttle failsafe:</source>
       <translation>스로틀 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="307"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="380"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="307"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="380"/>
       <source>PWM threshold:</source>
@@ -1381,85 +1175,70 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="313"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="313"/>
       <source>Failsafe Crash Check:</source>
       <translation>안전 설정 충돌 검사:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="342"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="342"/>
       <source>General Failsafe Triggers</source>
       <translation>일반 안전장치 트리거</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="372"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="372"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="372"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="372"/>
       <source>Always RTL</source>
       <translation>항상 시작점으로 돌아오기(RTL)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="373"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="373"/>
       <source>Continue with Mission in Auto Mode</source>
       <translation>Auto 모드에서 미션 계속하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="373"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="373"/>
       <source>Always Land</source>
       <translation>항상 착륙하기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="411"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="411"/>
       <source>GeoFence</source>
       <translation>비행제한구역(GeoFence)</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="426"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="426"/>
       <source>Circle GeoFence enabled</source>
       <translation>원형 지오펜스(GeoFence) 활성화</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="451"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="451"/>
       <source>Altitude GeoFence enabled</source>
       <translation>고도 지오펜스(GeoFence) 활성화</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="476"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="476"/>
       <source>Report only</source>
       <translation>보고만 하기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="487"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="487"/>
       <source>RTL or Land</source>
       <translation>RTL(복귀) 또는 착륙</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="497"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="497"/>
       <source>Max radius:</source>
       <translation>최대 반지름:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="513"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="513"/>
       <source>Max altitude:</source>
       <translation>최대 고도:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="546"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="684"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="546"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="684"/>
       <source>Return to Launch</source>
@@ -1468,14 +1247,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="582"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="698"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="582"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="698"/>
       <source>Return at current altitude</source>
       <translation>현재고도에서 귀환</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="593"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="709"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="593"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="709"/>
       <source>Return at specified altitude:</source>
@@ -1483,30 +1258,25 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="614"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="614"/>
       <source>Loiter above Home for:</source>
       <translation>홈 위에서 정지비행:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="633"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="633"/>
       <source>Land with descent speed:</source>
       <translation>착륙 하강 속도:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="653"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="653"/>
       <source>Final loiter altitude:</source>
       <translation>최종 정지비행 고도:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="736"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="736"/>
       <source>Arming Checks</source>
       <translation>시동 검사</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="767"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="767"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
       <translation>경고: 시동 체크를 비활성화하는 것은 기체의 제어를 잃는 결과를 가져올 수 있습니다.</translation>
@@ -1779,72 +1549,60 @@
     <name>APMSafetyComponentSub</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="71"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="71"/>
       <source>Failsafe Actions</source>
       <translation>안전장치 동작:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="97"/>
       <source>GCS Heartbeat:</source>
       <translation>지상관제소 발진주파수(하트비트):</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="116"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="116"/>
       <source>Leak:</source>
       <translation>누출:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="128"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="128"/>
       <source>Detector Pin:</source>
       <translation>검출 핀:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="166"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="166"/>
       <source>Battery:</source>
       <translation>배터리</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="214"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="214"/>
       <source>EKF:</source>
       <translation>EKF:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="248"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="248"/>
       <source>Pilot Input:</source>
       <translation>파일럿 입력:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="282"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="282"/>
       <source>Internal Temperature:</source>
       <translation>내부 온도:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="315"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="315"/>
       <source>Internal Pressure:</source>
       <translation>내부 압력:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="327"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="327"/>
       <source>Threshold:</source>
       <translation>임계값:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="348"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="348"/>
       <source>Arming Checks</source>
       <translation>시동 검사</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="379"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="379"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
       <translation>경고: 시동 체크를 비활성화하는 것은 기체의 제어를 잃는 결과를 가져올 수 있습니다.</translation>
@@ -1854,18 +1612,15 @@
     <name>APMSafetyComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="34"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="34"/>
       <source>Arming Checks:</source>
       <translation>시동 검사:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="35"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="35"/>
       <source>Enabled</source>
       <translation>활성화됨</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="35"/>
       <source>Some disabled</source>
       <translation>일부 불가</translation>
@@ -1874,44 +1629,35 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="57"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="49"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="57"/>
       <source>Throttle failsafe:</source>
       <translation>스로틀 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="65"/>
       <source>Failsafe Action:</source>
       <translation>안전장치 동작:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="73"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="73"/>
       <source>Failsafe Crash Check:</source>
       <translation>안전장치 추락 검사:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="81"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="81"/>
       <source>Batt1 low failsafe:</source>
       <translation>Batt1 저전압 안전장치:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="87"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="87"/>
       <source>Batt1 critical failsafe:</source>
       <translation>Batt1 중요 안전장치:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="93"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="93"/>
       <source>Batt2 low failsafe:</source>
       <translation>Batt1 방전 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="99"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="99"/>
       <source>Batt2 critical failsafe:</source>
       <translation>Batt2 중요 안전장치:</translation>
@@ -1919,49 +1665,40 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="105"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="115"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="105"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="115"/>
       <source>GeoFence:</source>
       <translation>경계선:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="107"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="107"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="109"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="109"/>
       <source>Altitude</source>
       <translation>고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="110"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="110"/>
       <source>Circle</source>
       <translation>원형</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="110"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="110"/>
       <source>Altitude,Circle</source>
       <translation>고도, 원형</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="117"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="117"/>
       <source>Report only</source>
       <translation>보고만 하기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
       <source>RTL or Land</source>
       <translation>RTL(복귀) 또는 착륙</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="118"/>
       <source>Unknown</source>
       <translation>알 수 없음</translation>
@@ -1969,14 +1706,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="123"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="131"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="123"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="131"/>
       <source>RTL min alt:</source>
       <translation>RTL(복귀) 최소 고도:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="124"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="124"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="132"/>
       <source>current</source>
@@ -2182,60 +1915,50 @@
     <name>APMSafetyComponentSummarySub</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="42"/>
       <source>Arming Checks:</source>
       <translation>시동 검사:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
       <source>Enabled</source>
       <translation>활성화됨</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="43"/>
       <source>Some disabled</source>
       <translation>일부 사용 불가</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="46"/>
       <source>GCS failsafe:</source>
       <translation>지상관제소(GCS) 안전장치</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="50"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="50"/>
       <source>Leak failsafe:</source>
       <translation>누출 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="55"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="55"/>
       <source>Battery failsafe:</source>
       <translation>배터리 안전장치:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="60"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="60"/>
       <source>EKF failsafe:</source>
       <translation>EKF 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="65"/>
       <source>Pilot Input failsafe:</source>
       <translation>파일럿 입력 안전장치:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="69"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="69"/>
       <source>Int. Temperature failsafe:</source>
       <translation>내부 온도 안전장치:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="73"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml" line="73"/>
       <source>Int. Pressure failsafe:</source>
       <translation>내부 압력 안전장치:</translation>
@@ -2245,60 +1968,50 @@
     <name>APMSensorsComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="40"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="40"/>
       <source>If mounted in the direction of flight, select None.</source>
       <translation>비행방향과 같은 방향으로 장착되어 있다면, '해당사항 없음'을 선택하여 주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="41"/>
       <source>Before calibrating make sure rotation settings are correct. </source>
       <translation>캘리브레이션을 시작하기 전에 회전 설정이 올바른지 확인하십시오. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="42"/>
       <source>If the compass or GPS module is mounted in flight direction, leave the default value (None)</source>
       <translation>지자기 센서와 GPS모듈이 비행방향과 일치하게 장착되어있다면, 기본값(None) 을 사용합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="44"/>
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.</source>
       <translation>지자기 센서를 캘리브레이션하기 위해서는 여러자세에서 기체를 돌려주어야합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="45"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="45"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.</source>
       <translation>수평계 센서를 캘리브레이션하기 위해서 기체를 수평한 표면에 놓고 가만히 두십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="46"/>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.</source>
       <translation>가속도 센서 캘리브레이션을 위해 기체를 수평한 표면위에 6개의 면에 맞추어 몇초 간 잡고 가만히 있으십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="47"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press OK.</source>
       <translation>수평을 캘리브레이션하기 위해서 기체를 수평하게 위치하고 확인을 눌러주십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="49"/>
       <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
       <translation>왼쪽의 버튼을 눌러 각 캘리브레이션 과정을 시작해주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="57"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="57"/>
       <source>The calibration for Compass %1 appears to be poor. </source>
       <translation>%1 지자기 센서에 대한 캘리브레이션이 잘못되었습니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="58"/>
       <source>Check the compass position within your vehicle and re-do the calibration.</source>
       <translation>기체 내의 지자기 센서의 위치를 확인하고 캘리브레이션을 다시 시행해주십시오.</translation>
@@ -2306,13 +2019,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="557"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="94"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="557"/>
       <source>Calibrate Compass</source>
       <translation>지자기 센서 캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="100"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="100"/>
       <source>Calibrate Accelerometer</source>
       <translation>가속도 센서 캘리브레이션</translation>
@@ -2320,56 +2030,45 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="106"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="597"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="106"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="597"/>
       <source>Sensor Settings</source>
       <translation>센서 세팅</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="132"/>
       <source>Calibration Cancel</source>
       <translation>캘리브레이션 취소</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="139"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="139"/>
       <source>Accelerometer calibration complete</source>
       <translation>가속도 센서 캘리브레이션 완료</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="142"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="142"/>
       <source>Compass calibration complete</source>
       <translation>지자기 센서 캘리브레이션 완료</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="145"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="145"/>
       <source>Calibration complete</source>
       <translation>캘리브레이션 완료</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="159"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="159"/>
       <source>Sensor Calibration</source>
       <translation>센서 캘리브레이션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="159"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="159"/>
       <source>Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead.</source>
       <translation>와이파이에 의한 센서 캘리브레이션은 신뢰도가 낮을 수 있습니다. 문제 발생시 USB를 이용하여 연결해주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="169"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="169"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
       <translation>취소명령에 대한 기체의 반응 대기 중. 몇초간 대기할 수 있습니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="240"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="330"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="240"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="330"/>
       <source>Compass </source>
@@ -2378,14 +2077,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="241"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="331"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="241"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="331"/>
       <source>(primary</source>
       <translation>(주</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="241"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="331"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="241"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="331"/>
       <source>(secondary</source>
@@ -2394,14 +2089,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="243"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="333"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="243"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="333"/>
       <source>, external</source>
       <translation>, 외부</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="243"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="333"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="243"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="333"/>
       <source>, internal</source>
@@ -2410,13 +2101,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="249"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="344"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="249"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="344"/>
       <source>Use Compass</source>
       <translation>지자기 센서 사용</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="276"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="276"/>
       <source>Shown in the indicator bars is the quality of the calibration for each compass.
 
@@ -2427,7 +2115,6 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="277"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="277"/>
       <source>- Green indicates a well functioning compass.
 </source>
       <translation>- 초록색은 지자기 센서가 잘 작동하고 있음을 의미합니다.
@@ -2435,14 +2122,12 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="278"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="278"/>
       <source>- Yellow indicates a questionable compass or calibration.
 </source>
       <translation>- 노란색은 지자기 센서가 제대로 캘리브레이션되지 않았음을 의미합니다.
 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="279"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="279"/>
       <source>- Red indicates a compass which should not be used.
 
@@ -2454,14 +2139,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="280"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="308"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="280"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="308"/>
       <source>YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.</source>
       <translation>센서 캘리브레이션 후에 기체를 반드시 재부팅 해야 합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="284"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="312"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="284"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="312"/>
       <source>Reboot Vehicle</source>
@@ -2469,156 +2150,130 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="352"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="352"/>
       <source>Orientation:</source>
       <translation>방향:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="399"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="399"/>
       <source>Autopilot Rotation:</source>
       <translation>비행 컨트롤러 회전:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="445"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="445"/>
       <source>This is recommended for vehicles that have only an internal compass and on vehicles where there is significant interference on the compass from the motors, power wires, etc. </source>
       <translation>이것은 내부 지자기 센서만 장착하고 있거나 모터, 전선에 의한 간섭이 심한 경우에 추천합니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="446"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="446"/>
       <source>CompassMot only works well if you have a battery current monitor because the magnetic interference is linear with current drawn. </source>
       <translation>지자기센서는 전류와 자기간섭을 측정하기 때문에 배터리 전류 측정이 설정되어있어야 올바르게 작동할 수 있습니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="447"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="447"/>
       <source>It is technically possible to set-up CompassMot using throttle but this is not recommended.</source>
       <translation>지자기센서를 설정하는것이 가능하나, 사용이 권장되지 않습니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="454"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="454"/>
       <source>Disconnect your props, flip them over and rotate them one position around the frame. </source>
       <translation>프로펠러를 분리하고 뒤집어서 옆의 모터로 한 칸 이동하여 다시 부착해주십시오. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="455"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="455"/>
       <source>In this configuration they should push the copter down into the ground when the throttle is raised.</source>
       <translation>이 구성에서 스로틀이 켜져있을 때 기체를 지면 방향으로 밀어주어야 합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="462"/>
       <source>Secure the copter (perhaps with tape) so that it does not move.</source>
       <translation>기체가 움직이지 않도록 (테이프 등으로) 고정해주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="469"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="469"/>
       <source>Turn on your transmitter and keep throttle at zero.</source>
       <translation>조종기를 켜고 스로틀을 0지점에 놓아주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="476"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="476"/>
       <source>Click Ok to start CompassMot calibration.</source>
       <translation>지자기센서 캘리브레이션을 시작하려면 확인을 눌러주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="498"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="498"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press Ok.</source>
       <translation>지편선을 맞추기 위해서 기체를 수평하게 위치하고 확인 버튼을 눌러주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
       <source>depth</source>
       <translation>깊이</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
       <source>altitude</source>
       <translation>고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="521"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="521"/>
       <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
       <translation>기압 캘리브레이션은 기압값 %1를 현재의 기압값 %2을 0으로 변경합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="522"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="522"/>
       <source>To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.</source>
       <translation>대기속도 센서를 캘리브레이션하기 위해 바람으로부터 보호해주십시오. 캘리브레이션 중 센서를 만지거나 구멍을 막지 않도록 주의하십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="544"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="544"/>
       <source>Accelerometer</source>
       <translation>가속도 센서</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="552"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="552"/>
       <source>Compass</source>
       <translation>지자기 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="557"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="557"/>
       <source>Accelerometer must be calibrated prior to Compass.</source>
       <translation>가속도 센서 캘리브레이션은 지자기 센서 캘리브레이션 전에 완료되어야 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="568"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="568"/>
       <source>Level Horizon</source>
       <translation>수평 조정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="572"/>
       <source>Accelerometer must be calibrated prior to Level Horizon.</source>
       <translation>가속도 센서 캘리브레이션은 수평 센서 캘리브레이션 전에 완료되어야 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
       <source>Cal Baro/Airspeed</source>
       <translation>기압/대기속도 센서 캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="584"/>
       <source>Calibrate Pressure</source>
       <translation>기압 캘리브레이션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="589"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="589"/>
       <source>CompassMot</source>
       <translation>지자기센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="592"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="592"/>
       <source>CompassMot - Compass Motor Interference Calibration</source>
       <translation>지자기 센서 - 지자기 모터 간섭 캘리브레이션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="612"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="612"/>
       <source>Next</source>
       <translation>다음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="620"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="620"/>
       <source>Cancel</source>
       <translation>취소</translation>
@@ -2630,22 +2285,10 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="721"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="730"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="694"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="703"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="712"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="721"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="730"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
       <source>Rotate</source>
       <translation>회전</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="694"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="703"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="712"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="721"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="730"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="739"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="694"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="703"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="712"/>
@@ -2788,13 +2431,10 @@
     <name>APMSensorsComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="34"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="34"/>
       <source>Compass </source>
       <translation>나침반 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
       <source>Setup required</source>
@@ -2802,18 +2442,15 @@
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="42"/>
       <source>Not installed</source>
       <translation>설치되지 않음</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="47"/>
       <source>Accelerometer(s)</source>
       <translation>가속도 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml" line="48"/>
       <source>Ready</source>
       <translation>준비완료</translation>
@@ -2824,13 +2461,10 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="123"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="122"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="123"/>
       <source>Load Vehicle Default Parameters</source>
       <translation>기본 기체 파라미터 불러오기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="188"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponent.qml" line="188"/>
       <source>Select your vehicle to load the default parameters:</source>
       <translation>기본 파라미터를 업로드하기 위해 기체를 선택하십시오</translation>
@@ -2852,12 +2486,10 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <name>APMSubFrameComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="44"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="44"/>
       <source>Frame Type</source>
       <translation>프레임 유형</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="49"/>
       <source>Firmware Version</source>
       <translation>펌웨어 버전</translation>
@@ -2865,13 +2497,10 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="55"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="50"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="55"/>
       <source>Unknown</source>
       <translation>알 수 없음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="54"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml" line="54"/>
       <source>Git Revision</source>
       <translation>Git 리비전</translation>
@@ -2881,12 +2510,10 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <name>APMSubMotorComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="113"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="113"/>
       <source>Reverse Motor Direction</source>
       <translation>모터 방향 전환하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="160"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="160"/>
       <source>Moving the sliders will cause the motors to spin. Make sure the motors and propellers are clear from obstructions! The direction of the motor rotation is dependent on how the three phases of the motor are physically connected to the ESCs (if any two wires are swapped, the direction of rotation will flip). Because we cannot guarantee what order the phases are connected, the motor directions must be configured in software. When a slider is moved DOWN, the thruster should push air/water TOWARD the cable entering the housing. Click the checkbox to reverse the direction of the corresponding thruster.
 
@@ -2896,7 +2523,6 @@ Blue Robotics thrusters are lubricated by water and are not designed to be run i
 Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설계되지 않았습니다. 그렇지만 추진기를 낮은 속도로 짧은 시간 동엔 대기에서 테스트해도 됩니다. Blue Robotics를 대기에서 장시간 작동시키면, 과열과 영구 손상을 초래할 수 있습니다. 물 윤활이 없다면 Blue Robotics 추진기는 대기에서 작동할 때 불쾌한 소음을 낼 수도 있지만, 정상입니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="198"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSubMotorComponent.qml" line="198"/>
       <source>Slide this switch to arm the vehicle and enable the motor test (CAUTION!)</source>
       <translation>이 스위치를 밀면 기체가 시동되고, 모터 테스트가 활성화됩니다 (주의!).</translation>
@@ -2919,174 +2545,145 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>APMTuningComponentCopter</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="127"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="127"/>
       <source>Basic Tuning</source>
       <translation>기본 세부설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="151"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="151"/>
       <source>Roll/Pitch Sensitivity</source>
       <translation>롤/피치 민감도</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="156"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="156"/>
       <source>Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy</source>
       <translation>기체가 느리게 반응한다면 오른쪽으로, 너무 빠르게 반응하면 왼쪽으로 밀어주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="184"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="184"/>
       <source>Climb Sensitivity</source>
       <translation>상승률 민감도</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="189"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="189"/>
       <source>Slide to the right to climb more aggressively or slide to the left to climb more gently</source>
       <translation>더 빠르게 상승하게 하려면 오른쪽으로, 더 느리게 상승하게 하려면 왼쪽으로 밀어주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="217"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="217"/>
       <source>RC Roll/Pitch Feel</source>
       <translation>RC 롤 / 피치 느낌</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="222"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="222"/>
       <source>Slide to the left for soft control, slide to the right for crisp control</source>
       <translation>부드러운 제어를 위헤서 왼쪽으로, 정확한 제어를 위해서 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="247"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="247"/>
       <source>Spin While Armed</source>
       <translation>시동을 걸 때 회전</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="252"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="252"/>
       <source>Adjust the amount the motors spin to indicate armed</source>
       <translation>시동을 걸 때 모터 회전속도 조절</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="277"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="277"/>
       <source>Minimum Thrust</source>
       <translation>최소 추력</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="282"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="282"/>
       <source>Adjust the minimum amount of thrust require for the vehicle to move</source>
       <translation>기체 이동에 요구되는 최소 추력 조절하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="286"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="286"/>
       <source>Warning: This setting should be higher than &apos;Spin While Armed&apos;</source>
       <translation>경고: 이 설정은 반드시 &apos;시동 시 회전&apos;값보다 높아야 합니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="322"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="322"/>
       <source>AutoTune</source>
       <translation>자동 튜닝</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="343"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="343"/>
       <source>Axes to AutoTune:</source>
       <translation>자동튜닝할 축:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="352"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="352"/>
       <source>Channel for AutoTune switch:</source>
       <translation>AutoTune 스위치 채널:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>None</source>
       <translation>없음</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 7</source>
       <translation>채널 7</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 8</source>
       <translation>채널 8</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 9</source>
       <translation>채널 9</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 10</source>
       <translation>채널 10</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 11</source>
       <translation>채널 11</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="358"/>
       <source>Channel 12</source>
       <translation>채널 12</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="382"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="382"/>
       <source>In Flight Tuning</source>
       <translation>비행중 세부설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="406"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="406"/>
       <source>RC Channel 6 Option (Tuning):</source>
       <translation>RC 채널 6 옵션 (Tuning):</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="424"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="424"/>
       <source>Min:</source>
       <translation>최소: </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="436"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="436"/>
       <source>Max:</source>
       <translation>최대:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Pitch</source>
       <translation>피치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml" line="464"/>
       <source>Yaw</source>
       <translation>요</translation>
@@ -3096,18 +2693,15 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>APMTuningComponentSub</name>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="43"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="43"/>
       <source>Attitude Controller Parameters</source>
       <translation>자세제어 파라미터</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="51"/>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="51"/>
       <source>Position Controller Parameters</source>
       <translation>위치제어 파라미터</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/APM/APMTuningComponentSub.qml" line="58"/>
       <source>Waypoint navigation parameters</source>
       <translation>경로지점 네비게이션 파라미터</translation>
@@ -3135,18 +2729,15 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>AirframeComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="68"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="68"/>
       <source>Custom Airframe Config</source>
       <translation>사용자지정 기체 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="78"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="78"/>
       <source>Your vehicle is using a custom airframe configuration. </source>
       <translation>이 기체는 사용자정의 기체 설정을 가지고 있습니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="79"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="79"/>
       <source>This configuration can only be modified through the Parameter Editor.
 
@@ -3157,37 +2748,30 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="80"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="80"/>
       <source>If you want to reset your airframe configuration and select a standard configuration, click &apos;Reset&apos; above.</source>
       <translation>기체의 구성을 표준 기체 구성으로 재설정하고 싶다면 &apos;재설정&apos; 을 클릭하십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="105"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="105"/>
       <source>Clicking “Apply” will save the changes you have made to your airframe configuration.&lt;br&gt;&lt;br&gt;All vehicle parameters other than Radio Calibration will be reset.&lt;br&gt;&lt;br&gt;Your vehicle will also be restarted in order to complete the process.</source>
       <translation>"Apply (적용)"를 클릭하면 기체 프레임 구성에 대한 변경 사항이 저장됩니다. &lt;br&gt;&lt;br&gt;라디오 캘리브레이션을 제외한 모든 기체 파라미터는 초기화됩니다. &lt;br&gt;&lt;br&gt; 기체는 이 과정을 완료하기 위해 재부팅됩니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="122"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="122"/>
       <source>You&apos;ve connected a %1.</source>
       <translation>%1에 연결했습니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="123"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="123"/>
       <source>Airframe is not set.</source>
       <translation>기체가 설정되지 않았습니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="124"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="124"/>
       <source>To change this configuration, select the desired airframe below then click “Apply and Restart”.</source>
       <translation>이 설정을 완료하기 위해서는 아래에서 알맞은 기체를 선택하여 "적용 및 재부팅"을 클릭하십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="132"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="134"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="134"/>
       <source>Apply and Restart</source>
@@ -3216,12 +2800,10 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>AirframeComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="23"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="23"/>
       <source>System ID</source>
       <translation>시스템 ID</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="27"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="27"/>
       <source>Airframe type</source>
       <translation>기체 타입</translation>
@@ -3229,31 +2811,25 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="28"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="32"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="28"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="32"/>
       <source>Setup required</source>
       <translation>설정이 필요합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="31"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="31"/>
       <source>Vehicle</source>
       <translation>기체</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="36"/>
       <source>Firmware Version</source>
       <translation>펌웨어 버전</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="37"/>
       <source>Unknown</source>
       <translation>알 수 없음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponentSummary.qml" line="41"/>
       <source>Custom Fw. Ver.</source>
       <translation>커스텀 펌웨어 버전</translation>
@@ -4202,78 +3778,65 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>CameraComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="88"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="88"/>
       <source>Vehicle must be restarted for changes to take effect.</source>
       <translation>변경사항을 적용하기 위해서는 기체를 재시작해야합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="91"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="91"/>
       <source>Apply and Restart</source>
       <translation>적용하고 재시작</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="102"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="102"/>
       <source>Camera Trigger Settings</source>
       <translation>카메라 트리거 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="125"/>
       <source>Trigger mode</source>
       <translation>트리거 모드</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="140"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="140"/>
       <source>Trigger interface</source>
       <translation>트리거 인터페이스</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="154"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="154"/>
       <source>Time Interval</source>
       <translation>시간 간격</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="169"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="169"/>
       <source>Distance Interval</source>
       <translation>거리 간격</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="186"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="186"/>
       <source>Hardware Settings</source>
       <translation>하드웨어 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="199"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="199"/>
       <source>AUX Pin Assignment</source>
       <translation>AUX 핀 분배</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="258"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="258"/>
       <source>Trigger Pin Polarity</source>
       <translation>트리거 핀 극성</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="289"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="289"/>
       <source>Trigger Period</source>
       <translation>트리거 주기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="305"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="305"/>
       <source>Camera Test</source>
       <translation>카메라 테스트</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="310"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponent.qml" line="310"/>
       <source>Trigger Camera</source>
       <translation>카메라 트리거하기</translation>
@@ -4293,36 +3856,30 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <name>CameraComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="25"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="25"/>
       <source>Trigger interface</source>
       <translation>트리거 인터페이스</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="30"/>
       <source>Trigger mode</source>
       <translation>트리거 모드</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="36"/>
       <source>Time interval</source>
       <translation>시간 간격</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="42"/>
       <source>Distance interval</source>
       <translation>거리 간격</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="48"/>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="48"/>
       <source>AUX pins</source>
       <translation>AUX 핀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="54"/>
       <location filename="../src/AutoPilotPlugins/PX4/CameraComponentSummary.qml" line="54"/>
       <source>AUX pin polarity</source>
       <translation>AUX 핀 극성</translation>
@@ -6216,14 +5773,10 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="49"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="29"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="49"/>
       <source>Mode switch</source>
       <translation>모드 스위치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="30"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="50"/>
       <source>Setup required</source>
@@ -6231,12 +5784,10 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="35"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="35"/>
       <source>Flight Mode %1 </source>
       <translation>비행 모드 %1 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="53"/>
       <source>Position Ctl switch</source>
       <translation>위치 제어 스위치</translation>
@@ -6245,20 +5796,15 @@ Blue Robotics 추진기는 물로 윤활되고 대기에서 작동하도록 설�
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="54"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="62"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="54"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="58"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="62"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="57"/>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="57"/>
       <source>Loiter switch</source>
       <translation>정지비행 스위치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="61"/>
       <location filename="../src/AutoPilotPlugins/PX4/FlightModesComponentSummary.qml" line="61"/>
       <source>Return switch</source>
       <translation>귀환 스위치</translation>
@@ -9439,60 +8985,50 @@ Is this really what you want?</source>
     <name>PX4AdvancedFlightModes</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="32"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="32"/>
       <source>FLIGHT MODES</source>
       <translation>비행모드</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="35"/>
       <source>Assign Flight Modes to radio control channels and adjust the thresholds for triggering them.</source>
       <translation>비행모드를 라디오 채널에 지정하고 모드 설정을 위한 임계값을 지정해주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="36"/>
       <source>Assign Flight Modes to radio control channels and adjust the thresholds for triggering them. </source>
       <translation>비행모드를 라디오 채널에 지정하고 모드 설정을 위한 임계값을 지정해주십시오. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="37"/>
       <source>You can assign multiple flight modes to a single channel. </source>
       <translation>하나의 채널에 여러개의 비행모드를 설정할 수 있습니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="38"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="38"/>
       <source>Turn your radio control on to test switch settings. </source>
       <translation>스위치 세팅을 테스트하기 위해 라디오를 켜십시오. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="39"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="39"/>
       <source>The following channels: </source>
       <translation>다음 채널: </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="40"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="40"/>
       <source> are not available for Flight Modes since they are already in use for other functions.</source>
       <translation> 다른 기능에 사용중이므로 비행모드에 사용할 수 없습니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="42"/>
       <source>Manual/Main</source>
       <translation>메뉴얼 / 메인</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="43"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="43"/>
       <source>Stabilized/Main</source>
       <translation>수평유지모드/주모드</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="44"/>
       <source>The pilot has full control of the aircraft, no assistance is provided. </source>
       <translation>파일럿이 기체를 조종해야 하며 보조장치가 없습니다 </translation>
@@ -9500,211 +9036,175 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="45"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="45"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="47"/>
       <source>The Main mode switch must always be assigned to a channel in order to fly</source>
       <translation>비행을 위해서는 주 모드 스위치에 채널이 할당되어야합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="46"/>
       <source>The pilot has full control of the aircraft, only attitude is stabilized. </source>
       <translation>파일럿이 기체를 조종하며 고도를 안정화 합니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="49"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="49"/>
       <source>Assist</source>
       <translation>보조</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="50"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="50"/>
       <source>If Position Control is placed on a separate channel from the Main mode channel, an additional &apos;Assist&apos; mode is added to the Main switch. </source>
       <translation>주 모드 채널과 Position Control이 다른 채널에 할당되어있을 경우, &apos;Assist&apos; 모드가 주 메인 스위치에 추가됩니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="51"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="51"/>
       <source>In order for the Attitude Control/Position Control switch to be active, the Main switch must be in Assist mode.</source>
       <translation>자세제어/위치제어 스위치가 활성화되기 위해서는 메인 스위치가 Assist mode에 있어야 합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="53"/>
       <source>Auto</source>
       <translation>자동</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="54"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="54"/>
       <source>If Loiter is placed on a separate channel from the Main mode channel, an additional &apos;Auto&apos; mode is added to the Main switch. </source>
       <translation>주 모드 채널과 Loiter모드가 다른 채널에 할당되어있을 경우, &apos;Assist&apos; 모드가 주 메인 스위치에 추가됩니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="55"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="55"/>
       <source>In order for the Mission/Loiter switch to be active, the Main switch must be in Auto mode.</source>
       <translation>Mission/Loiter 스위치가 활성화되기 위해서는 메인 스위치가 Assist mode에 있어야 합니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="57"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="57"/>
       <source>Stabilized</source>
       <translation>수평유지모드</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="58"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="58"/>
       <source>Acro</source>
       <translation>Acro</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="59"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="59"/>
       <source>Roll/pitch angles and rudder deflection are controlled. </source>
       <translation>롤/피치 각과 러더 조향각이 제어됩니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="60"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="60"/>
       <source>The angular rates are controlled, but not the attitude. </source>
       <translation>각속도는 제어되지만 고도는 제어되지 않습니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="62"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="62"/>
       <source>Altitude</source>
       <translation>고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="63"/>
       <source>Roll stick controls banking, pitch stick altitude </source>
       <translation>롤 스틱은 뱅킹을 제어하고 피치는 고도를 제어합니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
       <source>Throttle stick controls speed. </source>
       <translation>스로틀 스틱으로 속도를 제어합니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="65"/>
       <source>With no stick inputs the plane holds heading, but drifts off in wind. </source>
       <translation>스틱 인풋이 없으면 비행기는 방향을 유지하지만, 바람에 의해 흐를 수 있습니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
       <source>Same as Stablized mode except that Throttle controls climb/sink rate. Centered Throttle holds altitude steady. </source>
       <translation>스로틀이 상승률/하강률을 제어하며 이외에는 안정모드와 같습니다. 스로틀이 가운데에 있을 때 고도를 유지합니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="68"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="68"/>
       <source>Position Control</source>
       <translation>위치 제어</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="69"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="69"/>
       <source>Roll stick controls banking, pitch stick controls altitude. </source>
       <translation>롤 스틱은 뱅킹을 제어하고, 피치 스틱은 고도를 제어합니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="70"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="70"/>
       <source>Throttle stick controls speed.</source>
       <translation>스토틀 스틱으로 속도를 제어합니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="71"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="71"/>
       <source>With no stick inputs the plane flies a straight line, even in wind. </source>
       <translation>스틱인풋이 없어도 기체가 바람의 영향하에도 직선으로 비행합니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <source>Roll and Pitch sticks control sideways and forward speed </source>
       <translation>롤과 피치 스틱은 측방향 및 전방향 속도를 제어합니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="73"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="73"/>
       <source>Throttle stick controls climb / sink rade. </source>
       <translation>스로틀 스틱은 상승 / 하강 속도를 제어합니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="75"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="75"/>
       <source>Mission</source>
       <translation>미션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="76"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="76"/>
       <source>The aircraft obeys the programmed mission sent by QGroundControl. </source>
       <translation>기체는 QGroundControl으로부터 전송된 미션을 따릅니다. </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="78"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="78"/>
       <source>Hold</source>
       <translation>정지</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <source>The aircraft flies in a circle around the current position at the current altitude. </source>
       <translation>현재 고도와 위치에서 비행체가 원을 그리며 비행합니다 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
       <source>The multirotor hovers at the current position and altitude. </source>
       <translation>멀티로터가 현재 고도와 위치에서 호버합니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
       <source>Return</source>
       <translation>복귀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="83"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="83"/>
       <source>The vehicle returns to the home position, loiters and then lands. </source>
       <translation>기체가 홈 위치로 귀환하여, 정지비행후 착륙합니다 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="85"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="85"/>
       <source>Offboard</source>
       <translation>오프보드</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <source>All flight control aspects are controlled by an offboard system.</source>
       <translation>모든 비행제어 요소가 외부 시스템(offboard)에 의해 관리됩니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="159"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="159"/>
       <source>Flight Mode Config is disabled since you have a Joystick enabled.</source>
       <translation>조이스틱이 활성화되어 비행모드 설정이 비활성화되었습니다</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="194"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="194"/>
       <source>Use Single Channel Mode Selection</source>
       <translation>모드 설정을 위해 하나의 채널을 사용</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="204"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="204"/>
       <source>Generate Thresholds</source>
       <translation>임계값을 생성합니다</translation>
@@ -9972,15 +9472,10 @@ Is this really what you want?</source>
     <name>PX4RadioComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="26"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="26"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="27"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="32"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="27"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="32"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="37"/>
@@ -9990,24 +9485,20 @@ Is this really what you want?</source>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="31"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="31"/>
       <source>Pitch</source>
       <translation>피치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="36"/>
       <source>Yaw</source>
       <translation>요</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="41"/>
       <source>Throttle</source>
       <translation>스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="46"/>
       <source>Flaps</source>
       <translation>플랩</translation>
@@ -10016,20 +9507,15 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="58"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="53"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="58"/>
       <source>Disabled</source>
       <translation>비활성화</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="52"/>
       <source>Aux1</source>
       <translation>Aux1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml" line="57"/>
       <source>Aux2</source>
       <translation>Aux2</translation>
@@ -10039,24 +9525,20 @@ Is this really what you want?</source>
     <name>PX4SimpleFlightModes</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="74"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="74"/>
       <source>Flight Mode Settings</source>
       <translation>비행 모드 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="97"/>
       <source>Mode channel:</source>
       <translation>모드 채널:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="118"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="118"/>
       <source>Flight Mode %1</source>
       <translation>비행 모드 %1</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="138"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="138"/>
       <source>Switch Settings</source>
       <translation>스위치 세팅</translation>
@@ -10079,42 +9561,35 @@ Is this really what you want?</source>
     <name>PX4TuningComponentCopter</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="46"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="46"/>
       <source>Hover Throttle</source>
       <translation>호버 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="47"/>
       <source>Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center.</source>
       <translation>스로틀의 중간에서 호버링할 수 있도록 스로틀을 조정해주십시오. 스로틀 중앙보다 아래에서 호버링한다면 왼쪽으로 밀어주십시오. 스로틀 중앙보다 위쪽에서 호버링한다면 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="55"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="55"/>
       <source>Manual minimum throttle</source>
       <translation>최소 메뉴얼 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="56"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="56"/>
       <source>Slide to the left to start the motors with less idle power. Slide to the right if descending in manual flight becomes unstable.</source>
       <translation>모터를 더 적은 대기파워로 시작하려면 왼쪽으로 슬라이드를 밀어주십시오. 수동 비행에서의 하강이 불안정해진다면 슬라이드를 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
       <source>Pitch</source>
       <translation>피치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml" line="77"/>
       <source>Yaw</source>
       <translation>요</translation>
@@ -10124,30 +9599,25 @@ Is this really what you want?</source>
     <name>PX4TuningComponentPlane</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="45"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="45"/>
       <source>Cruise throttle</source>
       <translation>순항 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="46"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="46"/>
       <source>This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%.</source>
       <translation>이 스로틀 세팅은 순항 속도를 결정하기 위해 필요합니다. 대부분의 비행기는 50-60%를 필요로 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
       <source>Roll</source>
       <translation>롤</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
       <source>Pitch</source>
       <translation>피치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml" line="67"/>
       <source>Yaw</source>
       <translation>요</translation>
@@ -10157,72 +9627,60 @@ Is this really what you want?</source>
     <name>PX4TuningComponentVTOL</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="28"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="28"/>
       <source>Plane Roll sensitivity</source>
       <translation>고정익 롤 민감도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="29"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="29"/>
       <source>Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy.</source>
       <translation>롤을 더 민첩하고 정확하게 제어하려면 왼쪽으로 밀어주세요. 롤이 진동하거나 지나치게 민감하다면 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="37"/>
       <source>Plane Pitch sensitivity</source>
       <translation>고정익 피치 민감도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="38"/>
       <source>Slide to the left to make pitch control faster and more accurate. Slide to the right if pitch oscillates or is too twitchy.</source>
       <translation>피치를 더 빠르고 정확하게 제어하려면 왼쪽으로 밀어주십시오. 반대로 피치가 진동하거나 지나치게 민감하다면 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="46"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="46"/>
       <source>Plane Cruise throttle</source>
       <translation>고정익 순항 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="47"/>
       <source>This is the throttle setting required to achieve the desired cruise speed. Most planes need 50-60%.</source>
       <translation>이 스로틀 세팅은 순항 속도를 결정하기 위해 필요합니다. 대부분의 비행기는 50-60%를 필요로 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="55"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="55"/>
       <source>Hover Throttle</source>
       <translation>호버 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="56"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="56"/>
       <source>Adjust throttle so hover is at mid-throttle. Slide to the left if hover is lower than throttle center. Slide to the right if hover is higher than throttle center.</source>
       <translation>스로틀의 중간에서 호버링할 수 있도록 스로틀을 조정해주십시오. 스로틀 중앙보다 아래에서 호버링한다면 왼쪽으로 밀어주십시오. 스로틀 중앙보다 위쪽에서 호버링한다면 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="64"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="64"/>
       <source>Hover manual minimum throttle</source>
       <translation>정지비행 메뉴얼 최소 스로틀</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="65"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="65"/>
       <source>Slide to the left to start the motors with less idle power. Slide to the right if descending in manual flight becomes unstable.</source>
       <translation>모터를 더 적은 대기파워로 시작하려면 왼쪽으로 슬라이드를 밀어주십시오. 수동 비행에서의 하강이 불안정해진다면 슬라이드를 오른쪽으로 밀어주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="73"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="73"/>
       <source>Plane Mission mode sensitivity</source>
       <translation>고정익 미션 모드 민감도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="74"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml" line="74"/>
       <source>Slide to the left to make position control more accurate and more aggressive. Slide to the right to make flight in mission mode smoother and less twitchy.</source>
       <translation>위치 제어를 더 정확하고 적극적으로 하려면 왼쪽으로 슬라이드를 밀어주십시오. 미션 모드에서 움직임을 더 부드럽고 덜 민감하게 하려면 오른쪽으로 슬라이드를 밀어주십시오.</translation>
@@ -11046,28 +10504,20 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="95"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="91"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="92"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="95"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
       <source>ESC Calibration</source>
       <translation>ESC 캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="91"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="91"/>
       <source>%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.</source>
       <translation>%1이(가) 현재 펌웨어 버전으로 ESC 캘리브레이션을 할 수 없습니다. 새로운 버전의 펌웨어로 업그레이드가 필요합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="92"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="92"/>
       <source>%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.</source>
       <translation>%1이(가) 현재 펌웨어 버전으로 ESC 캘리브레이션을 할 수 없습니다. %1의 업그레이드가 필요합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
       <source>Performing calibration. This will take a few seconds..</source>
       <translation>캘리브레이션을 수행합니다. 수 초가 소요될 수 있습니다..</translation>
@@ -11075,79 +10525,65 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="94"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="97"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="94"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="97"/>
       <source>ESC Calibration failed</source>
       <translation>ESC 캘리브레이션에 실패하였습니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="95"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="95"/>
       <source>Calibration complete. You can disconnect your battery now if you like.</source>
       <translation>캘리브레이션 완료. 배터리 전원을 분리해도 됩니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
       <source>WARNING: Props must be removed from vehicle prior to performing ESC calibration.</source>
       <translation>경고: ESC 캘리브레이션을 하기 전 프로펠러가 기체에서 분리되어야합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="96"/>
       <source> Connect the battery now and calibration will begin.</source>
       <translation> 배터리를 연결하면 캘리브레이션을 시작합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="97"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="97"/>
       <source>You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again.</source>
       <translation>ESC 캘리브레이션 전에 반드시 배터리를 분리해야 합니다. 배터리를 분리하고 다시 시도해주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="119"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="119"/>
       <source>Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.</source>
       <translation>전압계를 이용하여 배터리 전압을 측정하고 아래 값과 비교해주십시오. 새로운 전압 배수를 적용하기 위해서 계산을 눌러주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="128"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="128"/>
       <source>Measured voltage:</source>
       <translation>측정 전압:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="132"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="132"/>
       <source>Vehicle voltage:</source>
       <translation>기체 전압:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="135"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="135"/>
       <source>Voltage divider:</source>
       <translation>전압 분배기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="177"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="177"/>
       <source>Measure current draw using an external current meter and enter the value below. Click Calculate to set the new amps per volt value.</source>
       <translation>외부 전압계를 이용하여 전류를 측정하고 아래에 값을 입력해주십시오. 새로 볼트 당 암페어를 설정하기 위해서 계산하기를 눌러주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="186"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="186"/>
       <source>Measured current:</source>
       <translation>측정 전류:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="190"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="190"/>
       <source>Vehicle current:</source>
       <translation>기체 전류:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="193"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="193"/>
       <source>Amps per volt:</source>
       <translation>볼트 당 암페어:</translation>
@@ -11156,62 +10592,50 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="198"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="302"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="330"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="198"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="302"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="330"/>
       <source>Calculate</source>
       <translation>계산하기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="218"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="218"/>
       <source>Battery</source>
       <translation>배터리</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="226"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="226"/>
       <source>Number of Cells (in Series)</source>
       <translation>셀의 수(직렬)</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="253"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="253"/>
       <source>Full Voltage (per cell)</source>
       <translation>전체 전압 (셀 당)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="264"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="264"/>
       <source>Battery Max:</source>
       <translation>최대 배터리 용량</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="273"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="273"/>
       <source>Empty Voltage (per cell)</source>
       <translation>방전 전압 (셀 당)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="284"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="284"/>
       <source>Battery Min:</source>
       <translation>최소 배터리 용량:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="292"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="292"/>
       <source>Voltage divider</source>
       <translation>전압 분배기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="303"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="303"/>
       <source>Calculate Voltage Divider</source>
       <translation>전압 분배기 계산</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="314"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="314"/>
       <source>If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. </source>
       <translation>만약 외부 전류계로 측정된 전압이 기체가 표시한 전압과 차이가 많이 난다면, 배전압(voltage multiplier)을 조정해서 해결할 수 있습니다. </translation>
@@ -11219,151 +10643,125 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="315"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="343"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="315"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="343"/>
       <source>Click the Calculate button for help with calculating a new value.</source>
       <translation>새로운 값을 계산하기 위해 계산하기 버튼을 눌러주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="320"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="320"/>
       <source>Amps per volt</source>
       <translation>볼트 당 암페어</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="331"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="331"/>
       <source>Calculate Amps per Volt</source>
       <translation>볼트 당 암페어 계산</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="342"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="342"/>
       <source>If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. </source>
       <translation>만약 외부 전류계로 측정된 전류가 기체가 표시한 전류와 차이가 많이 난다면, 볼트 당 암페어를 조정하여 해결할 수 있습니다. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="351"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="351"/>
       <source>ESC PWM Minimum and Maximum Calibration</source>
       <translation>ESC PWM 최소, 최대값 캘리브레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="361"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="361"/>
       <source>WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</source>
       <translation>경고: 프로펠러는 ESC 캘리브레이션을 수행하기 전에 반드시 분리되어야 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="366"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="366"/>
       <source>You must use USB connection for this operation.</source>
       <translation>이 작업은 반드시 USB가 연결되어야 합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="370"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="370"/>
       <source>Calibrate</source>
       <translation>캘리브레이션 시작</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="379"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="379"/>
       <source>Show UAVCAN Settings</source>
       <translation>UAVCAN 설정 보기</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="386"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="386"/>
       <source>UAVCAN Bus Configuration</source>
       <translation>UAVCAN 버스(Bus) 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="402"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="402"/>
       <source>Change required restart</source>
       <translation>변경사항이 재부팅을 필요로 합니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="410"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="410"/>
       <source>UAVCAN Motor Index and Direction Assignment</source>
       <translation>UAVCAN 모터 인덱스 및 방향 지정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="421"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="421"/>
       <source>WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</source>
       <translation>경고: 프로펠러는 UAVCAN ESC 설정을 시작하기 전에 반드시 분리되어야 합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="427"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="427"/>
       <source>ESC parameters will only be accessible in the editor after assignment.</source>
       <translation>ESC 파라미터는 ESC 배치 이후 에디터에서만 접근할 수 있습니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="433"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="433"/>
       <source>Start the process, then turn each motor into its turn direction, in the order of their motor indices.</source>
       <translation>프로세스를 시작한 다음, 모터의 순서대로 각 모터를 회전 방향으로 돌리십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="438"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="438"/>
       <source>Start Assignment</source>
       <translation>배치 시작</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="444"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="444"/>
       <source>Stop Assignment</source>
       <translation>배치 정지</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="453"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="453"/>
       <source>Show Advanced Settings</source>
       <translation>고급 설정 표시</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="459"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="459"/>
       <source>Advanced Power Settings</source>
       <translation>고급 전원 설정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="471"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="471"/>
       <source>Voltage Drop on Full Load (per cell)</source>
       <translation>최대부하시 전압하강 (셀 당)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="485"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="485"/>
       <source>Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full </source>
       <translation>배터리 전압은 높은 스로틀에서 더 낮게 측정됩니다. 최소 스로틀과 최대 스로틀일때 전압차이를 입력해주십시오 </translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="486"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="486"/>
       <source>throttle, divided by the number of battery cells. Leave at the default if unsure. </source>
       <translation>스로틀을 배터리 셀 수로 나눈 값. 확실하지 않다면 기본값으로 남겨두십시오. </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="487"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="487"/>
       <source>If this value is set too high, the battery might be deep discharged and damaged.</source>
       <translation>이 값이 지나치게 높을경우, 배터리가 과방전되어 손상될 수 있습니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="495"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="495"/>
       <source>Compensated Minimum Voltage:</source>
       <translation>캘리브레이션된 최소 전압:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="499"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="499"/>
       <source> V</source>
       <translation> V</translation>
@@ -11383,18 +10781,15 @@ Is this really what you want?</source>
     <name>PowerComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="37"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="37"/>
       <source>Battery Full</source>
       <translation>배터리 충전이 완료되었습니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="42"/>
       <source>Battery Empty</source>
       <translation>배터리 방전됨</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponentSummary.qml" line="47"/>
       <source>Number of Cells</source>
       <translation>셀 수</translation>
@@ -13226,14 +12621,10 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <name>SafetyComponent</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="130"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="130"/>
       <source>Low Battery Failsafe Trigger</source>
       <translation>Battery1 안전장치 트리거</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="154"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="218"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="264"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="154"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="218"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="264"/>
@@ -13242,156 +12633,130 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="164"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="164"/>
       <source>Battery Warn Level:</source>
       <translation>배터리 경고 레벨:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="173"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="173"/>
       <source>Battery Failsafe Level:</source>
       <translation>배터리 안정장치 레벨:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="182"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="182"/>
       <source>Battery Emergency Level:</source>
       <translation>배터리 비상 레벨:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="194"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="194"/>
       <source>RC Loss Failsafe Trigger</source>
       <translation>RC 연결 안전장치 트리거</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="228"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="228"/>
       <source>RC Loss Timeout:</source>
       <translation>RC 연결 타임아웃</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="240"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="240"/>
       <source>Data Link Loss Failsafe Trigger</source>
       <translation>데이터링크 안전장치 트리거</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="274"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="274"/>
       <source>Data Link Loss Timeout:</source>
       <translation>데이터링크 시간초과:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="286"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="286"/>
       <source>Geofence Failsafe Trigger</source>
       <translation>경계선(면) 안전장치 트리거</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="310"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="310"/>
       <source>Action on breach:</source>
       <translation>위반시 행동:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="321"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="321"/>
       <source>Max Radius:</source>
       <translation>최대 반지름:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="334"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="334"/>
       <source>Max Altitude:</source>
       <translation>최대 고도:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="349"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="349"/>
       <source>Return Home Settings</source>
       <translation>귀환 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="374"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="374"/>
       <source>Climb to altitude of:</source>
       <translation>고도로 상승:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="383"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="383"/>
       <source>Return home, then:</source>
       <translation>귀환, 다음:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="392"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="392"/>
       <source>Land immediately</source>
       <translation>즉시 착륙</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="402"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="402"/>
       <source>Loiter and do not land</source>
       <translation>정지비행후 착륙하지 않기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="412"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="412"/>
       <source>Loiter and land after specified time</source>
       <translation>정지비행 후 정의된 시간 후 착륙</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="418"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="418"/>
       <source>Loiter Time</source>
       <translation>정지비행 시간</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="428"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="428"/>
       <source>Loiter Altitude</source>
       <translation>정지비행 고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="441"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="441"/>
       <source>Land Mode Settings</source>
       <translation>착륙모드 설정</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="467"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="467"/>
       <source>Landing Descent Rate:</source>
       <translation>착륙 하강률:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="479"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="479"/>
       <source>Disarm After:</source>
       <translation>비활성화:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="494"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="494"/>
       <source>Vehicle Telemetry Logging</source>
       <translation>기체 텔레메트리 로깅</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="519"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="519"/>
       <source>Enable telemetry logging to vehicle storage</source>
       <translation>기체 저장 장치에 원격 측정 로깅 사용 가능</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="537"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="537"/>
       <source>Hardware in the Loop Simulation</source>
       <translation>Hardware in the Loop 시뮬레이션</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="563"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponent.qml" line="563"/>
       <source>HITL Enabled:</source>
       <translation>HITL 활성화</translation>
@@ -13411,66 +12776,55 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <name>SafetyComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="28"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="28"/>
       <source>Low Battery Failsafe</source>
       <translation>배터리방전 안전장치</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="33"/>
       <source>RC Loss Failsafe</source>
       <translation>RC 연결 안전장치</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="38"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="38"/>
       <source>RC Loss Timeout</source>
       <translation>RC 연결 타임아웃</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="43"/>
       <source>Data Link Loss Failsafe</source>
       <translation>데이터링크 안전장치</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="48"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="48"/>
       <source>RTL Climb To</source>
       <translation>RTL 상승</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="53"/>
       <source>RTL, Then</source>
       <translation>RTL, 실행후</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="55"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="55"/>
       <source>Land immediately</source>
       <translation>즉시 착륙</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="57"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="57"/>
       <source>Loiter and do not land</source>
       <translation>정지비행 후 착륙하지 않기</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="58"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="58"/>
       <source>Loiter and land after specified time</source>
       <translation>정지비행 후 정의된 시간 후 착륙</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="63"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="63"/>
       <source>Loiter Alt</source>
       <translation>정지비행 고도</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/PX4/SafetyComponentSummary.qml" line="69"/>
       <source>Land Delay</source>
       <translation>착륙 딜레이</translation>
@@ -13536,14 +12890,10 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <name>SensorsComponentSummary</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="29"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="29"/>
       <source>Compass 0</source>
       <translation>지자기 센서 0</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="30"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
@@ -13556,34 +12906,25 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="42"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="30"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="36"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="52"/>
       <source>Ready</source>
       <translation>준비완료</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="34"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="34"/>
       <source>Compass 1</source>
       <translation>지자기 센서 1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="40"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="40"/>
       <source>Compass 2</source>
       <translation>지자기 센서 2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="46"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="46"/>
       <source>Gyro</source>
       <translation>자이로스코프 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummary.qml" line="51"/>
       <source>Accelerometer</source>
       <translation>가속도 센서</translation>
@@ -13593,15 +12934,10 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <name>SensorsComponentSummaryFixedWing</name>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="32"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="32"/>
       <source>Compass:</source>
       <translation>지자기 센서:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="33"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="38"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="33"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
@@ -13614,27 +12950,20 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="33"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="38"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="43"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="49"/>
       <source>Ready</source>
       <translation>준비완료</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="37"/>
       <source>Gyro:</source>
       <translation>자이로스코프 센서:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="42"/>
       <source>Accelerometer:</source>
       <translation>가속도 센서:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml" line="47"/>
       <source>Airspeed:</source>
       <translation>대기속도:</translation>
@@ -13645,13 +12974,10 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="41"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="42"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="41"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="42"/>
       <source>If the orientation is in the direction of flight, select ROTATION_NONE.</source>
       <translation>만일 보드의 방향이 기체의 비행 방향이면 ROTATION_NONE을 선택해주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="44"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="44"/>
       <source>For Compass calibration you will need to rotate your vehicle through a number of positions.
 
@@ -13659,7 +12985,6 @@ Click Ok to start calibration.</source>
       <translation>지자기 센서를 캘리브레이션하기 위해서 여러 위치에서 기체를 돌려주어야합니다.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="45"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="45"/>
       <source>For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.
 
@@ -13670,7 +12995,6 @@ Click Ok to start calibration.</source>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="46"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="46"/>
       <source>For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.
 
 Click Ok to start calibration.</source>
@@ -13680,54 +13004,45 @@ Click Ok to start calibration.</source>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="47"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="47"/>
       <source>To level the horizon you need to place the vehicle in its level flight position and press OK.</source>
       <translation>수평을 캘리브레이션하기 위해서 기체를 수평하게 위치하고 확인을 눌러주십시오</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="48"/>
       <source>For Airspeed calibration you will need to keep your airspeed sensor out of any wind and then blow across the sensor. Do not touch the sensor or obstruct any holes during the calibration.</source>
       <translation>대기속도를 캘리브레이션하기 위해서 대기속도 센서를 바람으로부터 보호하고 센서를 불어주십시오. 캘리브레이션 중 센서를 만지거나 가리지 말아주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="50"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="50"/>
       <source>Start the individual calibration steps by clicking one of the buttons to the left.</source>
       <translation>왼쪽의 버튼을 눌러 각 캘리브레이션 과정을 시작해주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="134"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="134"/>
       <source>Compass Calibration Complete</source>
       <translation>지자기 센서 캘리브레이션 완료</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="139"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="139"/>
       <source>Calibration Cancel</source>
       <translation>캘리브레이션 취소</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <source>Sensor Calibration</source>
       <translation>센서 캘리브레이션</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="147"/>
       <source>Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead.</source>
       <translation>와이파이에 의한 센서 캘리브레이션은 신뢰도가 낮을 수 있습니다. 연결을 해제하고 직접 USB 연결을 통해 캘리브레이션을 수행해야 합니다.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="155"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="155"/>
       <source>Waiting for Vehicle to response to Cancel. This may take a few seconds.</source>
       <translation>취소명령에대한 기체의 반응 대기중. 몇초간 대기할 수 있습니다</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="204"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="204"/>
       <source>Set autopilot orientation before calibrating.</source>
       <translation>캘리브레이션을 시작하기 전에 비행 컨트롤러의 방향을 설정해주십시오.</translation>
@@ -13735,79 +13050,65 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="210"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="278"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="210"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="278"/>
       <source>Autopilot Orientation:</source>
       <translation>비행 컨트롤러 방향:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="255"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="255"/>
       <source>Make sure to reboot the vehicle prior to flight.</source>
       <translation>비행 전 반드시 기체를 재부팅해주십시오.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="256"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="256"/>
       <source>Set your compass orientations below and the make sure to reboot the vehicle prior to flight.</source>
       <translation>아래에서 지자기 센서 방향을 선택하고 반드시 비행전 기체를 재부팅해주십시오.</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="260"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="260"/>
       <source>Reboot Vehicle</source>
       <translation>기체 재부팅</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="297"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="297"/>
       <source>External Compass Orientation:</source>
       <translation>외부 지자기 센서 방향:</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="324"/>
       <source>External Compass 1 Orientation:</source>
       <translation>외부 지자기 센서 1 방향:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="352"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="352"/>
       <source>Compass 2 Orientation</source>
       <translation>지자기 센서 2 방향</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="389"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="389"/>
       <source>Compass</source>
       <translation>지자기 센서</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="396"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="396"/>
       <source>Calibrate Compass</source>
       <translation>지자기 센서 캘리브레이션 시작</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="403"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="403"/>
       <source>Gyroscope</source>
       <translation>자이로스코프 센서</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="410"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="410"/>
       <source>Calibrate Gyro</source>
       <translation>자이로스코프 센서 캘리브레이션 시작</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="417"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="417"/>
       <source>Accelerometer</source>
       <translation>가속도 센서</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="424"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="424"/>
       <source>Calibrate Accelerometer</source>
       <translation>가속도 센서 캘리브레이션 시작</translation>
@@ -13815,38 +13116,30 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="431"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="439"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="431"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="439"/>
       <source>Level Horizon</source>
       <translation>수평 조정</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="446"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="446"/>
       <source>Airspeed</source>
       <translation>대기속도</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="457"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="457"/>
       <source>Calibrate Airspeed</source>
       <translation>대기속도 캘리브레이션 시작</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="464"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="464"/>
       <source>Cancel</source>
       <translation>취소</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="473"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="473"/>
       <source>Next</source>
       <translation>다음</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="481"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="486"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="481"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="486"/>
       <source>Set Orientations</source>
@@ -13859,22 +13152,10 @@ Click Ok to start calibration.</source>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="588"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="597"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="606"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="561"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="570"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="579"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="588"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="597"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="606"/>
       <source>Rotate</source>
       <translation>회전</translation>
     </message>
     <message>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="561"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="570"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="579"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="588"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="597"/>
-      <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="606"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="561"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="570"/>
       <location filename="../src/AutoPilotPlugins/PX4/SensorsSetup.qml" line="579"/>
