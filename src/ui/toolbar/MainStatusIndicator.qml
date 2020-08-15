@@ -190,13 +190,23 @@ RowLayout {
 
                 QGCButton {
                     Layout.alignment:   Qt.AlignHCenter
-                    text:               _armed ?  qsTr("Disarm") : qsTr("Arm")
+                    text:               _armed ?  qsTr("Disarm") : (forceArm ? qsTr("Force Arm") : qsTr("Arm"))
+
+                    property bool forceArm: false
+
+                    onPressAndHold: forceArm = true
+
                     onClicked: {
                         if (_armed) {
                             mainWindow.disarmVehicleRequest()
                         } else {
-                            mainWindow.armVehicleRequest()
+                            if (forceArm) {
+                                mainWindow.forceArmVehicleRequest()
+                            } else {
+                                mainWindow.armVehicleRequest()
+                            }
                         }
+                        forceArm = false
                         mainWindow.hideIndicatorPopup()
                     }
                 }

@@ -27,8 +27,6 @@ Rectangle {
     property int _firstColumn:      ScreenTools.defaultFontPixelWidth * 12
     property int _secondColumn:     ScreenTools.defaultFontPixelWidth * 30
 
-    ExclusiveGroup { id: linkGroup }
-
     QGCPalette {
         id:                 qgcPal
         colorGroupEnabled:  enabled
@@ -65,7 +63,7 @@ Rectangle {
                     anchors.horizontalCenter:   settingsColumn.horizontalCenter
                     width:                      _linkRoot.width * 0.5
                     text:                       object.name
-                    exclusiveGroup:             linkGroup
+                    autoExclusive:              true
                     visible:                    !object.dynamic
                     onClicked: {
                         checked = true
