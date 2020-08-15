@@ -38,7 +38,6 @@
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
         <file alias="CameraPageWidget.qml">src/FlightMap/Widgets/CameraPageWidget.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
-        <file alias="CustomCommandWidget.qml">src/ViewWidgets/CustomCommandWidget.qml</file>
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
         <file alias="ESP8266ComponentSummary.qml">src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
@@ -187,7 +186,6 @@
         <file alias="QGroundControl/Controls/VehicleRotationCal.qml">src/QmlControls/VehicleRotationCal.qml</file>
         <file alias="QGroundControl/Controls/VehicleSummaryRow.qml">src/QmlControls/VehicleSummaryRow.qml</file>
         <file alias="QGroundControl/Controls/VerticalFactValueGrid.qml">src/QmlControls/VerticalFactValueGrid.qml</file>
-        <file alias="QGroundControl/Controls/ViewWidget.qml">src/ViewWidgets/ViewWidget.qml</file>
         <file alias="QGroundControl/Controls/VTOLLandingPatternMapVisual.qml">src/PlanView/VTOLLandingPatternMapVisual.qml</file>
         <file alias="QGroundControl/FactControls/AltitudeFactTextField.qml">src/FactSystem/FactControls/AltitudeFactTextField.qml</file>
         <file alias="QGroundControl/FactControls/FactBitmask.qml">src/FactSystem/FactControls/FactBitmask.qml</file>
