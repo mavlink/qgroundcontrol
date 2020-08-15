@@ -273,7 +273,7 @@
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="ValuePageWidget.qml">src/FlightMap/Widgets/ValuePageWidget.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
-        <file alias="VibrationPageWidget.qml">src/FlightMap/Widgets/VibrationPageWidget.qml</file>
+        <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
         <file alias="VideoPageWidget.qml">src/FlightMap/Widgets/VideoPageWidget.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>

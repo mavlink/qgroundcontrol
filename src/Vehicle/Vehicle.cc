@@ -1266,9 +1266,9 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
     _gpsFactGroup.lon()->setRawValue(gpsRawInt.lon * 1e-7);
     _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
     _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
-    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
-    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
-    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.cog / 100.0);
+    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? qQNaN() : gpsRawInt.eph / 100.0);
+    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? qQNaN() : gpsRawInt.epv / 100.0);
+    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? qQNaN() : gpsRawInt.cog / 100.0);
     _gpsFactGroup.lock()->setRawValue(gpsRawInt.fix_type);
 }
 
@@ -1338,7 +1338,7 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
     _groundSpeedFact.setRawValue((double)highLatency.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency.climb_rate / 10.0);
     _headingFact.setRawValue((double)highLatency.heading * 2.0);
-    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeRelativeFact.setRawValue(qQNaN());
     _altitudeAMSLFact.setRawValue(coordinate.altitude);
 
     _windFactGroup.speed()->setRawValue((double)highLatency.airspeed / 5.0);
@@ -1385,7 +1385,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _groundSpeedFact.setRawValue((double)highLatency2.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency2.climb_rate / 10.0);
     _headingFact.setRawValue((double)highLatency2.heading * 2.0);
-    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeRelativeFact.setRawValue(qQNaN());
     _altitudeAMSLFact.setRawValue(highLatency2.altitude);
 
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
@@ -1399,8 +1399,8 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _gpsFactGroup.lon()->setRawValue(highLatency2.longitude * 1e-7);
     _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7)));
     _gpsFactGroup.count()->setRawValue(0);
-    _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
-    _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
+    _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? qQNaN() : highLatency2.eph / 10.0);
+    _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? qQNaN() : highLatency2.epv / 10.0);
 
     struct failure2Sensor_s {
         HL_FAILURE_FLAG         failureBit;
@@ -4375,9 +4375,9 @@ VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
     _addFact(&_verticalSpeedFact,   _verticalSpeedFactName);
 
     // Start out as not available "--.--"
-    _directionFact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _speedFact.setRawValue          (std::numeric_limits<float>::quiet_NaN());
-    _verticalSpeedFact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
+    _directionFact.setRawValue      (qQNaN());
+    _speedFact.setRawValue          (qQNaN());
+    _verticalSpeedFact.setRawValue  (qQNaN());
 }
 
 const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
@@ -4404,9 +4404,9 @@ VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
     _addFact(&_clipCount3Fact,  _clipCount3FactName);
 
     // Start out as not available "--.--"
-    _xAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _zAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _xAxisFact.setRawValue(qQNaN());
+    _yAxisFact.setRawValue(qQNaN());
+    _zAxisFact.setRawValue(qQNaN());
 }
 
 const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
@@ -4424,9 +4424,9 @@ VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
     _addFact(&_temperature3Fact,       _temperature3FactName);
 
     // Start out as not available "--.--"
-    _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
+    _temperature1Fact.setRawValue      (qQNaN());
+    _temperature2Fact.setRawValue      (qQNaN());
+    _temperature3Fact.setRawValue      (qQNaN());
 }
 
 const char* VehicleClockFactGroup::_currentTimeFactName = "currentTime";
@@ -4477,12 +4477,12 @@ VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
     _addFact(&_yawRateFact,     _yawRateFactName);
 
     // Start out as not available "--.--"
-    _rollFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _pitchFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yawFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rollRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _pitchRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yawRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rollFact.setRawValue(qQNaN());
+    _pitchFact.setRawValue(qQNaN());
+    _yawFact.setRawValue(qQNaN());
+    _rollRateFact.setRawValue(qQNaN());
+    _pitchRateFact.setRawValue(qQNaN());
+    _yawRateFact.setRawValue(qQNaN());
 }
 
 const char* VehicleDistanceSensorFactGroup::_rotationNoneFactName =     "rotationNone";
@@ -4521,15 +4521,15 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _addFact(&_rotationPitch270Fact,    _rotationPitch270FactName);
 
     // Start out as not available "--.--"
-    _rotationNoneFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw45Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw135Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw180Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw225Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationPitch90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationPitch270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationNoneFact.setRawValue(qQNaN());
+    _rotationYaw45Fact.setRawValue(qQNaN());
+    _rotationYaw135Fact.setRawValue(qQNaN());
+    _rotationYaw90Fact.setRawValue(qQNaN());
+    _rotationYaw180Fact.setRawValue(qQNaN());
+    _rotationYaw225Fact.setRawValue(qQNaN());
+    _rotationYaw270Fact.setRawValue(qQNaN());
+    _rotationPitch90Fact.setRawValue(qQNaN());
+    _rotationPitch270Fact.setRawValue(qQNaN());
 }
 
 const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";
