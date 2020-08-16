@@ -109,7 +109,7 @@ Rectangle {
                     visible:    true
 
                     XYPoint { x: 0; y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude) }
-                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontralDistanceUnits(_missionDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
+                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
                 }
             }
 
