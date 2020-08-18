@@ -363,8 +363,8 @@ VideoManager::grabImage(const QString& imageFile)
 //-----------------------------------------------------------------------------
 double VideoManager::aspectRatio()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Primary AR: " << pInfo->aspectRatio();
             return pInfo->aspectRatio();
@@ -377,8 +377,8 @@ double VideoManager::aspectRatio()
 //-----------------------------------------------------------------------------
 double VideoManager::thermalAspectRatio()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->thermalStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Thermal AR: " << pInfo->aspectRatio();
             return pInfo->aspectRatio();
@@ -390,8 +390,8 @@ double VideoManager::thermalAspectRatio()
 //-----------------------------------------------------------------------------
 double VideoManager::hfov()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
         if(pInfo) {
             return pInfo->hfov();
         }
@@ -402,8 +402,8 @@ double VideoManager::hfov()
 //-----------------------------------------------------------------------------
 double VideoManager::thermalHfov()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->thermalStreamInstance();
         if(pInfo) {
             return pInfo->aspectRatio();
         }
@@ -415,8 +415,8 @@ double VideoManager::thermalHfov()
 bool
 VideoManager::hasThermal()
 {
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->thermalStreamInstance();
         if(pInfo) {
             return true;
         }
@@ -436,8 +436,8 @@ bool
 VideoManager::autoStreamConfigured()
 {
 #if defined(QGC_GST_STREAMING)
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
         if(pInfo) {
             return !pInfo->uri().isEmpty();
         }
@@ -614,8 +614,8 @@ VideoManager::_updateSettings(unsigned id)
 
     //-- Auto discovery
 
-    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+    if(_activeVehicle && _activeVehicle->cameraManager()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->cameraManager()->currentStreamInstance();
         if(pInfo) {
             if (id == 0) {
                 qCDebug(VideoManagerLog) << "Configure primary stream:" << pInfo->uri();
@@ -646,7 +646,7 @@ VideoManager::_updateSettings(unsigned id)
                 }
             }
             else if (id == 1) { //-- Thermal stream (if any)
-                QGCVideoStreamInfo* pTinfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+                QGCVideoStreamInfo* pTinfo = _activeVehicle->cameraManager()->thermalStreamInstance();
                 if (pTinfo) {
                     qCDebug(VideoManagerLog) << "Configure secondary stream:" << pTinfo->uri();
                     switch(pTinfo->type()) {
@@ -788,20 +788,20 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
 {
     if(_activeVehicle) {
         disconnect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
-        if(_activeVehicle->dynamicCameras()) {
-            QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
+        if(_activeVehicle->cameraManager()) {
+            QGCCameraControl* pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
             if(pCamera) {
                 pCamera->stopStream();
             }
-            disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
+            disconnect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
         }
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
         connect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
-        if(_activeVehicle->dynamicCameras()) {
-            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
-            QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
+        if(_activeVehicle->cameraManager()) {
+            connect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
+            QGCCameraControl* pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
             if(pCamera) {
                 pCamera->resumeStream();
             }

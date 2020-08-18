@@ -625,7 +625,7 @@ public:
     Q_PROPERTY(QVariantList         modeIndicators          READ modeIndicators                                         NOTIFY modeIndicatorsChanged)
     Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
-    Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
+    Q_PROPERTY(QGCCameraManager*    cameraManager           READ cameraManager                                          NOTIFY cameraManagerChanged)
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
@@ -771,7 +771,6 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
-    Q_INVOKABLE void triggerCamera();
     Q_INVOKABLE void sendPlan(QString planFile);
 
     /// Used to check if running current version is equal or higher than the one being compared.
@@ -1130,7 +1129,7 @@ public:
     bool capabilitiesKnown      () const { return _capabilityBitsKnown; }
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
-    QGCCameraManager*           dynamicCameras      () { return _cameras; }
+    QGCCameraManager*           cameraManager       () { return _cameraManager; }
     QString                     hobbsMeter          ();
 
     /// The vehicle is responsible for making the initial request for the Plan.
@@ -1190,7 +1189,7 @@ signals:
     void defaultHoverSpeedChanged       (double hoverSpeed);
     void firmwareTypeChanged            ();
     void vehicleTypeChanged             ();
-    void dynamicCamerasChanged          ();
+    void cameraManagerChanged           ();
     void hobbsMeterChanged              ();
     void capabilitiesKnownChanged       (bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
@@ -1457,7 +1456,7 @@ private:
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 
-    QGCCameraManager* _cameras;
+    QGCCameraManager* _cameraManager = nullptr;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;

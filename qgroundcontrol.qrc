@@ -36,7 +36,6 @@
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/ui/AppSettings.qml</file>
         <file alias="BluetoothSettings.qml">src/ui/preferences/BluetoothSettings.qml</file>
-        <file alias="CameraPageWidget.qml">src/FlightMap/Widgets/CameraPageWidget.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="DebugWindow.qml">src/ui/preferences/DebugWindow.qml</file>
         <file alias="ESP8266Component.qml">src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
@@ -117,7 +116,6 @@
         <file alias="QGroundControl/Controls/ModeSwitchDisplay.qml">src/QmlControls/ModeSwitchDisplay.qml</file>
         <file alias="QGroundControl/Controls/MultiRotorMotorDisplay.qml">src/QmlControls/MultiRotorMotorDisplay.qml</file>
         <file alias="QGroundControl/Controls/OfflineMapButton.qml">src/QmlControls/OfflineMapButton.qml</file>
-        <file alias="QGroundControl/Controls/PageView.qml">src/QmlControls/PageView.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditor.qml">src/QmlControls/ParameterEditor.qml</file>
         <file alias="QGroundControl/Controls/ParameterEditorDialog.qml">src/QmlControls/ParameterEditorDialog.qml</file>
         <file alias="QGroundControl/Controls/PIDTuning.qml">src/QmlControls/PIDTuning.qml</file>
@@ -222,7 +220,6 @@
         <file alias="QGroundControl/FlightDisplay/GuidedAltitudeSlider.qml">src/FlightDisplay/GuidedAltitudeSlider.qml</file>
         <file alias="QGroundControl/FlightDisplay/GuidedToolStripAction.qml">src/FlightDisplay/GuidedToolStripAction.qml</file>
         <file alias="QGroundControl/FlightDisplay/MultiVehicleList.qml">src/FlightDisplay/MultiVehicleList.qml</file>
-        <file alias="QGroundControl/FlightDisplay/MultiVehiclePanel.qml">src/FlightDisplay/MultiVehiclePanel.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightBatteryCheck.qml">src/FlightDisplay/PreFlightBatteryCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightGPSCheck.qml">src/FlightDisplay/PreFlightGPSCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightRCCheck.qml">src/FlightDisplay/PreFlightRCCheck.qml</file>
@@ -246,6 +243,7 @@
         <file alias="QGroundControl/FlightMap/MissionItemIndicatorDrag.qml">src/FlightMap/MapItems/MissionItemIndicatorDrag.qml</file>
         <file alias="QGroundControl/FlightMap/MissionItemView.qml">src/FlightMap/MapItems/MissionItemView.qml</file>
         <file alias="QGroundControl/FlightMap/MissionLineView.qml">src/FlightMap/MapItems/MissionLineView.qml</file>
+        <file alias="QGroundControl/FlightMap/PhotoVideoControl.qml">src/FlightMap/Widgets/PhotoVideoControl.qml</file>
         <file alias="QGroundControl/FlightMap/PlanMapItems.qml">src/FlightMap/MapItems/PlanMapItems.qml</file>
         <file alias="QGroundControl/FlightMap/PolygonEditor.qml">src/FlightMap/MapItems/PolygonEditor.qml</file>
         <file alias="QGroundControl/FlightMap/QGCArtificialHorizon.qml">src/FlightMap/Widgets/QGCArtificialHorizon.qml</file>
@@ -271,10 +269,8 @@
         <file alias="TcpSettings.qml">src/ui/preferences/TcpSettings.qml</file>
         <file alias="test.qml">src/test.qml</file>
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
-        <file alias="ValuePageWidget.qml">src/FlightMap/Widgets/ValuePageWidget.qml</file>
         <file alias="VehicleSummary.qml">src/VehicleSetup/VehicleSummary.qml</file>
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
-        <file alias="VideoPageWidget.qml">src/FlightMap/Widgets/VideoPageWidget.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
     </qresource>

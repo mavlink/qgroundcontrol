@@ -53,6 +53,29 @@ void FactGroup::_setupTimer()
     }
 }
 
+bool FactGroup::factExists(const QString& name)
+{
+    if (name.contains(".")) {
+        QStringList parts = name.split(".");
+        if (parts.count() != 2) {
+            qWarning() << "Only single level of hierarchy supported";
+            return false;
+        }
+
+        FactGroup * factGroup = getFactGroup(parts[0]);
+        if (!factGroup) {
+            qWarning() << "Unknown FactGroup" << parts[0];
+            return false;
+        }
+
+        return factGroup->factExists(parts[1]);
+    }
+
+    QString camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
+
+    return _nameToFactMap.contains(camelCaseName);
+}
+
 Fact* FactGroup::getFact(const QString& name)
 {
     if (name.contains(".")) {

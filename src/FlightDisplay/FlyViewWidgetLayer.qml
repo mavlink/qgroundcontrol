@@ -71,18 +71,59 @@ Item {
         rallyPointController:   _rallyPointController
     }
 
+    Row {
+        id:                 multiVehiclePanelSelector
+        anchors.margins:    _toolsMargin
+        anchors.top:        parent.top
+        anchors.right:      parent.right
+        width:              _rightPanelWidth
+        spacing:            ScreenTools.defaultFontPixelWidth
+        visible:            QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.flyView.showMultiVehicleList
+
+        property bool showSingleVehiclePanel:  !visible || singleVehicleRadio.checked
+
+        QGCMapPalette { id: mapPal; lightColors: true }
+
+        QGCRadioButton {
+            id:             singleVehicleRadio
+            text:           qsTr("Single")
+            checked:        true
+            textColor:      mapPal.text
+        }
+
+        QGCRadioButton {
+            text:           qsTr("Multi-Vehicle")
+            textColor:      mapPal.text
+        }
+    }
+
+    MultiVehicleList {
+        anchors.margins:    _toolsMargin
+        anchors.top:        multiVehiclePanelSelector.bottom
+        anchors.right:      parent.right
+        width:              _rightPanelWidth
+        height:             parent.height - y - _toolsMargin
+        visible:            !multiVehiclePanelSelector.showSingleVehiclePanel
+    }
+
     FlyViewInstrumentPanel {
         id:                         instrumentPanel
         anchors.margins:            _toolsMargin
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
+        anchors.top:                multiVehiclePanelSelector.visible ? multiVehiclePanelSelector.bottom : parent.top
         anchors.right:              parent.right
         width:                      _rightPanelWidth
         spacing:                    _toolsMargin
-        visible:                    QGroundControl.corePlugin.options.flyView.showInstrumentPanel
+        visible:                    QGroundControl.corePlugin.options.flyView.showInstrumentPanel && multiVehiclePanelSelector.showSingleVehiclePanel
         availableHeight:            parent.height - y - _toolsMargin
 
         property real rightInset: visible ? parent.width - x : 0
+    }
+
+    PhotoVideoControl {
+        anchors.margins:        _toolsMargin
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right:          parent.right
+        width:                  _rightPanelWidth
     }
 
     TelemetryValuesBar {
