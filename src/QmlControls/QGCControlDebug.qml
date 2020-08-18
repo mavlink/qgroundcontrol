@@ -11,7 +11,7 @@ import QtQuick 2.12
 
 Rectangle {
     id:             _root
-    border.width:   borderColor === undefined ? 0 : 1
+    border.width:   1
     border.color:   borderColor
     color:          "transparent"
 

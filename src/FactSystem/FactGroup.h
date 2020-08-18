@@ -32,10 +32,15 @@ public:
     Q_PROPERTY(QStringList factNames        READ factNames      CONSTANT)
     Q_PROPERTY(QStringList factGroupNames   READ factGroupNames CONSTANT)
 
+    /// @ return true: if the fact exists in the group
+    Q_INVOKABLE bool factExists(const QString& name);
+
     /// @return Fact for specified name, NULL if not found
+    /// Note: Requesting a fact which doesn't exists is considered an internal error and will spit out a qWarning
     Q_INVOKABLE Fact* getFact(const QString& name);
 
     /// @return FactGroup for specified name, NULL if not found
+    /// Note: Requesting a fact group which doesn't exists is considered an internal error and will spit out a qWarning
     Q_INVOKABLE FactGroup* getFactGroup(const QString& name);
 
     /// Turning on live updates will allow value changes to flow through as they are received.

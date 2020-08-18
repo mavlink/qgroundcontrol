@@ -12,6 +12,7 @@ InstrumentSwipeView         1.0 InstrumentSwipeView.qml
 MapFitFunctions             1.0 MapFitFunctions.qml
 MapLineArrow                1.0 MapLineArrow.qml
 MapScale                    1.0 MapScale.qml
+PhotoVideoControl           1.0 PhotoVideoControl.qml
 QGCArtificialHorizon        1.0 QGCArtificialHorizon.qml
 QGCAttitudeHUD              1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget           1.0 QGCAttitudeWidget.qml

@@ -26,15 +26,11 @@ Column {
     id:         _root
     spacing:    ScreenTools.defaultFontPixelHeight * 0.25
 
-    property var    missionController
-    property real   availableHeight
+    property var missionController
 
     Loader {
-        width: parent.width
+        width:  parent.width
         source: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue ?
                     "qrc:/qml/QGCInstrumentWidgetAlternate.qml" : "qrc:/qml/QGCInstrumentWidget.qml"
-
-        property real maxHeight:    availableHeight - y
-        property bool showValues:   !QGroundControl.airspaceManager.airspaceVisible
     }
 }

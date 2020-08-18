@@ -97,14 +97,9 @@ public:
     QmlComponentInfo* pQmlTest                  = nullptr;
 #endif
 
-    QmlComponentInfo*   cameraPageWidgetInfo    = nullptr;
-    QmlComponentInfo*   videoPageWidgetInfo     = nullptr;
-    QmlComponentInfo*   vibrationPageWidgetInfo = nullptr;
-
     QGCOptions*         defaultOptions          = nullptr;
     QVariantList        settingsList;
     QVariantList        analyzeList;
-    QVariantList        instrumentPageWidgetList;
 
     QmlObjectListModel _emptyCustomMapItems;
 };
@@ -132,79 +127,6 @@ void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
     qmlRegisterUncreatableType<QGCCorePlugin>       ("QGroundControl", 1, 0, "QGCCorePlugin",       "Reference only");
     qmlRegisterUncreatableType<QGCOptions>          ("QGroundControl", 1, 0, "QGCOptions",          "Reference only");
     qmlRegisterUncreatableType<QGCFlyViewOptions>   ("QGroundControl", 1, 0, "QGCFlyViewOptions",   "Reference only");
-
-    //-- Handle Camera and Video Changes
-    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &QGCCorePlugin::_activeVehicleChanged);
-}
-
-void QGCCorePlugin::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if(activeVehicle != _activeVehicle) {
-        if(_activeVehicle) {
-            disconnect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
-        }
-        if(_dynamicCameras) {
-            disconnect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
-            _dynamicCameras = nullptr;
-        }
-        _activeVehicle = activeVehicle;
-        if(_activeVehicle) {
-            connect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_dynamicCamerasChanged()
-{
-    if(_currentCamera) {
-        disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        _currentCamera = nullptr;
-    }
-    if(_activeVehicle) {
-        _dynamicCameras = _activeVehicle->dynamicCameras();
-        if(_dynamicCameras) {
-            connect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_currentCameraChanged()
-{
-    if(_dynamicCameras) {
-        QGCCameraControl* cp = _dynamicCameras->currentCameraInstance();
-        if(_currentCamera) {
-            disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        }
-        if(_currentCamera != cp) {
-            _currentCamera = cp;
-            connect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_autoStreamChanged()
-{
-    _resetInstrumentPages();
-    emit instrumentPagesChanged();
-}
-
-void QGCCorePlugin::_resetInstrumentPages()
-{
-    if(_p->cameraPageWidgetInfo) {
-        _p->cameraPageWidgetInfo->deleteLater();
-        _p->cameraPageWidgetInfo = nullptr;
-    }
-#if defined(QGC_GST_STREAMING)
-    if(_p->videoPageWidgetInfo) {
-        _p->videoPageWidgetInfo->deleteLater();
-        _p->videoPageWidgetInfo = nullptr;
-    }
-#endif
-    if(_p->vibrationPageWidgetInfo) {
-        _p->vibrationPageWidgetInfo->deleteLater();
-        _p->vibrationPageWidgetInfo = nullptr;
-    }
-    _p->instrumentPageWidgetList.clear();
 }
 
 QVariantList &QGCCorePlugin::settingsPages()
@@ -264,26 +186,6 @@ QVariantList &QGCCorePlugin::settingsPages()
 #endif
     }
     return _p->settingsList;
-}
-
-QVariantList& QGCCorePlugin::instrumentPages()
-{
-    if (!_p->cameraPageWidgetInfo) {
-        _p->cameraPageWidgetInfo    = new QmlComponentInfo(tr("Camera"),    QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
-#if defined(QGC_GST_STREAMING)
-        if(!_currentCamera || !_currentCamera->autoStream()) {
-            //-- Video Page Widget only available if using manual video streaming
-            _p->videoPageWidgetInfo = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
-        }
-#endif
-
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->cameraPageWidgetInfo));
-#if defined(QGC_GST_STREAMING)
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->videoPageWidgetInfo));
-#endif
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
-    }
-    return _p->instrumentPageWidgetList;
 }
 
 QVariantList& QGCCorePlugin::analyzePages()
