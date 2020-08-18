@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef QGC_LOGGING_CATEGORY_H
-#define QGC_LOGGING_CATEGORY_H
+#pragma once
 
 #include <QLoggingCategory>
 #include <QStringList>
@@ -73,5 +68,3 @@ class QGCLoggingCategory
 public:
     QGCLoggingCategory(const char* category) { QGCLoggingCategoryRegister::instance()->registerCategory(category); }
 };
-
-#endif

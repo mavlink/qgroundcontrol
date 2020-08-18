@@ -149,7 +149,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryRNoise(0)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
-    , _cameras(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -282,8 +281,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_orbitTelemetryTimer, &QTimer::timeout, this, &Vehicle::_orbitTelemetryTimeout);
 
     // Create camera manager instance
-    _cameras = _firmwarePlugin->createCameraManager(this);
-    emit dynamicCamerasChanged();
+    _cameraManager = _firmwarePlugin->createCameraManager(this);
+    emit cameraManagerChanged();
 
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
@@ -338,7 +337,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _capabilityBits(MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
-    , _cameras(nullptr)
+    , _cameraManager(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -573,13 +572,13 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-    if(_cameras) {
-        // because of _cameras QML bindings check for nullptr won't work in the binding pipeline
+    if(_cameraManager) {
+        // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
         // the dangling pointer access will cause a runtime fault
-        auto tmpCameras = _cameras;
-        _cameras = nullptr;
+        auto tmpCameras = _cameraManager;
+        _cameraManager = nullptr;
         delete tmpCameras;
-        emit dynamicCamerasChanged();
+        emit cameraManagerChanged();
         qApp->processEvents();
     }
 }
@@ -3614,17 +3613,6 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
     } else {
         qWarning() << "Call to Vehicle::setOfflineEditingDefaultComponentId on vehicle which is not offline";
     }
-}
-
-void Vehicle::triggerCamera()
-{
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_DO_DIGICAM_CONTROL,
-                   true,                            // show errors
-                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0,                             // trigger camera
-                   0.0,                             // param 6 unused
-                   1.0);                            // test shot flag
 }
 
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
