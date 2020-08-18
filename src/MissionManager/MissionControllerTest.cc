@@ -172,6 +172,7 @@ void MissionControllerTest::_testGimbalRecalc(void)
     SimpleMissionItem* item = _missionController->visualItems()->value<SimpleMissionItem*>(yawIndex);
     item->cameraSection()->setSpecifyGimbal(true);
     item->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    qgcApp()->toolbox()->settingsManager()->planViewSettings()->showGimbalOnlyWhenSet()->setRawValue(false);
     QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
         //qDebug() << i;
