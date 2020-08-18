@@ -179,7 +179,7 @@ Popup {
                 Layout.leftMargin:  ScreenTools.defaultFontPixelWidth
                 Layout.fillWidth:   true
                 text:               _dialogTitle
-                height:             parent.height
+                font.pointSize:     ScreenTools.mediumFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
 

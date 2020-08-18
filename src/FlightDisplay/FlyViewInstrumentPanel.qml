@@ -23,12 +23,6 @@ Column {
 
     property real availableHeight
 
-    MultiVehiclePanel {
-        id:                 multiVehiclePanel
-        width:              parent.width
-        availableHeight:    parent.height - y
-    }
-
     AirspaceControl {
         id:                 airspaceControl
         width:              parent.width
@@ -40,7 +34,5 @@ Column {
         id:                 flightDisplayViewWidgets
         width:              parent.width
         missionController:  _missionController
-        availableHeight:    _root.availableHeight - y
-        visible:            multiVehiclePanel.singleVehiclePanel
     }
 }
