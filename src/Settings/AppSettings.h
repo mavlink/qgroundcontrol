@@ -71,6 +71,7 @@ public:
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
     Q_PROPERTY(QString videoSavePath        READ videoSavePath      NOTIFY savePathsChanged)
+    Q_PROPERTY(QString photoSavePath        READ photoSavePath      NOTIFY savePathsChanged)
     Q_PROPERTY(QString crashSavePath        READ crashSavePath      NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
@@ -87,6 +88,7 @@ public:
     QString telemetrySavePath   ();
     QString logSavePath         ();
     QString videoSavePath       ();
+    QString photoSavePath       ();
     QString crashSavePath       ();
 
     // Helper methods for working with firstRunPromptIds QVariant settings string list
@@ -112,6 +114,7 @@ public:
     static const char* missionDirectory;
     static const char* logDirectory;
     static const char* videoDirectory;
+    static const char* photoDirectory;
     static const char* crashDirectory;
 
     // Returns the current language setting bypassing the standard SettingsGroup path. This should only be used
