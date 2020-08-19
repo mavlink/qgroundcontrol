@@ -21,6 +21,7 @@ import QGroundControl.Palette       1.0
 ColumnLayout {
     property var    instrumentValueData:            null
     property bool   settingsUnlocked:               false
+    property alias  contentWidth:                   label.contentWidth
 
     property bool   _verticalOrientation:           instrumentValueData.factValueGrid.orientation === FactValueGrid.VerticalOrientation
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
@@ -36,6 +37,7 @@ ColumnLayout {
     property real   _height:                        0
 
     QGCLabel {
+        id:                 label
         Layout.alignment:   _verticalOrientation ? Qt.AlignHCenter : Qt.AlignVCenter
         font.pointSize:     _fontSize
         text:               instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.units : "")
