@@ -15,7 +15,7 @@ exists($$PWD/custom/android) {
     android_source_dir_target.commands = $$QMAKE_MKDIR $$ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_COPY_DIR $$PWD/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
             $$QMAKE_COPY_DIR $$PWD/custom/android/* $$OUT_PWD/ANDROID_PACKAGE_SOURCE_DIR && \
-            $$QMAKE_STREAM_EDITOR -i \"s/package="org.mavlink.qgroundcontrol"/package=\"$$QGC_ORG_DOMAIN.qgroundcontrol\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
+            $$QMAKE_STREAM_EDITOR -i \"s/package=\\\"org.mavlink.qgroundcontrol\\\"/package=\\\"$$QGC_ANDROID_PACKAGE\\\"/\" $$ANDROID_PACKAGE_SOURCE_DIR/AndroidManifest.xml
     android_source_dir_target.depends = FORCE
 }
 
