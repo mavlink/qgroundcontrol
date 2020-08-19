@@ -9602,6 +9602,22 @@ How often the sensor is readout</short_desc>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
+    <parameter default="0.00063" name="VOXLPM_SHUNT_BAT" type="FLOAT">
+      <short_desc>VOXL Power Monitor Shunt, Battery</short_desc>
+      <min>0.000000001</min>
+      <max>0.1</max>
+      <decimal>10</decimal>
+      <increment>.000000001</increment>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0.0056" name="VOXLPM_SHUNT_REG" type="FLOAT">
+      <short_desc>VOXL Power Monitor Shunt, Regulator</short_desc>
+      <min>0.000000001</min>
+      <max>0.1</max>
+      <decimal>10</decimal>
+      <increment>.000000001</increment>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Serial">
     <parameter default="300" name="RC_PORT_CONFIG" type="INT32">
