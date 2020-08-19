@@ -8727,6 +8727,17 @@ is less than 50% of this value</short_desc>
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter default="0" name="BAT_SMBUS_MODEL" type="INT32">
+      <short_desc>Battery device model</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">AutoDetect</value>
+        <value code="1">BQ40Z50 based</value>
+        <value code="2">BQ40Z80 based</value>
+      </values>
+    </parameter>
     <parameter default="0" name="CAL_AIR_CMODEL" type="INT32">
       <short_desc>Airspeed sensor compensation model for the SDP3x</short_desc>
       <long_desc>Model with Pitot CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Model without Pitot (1.5 mm tubes) CAL_AIR_TUBED_MM: Not used, 1.5 mm tubes assumed. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor. Tube Pressure Drop CAL_AIR_TUBED_MM: Diameter in mm of the pitot and tubes, must have the same diameter. CAL_AIR_TUBELEN: Length of the tubes connecting the pitot to the sensor and the static + dynamic port length of the pitot.</long_desc>
@@ -8980,7 +8991,7 @@ How often the sensor is readout</short_desc>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_BATT" type="INT32">
-      <short_desc>SMBUS Smart battery driver (BQ40Z50)</short_desc>
+      <short_desc>SMBUS Smart battery driver BQ40Z50 and BQ40Z80</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
