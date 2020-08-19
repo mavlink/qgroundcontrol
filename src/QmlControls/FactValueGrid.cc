@@ -15,9 +15,7 @@
 #include <QSettings>
 
 const char* FactValueGrid::_rowsKey =             "rows";
-const char* FactValueGrid::_columnsKey =          "columns";
 const char* FactValueGrid::_fontSizeKey =         "fontSize";
-const char* FactValueGrid::_orientationKey =      "orientation";
 const char* FactValueGrid::_versionKey =          "version";
 const char* FactValueGrid::_factGroupNameKey =    "groupName";
 const char* FactValueGrid::_factNameKey =         "factName";
@@ -44,7 +42,7 @@ const QStringList FactValueGrid::_fontSizeNames = {
 
 FactValueGrid::FactValueGrid(QQuickItem* parent)
     : QQuickItem(parent)
-    , _rows     (new QmlObjectListModel(this))
+    , _columns  (new QmlObjectListModel(this))
 {
     if (_iconNames.isEmpty()) {
         QDir iconDir(":/InstrumentValueIcons/");
@@ -57,7 +55,7 @@ FactValueGrid::FactValueGrid(QQuickItem* parent)
 FactValueGrid::FactValueGrid(const QString& defaultSettingsGroup)
     : QQuickItem            (nullptr)
     , _defaultSettingsGroup (defaultSettingsGroup)
-    , _rows                 (new QmlObjectListModel(this))
+    , _columns              (new QmlObjectListModel(this))
 {
     _init();
 }
@@ -189,46 +187,46 @@ void FactValueGrid::_connectSaveSignals(InstrumentValueData* value)
     connect(value, &InstrumentValueData::rangeIconsChanged,     this, &FactValueGrid::_saveSettings);
 }
 
-void FactValueGrid::appendColumn(void)
+void FactValueGrid::appendRow(void)
 {
-    for (int rowIndex=0; rowIndex<_rows->count(); rowIndex++) {
-        QmlObjectListModel* list = _rows->value<QmlObjectListModel*>(rowIndex);
+    for (int colIndex=0; colIndex<_columns->count(); colIndex++) {
+        QmlObjectListModel* list = _columns->value<QmlObjectListModel*>(colIndex);
         list->append(_createNewInstrumentValueWorker(list));
 
     }
-    _columnCount++;
-    emit columnCountChanged(_columnCount);
+    _rowCount++;
+    emit rowCountChanged(_rowCount);
     _saveSettings();
 }
 
-void FactValueGrid::deleteLastColumn(void)
+void FactValueGrid::deleteLastRow(void)
 {
-    if (_columnCount <= 1) {
+    if (_rowCount <= 1) {
         return;
     }
-    for (int rowIndex=0; rowIndex<_rows->count(); rowIndex++) {
-        QmlObjectListModel* list = _rows->value<QmlObjectListModel*>(rowIndex);
+    for (int colIndex=0; colIndex<_columns->count(); colIndex++) {
+        QmlObjectListModel* list = _columns->value<QmlObjectListModel*>(colIndex);
         list->removeAt(list->count() - 1)->deleteLater();
     }
-    _columnCount--;
-    emit columnCountChanged(_columnCount);
+    _rowCount--;
+    emit rowCountChanged(_rowCount);
     _saveSettings();
 }
 
-QmlObjectListModel* FactValueGrid::appendRow(void)
+QmlObjectListModel* FactValueGrid::appendColumn(void)
 {
-    QmlObjectListModel* newList = new QmlObjectListModel(_rows);
-    _rows->append(newList);
+    QmlObjectListModel* newList = new QmlObjectListModel(_columns);
+    _columns->append(newList);
 
     // If this is the first row then we automatically add the first column as well
-    int cColsToAdd = qMax(_columnCount, 1);
-    for (int i=0; i<cColsToAdd; i++) {
+    int cRowsToAdd = qMax(_rowCount, 1);
+    for (int i=0; i<cRowsToAdd; i++) {
         newList->append(_createNewInstrumentValueWorker(newList));
     }
 
-    if (cColsToAdd != _columnCount) {
-        _columnCount = cColsToAdd;
-        emit columnCountChanged(_columnCount);
+    if (cRowsToAdd != _rowCount) {
+        _rowCount = cRowsToAdd;
+        emit rowCountChanged(_rowCount);
     }
 
     _saveSettings();
@@ -236,10 +234,10 @@ QmlObjectListModel* FactValueGrid::appendRow(void)
     return newList;
 }
 
-void FactValueGrid::deleteLastRow(void)
+void FactValueGrid::deleteLastColumn(void)
 {
-    if (_rows->count() > 1) {
-        _rows->removeAt(_rows->count() - 1)->deleteLater();
+    if (_columns->count() > 1) {
+        _columns->removeAt(_columns->count() - 1)->deleteLater();
     }
 }
 
@@ -272,17 +270,16 @@ void FactValueGrid::_saveSettings(void)
 
     settings.remove(""); // Remove any previous settings
 
-    settings.setValue(_versionKey,      1);
-    settings.setValue(_fontSizeKey,     _fontSize);
-    settings.setValue(_orientationKey,  _orientation);
-    settings.setValue(_columnsKey,      _columnCount);
+    settings.setValue(_versionKey,  1);
+    settings.setValue(_fontSizeKey, _fontSize);
+    settings.setValue(_rowsKey,     _rowCount);
 
     settings.beginWriteArray(_rowsKey);
-    for (int rowIndex=0; rowIndex<_rows->count(); rowIndex++) {
-        QmlObjectListModel* columns = _rows->value<QmlObjectListModel*>(rowIndex);
+    for (int colIndex=0; colIndex<_columns->count(); colIndex++) {
+        QmlObjectListModel* columns = _columns->value<QmlObjectListModel*>(colIndex);
 
-        settings.setArrayIndex(rowIndex);
-        settings.beginWriteArray(_columnsKey);
+        settings.setArrayIndex(colIndex);
+        settings.beginWriteArray(_rowsKey);
 
         for (int colIndex=0; colIndex<columns->count(); colIndex++) {
             InstrumentValueData* value = columns->value<InstrumentValueData*>(colIndex);
@@ -299,10 +296,10 @@ void FactValueGrid::_loadSettings(void)
 {
     _preventSaveSettings = true;
 
-    _rows->deleteLater();
+    _columns->deleteLater();
 
-    _rows           = new QmlObjectListModel(this);
-    _columnCount    = 0;
+    _columns    = new QmlObjectListModel(this);
+    _rowCount   = 0;
 
     QSettings   settings;
     QString     groupNameFormat("%1-%2");
@@ -325,27 +322,26 @@ void FactValueGrid::_loadSettings(void)
         qgcApp()->toolbox()->corePlugin()->factValueGridCreateDefaultSettings(_defaultSettingsGroup);
     }
     _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
-    _orientation = settings.value(_orientationKey, VerticalOrientation).value<Orientation>();
 
     // Initial setup of empty items
-    int cColumns = settings.value(_columnsKey).toInt();
+    int cColumns = settings.value(_rowsKey).toInt();
     int cModelLists = settings.beginReadArray(_rowsKey);
     if (cModelLists && cColumns) {
-        appendRow();
+        appendColumn();
         for (int itemIndex=1; itemIndex<cColumns; itemIndex++) {
-            appendColumn();
-        }
-        for (int rowIndex=1; rowIndex<cModelLists; rowIndex++) {
             appendRow();
+        }
+        for (int colIndex=1; colIndex<cModelLists; colIndex++) {
+            appendColumn();
         }
     }
 
     // Fill in the items from settings
-    for (int rowIndex=0; rowIndex<cModelLists; rowIndex++) {
-        settings.setArrayIndex(rowIndex);
-        int cItems = settings.beginReadArray(_columnsKey);
+    for (int colIndex=0; colIndex<cModelLists; colIndex++) {
+        settings.setArrayIndex(colIndex);
+        int cItems = settings.beginReadArray(_rowsKey);
         for (int itemIndex=0; itemIndex<cItems; itemIndex++) {
-            QmlObjectListModel* list = _rows->value<QmlObjectListModel*>(rowIndex);
+            QmlObjectListModel* list = _columns->value<QmlObjectListModel*>(colIndex);
             InstrumentValueData* value = list->value<InstrumentValueData*>(itemIndex);
             settings.setArrayIndex(itemIndex);
             _loadValueData(settings, value);
@@ -354,7 +350,7 @@ void FactValueGrid::_loadSettings(void)
     }
     settings.endArray();
 
-    emit rowsChanged(_rows);
+    emit columnsChanged(_columns);
 
     _preventSaveSettings = false;
 }
