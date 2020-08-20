@@ -39,30 +39,10 @@ public:
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
 
-    enum StartCalibrationType {
-        StartCalibrationRadio,
-        StartCalibrationGyro,
-        StartCalibrationMag,
-        StartCalibrationAirspeed,
-        StartCalibrationAccel,
-        StartCalibrationLevel,
-        StartCalibrationPressure,
-        StartCalibrationEsc,
-        StartCalibrationCopyTrims,
-        StartCalibrationUavcanEsc,
-        StartCalibrationCompassMot,
-    };
-
     enum StartBusConfigType {
         StartBusConfigActuators,
         EndBusConfigActuators,
     };
-
-    /// Starts the specified calibration
-    virtual void startCalibration(StartCalibrationType calType) = 0;
-
-    /// Ends any current calibration
-    virtual void stopCalibration(void) = 0;
 
     /// Starts the specified bus configuration
     virtual void startBusConfig(StartBusConfigType calType) = 0;

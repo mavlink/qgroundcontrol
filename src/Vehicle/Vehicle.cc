@@ -1324,8 +1324,8 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
         const double altitude;
     } coordinate {
         highLatency.latitude  / (double)1E7,
-        highLatency.longitude  / (double)1E7,
-        static_cast<double>(highLatency.altitude_amsl)
+                highLatency.longitude  / (double)1E7,
+                static_cast<double>(highLatency.altitude_amsl)
     };
 
     _coordinate.setLatitude(coordinate.latitude);
@@ -3581,6 +3581,87 @@ void Vehicle::rebootVehicle()
                                          &msg,
                                          &cmd);
     sendMessageOnLinkThreadSafe(priorityLink(), msg);
+}
+
+void Vehicle::startCalibration(Vehicle::CalibrationType calType)
+{
+    float param1 = 0;
+    float param2 = 0;
+    float param3 = 0;
+    float param4 = 0;
+    float param5 = 0;
+    float param6 = 0;
+    float param7 = 0;
+
+    switch (calType) {
+    case CalibrationGyro:
+        param1 = 1;
+        break;
+    case CalibrationMag:
+        param2 = 1;
+        break;
+    case CalibrationRadio:
+        param4 = 1;
+        break;
+    case CalibrationCopyTrims:
+        param4 = 2;
+        break;
+    case CalibrationAccel:
+        param5 = 1;
+        break;
+    case CalibrationLevel:
+        param5 = 2;
+        break;
+    case CalibrationEsc:
+        param7 = 1;
+        break;
+    case CalibrationPX4Airspeed:
+        param6 = 1;
+        break;
+    case CalibrationPX4Pressure:
+        param3 = 1;
+        break;
+    case CalibrationAPMCompassMot:
+        param6 = 1;
+        break;
+    case CalibrationAPMPressureAirspeed:
+        param3 = 1;
+        break;
+    case CalibrationAPMPreFlight:
+        param3 = 1; // GroundPressure/Airspeed
+        if (multiRotor() || rover()) {
+            // Gyro cal for ArduCopter only
+            param1 = 1;
+        }
+    }
+
+    // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
+    // causes the retry logic to break down.
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       priorityLink()->mavlinkChannel(),
+                                       &msg,
+                                       id(),
+                                       defaultComponentId(),            // target component
+                                       MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
+                                       0,                                // 0=first transmission of command
+                                       param1, param2, param3, param4, param5, param6, param7);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
+}
+
+void Vehicle::stopCalibration(void)
+{
+    sendMavCommand(defaultComponentId(),    // target component
+                   MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
+                   true,                              // showError
+                   0,                                 // gyro cal
+                   0,                                 // mag cal
+                   0,                                 // ground pressure
+                   0,                                 // radio cal
+                   0,                                 // accel cal
+                   0,                                 // airspeed cal
+                   0);                                // unused
 }
 
 void Vehicle::setSoloFirmware(bool soloFirmware)

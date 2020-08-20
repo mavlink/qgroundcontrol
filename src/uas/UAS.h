@@ -180,9 +180,6 @@ public slots:
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
 
-    void startCalibration(StartCalibrationType calType);
-    void stopCalibration(void);
-
     void startBusConfig(StartBusConfigType calType);
     void stopBusConfig(void);
 
