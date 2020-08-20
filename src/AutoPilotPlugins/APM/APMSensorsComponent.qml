@@ -569,6 +569,26 @@ SetupPage {
                 } // QGCViewDialog
             } // Component - calibratePressureDialogComponent
 
+            Component {
+                id: calibrateGyroDialogComponent
+
+                QGCViewDialog {
+                    id: calibrateGyroDialog
+
+                    function accept() {
+                        controller.calibrateGyro()
+                        calibrateGyroDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.\n\nClick Ok to start calibration.")
+                    }
+                }
+            }
+
             QGCFlickable {
                 id:             buttonFlickable
                 anchors.left:   parent.left
@@ -623,10 +643,17 @@ SetupPage {
 
                     QGCButton {
                         width:      _buttonWidth
+                        text:       qsTr("Gyro")
+                        visible:    activeVehicle && (activeVehicle.multiRotor | activeVehicle.rover)
+                        onClicked:  mainWindow.showComponentDialog(calibrateGyroDialogComponent, qsTr("Calibrate Gyro"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    }
+
+                    QGCButton {
+                        width:      _buttonWidth
                         text:       _calibratePressureText
                         onClicked:  mainWindow.showComponentDialog(calibratePressureDialogComponent, _calibratePressureText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
 
-                        readonly property string _calibratePressureText: activeVehicle.fixedWing ? qsTr("Cal Baro/Airspeed") : qsTr("Calibrate Pressure")
+                        readonly property string _calibratePressureText: activeVehicle.fixedWing ? qsTr("Baro/Airspeed") : qsTr("Pressure")
                     }
 
                     QGCButton {
