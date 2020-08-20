@@ -167,9 +167,10 @@ bool Bootloader::initFlashSequence(void)
             return false;
         }
         _port.setBaudRate(QSerialPort::Baud115200);
-    }
-    if (!_sync()) {
-        return false;
+
+        if (!_sync()) {
+            return false;
+        }
     }
     return true;
 }
@@ -330,6 +331,8 @@ bool Bootloader::_sendCommand(const uint8_t cmd, int responseTimeout)
     if (!_write(buf, 2)) {
         goto Error;
     }
+    _port.flush();
+
     if (!_getCommandResponse(responseTimeout)) {
         goto Error;
     }
@@ -710,6 +713,10 @@ bool Bootloader::_sync(void)
     bool success = false;
     for (int i=0; i<3; i++) {
         success = _syncWorker();
+
+        if (success) {
+            return true;
+        }
     }
     return success;
 }
