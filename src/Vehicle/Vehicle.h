@@ -641,7 +641,7 @@ public:
     Q_PROPERTY(qreal                gimbalPitch             READ gimbalPitch                                            NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal                gimbalYaw               READ gimbalYaw                                              NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
-    Q_PROPERTY(bool                 isROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
+    Q_PROPERTY(bool                 iARDURsROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState          READ checkListState         WRITE setCheckListState         NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable     READ readyToFlyAvailable                                    NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
     Q_PROPERTY(bool                 readyToFly              READ readyToFly                                             NOTIFY readyToFlyChanged)
@@ -979,6 +979,24 @@ public:
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
+
+    enum CalibrationType {
+        CalibrationRadio,
+        CalibrationGyro,
+        CalibrationMag,
+        CalibrationAccel,
+        CalibrationLevel,
+        CalibrationEsc,
+        CalibrationCopyTrims,
+        CalibrationAPMCompassMot,
+        CalibrationAPMPressureAirspeed,
+        CalibrationAPMPreFlight,
+        CalibrationPX4Airspeed,
+        CalibrationPX4Pressure,
+    };
+
+    void startCalibration   (CalibrationType calType);
+    void stopCalibration    (void);
 
     Fact* roll                              () { return &_rollFact; }
     Fact* pitch                             () { return &_pitchFact; }

@@ -701,7 +701,7 @@ void RadioComponentController::_writeCalibration(void)
     if (!_uas) return;
 
     if (_px4Vehicle()) {
-        _uas->stopCalibration();
+        _vehicle->stopCalibration();
     }
 
     if (!_px4Vehicle() && (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER || _vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionThrottle]].reversed) {
@@ -798,7 +798,7 @@ void RadioComponentController::_startCalibration(void)
 
     // Let the mav known we are starting calibration. This should turn off motors and so forth.
     if (_px4Vehicle()) {
-        _uas->startCalibration(UASInterface::StartCalibrationRadio);
+        _vehicle->startCalibration(Vehicle::CalibrationRadio);
     }
 
     _nextButton->setProperty("text", tr("Next"));
@@ -815,7 +815,7 @@ void RadioComponentController::_stopCalibration(void)
 
     if (_uas) {
         if (_px4Vehicle()) {
-            _uas->stopCalibration();
+            _vehicle->stopCalibration();
         }
         _setInternalCalibrationValuesFromParameters();
     } else {
@@ -1024,7 +1024,7 @@ void RadioComponentController::_signalAllAttitudeValueChanges(void)
 
 void RadioComponentController::copyTrims(void)
 {
-    _uas->startCalibration(UASInterface::StartCalibrationCopyTrims);
+    _vehicle->startCalibration(Vehicle::CalibrationCopyTrims);
 }
 
 bool RadioComponentController::_px4Vehicle(void) const
