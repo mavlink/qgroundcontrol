@@ -1375,11 +1375,11 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <bit index="1"> Enable override in offboard mode</bit>
       </bitmask>
     </parameter>
-    <parameter default="12.0" name="COM_RC_STICK_OV" type="FLOAT">
+    <parameter default="50.0" name="COM_RC_STICK_OV" type="FLOAT">
       <short_desc>RC stick override threshold</short_desc>
       <long_desc>If an RC stick is moved more than by this amount the system will interpret this as override request by the pilot.</long_desc>
       <min>5</min>
-      <max>40</max>
+      <max>80</max>
       <unit>%</unit>
       <decimal>0</decimal>
       <increment>0.05</increment>
