@@ -164,7 +164,6 @@ add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoManager)
 add_subdirectory(VideoReceiver)
-add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
 	PRIVATE
@@ -202,7 +201,6 @@ target_link_libraries(qgc
 		Vehicle
 		VehicleSetup
 		VideoManager
-		ViewWidgets
 )
 
 if(BUILD_TESTING)
