@@ -71,11 +71,11 @@ T.HorizontalFactValueGrid {
 
             GridLayout {
                 id:         valueGrid
-                rows:       _root.rows.count
+                rows:       _root.columns.count
                 rowSpacing: 0
 
                 Repeater {
-                    model: _root.rows
+                    model: _root.columns
 
                     Repeater {
                         id:     labelRepeater
@@ -84,8 +84,8 @@ T.HorizontalFactValueGrid {
                         property real _index: index
 
                         InstrumentValueLabel {
-                            Layout.row:             labelRepeater._index
-                            Layout.column:          index * 3
+                            Layout.row:             index
+                            Layout.column:          labelRepeater._index * 3
                             Layout.fillHeight:      true
                             Layout.alignment:       Qt.AlignRight
                             instrumentValueData:    object
@@ -94,26 +94,55 @@ T.HorizontalFactValueGrid {
                 }
 
                 Repeater {
-                    model: _root.rows
+                    model: _root.columns
 
                     Repeater {
                         id:     valueRepeater
                         model:  object
 
-                        property real _index: index
+                        property real   _index:     index
+                        property real   maxWidth:   0
+                        property var    lastCheck:  new Date().getTime()
+
+                        function recalcWidth() {
+                            var newMaxWidth = 0
+                            for (var i=0; i<valueRepeater.count; i++) {
+                                newMaxWidth = Math.max(newMaxWidth, valueRepeater.itemAt(0).contentWidth)
+                            }
+                            console.log("recalcWidth", newMaxWidth, maxWidth)
+                            maxWidth = Math.min(maxWidth, newMaxWidth)
+                        }
 
                         InstrumentValueValue {
-                            Layout.row:             valueRepeater._index
-                            Layout.column:          (index * 3) + 1
+                            Layout.row:             index
+                            Layout.column:          (valueRepeater._index * 3) + 1
                             Layout.fillHeight:      true
                             Layout.alignment:       Qt.AlignLeft
+                            Layout.preferredWidth:  maxWidth
                             instrumentValueData:    object
+
+                            property real lastContentWidth
+
+                            Component.onCompleted:  {
+                                maxWidth = Math.max(maxWidth, contentWidth)
+                                lastContentWidth = contentWidth
+                            }
+
+                            onContentWidthChanged: {
+                                maxWidth = Math.max(maxWidth, contentWidth)
+                                lastContentWidth = contentWidth
+                                var currentTime = new Date().getTime()
+                                if (currentTime - lastCheck > 30 * 1000) {
+                                    lastCheck = currentTime
+                                    valueRepeater.recalcWidth()
+                                }
+                            }
                         }
                     }
                 }
 
                 Repeater {
-                    model: _root.rows
+                    model: _root.columns
 
                     Repeater {
                         id:     spacerRepeater
@@ -122,8 +151,8 @@ T.HorizontalFactValueGrid {
                         property real _index: index
 
                         Item {
-                            Layout.row:             spacerRepeater._index
-                            Layout.column:          (index * 3) + 2
+                            Layout.row:             index
+                            Layout.column:          (spacerRepeater._index * 3) + 2
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth
                             Layout.preferredHeight: 1
                         }
@@ -150,7 +179,7 @@ T.HorizontalFactValueGrid {
                     Layout.fillWidth:       true
                     Layout.preferredHeight: parent.height
                     text:                   qsTr("-")
-                    enabled:                _root.rows.count > 1
+                    enabled:                _root.rowCount > 1
                     onClicked:              deleteLastRow()
                 }
             }
@@ -177,7 +206,7 @@ T.HorizontalFactValueGrid {
                 Layout.preferredHeight: ScreenTools.minTouchPixels
                 Layout.preferredWidth:  parent.width
                 text:                   qsTr("-")
-                enabled:                _root.columnCount > 1
+                enabled:                _root.columns.count > 1
                 onClicked:              deleteLastColumn()
             }
         }
