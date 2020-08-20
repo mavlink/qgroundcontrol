@@ -347,7 +347,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     
     if (text.endsWith("orientation detected")) {
         QString side = text.section(" ", 0, 0);
-        qDebug() << "Side started" << side;
+        qCDebug(SensorsComponentControllerLog) << "Side started" << side;
         
         if (side == "down") {
             _orientationCalDownSideInProgress = true;
@@ -394,7 +394,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     
     if (text.endsWith("side done, rotate to a different side")) {
         QString side = text.section(" ", 0, 0);
-        qDebug() << "Side finished" << side;
+        qCDebug(SensorsComponentControllerLog) << "Side finished" << side;
         
         if (side == "down") {
             _orientationCalDownSideInProgress = false;
