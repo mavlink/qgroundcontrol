@@ -22,26 +22,26 @@ PowerComponentController::PowerComponentController(void)
 void PowerComponentController::calibrateEsc(void)
 {
     _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
     _vehicle->startCalibration(Vehicle::CalibrationEsc);
 }
 
-void PowerComponentController::busConfigureActuators(void)
+void PowerComponentController::startBusConfigureActuators(void)
 {
     _warningMessages.clear();
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
-    _uas->startBusConfig(UASInterface::StartBusConfigActuators);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    _vehicle->startUAVCANBusConfig();
 }
 
 void PowerComponentController::stopBusConfigureActuators(void)
 {
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
-    _uas->startBusConfig(UASInterface::EndBusConfigActuators);
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
+    _vehicle->stopUAVCANBusConfig();
 }
 
 void PowerComponentController::_stopCalibration(void)
 {
-    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
 }
 
 void PowerComponentController::_stopBusConfig(void)
@@ -49,12 +49,9 @@ void PowerComponentController::_stopBusConfig(void)
     _stopCalibration();
 }
 
-void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
+void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text)
 {
-    Q_UNUSED(compId);
-    Q_UNUSED(severity);
-    
-    if (uasId != _vehicle->id()) {
+    if (vehicleId != _vehicle->id()) {
         return;
     }
     
