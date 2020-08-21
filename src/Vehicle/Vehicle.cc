@@ -1139,6 +1139,7 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
         if (orientation2Fact.orientation == distanceSensor.orientation) {
             orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
         }
+    _distanceSensorFactGroup.maxDistance()->setRawValue(distanceSensor.max_distance/100.0);
     }
 }
 
@@ -4483,6 +4484,7 @@ const char* VehicleDistanceSensorFactGroup::_rotationYaw270FactName =   "rotatio
 const char* VehicleDistanceSensorFactGroup::_rotationYaw315FactName =   "rotationYaw315";
 const char* VehicleDistanceSensorFactGroup::_rotationPitch90FactName =  "rotationPitch90";
 const char* VehicleDistanceSensorFactGroup::_rotationPitch270FactName = "rotationPitch270";
+const char* VehicleDistanceSensorFactGroup::_maxDistanceFactName =      "maxDistance";
 
 VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     : FactGroup             (1000, ":/json/Vehicle/DistanceSensorFact.json", parent)
@@ -4496,6 +4498,7 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     , _rotationYaw315Fact   (0, _rotationYaw315FactName,    FactMetaData::valueTypeDouble)
     , _rotationPitch90Fact  (0, _rotationPitch90FactName,   FactMetaData::valueTypeDouble)
     , _rotationPitch270Fact (0, _rotationPitch270FactName,  FactMetaData::valueTypeDouble)
+    , _maxDistanceFact      (0, _maxDistanceFactName,       FactMetaData::valueTypeDouble)
 {
     _addFact(&_rotationNoneFact,        _rotationNoneFactName);
     _addFact(&_rotationYaw45Fact,       _rotationYaw45FactName);
@@ -4507,6 +4510,7 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _addFact(&_rotationYaw315Fact,      _rotationYaw315FactName);
     _addFact(&_rotationPitch90Fact,     _rotationPitch90FactName);
     _addFact(&_rotationPitch270Fact,    _rotationPitch270FactName);
+    _addFact(&_maxDistanceFact,         _maxDistanceFactName);
 
     // Start out as not available "--.--"
     _rotationNoneFact.setRawValue(qQNaN());
@@ -4518,6 +4522,7 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _rotationYaw270Fact.setRawValue(qQNaN());
     _rotationPitch90Fact.setRawValue(qQNaN());
     _rotationPitch270Fact.setRawValue(qQNaN());
+    _maxDistanceFact.setRawValue(qQNaN());
 }
 
 const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";
