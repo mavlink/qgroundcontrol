@@ -348,41 +348,6 @@ void UAS::receiveMessage(mavlink_message_t message)
 #pragma warning(pop, 0)
 #endif
 
-void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
-{
-    if (!_vehicle) {
-        return;
-    }
-
-   int actuatorCal = 0;
-
-    switch (calType) {
-        case StartBusConfigActuators:
-            actuatorCal = 1;
-        break;
-        case EndBusConfigActuators:
-            actuatorCal = 0;
-        break;
-    }
-
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
-                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
-                             true,                              // showError
-                             actuatorCal);                      // actuators
-}
-
-void UAS::stopBusConfig(void)
-{
-    if (!_vehicle) {
-        return;
-    }
-
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
-                             MAV_CMD_PREFLIGHT_UAVCAN,          // command id
-                             true,                              // showError
-                             0);                                // cancel
-}
-
 /**
 * Check if time is smaller than 40 years, assuming no system without Unix
 * timestamp runs longer than 40 years continuously without reboot. In worst case

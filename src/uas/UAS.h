@@ -180,9 +180,6 @@ public slots:
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
 
-    void startBusConfig(StartBusConfigType calType);
-    void stopBusConfig(void);
-
 signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
