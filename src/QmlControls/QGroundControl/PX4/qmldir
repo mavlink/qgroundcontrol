@@ -1,3 +1,4 @@
 Module QGroundControl.PX4
 
+BatteryParams   1.0 BatteryParams.qml
 SensorSetupPage 1.0 SensorSetupPage.qml

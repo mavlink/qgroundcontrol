@@ -39,17 +39,6 @@ public:
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
 
-    enum StartBusConfigType {
-        StartBusConfigActuators,
-        EndBusConfigActuators,
-    };
-
-    /// Starts the specified bus configuration
-    virtual void startBusConfig(StartBusConfigType calType) = 0;
-
-    /// Ends any current bus configuration
-    virtual void stopBusConfig(void) = 0;
-
 public slots:
     /** @brief Order the robot to pair its receiver **/
     virtual void pairRX(int rxType, int rxSubType) = 0;
