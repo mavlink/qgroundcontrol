@@ -22,15 +22,10 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
-Column {
-    id:         _root
-    spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+Loader {
+    width:  parent.width
+    source: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue ?
+                "qrc:/qml/QGCInstrumentWidgetAlternate.qml" : "qrc:/qml/QGCInstrumentWidget.qml"
 
     property var missionController
-
-    Loader {
-        width:  parent.width
-        source: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue ?
-                    "qrc:/qml/QGCInstrumentWidgetAlternate.qml" : "qrc:/qml/QGCInstrumentWidget.qml"
-    }
 }
