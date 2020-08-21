@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PowerComponentController.h"
 #include "QGCMAVLink.h"
 #include "UAS.h"
@@ -27,7 +23,7 @@ void PowerComponentController::calibrateEsc(void)
 {
     _warningMessages.clear();
     connect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleUASTextMessage);
-    _uas->startCalibration(UASInterface::StartCalibrationEsc);
+    _vehicle->startCalibration(Vehicle::CalibrationEsc);
 }
 
 void PowerComponentController::busConfigureActuators(void)
