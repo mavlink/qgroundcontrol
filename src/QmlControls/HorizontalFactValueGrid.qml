@@ -109,7 +109,6 @@ T.HorizontalFactValueGrid {
                             for (var i=0; i<valueRepeater.count; i++) {
                                 newMaxWidth = Math.max(newMaxWidth, valueRepeater.itemAt(0).contentWidth)
                             }
-                            console.log("recalcWidth", newMaxWidth, maxWidth)
                             maxWidth = Math.min(maxWidth, newMaxWidth)
                         }
 
