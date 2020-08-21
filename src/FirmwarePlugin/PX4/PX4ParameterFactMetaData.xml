@@ -974,7 +974,7 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="30" name="COM_ARM_MAG_ANG" type="INT32">
+    <parameter default="45" name="COM_ARM_MAG_ANG" type="INT32">
       <short_desc>Maximum magnetic field inconsistency between units that will allow arming
 Set -1 to disable the check</short_desc>
       <min>3</min>
@@ -8146,11 +8146,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
-    <parameter category="System" default="1" name="CAL_ACC0_EN" type="INT32">
-      <short_desc>Accelerometer 0 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_ACC0_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_ACC0_PRIO" type="INT32">
+      <short_desc>Accelerometer 0 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_ACC0_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
@@ -8170,11 +8178,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="1.0" name="CAL_ACC0_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_ACC1_EN" type="INT32">
-      <short_desc>Accelerometer 1 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_ACC1_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_ACC1_PRIO" type="INT32">
+      <short_desc>Accelerometer 1 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_ACC1_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
@@ -8194,11 +8210,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="1.0" name="CAL_ACC1_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_ACC2_EN" type="INT32">
-      <short_desc>Accelerometer 2 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_ACC2_ID" type="INT32">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_ACC2_PRIO" type="INT32">
+      <short_desc>Accelerometer 2 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_ACC2_XOFF" type="FLOAT">
       <short_desc>Accelerometer X-axis offset</short_desc>
@@ -8218,14 +8242,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="1.0" name="CAL_ACC2_ZSCALE" type="FLOAT">
       <short_desc>Accelerometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="0" name="CAL_ACC_PRIME" type="INT32">
-      <short_desc>Primary accel ID</short_desc>
-    </parameter>
-    <parameter category="System" default="1" name="CAL_GYRO0_EN" type="INT32">
-      <short_desc>Gyro 0 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_GYRO0_ID" type="INT32">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_GYRO0_PRIO" type="INT32">
+      <short_desc>Gyro 0 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO0_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
@@ -8236,11 +8265,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO0_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_GYRO1_EN" type="INT32">
-      <short_desc>Gyro 1 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_GYRO1_ID" type="INT32">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_GYRO1_PRIO" type="INT32">
+      <short_desc>Gyro 1 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO1_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
@@ -8251,11 +8288,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO1_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_GYRO2_EN" type="INT32">
-      <short_desc>Gyro 2 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_GYRO2_ID" type="INT32">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_GYRO2_PRIO" type="INT32">
+      <short_desc>Gyro 2 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_GYRO2_XOFF" type="FLOAT">
       <short_desc>Gyro X-axis offset</short_desc>
@@ -8266,14 +8311,19 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter category="System" default="0.0" name="CAL_GYRO2_ZOFF" type="FLOAT">
       <short_desc>Gyro Z-axis offset</short_desc>
     </parameter>
-    <parameter category="System" default="0" name="CAL_GYRO_PRIME" type="INT32">
-      <short_desc>Primary gyro ID</short_desc>
-    </parameter>
-    <parameter category="System" default="1" name="CAL_MAG0_EN" type="INT32">
-      <short_desc>Mag 0 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_MAG0_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_MAG0_PRIO" type="INT32">
+      <short_desc>Mag 0 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="-1" name="CAL_MAG0_ROT" type="INT32">
       <short_desc>Rotation of magnetometer 0 relative to airframe</short_desc>
@@ -8338,6 +8388,9 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_XODIAG" type="FLOAT">
+      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
@@ -8350,6 +8403,9 @@ Y component of magnetometer in body frame axis
 and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_YODIAG" type="FLOAT">
+      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
@@ -8364,17 +8420,28 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG0_ZODIAG" type="FLOAT">
+      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG0_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG0_ZSCALE" type="FLOAT">
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_MAG1_EN" type="INT32">
-      <short_desc>Mag 1 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_MAG1_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_MAG1_PRIO" type="INT32">
+      <short_desc>Mag 1 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="-1" name="CAL_MAG1_ROT" type="INT32">
       <short_desc>Rotation of magnetometer 1 relative to airframe</short_desc>
@@ -8439,6 +8506,9 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_XODIAG" type="FLOAT">
+      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
@@ -8451,6 +8521,9 @@ Y component of magnetometer in body frame axis
 and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_YODIAG" type="FLOAT">
+      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
@@ -8465,17 +8538,28 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG1_ZODIAG" type="FLOAT">
+      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG1_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG1_ZSCALE" type="FLOAT">
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_MAG2_EN" type="INT32">
-      <short_desc>Mag 2 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_MAG2_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
+    </parameter>
+    <parameter category="System" default="50" name="CAL_MAG2_PRIO" type="INT32">
+      <short_desc>Mag 2 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
     </parameter>
     <parameter category="System" default="-1" name="CAL_MAG2_ROT" type="INT32">
       <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
@@ -8540,6 +8624,9 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_XODIAG" type="FLOAT">
+      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
@@ -8552,6 +8639,9 @@ Y component of magnetometer in body frame axis
 and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_YODIAG" type="FLOAT">
+      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
@@ -8566,20 +8656,31 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG2_ZODIAG" type="FLOAT">
+      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG2_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
     </parameter>
     <parameter category="System" default="1.0" name="CAL_MAG2_ZSCALE" type="FLOAT">
       <short_desc>Magnetometer Z-axis scaling factor</short_desc>
     </parameter>
-    <parameter category="System" default="1" name="CAL_MAG3_EN" type="INT32">
-      <short_desc>Mag 3 enabled</short_desc>
-    </parameter>
     <parameter category="System" default="0" name="CAL_MAG3_ID" type="INT32">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
     </parameter>
+    <parameter category="System" default="50" name="CAL_MAG3_PRIO" type="INT32">
+      <short_desc>Mag 3 priority</short_desc>
+      <values>
+        <value code="0">  Disabled</value>
+        <value code="1">  Min</value>
+        <value code="25"> Low</value>
+        <value code="50"> Medium (Default)</value>
+        <value code="75"> High</value>
+        <value code="100">Max</value>
+      </values>
+    </parameter>
     <parameter category="System" default="-1" name="CAL_MAG3_ROT" type="INT32">
-      <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
+      <short_desc>Rotation of magnetometer 3 relative to airframe</short_desc>
       <long_desc>An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
       <max>45</max>
@@ -8641,6 +8742,9 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_XODIAG" type="FLOAT">
+      <short_desc>Magnetometer X-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_XOFF" type="FLOAT">
       <short_desc>Magnetometer X-axis offset</short_desc>
     </parameter>
@@ -8654,6 +8758,9 @@ and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
     </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_YODIAG" type="FLOAT">
+      <short_desc>Magnetometer Y-axis off diagonal factor</short_desc>
+    </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_YOFF" type="FLOAT">
       <short_desc>Magnetometer Y-axis offset</short_desc>
     </parameter>
@@ -8666,6 +8773,9 @@ Z component of magnetometer in body frame axis
 and either current or throttle depending on value of CAL_MAG_COMP_TYP
 Unit for throttle-based compensation is [G] and
 for current-based compensation [G/kA]</short_desc>
+    </parameter>
+    <parameter category="System" default="0.0" name="CAL_MAG3_ZODIAG" type="FLOAT">
+      <short_desc>Magnetometer Z-axis off diagonal factor</short_desc>
     </parameter>
     <parameter category="System" default="0.0" name="CAL_MAG3_ZOFF" type="FLOAT">
       <short_desc>Magnetometer Z-axis offset</short_desc>
@@ -8681,9 +8791,6 @@ for current-based compensation [G/kA]</short_desc>
         <value code="2">Current-based compensation (battery_status instance 0)</value>
         <value code="3">Current-based compensation (battery_status instance 1)</value>
       </values>
-    </parameter>
-    <parameter category="System" default="0" name="CAL_MAG_PRIME" type="INT32">
-      <short_desc>Primary mag ID</short_desc>
     </parameter>
     <parameter default="0" name="SENS_DPRES_ANSC" type="FLOAT">
       <short_desc>Differential pressure sensor analog scaling</short_desc>
@@ -8760,9 +8867,13 @@ is less than 50% of this value</short_desc>
       <max>2.00</max>
       <unit>meter</unit>
     </parameter>
+    <parameter default="1" name="CAL_MAG_ROT_AUTO" type="INT32">
+      <short_desc>Automatically set external rotations</short_desc>
+      <long_desc>During calibration attempt to automatically determine the rotation of external magnetometers.</long_desc>
+    </parameter>
     <parameter default="63" name="CAL_MAG_SIDES" type="INT32">
       <short_desc>Bitfield selecting mag sides for calibration</short_desc>
-      <long_desc>If set to two side calibration, only the offsets are estimated, the scale calibration is left unchanged. Thus an initial six side calibration is recommended. Bits: DETECT_ORIENTATION_TAIL_DOWN = 1 DETECT_ORIENTATION_NOSE_DOWN = 2 DETECT_ORIENTATION_LEFT = 4 DETECT_ORIENTATION_RIGHT = 8 DETECT_ORIENTATION_UPSIDE_DOWN = 16 DETECT_ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
+      <long_desc>If set to two side calibration, only the offsets are estimated, the scale calibration is left unchanged. Thus an initial six side calibration is recommended. Bits: ORIENTATION_TAIL_DOWN = 1 ORIENTATION_NOSE_DOWN = 2 ORIENTATION_LEFT = 4 ORIENTATION_RIGHT = 8 ORIENTATION_UPSIDE_DOWN = 16 ORIENTATION_RIGHTSIDE_UP = 32</long_desc>
       <min>34</min>
       <max>63</max>
       <values>
@@ -9139,6 +9250,14 @@ How often the sensor is readout</short_desc>
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
       </values>
+    </parameter>
+    <parameter default="50.0" name="SENS_MAG_RATE" type="FLOAT">
+      <short_desc>Magnetometer max rate</short_desc>
+      <long_desc>Magnetometer data maximum publication rate. This is an upper bound, actual magnetometer data rate is still dependant on the sensor.</long_desc>
+      <min>1</min>
+      <max>200</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SENS_MB12_0_ROT" type="INT32">
       <short_desc>MaxBotix MB12XX Sensor 0 Rotation</short_desc>
