@@ -1003,6 +1003,9 @@ public:
     void startCalibration   (CalibrationType calType);
     void stopCalibration    (void);
 
+    void startUAVCANBusConfig(void);
+    void stopUAVCANBusConfig(void);
+
     Fact* roll                              () { return &_rollFact; }
     Fact* pitch                             () { return &_pitchFact; }
     Fact* heading                           () { return &_headingFact; }
