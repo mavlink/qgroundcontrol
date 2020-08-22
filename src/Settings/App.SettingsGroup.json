@@ -197,6 +197,20 @@
     "default":     ""
 },
 {
+    "name":             "mapboxAccount",
+    "shortDesc": "Account name for Mapbox maps",
+    "longDesc":  "Your personal account name for Mapbox maps",
+    "type":             "string",
+    "default":     ""
+},
+{
+    "name":             "mapboxStyle",
+    "shortDesc": "Map style ID",
+    "longDesc":  "Map design style ID for Mapbox maps",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "esriToken",
     "shortDesc": "Access token to Esri maps",
     "longDesc":  "Your personal access token for Esri maps",
