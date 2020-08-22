@@ -32,7 +32,7 @@ public:
     DEFINE_SETTINGFACT(offlineEditingHoverSpeed)
     DEFINE_SETTINGFACT(offlineEditingAscentSpeed)
     DEFINE_SETTINGFACT(offlineEditingDescentSpeed)
-    DEFINE_SETTINGFACT(batteryPercentRemainingAnnounce)
+    DEFINE_SETTINGFACT(batteryPercentRemainingAnnounce) // Important: This is only used to calculate battery swaps
     DEFINE_SETTINGFACT(defaultMissionItemAltitude)
     DEFINE_SETTINGFACT(telemetrySave)
     DEFINE_SETTINGFACT(telemetrySaveNotArmed)
