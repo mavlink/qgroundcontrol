@@ -25,8 +25,6 @@ Item {
     anchors.bottom: parent.bottom
     width:          batteryIndicatorRow.width
 
-    Component.onCompleted: console.log("mavlink", MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL, MAVLink.MAV_BATTERY_FUNCTION_ALL)
-
     property bool showIndicator: true
 
     Row {
