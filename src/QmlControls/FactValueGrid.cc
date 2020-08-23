@@ -14,19 +14,21 @@
 
 #include <QSettings>
 
-const char* FactValueGrid::_rowsKey =             "rows";
-const char* FactValueGrid::_fontSizeKey =         "fontSize";
-const char* FactValueGrid::_versionKey =          "version";
-const char* FactValueGrid::_factGroupNameKey =    "groupName";
-const char* FactValueGrid::_factNameKey =         "factName";
-const char* FactValueGrid::_textKey =             "text";
-const char* FactValueGrid::_showUnitsKey =        "showUnits";
-const char* FactValueGrid::_iconKey =             "icon";
-const char* FactValueGrid::_rangeTypeKey =        "rangeType";
-const char* FactValueGrid::_rangeValuesKey =      "rangeValues";
-const char* FactValueGrid::_rangeColorsKey =      "rangeColors";
-const char* FactValueGrid::_rangeIconsKey =       "rangeIcons";
-const char* FactValueGrid::_rangeOpacitiesKey =   "rangeOpacities";
+const char* FactValueGrid::_columnsKey          = "columns";
+const char* FactValueGrid::_rowsKey             = "rows";
+const char* FactValueGrid::_rowCountKey         = "rowCount";
+const char* FactValueGrid::_fontSizeKey         = "fontSize";
+const char* FactValueGrid::_versionKey          = "version";
+const char* FactValueGrid::_factGroupNameKey    = "factGroupName";
+const char* FactValueGrid::_factNameKey         = "factName";
+const char* FactValueGrid::_textKey             = "text";
+const char* FactValueGrid::_showUnitsKey        = "showUnits";
+const char* FactValueGrid::_iconKey             = "icon";
+const char* FactValueGrid::_rangeTypeKey        = "rangeType";
+const char* FactValueGrid::_rangeValuesKey      = "rangeValues";
+const char* FactValueGrid::_rangeColorsKey      = "rangeColors";
+const char* FactValueGrid::_rangeIconsKey       = "rangeIcons";
+const char* FactValueGrid::_rangeOpacitiesKey   = "rangeOpacities";
 
 const char* FactValueGrid::_deprecatedGroupKey =  "ValuesWidget";
 
@@ -272,9 +274,9 @@ void FactValueGrid::_saveSettings(void)
 
     settings.setValue(_versionKey,  1);
     settings.setValue(_fontSizeKey, _fontSize);
-    settings.setValue(_rowsKey,     _rowCount);
+    settings.setValue(_rowCountKey, _rowCount);
 
-    settings.beginWriteArray(_rowsKey);
+    settings.beginWriteArray(_columnsKey);
     for (int colIndex=0; colIndex<_columns->count(); colIndex++) {
         QmlObjectListModel* columns = _columns->value<QmlObjectListModel*>(colIndex);
 
@@ -324,11 +326,11 @@ void FactValueGrid::_loadSettings(void)
     _fontSize = settings.value(_fontSizeKey, DefaultFontSize).value<FontSize>();
 
     // Initial setup of empty items
-    int cColumns = settings.value(_rowsKey).toInt();
-    int cModelLists = settings.beginReadArray(_rowsKey);
-    if (cModelLists && cColumns) {
+    int cRows       = settings.value(_rowCountKey).toInt();
+    int cModelLists = settings.beginReadArray(_columnsKey);
+    if (cModelLists && cRows) {
         appendColumn();
-        for (int itemIndex=1; itemIndex<cColumns; itemIndex++) {
+        for (int rowIndex=1; rowIndex<cRows; rowIndex++) {
             appendRow();
         }
         for (int colIndex=1; colIndex<cModelLists; colIndex++) {

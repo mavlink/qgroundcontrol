@@ -104,7 +104,9 @@ private:
     static const QStringList _fontSizeNames;
 
     static const char* _versionKey;
+    static const char* _columnsKey;
     static const char* _rowsKey;
+    static const char* _rowCountKey;
     static const char* _fontSizeKey;
     static const char* _factGroupNameKey;
     static const char* _factNameKey;
