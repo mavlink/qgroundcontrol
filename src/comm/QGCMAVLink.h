@@ -47,8 +47,14 @@ extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 #define PACKED_STRUCT( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
 #endif
 
-class QGCMAVLink {
+class QGCMAVLink : public QObject
+{
+    Q_OBJECT
+
 public:
+    // Creating an instance of QGCMAVLink is only meant to be used for the Qml Singleton
+    QGCMAVLink(QObject* parent = nullptr);
+
     typedef int FirmwareClass_t;
     typedef int VehicleClass_t;
 
@@ -83,6 +89,30 @@ public:
 
     static QString                  mavResultToString           (MAV_RESULT result);
     static QString                  mavSysStatusSensorToString  (MAV_SYS_STATUS_SENSOR sysStatusSensor);
+
+    // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
+
+    enum MAV_BATTERY_FUNCTION {
+        MAV_BATTERY_FUNCTION_UNKNOWN=0, /* Battery function is unknown | */
+        MAV_BATTERY_FUNCTION_ALL=1, /* Battery supports all flight systems | */
+        MAV_BATTERY_FUNCTION_PROPULSION=2, /* Battery for the propulsion system | */
+        MAV_BATTERY_FUNCTION_AVIONICS=3, /* Avionics battery | */
+        MAV_BATTERY_TYPE_PAYLOAD=4, /* Payload battery | */
+    };
+    Q_ENUM(MAV_BATTERY_FUNCTION)
+
+    enum MAV_BATTERY_CHARGE_STATE
+    {
+       MAV_BATTERY_CHARGE_STATE_UNDEFINED=0, /* Low battery state is not provided | */
+       MAV_BATTERY_CHARGE_STATE_OK=1, /* Battery is not in low state. Normal operation. | */
+       MAV_BATTERY_CHARGE_STATE_LOW=2, /* Battery state is low, warn and monitor close. | */
+       MAV_BATTERY_CHARGE_STATE_CRITICAL=3, /* Battery state is critical, return or abort immediately. | */
+       MAV_BATTERY_CHARGE_STATE_EMERGENCY=4, /* Battery state is too low for ordinary abort sequence. Perform fastest possible emergency stop to prevent damage. | */
+       MAV_BATTERY_CHARGE_STATE_FAILED=5, /* Battery failed, damage unavoidable. | */
+       MAV_BATTERY_CHARGE_STATE_UNHEALTHY=6, /* Battery is diagnosed to be defective or an error occurred, usage is discouraged / prohibited. | */
+       MAV_BATTERY_CHARGE_STATE_CHARGING=7, /* Battery is charging. | */
+    };
+    Q_ENUM(MAV_BATTERY_CHARGE_STATE)
 };
 
 class MavlinkFTP {

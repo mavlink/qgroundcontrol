@@ -47,6 +47,7 @@ class TerrainProtocolHandler;
 class ComponentInformationManager;
 class FTPManager;
 class InitialConnectStateMachine;
+class VehicleBatteryFactGroup;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -255,53 +256,6 @@ private:
     Fact        _courseOverGroundFact;
     Fact        _countFact;
     Fact        _lockFact;
-};
-
-class VehicleBatteryFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleBatteryFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* voltage            READ voltage            CONSTANT)
-    Q_PROPERTY(Fact* percentRemaining   READ percentRemaining   CONSTANT)
-    Q_PROPERTY(Fact* mahConsumed        READ mahConsumed        CONSTANT)
-    Q_PROPERTY(Fact* current            READ current            CONSTANT)
-    Q_PROPERTY(Fact* temperature        READ temperature        CONSTANT)
-    Q_PROPERTY(Fact* instantPower       READ instantPower       CONSTANT)
-    Q_PROPERTY(Fact* timeRemaining      READ timeRemaining      CONSTANT)
-    Q_PROPERTY(Fact* chargeState        READ chargeState        CONSTANT)
-
-    Fact* voltage                   () { return &_voltageFact; }
-    Fact* percentRemaining          () { return &_percentRemainingFact; }
-    Fact* mahConsumed               () { return &_mahConsumedFact; }
-    Fact* current                   () { return &_currentFact; }
-    Fact* temperature               () { return &_temperatureFact; }
-    Fact* instantPower              () { return &_instantPowerFact; }
-    Fact* timeRemaining             () { return &_timeRemainingFact; }
-    Fact* chargeState               () { return &_chargeStateFact; }
-
-    static const char* _voltageFactName;
-    static const char* _percentRemainingFactName;
-    static const char* _mahConsumedFactName;
-    static const char* _currentFactName;
-    static const char* _temperatureFactName;
-    static const char* _instantPowerFactName;
-    static const char* _timeRemainingFactName;
-    static const char* _chargeStateFactName;
-
-    static const char* _settingsGroup;
-
-private:
-    Fact            _voltageFact;
-    Fact            _percentRemainingFact;
-    Fact            _mahConsumedFact;
-    Fact            _currentFact;
-    Fact            _temperatureFact;
-    Fact            _instantPowerFact;
-    Fact            _timeRemainingFact;
-    Fact            _chargeStateFact;
 };
 
 class VehicleTemperatureFactGroup : public FactGroup
@@ -692,17 +646,16 @@ public:
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
     Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
-    Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* battery2          READ battery2FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* wind              READ windFactGroup              CONSTANT)
-    Q_PROPERTY(FactGroup* vibration         READ vibrationFactGroup         CONSTANT)
-    Q_PROPERTY(FactGroup* temperature       READ temperatureFactGroup       CONSTANT)
-    Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
-    Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
-    Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
-    Q_PROPERTY(FactGroup* distanceSensors   READ distanceSensorFactGroup    CONSTANT)
+    Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
+    Q_PROPERTY(FactGroup*           wind            READ windFactGroup              CONSTANT)
+    Q_PROPERTY(FactGroup*           vibration       READ vibrationFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup*           temperature     READ temperatureFactGroup       CONSTANT)
+    Q_PROPERTY(FactGroup*           clock           READ clockFactGroup             CONSTANT)
+    Q_PROPERTY(FactGroup*           setpoint        READ setpointFactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup*           estimatorStatus READ estimatorStatusFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup*           terrain         READ terrainFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup*           distanceSensors READ distanceSensorFactGroup    CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -720,7 +673,7 @@ public:
     Q_INVOKABLE void resetCounters  ();
 
     // Called when the message drop-down is invoked to clear current count
-    Q_INVOKABLE void        resetMessages();
+    Q_INVOKABLE void resetMessages();
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle();
@@ -1027,8 +980,6 @@ public:
     Fact* throttlePct                       () { return &_throttlePctFact; }
 
     FactGroup* gpsFactGroup                 () { return &_gpsFactGroup; }
-    FactGroup* battery1FactGroup            () { return &_battery1FactGroup; }
-    FactGroup* battery2FactGroup            () { return &_battery2FactGroup; }
     FactGroup* windFactGroup                () { return &_windFactGroup; }
     FactGroup* vibrationFactGroup           () { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup         () { return &_temperatureFactGroup; }
@@ -1037,6 +988,7 @@ public:
     FactGroup* distanceSensorFactGroup      () { return &_distanceSensorFactGroup; }
     FactGroup* estimatorStatusFactGroup     () { return &_estimatorStatusFactGroup; }
     FactGroup* terrainFactGroup             () { return &_terrainFactGroup; }
+    QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -1404,7 +1356,6 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
-    void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
 
@@ -1566,9 +1517,6 @@ private:
     QString _gitHash;
     quint64 _uid;
 
-    QElapsedTimer   _lastBatteryAnnouncement;
-    int     _lastAnnouncedLowBatteryPercent;
-
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
     bool _priorityLinkCommanded;
 
@@ -1653,6 +1601,8 @@ private:
 
     void _sendMavCommandWorker(bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
 
+    QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
+
     // FactGroup facts
 
     Fact _rollFact;
@@ -1677,8 +1627,6 @@ private:
     Fact _throttlePctFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
-    VehicleBatteryFactGroup         _battery1FactGroup;
-    VehicleBatteryFactGroup         _battery2FactGroup;
     VehicleWindFactGroup            _windFactGroup;
     VehicleVibrationFactGroup       _vibrationFactGroup;
     VehicleTemperatureFactGroup     _temperatureFactGroup;
@@ -1687,6 +1635,7 @@ private:
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
     TerrainFactGroup                _terrainFactGroup;
+    QmlObjectListModel              _batteryFactGroupListModel;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
 
@@ -1712,8 +1661,6 @@ private:
     static const char* _throttlePctFactName;
 
     static const char* _gpsFactGroupName;
-    static const char* _battery1FactGroupName;
-    static const char* _battery2FactGroupName;
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
@@ -1729,4 +1676,5 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
     friend class InitialConnectStateMachine;
+    friend class VehicleBatteryFactGroup;       // Allow VehicleBatteryFactGroup to call _addFactGroup
 };

@@ -176,6 +176,7 @@ void MockLink::_run1HzTasks(void)
             _sendHighLatency2();
         } else {
             _sendVibration();
+            _sendBatteryStatus();
             _sendSysStatus();
             _sendADSBVehicles();
             if (!qgcApp()->runningUnitTests()) {
@@ -360,9 +361,6 @@ void MockLink::_sendHighLatency2(void)
 
 void MockLink::_sendSysStatus(void)
 {
-    if(_batteryRemaining > 50) {
-        _batteryRemaining = static_cast<int8_t>(100 - (_runningTime.elapsed() / 1000));
-    }
     mavlink_message_t   msg;
     mavlink_msg_sys_status_pack_chan(
                 _vehicleSystemId,
@@ -375,8 +373,84 @@ void MockLink::_sendSysStatus(void)
                 250,        // load
                 4200 * 4,   // voltage_battery
                 8000,       // current_battery
-                _batteryRemaining, // battery_remaining
+                _battery1PctRemaining, // battery_remaining
                 0,0,0,0,0,0);
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendBatteryStatus(void)
+{
+    if(_battery1PctRemaining > 1) {
+        _battery1PctRemaining = static_cast<int8_t>(100 - (_runningTime.elapsed() / 1000));
+        _battery1TimeRemaining = static_cast<double>(_batteryMaxTimeRemaining) * (static_cast<double>(_battery1PctRemaining) / 100.0);
+        if (_battery1PctRemaining > 50) {
+            _battery1ChargeState = MAV_BATTERY_CHARGE_STATE_OK;
+        } else if (_battery1PctRemaining > 30) {
+            _battery1ChargeState = MAV_BATTERY_CHARGE_STATE_LOW;
+        } else if (_battery1PctRemaining > 20) {
+            _battery1ChargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        } else {
+            _battery1ChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+        }
+    }
+    if(_battery2PctRemaining > 1) {
+        _battery2PctRemaining = static_cast<int8_t>(100 - ((_runningTime.elapsed() / 1000) / 2));
+        _battery2TimeRemaining = static_cast<double>(_batteryMaxTimeRemaining) * (static_cast<double>(_battery2PctRemaining) / 100.0);
+        if (_battery2PctRemaining > 50) {
+            _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_OK;
+        } else if (_battery2PctRemaining > 30) {
+            _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_LOW;
+        } else if (_battery2PctRemaining > 20) {
+            _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        } else {
+            _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+        }
+    }
+
+    mavlink_message_t   msg;
+    uint16_t            rgVoltages[10];
+    uint16_t            rgVoltagesNone[10];
+
+    for (int i=0; i<10; i++) {
+        rgVoltages[i]       = UINT16_MAX;
+        rgVoltagesNone[i]   = UINT16_MAX;
+    }
+    rgVoltages[0] = rgVoltages[1] = rgVoltages[2] = 4200;
+
+    mavlink_msg_battery_status_pack_chan(
+                _vehicleSystemId,
+                _vehicleComponentId,
+                static_cast<uint8_t>(_mavlinkChannel),
+                &msg,
+                1,                          // battery id
+                MAV_BATTERY_FUNCTION_ALL,
+                MAV_BATTERY_TYPE_LIPO,
+                2100,                       // temp cdegC
+                rgVoltages,
+                600,                        // battery cA
+                100,                        // current consumed mAh
+                -1,                         // energy consumed not supported
+                _battery1PctRemaining,
+                _battery1TimeRemaining,
+                _battery1ChargeState);
+    respondWithMavlinkMessage(msg);
+
+    mavlink_msg_battery_status_pack_chan(
+                _vehicleSystemId,
+                _vehicleComponentId,
+                static_cast<uint8_t>(_mavlinkChannel),
+                &msg,
+                2,                          // battery id
+                MAV_BATTERY_FUNCTION_ALL,
+                MAV_BATTERY_TYPE_LIPO,
+                INT16_MAX,                  // temp cdegC
+                rgVoltagesNone,
+                600,                        // battery cA
+                100,                        // current consumed mAh
+                -1,                         // energy consumed not supported
+                _battery2PctRemaining,
+                _battery2TimeRemaining,
+                _battery2ChargeState);
     respondWithMavlinkMessage(msg);
 }
 
