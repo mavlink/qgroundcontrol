@@ -105,12 +105,14 @@ private slots:
     void _resetRangeInfo        (void);
     void _updateRanges          (void);
     void _activeVehicleChanged  (Vehicle* activeVehicle);
+    void _lookForMissingFact    (void);
 
 private:
     int  _currentRangeIndex     (const QVariant& value);
     void _updateColor           (void);
     void _updateIcon            (void);
     void _updateOpacity         (void);
+    void _setFactWorker         (void);
 
     FactValueGrid*          _factValueGrid =        nullptr;
     Vehicle*                _activeVehicle =        nullptr;

@@ -42,37 +42,31 @@ InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* 
 
 void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
 {
+    if (_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    }
+
     if (!activeVehicle) {
         activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
 
-    if (_fact) {
-        disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateColor);
-    }
-
     _activeVehicle = activeVehicle;
+    connect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
     emit factGroupNamesChanged();
 
-    if (_fact) {
-        _fact = nullptr;
-
-        FactGroup* factGroup = nullptr;
-        if (_factGroupName == vehicleFactGroupName) {
-            factGroup = _activeVehicle;
-        } else {
-            factGroup = _activeVehicle->getFactGroup(_factGroupName);
-        }
-
-        if (factGroup) {
-            _fact = factGroup->getFact(_factName);
-        }
-        emit factChanged(_fact);
-
-        connect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
+    if (!_factGroupName.isEmpty() && !_factName.isEmpty()) {
+        _setFactWorker();
     }
+}
 
-    _updateRanges();
+void InstrumentValueData::_lookForMissingFact(void)
+{
+    // This is called when new fact groups show up on the vehicle. We need to see if we can fill in any
+    // facts which may have been missing up to now.
+    if (!_fact) {
+        _setFactWorker();
+    }
 }
 
 void InstrumentValueData::clearFact(void)
@@ -92,7 +86,7 @@ void InstrumentValueData::clearFact(void)
     emit showUnitsChanged       (_showUnits);
 }
 
-void InstrumentValueData::setFact(const QString& factGroupName, const QString& factName)
+void InstrumentValueData::_setFactWorker(void)
 {
     if (_fact) {
         disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
@@ -100,19 +94,18 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     }
 
     FactGroup* factGroup = nullptr;
-    if (factGroupName == vehicleFactGroupName) {
+    if (_factGroupName == vehicleFactGroupName) {
         factGroup = _activeVehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(factGroupName);
+        factGroup = _activeVehicle->getFactGroup(_factGroupName);
     }
-    _factGroupName = factGroupName;
 
     QString nonEmptyFactName;
     if (factGroup) {
-        if (factName.isEmpty()) {
+        if (_factName.isEmpty()) {
             nonEmptyFactName = factValueNames()[0];
         } else {
-            nonEmptyFactName = factName;
+            nonEmptyFactName = _factName;
         }
         _fact = factGroup->getFact(nonEmptyFactName);
     }
@@ -120,9 +113,6 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     if (_fact) {
         _factName = nonEmptyFactName;
         connect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
-    } else {
-        _factGroupName.clear();
-        _factName.clear();
     }
 
     emit factValueNamesChanged  ();
@@ -131,6 +121,13 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     emit factGroupNameChanged   (_factGroupName);
 
     _updateRanges();
+}
+void InstrumentValueData::setFact(const QString& factGroupName, const QString& factName)
+{
+    _factGroupName  = factGroupName;
+    _factName       = factName;
+
+    _setFactWorker();
 }
 
 void InstrumentValueData::setText(const QString& text)
@@ -364,6 +361,8 @@ QStringList InstrumentValueData::factGroupNames(void) const
 
 QStringList InstrumentValueData::factValueNames(void) const
 {
+    QStringList valueNames;
+
     FactGroup* factGroup = nullptr;
     if (_factGroupName == vehicleFactGroupName) {
         factGroup = _activeVehicle;
@@ -371,9 +370,11 @@ QStringList InstrumentValueData::factValueNames(void) const
         factGroup = _activeVehicle->getFactGroup(_factGroupName);
     }
 
-    QStringList valueNames = factGroup->factNames();
-    for (QString& name: valueNames) {
-        name[0] = name[0].toUpper();
+    if (factGroup) {
+        valueNames = factGroup->factNames();
+        for (QString& name: valueNames) {
+            name[0] = name[0].toUpper();
+        }
     }
 
     return valueNames;
