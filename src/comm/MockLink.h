@@ -224,6 +224,7 @@ private:
     void _sendGpsRawInt                 (void);
     void _sendVibration                 (void);
     void _sendSysStatus                 (void);
+    void _sendBatteryStatus             (void);
     void _sendStatusTextMessages        (void);
     void _sendChunkedStatusText         (uint16_t chunkId, bool missingChunks);
     void _respondWithAutopilotVersion   (void);
@@ -257,8 +258,14 @@ private:
     uint32_t    _mavCustomMode;
     uint8_t     _mavState;
 
-    QElapsedTimer _runningTime;
-    int8_t      _batteryRemaining = 100;
+    QElapsedTimer               _runningTime;
+    static const int32_t        _batteryMaxTimeRemaining    = 15 * 60;
+    int8_t                      _battery1PctRemaining       = 100;
+    int32_t                     _battery1TimeRemaining      = _batteryMaxTimeRemaining;
+    MAV_BATTERY_CHARGE_STATE    _battery1ChargeState        = MAV_BATTERY_CHARGE_STATE_OK;
+    int8_t                      _battery2PctRemaining       = 100;
+    int32_t                     _battery2TimeRemaining      = _batteryMaxTimeRemaining;
+    MAV_BATTERY_CHARGE_STATE    _battery2ChargeState        = MAV_BATTERY_CHARGE_STATE_OK;
 
     MAV_AUTOPILOT       _firmwareType;
     MAV_TYPE            _vehicleType;

@@ -52,13 +52,7 @@ void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
 
     _activeVehicle = activeVehicle;
 
-    _factGroupNames.clear();
-    _factGroupNames = _activeVehicle->factGroupNames();
-    for (QString& name: _factGroupNames) {
-        name[0] = name[0].toUpper();
-    }
-    _factGroupNames.prepend(vehicleFactGroupName);
-    emit factGroupNamesChanged(_factGroupNames);
+    emit factGroupNamesChanged();
 
     if (_fact) {
         _fact = nullptr;
@@ -85,13 +79,11 @@ void InstrumentValueData::clearFact(void)
 {
     _fact = nullptr;
     _factName.clear();
-    _factGroupName.clear();
-    _factValueNames.clear();
     _text.clear();
     _icon.clear();
     _showUnits = true;
 
-    emit factValueNamesChanged  (_factValueNames);
+    emit factValueNamesChanged  ();
     emit factChanged            (_fact);
     emit factNameChanged        (_factName);
     emit factGroupNameChanged   (_factGroupName);
@@ -113,17 +105,12 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     } else {
         factGroup = _activeVehicle->getFactGroup(factGroupName);
     }
-
-    _factValueNames.clear();
-    _factValueNames = factGroup->factNames();
-    for (QString& name: _factValueNames) {
-        name[0] = name[0].toUpper();
-    }
+    _factGroupName = factGroupName;
 
     QString nonEmptyFactName;
     if (factGroup) {
         if (factName.isEmpty()) {
-            nonEmptyFactName = _factValueNames[0];
+            nonEmptyFactName = factValueNames()[0];
         } else {
             nonEmptyFactName = factName;
         }
@@ -131,16 +118,14 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     }
 
     if (_fact) {
-        _factGroupName = factGroupName;
-        _factName =      nonEmptyFactName;
-
+        _factName = nonEmptyFactName;
         connect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
     } else {
-        _factName.clear();
         _factGroupName.clear();
+        _factName.clear();
     }
 
-    emit factValueNamesChanged  (_factValueNames);
+    emit factValueNamesChanged  ();
     emit factChanged            (_fact);
     emit factNameChanged        (_factName);
     emit factGroupNameChanged   (_factGroupName);
@@ -363,4 +348,33 @@ int InstrumentValueData::_currentRangeIndex(const QVariant& value)
         }
     }
     return _rangeValues.count();
+}
+
+QStringList InstrumentValueData::factGroupNames(void) const
+{
+    QStringList groupNames = _activeVehicle->factGroupNames();
+
+    for (QString& name: groupNames) {
+        name[0] = name[0].toUpper();
+    }
+    groupNames.prepend(vehicleFactGroupName);
+
+    return groupNames;
+}
+
+QStringList InstrumentValueData::factValueNames(void) const
+{
+    FactGroup* factGroup = nullptr;
+    if (_factGroupName == vehicleFactGroupName) {
+        factGroup = _activeVehicle;
+    } else {
+        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+    }
+
+    QStringList valueNames = factGroup->factNames();
+    for (QString& name: valueNames) {
+        name[0] = name[0].toUpper();
+    }
+
+    return valueNames;
 }

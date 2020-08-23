@@ -30,7 +30,6 @@ Rectangle {
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
-    property Fact _percentRemainingAnnounce:            QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce
     property Fact _savePath:                            QGroundControl.settingsManager.appSettings.savePath
     property Fact _appFontPointSize:                    QGroundControl.settingsManager.appSettings.appFontPointSize
     property Fact _userBrandImageIndoor:                QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
@@ -621,28 +620,6 @@ Rectangle {
                                             clearCheck.checked  = false
                                             clearDialog.visible = false
                                         }
-                                    }
-                                }
-
-                                RowLayout {
-                                    visible: QGroundControl.settingsManager.appSettings.batteryPercentRemainingAnnounce.visible
-
-                                    QGCCheckBox {
-                                        id:         announcePercentCheckbox
-                                        text:       qsTr("Announce battery lower than")
-                                        checked:    _percentRemainingAnnounce.value !== 0
-                                        onClicked: {
-                                            if (checked) {
-                                                _percentRemainingAnnounce.value = _percentRemainingAnnounce.defaultValueString
-                                            } else {
-                                                _percentRemainingAnnounce.value = 0
-                                            }
-                                        }
-                                    }
-                                    FactTextField {
-                                        fact:                   _percentRemainingAnnounce
-                                        Layout.preferredWidth:  _valueFieldWidth
-                                        enabled:                announcePercentCheckbox.checked
                                     }
                                 }
                             }

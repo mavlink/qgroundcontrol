@@ -48,6 +48,7 @@
 #include "FTPManager.h"
 #include "ComponentInformationManager.h"
 #include "InitialConnectStateMachine.h"
+#include "VehicleBatteryFactGroup.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -86,8 +87,6 @@ const char* Vehicle::_hobbsFactName =               "hobbs";
 const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
-const char* Vehicle::_battery1FactGroupName =           "battery";
-const char* Vehicle::_battery2FactGroupName =           "battery2";
 const char* Vehicle::_windFactGroupName =               "wind";
 const char* Vehicle::_vibrationFactGroupName =          "vibration";
 const char* Vehicle::_temperatureFactGroupName =        "temperature";
@@ -182,7 +181,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _uid(0)
-    , _lastAnnouncedLowBatteryPercent(100)
     , _priorityLinkCommanded(false)
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
@@ -208,8 +206,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _battery1FactGroup(this)
-    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
@@ -287,7 +283,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
-    _lastBatteryAnnouncement.start();
 }
 
 // Disconnected Vehicle for offline editing
@@ -371,7 +366,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _uid(0)
-    , _lastAnnouncedLowBatteryPercent(100)
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
     , _pidTuningWaitingForRates(false)
@@ -396,8 +390,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _battery1FactGroup(this)
-    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _clockFactGroup(this)
@@ -504,8 +496,6 @@ void Vehicle::_commonInit()
     _addFact(&_hobbsFact,               _hobbsFactName);
 
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
-    _addFactGroup(&_battery1FactGroup,          _battery1FactGroupName);
-    _addFactGroup(&_battery2FactGroup,          _battery2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
@@ -713,6 +703,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _ftpManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
+
+    // Battery fact groups are created dynamically as new batteries are discovered
+    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+
+    // Let the fact groups take a whack at the mavlink traffic
+    QStringList groupNames = factGroupNames();
+    for (int i=0; i<groupNames.count(); i++) {
+        FactGroup* factGroup = getFactGroup(groupNames[i]);
+        factGroup->handleMessage(this, message);
+    }
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
@@ -1343,8 +1343,6 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
 
     _windFactGroup.speed()->setRawValue((double)highLatency.airspeed / 5.0);
 
-    _battery1FactGroup.percentRemaining()->setRawValue(highLatency.battery_remaining);
-
     _temperatureFactGroup.temperature1()->setRawValue(highLatency.temperature_air);
 
     _gpsFactGroup.lat()->setRawValue(coordinate.latitude);
@@ -1390,8 +1388,6 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
 
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
-
-    _battery1FactGroup.percentRemaining()->setRawValue(highLatency2.battery);
 
     _temperatureFactGroup.temperature1()->setRawValue(highLatency2.temperature_air);
 
@@ -1617,35 +1613,6 @@ bool Vehicle::_apmArmingNotRequired()
             _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
-void Vehicle::_batteryStatusWorker(int batteryId, double voltage, double current, double batteryRemainingPct)
-{
-    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (batteryId == 0) {
-        pBatteryFactGroup = &_battery1FactGroup;
-    } else if (batteryId == 1) {
-        pBatteryFactGroup = &_battery2FactGroup;
-    } else {
-        return;
-    }
-
-    pBatteryFactGroup->voltage()->setRawValue(voltage);
-    pBatteryFactGroup->current()->setRawValue(current);
-    pBatteryFactGroup->instantPower()->setRawValue(voltage * current);
-    pBatteryFactGroup->percentRemaining()->setRawValue(batteryRemainingPct);
-
-    //-- Low battery warning
-    if (batteryId == 0 && !qIsNaN(batteryRemainingPct)) {
-        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
-        if (batteryRemainingPct < warnThreshold &&
-                batteryRemainingPct < _lastAnnouncedLowBatteryPercent &&
-                _lastBatteryAnnouncement.elapsed() > (batteryRemainingPct < warnThreshold * 0.5 ? 15000 : 30000)) {
-            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(static_cast<int>(batteryRemainingPct)));
-            _lastBatteryAnnouncement.start();
-            _lastAnnouncedLowBatteryPercent = static_cast<int>(batteryRemainingPct);
-        }
-    }
-}
-
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
 {
     mavlink_sys_status_t sysStatus;
@@ -1697,52 +1664,64 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _onboardControlSensorsUnhealthy = newSensorsUnhealthy;
         emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
-
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    _batteryStatusWorker(0 /* batteryId */,
-                         sysStatus.voltage_battery == UINT16_MAX ? qQNaN() : static_cast<double>(sysStatus.voltage_battery) / 1000.0,
-                         sysStatus.current_battery == -1 ? qQNaN() : static_cast<double>(sysStatus.current_battery) / 100.0,
-                         sysStatus.battery_remaining == -1 ? qQNaN() : sysStatus.battery_remaining);
 }
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 {
-    mavlink_battery_status_t bat_status;
-    mavlink_msg_battery_status_decode(&message, &bat_status);
+    mavlink_battery_status_t batteryStatus;
+    mavlink_msg_battery_status_decode(&message, &batteryStatus);
 
-    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (bat_status.id == 0) {
-        pBatteryFactGroup = &_battery1FactGroup;
-    } else if (bat_status.id == 1) {
-        pBatteryFactGroup = &_battery2FactGroup;
-    } else {
-        return;
+    if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryStatus.id)) {
+        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
     }
 
-    double voltage = qQNaN();
-    for (int i=0; i<10; i++) {
-        double cellVoltage = bat_status.voltages[i] == UINT16_MAX ? qQNaN() : static_cast<double>(bat_status.voltages[i]) / 1000.0;
-        if (qIsNaN(cellVoltage)) {
-            break;
+    QString batteryMessage;
+
+    switch (batteryStatus.charge_state) {
+    case MAV_BATTERY_CHARGE_STATE_OK:
+        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        break;
+    case MAV_BATTERY_CHARGE_STATE_LOW:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level low");
         }
-        if (i == 0) {
-            voltage = cellVoltage;
+        break;
+    case MAV_BATTERY_CHARGE_STATE_CRITICAL:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level is critical");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_EMERGENCY:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level emergency");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_FAILED:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 failed");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 unhealthy");
+        }
+        break;
+    }
+
+    if (!batteryMessage.isEmpty()) {
+        QString batteryIdStr("%1");
+        if (_batteryFactGroupListModel.count() > 1) {
+            batteryIdStr = batteryIdStr.arg(batteryStatus.id);
         } else {
-            voltage += cellVoltage;
+            batteryIdStr = batteryIdStr.arg("");
         }
-    }
-
-    pBatteryFactGroup->temperature()->setRawValue(bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
-    pBatteryFactGroup->mahConsumed()->setRawValue(bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
-    pBatteryFactGroup->chargeState()->setRawValue(bat_status.charge_state);
-    pBatteryFactGroup->timeRemaining()->setRawValue(bat_status.time_remaining == 0 ? qQNaN() : bat_status.time_remaining);
-
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    if (bat_status.id != 0) {
-        _batteryStatusWorker(bat_status.id,
-                             voltage,
-                             bat_status.current_battery == -1 ? qQNaN() : (double)bat_status.current_battery / 100.0,
-                             bat_status.battery_remaining == -1 ? qQNaN() : bat_status.battery_remaining);
+        _say(tr("warning"));
+        _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
     }
 }
 
@@ -1777,7 +1756,7 @@ void Vehicle::_updateArmed(bool armed)
             _flightTimerStart();
             _clearCameraTriggerPoints();
             // Reset battery warning
-            _lastAnnouncedLowBatteryPercent = 100;
+            _lowestBatteryChargeStateAnnouncedMap.clear();
         } else {
             _trajectoryPoints->stop();
             _flightTimerStop();
@@ -4399,51 +4378,6 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 static_cast<int16_t>(newYawCommand),
                 buttons);
     sendMessageOnLinkThreadSafe(priorityLink(), message);
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-const char* VehicleBatteryFactGroup::_voltageFactName =                     "voltage";
-const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "percentRemaining";
-const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
-const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
-const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
-const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
-const char* VehicleBatteryFactGroup::_timeRemainingFactName =               "timeRemaining";
-const char* VehicleBatteryFactGroup::_chargeStateFactName =                 "chargeState";
-
-const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
-
-VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
-    , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
-    , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeDouble)
-    , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeDouble)
-    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeDouble)
-    , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
-    , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeDouble)
-    , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeDouble)
-    , _chargeStateFact              (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
-{
-    _addFact(&_voltageFact,                 _voltageFactName);
-    _addFact(&_percentRemainingFact,        _percentRemainingFactName);
-    _addFact(&_mahConsumedFact,             _mahConsumedFactName);
-    _addFact(&_currentFact,                 _currentFactName);
-    _addFact(&_temperatureFact,             _temperatureFactName);
-    _addFact(&_instantPowerFact,            _instantPowerFactName);
-    _addFact(&_timeRemainingFact,           _timeRemainingFactName);
-    _addFact(&_chargeStateFact,             _chargeStateFactName);
-
-    // Start out as not available
-    _voltageFact.setRawValue            (qQNaN());
-    _percentRemainingFact.setRawValue   (qQNaN());
-    _mahConsumedFact.setRawValue        (qQNaN());
-    _currentFact.setRawValue            (qQNaN());
-    _temperatureFact.setRawValue        (qQNaN());
-    _instantPowerFact.setRawValue       (qQNaN());
-    _timeRemainingFact.setRawValue      (qQNaN());
-    _chargeStateFact.setRawValue        (MAV_BATTERY_CHARGE_STATE_UNDEFINED);
 }
 
 const char* VehicleWindFactGroup::_directionFactName =      "direction";
