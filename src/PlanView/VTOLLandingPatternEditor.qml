@@ -276,6 +276,7 @@ Rectangle {
                 onClicked: {
                     missionItem.landingCoordinate = activeVehicle.coordinate
                     missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                    missionItem.setLandingHeadingToTakeoffHeading()
                 }
             }
         }

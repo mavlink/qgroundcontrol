@@ -189,6 +189,7 @@ Item {
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                 _missionItem.landingCoordinate = coordinate
+                _missionItem.setLandingHeadingToTakeoffHeading()
             }
         }
     }
