@@ -19,8 +19,11 @@ Rectangle {
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property bool _supportsTerrainFrame:    missionItem.masterController.supportsTerrain
     property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
+    property bool _supportsTerrainFrame:    _controllerVehicle.supportsTerrainFrame
+    property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
+    property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeNone
+    property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
 
     property string _altModeRelativeHelpText:       qsTr("Altitude relative to launch altitude")
     property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
@@ -29,16 +32,16 @@ Rectangle {
 
     function updateAltitudeModeText() {
         if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
-            altModeLabel.text = qsTr("Altitude")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
             altModeHelp.text = _altModeRelativeHelpText
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute) {
-            altModeLabel.text = qsTr("Above Mean Sea Level")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
             altModeHelp.text = _altModeAbsoluteHelpText
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAboveTerrain) {
-            altModeLabel.text = qsTr("Above Terrain")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAboveTerrain)
             altModeHelp.text = Qt.binding(function() { return _altModeAboveTerrainHelpText })
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
-            altModeLabel.text = qsTr("Terrain Frame")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
             altModeHelp.text = _altModeTerrainFrameHelpText
         } else {
             altModeLabel.text = qsTr("Internal Error")
@@ -52,6 +55,8 @@ Rectangle {
         target:                 missionItem
         onAltitudeModeChanged:  updateAltitudeModeText()
     }
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     Column {
         id:                 editorColumn
@@ -77,7 +82,11 @@ Rectangle {
             visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
             QGCLabel {
-                text:               qsTr("Move '%1' Takeoff to the %2 location.").arg(_controllerVehicle.vtol ? qsTr("V") : qsTr("T")).arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
+                text:               qsTr("Move '%1' %2 to the %3 location. %4")
+                                        .arg(_controllerVehicle.vtol ? qsTr("T") : qsTr("T"))
+                                        .arg(_controllerVehicle.vtol ? qsTr("Transition Direction") : qsTr("Takeoff"))
+                                        .arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
+                                        .arg(_controllerVehicle.vtol ? (qsTr("Ensure distance from launch to transition direction is far enough to complete transition.")) : "")
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 visible:            !initialClickLabel.visible
@@ -96,8 +105,6 @@ Rectangle {
                 visible:            !initialClickLabel.visible
                 onClicked: {
                     missionItem.wizardMode = false
-                    // Trial of no auto select next item
-                    //editorRoot.selectNextNotReadyItem()
                 }
             }
 
@@ -118,68 +125,39 @@ Rectangle {
             spacing:            _margin
             visible:            !missionItem.wizardMode
 
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columns:        2
-
-                Repeater {
-                    model: missionItem.comboboxFacts
-
-                    QGCLabel {
-                        text:           object.name
-                        visible:        object.name !== ""
-                        Layout.column:  0
-                        Layout.row:     index
-                    }
-                }
-
-                Repeater {
-                    model: missionItem.comboboxFacts
-
-                    FactComboBox {
-                        indexModel:         false
-                        model:              object.enumStrings
-                        fact:               object
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        Layout.column:      1
-                        Layout.row:         index
-                        Layout.fillWidth:   true
-                    }
-                }
-            }
-
+            // This control needs to morph between a simple altitude entry field to a more complex alt mode picker based on the global plan alt mode
             Rectangle {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 height:         altColumn.y + altColumn.height + _margin
-                color:          qgcPal.windowShade
+                color:          _globalAltModeIsMixed ? qgcPal.windowShadeLight : qgcPal.windowShadeDark
                 visible:        _specifiesAltitude
 
-                Column {
+                ColumnLayout {
                     id:                 altColumn
-                    anchors.margins:    _margin
+                    anchors.margins:    _globalAltModeIsMixed ? _margin : 0
                     anchors.top:        parent.top
                     anchors.left:       parent.left
                     anchors.right:      parent.right
-                    spacing:            _margin
+                    spacing:            _globalAltModeIsMixed ? _margin : 0
 
                     QGCLabel {
-                        width:          parent.width
-                        wrapMode:       Text.WordWrap
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        text:           qsTr("Altitude below specifies the approximate altitude of the ground. Normally 0 for landing back at original launch location.")
-                        visible:        missionItem.isLandCommand
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        text:               qsTr("Altitude below specifies the approximate altitude of the ground. Normally 0 for landing back at original launch location.")
+                        visible:            missionItem.isLandCommand
                     }
 
                     Item {
-                        width:  altHamburger.x + altHamburger.width
-                        height: altModeLabel.height
+                        width:      altModeDropArrow.x + altModeDropArrow.width
+                        height:     altModeLabel.height
+                        visible:    _globalAltModeIsMixed
 
                         QGCLabel { id: altModeLabel }
 
                         QGCColoredImage {
-                            id:                     altHamburger
+                            id:                     altModeDropArrow
                             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 4
                             anchors.left:           altModeLabel.right
                             anchors.verticalCenter: altModeLabel.verticalCenter
@@ -192,21 +170,21 @@ Rectangle {
 
                         QGCMouseArea {
                             anchors.fill:   parent
-                            onClicked:      altHamburgerMenu.popup()
+                            onClicked:      altModeMenu.popup()
                         }
 
                         QGCMenu {
-                            id: altHamburgerMenu
+                            id: altModeMenu
 
                             QGCMenuItem {
-                                text:           qsTr("Altitude Relative To Launch")
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeRelative
                                 onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeRelative
                             }
 
                             QGCMenuItem {
-                                text:           qsTr("Altitude Above Mean Sea Level")
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute
                                 visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude
@@ -214,7 +192,7 @@ Rectangle {
                             }
 
                             QGCMenuItem {
-                                text:           qsTr("Altitude Above Terrain")
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAboveTerrain)
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAboveTerrain
                                 onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeAboveTerrain
@@ -222,7 +200,7 @@ Rectangle {
                             }
 
                             QGCMenuItem {
-                                text:           qsTr("Terrain Frame")
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
                                 checkable:      true
                                 checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
                                 visible:        _supportsTerrainFrame && (missionItem.specifiesCoordinate || missionItem.specifiesAltitudeOnly)
@@ -231,20 +209,53 @@ Rectangle {
                         }
                     }
 
+                    QGCLabel {
+                        text:           qsTr("Altitude")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        visible:        !_globalAltModeIsMixed
+                    }
+
                     AltitudeFactTextField {
                         id:                 altField
+                        Layout.fillWidth:   true
                         fact:               missionItem.altitude
                         altitudeMode:       missionItem.altitudeMode
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
                     }
 
                     QGCLabel {
                         id:                 altModeHelp
+                        Layout.fillWidth:   true
                         wrapMode:           Text.WordWrap
                         font.pointSize:     ScreenTools.smallFontPointSize
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
+                        visible:            _globalAltModeIsMixed
+                    }
+                }
+            }
+
+            ColumnLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+
+                Repeater {
+                    model: missionItem.comboboxFacts
+
+                    ColumnLayout {
+                        Layout.fillWidth:   true
+                        spacing:            0
+
+                        QGCLabel {
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            text:           object.name
+                            visible:        object.name !== ""
+                        }
+
+                        FactComboBox {
+                            Layout.fillWidth:   true
+                            indexModel:         false
+                            model:              object.enumStrings
+                            fact:               object
+                        }
                     }
                 }
             }

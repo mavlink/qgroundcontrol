@@ -154,7 +154,7 @@ read_value(QDomNode& element, const char* tagName, QString& target)
 
 //-----------------------------------------------------------------------------
 QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
-    : FactGroup(0, parent)
+    : FactGroup(0, parent, true /* ignore camel case */)
     , _vehicle(vehicle)
     , _compID(compID)
 {
@@ -387,10 +387,7 @@ QGCCameraControl::takePhoto()
             _captureInfoRetries = 0;
             //-- Capture local image as well
             if(qgcApp()->toolbox()->videoManager()) {
-                QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-                QDir().mkpath(photoPath);
-                photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-                qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
+                qgcApp()->toolbox()->videoManager()->grabImage();
             }
             return true;
         }
@@ -1183,7 +1180,7 @@ QGCCameraControl::_requestAllParameters()
         &msg,
         static_cast<uint8_t>(_vehicle->id()),
         static_cast<uint8_t>(compID()));
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     qCDebug(CameraControlVerboseLog) << "Request all parameters";
 }
 
@@ -1274,17 +1271,26 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
     qCDebug(CameraControlVerboseLog) << "_processConditionTest(" << conditionTest << ")";
     int op = TEST_NONE;
     QStringList test;
+
+    auto split = [&conditionTest](const QString& sep ) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+        return conditionTest.split(sep, QString::SkipEmptyParts);
+#else
+        return conditionTest.split(sep, Qt::SkipEmptyParts);
+#endif
+    };
+
     if(conditionTest.contains("!=")) {
-        test = conditionTest.split("!=", QString::SkipEmptyParts);
+        test = split("!=");
         op = TEST_NOT_EQUAL;
     } else if(conditionTest.contains("=")) {
-        test = conditionTest.split("=", QString::SkipEmptyParts);
+        test = split("=");
         op = TEST_EQUAL;
     } else if(conditionTest.contains(">")) {
-        test = conditionTest.split(">", QString::SkipEmptyParts);
+        test = split(">");
         op = TEST_GREATER;
     } else if(conditionTest.contains("<")) {
-        test = conditionTest.split("<", QString::SkipEmptyParts);
+        test = split("<");
         op = TEST_SMALLER;
     }
     if(test.size() == 2) {
@@ -1319,7 +1325,11 @@ QGCCameraControl::_processCondition(const QString condition)
     bool result = true;
     bool andOp  = true;
     if(!condition.isEmpty()) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         QStringList scond = condition.split(" ", QString::SkipEmptyParts);
+#else
+        QStringList scond = condition.split(" ", Qt::SkipEmptyParts);
+#endif
         while(scond.size()) {
             QString test = scond.first();
             scond.removeFirst();
@@ -1577,7 +1587,7 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         qCDebug(CameraControlLog) << "All stream handlers done";
         _streamInfoTimer.stop();
         emit autoStreamChanged();
-        emit _vehicle->dynamicCameras()->streamChanged();
+        emit _vehicle->cameraManager()->streamChanged();
     }
 }
 
@@ -1623,7 +1633,7 @@ QGCCameraControl::setCurrentStream(int stream)
                 _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
             }
             emit currentStreamChanged();
-            emit _vehicle->dynamicCameras()->streamChanged();
+            emit _vehicle->cameraManager()->streamChanged();
         }
     }
 }
@@ -1773,7 +1783,7 @@ QGCCameraControl::_streamTimeout()
         //-- If we have at least one stream, work with what we have.
         if(_streams.count()) {
             emit autoStreamChanged();
-            emit _vehicle->dynamicCameras()->streamChanged();
+            emit _vehicle->cameraManager()->streamChanged();
         }
         return;
     }
@@ -2127,7 +2137,7 @@ QGCCameraControl::wb()
 Fact*
 QGCCameraControl::mode()
 {
-    return _paramComplete ? getFact(kCAM_MODE) : nullptr;
+    return _paramComplete && factExists(kCAM_MODE) ? getFact(kCAM_MODE) : nullptr;
 }
 
 //-----------------------------------------------------------------------------

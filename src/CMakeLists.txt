@@ -119,6 +119,8 @@ add_library(qgc
 	QGCTemporaryFile.h
 	QGCToolbox.cc
 	QGCToolbox.h
+	QGCZlib.cc
+	QGCZlib.h
 	RunGuard.cc
 	RunGuard.h
 	ShapeFileHelper.cc
@@ -162,12 +164,12 @@ add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoManager)
 add_subdirectory(VideoReceiver)
-add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
 	PRIVATE
 		shp
                 Qt5::QuickControls2
+                z # zlib
 
 	PUBLIC
 		Qt5::QuickWidgets
@@ -199,7 +201,6 @@ target_link_libraries(qgc
 		Vehicle
 		VehicleSetup
 		VideoManager
-		ViewWidgets
 )
 
 if(BUILD_TESTING)

@@ -15,6 +15,7 @@
 #include "FlightPathSegment.h"
 #include "MissionController.h"
 
+#include <QCborValue>
 #include <QSettings>
 
 const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
@@ -78,7 +79,7 @@ void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& prese
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    settings.setValue(name, QJsonDocument(presetObject).toBinaryData());
+    settings.setValue(name, QCborMap::fromJsonObject(presetObject).toCborValue().toByteArray());
 
     // Use this to save a survey preset as a JSON file to be included in the build
     // as a built-in survey preset that cannot be deleted.
@@ -107,7 +108,7 @@ QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    return QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
+    return QCborValue(settings.value(name).toByteArray()).toMap().toJsonObject();
 }
 
 void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)

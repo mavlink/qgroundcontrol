@@ -48,7 +48,6 @@ public:
 
     Q_PROPERTY(QVariantList         settingsPages                   READ settingsPages                                  NOTIFY settingsPagesChanged)
     Q_PROPERTY(QVariantList         analyzePages                    READ analyzePages                                   NOTIFY analyzePagesChanged)
-    Q_PROPERTY(QVariantList         instrumentPages                 READ instrumentPages                                NOTIFY instrumentPagesChanged)
     Q_PROPERTY(int                  defaultSettings                 READ defaultSettings                                CONSTANT)
     Q_PROPERTY(QGCOptions*          options                         READ options                                        CONSTANT)
     Q_PROPERTY(bool                 showTouchAreas                  READ showTouchAreas         WRITE setShowTouchAreas NOTIFY showTouchAreasChanged)
@@ -70,10 +69,6 @@ public:
     /// The list of pages/buttons under the Analyze Menu
     /// @return A list of QmlPageInfo
     virtual QVariantList& analyzePages();
-
-    /// The list of PageWidget pages shown in the instrument panel
-    /// @return A list of QmlPageInfo
-    virtual QVariantList& instrumentPages();
 
     /// The default settings panel to show
     /// @return The settings index
@@ -205,25 +200,15 @@ public:
 signals:
     void settingsPagesChanged       ();
     void analyzePagesChanged        ();
-    void instrumentPagesChanged     ();
     void showTouchAreasChanged      (bool showTouchAreas);
     void showAdvancedUIChanged      (bool showAdvancedUI);
     void toolBarIndicatorsChanged   ();
-
-protected slots:
-    void _activeVehicleChanged  (Vehicle* activeVehicle);
-    void _dynamicCamerasChanged ();
-    void _currentCameraChanged  ();
-    void _autoStreamChanged     ();
-
-protected:
-    void _resetInstrumentPages  ();
 
 protected:
     bool                _showTouchAreas;
     bool                _showAdvancedUI;
     Vehicle*            _activeVehicle  = nullptr;
-    QGCCameraManager*   _dynamicCameras = nullptr;
+    QGCCameraManager*   _cameraManager  = nullptr;
     QGCCameraControl*   _currentCamera  = nullptr;
     QVariantList        _toolBarIndicatorList;
 

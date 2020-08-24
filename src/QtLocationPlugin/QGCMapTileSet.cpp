@@ -250,7 +250,11 @@ void QGCCachedTileSet::_prepareDownload()
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
             connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCCachedTileSet::_networkReplyError);
+#else
+            connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
+#endif
             _replies.insert(tile->hash(), reply);
 #if !defined(__mobile__)
             _networkManager->setProxy(proxy);

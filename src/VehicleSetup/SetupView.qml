@@ -55,6 +55,7 @@ Rectangle {
         } else {
             panelLoader.setSourceComponent(disconnectedVehicleSummaryComponent)
         }
+        summaryButton.checked = true
     }
 
     function showPanel(button, qmlSource) {
@@ -80,7 +81,7 @@ Rectangle {
             for(var i = 0; i < componentRepeater.count; i++) {
                 var obj = componentRepeater.itemAt(i);
                 if (obj.text === vehicleComponent.name) {
-                    obj.checked = true;
+                    obj.checked = true
                     break;
                 }
             }
@@ -203,14 +204,6 @@ Rectangle {
         ColumnLayout {
             id:         buttonColumn
             spacing:    _defaultTextHeight / 2
-
-            QGCLabel {
-                Layout.fillWidth:       true
-                text:                   qsTr("Vehicle Setup")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !ScreenTools.isShortScreen
-            }
 
             Repeater {
                 model:                  _corePlugin ? _corePlugin.settingsPages : []

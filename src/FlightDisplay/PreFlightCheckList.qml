@@ -19,7 +19,7 @@ import QGroundControl.Vehicle       1.0
 
 Rectangle {
     width:      mainColumn.width  + ScreenTools.defaultFontPixelWidth * 3
-    height:     Math.min(mainWindow.availableHeight - (_verticalMargin * 2), mainColumn.height + ScreenTools.defaultFontPixelHeight)
+    height:     Math.min(mainWindow.height - (_verticalMargin * 2), mainColumn.height + ScreenTools.defaultFontPixelHeight)
     color:      qgcPal.windowShade
     radius:     3
 
@@ -31,7 +31,7 @@ Rectangle {
     }
 
     property bool allChecksPassed:  false
-    property var  vehicleCopy:       activeVehicle
+    property var  vehicleCopy:       globals.activeVehicle
 
     onVehicleCopyChanged: {
         checkListRepeater.model.reset()
@@ -39,9 +39,9 @@ Rectangle {
 
     onAllChecksPassedChanged: {
         if (allChecksPassed) {
-            activeVehicle.checkListState = Vehicle.CheckListPassed
+            globals.activeVehicle.checkListState = Vehicle.CheckListPassed
         } else {
-            activeVehicle.checkListState = Vehicle.CheckListFailed
+            globals.activeVehicle.checkListState = Vehicle.CheckListFailed
         }
     }
 
@@ -71,7 +71,7 @@ Rectangle {
 
     //-- Pick a checklist model that matches the current airframe type (if any)
     function _updateModel() {
-        var vehicle = activeVehicle
+        var vehicle = globals.activeVehicle
         if (!vehicle) {
            vehicle = QGroundControl.multiVehicleManager.offlineEditingVehicle
         }
@@ -97,7 +97,7 @@ Rectangle {
     }
 
     onVisibleChanged: {
-        if(activeVehicle) {
+        if(globals.activeVehicle) {
             if(visible) {
                 _updateModel()
             }

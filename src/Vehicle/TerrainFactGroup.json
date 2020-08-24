@@ -5,14 +5,14 @@
 [
 {
     "name":             "blocksPending",
-    "shortDescription": "Blocks Pending",
+    "shortDesc": "Blocks Pending",
     "type":             "double",
     "decimalPlaces":    0,
     "default":          0
 },
 {
     "name":             "blocksLoaded",
-    "shortDescription": "Blocks Loaded",
+    "shortDesc": "Blocks Loaded",
     "type":             "double",
     "decimalPlaces":    0,
     "default":          0

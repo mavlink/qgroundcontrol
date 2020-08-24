@@ -42,21 +42,21 @@ Item {
             QGCCheckBox {
                 id:             enabledSwitch
                 enabled:        _activeJoystick ? _activeJoystick.calibrated : false
-                onClicked:      activeVehicle.joystickEnabled = checked
+                onClicked:      globals.activeVehicle.joystickEnabled = checked
                 Component.onCompleted: {
-                    checked = activeVehicle.joystickEnabled
+                    checked = globals.activeVehicle.joystickEnabled
                 }
                 Connections {
-                    target: activeVehicle
+                    target: globals.activeVehicle
                     onJoystickEnabledChanged: {
-                        enabledSwitch.checked = activeVehicle.joystickEnabled
+                        enabledSwitch.checked = globals.activeVehicle.joystickEnabled
                     }
                 }
                 Connections {
                     target: joystickManager
                     onActiveJoystickChanged: {
                         if(_activeJoystick) {
-                            enabledSwitch.checked = Qt.binding(function() { return _activeJoystick.calibrated && activeVehicle.joystickEnabled })
+                            enabledSwitch.checked = Qt.binding(function() { return _activeJoystick.calibrated && globals.activeVehicle.joystickEnabled })
                         }
                     }
                 }
@@ -148,7 +148,7 @@ Item {
                     rowSpacing:         ScreenTools.defaultFontPixelHeight
                     anchors.centerIn:   parent
                     QGCLabel {
-                        text:               activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                        text:               globals.activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 12
                     }
                     AxisMonitor {
@@ -162,7 +162,7 @@ Item {
                     QGCLabel {
                         id:                 pitchLabel
                         width:              _attitudeLabelWidth
-                        text:               activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
+                        text:               globals.activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                     }
                     AxisMonitor {
                         id:                 pitchAxis
@@ -200,7 +200,7 @@ Item {
 
                     Connections {
                         target:             _activeJoystick
-                        onManualControl: {
+                        onAxisValues: {
                             rollAxis.axisValue      = roll  * 32768.0
                             pitchAxis.axisValue     = pitch * 32768.0
                             yawAxis.axisValue       = yaw   * 32768.0

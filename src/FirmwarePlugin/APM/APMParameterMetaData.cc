@@ -425,27 +425,26 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
     return true;
 }
 
-void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
+FactMetaData* APMParameterMetaData::getMetaDataForFact(const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
 {
     const QString mavTypeString = mavTypeToString(vehicleType);
     APMFactMetaDataRaw* rawMetaData = nullptr;
 
     // check if we have metadata for fact, use generic otherwise
-    if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {
-        rawMetaData = _vehicleTypeToParametersMap[mavTypeString][fact->name()];
-    } else if (_vehicleTypeToParametersMap["libraries"].contains(fact->name())) {
-        rawMetaData = _vehicleTypeToParametersMap["libraries"][fact->name()];
+    if (_vehicleTypeToParametersMap[mavTypeString].contains(name)) {
+        rawMetaData = _vehicleTypeToParametersMap[mavTypeString][name];
+    } else if (_vehicleTypeToParametersMap["libraries"].contains(name)) {
+        rawMetaData = _vehicleTypeToParametersMap["libraries"][name];
     }
 
-    FactMetaData *metaData = new FactMetaData(fact->type(), fact);
+    FactMetaData *metaData = new FactMetaData(type, this);
 
     // we don't have data for this fact
     if (!rawMetaData) {
         metaData->setCategory(QStringLiteral("Advanced"));
-        metaData->setGroup(_groupFromParameterName(fact->name()));
-        fact->setMetaData(metaData);
-        qCDebug(APMParameterMetaDataLog) << "No metaData for " << fact->name() << "using generic metadata";
-        return;
+        metaData->setGroup(_groupFromParameterName(name));
+        qCDebug(APMParameterMetaDataLog) << "No metaData for " << name << "using generic metadata";
+        return metaData;
     }
 
     metaData->setName(rawMetaData->name);
@@ -531,7 +530,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
             QVariant typedBitSet;
 
-            switch (fact->type()) {
+            switch (type) {
             case FactMetaData::valueTypeInt8:
                 typedBitSet = QVariant((signed char)bitSet);
                 break;
@@ -599,15 +598,15 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     }
 
     // ArduPilot does not yet support decimal places meta data. So for P/I/D parameters we force to 6 places
-    if ((fact->name().endsWith(QStringLiteral("_P")) ||
-         fact->name().endsWith(QStringLiteral("_I")) ||
-         fact->name().endsWith(QStringLiteral("_D"))) &&
-            (fact->type() == FactMetaData::valueTypeFloat ||
-             fact->type() == FactMetaData::valueTypeDouble)) {
+    if ((name.endsWith(QStringLiteral("_P")) ||
+         name.endsWith(QStringLiteral("_I")) ||
+         name.endsWith(QStringLiteral("_D"))) &&
+            (type == FactMetaData::valueTypeFloat ||
+             type == FactMetaData::valueTypeDouble)) {
         metaData->setDecimalPlaces(6);
     }
 
-    fact->setMetaData(metaData);
+    return metaData;
 }
 
 void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)

@@ -4,6 +4,11 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* Video Streaming: New camera control supports capturing individual images from the stream
+* Fly: Press and hold on arm button will change it to Force Arm. Click again to force arm.
+* VTOL: General setting for transition distance which affects Plan takeoff, landing pattern creation
+* VTOL: Much better VTOL support throughout QGC
+* Maps: Support zoom up to level 23 even if map provider doesn't provide tiles that high
 * Settings/Mavlink: Add ability to forward mavlink traffic out specified UDP port
 * Support mavlink terrain protocol which queries gcs for terrain height information. Allows planning missions with TERRAIN\_FRAME.
 * Fly: New instrument values display/editing support
@@ -14,7 +19,13 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.8 - Not yet released
+## 4.0.9 - Not yet released
+
+* Don't auto-connect to second Cube Orange/Yellow composite port
+* Plan: Fix bugs associated with mission commands which specify and altitude but no lat/lon
+* Fix bug which could prevent view switching from working after altitude mode warning dialog would pop up
+
+## 4.0.8 - Stable
 
 * iOS: Modify QGC file storage location to support new Files app
 * Mobile: Fix Log Replay status bar file selection

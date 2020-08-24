@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include <QStringList>
 #include <QDebug>
 
@@ -18,6 +17,7 @@
 #include "TerrainQuery.h"
 #include "TakeoffMissionItem.h"
 #include "PlanMasterController.h"
+#include "QGC.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
@@ -96,7 +96,7 @@ void VisualMissionItem::setHasCurrentChildItem(bool hasCurrentChildItem)
 
 void VisualMissionItem::setDistance(double distance)
 {
-    if (!qFuzzyCompare(_distance, distance)) {
+    if (!QGC::fuzzyCompare(_distance, distance)) {
         _distance = distance;
         emit distanceChanged(_distance);
     }
@@ -104,7 +104,7 @@ void VisualMissionItem::setDistance(double distance)
 
 void VisualMissionItem::setDistanceFromStart(double distanceFromStart)
 {
-    if (!qFuzzyCompare(_distanceFromStart, distanceFromStart)) {
+    if (!QGC::fuzzyCompare(_distanceFromStart, distanceFromStart)) {
         _distanceFromStart = distanceFromStart;
         emit distanceFromStartChanged(_distanceFromStart);
     }
@@ -112,7 +112,7 @@ void VisualMissionItem::setDistanceFromStart(double distanceFromStart)
 
 void VisualMissionItem::setAltDifference(double altDifference)
 {
-    if (!qFuzzyCompare(_altDifference, altDifference)) {
+    if (!QGC::fuzzyCompare(_altDifference, altDifference)) {
         _altDifference = altDifference;
         emit altDifferenceChanged(_altDifference);
     }
@@ -120,7 +120,7 @@ void VisualMissionItem::setAltDifference(double altDifference)
 
 void VisualMissionItem::setAltPercent(double altPercent)
 {
-    if (!qFuzzyCompare(_altPercent, altPercent)) {
+    if (!QGC::fuzzyCompare(_altPercent, altPercent)) {
         _altPercent = altPercent;
         emit altPercentChanged(_altPercent);
     }
@@ -128,7 +128,7 @@ void VisualMissionItem::setAltPercent(double altPercent)
 
 void VisualMissionItem::setTerrainPercent(double terrainPercent)
 {
-    if (!qFuzzyCompare(_terrainPercent, terrainPercent)) {
+    if (!QGC::fuzzyCompare(_terrainPercent, terrainPercent)) {
         _terrainPercent = terrainPercent;
         emit terrainPercentChanged(terrainPercent);
     }
@@ -144,7 +144,7 @@ void VisualMissionItem::setTerrainCollision(bool terrainCollision)
 
 void VisualMissionItem::setAzimuth(double azimuth)
 {
-    if (!qFuzzyCompare(_azimuth, azimuth)) {
+    if (!QGC::fuzzyCompare(_azimuth, azimuth)) {
         _azimuth = azimuth;
         emit azimuthChanged(_azimuth);
     }
@@ -152,19 +152,19 @@ void VisualMissionItem::setAzimuth(double azimuth)
 
 void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
-    _missionFlightStatus = missionFlightStatus;
-    if (qIsNaN(_missionFlightStatus.gimbalYaw) && qIsNaN(_missionGimbalYaw)) {
-        return;
-    }
-    if (!qFuzzyCompare(_missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
-        _missionGimbalYaw = _missionFlightStatus.gimbalYaw;
+    if (!QGC::fuzzyCompare(missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
+        _missionGimbalYaw = missionFlightStatus.gimbalYaw;
         emit missionGimbalYawChanged(_missionGimbalYaw);
+    }
+    if (missionFlightStatus.vtolMode != _previousVTOLMode) {
+        _previousVTOLMode = missionFlightStatus.vtolMode;
+        emit previousVTOLModeChanged();
     }
 }
 
 void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 {
-    if (!qFuzzyCompare(_missionVehicleYaw, vehicleYaw)) {
+    if (!QGC::fuzzyCompare(_missionVehicleYaw, vehicleYaw)) {
         _missionVehicleYaw = vehicleYaw;
         emit missionVehicleYawChanged(_missionVehicleYaw);
     }
@@ -189,7 +189,7 @@ void VisualMissionItem::_updateTerrainAltitude(void)
 void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 {
     QGeoCoordinate coord = coordinate();
-    if (specifiesCoordinate() && coord.isValid() && (qIsNaN(_terrainAltitude) || !qFuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || qFuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
+    if (specifiesCoordinate() && coord.isValid() && (qIsNaN(_terrainAltitude) || !QGC::fuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || QGC::fuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
         if (_currentTerrainAtCoordinateQuery) {

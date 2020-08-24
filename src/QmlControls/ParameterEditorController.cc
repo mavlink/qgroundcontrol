@@ -168,7 +168,12 @@ bool ParameterEditorController::_shouldShow(Fact* fact)
 void ParameterEditorController::_updateParameters(void)
 {
     QObjectList newParameterList;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
+#else
+    QStringList searchItems = _searchText.split(' ', Qt::SkipEmptyParts);
+#endif
 
     if (searchItems.isEmpty() && !_showModifiedOnly) {
         int compId = _parameterMgr->getComponentId(_currentCategory);

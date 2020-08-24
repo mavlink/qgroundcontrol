@@ -159,11 +159,11 @@ bool CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaD
     if (settingsGroup == AppSettings::settingsGroup) {
         // This tells QGC than when you are creating Plans while not connected to a vehicle
         // the specific firmware/vehicle the plan is for.
-        if (metaData.name() == AppSettings::offlineEditingFirmwareTypeName) {
-            metaData.setRawDefaultValue(MAV_AUTOPILOT_PX4);
+        if (metaData.name() == AppSettings::offlineEditingFirmwareClassName) {
+            metaData.setRawDefaultValue(QGCMAVLink::FirmwareClassPX4);
             return false;
-        } else if (metaData.name() == AppSettings::offlineEditingVehicleTypeName) {
-            metaData.setRawDefaultValue(MAV_TYPE_QUADROTOR);
+        } else if (metaData.name() == AppSettings::offlineEditingVehicleClassName) {
+            metaData.setRawDefaultValue(QGCMAVLink::VehicleClassMultiRotor);
             return false;
         }
     }

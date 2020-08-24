@@ -112,7 +112,7 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
-            visible:        !activeVehicle.apmFirmware
+            visible:        !_activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
         QGCMenuSeparator { }
@@ -188,8 +188,6 @@ Item {
                         }
                     }
 
-                    ExclusiveGroup { id: buttonGroup }
-
                     Repeater {
                         model: categoryHeader.checked ? controller.getGroupsForCategory(category) : 0
 
@@ -198,7 +196,7 @@ Item {
                             text:           groupName
                             height:         _rowHeight
                             checked:        controller.currentGroup === text
-                            exclusiveGroup: buttonGroup
+                            autoExclusive:  true
 
                             readonly property string groupName: modelData
 
@@ -347,7 +345,7 @@ Item {
 
         QGCViewDialog {
             function accept() {
-                activeVehicle.rebootVehicle()
+                _activeVehicle.rebootVehicle()
                 hideDialog()
             }
 

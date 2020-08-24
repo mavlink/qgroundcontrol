@@ -41,7 +41,6 @@
 class QQmlApplicationEngine;
 class QGCSingleton;
 class QGCToolbox;
-class QGCFileDownload;
 
 /**
  * @brief The main application and management class.
@@ -79,7 +78,7 @@ public:
     void reportMissingParameter(int componentId, const QString& name);
 
     /// Show non-modal vehicle message to the user
-    Q_SLOT void showVehicleMessage(const QString& message);
+    Q_SLOT void showCriticalVehicleMessage(const QString& message);
 
     /// Show modal application message to the user
     Q_SLOT void showAppMessage(const QString& message, const QString& title = QString());
@@ -98,7 +97,7 @@ public:
 
     FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
 
-    QTranslator& qgcTranslator(void) { return _QGCTranslator; }
+    QTranslator& qgcJSONTranslator(void) { return _qgcTranslatorJSON; }
 
     static QString cachedParameterMetaDataFile(void);
     static QString cachedAirframeMetaDataFile(void);
@@ -166,15 +165,14 @@ public:
     bool _checkTelemetrySavePath(bool useMessageBox);
 
 private slots:
-    void _missingParamsDisplay          (void);
-    void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
-    void _currentVersionDownloadError   (QString errorMsg);
-    bool _parseVersionText              (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
-    void _onGPSConnect                  (void);
-    void _onGPSDisconnect               (void);
-    void _gpsSurveyInStatus             (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
-    void _gpsNumSatellites              (int numSatellites);
-    void _showDelayedAppMessages        (void);
+    void _missingParamsDisplay                      (void);
+    void _qgcCurrentStableVersionDownloadComplete   (QString remoteFile, QString localFile, QString errorMsg);
+    bool _parseVersionText                          (const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect                              (void);
+    void _onGPSDisconnect                           (void);
+    void _gpsSurveyInStatus                         (float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites                          (int numSatellites);
+    void _showDelayedAppMessages                    (void);
 
 private:
     QObject*    _rootQmlObject          ();
@@ -188,19 +186,19 @@ private:
     QList<QPair<int,QString>>   _missingParams;                                     ///< List of missing parameter component id:name
 
     QQmlApplicationEngine* _qmlAppEngine        = nullptr;
-    bool                _logOutput              = false;                    ///< true: Log Qt debug output to file
-    bool				_fakeMobile             = false;                    ///< true: Fake ui into displaying mobile interface
-    bool                _settingsUpgraded       = false;                    ///< true: Settings format has been upgrade to new version
+    bool                _logOutput              = false;    ///< true: Log Qt debug output to file
+    bool				_fakeMobile             = false;    ///< true: Fake ui into displaying mobile interface
+    bool                _settingsUpgraded       = false;    ///< true: Settings format has been upgrade to new version
     int                 _majorVersion           = 0;
     int                 _minorVersion           = 0;
     int                 _buildVersion           = 0;
-    QGCFileDownload*    _currentVersionDownload = nullptr;
     GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
     QGCToolbox*         _toolbox                = nullptr;
     QQuickItem*         _mainRootWindow         = nullptr;
     bool                _bluetoothAvailable     = false;
-    QTranslator         _QGCTranslator;
-    QTranslator         _QGCTranslatorQt;
+    QTranslator         _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
+    QTranslator         _qgcTranslatorJSON;                 ///< translations for json files
+    QTranslator         _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries
     QLocale             _locale;
     bool                _error                  = false;
     QElapsedTimer       _msecsElapsedTime;
@@ -225,7 +223,7 @@ private:
         /*! Returns a signal index that is can be compared to QMetaCallEvent.signalId. */
         static int signalIndex(const QMetaMethod & method) {
             Q_ASSERT(method.methodType() == QMetaMethod::Signal);
-    #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+
             int index = -1;
             const QMetaObject * mobj = method.enclosingMetaObject();
             for (int i = 0; i <= method.methodIndex(); ++i) {
@@ -233,9 +231,6 @@ private:
                 ++ index;
             }
             return index;
-    #else
-            return method.methodIndex();
-    #endif
         }
     public:
         SignalList() {}

@@ -7,18 +7,17 @@
  *
  ****************************************************************************/
 
-
-#ifndef FactGroup_H
-#define FactGroup_H
+#pragma once
 
 #include "Fact.h"
+#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 
 #include <QStringList>
 #include <QMap>
 #include <QTimer>
 
-Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
+class Vehicle;
 
 /// Used to group Facts together into an object hierarachy.
 class FactGroup : public QObject
@@ -26,16 +25,21 @@ class FactGroup : public QObject
     Q_OBJECT
     
 public:
-    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = nullptr);
-    FactGroup(int updateRateMsecs, QObject* parent = nullptr);
+    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = nullptr, bool ignoreCamelCase = false);
+    FactGroup(int updateRateMsecs, QObject* parent = nullptr, bool ignoreCamelCase = false);
 
-    Q_PROPERTY(QStringList factNames        READ factNames      CONSTANT)
-    Q_PROPERTY(QStringList factGroupNames   READ factGroupNames CONSTANT)
+    Q_PROPERTY(QStringList factNames        READ factNames      NOTIFY factNamesChanged)
+    Q_PROPERTY(QStringList factGroupNames   READ factGroupNames NOTIFY factGroupNamesChanged)
+
+    /// @ return true: if the fact exists in the group
+    Q_INVOKABLE bool factExists(const QString& name);
 
     /// @return Fact for specified name, NULL if not found
+    /// Note: Requesting a fact which doesn't exists is considered an internal error and will spit out a qWarning
     Q_INVOKABLE Fact* getFact(const QString& name);
 
     /// @return FactGroup for specified name, NULL if not found
+    /// Note: Requesting a fact group which doesn't exists is considered an internal error and will spit out a qWarning
     Q_INVOKABLE FactGroup* getFactGroup(const QString& name);
 
     /// Turning on live updates will allow value changes to flow through as they are received.
@@ -43,6 +47,13 @@ public:
 
     QStringList factNames(void) const { return _factNames; }
     QStringList factGroupNames(void) const { return _nameToFactGroupMap.keys(); }
+
+    /// Allows a FactGroup to parse incoming messages and fill in values
+    virtual void handleMessage(Vehicle* vehicle, mavlink_message_t& message);
+
+signals:
+    void factNamesChanged       (void);
+    void factGroupNamesChanged  (void);
 
 protected slots:
     virtual void _updateAllValues(void);
@@ -63,7 +74,6 @@ private:
     void    _setupTimer (void);
     QString _camelCase  (const QString& text);
 
+    bool    _ignoreCamelCase = false;
     QTimer  _updateTimer;
 };
-
-#endif

@@ -27,7 +27,8 @@ void PlanMasterControllerTest::init(void)
     UnitTest::init();
 
     _masterController = new PlanMasterController(this);
-    _masterController->start(false /* flyView */);
+    _masterController->setFlyView(false);
+    _masterController->start();
 }
 
 void PlanMasterControllerTest::cleanup(void)

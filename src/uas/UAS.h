@@ -20,10 +20,6 @@
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
 
-#ifndef __mobile__
-#include "FileManager.h"
-#endif
-
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
 class Vehicle;
@@ -109,10 +105,6 @@ public:
         temperature_var = var;
     }
 
-#ifndef __mobile__
-    friend class FileManager;
-#endif
-
 protected:
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
@@ -137,10 +129,6 @@ protected:
 
     /// POSITION
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
-
-#ifndef __mobile__
-    FileManager   fileManager;
-#endif
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -182,10 +170,6 @@ public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
 
-#ifndef __mobile__
-    virtual FileManager* getFileManager() { return &fileManager; }
-#endif
-
     QImage getImage();
     void requestImage();
 
@@ -193,22 +177,8 @@ public slots:
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
 
-    /** @brief Set the values for the manual control of the vehicle */
-    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
-
-    /** @brief Set the values for the 6dof manual control of the vehicle */
-#ifndef __mobile__
-    void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
-#endif
-
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
-
-    void startCalibration(StartCalibrationType calType);
-    void stopCalibration(void);
-
-    void startBusConfig(StartBusConfigType calType);
-    void stopBusConfig(void);
 
 signals:
     void imageStarted(quint64 timestamp);

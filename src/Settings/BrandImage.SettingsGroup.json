@@ -5,17 +5,17 @@
 [
 {
     "name":             "userBrandImageIndoor",
-    "shortDescription": "User-selected brand image",
-    "longDescription":  "Location in file system of user-selected brand image (indoor)",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (indoor)",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 },
 {
     "name":             "userBrandImageOutdoor",
-    "shortDescription": "User-selected brand image",
-    "longDescription":  "Location in file system of user-selected brand image (outdoor)",
+    "shortDesc": "User-selected brand image",
+    "longDesc":  "Location in file system of user-selected brand image (outdoor)",
     "type":             "string",
-    "defaultValue":     ""
+    "default":     ""
 }
 ]
 }

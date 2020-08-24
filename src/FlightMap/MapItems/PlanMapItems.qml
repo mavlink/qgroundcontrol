@@ -30,6 +30,7 @@ Item {
     property var    _missionController:         masterController.missionController
     property var    _geoFenceController:        masterController.geoFenceController
     property var    _rallyPointController:      masterController.rallyPointController
+    property var    _guidedController:          globals.guidedControllerFlyView
     property var    _missionLineViewComponent
     property bool   _isActiveVehicle:           vehicle.active
 
@@ -42,7 +43,7 @@ Item {
         delegate: MissionItemMapVisual {
             map:        _map
             vehicle:    _vehicle
-            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
+            onClicked:  _guidedController.confirmAction(_guidedController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
         }
     }
 

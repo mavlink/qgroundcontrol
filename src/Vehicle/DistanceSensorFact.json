@@ -5,70 +5,70 @@
 [
 {
     "name":             "rotationNone",
-    "shortDescription": "Forward",
+    "shortDesc": "Forward",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw45",
-    "shortDescription": "Forward/Right",
+    "shortDesc": "Forward/Right",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw90",
-    "shortDescription": "Right",
+    "shortDesc": "Right",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw135",
-    "shortDescription": "Rear/Right",
+    "shortDesc": "Rear/Right",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw180",
-    "shortDescription": "Rear",
+    "shortDesc": "Rear",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw225",
-    "shortDescription": "Rear/Left",
+    "shortDesc": "Rear/Left",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw270",
-    "shortDescription": "Left",
+    "shortDesc": "Left",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw315",
-    "shortDescription": "Forward/Left",
+    "shortDesc": "Forward/Left",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch90",
-    "shortDescription": "Up",
+    "shortDesc": "Up",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch270",
-    "shortDescription": "Down",
+    "shortDesc": "Down",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"

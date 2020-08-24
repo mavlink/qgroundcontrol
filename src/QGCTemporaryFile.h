@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef QGCTemporaryFile_H
-#define QGCTemporaryFile_H
+#pragma once
 
 #include <QFile>
 
@@ -30,13 +28,15 @@ public:
 	//							directory path, only file name.
     QGCTemporaryFile(const QString& fileTemplate, QObject* parent = nullptr);
 
-	/// @brief Opens the file in ReadWrite mode.
-	///		@returns false - open failed
+    ~QGCTemporaryFile();
+
 	bool open(OpenMode openMode = ReadWrite);
+
+    void setAutoRemove(bool autoRemove) { _autoRemove = autoRemove; }
     
 private:
+    static QString _newTempFileFullyQualifiedName(const QString& fileTemplate);
+
     QString _template;
+    bool    _autoRemove = false;
 };
-
-
-#endif

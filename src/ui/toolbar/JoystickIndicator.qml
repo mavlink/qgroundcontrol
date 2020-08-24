@@ -22,7 +22,7 @@ Item {
     width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        activeVehicle ? activeVehicle.sub : false
+    visible:        globals.activeVehicle ? globals.activeVehicle.sub : false
 
 
     Component {
@@ -63,8 +63,8 @@ Item {
                     }
                     QGCLabel { text: qsTr("Enabled:") }
                     QGCLabel {
-                        text:  activeVehicle && activeVehicle.joystickEnabled ? "Yes" : "No"
-                        color: activeVehicle && activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
+                        text:  globals.activeVehicle && globals.activeVehicle.joystickEnabled ? "Yes" : "No"
+                        color: globals.activeVehicle && globals.activeVehicle.joystickEnabled ? qgcPal.buttonText : "red"
                     }
                 }
             }
@@ -84,14 +84,14 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/Joystick.png"
             fillMode:           Image.PreserveAspectFit
-            color:              activeVehicle && activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
+            color:              globals.activeVehicle && globals.activeVehicle.joystickEnabled && joystickManager.activeJoystick ? qgcPal.buttonText : "red"
         }
     }
 
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            mainWindow.showPopUp(_root, joystickInfo)
+            mainWindow.showIndicatorPopup(_root, joystickInfo)
         }
     }
 }

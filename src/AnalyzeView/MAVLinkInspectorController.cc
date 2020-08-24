@@ -156,7 +156,7 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(QObject *parent, mavlink_message_t* message
     _message = *message;
     const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
     if (!msgInfo) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message->msgid);
+        qCWarning(MAVLinkInspectorLog) << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message->msgid);
         return;
     }
     _name = QString(msgInfo->name);
@@ -217,26 +217,41 @@ QGCMAVLinkMessage::updateFreq()
     emit freqChanged();
 }
 
+void QGCMAVLinkMessage::setSelected(bool sel)
+{
+    if (_selected != sel) {
+        _selected = sel;
+        _updateFields();
+        emit selectedChanged();
+    }
+}
+
 //-----------------------------------------------------------------------------
 void
 QGCMAVLinkMessage::update(mavlink_message_t* message)
 {
     _count++;
-    //-- If we are not consuming this message, no need to parse it
-    if(!_selected && !_fieldSelected) {
-        return;
-    }
     _message = *message;
-    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
+
+    if (_selected) {
+        // Don't update field info unless selected to reduce perf hit of message processing
+        _updateFields();
+    }
+    emit countChanged();
+}
+
+void QGCMAVLinkMessage::_updateFields(void)
+{
+    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(&_message);
     if (!msgInfo) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage::update NULL msgInfo msgid(%1)").arg(message->msgid);
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update NULL msgInfo msgid(%1)").arg(_message.msgid);
         return;
     }
     if(_fields.count() != static_cast<int>(msgInfo->num_fields)) {
-        qWarning() << QStringLiteral("QGCMAVLinkMessage::update msgInfo field count mismatch msgid(%1)").arg(message->msgid);
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update msgInfo field count mismatch msgid(%1)").arg(_message.msgid);
         return;
     }
-    uint8_t* m = reinterpret_cast<uint8_t*>(&message->payload64[0]);
+    uint8_t* m = reinterpret_cast<uint8_t*>(&_message.payload64[0]);
     for (unsigned int i = 0; i < msgInfo->num_fields; ++i) {
         QGCMAVLinkMessageField* f = qobject_cast<QGCMAVLinkMessageField*>(_fields.get(static_cast<int>(i)));
         if(f) {
@@ -450,11 +465,10 @@ QGCMAVLinkMessage::update(mavlink_message_t* message)
             }
         }
     }
-    emit messageChanged();
 }
 
 //-----------------------------------------------------------------------------
-QGCMAVLinkVehicle::QGCMAVLinkVehicle(QObject* parent, quint8 id)
+QGCMAVLinkSystem::QGCMAVLinkSystem(QObject* parent, quint8 id)
     : QObject(parent)
     , _id(id)
 {
@@ -462,14 +476,14 @@ QGCMAVLinkVehicle::QGCMAVLinkVehicle(QObject* parent, quint8 id)
 }
 
 //-----------------------------------------------------------------------------
-QGCMAVLinkVehicle::~QGCMAVLinkVehicle()
+QGCMAVLinkSystem::~QGCMAVLinkSystem()
 {
     _messages.clearAndDeleteContents();
 }
 
 //-----------------------------------------------------------------------------
 QGCMAVLinkMessage*
-QGCMAVLinkVehicle::findMessage(uint32_t id, uint8_t cid)
+QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t cid)
 {
     for(int i = 0; i < _messages.count(); i++) {
         QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
@@ -484,7 +498,7 @@ QGCMAVLinkVehicle::findMessage(uint32_t id, uint8_t cid)
 
 //-----------------------------------------------------------------------------
 int
-QGCMAVLinkVehicle::findMessage(QGCMAVLinkMessage* message)
+QGCMAVLinkSystem::findMessage(QGCMAVLinkMessage* message)
 {
     for(int i = 0; i < _messages.count(); i++) {
         QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
@@ -497,7 +511,7 @@ QGCMAVLinkVehicle::findMessage(QGCMAVLinkMessage* message)
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkVehicle::_resetSelection()
+QGCMAVLinkSystem::_resetSelection()
 {
     for(int i = 0; i < _messages.count(); i++) {
         QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
@@ -510,7 +524,7 @@ QGCMAVLinkVehicle::_resetSelection()
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkVehicle::setSelected(int sel)
+QGCMAVLinkSystem::setSelected(int sel)
 {
     if(sel < _messages.count()) {
         _selected = sel;
@@ -537,7 +551,7 @@ messages_sort(QObject* a, QObject* b)
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
+QGCMAVLinkSystem::append(QGCMAVLinkMessage* message)
 {
     //-- Save selected message
     QGCMAVLinkMessage* selectedMsg = nullptr;
@@ -549,17 +563,12 @@ QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
     }
     _messages.append(message);
     //-- Sort messages by id and then cid
-    if(_messages.count() > 0) {
+    if (_messages.count() > 0) {
+        _messages.beginReset();
         std::sort(_messages.objectList()->begin(), _messages.objectList()->end(), messages_sort);
-        for(int i = 0; i < _messages.count(); i++) {
-            QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
-            if(m) {
-                emit m->indexChanged();
-            }
-        }
+        _messages.endReset();
         _checkCompID(message);
     }
-    emit messagesChanged();
     //-- Remember selected message
     if(selectedMsg) {
         int idx = findMessage(selectedMsg);
@@ -572,15 +581,15 @@ QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
 
 //-----------------------------------------------------------------------------
 void
-QGCMAVLinkVehicle::_checkCompID(QGCMAVLinkMessage* message)
+QGCMAVLinkSystem::_checkCompID(QGCMAVLinkMessage* message)
 {
     if(_compIDsStr.isEmpty()) {
-        _compIDsStr << tr("All");
+        _compIDsStr << tr("Comp All");
     }
     if(!_compIDs.contains(static_cast<int>(message->cid()))) {
         int cid = static_cast<int>(message->cid());
         _compIDs.append(cid);
-        _compIDsStr << QString::number(cid);
+        _compIDsStr << tr("Comp %1").arg(cid);
         emit compIDsChanged();
     }
 }
@@ -748,7 +757,7 @@ MAVLinkInspectorController::MAVLinkInspectorController()
 MAVLinkInspectorController::~MAVLinkInspectorController()
 {
     _charts.clearAndDeleteContents();
-    _vehicles.clearAndDeleteContents();
+    _systems.clearAndDeleteContents();
 }
 
 //----------------------------------------------------------------------------------------
@@ -780,24 +789,24 @@ void
 MAVLinkInspectorController::_setActiveVehicle(Vehicle* vehicle)
 {
     if(vehicle) {
-        QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+        QGCMAVLinkSystem* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
         if(v) {
-            _activeVehicle = v;
+            _activeSystem = v;
         } else {
-            _activeVehicle = nullptr;
+            _activeSystem = nullptr;
         }
     } else {
-        _activeVehicle = nullptr;
+        _activeSystem = nullptr;
     }
-    emit activeVehiclesChanged();
+    emit activeSystemChanged();
 }
 
 //-----------------------------------------------------------------------------
-QGCMAVLinkVehicle*
+QGCMAVLinkSystem*
 MAVLinkInspectorController::_findVehicle(uint8_t id)
 {
-    for(int i = 0; i < _vehicles.count(); i++) {
-        QGCMAVLinkVehicle* v = qobject_cast<QGCMAVLinkVehicle*>(_vehicles.get(i));
+    for(int i = 0; i < _systems.count(); i++) {
+        QGCMAVLinkSystem* v = qobject_cast<QGCMAVLinkSystem*>(_systems.get(i));
         if(v) {
             if(v->id() == id) {
                 return v;
@@ -811,8 +820,8 @@ MAVLinkInspectorController::_findVehicle(uint8_t id)
 void
 MAVLinkInspectorController::_refreshFrequency()
 {
-    for(int i = 0; i < _vehicles.count(); i++) {
-        QGCMAVLinkVehicle* v = qobject_cast<QGCMAVLinkVehicle*>(_vehicles.get(i));
+    for(int i = 0; i < _systems.count(); i++) {
+        QGCMAVLinkSystem* v = qobject_cast<QGCMAVLinkSystem*>(_systems.get(i));
         if(v) {
             for(int i = 0; i < v->messages()->count(); i++) {
                 QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(v->messages()->get(i));
@@ -828,29 +837,28 @@ MAVLinkInspectorController::_refreshFrequency()
 void
 MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
 {
-    QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    QGCMAVLinkSystem* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
     if(v) {
         v->messages()->clearAndDeleteContents();
-        emit v->messagesChanged();
     } else {
-        v = new QGCMAVLinkVehicle(this, static_cast<uint8_t>(vehicle->id()));
-        _vehicles.append(v);
-        _vehicleNames.append(tr("Vehicle %1").arg(vehicle->id()));
+        v = new QGCMAVLinkSystem(this, static_cast<uint8_t>(vehicle->id()));
+        _systems.append(v);
+        _systemNames.append(tr("System %1").arg(vehicle->id()));
     }
-    emit vehiclesChanged();
+    emit systemsChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 MAVLinkInspectorController::_vehicleRemoved(Vehicle* vehicle)
 {
-    QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    QGCMAVLinkSystem* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
     if(v) {
         v->deleteLater();
-        _vehicles.removeOne(v);
-        QString vs = tr("Vehicle %1").arg(vehicle->id());
-        _vehicleNames.removeOne(vs);
-        emit vehiclesChanged();
+        _systems.removeOne(v);
+        QString vs = tr("System %1").arg(vehicle->id());
+        _systemNames.removeOne(vs);
+        emit systemsChanged();
     }
 }
 
@@ -859,15 +867,15 @@ void
 MAVLinkInspectorController::_receiveMessage(LinkInterface*, mavlink_message_t message)
 {
     QGCMAVLinkMessage* m = nullptr;
-    QGCMAVLinkVehicle* v = _findVehicle(message.sysid);
+    QGCMAVLinkSystem* v = _findVehicle(message.sysid);
     if(!v) {
-        v = new QGCMAVLinkVehicle(this, message.sysid);
-        _vehicles.append(v);
-        _vehicleNames.append(tr("Vehicle %1").arg(message.sysid));
-        emit vehiclesChanged();
-        if(!_activeVehicle) {
-            _activeVehicle = v;
-            emit activeVehiclesChanged();
+        v = new QGCMAVLinkSystem(this, message.sysid);
+        _systems.append(v);
+        _systemNames.append(tr("System %1").arg(message.sysid));
+        emit systemsChanged();
+        if(!_activeSystem) {
+            _activeSystem = v;
+            emit activeSystemChanged();
         }
     } else {
         m = v->findMessage(message.msgid, message.compid);
@@ -922,5 +930,14 @@ MAVLinkInspectorController::Range_st::Range_st(QObject* parent, const QString& l
     , label(l)
     , range(r)
 {
+}
+
+void MAVLinkInspectorController::setActiveSystem(int systemId)
+{
+    QGCMAVLinkSystem* v = _findVehicle(systemId);
+    if (v != _activeSystem) {
+        _activeSystem = v;
+        emit activeSystemChanged();
+    }
 }
 

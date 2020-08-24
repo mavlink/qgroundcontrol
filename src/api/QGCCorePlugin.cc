@@ -23,7 +23,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCCameraManager.h"
 #include "HorizontalFactValueGrid.h"
-#include "VerticalFactValueGrid.h"
 #include "InstrumentValueData.h"
 
 #include <QtQml>
@@ -97,16 +96,9 @@ public:
     QmlComponentInfo* pQmlTest                  = nullptr;
 #endif
 
-    QmlComponentInfo*   valuesPageWidgetInfo    = nullptr;
-    QmlComponentInfo*   cameraPageWidgetInfo    = nullptr;
-    QmlComponentInfo*   videoPageWidgetInfo     = nullptr;
-    QmlComponentInfo*   healthPageWidgetInfo    = nullptr;
-    QmlComponentInfo*   vibrationPageWidgetInfo = nullptr;
-
     QGCOptions*         defaultOptions          = nullptr;
     QVariantList        settingsList;
     QVariantList        analyzeList;
-    QVariantList        instrumentPageWidgetList;
 
     QmlObjectListModel _emptyCustomMapItems;
 };
@@ -134,87 +126,6 @@ void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
     qmlRegisterUncreatableType<QGCCorePlugin>       ("QGroundControl", 1, 0, "QGCCorePlugin",       "Reference only");
     qmlRegisterUncreatableType<QGCOptions>          ("QGroundControl", 1, 0, "QGCOptions",          "Reference only");
     qmlRegisterUncreatableType<QGCFlyViewOptions>   ("QGroundControl", 1, 0, "QGCFlyViewOptions",   "Reference only");
-
-    //-- Handle Camera and Video Changes
-    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &QGCCorePlugin::_activeVehicleChanged);
-}
-
-void QGCCorePlugin::_activeVehicleChanged(Vehicle* activeVehicle)
-{
-    if(activeVehicle != _activeVehicle) {
-        if(_activeVehicle) {
-            disconnect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
-        }
-        if(_dynamicCameras) {
-            disconnect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
-            _dynamicCameras = nullptr;
-        }
-        _activeVehicle = activeVehicle;
-        if(_activeVehicle) {
-            connect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_dynamicCamerasChanged()
-{
-    if(_currentCamera) {
-        disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        _currentCamera = nullptr;
-    }
-    if(_activeVehicle) {
-        _dynamicCameras = _activeVehicle->dynamicCameras();
-        if(_dynamicCameras) {
-            connect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_currentCameraChanged()
-{
-    if(_dynamicCameras) {
-        QGCCameraControl* cp = _dynamicCameras->currentCameraInstance();
-        if(_currentCamera) {
-            disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        }
-        if(_currentCamera != cp) {
-            _currentCamera = cp;
-            connect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
-        }
-    }
-}
-
-void QGCCorePlugin::_autoStreamChanged()
-{
-    _resetInstrumentPages();
-    emit instrumentPagesChanged();
-}
-
-void QGCCorePlugin::_resetInstrumentPages()
-{
-    if (_p->valuesPageWidgetInfo) {
-        _p->valuesPageWidgetInfo->deleteLater();
-        _p->valuesPageWidgetInfo = nullptr;
-    }
-    if(_p->cameraPageWidgetInfo) {
-        _p->cameraPageWidgetInfo->deleteLater();
-        _p->cameraPageWidgetInfo = nullptr;
-    }
-#if defined(QGC_GST_STREAMING)
-    if(_p->videoPageWidgetInfo) {
-        _p->videoPageWidgetInfo->deleteLater();
-        _p->videoPageWidgetInfo = nullptr;
-    }
-#endif
-    if(_p->healthPageWidgetInfo) {
-        _p->healthPageWidgetInfo->deleteLater();
-        _p->healthPageWidgetInfo = nullptr;
-    }
-    if(_p->vibrationPageWidgetInfo) {
-        _p->vibrationPageWidgetInfo->deleteLater();
-        _p->vibrationPageWidgetInfo = nullptr;
-    }
-    _p->instrumentPageWidgetList.clear();
 }
 
 QVariantList &QGCCorePlugin::settingsPages()
@@ -276,42 +187,18 @@ QVariantList &QGCCorePlugin::settingsPages()
     return _p->settingsList;
 }
 
-QVariantList& QGCCorePlugin::instrumentPages()
-{
-    if (!_p->valuesPageWidgetInfo) {
-        _p->valuesPageWidgetInfo    = new QmlComponentInfo(tr("Values"),    QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
-        _p->cameraPageWidgetInfo    = new QmlComponentInfo(tr("Camera"),    QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
-#if defined(QGC_GST_STREAMING)
-        if(!_currentCamera || !_currentCamera->autoStream()) {
-            //-- Video Page Widget only available if using manual video streaming
-            _p->videoPageWidgetInfo = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
-        }
-#endif
-        _p->healthPageWidgetInfo    = new QmlComponentInfo(tr("Health"),    QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
-        _p->vibrationPageWidgetInfo = new QmlComponentInfo(tr("Vibration"), QUrl::fromUserInput("qrc:/qml/VibrationPageWidget.qml"));
-
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->valuesPageWidgetInfo));
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->cameraPageWidgetInfo));
-#if defined(QGC_GST_STREAMING)
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->videoPageWidgetInfo));
-#endif
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->healthPageWidgetInfo));
-        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
-    }
-    return _p->instrumentPageWidgetList;
-}
-
 QVariantList& QGCCorePlugin::analyzePages()
 {
     if (!_p->analyzeList.count()) {
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),     QUrl::fromUserInput("qrc:/qml/LogDownloadPage.qml"),      QUrl::fromUserInput("qrc:/qmlimages/LogDownloadIcon"))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Log Download"),     QUrl::fromUserInput("qrc:/qml/LogDownloadPage.qml"),        QUrl::fromUserInput("qrc:/qmlimages/LogDownloadIcon"))));
 #if !defined(__mobile__)
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),    QUrl::fromUserInput("qrc:/qml/GeoTagPage.qml"),           QUrl::fromUserInput("qrc:/qmlimages/GeoTagIcon"))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("GeoTag Images"),    QUrl::fromUserInput("qrc:/qml/GeoTagPage.qml"),             QUrl::fromUserInput("qrc:/qmlimages/GeoTagIcon"))));
 #endif
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),  QUrl::fromUserInput("qrc:/qml/MavlinkConsolePage.qml"),   QUrl::fromUserInput("qrc:/qmlimages/MavlinkConsoleIcon"))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Console"),  QUrl::fromUserInput("qrc:/qml/MavlinkConsolePage.qml"),     QUrl::fromUserInput("qrc:/qmlimages/MavlinkConsoleIcon"))));
 #if defined(QGC_ENABLE_MAVLINK_INSPECTOR)
-        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),QUrl::fromUserInput("qrc:/qml/MAVLinkInspectorPage.qml"), QUrl::fromUserInput("qrc:/qmlimages/MAVLinkInspector"))));
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("MAVLink Inspector"),QUrl::fromUserInput("qrc:/qml/MAVLinkInspectorPage.qml"),   QUrl::fromUserInput("qrc:/qmlimages/MAVLinkInspector"))));
 #endif
+        _p->analyzeList.append(QVariant::fromValue(new QmlComponentInfo(tr("Vibration"),        QUrl::fromUserInput("qrc:/qml/VibrationPage.qml"),          QUrl::fromUserInput("qrc:/qmlimages/VibrationPageIcon"))));
     }
     return _p->analyzeList;
 }
@@ -404,46 +291,80 @@ QString QGCCorePlugin::showAdvancedUIMessage() const
 
 void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSettingsGroup)
 {
-    if (defaultSettingsGroup == VerticalFactValueGrid::valuePageDefaultSettingsGroup) {
-        VerticalFactValueGrid factValueGrid(defaultSettingsGroup);
+    HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
 
-        factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
+    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL;
 
-        QmlObjectListModel* row = factValueGrid.appendRow();
-        InstrumentValueData* value = row->value<InstrumentValueData*>(0);
-        value->setFact("Vehicle", "DistanceToHome");
-        value->setText(value->fact()->shortDescription());
+    factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
+
+    factValueGrid.appendColumn();
+    factValueGrid.appendColumn();
+    factValueGrid.appendColumn();
+    if (includeFWValues) {
+        factValueGrid.appendColumn();
+    }
+    factValueGrid.appendRow();
+
+    int                 rowIndex    = 0;
+    QmlObjectListModel* column      = factValueGrid.columns()->value<QmlObjectListModel*>(0);
+
+    InstrumentValueData* value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "AltitudeRelative");
+    value->setIcon("arrow-thick-up.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(true);
+
+    value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "DistanceToHome");
+    value->setIcon("bookmark copy 3.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(true);
+
+    rowIndex    = 0;
+    column      = factValueGrid.columns()->value<QmlObjectListModel*>(1);
+
+    value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "ClimbRate");
+    value->setIcon("arrow-simple-up.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(true);
+
+    value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "GroundSpeed");
+    value->setIcon("arrow-simple-right.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(true);
+
+
+    if (includeFWValues) {
+        rowIndex    = 0;
+        column      = factValueGrid.columns()->value<QmlObjectListModel*>(2);
+
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Vehicle", "AirSpeed");
+        value->setText("AirSpd");
         value->setShowUnits(true);
 
-        row = factValueGrid.appendRow();
-        value = row->value<InstrumentValueData*>(0);
-        value->setFact("Vehicle", "FlightDistance");
-        value->setText(value->fact()->shortDescription());
-        value->setShowUnits(true);
-
-        row = factValueGrid.appendRow();
-        value = row->value<InstrumentValueData*>(0);
-        value->setFact("Vehicle", "FlightTime");
-        value->setText(value->fact()->shortDescription());
-        value->setShowUnits(false);
-    } else if (defaultSettingsGroup == HorizontalFactValueGrid::toolbarDefaultSettingsGroup) {
-        HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
-
-        factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
-
-        QmlObjectListModel* row = factValueGrid.appendRow();
-        InstrumentValueData* value = row->value<InstrumentValueData*>(0);
-        value->setFact("Vehicle", "AltitudeRelative");
-        value->setIcon("arrow-thick-up.svg");
-        value->setText(value->fact()->shortDescription());
-        value->setShowUnits(true);
-
-        row = factValueGrid.appendRow();
-        value = row->value<InstrumentValueData*>(0);
-        value->setFact("Vehicle", "GroundSpeed");
-        value->setIcon("arrow-thick-right.svg");
+        value = column->value<InstrumentValueData*>(rowIndex++);
+        value->setFact("Vehicle", "ThrottlePct");
+        value->setText("Thr");
         value->setShowUnits(true);
     }
+
+    rowIndex    = 0;
+    column      = factValueGrid.columns()->value<QmlObjectListModel*>(includeFWValues ? 3 : 2);
+
+    value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "FlightTime");
+    value->setIcon("timer.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(false);
+
+    value = column->value<InstrumentValueData*>(rowIndex++);
+    value->setFact("Vehicle", "FlightDistance");
+    value->setIcon("travel-walk.svg");
+    value->setText(value->fact()->shortDescription());
+    value->setShowUnits(true);
 }
 
 QQmlApplicationEngine* QGCCorePlugin::createQmlApplicationEngine(QObject* parent)

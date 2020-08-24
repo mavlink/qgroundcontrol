@@ -35,7 +35,7 @@ SetupPage {
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
-            property bool _firmware34:       activeVehicle.versionCompare(3, 5, 0) < 0
+            property bool _firmware34:       globals.activeVehicle.versionCompare(3, 5, 0) < 0
 
             // Enable/Action parameters
             property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")
@@ -60,8 +60,6 @@ SetupPage {
 
             property real _margins:     ScreenTools.defaultFontPixelHeight
             property bool _showIcon:    !ScreenTools.isTinyScreen
-
-            ExclusiveGroup { id: fenceActionRadioGroup }
 
             Column {
                 spacing: _margins / 2

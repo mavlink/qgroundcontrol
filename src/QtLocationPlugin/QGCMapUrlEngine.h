@@ -24,7 +24,7 @@
 #include "MapboxMapProvider.h"
 #include "ElevationMapProvider.h"
 
-#define MAX_MAP_ZOOM (20.0)
+#define MAX_MAP_ZOOM (23.0)
 
 class UrlFactory : public QObject {
     Q_OBJECT
@@ -48,6 +48,7 @@ public:
 
     int getIdFromType(QString type);
     QString getTypeFromId(int id);
+    MapProvider* getMapProviderFromId(int id);
 
     QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
                             double bottomRightLon, double bottomRightLat,

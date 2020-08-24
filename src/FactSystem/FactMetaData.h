@@ -47,6 +47,8 @@ public:
     //  @return Error string for failed validation explanation to user. Empty string indicates no error.
     typedef QString (*CustomCookedValidator)(const QVariant& cookedValue);
 
+    typedef QMap<QString /* param Name */, FactMetaData*> NameToMetaDataMap_t;
+
     FactMetaData(QObject* parent = nullptr);
     FactMetaData(ValueType_t type, QObject* parent = nullptr);
     FactMetaData(ValueType_t type, const QString name, QObject* parent = nullptr);
@@ -94,6 +96,9 @@ public:
 
     /// Returns the string for distance units which has configued by user
     static QString appSettingsAreaUnitsString(void);
+
+    /// Returns the string for speed units which has configued by user
+    static QString appSettingsSpeedUnitsString();
 
     static const QString defaultCategory    ();
     static const QString defaultGroup       ();
@@ -191,6 +196,7 @@ public:
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
+    static QString typeToString(ValueType_t type);
     static size_t typeToSize(ValueType_t type);
 
     static const char* qgcFileType;
@@ -199,6 +205,30 @@ private:
     QVariant _minForType(void) const;
     QVariant _maxForType(void) const;
     void _setAppSettingsTranslators(void);
+
+
+    /// Clamp a value to be within cookedMin and cookedMax
+    template<class T>
+    void clamp(QVariant& variantValue) const {
+        if (cookedMin().value<T>() > variantValue.value<T>()) {
+            variantValue = cookedMin();
+        } else if(variantValue.value<T>() > cookedMax().value<T>()) {
+            variantValue = cookedMax();
+        }
+    }
+
+    template<class T>
+    bool isInCookedLimit(const QVariant& variantValue) const {
+        return cookedMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= cookedMax().value<T>();
+    }
+
+    template<class T>
+    bool isInRawLimit(const QVariant& variantValue) const {
+        return rawMin().value<T>() <= variantValue.value<T>() && variantValue.value<T>() <= rawMax().value<T>();
+    }
+
+    bool isInRawMinLimit(const QVariant& variantValue) const;
+    bool isInRawMaxLimit(const QVariant& variantValue) const;
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -258,10 +288,7 @@ private:
         Translator    cookedTranslator;
     };
 
-    static const AppSettingsTranslation_s* _findAppSettingsHorizontalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsVerticalDistanceUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
-    static const AppSettingsTranslation_s* _findAppSettingsWeightUnitsTranslation(const QString& rawUnits);
+    static const AppSettingsTranslation_s* _findAppSettingsUnitsTranslation(const QString& rawUnits, UnitTypes type);
 
     static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
 
@@ -318,6 +345,9 @@ private:
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 
+    static const char*          _rgKnownTypeStrings[];
+    static const ValueType_t    _rgKnownValueTypes[];
+
     static const char* _nameJsonKey;
     static const char* _decimalPlacesJsonKey;
     static const char* _typeJsonKey;
@@ -331,6 +361,9 @@ private:
     static const char* _incrementJsonKey;
     static const char* _hasControlJsonKey;
     static const char* _qgcRebootRequiredJsonKey;
+    static const char* _categoryJsonKey;
+    static const char* _groupJsonKey;
+    static const char* _volatileJsonKey;
 
     static const char* _jsonMetaDataDefinesName;
     static const char* _jsonMetaDataFactsName;

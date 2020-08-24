@@ -1,13 +1,10 @@
 
 add_library(uas
-	FileManager.cc
 	UAS.cc
-	UASMessageHandler.cc
-
-	# HEADERS
-	# shouldn't be listed here, but aren't named properly for AUTOMOC
 	UAS.h
 	UASInterface.h
+	UASMessageHandler.cc
+	UASMessageHandler.h
 )
 
 target_link_libraries(uas

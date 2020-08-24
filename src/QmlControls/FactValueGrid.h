@@ -26,12 +26,6 @@ public:
     FactValueGrid(QQuickItem *parent = nullptr);
     FactValueGrid(const QString& defaultSettingsGroup);
 
-    enum Orientation {
-        HorizontalOrientation=0,    // Labels will be to the left of the value
-        VerticalOrientation         // Labels will be above the value
-    };
-    Q_ENUMS(Orientation)
-
     enum FontSize {
         DefaultFontSize=0,
         SmallFontSize,
@@ -50,23 +44,24 @@ public:
 
     // The combination of the two valuePage*SettingsGroup values allows each FactValueGrid to have it's own persistence space.
 
-    Q_PROPERTY(QmlObjectListModel*  rows                            MEMBER _rows                                            NOTIFY rowsChanged)
-    Q_PROPERTY(int                  columnCount                     MEMBER _columnCount                                     NOTIFY columnCountChanged)
+    Q_PROPERTY(QmlObjectListModel*  columns                         MEMBER _columns                                         NOTIFY columnsChanged)
+    Q_PROPERTY(int                  rowCount                        MEMBER _rowCount                                        NOTIFY rowCountChanged)
     Q_PROPERTY(QString              userSettingsGroup               MEMBER _userSettingsGroup                               NOTIFY userSettingsGroupChanged)
     Q_PROPERTY(QString              defaultSettingsGroup            MEMBER _defaultSettingsGroup                            NOTIFY defaultSettingsGroupChanged)
-    Q_PROPERTY(Orientation          orientation                     MEMBER _orientation                                     CONSTANT)
     Q_PROPERTY(QStringList          iconNames                       READ iconNames                                          CONSTANT)
     Q_PROPERTY(FontSize             fontSize                        READ fontSize                       WRITE setFontSize   NOTIFY fontSizeChanged)
     Q_PROPERTY(QStringList          fontSizeNames                   MEMBER _fontSizeNames                                   CONSTANT)
 
-    Q_INVOKABLE void                resetToDefaults     (void);
-    Q_INVOKABLE QmlObjectListModel* appendRow           (void);
-    Q_INVOKABLE void                deleteLastRow       (void);
-    Q_INVOKABLE void                appendColumn        (void);
-    Q_INVOKABLE void                deleteLastColumn    (void);
+    Q_INVOKABLE void                resetToDefaults (void);
+    Q_INVOKABLE QmlObjectListModel* appendColumn    (void);
+    Q_INVOKABLE void                deleteLastColumn(void);
+    Q_INVOKABLE void                appendRow       (void);
+    Q_INVOKABLE void                deleteLastRow   (void);
 
-    FontSize    fontSize    (void) const { return _fontSize; }
-    QStringList iconNames   (void) const { return _iconNames; }
+    QmlObjectListModel*         columns     (void) const { return _columns; }
+    FontSize                    fontSize    (void) const { return _fontSize; }
+    QStringList                 iconNames   (void) const { return _iconNames; }
+    QGCMAVLink::VehicleClass_t  vehicleClass(void) const { return _vehicleClass; }
 
     void setFontSize(FontSize fontSize);
 
@@ -77,26 +72,28 @@ signals:
     void userSettingsGroupChanged   (const QString& userSettingsGroup);
     void defaultSettingsGroupChanged(const QString& defaultSettingsGroup);
     void fontSizeChanged            (FontSize fontSize);
-    void rowsChanged                (QmlObjectListModel* model);
-    void columnCountChanged         (int columnCount);
+    void columnsChanged             (QmlObjectListModel* model);
+    void rowCountChanged            (int rowCount);
 
 protected:
-
     Q_DISABLE_COPY(FactValueGrid)
 
-    QString                 _defaultSettingsGroup;              // Settings group to read from if the user has not modified from the default settings
-    QString                 _userSettingsGroup;                 // Settings group to read from for user modified settings
-    Orientation             _orientation =          VerticalOrientation;
-    FontSize                _fontSize =             DefaultFontSize;
-    bool                    _preventSaveSettings =  false;
-    QmlObjectListModel*     _rows =                 nullptr;
-    int                     _columnCount =          0;
+    QGCMAVLink::VehicleClass_t  _vehicleClass           = QGCMAVLink::VehicleClassGeneric;
+    QString                     _defaultSettingsGroup;                                      // Settings group to read from if the user has not modified from the default settings
+    QString                     _userSettingsGroup;                                         // Settings group to read from for user modified settings
+    FontSize                    _fontSize               = DefaultFontSize;
+    bool                        _preventSaveSettings    = false;
+    QmlObjectListModel*         _columns                = nullptr;
+    int                         _rowCount               = 0;
+
+private slots:
+    void _offlineVehicleTypeChanged(void);
 
 private:
     InstrumentValueData*    _createNewInstrumentValueWorker (QObject* parent);
     void                    _saveSettings                   (void);
     void                    _loadSettings                   (void);
-    void                    _connectSignals                 (void);
+    void                    _init                           (void);
     void                    _connectSaveSignals             (InstrumentValueData* value);
     QString                 _pascalCase                     (const QString& text);
     void                    _saveValueData                  (QSettings& settings, InstrumentValueData* value);
@@ -107,9 +104,9 @@ private:
     static const QStringList _fontSizeNames;
 
     static const char* _versionKey;
-    static const char* _rowsKey;
     static const char* _columnsKey;
-    static const char* _orientationKey;
+    static const char* _rowsKey;
+    static const char* _rowCountKey;
     static const char* _fontSizeKey;
     static const char* _factGroupNameKey;
     static const char* _factNameKey;
@@ -128,4 +125,3 @@ private:
 QML_DECLARE_TYPE(FactValueGrid)
 
 Q_DECLARE_METATYPE(FactValueGrid::FontSize)
-Q_DECLARE_METATYPE(FactValueGrid::Orientation)

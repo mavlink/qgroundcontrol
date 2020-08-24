@@ -26,6 +26,12 @@ class JsonHelper
     Q_DECLARE_TR_FUNCTIONS(JsonHelper)
 
 public:
+    /// Determines is the specified file is a json file
+    /// @return true: file is json, false: file is not json
+    static bool isJsonFile(const QString&       fileName,       ///< filename
+                           QJsonDocument&       jsonDoc,        ///< returned json document
+                           QString&             errorString);   ///< error on parse failure
+
     /// Determines is the specified data is a json file
     /// @return true: file is json, false: file is not json
     static bool isJsonFile(const QByteArray&    bytes,          ///< json bytes

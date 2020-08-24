@@ -50,15 +50,16 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _rgMissionControllerSignals[visualItemsChangedSignalIndex] =    SIGNAL(visualItemsChanged());
 
     // Master controller pulls offline vehicle info from settings
-    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->setRawValue(firmwareType);
+    qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(firmwareType));
     _masterController = new PlanMasterController(this);
+    _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
 
     _multiSpyMissionController = new MultiSignalSpy();
     Q_CHECK_PTR(_multiSpyMissionController);
     QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
 
-    _masterController->start(false /* flyView */);
+    _masterController->start();
 
     // All signals should some through on start
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask), true);
@@ -166,17 +167,68 @@ void MissionControllerTest::_testGimbalRecalc(void)
         QVERIFY(qIsNaN(visualItem->missionGimbalYaw()));
     }
 
-#if 0
-    // FIXME: No longer works due to signal compression
-    // Specify gimbal yaw on settings item should generate yaw on all items
-    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
-    settingsItem->cameraSection()->setSpecifyGimbal(true);
-    settingsItem->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    // Specify gimbal yaw on settings item should generate yaw on all subsequent items
+    const int yawIndex = 2;
+    SimpleMissionItem* item = _missionController->visualItems()->value<SimpleMissionItem*>(yawIndex);
+    item->cameraSection()->setSpecifyGimbal(true);
+    item->cameraSection()->gimbalYaw()->setRawValue(0.0);
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
     for (int i=1; i<_missionController->visualItems()->count(); i++) {
+        //qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
-        QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
+        if (i >= yawIndex) {
+            QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
+        } else {
+            QVERIFY(qIsNaN(visualItem->missionGimbalYaw()));
+        }
     }
-#endif
+}
+
+void MissionControllerTest::_testVehicleYawRecalc(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    double wpDistance   = 1000;
+    double wpAngleInc   = 45;
+    double wpAngle      = 0;
+
+    int cMissionItems = 4;
+    QGeoCoordinate currentCoord(0, 0);
+    _missionController->insertSimpleMissionItem(currentCoord, 1);
+    for (int i=2; i<=cMissionItems; i++) {
+        wpAngle += wpAngleInc;
+        currentCoord = currentCoord.atDistanceAndAzimuth(wpDistance, wpAngle);
+        _missionController->insertSimpleMissionItem(currentCoord, i);
+    }
+
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+
+    // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
+    double expectedVehicleYaw = wpAngleInc;
+    for (int i=2; i<cMissionItems; i++) {
+        //qDebug() << i;
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QCOMPARE(visualItem->missionVehicleYaw(), expectedVehicleYaw);
+        if (i <= cMissionItems - 1) {
+            expectedVehicleYaw += wpAngleInc;
+        }
+    }
+
+    SimpleMissionItem* simpleItem = _missionController->visualItems()->value<SimpleMissionItem*>(3);
+    simpleItem->missionItem().setParam4(66);
+
+    QTest::qWait(100); // Recalcs in MissionController are queued to remove dups. Allow return to main message loop.
+
+    // All item should track vehicle path except for the one changed
+    expectedVehicleYaw = wpAngleInc;
+    for (int i=2; i<cMissionItems; i++) {
+        //qDebug() << i;
+        VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
+        QCOMPARE(visualItem->missionVehicleYaw(), i == 3 ? 66.0 : expectedVehicleYaw);
+        if (i <= cMissionItems - 1) {
+            expectedVehicleYaw += wpAngleInc;
+        }
+    }
 }
 
 void MissionControllerTest::_testLoadJsonSectionAvailable(void)
@@ -200,5 +252,41 @@ void MissionControllerTest::_testLoadJsonSectionAvailable(void)
             QCOMPARE(item->speedSection()->available(), false);
         }
 
+    }
+}
+
+void MissionControllerTest::_testGlobalAltMode(void)
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    struct  _globalAltMode_s {
+        QGroundControlQmlGlobal::AltitudeMode   altMode;
+        MAV_FRAME                               expectedMavFrame;
+    } altModeTestCases[] = {
+        { QGroundControlQmlGlobal::AltitudeModeRelative,        MAV_FRAME_GLOBAL_RELATIVE_ALT },
+        { QGroundControlQmlGlobal::AltitudeModeAbsolute,        MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeAboveTerrain,    MAV_FRAME_GLOBAL },
+        { QGroundControlQmlGlobal::AltitudeModeTerrainFrame,    MAV_FRAME_GLOBAL_TERRAIN_ALT },
+    };
+
+    for (const _globalAltMode_s& testCase: altModeTestCases) {
+        _missionController->removeAll();
+        _missionController->setGlobalAltitudeMode(testCase.altMode);
+
+        _missionController->insertTakeoffItem(QGeoCoordinate(0, 0), 1);
+        _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 2);
+        _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 3);
+        _missionController->insertSimpleMissionItem(QGeoCoordinate(0, 0), 4);
+
+        SimpleMissionItem* si = qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(1));
+        QCOMPARE(si->altitudeMode(), QGroundControlQmlGlobal::AltitudeModeRelative);
+        QCOMPARE(si->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
+
+        for (int i=2; i<_missionController->visualItems()->count(); i++) {
+            qDebug() << i;
+            SimpleMissionItem* si = qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(i));
+            QCOMPARE(si->altitudeMode(), testCase.altMode);
+            QCOMPARE(si->missionItem().frame(), testCase.expectedMavFrame);
+        }
     }
 }

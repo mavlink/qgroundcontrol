@@ -26,8 +26,8 @@ FirstRunPrompt {
     property var    _offlineVehicle:        QGroundControl.multiVehicleManager.offlineEditingVehicle
     property bool   _showCruiseSpeed:       !_offlineVehicle.multiRotor
     property bool   _showHoverSpeed:        _offlineVehicle.multiRotor || _offlineVehicle.vtol
-    property bool   _multipleFirmware:      QGroundControl.supportedFirmwareCount > 2
-    property bool   _multipleVehicleTypes:  QGroundControl.supportedVehicleCount > 1
+    property bool   _multipleFirmware:      !QGroundControl.singleFirmwareSupport
+    property bool   _multipleVehicleTypes:  !QGroundControl.singleVehicleSupport
     property real   _fieldWidth:            ScreenTools.defaultFontPixelWidth * 16
 
     ColumnLayout {
@@ -61,7 +61,7 @@ FirstRunPrompt {
                 }
                 FactComboBox {
                     Layout.preferredWidth:  _fieldWidth
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
+                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareClass
                     indexModel:             false
                     visible:                _multipleFirmware
                 }
@@ -73,7 +73,7 @@ FirstRunPrompt {
                 }
                 FactComboBox {
                     Layout.preferredWidth:  _fieldWidth
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
+                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                     indexModel:             false
                     visible:                _multipleVehicleTypes
                 }

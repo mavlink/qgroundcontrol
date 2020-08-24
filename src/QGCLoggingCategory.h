@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef QGC_LOGGING_CATEGORY_H
-#define QGC_LOGGING_CATEGORY_H
+#pragma once
 
 #include <QLoggingCategory>
 #include <QStringList>
@@ -27,6 +22,7 @@ Q_DECLARE_LOGGING_CATEGORY(GeotaggingLog)
 Q_DECLARE_LOGGING_CATEGORY(RTKGPSLog)
 Q_DECLARE_LOGGING_CATEGORY(GuidedActionsControllerLog)
 Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
+Q_DECLARE_LOGGING_CATEGORY(LocalizationLog)
 
 /// @def QGC_LOGGING_CATEGORY
 /// This is a QGC specific replacement for Q_LOGGING_CATEGORY. It will register the category name into a
@@ -72,5 +68,3 @@ class QGCLoggingCategory
 public:
     QGCLoggingCategory(const char* category) { QGCLoggingCategoryRegister::instance()->registerCategory(category); }
 };
-
-#endif

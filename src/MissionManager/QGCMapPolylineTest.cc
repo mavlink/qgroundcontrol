@@ -200,3 +200,38 @@ void QGCMapPolylineTest::_testKMLLoad(void)
     checkExpectedMessageBox();
 }
 #endif
+
+void QGCMapPolylineTest::_testSelectVertex(void)
+{
+    // Create polyline
+    foreach (auto vertex, _linePoints) {
+        _mapPolyline->appendVertex(vertex);
+    }
+
+    QVERIFY(_mapPolyline->selectedVertex() == -1);
+    QVERIFY(_mapPolyline->count() == _linePoints.count());
+
+    // Test deselect
+    _mapPolyline->selectVertex(-1);
+    QVERIFY(_mapPolyline->selectedVertex() == -1);
+    // Test out of bounds
+    _mapPolyline->selectVertex(_linePoints.count());
+    QVERIFY(_mapPolyline->selectedVertex() == -1);
+    // Simple select test
+    _mapPolyline->selectVertex(_linePoints.count() - 1);
+    QVERIFY(_mapPolyline->selectedVertex() == _linePoints.count() - 1);
+    // Keep selected test
+    _mapPolyline->selectVertex(0);
+    _mapPolyline->removeVertex(_linePoints.count() - 1);
+    QVERIFY(_mapPolyline->selectedVertex() == 0);
+    // Deselect if selected vertex removed
+    _mapPolyline->appendVertex(_linePoints[_linePoints.count() - 1]);
+    _mapPolyline->selectVertex(_linePoints.count() - 1);
+    _mapPolyline->removeVertex(_linePoints.count() - 1);
+    QVERIFY(_mapPolyline->selectedVertex() == -1);
+    // Shift selected index down if removed index < selected index
+    _mapPolyline->appendVertex(_linePoints[_linePoints.count() - 1]);
+    _mapPolyline->selectVertex(_linePoints.count() - 1);
+    _mapPolyline->removeVertex(0);
+    QVERIFY(_mapPolyline->selectedVertex() == _mapPolyline->count() - 1);
+}

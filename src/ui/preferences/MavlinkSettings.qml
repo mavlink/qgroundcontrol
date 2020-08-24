@@ -311,7 +311,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               activeVehicle ? activeVehicle.mavlinkSentCount : qsTr("Not Connected")
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkSentCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -326,7 +326,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               activeVehicle ? activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -341,7 +341,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               activeVehicle ? activeVehicle.mavlinkLossCount : qsTr("Not Connected")
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkLossCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -356,7 +356,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               activeVehicle ? activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
+                            text:               globals.activeVehicle ? globals.activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }

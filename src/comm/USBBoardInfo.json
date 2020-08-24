@@ -1,4 +1,4 @@
-{
+﻿{
     "comment":  "AutoConnect usb board info",
     "version":  1,
     "fileType": "USBBoardInfo",
@@ -21,7 +21,8 @@
         { "vendorID": 1155, "productID": 41775,     "boardClass": "Pixhawk",    "name": "PX4 FMU ModalAI FCv1" },
         { "vendorID":12642, "productID": 75,        "boardClass": "Pixhawk",    "name": "PX4 DurandalV1" },
         { "vendorID": 4104, "productID": 1,         "boardClass": "Pixhawk",    "name": "PX4 FMU UVify Core" },
-        
+        { "vendorID": 12643, "productID": 76,       "boardClass": "Pixhawk",    "name": "PX4 CUAV X7(PRO)" },
+
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22337,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
@@ -68,6 +69,7 @@
         { "regExp": "^Crazyflie BL",        "boardClass": "Pixhawk" },
         { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
         { "regExp": "^fmuv[2345]$",         "boardClass": "Pixhawk" },
+        { "regExp": "^mRoControlZeroF7",    "boardClass": "Pixhawk" },
         { "regExp": "PX4.*Flow",            "boardClass": "PX4 Flow" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }

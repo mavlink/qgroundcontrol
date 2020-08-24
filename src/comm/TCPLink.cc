@@ -150,12 +150,21 @@ bool TCPLink::_hardwareConnect()
     Q_ASSERT(_socket == nullptr);
     _socket = new QTcpSocket();
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
+#else
+    QSignalSpy errorSpy(_socket, &QAbstractSocket::errorOccurred);
+#endif
+
     _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
     QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QObject::connect(_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),
                      this, &TCPLink::_socketError);
+#else
+    QObject::connect(_socket, &QAbstractSocket::errorOccurred, this, &TCPLink::_socketError);
+#endif
 
     // Give the socket a second to connect to the other side otherwise error out
     if (!_socket->waitForConnected(1000))
@@ -320,7 +329,7 @@ void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
     settings.beginGroup(root);
     _port = (quint16)settings.value("port", QGC_TCP_PORT).toUInt();
     QString address = settings.value("host", _address.toString()).toString();
-    _address = address;
+    _address = QHostAddress(address);
     settings.endGroup();
 }
 

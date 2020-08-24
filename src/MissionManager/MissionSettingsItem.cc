@@ -266,7 +266,7 @@ void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
 {
     double newAltitude = value.toDouble();
 
-    if (!qFuzzyCompare(_plannedHomePositionCoordinate.altitude(), newAltitude)) {
+    if (QGC::fuzzyCompare(_plannedHomePositionCoordinate.altitude(), newAltitude)) {
         _plannedHomePositionCoordinate.setAltitude(newAltitude);
         emit coordinateChanged(_plannedHomePositionCoordinate);
         emit exitCoordinateChanged(_plannedHomePositionCoordinate);

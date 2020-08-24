@@ -22,7 +22,7 @@ import QGroundControl.FactControls  1.0
 
 Item {
     width:                  availableWidth
-    height:                 (activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
+    height:                 (globals.activeVehicle.supportsJSButton ? buttonCol.height : flowColumn.height) + (ScreenTools.defaultFontPixelHeight * 2)
     Connections {
         target: _activeJoystick
         onRawButtonPressedChanged: {
@@ -48,7 +48,7 @@ Item {
             id:                     buttonFlow
             Layout.preferredWidth:  parent.width
             spacing:                ScreenTools.defaultFontPixelWidth
-            visible:                !activeVehicle.supportsJSButton
+            visible:                !globals.activeVehicle.supportsJSButton
             Repeater {
                 id:             buttonActionRepeater
                 model:          _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : []
@@ -113,7 +113,7 @@ Item {
     Column {
         id:         buttonCol
         width:      parent.width
-        visible:    activeVehicle.supportsJSButton
+        visible:    globals.activeVehicle.supportsJSButton
         spacing:    ScreenTools.defaultFontPixelHeight / 3
         Row {
             spacing: ScreenTools.defaultFontPixelWidth
@@ -137,7 +137,7 @@ Item {
 
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
-                visible: activeVehicle.supportsJSButton
+                visible: globals.activeVehicle.supportsJSButton
 
                 property bool pressed
 

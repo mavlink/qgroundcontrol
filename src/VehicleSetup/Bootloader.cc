@@ -7,11 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief PX4 Bootloader Utility routines
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
 
@@ -22,17 +17,212 @@
 
 #include "QGC.h"
 
-Bootloader::Bootloader(QObject *parent) :
-    QObject(parent)
+/// This class manages interactions with the bootloader
+Bootloader::Bootloader(bool sikRadio, QObject *parent)
+    : QObject   (parent)
+    , _sikRadio (sikRadio)
 {
 
 }
 
-bool Bootloader::_write(QSerialPort* port, const uint8_t* data, qint64 maxSize)
+bool Bootloader::open(const QString portName)
 {
-    qint64 bytesWritten = port->write((const char*)data, maxSize);
+    qCDebug(FirmwareUpgradeLog) << "open:" << portName;
+
+    _port.setPortName   (portName);
+    _port.setBaudRate   (QSerialPort::Baud115200);
+    _port.setDataBits   (QSerialPort::Data8);
+    _port.setParity     (QSerialPort::NoParity);
+    _port.setStopBits   (QSerialPort::OneStop);
+    _port.setFlowControl(QSerialPort::NoFlowControl);
+
+    if (!_port.open(QIODevice::ReadWrite)) {
+        _errorString = tr("Open failed on port %1: %2").arg(portName, _port.errorString());
+        return false;
+    }
+
+    if (_sikRadio) {
+        // Radios are slow to start up
+        QGC::SLEEP::msleep(1000);
+    }
+    return true;
+}
+
+QString Bootloader::_getNextLine(int timeoutMsecs)
+{
+    QString         line;
+    QElapsedTimer   timeout;
+    bool            foundCR = false;
+
+    timeout.start();
+    while (timeout.elapsed() < timeoutMsecs) {
+        char oneChar;
+        _port.waitForReadyRead(100);
+        if (_port.read(&oneChar, 1) > 0) {
+            if (oneChar == '\r') {
+                foundCR = true;
+                continue;
+            } else if (oneChar == '\n' && foundCR) {
+                return line;
+            }
+            line += oneChar;
+        }
+    }
+
+    return QString();
+}
+
+bool Bootloader::getBoardInfo(uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
+{
+    if (_sikRadio) {
+        // Try sync to see if already in bootloader mode
+        _sync();
+        if (_inBootloaderMode) {
+            qCDebug(FirmwareUpgradeLog) << "Radio in bootloader mode already";
+            if (!_get3DRRadioBoardId(_boardID)) {
+                goto Error;
+            }
+        } else {
+            qCDebug(FirmwareUpgradeLog) << "Radio in normal mode";
+            _port.readAll();
+            _port.setBaudRate(QSerialPort::Baud57600);
+            // Put radio into command mode
+            _write("+++");
+            if (!_port.waitForReadyRead(2000)) {
+                _errorString = tr("Unable to put radio into command mode +++");
+                goto Error;
+            }
+            QByteArray bytes = _port.readAll();
+            if (!bytes.contains("OK")) {
+                _errorString = tr("Radio did not respond to command mode");
+                goto Error;
+            }
+
+            // Use ATI2 command to get board id
+            _write("ATI2\r\n");
+            QString echo = _getNextLine(2000);
+            if (echo.isEmpty() || echo != "ATI2") {
+                _errorString = tr("Radio did not respond to ATI2 command");
+                goto Error;
+            }
+            QString boardIdStr = _getNextLine(2000);
+            bool ok = false;
+            _boardID = boardIdStr.toInt(&ok);
+            _boardID = 130;
+            if (boardIdStr.isEmpty() || !ok) {
+                _errorString = tr("Radio did not return board id");
+                goto Error;
+            }
+        }
+        bootloaderVersion   = 0;
+        boardID             = _boardID;
+        flashSize           = 0;
+
+        return true;
+    } else {
+        if (!_sync()) {
+            goto Error;
+        }
+        if (!_protoGetDevice(INFO_BL_REV, _bootloaderVersion)) {
+            goto Error;
+        }
+        if (_bootloaderVersion < BL_REV_MIN || _bootloaderVersion > BL_REV_MAX) {
+            _errorString = tr("Found unsupported bootloader version: %1").arg(_bootloaderVersion);
+            goto Error;
+        }
+        if (!_protoGetDevice(INFO_BOARD_ID, _boardID)) {
+            goto Error;
+        }
+        if (!_protoGetDevice(INFO_FLASH_SIZE, _boardFlashSize)) {
+            qWarning() << _errorString;
+            goto Error;
+        }
+
+        // Older V2 boards have large flash space but silicon error which prevents it from being used. Bootloader v5 and above
+        // will correctly account/report for this. Older bootloaders will not. Newer V2 board which support larger flash space are
+        // reported as V3 board id.
+        if (_boardID == boardIDPX4FMUV2 && _bootloaderVersion >= _bootloaderVersionV2CorrectFlash && _boardFlashSize > _flashSizeSmall) {
+            _boardID = boardIDPX4FMUV3;
+        }
+
+        bootloaderVersion   = _bootloaderVersion;
+        boardID             = _boardID;
+        flashSize           = _boardFlashSize;
+
+        return true;
+    }
+
+Error:
+    qCDebug(FirmwareUpgradeLog) << "getBoardInfo failed:" << _errorString;
+    _errorString.prepend(tr("Get Board Info: "));
+    return false;
+}
+
+bool Bootloader::initFlashSequence(void)
+{
+    if (_sikRadio && !_inBootloaderMode) {
+        _write("AT&UPDATE\r\n");
+        if (!_port.waitForReadyRead(1500)) {
+            _errorString = tr("Unable to reboot radio (ready read)");
+            return false;
+        }
+        _port.setBaudRate(QSerialPort::Baud115200);
+
+        if (!_sync()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Bootloader::erase(void)
+{
+    // Erase is slow, need larger timeout
+    if (!_sendCommand(PROTO_CHIP_ERASE, _eraseTimeout)) {
+        _errorString = tr("Erase failed: %1").arg(_errorString);
+        return false;
+    }
+
+    return true;
+}
+
+bool Bootloader::program(const FirmwareImage* image)
+{
+    if (image->imageIsBinFormat()) {
+        return _binProgram(image);
+    } else {
+        return _ihxProgram(image);
+    }
+}
+
+bool Bootloader::reboot(void)
+{
+    bool success;
+    if (_sikRadio && !_inBootloaderMode) {
+        qCDebug(FirmwareUpgradeLog) << "reboot ATZ";
+        _port.readAll();
+        success = _write("ATZ\r\n");
+    } else {
+        qCDebug(FirmwareUpgradeLog) << "reboot";
+        success = _write(PROTO_BOOT) && _write(PROTO_EOC);
+    }
+    _port.flush();
+    if (success) {
+        QGC::SLEEP::msleep(1000);
+    }
+    return success;
+}
+
+bool Bootloader::_write(const char* data)
+{
+    return _write((uint8_t*)data, qstrlen(data));
+}
+
+bool Bootloader::_write(const uint8_t* data, qint64 maxSize)
+{
+    qint64 bytesWritten = _port.write((const char*)data, maxSize);
     if (bytesWritten == -1) {
-        _errorString = tr("Write failed: %1").arg(port->errorString());
+        _errorString = tr("Write failed: %1").arg(_port.errorString());
         qWarning() << _errorString;
         return false;
     }
@@ -45,49 +235,43 @@ bool Bootloader::_write(QSerialPort* port, const uint8_t* data, qint64 maxSize)
     return true;
 }
 
-bool Bootloader::_write(QSerialPort* port, const uint8_t byte)
+bool Bootloader::_write(const uint8_t byte)
 {
     uint8_t buf[1] = { byte };
-    return _write(port, buf, 1);
+    return _write(buf, 1);
 }
 
-bool Bootloader::_read(QSerialPort* port, uint8_t* data, qint64 maxSize, int readTimeout)
+bool Bootloader::_read(uint8_t* data, qint64 cBytesExpected, int readTimeout)
 {
-    qint64 bytesAlreadyRead = 0;
+    QElapsedTimer timeout;
 
-    while (bytesAlreadyRead < maxSize) {
-        QElapsedTimer timeout;
-        timeout.start();
-        while (port->bytesAvailable() < 1) {
-            if (timeout.elapsed() > readTimeout) {
-                _errorString = tr("Timeout waiting for bytes to be available");
-                return false;
-            }
-            port->waitForReadyRead(100);
-        }
-        
-        qint64 bytesRead;
-        bytesRead = port->read((char*)&data[bytesAlreadyRead], maxSize);
-        
-        if (bytesRead == -1) {
-            _errorString = tr("Read failed: error: %1").arg(port->errorString());
+    timeout.start();
+    while (_port.bytesAvailable() < cBytesExpected) {
+        if (timeout.elapsed() > readTimeout) {
+            _errorString = tr("Timeout waiting for bytes to be available");
             return false;
-        } else {
-            Q_ASSERT(bytesRead != 0);
-            bytesAlreadyRead += bytesRead;
         }
+        _port.waitForReadyRead(100);
     }
-    
+
+    qint64 bytesRead;
+    bytesRead = _port.read((char *)data, cBytesExpected);
+
+    if (bytesRead != cBytesExpected) {
+        _errorString = tr("Read failed: error: %1").arg(_port.errorString());
+        return false;
+    }
+
     return true;
 }
 
 /// Read a PROTO_SYNC command response from the bootloader
 ///     @param responseTimeout Msecs to wait for response bytes to become available on port
-bool Bootloader::_getCommandResponse(QSerialPort* port, int responseTimeout)
+bool Bootloader::_getCommandResponse(int responseTimeout)
 {
     uint8_t response[2];
     
-    if (!_read(port, response, 2, responseTimeout)) {
+    if (!_read(response, 2, responseTimeout)) {
         _errorString.prepend(tr("Get Command Response: "));
         return false;
     }
@@ -116,40 +300,40 @@ bool Bootloader::_getCommandResponse(QSerialPort* port, int responseTimeout)
 /// Send a PROTO_GET_DEVICE command to retrieve a value from the PX4 bootloader
 ///     @param param Value to retrieve using INFO_BOARD_* enums
 ///     @param value Returned value
-bool Bootloader::_getPX4BoardInfo(QSerialPort* port, uint8_t param, uint32_t& value)
+bool Bootloader::_protoGetDevice(uint8_t param, uint32_t& value)
 {
     uint8_t buf[3] = { PROTO_GET_DEVICE, param, PROTO_EOC };
     
-    if (!_write(port, buf, sizeof(buf))) {
+    if (!_write(buf, sizeof(buf))) {
         goto Error;
     }
-    port->flush();
-    if (!_read(port, (uint8_t*)&value, sizeof(value))) {
+    if (!_read((uint8_t*)&value, sizeof(value))) {
         goto Error;
     }
-    if (!_getCommandResponse(port)) {
+    if (!_getCommandResponse()) {
         goto Error;
     }
     
     return true;
     
 Error:
-    _errorString.prepend(tr("Get Board Info: "));
+    _errorString.prepend(tr("Get Device: "));
     return false;
 }
 
 /// Send a command to the bootloader
 ///     @param cmd Command to send using PROTO_* enums
 /// @return true: Command sent and valid sync response returned
-bool Bootloader::_sendCommand(QSerialPort* port, const uint8_t cmd, int responseTimeout)
+bool Bootloader::_sendCommand(const uint8_t cmd, int responseTimeout)
 {
     uint8_t buf[2] = { cmd, PROTO_EOC };
     
-    if (!_write(port, buf, 2)) {
+    if (!_write(buf, 2)) {
         goto Error;
     }
-    port->flush();
-    if (!_getCommandResponse(port, responseTimeout)) {
+    _port.flush();
+
+    if (!_getCommandResponse(responseTimeout)) {
         goto Error;
     }
     
@@ -160,27 +344,7 @@ Error:
     return false;
 }
 
-bool Bootloader::erase(QSerialPort* port)
-{
-    // Erase is slow, need larger timeout
-    if (!_sendCommand(port, PROTO_CHIP_ERASE, _eraseTimeout)) {
-        _errorString = tr("Board erase failed: %1").arg(_errorString);
-        return false;
-    }
-    
-    return true;
-}
-
-bool Bootloader::program(QSerialPort* port, const FirmwareImage* image)
-{
-    if (image->imageIsBinFormat()) {
-        return _binProgram(port, image);
-    } else {
-        return _ihxProgram(port, image);
-    }
-}
-
-bool Bootloader::_binProgram(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::_binProgram(const FirmwareImage* image)
 {
     QFile firmwareFile(image->binFilename());
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
@@ -212,43 +376,39 @@ bool Bootloader::_binProgram(QSerialPort* port, const FirmwareImage* image)
         Q_ASSERT(bytesToSend <= 0x8F);
         
         bool failed = true;
-        if (_write(port, PROTO_PROG_MULTI)) {
-            if (_write(port, (uint8_t)bytesToSend)) {
-                if (_write(port, imageBuf, bytesToSend)) {
-                    if (_write(port, PROTO_EOC)) {
-                        port->flush();
-                        if (_getCommandResponse(port)) {
-                            failed = false;
-                        }
-                    }
-                }
+        if (_write(PROTO_PROG_MULTI) &&
+                _write((uint8_t)bytesToSend) &&
+                _write(imageBuf, bytesToSend) &&
+                _write(PROTO_EOC)) {
+            if (_getCommandResponse()) {
+                failed = false;
             }
         }
         if (failed) {
             _errorString = tr("Flash failed: %1 at address 0x%2").arg(_errorString).arg(bytesSent, 8, 16, QLatin1Char('0'));
             return false;
         }
-        
+
         bytesSent += bytesToSend;
-        
+
         // Calculate the CRC now so we can test it after the board is flashed.
         _imageCRC = QGC::crc32((uint8_t *)imageBuf, bytesToSend, _imageCRC);
-        
+
         emit updateProgress(bytesSent, imageSize);
     }
     firmwareFile.close();
-    
+
     // We calculate the CRC using the entire flash size, filling the remainder with 0xFF.
     while (bytesSent < _boardFlashSize) {
         const uint8_t fill = 0xFF;
         _imageCRC = QGC::crc32(&fill, 1, _imageCRC);
         bytesSent++;
     }
-    
+
     return true;
 }
 
-bool Bootloader::_ihxProgram(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::_ihxProgram(const FirmwareImage* image)
 {
     uint32_t imageSize = image->imageSize();
     uint32_t bytesSent = 0;
@@ -268,12 +428,12 @@ bool Bootloader::_ihxProgram(QSerialPort* port, const FirmwareImage* image)
         // Set flash address
         
         failed = true;
-        if (_write(port, PROTO_LOAD_ADDRESS) &&
-                _write(port, flashAddress & 0xFF) &&
-                _write(port, (flashAddress >> 8) & 0xFF) &&
-                _write(port, PROTO_EOC)) {
-            port->flush();
-            if (_getCommandResponse(port)) {
+        if (_write(PROTO_LOAD_ADDRESS) &&
+                _write(flashAddress & 0xFF) &&
+                _write((flashAddress >> 8) & 0xFF) &&
+                _write(PROTO_EOC)) {
+            _port.flush();
+            if (_getCommandResponse()) {
                 failed = false;
             }
         }
@@ -290,20 +450,20 @@ bool Bootloader::_ihxProgram(QSerialPort* port, const FirmwareImage* image)
         
         while (bytesLeftToWrite > 0) {
             uint8_t bytesToWrite;
-        
+
             if (bytesLeftToWrite > PROG_MULTI_MAX) {
                 bytesToWrite = PROG_MULTI_MAX;
             } else {
                 bytesToWrite = bytesLeftToWrite;
             }
-        
+
             failed = true;
-            if (_write(port, PROTO_PROG_MULTI) &&
-                    _write(port, bytesToWrite) &&
-                    _write(port, &((uint8_t *)bytes.data())[bytesIndex], bytesToWrite) &&
-                    _write(port, PROTO_EOC)) {
-                port->flush();
-                if (_getCommandResponse(port)) {
+            if (_write(PROTO_PROG_MULTI) &&
+                    _write(bytesToWrite) &&
+                    _write(&((uint8_t *)bytes.data())[bytesIndex], bytesToWrite) &&
+                    _write(PROTO_EOC)) {
+                _port.flush();
+                if (_getCommandResponse()) {
                     failed = false;
                 }
             }
@@ -323,32 +483,32 @@ bool Bootloader::_ihxProgram(QSerialPort* port, const FirmwareImage* image)
     return true;
 }
 
-bool Bootloader::verify(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::verify(const FirmwareImage* image)
 {
     bool ret;
     
     if (!image->imageIsBinFormat() || _bootloaderVersion <= 2) {
-        ret = _verifyBytes(port, image);
+        ret = _verifyBytes(image);
     } else {
-        ret = _verifyCRC(port);
+        ret = _verifyCRC();
     }
     
-    reboot(port);
+    reboot();
     
     return ret;
 }
 
 /// @brief Verify the flash on bootloader reading it back and comparing it against the original image
-bool Bootloader::_verifyBytes(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::_verifyBytes(const FirmwareImage* image)
 {
     if (image->imageIsBinFormat()) {
-        return _binVerifyBytes(port, image);
+        return _binVerifyBytes(image);
     } else {
-        return _ihxVerifyBytes(port, image);
+        return _ihxVerifyBytes(image);
     }
 }
 
-bool Bootloader::_binVerifyBytes(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::_binVerifyBytes(const FirmwareImage* image)
 {
     Q_ASSERT(image->imageIsBinFormat());
     
@@ -359,7 +519,7 @@ bool Bootloader::_binVerifyBytes(QSerialPort* port, const FirmwareImage* image)
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
     
-    if (!_sendCommand(port, PROTO_CHIP_VERIFY)) {
+    if (!_sendCommand(PROTO_CHIP_VERIFY)) {
         return false;
     }
     
@@ -386,12 +546,12 @@ bool Bootloader::_binVerifyBytes(QSerialPort* port, const FirmwareImage* image)
         Q_ASSERT(bytesToRead <= 0x8F);
         
         bool failed = true;
-        if (_write(port, PROTO_READ_MULTI) &&
-            _write(port, (uint8_t)bytesToRead) &&
-            _write(port, PROTO_EOC)) {
-            port->flush();
-            if (_read(port, readBuf, bytesToRead)) {
-                if (_getCommandResponse(port)) {
+        if (_write(PROTO_READ_MULTI) &&
+                _write((uint8_t)bytesToRead) &&
+                _write(PROTO_EOC)) {
+            _port.flush();
+            if (_read(readBuf, bytesToRead)) {
+                if (_getCommandResponse()) {
                     failed = false;
                 }
             }
@@ -418,7 +578,7 @@ bool Bootloader::_binVerifyBytes(QSerialPort* port, const FirmwareImage* image)
     return true;
 }
 
-bool Bootloader::_ihxVerifyBytes(QSerialPort* port, const FirmwareImage* image)
+bool Bootloader::_ihxVerifyBytes(const FirmwareImage* image)
 {
     Q_ASSERT(!image->imageIsBinFormat());
     
@@ -440,12 +600,12 @@ bool Bootloader::_ihxVerifyBytes(QSerialPort* port, const FirmwareImage* image)
         // Set read address
         
         failed = true;
-        if (_write(port, PROTO_LOAD_ADDRESS) &&
-            _write(port, readAddress & 0xFF) &&
-            _write(port, (readAddress >> 8) & 0xFF) &&
-            _write(port, PROTO_EOC)) {
-            port->flush();
-            if (_getCommandResponse(port)) {
+        if (_write(PROTO_LOAD_ADDRESS) &&
+                _write(readAddress & 0xFF) &&
+                _write((readAddress >> 8) & 0xFF) &&
+                _write(PROTO_EOC)) {
+            _port.flush();
+            if (_getCommandResponse()) {
                 failed = false;
             }
         }
@@ -471,12 +631,12 @@ bool Bootloader::_ihxVerifyBytes(QSerialPort* port, const FirmwareImage* image)
             }
 
             failed = true;
-            if (_write(port, PROTO_READ_MULTI) &&
-                _write(port, bytesToRead) &&
-                _write(port, PROTO_EOC)) {
-                port->flush();
-                if (_read(port, readBuf, bytesToRead)) {
-                    if (_getCommandResponse(port)) {
+            if (_write(PROTO_READ_MULTI) &&
+                    _write(bytesToRead) &&
+                    _write(PROTO_EOC)) {
+                _port.flush();
+                if (_read(readBuf, bytesToRead)) {
+                    if (_getCommandResponse()) {
                         failed = false;
                     }
                 }
@@ -507,16 +667,17 @@ bool Bootloader::_ihxVerifyBytes(QSerialPort* port, const FirmwareImage* image)
 }
 
 /// @Brief Verify the flash by comparing CRCs.
-bool Bootloader::_verifyCRC(QSerialPort* port)
+bool Bootloader::_verifyCRC(void)
 {
     uint8_t buf[2] = { PROTO_GET_CRC, PROTO_EOC };
+
     quint32 flashCRC;
     
     bool failed = true;
-    if (_write(port, buf, 2)) {
-        port->flush();
-        if (_read(port, (uint8_t*)&flashCRC, sizeof(flashCRC), _verifyTimeout)) {
-            if (_getCommandResponse(port)) {
+    if (_write(buf, 2)) {
+        _port.flush();
+        if (_read((uint8_t*)&flashCRC, sizeof(flashCRC), _verifyTimeout)) {
+            if (_getCommandResponse()) {
                 failed = false;
             }
         }
@@ -533,29 +694,11 @@ bool Bootloader::_verifyCRC(QSerialPort* port)
     return true;
 }
 
-bool Bootloader::open(QSerialPort* port, const QString portName)
-{
-    Q_ASSERT(!port->isOpen());
-    
-    port->setPortName(portName);
-    port->setBaudRate(QSerialPort::Baud115200);
-    port->setDataBits(QSerialPort::Data8);
-    port->setParity(QSerialPort::NoParity);
-    port->setStopBits(QSerialPort::OneStop);
-    port->setFlowControl(QSerialPort::NoFlowControl);
-    
-    if (!port->open(QIODevice::ReadWrite)) {
-        _errorString = tr("Open failed on port %1: %2").arg(portName, port->errorString());
-        return false;
-    }
-    
-    return true;
-}
-
-bool Bootloader::sync(QSerialPort* port)
+bool Bootloader::_syncWorker(void)
 {
     // Send sync command
-    if (_sendCommand(port, PROTO_GET_SYNC)) {
+    if (_sendCommand(PROTO_GET_SYNC)) {
+        _inBootloaderMode = true;
         return true;
     } else {
         _errorString.prepend("Sync: ");
@@ -563,77 +706,45 @@ bool Bootloader::sync(QSerialPort* port)
     }
 }
 
-bool Bootloader::getPX4BoardInfo(QSerialPort* port, uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize)
+bool Bootloader::_sync(void)
 {
-    
-    if (!_getPX4BoardInfo(port, INFO_BL_REV, _bootloaderVersion)) {
-        goto Error;
-    }
-    if (_bootloaderVersion < BL_REV_MIN || _bootloaderVersion > BL_REV_MAX) {
-        _errorString = tr("Found unsupported bootloader version: %1").arg(_bootloaderVersion);
-        goto Error;
-    }
-    
-    if (!_getPX4BoardInfo(port, INFO_BOARD_ID, _boardID)) {
-        goto Error;
-    }
-    
-    if (!_getPX4BoardInfo(port, INFO_FLASH_SIZE, _boardFlashSize)) {
-        qWarning() << _errorString;
-        goto Error;
-    }
+    // Sometimes getting sync is flaky, try 3 times
+    _port.readAll();
+    bool success = false;
+    for (int i=0; i<3; i++) {
+        success = _syncWorker();
 
-    // Older V2 boards have large flash space but silicon error which prevents it from being used. Bootloader v5 and above
-    // will correctly account/report for this. Older bootloaders will not. Newer V2 board which support larger flash space are
-    // reported as V3 board id.
-    if (_boardID == boardIDPX4FMUV2 && _bootloaderVersion >= _bootloaderVersionV2CorrectFlash && _boardFlashSize > _flashSizeSmall) {
-        _boardID = boardIDPX4FMUV3;
+        if (success) {
+            return true;
+        }
     }
-    
-    bootloaderVersion = _bootloaderVersion;
-    boardID = _boardID;
-    flashSize = _boardFlashSize;
-    
-    return true;
-    
-Error:
-    _errorString.prepend(tr("Get Board Info: "));
-    return false;
+    return success;
 }
 
-bool Bootloader::get3DRRadioBoardId(QSerialPort* port, uint32_t& boardID)
+bool Bootloader::_get3DRRadioBoardId(uint32_t& boardID)
 {
     uint8_t buf[2] = { PROTO_GET_DEVICE, PROTO_EOC };
-    
-    if (!_write(port, buf, sizeof(buf))) {
+
+    if (!_write(buf, sizeof(buf))) {
         goto Error;
     }
-    port->flush();
-    
-    if (!_read(port, (uint8_t*)buf, 2)) {
+    _port.flush();
+
+    if (!_read((uint8_t*)buf, 2)) {
         goto Error;
     }
-    if (!_getCommandResponse(port)) {
+    if (!_getCommandResponse()) {
         goto Error;
     }
-    
+
     boardID = buf[0];
-    
+
     _bootloaderVersion = 0;
     _boardFlashSize = 0;
-    
+
     return true;
-    
+
 Error:
     _errorString.prepend(tr("Get Board Id: "));
     return false;
-}
-
-bool Bootloader::reboot(QSerialPort* port)
-{
-    bool success = _write(port, PROTO_BOOT) && _write(port, PROTO_EOC);
-    if (success) {
-        port->waitForBytesWritten(100);
-    }
-    return success;
 }
