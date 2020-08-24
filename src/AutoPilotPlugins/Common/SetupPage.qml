@@ -33,9 +33,9 @@ Item {
     property bool   showAdvanced:           false
     property alias  advanced:               advancedCheckBox.checked
 
-    property bool   _vehicleIsRover:        activeVehicle ? activeVehicle.rover : false
-    property bool   _vehicleArmed:          activeVehicle ? activeVehicle.armed : false
-    property bool   _vehicleFlying:         activeVehicle ? activeVehicle.flying : false
+    property bool   _vehicleIsRover:        globals.activeVehicle ? globals.activeVehicle.rover : false
+    property bool   _vehicleArmed:          globals.activeVehicle ? globals.activeVehicle.armed : false
+    property bool   _vehicleFlying:         globals.activeVehicle ? globals.activeVehicle.flying : false
     property bool   _disableDueToArmed:     vehicleComponent ? (!vehicleComponent.allowSetupWhileArmed && _vehicleArmed) : false
     // FIXME: The _vehicleIsRover checkl is a hack to work around https://github.com/PX4/Firmware/issues/10969
     property bool   _disableDueToFlying:    vehicleComponent ? (!_vehicleIsRover && !vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false

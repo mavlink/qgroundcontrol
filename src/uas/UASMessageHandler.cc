@@ -202,7 +202,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showVehicleMessage(message->getText());
+        _app->showCriticalVehicleMessage(message->getText());
     }
 }
 

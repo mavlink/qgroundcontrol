@@ -108,15 +108,15 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !_activeVehicle.connectionLost && mainWindow.guidedControllerFlyView.showResumeMission
+                        visible:            !_activeVehicle.connectionLost && globals.guidedControllerFlyView.showResumeMission
 
                         QGCButton {
                             Layout.fillWidth:   true
                             Layout.alignment:   Qt.AlignHCenter
-                            text:               qsTr("Resume Mission From Waypoint %1").arg(mainWindow.guidedControllerFlyView._resumeMissionIndex)
+                            text:               qsTr("Resume Mission From Waypoint %1").arg(globals.guidedControllerFlyView._resumeMissionIndex)
 
                             onClicked: {
-                                mainWindow.guidedControllerFlyView.executeAction(mainWindow.guidedControllerFlyView.actionResumeMission, null, null)
+                                globals.guidedControllerFlyView.executeAction(globals.guidedControllerFlyView.actionResumeMission, null, null)
                                 hideDialog()
                             }
                         }
@@ -133,7 +133,7 @@ Item {
                         wrapMode:           Text.WordWrap
                         color:              qgcPal.warningText
                         text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
-                        visible:            mainWindow.guidedControllerFlyView.showResumeMission
+                        visible:            globals.guidedControllerFlyView.showResumeMission
                     }
                 }
             }

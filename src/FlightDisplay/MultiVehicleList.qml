@@ -23,7 +23,7 @@ Item {
     property real   _widgetHeight:      ScreenTools.defaultFontPixelHeight * 3
     property color  _textColor:         "black"
     property real   _rectOpacity:       0.8
-    property var    _guidedController:  mainWindow.guidedControllerFlyView
+    property var    _guidedController:  globals.guidedControllerFlyView
 
     QGCPalette { id: qgcPal }
 
