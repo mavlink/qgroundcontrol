@@ -105,8 +105,8 @@ Rectangle {
 
             QGCButton {
                 text:       _setToVehicleHeadingStr
-                visible:    activeVehicle
-                onClicked:  missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                visible:    globals.activeVehicle
+                onClicked:  missionItem.landingHeading.rawValue = globals.activeVehicle.heading.rawValue
             }
         }
 
@@ -154,9 +154,9 @@ Rectangle {
 
                 QGCButton {
                     text:               _setToVehicleLocationStr
-                    visible:            activeVehicle
+                    visible:            globals.activeVehicle
                     Layout.columnSpan:  2
-                    onClicked:          missionItem.landingCoordinate = activeVehicle.coordinate
+                    onClicked:          missionItem.landingCoordinate = globals.activeVehicle.coordinate
                 }
             }
         }
@@ -265,17 +265,17 @@ Rectangle {
                 anchors.right:          parent.right
                 horizontalAlignment:    Text.AlignHCenter
                 text:                   qsTr("- or -")
-                visible:                activeVehicle
+                visible:                globals.activeVehicle
             }
 
             QGCButton {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 text:                       _setToVehicleLocationStr
-                visible:                    activeVehicle
+                visible:                    globals.activeVehicle
 
                 onClicked: {
-                    missionItem.landingCoordinate = activeVehicle.coordinate
-                    missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                    missionItem.landingCoordinate = globals.activeVehicle.coordinate
+                    missionItem.landingHeading.rawValue = globals.activeVehicle.heading.rawValue
                     missionItem.setLandingHeadingToTakeoffHeading()
                 }
             }

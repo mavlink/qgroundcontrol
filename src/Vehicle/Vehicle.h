@@ -149,8 +149,7 @@ public:
     Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                                       NOTIFY messageTypeChanged)
     Q_PROPERTY(int                  newMessageCount         READ newMessageCount                                        NOTIFY newMessageCountChanged)
     Q_PROPERTY(int                  messageCount            READ messageCount                                           NOTIFY messageCountChanged)
-    Q_PROPERTY(QString              formatedMessages        READ formatedMessages                                       NOTIFY formatedMessagesChanged)
-    Q_PROPERTY(QString              formatedMessage         READ formatedMessage                                        NOTIFY formatedMessageChanged)
+    Q_PROPERTY(QString              formattedMessages       READ formattedMessages                                      NOTIFY formattedMessagesChanged)
     Q_PROPERTY(QString              latestError             READ latestError                                            NOTIFY latestErrorChanged)
     Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled        WRITE setJoystickEnabled        NOTIFY joystickEnabledChanged)
     Q_PROPERTY(bool                 active                  READ active                 WRITE setActive                 NOTIFY activeChanged)
@@ -227,7 +226,7 @@ public:
     Q_PROPERTY(qreal                gimbalPitch             READ gimbalPitch                                            NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal                gimbalYaw               READ gimbalYaw                                              NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
-    Q_PROPERTY(bool                 iARDURsROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
+    Q_PROPERTY(bool                 isROIEnabled            READ isROIEnabled                                           NOTIFY isROIEnabledChanged)
     Q_PROPERTY(CheckList            checkListState          READ checkListState         WRITE setCheckListState         NOTIFY checkListStateChanged)
     Q_PROPERTY(bool                 readyToFlyAvailable     READ readyToFlyAvailable                                    NOTIFY readyToFlyAvailableChanged)  ///< true: readyToFly signalling is available on this vehicle
     Q_PROPERTY(bool                 readyToFly              READ readyToFly                                             NOTIFY readyToFlyChanged)
@@ -506,8 +505,7 @@ public:
     bool            messageTypeError        () { return _currentMessageType == MessageError; }
     int             newMessageCount         () { return _currentMessageCount; }
     int             messageCount            () { return _messageCount; }
-    QString         formatedMessages        ();
-    QString         formatedMessage         () { return _formatedMessage; }
+    QString         formattedMessages       ();
     QString         latestError             () { return _latestError; }
     float           latitude                () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude               () { return static_cast<float>(_coordinate.longitude()); }
@@ -814,8 +812,8 @@ signals:
     void messageTypeChanged             ();
     void newMessageCountChanged         ();
     void messageCountChanged            ();
-    void formatedMessagesChanged        ();
-    void formatedMessageChanged         ();
+    void formattedMessagesChanged       ();
+    void newFormattedMessage            (QString formattedMessage);
     void latestErrorChanged             ();
     void longitudeChanged               ();
     void currentConfigChanged           ();
@@ -1015,7 +1013,6 @@ private:
     MessageType_t   _currentMessageType;
     QString         _latestError;
     int             _updateCount;
-    QString         _formatedMessage;
     int             _rcRSSI;
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat

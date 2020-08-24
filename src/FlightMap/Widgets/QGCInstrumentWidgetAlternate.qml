@@ -44,7 +44,7 @@ Rectangle {
         anchors.margins :           _margins
         anchors.top:                parent.top
         size:                       _innerRadius * 2
-        vehicle:                    activeVehicle
+        vehicle:                    globals.activeVehicle
     }
 
     QGCCompassWidget {
@@ -53,6 +53,6 @@ Rectangle {
         anchors.margins:            _margins
         anchors.top:                attitude.bottom
         size:                       _innerRadius * 2
-        vehicle:                    activeVehicle
+        vehicle:                    globals.activeVehicle
     }
 }

@@ -43,7 +43,7 @@ ColumnLayout {
             anchors.leftMargin:     _topBottomMargin
             anchors.left:           parent.left
             size:                   _innerRadius * 2
-            vehicle:                activeVehicle
+            vehicle:                globals.activeVehicle
             anchors.verticalCenter: parent.verticalCenter
         }
 
@@ -52,7 +52,7 @@ ColumnLayout {
             anchors.leftMargin:     _spacing
             anchors.left:           attitude.right
             size:                   _innerRadius * 2
-            vehicle:                activeVehicle
+            vehicle:                globals.activeVehicle
             anchors.verticalCenter: parent.verticalCenter
         }
     }
