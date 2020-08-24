@@ -178,7 +178,7 @@ SetupPage {
 
             Component.onCompleted: {
                 var usingUDP = controller.usingUDPLink()
-                var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
+                var isSub = globals.activeVehicle.sub;
                 if (usingUDP && !isSub) {
                     mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."))
                 }
@@ -562,9 +562,9 @@ SetupPage {
                         wrapMode:       Text.WordWrap
                         text:           _helpText
 
-                        readonly property string _altText:      activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
+                        readonly property string _altText:      globals.activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
                         readonly property string _helpText:     qsTr("Pressure calibration will set the %1 to zero at the current pressure reading. %2").arg(_altText).arg(_helpTextFW)
-                        readonly property string _helpTextFW:   activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
+                        readonly property string _helpTextFW:   globals.activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
                     }
                 } // QGCViewDialog
             } // Component - calibratePressureDialogComponent
@@ -644,7 +644,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("Gyro")
-                        visible:    activeVehicle && (activeVehicle.multiRotor | activeVehicle.rover)
+                        visible:    globals.activeVehicle && (globals.activeVehicle.multiRotor | globals.activeVehicle.rover)
                         onClicked:  mainWindow.showComponentDialog(calibrateGyroDialogComponent, qsTr("Calibrate Gyro"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
 
@@ -653,13 +653,13 @@ SetupPage {
                         text:       _calibratePressureText
                         onClicked:  mainWindow.showComponentDialog(calibratePressureDialogComponent, _calibratePressureText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
 
-                        readonly property string _calibratePressureText: activeVehicle.fixedWing ? qsTr("Baro/Airspeed") : qsTr("Pressure")
+                        readonly property string _calibratePressureText: globals.activeVehicle.fixedWing ? qsTr("Baro/Airspeed") : qsTr("Pressure")
                     }
 
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
-                        visible:    activeVehicle ? activeVehicle.supportsMotorInterference : false
+                        visible:    globals.activeVehicle ? globals.activeVehicle.supportsMotorInterference : false
 
                         onClicked:  mainWindow.showComponentDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), mainWindow.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                     }

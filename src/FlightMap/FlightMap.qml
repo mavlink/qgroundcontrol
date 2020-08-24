@@ -45,7 +45,8 @@ Map {
 
     readonly property real  maxZoomLevel: 20
 
-    property var    activeVehicleCoordinate:        activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+    property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
         // TODO: Is this still necessary with Qt 5.11?
@@ -57,9 +58,9 @@ Map {
     }
 
     function _possiblyCenterToVehiclePosition() {
-        if (!firstVehiclePositionReceived && allowVehicleLocationCenter && activeVehicleCoordinate.isValid) {
+        if (!firstVehiclePositionReceived && allowVehicleLocationCenter && _activeVehicleCoordinate.isValid) {
             firstVehiclePositionReceived = true
-            center = activeVehicleCoordinate
+            center = _activeVehicleCoordinate
             zoomLevel = QGroundControl.flightMapInitialZoom
         }
     }
@@ -81,8 +82,8 @@ Map {
         if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
             firstGCSPositionReceived = true
             //-- Only center on gsc if we have no vehicle (and we are supposed to do so)
-            var activeVehicleCoordinate = activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
-            if(QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue || !activeVehicleCoordinate.isValid)
+            var _activeVehicleCoordinate = _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+            if(QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue || !_activeVehicleCoordinate.isValid)
                 center = gcsPosition
         }
     }
@@ -99,7 +100,7 @@ Map {
         }
     }
 
-    onActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
+    on_ActiveVehicleCoordinateChanged: _possiblyCenterToVehiclePosition()
 
     Component.onCompleted: {
         updateActiveMapType()

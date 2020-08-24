@@ -34,12 +34,12 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Firmware Version")
-            valueText: activeVehicle.firmwareMajorVersion === -1 ? qsTr("Unknown") : activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion + activeVehicle.firmwareVersionTypeString
+            valueText: globals.activeVehicle.firmwareMajorVersion === -1 ? qsTr("Unknown") : globals.activeVehicle.firmwareMajorVersion + "." + globals.activeVehicle.firmwareMinorVersion + "." + globals.activeVehicle.firmwarePatchVersion + globals.activeVehicle.firmwareVersionTypeString
         }
         VehicleSummaryRow {
-            visible: activeVehicle.firmwareCustomMajorVersion !== -1
+            visible: globals.activeVehicle.firmwareCustomMajorVersion !== -1
             labelText: qsTr("Custom Fw. Ver.")
-            valueText: activeVehicle.firmwareCustomMajorVersion + "." + activeVehicle.firmwareCustomMinorVersion + "." + activeVehicle.firmwareCustomPatchVersion
+            valueText: globals.activeVehicle.firmwareCustomMajorVersion + "." + globals.activeVehicle.firmwareCustomMinorVersion + "." + globals.activeVehicle.firmwareCustomPatchVersion
         }
     }
 }

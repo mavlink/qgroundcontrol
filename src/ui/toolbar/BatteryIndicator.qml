@@ -27,13 +27,15 @@ Item {
 
     property bool showIndicator: true
 
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     Row {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
 
         Repeater {
-            model: activeVehicle ? activeVehicle.batteries : 0
+            model: _activeVehicle ? _activeVehicle.batteries : 0
 
             Loader {
                 anchors.top:        parent.top
@@ -149,7 +151,7 @@ Item {
 
                     ColumnLayout {
                         Repeater {
-                            model: activeVehicle ? activeVehicle.batteries : 0
+                            model: _activeVehicle ? _activeVehicle.batteries : 0
 
                             ColumnLayout {
                                 spacing: 0
@@ -177,7 +179,7 @@ Item {
 
                     ColumnLayout {
                         Repeater {
-                            model: activeVehicle ? activeVehicle.batteries : 0
+                            model: _activeVehicle ? _activeVehicle.batteries : 0
 
                             ColumnLayout {
                                 spacing: 0

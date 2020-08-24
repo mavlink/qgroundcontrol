@@ -13,8 +13,8 @@ import QGroundControl.Palette           1.0
 Item {
     width: missionStats.width + _margins
 
-    property var    _planMasterController:      mainWindow.planMasterControllerPlanView
-    property var    _currentMissionItem:        mainWindow.currentPlanMissionItem          ///< Mission item to display status for
+    property var    _planMasterController:      globals.planMasterControllerPlanView
+    property var    _currentMissionItem:        globals.currentPlanMissionItem          ///< Mission item to display status for
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
