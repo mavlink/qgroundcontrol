@@ -101,7 +101,7 @@ QGCViewDialog {
 
         Column {
             id:             _column
-            spacing:        defaultTextHeight
+            spacing:        globals.defaultTextHeight
             anchors.left:   parent.left
             anchors.right:  parent.right
 

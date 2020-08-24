@@ -126,22 +126,40 @@ Rectangle {
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
-        property string _brandImageIndoor:      _userBrandingIndoor ?
-                                                    _userBrandImageIndoor : (_userBrandingOutdoor ?
-                                                                                 _userBrandImageOutdoor : (_corePluginBranding ?
-                                                                                                               QGroundControl.corePlugin.brandImageIndoor : (activeVehicle ?
-                                                                                                                                                                 activeVehicle.brandImageIndoor : ""
-                                                                                                                                                             )
-                                                                                                           )
-                                                                             )
-        property string _brandImageOutdoor:     _userBrandingOutdoor ?
-                                                    _userBrandImageOutdoor : (_userBrandingIndoor ?
-                                                                                  _userBrandImageIndoor : (_corePluginBranding ?
-                                                                                                               QGroundControl.corePlugin.brandImageOutdoor : (activeVehicle ?
-                                                                                                                                                                  activeVehicle.brandImageOutdoor : ""
-                                                                                                                                                              )
-                                                                                                           )
-                                                                              )
+        property string _brandImageIndoor:      brandImageIndoor()
+        property string _brandImageOutdoor:     brandImageOutdoor()
+
+        function brandImageIndoor() {
+            if (_userBrandingIndoor) {
+                return _userBrandImageIndoor
+            } else {
+                if (_userBrandingOutdoor) {
+                    return _userBrandingOutdoor
+                } else {
+                    if (_corePluginBranding) {
+                        return QGroundControl.corePlugin.brandImageIndoor
+                    } else {
+                        return _activeVehicle ? _activeVehicle.brandImageIndoor : ""
+                    }
+                }
+            }
+        }
+
+        function brandImageOutdoor() {
+            if (_userBrandingOutdoor) {
+                return _userBrandingOutdoor
+            } else {
+                if (_userBrandingIndoor) {
+                    return _userBrandingIndoor
+                } else {
+                    if (_corePluginBranding) {
+                        return QGroundControl.corePlugin.brandImageOutdoor
+                    } else {
+                        return _activeVehicle ? _activeVehicle.brandImageOutdoor : ""
+                    }
+                }
+            }
+        }
     }
 
     // Small parameter download progress bar
