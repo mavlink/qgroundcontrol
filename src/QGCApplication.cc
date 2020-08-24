@@ -449,6 +449,9 @@ void QGCApplication::setLanguage()
         case 19:
             _locale = QLocale(QLocale::Turkish);
             break;
+        case 20:
+            _locale = QLocale(QLocale::Azerbaijani);
+            break;
         }
     }
     //-- We have specific fonts for Korean
