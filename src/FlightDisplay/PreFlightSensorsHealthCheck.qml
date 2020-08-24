@@ -17,7 +17,7 @@ PreFlightCheckButton {
     name:               qsTr("Sensors")
     telemetryFailure:   _unhealthySensors & _allCheckedSensors
 
-    property int    _unhealthySensors:  activeVehicle ? activeVehicle.sensorsUnhealthyBits : 1
+    property int    _unhealthySensors:  globals.activeVehicle ? globals.activeVehicle.sensorsUnhealthyBits : 1
     property int    _allCheckedSensors: Vehicle.SysStatusSensor3dMag |
                                         Vehicle.SysStatusSensor3dAccel |
                                         Vehicle.SysStatusSensor3dGyro |

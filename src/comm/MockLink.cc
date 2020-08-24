@@ -1252,7 +1252,7 @@ void MockLink::_sendStatusTextMessages(void)
                                          status->msg,
                                          0,                     // Not a chunked sequence
                                          0);                    // Not a chunked sequence
-        //respondWithMavlinkMessage(msg);
+        respondWithMavlinkMessage(msg);
     }
 
     _sendChunkedStatusText(1, false /* missingChunks */);

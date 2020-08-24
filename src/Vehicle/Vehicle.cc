@@ -1959,7 +1959,7 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-QString Vehicle::formatedMessages()
+QString Vehicle::formattedMessages()
 {
     QString messages;
     for(UASMessage* message: _toolbox->uasMessageHandler()->messages()) {
@@ -1975,10 +1975,8 @@ void Vehicle::clearMessages()
 
 void Vehicle::_handletextMessageReceived(UASMessage* message)
 {
-    if(message)
-    {
-        _formatedMessage = message->getFormatedText();
-        emit formatedMessageChanged();
+    if (message) {
+        emit newFormattedMessage(message->getFormatedText());
     }
 }
 

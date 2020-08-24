@@ -166,6 +166,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _visualItems->deleteLater();
         _visualItems  = nullptr;
         _settingsItem = nullptr;
+        _takeoffMissionItem = nullptr;
         _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
 
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
@@ -192,9 +193,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem, this);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                 // This needs to be a TakeoffMissionItem
-                TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem, this);
+                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem, this);
                 simpleItem->deleteLater();
-                simpleItem = takeoffItem;
+                simpleItem = _takeoffMissionItem;
             }
             newControllerMissionItems->append(simpleItem);
         }
@@ -359,34 +360,34 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
-    TakeoffMissionItem * newItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, this);
-    newItem->setSequenceNumber(sequenceNumber);
-    _initVisualItem(newItem);
+    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, this);
+    _takeoffMissionItem->setSequenceNumber(sequenceNumber);
+    _initVisualItem(_takeoffMissionItem);
 
-    if (newItem->specifiesAltitude()) {
+    if (_takeoffMissionItem->specifiesAltitude()) {
         double  prevAltitude;
         int     prevAltitudeMode;
 
         if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
-            newItem->altitude()->setRawValue(prevAltitude);
-            newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
+            _takeoffMissionItem->altitude()->setRawValue(prevAltitude);
+            _takeoffMissionItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
         }
     }
     if (visualItemIndex == -1) {
-        _visualItems->append(newItem);
+        _visualItems->append(_takeoffMissionItem);
     } else {
-        _visualItems->insert(visualItemIndex, newItem);
+        _visualItems->insert(visualItemIndex, _takeoffMissionItem);
     }
 
     _recalcAll();
 
     if (makeCurrentItem) {
-        setCurrentPlanViewSeqNum(newItem->sequenceNumber(), true);
+        setCurrentPlanViewSeqNum(_takeoffMissionItem->sequenceNumber(), true);
     }
 
     _firstItemAdded();
 
-    return newItem;
+    return _takeoffMissionItem;
 }
 
 VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
@@ -536,6 +537,10 @@ void MissionController::removeVisualItem(int viIndex)
     bool removeSurveyStyle = _visualItems->value<SurveyComplexItem*>(viIndex) || _visualItems->value<CorridorScanComplexItem*>(viIndex);
     VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(viIndex));
 
+    if (item == _takeoffMissionItem) {
+        _takeoffMissionItem = nullptr;
+    }
+
     _deinitVisualItem(item);
     item->deleteLater();
 
@@ -591,6 +596,7 @@ void MissionController::removeAll(void)
         _visualItems->clearAndDeleteContents();
         _visualItems->deleteLater();
         _settingsItem = nullptr;
+        _takeoffMissionItem = nullptr;
         _visualItems = new QmlObjectListModel(this);
         _addMissionSettings(_visualItems);
         _initAllVisualItems();
@@ -983,8 +989,9 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
     if (_visualItems) {
         _deinitAllVisualItems();
         _visualItems->deleteLater();
-        _settingsItem = nullptr;
     }
+    _settingsItem = nullptr;
+    _takeoffMissionItem = nullptr;
 
     _visualItems = loadedVisualItems;
 
@@ -1859,6 +1866,11 @@ void MissionController::_initAllVisualItems(void)
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
         _initVisualItem(item);
+
+        TakeoffMissionItem* takeoffItem = qobject_cast<TakeoffMissionItem*>(item);
+        if (takeoffItem) {
+            _takeoffMissionItem = takeoffItem;
+        }
     }
 
     _recalcAll();

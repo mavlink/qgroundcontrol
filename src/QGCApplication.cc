@@ -449,6 +449,9 @@ void QGCApplication::setLanguage()
         case 19:
             _locale = QLocale(QLocale::Turkish);
             break;
+        case 20:
+            _locale = QLocale(QLocale::Azerbaijani);
+            break;
         }
     }
     //-- We have specific fonts for Korean
@@ -783,7 +786,7 @@ QObject* QGCApplication::_rootQmlObject()
     return nullptr;
 }
 
-void QGCApplication::showVehicleMessage(const QString& message)
+void QGCApplication::showCriticalVehicleMessage(const QString& message)
 {
     // PreArm messages are handled by Vehicle and shown in Map
     if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
@@ -793,10 +796,10 @@ void QGCApplication::showVehicleMessage(const QString& message)
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
-        QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+        QMetaObject::invokeMethod(_rootQmlObject(), "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
     } else if (runningUnitTests()) {
         // Unit tests can run without UI
-        qDebug() << "QGCApplication::showVehicleMessage unittest" << message;
+        qDebug() << "QGCApplication::showCriticalVehicleMessage unittest" << message;
     } else {
         qWarning() << "Internal error";
     }

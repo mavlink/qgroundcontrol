@@ -63,11 +63,11 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Vehicle")
         Layout.fillWidth:   true
-        enabled:            activeVehicle && activeVehicle.coordinate.isValid
+        enabled:            globals.activeVehicle && globals.activeVehicle.coordinate.isValid
 
         onClicked: {
             dropPanel.hide()
-            map.center = activeVehicle.coordinate
+            map.center = globals.activeVehicle.coordinate
         }
     }
 

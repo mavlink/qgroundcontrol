@@ -112,7 +112,7 @@ Item {
         }
         QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
-            visible:        !activeVehicle.apmFirmware
+            visible:        !_activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
         QGCMenuSeparator { }
@@ -345,7 +345,7 @@ Item {
 
         QGCViewDialog {
             function accept() {
-                activeVehicle.rebootVehicle()
+                _activeVehicle.rebootVehicle()
                 hideDialog()
             }
 

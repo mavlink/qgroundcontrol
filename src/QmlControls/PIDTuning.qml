@@ -27,18 +27,18 @@ RowLayout {
     property real   _chartHeight:       ScreenTools.defaultFontPixelHeight * 20
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property string _currentTuneType:   tuneList[0]
-    property real   _roll:              activeVehicle.roll.value
-    property real   _rollSetpoint:      activeVehicle.setpoint.roll.value
-    property real   _rollRate:          activeVehicle.rollRate.value
-    property real   _rollRateSetpoint:  activeVehicle.setpoint.rollRate.value
-    property real   _pitch:             activeVehicle.pitch.value
-    property real   _pitchSetpoint:     activeVehicle.setpoint.pitch.value
-    property real   _pitchRate:         activeVehicle.pitchRate.value
-    property real   _pitchRateSetpoint: activeVehicle.setpoint.pitchRate.value
-    property real   _yaw:               activeVehicle.heading.value
-    property real   _yawSetpoint:       activeVehicle.setpoint.yaw.value
-    property real   _yawRate:           activeVehicle.yawRate.value
-    property real   _yawRateSetpoint:   activeVehicle.setpoint.yawRate.value
+    property real   _roll:              globals.activeVehicle.roll.value
+    property real   _rollSetpoint:      globals.activeVehicle.setpoint.roll.value
+    property real   _rollRate:          globals.activeVehicle.rollRate.value
+    property real   _rollRateSetpoint:  globals.activeVehicle.setpoint.rollRate.value
+    property real   _pitch:             globals.activeVehicle.pitch.value
+    property real   _pitchSetpoint:     globals.activeVehicle.setpoint.pitch.value
+    property real   _pitchRate:         globals.activeVehicle.pitchRate.value
+    property real   _pitchRateSetpoint: globals.activeVehicle.setpoint.pitchRate.value
+    property real   _yaw:               globals.activeVehicle.heading.value
+    property real   _yawSetpoint:       globals.activeVehicle.setpoint.yaw.value
+    property real   _yawRate:           globals.activeVehicle.yawRate.value
+    property real   _yawRateSetpoint:   globals.activeVehicle.setpoint.yawRate.value
     property var    _valueXAxis:        valueXAxis
     property var    _valueRateXAxis:    valueRateXAxis
     property var    _valueYAxis:        valueYAxis
@@ -142,11 +142,11 @@ RowLayout {
     }
 
     Component.onCompleted: {
-        activeVehicle.setPIDTuningTelemetryMode(true)
+        globals.activeVehicle.setPIDTuningTelemetryMode(true)
         saveTuningParamValues()
     }
 
-    Component.onDestruction: activeVehicle.setPIDTuningTelemetryMode(false)
+    Component.onDestruction: globals.activeVehicle.setPIDTuningTelemetryMode(false)
 
     on_CurrentTuneTypeChanged: {
         saveTuningParamValues()
@@ -369,7 +369,7 @@ RowLayout {
                 onClicked: {
                     dataTimer.running = !dataTimer.running
                     if (autoModeChange.checked) {
-                        activeVehicle.flightMode = dataTimer.running ? "Stabilized" : activeVehicle.pauseFlightMode
+                        globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
                     }
                 }
             }
@@ -388,7 +388,7 @@ RowLayout {
             }
 
             QGCLabel {
-                text:            qsTr("Switches to '%1' when you click Stop.").arg(activeVehicle.pauseFlightMode)
+                text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
                 font.pointSize:     ScreenTools.smallFontPointSize
             }
         }

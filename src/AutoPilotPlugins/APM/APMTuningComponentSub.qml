@@ -157,7 +157,7 @@ SetupPage {
                     anchors.right:      parent.right
                     anchors.top:        parent.top
 
-                    sourceComponent: activeVehicle.versionCompare(3, 6, 0) <= 0 ? velColumnUpTo36 :velColumn40
+                    sourceComponent: globals.activeVehicle.versionCompare(3, 6, 0) <= 0 ? velColumnUpTo36 :velColumn40
                 }
             } // Rectangle - VEL parameters
 
@@ -224,7 +224,7 @@ SetupPage {
                     anchors.right:      parent.right
                     anchors.top:        parent.top
 
-                    sourceComponent: activeVehicle.versionCompare(3, 6, 0) < 0 ? wpnavColumn35 : wpnavColumn36
+                    sourceComponent: globals.activeVehicle.versionCompare(3, 6, 0) < 0 ? wpnavColumn35 : wpnavColumn36
                     }
             } // Rectangle - WPNAV parameters
         } // Column
