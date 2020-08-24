@@ -14,6 +14,7 @@
 #include "SimpleMissionItem.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
+#include "TakeoffMissionItem.h"
 
 #include <QPolygonF>
 
@@ -27,6 +28,15 @@ LandingComplexItem::LandingComplexItem(PlanMasterController* masterController, b
     // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &LandingComplexItem::_updateFlightPathSegmentsSignal, this, &LandingComplexItem::_updateFlightPathSegmentsDontCallDirectly,   Qt::QueuedConnection);
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&LandingComplexItem::_updateFlightPathSegmentsSignal));
+}
+
+void LandingComplexItem::setLandingHeadingToTakeoffHeading()
+{
+    TakeoffMissionItem* takeoffMissionItem = _missionController->takeoffMissionItem();
+    if (takeoffMissionItem && takeoffMissionItem->specifiesCoordinate()) {
+        qreal heading = takeoffMissionItem->launchCoordinate().azimuthTo(takeoffMissionItem->coordinate());
+        landingHeading()->setRawValue(heading);
+    }
 }
 
 double LandingComplexItem::complexDistance(void) const

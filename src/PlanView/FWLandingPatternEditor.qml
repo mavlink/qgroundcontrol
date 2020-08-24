@@ -289,6 +289,7 @@ Rectangle {
                 onClicked: {
                     missionItem.landingCoordinate = globals.activeVehicle.coordinate
                     missionItem.landingHeading.rawValue = globals.activeVehicle.heading.rawValue
+                    missionItem.setLandingHeadingToTakeoffHeading()
                 }
             }
         }
