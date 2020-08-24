@@ -218,7 +218,7 @@ Item {
         Component.onCompleted: {
             _planMasterController.start()
             _missionController.setCurrentPlanViewSeqNum(0, true)
-            mainWindow.planMasterControllerPlanView = _planMasterController
+            globals.planMasterControllerPlanView = _planMasterController
         }
 
         onPromptForPlanUsageOnVehicleChange: {
@@ -1040,7 +1040,7 @@ Item {
                 id:                 unsavedChangedLabel
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                text:               activeVehicle ?
+                text:               globals.activeVehicle ?
                                         qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file.") :
                                         qsTr("You have unsaved changes.")
                 visible:            _planMasterController.dirty
