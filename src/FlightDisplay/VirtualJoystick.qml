@@ -27,8 +27,8 @@ Item {
         running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && activeVehicle
         repeat:     true
         onTriggered: {
-            if (activeVehicle) {
-                activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, -rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+            if (_activeVehicle) {
+                _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
             }
         }
     }

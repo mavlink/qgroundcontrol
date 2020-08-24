@@ -2,6 +2,16 @@
   <version>1</version>
   <airframe_version_major>1</airframe_version_major>
   <airframe_version_minor>1</airframe_version_minor>
+  <airframe_group image="Airship" name="Airship">
+    <airframe id="2507" maintainer="John Doe &lt;john@example.com&gt;" name="Cloudship">
+      <class>Airship</class>
+      <type>Airship</type>
+      <output name="MAIN1">starboard thruster</output>
+      <output name="MAIN2">port thruster</output>
+      <output name="MAIN3">thrust tilt</output>
+      <output name="MAIN4">tail thruster</output>
+    </airframe>
+  </airframe_group>
   <airframe_group image="Autogyro" name="Autogyro">
     <airframe id="17002" maintainer="ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;" name="ThunderFly Auto-G2">
       <class>Autogyro</class>
@@ -327,12 +337,12 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe id="4010" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI Flame Wheel F330">
+    <airframe id="4010" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI F330 w/ DJI ESCs">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
-    <airframe id="4011" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI Flame Wheel F450">
+    <airframe id="4011" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="DJI F450 w/ DJI ESCs">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -735,7 +745,7 @@
       <output name="MAIN0">Speed of left wheels</output>
       <output name="MAIN1">Speed of right wheels</output>
     </airframe>
-    <airframe id="50004" maintainer="Katrin Moritz" name="DF Robot GPX:Asurada">
+    <airframe id="50004" maintainer="Katrin Moritz" name="NXP Cup car: DF Robot GPX">
       <class>Rover</class>
       <maintainer>Katrin Moritz</maintainer>
       <type>Rover</type>

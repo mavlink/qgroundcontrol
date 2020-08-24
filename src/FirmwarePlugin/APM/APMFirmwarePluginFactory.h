@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef APMFirmwarePluginFactory_H
-#define APMFirmwarePluginFactory_H
+#pragma once
 
 #include "FirmwarePlugin.h"
 
@@ -24,8 +23,8 @@ class APMFirmwarePluginFactory : public FirmwarePluginFactory
 public:
     APMFirmwarePluginFactory(void);
 
-    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      (void) const final;
-    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
+    QList<QGCMAVLink::FirmwareClass_t>  supportedFirmwareClasses(void) const final;
+    FirmwarePlugin*                     firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
 
 private:
     ArduCopterFirmwarePlugin*   _arduCopterPluginInstance;
@@ -33,5 +32,3 @@ private:
     ArduRoverFirmwarePlugin*    _arduRoverPluginInstance;
     ArduSubFirmwarePlugin*      _arduSubPluginInstance;
 };
-
-#endif

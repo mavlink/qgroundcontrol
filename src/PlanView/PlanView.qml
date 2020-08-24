@@ -53,6 +53,7 @@ Item {
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
+    property bool   _promptForPlanUsageShowing:         false
 
     readonly property var       _layers:                [_layerMission, _layerGeoFence, _layerRallyPoints]
 
@@ -135,29 +136,63 @@ Item {
     }
 
     Component {
-        id: activeMissionUploadDialogComponent
-        QGCViewDialog {
-            Column {
-                anchors.fill:   parent
-                spacing:        ScreenTools.defaultFontPixelHeight
+        id: promptForPlanUsageOnVehicleChangePopupComponent
+        QGCPopupDialog {
+            title:      _planMasterController.managerVehicle.isOfflineEditingVehicle ? qsTr("Plan View - Vehicle Disconnected") : qsTr("Plan View - Vehicle Changed")
+            buttons:    StandardButton.NoButton
+
+            ColumnLayout {
                 QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       qsTr("Your vehicle is currently flying a mission. In order to upload a new or modified mission the current mission will be paused.")
+                    Layout.maximumWidth:    parent.width
+                    wrapMode:               QGCLabel.WordWrap
+                    text:                   _planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                                qsTr("The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?") :
+                                                qsTr("The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?")
                 }
-                QGCLabel {
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
-                    text:       qsTr("After the mission is uploaded you can adjust the current waypoint and start the mission.")
-                }
+
                 QGCButton {
-                    text:       qsTr("Pause and Upload")
+                    Layout.fillWidth:   true
+                    text:               _planMasterController.dirty ?
+                                            (_planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                                 qsTr("Discard Unsaved Changes") :
+                                                 qsTr("Discard Unsaved Changes, Load New Plan From Vehicle")) :
+                                            qsTr("Load New Plan From Vehicle")
                     onClicked: {
-                        activeVehicle.flightMode = activeVehicle.pauseFlightMode
-                        _planMasterController.sendToVehicle()
+                        _planMasterController.showPlanFromManagerVehicle()
+                        _promptForPlanUsageShowing = false
+                        hideDialog();
+                    }
+                }
+
+                QGCButton {
+                    Layout.fillWidth:   true
+                    text:               _planMasterController.managerVehicle.isOfflineEditingVehicle ?
+                                            qsTr("Keep Current Plan") :
+                                            qsTr("Keep Current Plan, Don't Update From Vehicle")
+                    onClicked: {
+                        if (!_planMasterController.managerVehicle.isOfflineEditingVehicle) {
+                            _planMasterController.dirty = true
+                        }
+                        _promptForPlanUsageShowing = false
                         hideDialog()
                     }
                 }
+            }
+        }
+    }
+
+
+    Component {
+        id: firmwareOrVehicleMismatchUploadDialogComponent
+        QGCViewMessage {
+            message: qsTr("This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. " +
+                            "This can lead to errors or incorrect behavior. " +
+                            "It is recommended to recreate the Plan for the correct firmware/vehicle type.\n\n" +
+                            "Click 'Ok' to upload the Plan anyway.")
+
+            function accept() {
+                _planMasterController.sendToVehicle()
+                hideDialog()
             }
         }
     }
@@ -177,12 +212,20 @@ Item {
     }
 
     PlanMasterController {
-        id: _planMasterController
+        id:         _planMasterController
+        flyView:    false
 
         Component.onCompleted: {
-            _planMasterController.start(false /* flyView */)
+            _planMasterController.start()
             _missionController.setCurrentPlanViewSeqNum(0, true)
-            mainWindow.planMasterControllerPlanView = _planMasterController
+            globals.planMasterControllerPlanView = _planMasterController
+        }
+
+        onPromptForPlanUsageOnVehicleChange: {
+            if (!_promptForPlanUsageShowing) {
+                _promptForPlanUsageShowing = true
+                mainWindow.showPopupDialogFromComponent(promptForPlanUsageOnVehicleChangePopupComponent)
+            }
         }
 
         function waitingOnIncompleteDataMessage(save) {
@@ -210,10 +253,16 @@ Item {
             if (!checkReadyForSaveUpload(false /* save */)) {
                 return
             }
-            if (activeVehicle && activeVehicle.armed && activeVehicle.flightMode === activeVehicle.missionFlightMode) {
-                mainWindow.showComponentDialog(activeMissionUploadDialogComponent, qsTr("Plan Upload"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
-            } else {
-                sendToVehicle()
+            switch (_missionController.sendToVehiclePreCheck()) {
+                case MissionController.SendToVehiclePreCheckStateOk:
+                    sendToVehicle()
+                    break
+                case MissionController.SendToVehiclePreCheckStateActiveMission:
+                    mainWindow.showMessageDialog(qsTr("Send To Vehicle"), qsTr("Current mission must be paused prior to uploading a new Plan"))
+                    break
+                case MissionController.SendToVehiclePreCheckStateFirwmareVehicleMismatch:
+                    mainWindow.showComponentDialog(firmwareOrVehicleMismatchUploadDialogComponent, qsTr("Plan Upload"), mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    break
             }
         }
 
@@ -575,14 +624,14 @@ Item {
             maxHeight:          parent.height - toolStrip.y
             title:              qsTr("Plan")
 
-            //readonly property int flyButtonIndex:       0
-            readonly property int fileButtonIndex:      0
-            readonly property int takeoffButtonIndex:   1
-            readonly property int waypointButtonIndex:  2
-            readonly property int roiButtonIndex:       3
-            readonly property int patternButtonIndex:   4
-            readonly property int landButtonIndex:      5
-            readonly property int centerButtonIndex:    6
+            readonly property int flyButtonIndex:       0
+            readonly property int fileButtonIndex:      1
+            readonly property int takeoffButtonIndex:   2
+            readonly property int waypointButtonIndex:  3
+            readonly property int roiButtonIndex:       4
+            readonly property int patternButtonIndex:   5
+            readonly property int landButtonIndex:      6
+            readonly property int centerButtonIndex:    7
 
             property bool _isRallyLayer:    _editingLayer == _layerRallyPoints
             property bool _isMissionLayer:  _editingLayer == _layerMission
@@ -590,6 +639,11 @@ Item {
             ToolStripActionList {
                 id: toolStripActionList
                 model: [
+                    ToolStripAction {
+                        text:           qsTr("Fly")
+                        iconSource:     "/qmlimages/PaperPlane.svg"
+                        onTriggered:    mainWindow.showFlyView()
+                    },
                     ToolStripAction {
                         text:                   qsTr("File")
                         enabled:                !_planMasterController.syncInProgress
@@ -603,7 +657,7 @@ Item {
                         text:       qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
                         enabled:    _missionController.isInsertTakeoffValid
-                        visible:    toolStrip._isMissionLayer
+                        visible:    toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             toolStrip.allAddClickBoolsOff()
                             insertTakeItemAfterCurrent()
@@ -986,7 +1040,7 @@ Item {
                 id:                 unsavedChangedLabel
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
-                text:               activeVehicle ?
+                text:               globals.activeVehicle ?
                                         qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file.") :
                                         qsTr("You have unsaved changes.")
                 visible:            _planMasterController.dirty

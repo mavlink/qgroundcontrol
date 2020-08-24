@@ -51,7 +51,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     , _terrainAdjustMaxClimbRateFact    (settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
     , _terrainAdjustMaxDescentRateFact  (settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
 {
-    _terrainQueryTimer.setInterval(_terrainQueryTimeoutMsecs);
+    _terrainQueryTimer.setInterval(qgcApp()->runningUnitTests() ? 10 : _terrainQueryTimeoutMsecs);
     _terrainQueryTimer.setSingleShot(true);
     connect(&_terrainQueryTimer, &QTimer::timeout, this, &TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo);
 
@@ -327,8 +327,10 @@ double TransectStyleComplexItem::greatestDistanceTo(const QGeoCoordinate &other)
 void TransectStyleComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
-    if (!qFuzzyCompare(_cruiseSpeed, missionFlightStatus.vehicleSpeed)) {
-        _cruiseSpeed = missionFlightStatus.vehicleSpeed;
+    if (!QGC::fuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {
+        _vehicleSpeed = missionFlightStatus.vehicleSpeed;
+        // Vehicle speed change affects max climb/descent rates calcs for terrain so we need to re-adjust
+        _rebuildTransects();
         emit timeBetweenShotsChanged();
     }
 }
@@ -707,9 +709,9 @@ int TransectStyleComplexItem::_maxPathHeight(const TerrainPathQuery::PathHeightI
 
 void TransectStyleComplexItem::_adjustForMaxRates(QList<CoordInfo_t>& transect)
 {
-    double maxClimbRate = _terrainAdjustMaxClimbRateFact.rawValue().toDouble();
-    double maxDescentRate = _terrainAdjustMaxDescentRateFact.rawValue().toDouble();
-    double flightSpeed = _missionFlightStatus.vehicleSpeed;
+    double maxClimbRate     = _terrainAdjustMaxClimbRateFact.rawValue().toDouble();
+    double maxDescentRate   = _terrainAdjustMaxDescentRateFact.rawValue().toDouble();
+    double flightSpeed      = _vehicleSpeed;
 
     if (qIsNaN(flightSpeed) || (maxClimbRate == 0 && maxDescentRate == 0)) {
         if (qIsNaN(flightSpeed)) {
@@ -1016,7 +1018,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
     bool imagesInTurnaround =       _cameraTriggerInTurnAroundFact.rawValue().toBool();
     bool hasTurnarounds =           _turnAroundDistance() != 0;
     bool addTriggerAtBeginningEnd = !hoverAndCaptureEnabled() && imagesInTurnaround && triggerCamera();
-    bool useConditionGate =         _controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_CONDITION_GATE) &&
+    bool useConditionGate =         _controllerVehicle->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric).contains(MAV_CMD_CONDITION_GATE) &&
             triggerCamera() &&
             !hoverAndCaptureEnabled();
 

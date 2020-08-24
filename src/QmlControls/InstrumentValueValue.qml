@@ -21,8 +21,8 @@ import QGroundControl.Palette       1.0
 ColumnLayout {
     property var    instrumentValueData:            null
     property bool   settingsUnlocked:               false
+    property alias  contentWidth:                   label.contentWidth
 
-    property bool   _verticalOrientation:           instrumentValueData.factValueGrid.orientation === FactValueGrid.VerticalOrientation
     property var    _rgFontSizes:                   [ ScreenTools.defaultFontPointSize, ScreenTools.smallFontPointSize, ScreenTools.mediumFontPointSize, ScreenTools.largeFontPointSize ]
     property var    _rgFontSizeRatios:              [ 1, ScreenTools.smallFontPointRatio, ScreenTools.mediumFontPointRatio, ScreenTools.largeFontPointRatio ]
     property real   _doubleDescent:                 ScreenTools.defaultFontDescent * 2
@@ -31,16 +31,21 @@ ColumnLayout {
     property real   _tightHeight:                   _rgFontSizeTightHeights[instrumentValueData.factValueGrid.fontSize]
     property real   _fontSize:                      _rgFontSizes[instrumentValueData.factValueGrid.fontSize]
     property real   _horizontalLabelSpacing:        ScreenTools.defaultFontPixelWidth
-    property bool   _valueVisible:                  instrumentValueData.fact
     property real   _width:                         0
     property real   _height:                        0
 
     QGCLabel {
-        Layout.alignment:   _verticalOrientation ? Qt.AlignHCenter : Qt.AlignVCenter
+        id:                 label
+        Layout.alignment:   Qt.AlignVCenter
         font.pointSize:     _fontSize
-        text:               instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.units : "")
-        visible:            _valueVisible
+        text:               valueText()
 
-        QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+        function valueText() {
+            if (instrumentValueData.fact) {
+                return instrumentValueData.fact.enumOrValueString + (instrumentValueData.showUnits ? " " + instrumentValueData.fact.units : "")
+            } else {
+                return qsTr("--.--")
+            }
+        }
     }
 }

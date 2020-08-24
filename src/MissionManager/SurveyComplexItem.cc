@@ -324,7 +324,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraCalc.adjustedFootprintFrontal()->setRawValue (complexObject[_jsonV3CameraTriggerDistanceKey].toDouble());
 
     if (manualGrid) {
-        _cameraCalc.cameraName()->setRawValue(_cameraCalc.manualCameraName());
+        _cameraCalc.setCameraBrand(CameraCalc::canonicalManualCameraName());
     } else {
         if (!complexObject.contains(_jsonV3CameraObjectKey)) {
             errorString = tr("%1 but %2 object is missing").arg("manualGrid = false").arg("camera");
@@ -359,7 +359,6 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
             return false;
         }
 
-        _cameraCalc.cameraName()->setRawValue           (cameraObject[_jsonV3CameraNameKey].toString());
         _cameraCalc.landscape()->setRawValue            (cameraObject[_jsonV3CameraOrientationLandscapeKey].toBool(true));
         _cameraCalc.frontalOverlap()->setRawValue       (cameraObject[_jsonV3FrontalOverlapKey].toInt());
         _cameraCalc.sideOverlap()->setRawValue          (cameraObject[_jsonV3SideOverlapKey].toInt());
@@ -371,6 +370,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
         _cameraCalc.minTriggerInterval()->setRawValue   (cameraObject[_jsonV3CameraMinTriggerIntervalKey].toDouble(0));
         _cameraCalc.imageDensity()->setRawValue         (cameraObject[_jsonV3GroundResolutionKey].toDouble());
         _cameraCalc.fixedOrientation()->setRawValue     (false);
+        _cameraCalc._setCameraNameFromV3TransectLoad    (cameraObject[_jsonV3CameraNameKey].toString());
     }
 
     // Polygon shape
@@ -520,12 +520,20 @@ void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
         QLineF intersectLine;
         const QLineF& line = lineList[i];
 
+        auto isLineBoundedIntersect = [&line, &intersectPoint](const QLineF& linePosition) {
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+            return line.intersect(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
+#else
+            return line.intersects(linePosition, &intersectPoint) == QLineF::BoundedIntersection;
+#endif
+        };
+
         int foundCount = 0;
-        if (line.intersect(topLine, &intersectPoint) == QLineF::BoundedIntersection) {
+        if (isLineBoundedIntersect(topLine)) {
             intersectLine.setP1(intersectPoint);
             foundCount++;
         }
-        if (line.intersect(rightLine, &intersectPoint) == QLineF::BoundedIntersection) {
+        if (isLineBoundedIntersect(rightLine)) {
             if (foundCount == 0) {
                 intersectLine.setP1(intersectPoint);
             } else {
@@ -536,7 +544,7 @@ void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
             }
             foundCount++;
         }
-        if (line.intersect(bottomLine, &intersectPoint) == QLineF::BoundedIntersection) {
+        if (isLineBoundedIntersect(bottomLine)) {
             if (foundCount == 0) {
                 intersectLine.setP1(intersectPoint);
             } else {
@@ -547,7 +555,7 @@ void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
             }
             foundCount++;
         }
-        if (line.intersect(leftLine, &intersectPoint) == QLineF::BoundedIntersection) {
+        if (isLineBoundedIntersect(leftLine)) {
             if (foundCount == 0) {
                 intersectLine.setP1(intersectPoint);
             } else {
@@ -577,7 +585,13 @@ void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
         for (int j=0; j<polygon.count()-1; j++) {
             QPointF intersectPoint;
             QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
-            if (line.intersect(polygonLine, &intersectPoint) == QLineF::BoundedIntersection) {
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+            auto intersect = line.intersect(polygonLine, &intersectPoint);
+#else
+            auto intersect = line.intersects(polygonLine, &intersectPoint);
+#endif
+            if (intersect == QLineF::BoundedIntersection) {
                 if (!intersections.contains(intersectPoint)) {
                     intersections.append(intersectPoint);
                 }
@@ -1102,7 +1116,12 @@ bool SurveyComplexItem::_VertexCanSeeOther(const QPolygonF& polygon, const QPoin
         if (vertexD == vertexB) continue;
         QLineF lineCD(*vertexC, *vertexD);
         QPointF intersection{};
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
         auto intersects = lineAB.intersect(lineCD, &intersection);
+#else
+        auto intersects = lineAB.intersects(lineCD, &intersection);
+#endif
         if (intersects == QLineF::IntersectType::BoundedIntersection) {
 //            auto diffIntersection = *vertexA - intersection;
 //            auto distanceIntersection = sqrtf(diffIntersection.x() * diffIntersection.x() + diffIntersection.y()*diffIntersection.y());
@@ -1397,7 +1416,7 @@ void SurveyComplexItem::rotateEntryPoint(void)
 
 double SurveyComplexItem::timeBetweenShots(void)
 {
-    return _cruiseSpeed == 0 ? 0 : triggerDistance() / _cruiseSpeed;
+    return _vehicleSpeed == 0 ? 0 : triggerDistance() / _vehicleSpeed;
 }
 
 double SurveyComplexItem::additionalTimeDelay (void) const

@@ -31,14 +31,15 @@ Item {
     property real size:     _defaultSize
     property var  vehicle:  null
 
-    property real _defaultSize:     ScreenTools.defaultFontPixelHeight * (10)
-    property real _sizeRatio:       ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:        ScreenTools.defaultFontPointSize * _sizeRatio
-    property real _heading:         vehicle ? vehicle.heading.rawValue : 0
-    property real _headingToHome:   vehicle ? vehicle.headingToHome.rawValue : 0
-    property real _groundSpeed:     vehicle ? vehicle.groundSpeed.rawValue : 0
-    property real _headingToNextWP: vehicle ? vehicle.headingToNextWP.rawValue : 0
-    property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property real _defaultSize:         ScreenTools.defaultFontPixelHeight * (10)
+    property real _sizeRatio:           ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
+    property int  _fontSize:            ScreenTools.defaultFontPointSize * _sizeRatio
+    property real _heading:             vehicle ? vehicle.heading.rawValue : 0
+    property real _headingToHome:       vehicle ? vehicle.headingToHome.rawValue : 0
+    property real _groundSpeed:         vehicle ? vehicle.groundSpeed.rawValue : 0
+    property real _headingToNextWP:     vehicle ? vehicle.headingToNextWP.rawValue : 0
+    property real _courseOverGround:    _activeVehicle ? _activeVehicle.gps.courseOverGround.rawValue : 0
 
     property bool usedByMultipleVehicleList:  false
 

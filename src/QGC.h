@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef QGC_H
-#define QGC_H
+#pragma once
 
 #include <QDateTime>
 #include <QColor>
@@ -42,7 +40,8 @@ void initTimer();
 /** @brief Get the ground time since boot in milliseconds */
 quint64 bootTimeMilliseconds();
 
-const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
+/// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
+bool fuzzyCompare(double value1, double value2);
 
 class SLEEP : public QThread
 {
@@ -56,7 +55,3 @@ public:
 quint32 crc32(const quint8 *src, unsigned len, unsigned state);
 
 }
-
-#define QGC_EVENTLOOP_DEBUG 0
-
-#endif // QGC_H

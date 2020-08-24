@@ -1,63 +1,89 @@
 {
     "version":      1,
-    "fileType":  "FactMetaData",
+    "fileType":     "FactMetaData",
     "QGC.MetaData.Facts":
 [
 {
+    "name":             "id",
+    "shortDesc":        "Battery Id",
+    "type":             "uint8"
+},
+{
+    "name":             "batteryFunction",
+    "shortDesc":        "Battery Function",
+    "type":             "uint8",
+    "enumStrings":      "n/a,All Flight Systems,Propulsion,Avionics,Payload",
+    "enumValues":       "0,1,2,3,4",
+    "decimalPlaces":    0
+},
+{
+    "name":             "batteryType",
+    "shortDesc":        "Battery Type",
+    "type":             "uint8",
+    "enumStrings":      "n/a,LIPO,LIFE,LION,NIMH",
+    "enumValues":       "0,1,2,3,4",
+    "decimalPlaces":    0
+},
+{
     "name":             "voltage",
-    "shortDescription": "Voltage",
+    "shortDesc":        "Voltage",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "v"
 },
 {
     "name":             "percentRemaining",
-    "shortDescription": "Percent",
+    "shortDesc":        "Percent",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "%"
 },
 {
     "name":             "mahConsumed",
-    "shortDescription": "Consumed",
+    "shortDesc":        "Consumed",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "mAh"
 },
 {
     "name":             "current",
-    "shortDescription": "Current",
+    "shortDesc":        "Current",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "A"
 },
 {
     "name":             "temperature",
-    "shortDescription": "Temperature",
+    "shortDesc":        "Temperature",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "C"
 },
 {
     "name":             "instantPower",
-    "shortDescription": "Watts",
+    "shortDesc":        "Watts",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "W"
 },
 {
     "name":             "timeRemaining",
-    "shortDescription": "Time Remaining",
+    "shortDesc":        "Time Remaining",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "s"
 },
 {
+    "name":             "timeRemainingStr",
+    "shortDesc":        "Time Remaining",
+    "type":             "string"
+},
+{
     "name":             "chargeState",
-    "shortDescription": "Charge State",
+    "shortDesc":        "Charge State",
     "type":             "uint8",
-    "enumStrings":      "n/a,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy",
-    "enumValues":       "0,1,2,3,4,5,6",
+    "enumStrings":      "n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging",
+    "enumValues":       "0,1,2,3,4,5,6,7",
     "decimalPlaces":    0
 }
 ]

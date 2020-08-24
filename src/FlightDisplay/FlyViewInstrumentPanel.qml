@@ -22,14 +22,6 @@ Column {
     z:          QGroundControl.zOrderWidgets
 
     property real availableHeight
-    property var guidedActionsController
-
-    MultiVehiclePanel {
-        id:                         multiVehiclePanel
-        width:                      parent.width
-        availableHeight:            parent.height - y
-        guidedActionsController:    _root.guidedActionsController
-    }
 
     AirspaceControl {
         id:                 airspaceControl
@@ -42,7 +34,5 @@ Column {
         id:                 flightDisplayViewWidgets
         width:              parent.width
         missionController:  _missionController
-        availableHeight:    _root.availableHeight - y
-        visible:            multiVehiclePanel.singleVehiclePanel
     }
 }

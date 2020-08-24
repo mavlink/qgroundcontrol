@@ -68,6 +68,7 @@ private:
     void        _importSets             (QGCMapTask* mtask);
     bool        _testTask               (QGCMapTask* mtask);
     void        _testInternet           ();
+    void        _deleteBingNoTileTiles  ();
 
     quint64     _findTile               (const QString hash);
     bool        _findTileSetID          (const QString name, quint64& setID);

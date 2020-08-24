@@ -57,14 +57,16 @@ private slots:
     void _newVisualItems            (void);
 
 private:
-    void    _createGeometry             (QSGGeometryNode*& geometryNode, QSGGeometry*& geometry, int vertices, QSGGeometry::DrawingMode drawingMode, const QColor& color);
-    void    _updateSegmentCounts        (FlightPathSegment* segment, int& cTerrainPoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& maxTerrainHeight);
-    void    _addTerrainProfileSegment   (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* terrainVertices, int& terrainVertexIndex);
-    void    _addMissingTerrainSegment   (FlightPathSegment* segment, double currentDistance, QSGGeometry::Point2D* missingTerrainVertices, int& missingTerrainVertexIndex);
-    void    _addTerrainCollisionSegment (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* terrainCollisionVertices, int& terrainCollisionVertexIndex);
-    void    _addFlightProfileSegment    (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* flightProfileVertices, int& flightProfileVertexIndex);
-    double  _availableHeight            (void) const;
-    void    _setVertex                  (QSGGeometry::Point2D& vertex, double x, double y);
+    void    _createGeometry                 (QSGGeometryNode*& geometryNode, QSGGeometry*& geometry, QSGGeometry::DrawingMode drawingMode, const QColor& color);
+    void    _updateSegmentCounts            (FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainPoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& maxTerrainHeight);
+    void    _addTerrainProfileSegment       (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* terrainProfileVertices, int& terrainVertexIndex);
+    void    _addMissingTerrainSegment       (FlightPathSegment* segment, double currentDistance, QSGGeometry::Point2D* missingTerrainVertices, int& missingTerrainVertexIndex);
+    void    _addTerrainCollisionSegment     (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* terrainCollisionVertices, int& terrainCollisionVertexIndex);
+    void    _addFlightProfileSegment        (FlightPathSegment* segment, double currentDistance, double amslAltRange, QSGGeometry::Point2D* flightProfileVertices, int& flightProfileVertexIndex);
+    double  _availableHeight                (void) const;
+    void    _setVertex                      (QSGGeometry::Point2D& vertex, double x, double y);
+    bool    _shouldAddFlightProfileSegment  (FlightPathSegment* segment);
+    bool    _shouldAddMissingTerrainSegment (FlightPathSegment* segment);
 
     MissionController*  _missionController =    nullptr;
     QmlObjectListModel* _visualItems =          nullptr;

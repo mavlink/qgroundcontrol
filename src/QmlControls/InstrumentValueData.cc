@@ -42,56 +42,42 @@ InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* 
 
 void InstrumentValueData::_activeVehicleChanged(Vehicle* activeVehicle)
 {
+    if (_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
+    }
+
     if (!activeVehicle) {
         activeVehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
 
-    if (_fact) {
-        disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateColor);
-    }
-
     _activeVehicle = activeVehicle;
+    connect(_activeVehicle, &Vehicle::factGroupNamesChanged, this, &InstrumentValueData::_lookForMissingFact);
 
-    _factGroupNames.clear();
-    _factGroupNames = _activeVehicle->factGroupNames();
-    for (QString& name: _factGroupNames) {
-        name[0] = name[0].toUpper();
+    emit factGroupNamesChanged();
+
+    if (!_factGroupName.isEmpty() && !_factName.isEmpty()) {
+        _setFactWorker();
     }
-    _factGroupNames.prepend(vehicleFactGroupName);
-    emit factGroupNamesChanged(_factGroupNames);
+}
 
-    if (_fact) {
-        _fact = nullptr;
-
-        FactGroup* factGroup = nullptr;
-        if (_factGroupName == vehicleFactGroupName) {
-            factGroup = _activeVehicle;
-        } else {
-            factGroup = _activeVehicle->getFactGroup(_factGroupName);
-        }
-
-        if (factGroup) {
-            _fact = factGroup->getFact(_factName);
-        }
-        emit factChanged(_fact);
-
-        connect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
+void InstrumentValueData::_lookForMissingFact(void)
+{
+    // This is called when new fact groups show up on the vehicle. We need to see if we can fill in any
+    // facts which may have been missing up to now.
+    if (!_fact) {
+        _setFactWorker();
     }
-
-    _updateRanges();
 }
 
 void InstrumentValueData::clearFact(void)
 {
     _fact = nullptr;
     _factName.clear();
-    _factGroupName.clear();
-    _factValueNames.clear();
     _text.clear();
     _icon.clear();
     _showUnits = true;
 
-    emit factValueNamesChanged  (_factValueNames);
+    emit factValueNamesChanged  ();
     emit factChanged            (_fact);
     emit factNameChanged        (_factName);
     emit factGroupNameChanged   (_factGroupName);
@@ -100,7 +86,7 @@ void InstrumentValueData::clearFact(void)
     emit showUnitsChanged       (_showUnits);
 }
 
-void InstrumentValueData::setFact(const QString& factGroupName, const QString& factName)
+void InstrumentValueData::_setFactWorker(void)
 {
     if (_fact) {
         disconnect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
@@ -108,44 +94,40 @@ void InstrumentValueData::setFact(const QString& factGroupName, const QString& f
     }
 
     FactGroup* factGroup = nullptr;
-    if (factGroupName == vehicleFactGroupName) {
+    if (_factGroupName == vehicleFactGroupName) {
         factGroup = _activeVehicle;
     } else {
-        factGroup = _activeVehicle->getFactGroup(factGroupName);
-    }
-
-    _factValueNames.clear();
-    _factValueNames = factGroup->factNames();
-    for (QString& name: _factValueNames) {
-        name[0] = name[0].toUpper();
+        factGroup = _activeVehicle->getFactGroup(_factGroupName);
     }
 
     QString nonEmptyFactName;
     if (factGroup) {
-        if (factName.isEmpty()) {
-            nonEmptyFactName = _factValueNames[0];
+        if (_factName.isEmpty()) {
+            nonEmptyFactName = factValueNames()[0];
         } else {
-            nonEmptyFactName = factName;
+            nonEmptyFactName = _factName;
         }
         _fact = factGroup->getFact(nonEmptyFactName);
     }
 
     if (_fact) {
-        _factGroupName = factGroupName;
-        _factName =      nonEmptyFactName;
-
+        _factName = nonEmptyFactName;
         connect(_fact, &Fact::rawValueChanged, this, &InstrumentValueData::_updateRanges);
-    } else {
-        _factName.clear();
-        _factGroupName.clear();
     }
 
-    emit factValueNamesChanged  (_factValueNames);
+    emit factValueNamesChanged  ();
     emit factChanged            (_fact);
     emit factNameChanged        (_factName);
     emit factGroupNameChanged   (_factGroupName);
 
     _updateRanges();
+}
+void InstrumentValueData::setFact(const QString& factGroupName, const QString& factName)
+{
+    _factGroupName  = factGroupName;
+    _factName       = factName;
+
+    _setFactWorker();
 }
 
 void InstrumentValueData::setText(const QString& text)
@@ -327,7 +309,7 @@ void InstrumentValueData::_updateOpacity(void)
         newOpacity = _rangeOpacities[rangeIndex].toDouble();
     }
 
-    if (!qFuzzyCompare(newOpacity, _currentOpacity)) {
+    if (!QGC::fuzzyCompare(newOpacity, _currentOpacity)) {
         _currentOpacity = newOpacity;
         emit currentOpacityChanged(newOpacity);
     }
@@ -363,4 +345,37 @@ int InstrumentValueData::_currentRangeIndex(const QVariant& value)
         }
     }
     return _rangeValues.count();
+}
+
+QStringList InstrumentValueData::factGroupNames(void) const
+{
+    QStringList groupNames = _activeVehicle->factGroupNames();
+
+    for (QString& name: groupNames) {
+        name[0] = name[0].toUpper();
+    }
+    groupNames.prepend(vehicleFactGroupName);
+
+    return groupNames;
+}
+
+QStringList InstrumentValueData::factValueNames(void) const
+{
+    QStringList valueNames;
+
+    FactGroup* factGroup = nullptr;
+    if (_factGroupName == vehicleFactGroupName) {
+        factGroup = _activeVehicle;
+    } else {
+        factGroup = _activeVehicle->getFactGroup(_factGroupName);
+    }
+
+    if (factGroup) {
+        valueNames = factGroup->factNames();
+        for (QString& name: valueNames) {
+            name[0] = name[0].toUpper();
+        }
+    }
+
+    return valueNames;
 }

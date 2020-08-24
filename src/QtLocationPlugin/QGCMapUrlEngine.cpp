@@ -155,6 +155,17 @@ QString UrlFactory::getTypeFromId(int id) {
     return "";
 }
 
+MapProvider* UrlFactory::getMapProviderFromId(int id)
+{
+    QString type = getTypeFromId(id);
+    if (!type.isEmpty()) {
+        if (_providersTable.find(type) != _providersTable.end()) {
+            return _providersTable[type];
+        }
+    }
+    return nullptr;
+}
+
 // Todo : qHash produce a uint bigger than max(int)
 // There is still a low probability for this to
 // generate similar hash for different types

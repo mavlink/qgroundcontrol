@@ -125,6 +125,10 @@
         <file alias="no-logging.svg">src/AutoPilotPlugins/PX4/Images/no-logging.svg</file>
         <file alias="ObjectAvoidance.svg">src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg</file>
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="PatternCamera.png">resources/PatternCamera.png</file>
+        <file alias="PatternGrid.png">resources/PatternGrid.png</file>
+        <file alias="PatternPresets.png">resources/PatternPresets.png</file>
+        <file alias="PatternTerrain.png">resources/PatternTerrain.png</file>
         <file alias="PiP.svg">src/FlightMap/Images/PiP.svg</file>
         <file alias="pipHide.svg">src/FlightMap/Images/pipHide.svg</file>
         <file alias="pipResize.svg">src/FlightMap/Images/pipResize.svg</file>
@@ -185,6 +189,7 @@
         <file alias="VehicleTailDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleTailDownRotate.png</file>
         <file alias="VehicleUpsideDown.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDown.png</file>
         <file alias="VehicleUpsideDownRotate.png">src/AutoPilotPlugins/PX4/Images/VehicleUpsideDownRotate.png</file>
+        <file alias="VibrationPageIcon">src/AnalyzeView/VibrationPageIcon.png</file>
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>

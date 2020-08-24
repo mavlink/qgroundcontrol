@@ -170,7 +170,11 @@ bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, Q
     } else {
         // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
         QString value = jsonObject.value(_enumStringsJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         enumStrings = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
+#else
+        enumStrings = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
+#endif
     }
 
     if(jsonObject.value(_enumValuesJsonKey).isArray()) {
@@ -186,7 +190,11 @@ bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, Q
     } else {
         // "enumValues": "0,1,2,3,4,5",
         QString value = jsonObject.value(_enumValuesJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
         enumValues = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
+#else
+        enumValues = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
+#endif
     }
 
     if (enumStrings.count() != enumValues.count()) {
@@ -217,9 +225,25 @@ bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QSt
     if (parseError.error == QJsonParseError::NoError) {
         return true;
     } else {
+        int startPos = qMax(0, parseError.offset - 100);
+        int length = qMin(bytes.count() - startPos, 200);
+        qDebug() << QStringLiteral("Json read error '%1'").arg(bytes.mid(startPos, length).constData());
         errorString = parseError.errorString();
         return false;
     }
+}
+
+bool JsonHelper::isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString)
+{
+    QFile jsonFile(fileName);
+    if (!jsonFile.open(QFile::ReadOnly)) {
+        errorString = tr("File open failed: file:error %1 %2").arg(jsonFile.fileName()).arg(jsonFile.errorString());
+        return false;
+    }
+    QByteArray jsonBytes = jsonFile.readAll();
+    jsonFile.close();
+
+    return isJsonFile(jsonBytes, jsonDoc, errorString);
 }
 
 bool JsonHelper::validateInternalQGCJsonFile(const QJsonObject& jsonObject,
@@ -325,7 +349,7 @@ QJsonObject JsonHelper::_translateObject(QJsonObject& jsonObject, const QString&
                     }
                 }
 
-                QString xlatString = qgcApp()->qgcTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
+                QString xlatString = qgcApp()->qgcJSONTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
                 if (!xlatString.isNull()) {
                     jsonObject[key] = xlatString;
                 }

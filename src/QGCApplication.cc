@@ -50,9 +50,7 @@
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
 #include "QGCLoggingCategory.h"
-#include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
-#include "CustomCommandWidgetController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
 #include "QGCFileDialogController.h"
@@ -79,7 +77,6 @@
 #include "MAVLinkInspectorController.h"
 #endif
 #include "HorizontalFactValueGrid.h"
-#include "VerticalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "AppMessages.h"
 #include "SimulatedPosition.h"
@@ -109,6 +106,7 @@
 #include "TerrainProfile.h"
 #include "ToolStripAction.h"
 #include "ToolStripActionList.h"
+#include "QGCMAVLink.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -169,6 +167,11 @@ static QObject* screenToolsControllerSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     ScreenToolsController* screenToolsController = new ScreenToolsController;
     return screenToolsController;
+}
+
+static QObject* mavlinkSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new QGCMAVLink();
 }
 
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
@@ -349,6 +352,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     Q_UNUSED(gstDebugLevel)
 #endif
 
+    // We need to set language as early as possible prior to loading on JSON files.
+    setLanguage();
+
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
 
@@ -382,7 +388,7 @@ void QGCApplication::setLanguage()
     _locale = QLocale::system();
     qDebug() << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
 
-    int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    int langID = AppSettings::_languageID();
     //-- See App.SettinsGroup.json for index
     if(langID) {
         switch(langID) {
@@ -443,31 +449,42 @@ void QGCApplication::setLanguage()
         case 19:
             _locale = QLocale(QLocale::Turkish);
             break;
+        case 20:
+            _locale = QLocale(QLocale::Azerbaijani);
+            break;
         }
     }
     //-- We have specific fonts for Korean
     if(_locale == QLocale::Korean) {
-        qDebug() << "Loading Korean fonts" << _locale.name();
+        qCDebug(LocalizationLog) << "Loading Korean fonts" << _locale.name();
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
-            qWarning() << "Could not load /fonts/NanumGothic-Regular font";
+            qCWarning(LocalizationLog) << "Could not load /fonts/NanumGothic-Regular font";
         }
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
-            qWarning() << "Could not load /fonts/NanumGothic-Bold font";
+            qCWarning(LocalizationLog) << "Could not load /fonts/NanumGothic-Bold font";
         }
     }
-    qDebug() << "Loading localization for" << _locale.name();
-    _app->removeTranslator(&_QGCTranslator);
-    _app->removeTranslator(&_QGCTranslatorQt);
-    if(_QGCTranslatorQt.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
-        _app->installTranslator(&_QGCTranslatorQt);
-    } else {
-        qDebug() << "Qt localization for" << _locale.name() << "is not present";
-    }
-    if(_QGCTranslator.load(_locale, QLatin1String("qgc_"), "", ":/i18n")) {
+    qCDebug(LocalizationLog) << "Loading localizations for" << _locale.name();
+    _app->removeTranslator(&_qgcTranslatorJSON);
+    _app->removeTranslator(&_qgcTranslatorSourceCode);
+    _app->removeTranslator(&_qgcTranslatorQtLibs);
+    if (_locale.name() != "en_US") {
         QLocale::setDefault(_locale);
-        _app->installTranslator(&_QGCTranslator);
-    } else {
-        qDebug() << "Error loading application localization for" << _locale.name();
+        if(_qgcTranslatorQtLibs.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+            _app->installTranslator(&_qgcTranslatorQtLibs);
+        } else {
+            qCWarning(LocalizationLog) << "Qt lib localization for" << _locale.name() << "is not present";
+        }
+        if(_qgcTranslatorSourceCode.load(_locale, QLatin1String("qgc_source_"), "", ":/i18n")) {
+            _app->installTranslator(&_qgcTranslatorSourceCode);
+        } else {
+            qCWarning(LocalizationLog) << "Error loading source localization for" << _locale.name();
+        }
+        if(_qgcTranslatorJSON.load(_locale, QLatin1String("qgc_json_"), "", ":/i18n")) {
+            _app->installTranslator(&_qgcTranslatorJSON);
+        } else {
+            qCWarning(LocalizationLog) << "Error loading json localization for" << _locale.name();
+        }
     }
     if(_qmlAppEngine)
         _qmlAppEngine->retranslate();
@@ -544,7 +561,6 @@ void QGCApplication::_initCommon()
 
     qmlRegisterUncreatableType<FactValueGrid>       (kQGCTemplates,                         1, 0, "FactValueGrid",              kRefOnly);
     qmlRegisterType<HorizontalFactValueGrid>        (kQGCTemplates,                         1, 0, "HorizontalFactValueGrid");
-    qmlRegisterType<VerticalFactValueGrid>          (kQGCTemplates,                         1, 0, "VerticalFactValueGrid");
 
     qmlRegisterType<QGCMapCircle>                   ("QGroundControl.FlightMap",            1, 0, "QGCMapCircle");
 
@@ -579,18 +595,19 @@ void QGCApplication::_initCommon()
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
     qmlRegisterSingletonType<ShapeFileHelper>           ("QGroundControl.ShapeFileHelper",          1, 0, "ShapeFileHelper",        shapeFileHelperSingletonFactory);
-}
+    qmlRegisterSingletonType<ShapeFileHelper>           ("MAVLink",                                 1, 0, "MAVLink",                mavlinkSingletonFactory);
 
-bool QGCApplication::_initForNormalAppBoot()
-{
-
+    // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
         qWarning() << "Could not load /fonts/opensans font";
     }
     if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qWarning() << "Could not load /fonts/opensans-demibold font";
     }
+}
 
+bool QGCApplication::_initForNormalAppBoot()
+{
     QSettings settings;
 
     _qmlAppEngine = toolbox()->corePlugin()->createQmlApplicationEngine(this);
@@ -769,7 +786,7 @@ QObject* QGCApplication::_rootQmlObject()
     return nullptr;
 }
 
-void QGCApplication::showVehicleMessage(const QString& message)
+void QGCApplication::showCriticalVehicleMessage(const QString& message)
 {
     // PreArm messages are handled by Vehicle and shown in Map
     if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
@@ -779,10 +796,10 @@ void QGCApplication::showVehicleMessage(const QString& message)
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
-        QMetaObject::invokeMethod(_rootQmlObject(), "showVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+        QMetaObject::invokeMethod(_rootQmlObject(), "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
     } else if (runningUnitTests()) {
         // Unit tests can run without UI
-        qDebug() << "QGCApplication::showVehicleMessage unittest" << message;
+        qDebug() << "QGCApplication::showCriticalVehicleMessage unittest" << message;
     } else {
         qWarning() << "Internal error";
     }
@@ -855,46 +872,44 @@ void QGCApplication::_checkForNewVersion()
         if (_parseVersionText(applicationVersion(), _majorVersion, _minorVersion, _buildVersion)) {
             QString versionCheckFile = toolbox()->corePlugin()->stableVersionCheckFileUrl();
             if (!versionCheckFile.isEmpty()) {
-                _currentVersionDownload = new QGCFileDownload(this);
-                connect(_currentVersionDownload, &QGCFileDownload::downloadFinished, this, &QGCApplication::_currentVersionDownloadFinished);
-                connect(_currentVersionDownload, &QGCFileDownload::error, this, &QGCApplication::_currentVersionDownloadError);
-                _currentVersionDownload->download(versionCheckFile);
+                QGCFileDownload* download = new QGCFileDownload(this);
+                connect(download, &QGCFileDownload::downloadComplete, this, &QGCApplication::_qgcCurrentStableVersionDownloadComplete);
+                download->download(versionCheckFile);
             }
         }
     }
 #endif
 }
 
-void QGCApplication::_currentVersionDownloadFinished(QString /*remoteFile*/, QString localFile)
+void QGCApplication::_qgcCurrentStableVersionDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
 #ifdef __mobile__
-    Q_UNUSED(localFile);
+    Q_UNUSED(localFile)
+    Q_UNUSED(errorMsg)
 #else
-    QFile versionFile(localFile);
-    if (versionFile.open(QIODevice::ReadOnly)) {
-        QTextStream textStream(&versionFile);
-        QString version = textStream.readLine();
+    if (errorMsg.isEmpty()) {
+        QFile versionFile(localFile);
+        if (versionFile.open(QIODevice::ReadOnly)) {
+            QTextStream textStream(&versionFile);
+            QString version = textStream.readLine();
 
-        qDebug() << version;
+            qDebug() << version;
 
-        int majorVersion, minorVersion, buildVersion;
-        if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
-            if (_majorVersion < majorVersion ||
-                    (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
-                    (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                //-- TODO
-                ///QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
+            int majorVersion, minorVersion, buildVersion;
+            if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
+                if (_majorVersion < majorVersion ||
+                        (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
+                        (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
+                    showAppMessage(tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()), tr("New Version Available"));
+                }
             }
         }
+    } else {
+        qDebug() << "Download QGC stable version failed" << errorMsg;
     }
 
-    _currentVersionDownload->deleteLater();
+    sender()->deleteLater();
 #endif
-}
-
-void QGCApplication::_currentVersionDownloadError(QString /*errorMsg*/)
-{
-    _currentVersionDownload->deleteLater();
 }
 
 bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)

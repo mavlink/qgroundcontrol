@@ -19,11 +19,10 @@ import QGroundControl.Palette       1.0
 QGCViewDialog {
     id: root
 
+    property var    vehicle
     property var    missionItem
     property var    map
     property bool   flyThroughCommandsAllowed
-
-    property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     QGCPalette { id: qgcPal }
 
@@ -38,10 +37,10 @@ QGCViewDialog {
         anchors.margins:    ScreenTools.defaultFontPixelWidth
         anchors.left:       categoryLabel.right
         anchors.right:      parent.right
-        model:              QGroundControl.missionCommandTree.categoriesForVehicle(_vehicle)
+        model:              QGroundControl.missionCommandTree.categoriesForVehicle(vehicle)
 
         function categorySelected(category) {
-            commandList.model = QGroundControl.missionCommandTree.getCommandsForCategory(_vehicle, category, flyThroughCommandsAllowed)
+            commandList.model = QGroundControl.missionCommandTree.getCommandsForCategory(vehicle, category, flyThroughCommandsAllowed)
         }
 
         Component.onCompleted: {

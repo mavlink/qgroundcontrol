@@ -45,7 +45,7 @@ isEmpty(MAVLINKPATH) {
         MAVLINKPATH     = $$fromfile(user_config.pri, MAVLINKPATH)
         message($$sprintf("Using user-supplied mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH))
     } else {
-        MAVLINKPATH     = $$BASEDIR/$$MAVLINKPATH_REL
+        MAVLINKPATH     = $$SOURCE_DIR/$$MAVLINKPATH_REL
     }
 }
 
@@ -109,28 +109,38 @@ SOURCES += \
     libs/shapelib/safileio.c
 
 #
+# [REQUIRED] zlib library
+WindowsBuild {
+    INCLUDEPATH +=  $$SOURCE_DIR/libs/zlib/windows/include
+    LIBS += -L$$SOURCE_DIR/libs/zlib/windows/lib
+    LIBS += -lzlibstat
+} else {
+    LIBS += -lz
+}
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
 #
 MacBuild {
     INCLUDEPATH += \
-        $$BASEDIR/libs/Frameworks/SDL2.framework/Headers
+        $$SOURCE_DIR/libs/Frameworks/SDL2.framework/Headers
     LIBS += \
-        -F$$BASEDIR/libs/Frameworks \
+        -F$$SOURCE_DIR/libs/Frameworks \
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
-    INCLUDEPATH += $$BASEDIR/libs/sdl2/msvc/include
-    INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
-    LIBS += -L$$BASEDIR/libs/sdl2/msvc/lib/x64
+    INCLUDEPATH += $$SOURCE_DIR/libs/sdl2/msvc/include
+    INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Windows/x64/include
+    LIBS += -L$$SOURCE_DIR/libs/sdl2/msvc/lib/x64
     LIBS += -lSDL2
 }
 
 # Include Android OpenSSL libs
 AndroidBuild {
-    include($$BASEDIR/libs/OpenSSL/android_openssl/openssl.pri)
+    include($$SOURCE_DIR/libs/OpenSSL/android_openssl/openssl.pri)
     message("ANDROID_EXTRA_LIBS")
     message($$ANDROID_TARGET_ARCH)
     message($$ANDROID_EXTRA_LIBS)
@@ -143,7 +153,7 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
         exists(/usr/local/Cellar/openssl/1.0.2t/include) {
             INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2t/include
             LIBS += -L/usr/local/Cellar/openssl/1.0.2t/lib
-            LIBS += -lcrypto -lz
+            LIBS += -lcrypto
         } else {
             # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
             # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
@@ -153,14 +163,14 @@ contains(DEFINES, QGC_ENABLE_PAIRING) {
         #- Pairing is not supported on Windows
         DEFINES -= QGC_ENABLE_PAIRING
     } else {
-        LIBS += -lcrypto -lz
+        LIBS += -lcrypto
         AndroidBuild {
             contains(QT_ARCH, arm) {
                 LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
+                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
             } else {
                 LIBS += $$ANDROID_EXTRA_LIBS
-                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
+                INCLUDEPATH += $$SOURCE_DIR/libs/OpenSSL/Android/arch-x86/include
             }
         }
     }

@@ -24,5 +24,9 @@ void QGCComboBox::simulateUserSetCurrentIndex(int index)
     
     // We have to manually signal activated
     emit activated(index);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     emit activated(itemText(index));
+#else
+    emit textActivated(itemText(index));
+#endif
 }

@@ -57,11 +57,6 @@ private slots:
     void _checkForMissingParameters(void);
 
 private:
-    void _notifyPanelMissingParameter(const QString& missingParam);
-    void _notifyPanelErrorMsg(const QString& errorMsg);
-    void _showInternalError(const QString& errorMsg);
-
-    QStringList _delayedMissingParams;
     QStringList _missingParameterWaitList;
     QTimer      _missingParametersTimer;
 };

@@ -48,19 +48,15 @@
 #define QGEOTILEDMAPPINGMANAGERENGINEQGC_H
 
 #include <QtLocation/QGeoServiceProvider>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 #include <QtLocation/private/qgeotiledmap_p.h>
-#endif
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 class QGeoTiledMapQGC : public QGeoTiledMap
 {
     Q_OBJECT
 public:
     QGeoTiledMapQGC(QGeoTiledMappingManagerEngine *engine, QObject *parent = 0);
 };
-#endif
 
 class QGeoTileFetcherQGC;
 
@@ -70,15 +66,10 @@ class QGeoTiledMappingManagerEngineQGC : public QGeoTiledMappingManagerEngine
 public:
     QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString);
     ~QGeoTiledMappingManagerEngineQGC();
-#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
-    QGeoMapData *createMapData();
-#else
     QGeoMap *createMap();
-#endif
+
 private:
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     void _setCache(const QVariantMap &parameters);
-#endif
 };
 
 #endif // QGEOTILEDMAPPINGMANAGERENGINEQGC_H

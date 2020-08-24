@@ -37,8 +37,6 @@ add_library(QmlControls
 	ToolStripAction.h
 	ToolStripActionList.cc
 	ToolStripActionList.h
-	VerticalFactValueGrid.cc
-	VerticalFactValueGrid.h
 )
 
 add_custom_target(QmlControlsQml
@@ -76,9 +74,8 @@ add_custom_target(QmlControlsQml
 		ModeSwitchDisplay.qml
 		MultiRotorMotorDisplay.qml
 		OfflineMapButton.qml
-		PageView.qml
-		ParameterEditorDialog.qml
 		ParameterEditor.qml
+		ParameterEditorDialog.qml
 		PIDTuning.qml
 		PreFlightCheckButton.qml
 		PreFlightCheckGroup.qml
@@ -91,24 +88,24 @@ add_custom_target(QmlControlsQml
 		QGCControlDebug.qml
 		QGCDynamicObjectManager.qml
 		QGCFileDialog.qml
-		QGCFlickableHorizontalIndicator.qml
 		QGCFlickable.qml
+		QGCFlickableHorizontalIndicator.qml
 		QGCFlickableVerticalIndicator.qml
 		QGCGroupBox.qml
 		QGCHoverButton.qml
 		QGCLabel.qml
 		QGCListView.qml
 		QGCMapLabel.qml
-		QGCMenuItem.qml
 		QGCMenu.qml
+		QGCMenuItem.qml
 		QGCMenuSeparator.qml
 		QGCMouseArea.qml
 		QGCMovableItem.qml
 		QGCOptionsComboBox.qml
 		QGCPipOverlay.qml
 		QGCPipState.qml
-		QGCPopupDialogContainer.qml
 		QGCPopupDialog.qml
+		QGCPopupDialogContainer.qml
 		QGCRadioButton.qml
 		QGCSlider.qml
 		QGCSwitch.qml
@@ -117,8 +114,8 @@ add_custom_target(QmlControlsQml
 		QGCTextField.qml
 		QGCToolBarButton.qml
 		QGCToolInsets.qml
-		QGCViewDialogContainer.qml
 		QGCViewDialog.qml
+		QGCViewDialogContainer.qml
 		QGCViewMessage.qml
 		QmlTest.qml
 		RCChannelMonitor.qml
@@ -131,7 +128,6 @@ add_custom_target(QmlControlsQml
 		ToolStrip.qml
 		VehicleRotationCal.qml
 		VehicleSummaryRow.qml
-		VerticalFactValueGrid.qml
 )
 target_link_libraries(QmlControls
         PUBLIC

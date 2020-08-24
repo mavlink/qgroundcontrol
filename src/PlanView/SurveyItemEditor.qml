@@ -27,23 +27,24 @@ Rectangle {
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
+    property real   _cameraMinTriggerInterval:  _missionItem.cameraCalc.minTriggerInterval.rawValue
     property bool   _polygonDone:               false
     property string _doneAdjusting:             qsTr("Done")
-    property bool   _presetsAvailable:          missionItem.presetNames.length !== 0
+    property var    _missionItem:               missionItem
+    property bool   _presetsAvailable:          _missionItem.presetNames.length !== 0
 
     function polygonCaptureStarted() {
-        missionItem.clearPolygon()
+        _missionItem.clearPolygon()
     }
 
     function polygonCaptureFinished(coordinates) {
         for (var i=0; i<coordinates.length; i++) {
-            missionItem.addPolygonCoordinate(coordinates[i])
+            _missionItem.addPolygonCoordinate(coordinates[i])
         }
     }
 
     function polygonAdjustVertex(vertexIndex, vertexCoordinate) {
-        missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
+        _missionItem.adjustPolygonCoordinate(vertexIndex, vertexCoordinate)
     }
 
     function polygonAdjustStarted() { }
@@ -63,7 +64,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        !missionItem.surveyAreaPolygon.isValid || missionItem.wizardMode
+            visible:        !_missionItem.surveyAreaPolygon.isValid || _missionItem.wizardMode
 
             ColumnLayout {
                 Layout.fillWidth:   true
@@ -76,108 +77,7 @@ Rectangle {
                     horizontalAlignment:    Text.AlignHCenter
                     text:                   qsTr("Use the Polygon Tools to create the polygon which outlines your survey area.")
                 }
-
-                /*
-                  Trial of new "done" model so leaving for now in case it comes back
-                QGCButton {
-                    text:               qsTr("Done With Polygon")
-                    Layout.fillWidth:   true
-                    enabled:            missionItem.surveyAreaPolygon.isValid && !missionItem.surveyAreaPolygon.traceMode
-                    onClicked: {
-                        if (!_presetsAvailable) {
-                            missionItem.wizardMode = false
-                            // Trial of no auto select next item
-                            //editorRoot.selectNextNotReadyItem()
-                        }
-                        _polygonDone = true
-                    }
-                }
-                */
             }
-
-            /*
-            Trial of new "done" model so leaving for now in case it comes back
-            ColumnLayout {
-                Layout.fillWidth:   true
-                spacing:            _margin
-                visible:            _polygonDone
-
-                QGCLabel {
-                    Layout.fillWidth:       true
-                    wrapMode:               Text.WordWrap
-                    horizontalAlignment:    Text.AlignHCenter
-                    text:                   qsTr("Apply a Preset or click %1 for manual setup.").arg(_doneAdjusting)
-                }
-
-                QGCComboBox {
-                    id:                 wizardPresetCombo
-                    Layout.fillWidth:   true
-                    model:              missionItem.presetNames
-                }
-
-                QGCButton {
-                    Layout.fillWidth:   true
-                    text:               qsTr("Apply Preset")
-                    enabled:            missionItem.presetNames.length != 0
-                    onClicked:          missionItem.loadPreset(wizardPresetCombo.textAt(wizardPresetCombo.currentIndex))
-                }
-
-                SectionHeader {
-                    id:                 wizardPresectsTransectsHeader
-                    Layout.fillWidth:   true
-                    text:               qsTr("Transects")
-                }
-
-                GridLayout {
-                    Layout.fillWidth:   true
-                    columnSpacing:      _margin
-                    rowSpacing:         _margin
-                    columns:            2
-                    visible:            wizardPresectsTransectsHeader.checked
-
-                    QGCLabel { text: qsTr("Angle") }
-                    FactTextField {
-                        fact:                   missionItem.gridAngle
-                        Layout.fillWidth:       true
-                        onUpdated:              wizardPresetsAngleSlider.value = missionItem.gridAngle.value
-                    }
-
-                    QGCSlider {
-                        id:                     wizardPresetsAngleSlider
-                        minimumValue:           0
-                        maximumValue:           359
-                        stepSize:               1
-                        tickmarksEnabled:       false
-                        Layout.fillWidth:       true
-                        Layout.columnSpan:      2
-                        Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
-                        onValueChanged:         missionItem.gridAngle.value = value
-                        Component.onCompleted:  value = missionItem.gridAngle.value
-                        updateValueWhileDragging: true
-                    }
-
-                    QGCButton {
-                        Layout.columnSpan:  2
-                        Layout.fillWidth:   true
-                        text:               qsTr("Rotate Entry Point")
-                        onClicked:          missionItem.rotateEntryPoint();
-                    }
-                }
-
-                Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
-
-                QGCButton {
-                    text:               _doneAdjusting
-                    Layout.fillWidth:   true
-                    enabled:            missionItem.surveyAreaPolygon.isValid
-                    onClicked: {
-                        missionItem.wizardMode = false
-                        // Trial of no auto select next item
-                        //editorRoot.selectNextNotReadyItem()
-                    }
-                }
-            }
-            */
         }
 
         Column {
@@ -186,23 +86,18 @@ Rectangle {
             spacing:        _margin
             visible:        !wizardColumn.visible
 
-            QGCTabBar {
+            TransectStyleComplexItemTabBar {
                 id:             tabBar
                 anchors.left:   parent.left
                 anchors.right:  parent.right
-
-                Component.onCompleted: currentIndex = QGroundControl.settingsManager.planViewSettings.displayPresetsTabFirst.rawValue ? 2 : 0
-
-                QGCTabButton { text: qsTr("Grid") }
-                QGCTabButton { text: qsTr("Camera") }
-                QGCTabButton { text: qsTr("Presets") }
             }
 
+            // Grid tab
             Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 0
+                visible:            tabBar.currentIndex === 0
 
                 QGCLabel {
                     anchors.left:   parent.left
@@ -210,16 +105,16 @@ Rectangle {
                     text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
                     wrapMode:       Text.WordWrap
                     color:          qgcPal.warningText
-                    visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
+                    visible:        _missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > _missionItem.timeBetweenShots
                 }
 
                 CameraCalcGrid {
-                    cameraCalc:                     missionItem.cameraCalc
+                    cameraCalc:                     _missionItem.cameraCalc
                     vehicleFlightIsFrontal:         true
                     distanceToSurfaceLabel:         qsTr("Altitude")
-                    distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
+                    distanceToSurfaceAltitudeMode:  _missionItem.followTerrain ?
                                                         QGroundControl.AltitudeModeAboveTerrain :
-                                                        (missionItem.cameraCalc.distanceToSurfaceRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute)
+                                                        (_missionItem.cameraCalc.distanceToSurfaceRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute)
                     frontalDistanceLabel:           qsTr("Trigger Dist")
                     sideDistanceLabel:              qsTr("Spacing")
                 }
@@ -241,9 +136,9 @@ Rectangle {
 
                     QGCLabel { text: qsTr("Angle") }
                     FactTextField {
-                        fact:                   missionItem.gridAngle
+                        fact:                   _missionItem.gridAngle
                         Layout.fillWidth:       true
-                        onUpdated:              angleSlider.value = missionItem.gridAngle.value
+                        onUpdated:              angleSlider.value = _missionItem.gridAngle.value
                     }
 
                     QGCSlider {
@@ -255,8 +150,8 @@ Rectangle {
                         Layout.fillWidth:       true
                         Layout.columnSpan:      2
                         Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
-                        onValueChanged:         missionItem.gridAngle.value = value
-                        Component.onCompleted:  value = missionItem.gridAngle.value
+                        onValueChanged:         _missionItem.gridAngle.value = value
+                        Component.onCompleted:  value = _missionItem.gridAngle.value
                         updateValueWhileDragging: true
                     }
 
@@ -264,14 +159,14 @@ Rectangle {
                         text:       qsTr("Turnaround dist")
                     }
                     FactTextField {
-                        fact:               missionItem.turnAroundDistance
+                        fact:               _missionItem.turnAroundDistance
                         Layout.fillWidth:   true
                     }
                 }
 
                 QGCButton {
                     text:               qsTr("Rotate Entry Point")
-                    onClicked:          missionItem.rotateEntryPoint();
+                    onClicked:          _missionItem.rotateEntryPoint();
                 }
 
                 ColumnLayout {
@@ -286,90 +181,41 @@ Rectangle {
                         model: [
                             {
                                 text:       qsTr("Hover and capture image"),
-                                fact:       missionItem.hoverAndCapture,
-                                enabled:    !missionItem.followTerrain,
-                                visible:    missionItem.hoverAndCaptureAllowed
+                                fact:       _missionItem.hoverAndCapture,
+                                enabled:    !_missionItem.followTerrain,
+                                visible:    _missionItem.hoverAndCaptureAllowed
                             },
                             {
                                 text:       qsTr("Refly at 90 deg offset"),
-                                fact:       missionItem.refly90Degrees,
-                                enabled:    !missionItem.followTerrain,
+                                fact:       _missionItem.refly90Degrees,
+                                enabled:    !_missionItem.followTerrain,
                                 visible:    true
                             },
                             {
                                 text:       qsTr("Images in turnarounds"),
-                                fact:       missionItem.cameraTriggerInTurnAround,
-                                enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true,
+                                fact:       _missionItem.cameraTriggerInTurnAround,
+                                enabled:    _missionItem.hoverAndCaptureAllowed ? !_missionItem.hoverAndCapture.rawValue : true,
                                 visible:    true
                             },
                             {
                                 text:       qsTr("Fly alternate transects"),
-                                fact:       missionItem.flyAlternateTransects,
+                                fact:       _missionItem.flyAlternateTransects,
                                 enabled:    true,
                                 visible:    _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
                             },
                             {
                                 text:       qsTr("Relative altitude"),
-                                enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
-                                visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
-                                checked:    missionItem.cameraCalc.distanceToSurfaceRelative
+                                enabled:    _missionItem.cameraCalc.isManualCamera && !_missionItem.followTerrain,
+                                visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!_missionItem.cameraCalc.distanceToSurfaceRelative && !_missionItem.followTerrain),
+                                checked:    _missionItem.cameraCalc.distanceToSurfaceRelative
                             }
                         ]
 
                         onItemClicked: {
                             if (index == 4) {
-                                missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
-                                console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
+                                _missionItem.cameraCalc.distanceToSurfaceRelative = !_missionItem.cameraCalc.distanceToSurfaceRelative
+                                console.log(_missionItem.cameraCalc.distanceToSurfaceRelative)
                             }
-                        }
-                    }
-                }
-
-                SectionHeader {
-                    id:             terrainHeader
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    text:           qsTr("Terrain")
-                    checked:        missionItem.followTerrain
-                }
-
-                ColumnLayout {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        _margin
-                    visible:        terrainHeader.checked
-
-
-                    QGCCheckBox {
-                        id:         followsTerrainCheckBox
-                        text:       qsTr("Vehicle follows terrain")
-                        checked:    missionItem.followTerrain
-                        onClicked:  missionItem.followTerrain = checked
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth:   true
-                        columnSpacing:      _margin
-                        rowSpacing:         _margin
-                        columns:            2
-                        visible:            followsTerrainCheckBox.checked
-
-                        QGCLabel { text: qsTr("Tolerance") }
-                        FactTextField {
-                            fact:               missionItem.terrainAdjustTolerance
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel { text: qsTr("Max Climb Rate") }
-                        FactTextField {
-                            fact:               missionItem.terrainAdjustMaxClimbRate
-                            Layout.fillWidth:   true
-                        }
-
-                        QGCLabel { text: qsTr("Max Descent Rate") }
-                        FactTextField {
-                            fact:               missionItem.terrainAdjustMaxDescentRate
-                            Layout.fillWidth:   true
                         }
                     }
                 }
@@ -388,22 +234,33 @@ Rectangle {
                 }
             } // Grid Column
 
+            // Camera Tab
             Column {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 1
+                visible:            tabBar.currentIndex === 1
 
                 CameraCalcCamera {
-                    cameraCalc: missionItem.cameraCalc
+                    cameraCalc: _missionItem.cameraCalc
                 }
             } // Camera Column
 
+            // Terrain Tab
+            TransectStyleComplexItemTerrainFollow {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        tabBar.currentIndex === 2
+                missionItem:    _missionItem
+            }
+
+            // Presets Tab
             ColumnLayout {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 spacing:            _margin
-                visible:            tabBar.currentIndex == 2
+                visible:            tabBar.currentIndex === 3
 
                 QGCLabel {
                     Layout.fillWidth:   true
@@ -414,7 +271,7 @@ Rectangle {
                 QGCComboBox {
                     id:                 presetCombo
                     Layout.fillWidth:   true
-                    model:              missionItem.presetNames
+                    model:              _missionItem.presetNames
                 }
 
                 RowLayout {
@@ -423,14 +280,14 @@ Rectangle {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Apply Preset")
-                        enabled:            missionItem.presetNames.length != 0
-                        onClicked:          missionItem.loadPreset(presetCombo.textAt(presetCombo.currentIndex))
+                        enabled:            _missionItem.presetNames.length != 0
+                        onClicked:          _missionItem.loadPreset(presetCombo.textAt(presetCombo.currentIndex))
                     }
 
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Delete Preset")
-                        enabled:            missionItem.presetNames.length != 0
+                        enabled:            _missionItem.presetNames.length != 0
                         onClicked:          mainWindow.showComponentDialog(deletePresetMessage, qsTr("Delete Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
 
                         Component {
@@ -439,13 +296,12 @@ Rectangle {
                                 message: qsTr("Are you sure you want to delete '%1' preset?").arg(presetName)
                                 property string presetName: presetCombo.textAt(presetCombo.currentIndex)
                                 function accept() {
-                                    missionItem.deletePreset(presetName)
+                                    _missionItem.deletePreset(presetName)
                                     hideDialog()
                                 }
                             }
                         }
                     }
-
                 }
 
                 Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
@@ -472,9 +328,9 @@ Rectangle {
 
                     QGCLabel { text: qsTr("Angle") }
                     FactTextField {
-                        fact:                   missionItem.gridAngle
+                        fact:                   _missionItem.gridAngle
                         Layout.fillWidth:       true
-                        onUpdated:              presetsAngleSlider.value = missionItem.gridAngle.value
+                        onUpdated:              presetsAngleSlider.value = _missionItem.gridAngle.value
                     }
 
                     QGCSlider {
@@ -486,8 +342,8 @@ Rectangle {
                         Layout.fillWidth:       true
                         Layout.columnSpan:      2
                         Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
-                        onValueChanged:         missionItem.gridAngle.value = value
-                        Component.onCompleted:  value = missionItem.gridAngle.value
+                        onValueChanged:         _missionItem.gridAngle.value = value
+                        Component.onCompleted:  value = _missionItem.gridAngle.value
                         updateValueWhileDragging: true
                     }
 
@@ -495,7 +351,7 @@ Rectangle {
                         Layout.columnSpan:  2
                         Layout.fillWidth:   true
                         text:               qsTr("Rotate Entry Point")
-                        onClicked:          missionItem.rotateEntryPoint();
+                        onClicked:          _missionItem.rotateEntryPoint();
                     }
                 }
 
@@ -518,7 +374,7 @@ Rectangle {
             QGCViewDialog {
                 function accept() {
                     if (presetNameField.text != "") {
-                        missionItem.savePreset(presetNameField.text)
+                        _missionItem.savePreset(presetNameField.text)
                         hideDialog()
                     }
                 }
@@ -553,9 +409,9 @@ Rectangle {
         selectExisting: true
 
         onAcceptedForLoad: {
-            missionItem.surveyAreaPolygon.loadKMLOrSHPFile(file)
-            missionItem.resetState = false
-            //editorMap.mapFitFunctions.fitMapViewportToMissionItems()
+            _missionItem.surveyAreaPolygon.loadKMLOrSHPFile(file)
+            _missionItem.resetState = false
+            //editorMap.mapFitFunctions.fitMapViewportTo_missionItems()
             close()
         }
     }

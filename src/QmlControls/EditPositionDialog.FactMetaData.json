@@ -5,7 +5,7 @@
 [
 {
     "name":             "Latitude",
-    "shortDescription": "Latitude of item position",
+    "shortDesc": "Latitude of item position",
     "type":             "double",
     "min":              -90.0,
     "max":              90.0,
@@ -13,7 +13,7 @@
 },
 {
     "name":             "Longitude",
-    "shortDescription": "Longitude of item position",
+    "shortDesc": "Longitude of item position",
     "type":             "double",
     "min":              -180.0,
     "max":              180.0,
@@ -21,33 +21,33 @@
 },
 {
     "name":             "Easting",
-    "shortDescription": "Easting of item position",
+    "shortDesc": "Easting of item position",
     "type":             "double",
     "decimalPlaces":    7
 },
 {
     "name":             "Northing",
-    "shortDescription": "Northing of item position",
+    "shortDesc": "Northing of item position",
     "type":             "double",
     "decimalPlaces":    7
 },
 {
     "name":             "Zone",
-    "shortDescription": "UTM zone",
+    "shortDesc": "UTM zone",
     "type":             "uint8",
     "min":              1,
     "max":              60
 },
 {
     "name":             "Hemisphere",
-    "shortDescription": "Hemisphere for position",
+    "shortDesc": "Hemisphere for position",
     "type":             "uint8",
     "enumStrings":      "North,South",
     "enumValues":       "0,1"
 },
 {
     "name":             "MGRS",
-    "shortDescription": "MGRS coordinate",
+    "shortDesc": "MGRS coordinate",
     "type":             "string"
 }
 ]

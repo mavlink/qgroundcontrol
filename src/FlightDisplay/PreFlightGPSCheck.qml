@@ -24,8 +24,8 @@ PreFlightCheckButton {
     property bool   allowOverrideSatCount:  false   ///< true: sat count above failureSatCount reguired to pass, false: user can click past satCount <= failureSetCount
     property int    failureSatCount:        -1      ///< -1 indicates no sat count check
 
-    property bool   _3dLock:                activeVehicle ? activeVehicle.gps.lock.rawValue >= 3 : false
-    property int    _satCount:              activeVehicle ? activeVehicle.gps.count.rawValue : 0
+    property bool   _3dLock:                globals.activeVehicle ? globals.activeVehicle.gps.lock.rawValue >= 3 : false
+    property int    _satCount:              globals.activeVehicle ? globals.activeVehicle.gps.count.rawValue : 0
     property bool   _3dLockFailure:         !_3dLock
     property bool   _satCountFailure:       failureSatCount !== -1 && _satCount <= failureSatCount
     property string _satCountFailureText:   allowOverrideSatCount ? qsTr("Warning - Sat count below %1.").arg(failureSatCount + 1) : qsTr("Waiting for sat count above %1.").arg(failureSatCount)

@@ -67,7 +67,7 @@ class MapboxHybridMapProvider : public MapboxMapProvider {
 
 public:
     MapboxHybridMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.hybrid"), AVERAGE_MAPBOX_SAT_MAP,
+        : MapboxMapProvider(QStringLiteral("mapbox.streets-satellite"), AVERAGE_MAPBOX_SAT_MAP,
                             QGeoMapType::HybridMap, parent) {}
 };
 

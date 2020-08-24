@@ -31,6 +31,10 @@
 #include "PositionManager.h"
 #endif
 
+#ifdef QT_DEBUG
+#include "MockLink.h"
+#endif
+
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "LinkManagerVerboseLog")
 
@@ -512,7 +516,6 @@ void LinkManager::_updateAutoConnectLinks(void)
 
         UDPConfiguration* udpConfig = new UDPConfiguration(_mavlinkForwardingLinkName);
         udpConfig->setDynamic(true);
-        udpConfig->setTransmitOnly(true);
 
         QString hostName = _toolbox->settingsManager()->appSettings()->forwardMavlinkHostName()->rawValue().toString();
         udpConfig->addHost(hostName);
@@ -969,7 +972,7 @@ void LinkManager::_activeLinkCheck(void)
     if (!found && link) {
         // See if we can get an NSH prompt on this link
         bool foundNSHPrompt = false;
-        link->writeBytesSafe("\r", 1);
+        link->writeBytesThreadSafe("\r", 1);
         QSignalSpy spy(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)));
         if (spy.wait(100)) {
             QList<QVariant> arguments = spy.takeFirst();

@@ -50,7 +50,7 @@ QGC also supports RTSP, TCP-MPEG2 and MPEG-TS (h.264) pipelines.
 
 Use apt-get to install GStreamer 1.0
 ```
-list=$(apt-cache --names-only search ^gstreamer1.0-* | awk '{ print $1 }' | grep -v gstreamer1.0-hybris)
+list=$(apt-cache --names-only search ^gstreamer1.0-* | awk '{ print $1 }' | sed -e /-doc/d | grep -v gstreamer1.0-hybris)
 ```
 ```
 sudo apt-get install $list

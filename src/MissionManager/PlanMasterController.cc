@@ -39,11 +39,7 @@ const char* PlanMasterController::kJsonRallyPointsObjectKey =   "rallyPoints";
 PlanMasterController::PlanMasterController(QObject* parent)
     : QObject               (parent)
     , _multiVehicleMgr      (qgcApp()->toolbox()->multiVehicleManager())
-    , _controllerVehicle    (new Vehicle(
-                                 static_cast<MAV_AUTOPILOT>(qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
-                                 static_cast<MAV_TYPE>(qgcApp()->toolbox()->settingsManager()->appSettings()->offlineEditingVehicleType()->rawValue().toInt()),
-                                 qgcApp()->toolbox()->firmwarePluginManager(),
-                                 this))
+    , _controllerVehicle    (new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, qgcApp()->toolbox()->firmwarePluginManager(), this))
     , _managerVehicle       (_controllerVehicle)
     , _missionController    (this)
     , _geoFenceController   (this)
@@ -68,9 +64,9 @@ PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE 
 
 void PlanMasterController::_commonInit(void)
 {
-    connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
-    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
-    connect(&_rallyPointController, &RallyPointController::dirtyChanged,    this, &PlanMasterController::dirtyChanged);
+    connect(&_missionController,    &MissionController::dirtyChanged,               this, &PlanMasterController::dirtyChanged);
+    connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,              this, &PlanMasterController::dirtyChanged);
+    connect(&_rallyPointController, &RallyPointController::dirtyChanged,            this, &PlanMasterController::dirtyChanged);
 
     connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::containsItemsChanged);
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
@@ -81,11 +77,7 @@ void PlanMasterController::_commonInit(void)
     connect(&_rallyPointController, &RallyPointController::syncInProgressChanged,   this, &PlanMasterController::syncInProgressChanged);
 
     // Offline vehicle can change firmware/vehicle type
-    connect(_controllerVehicle, &Vehicle::capabilityBitsChanged,    this, &PlanMasterController::_updateSupportsTerrain);
-    connect(_controllerVehicle, &Vehicle::vehicleTypeChanged,       this, &PlanMasterController::_updateSupportsTerrain);
-    connect(_controllerVehicle, &Vehicle::vehicleTypeChanged,       this, &PlanMasterController::_updatePlanCreatorsList);
-
-    _updateSupportsTerrain();
+    connect(_controllerVehicle,     &Vehicle::vehicleTypeChanged,                   this, &PlanMasterController::_updatePlanCreatorsList);
 }
 
 
@@ -94,12 +86,11 @@ PlanMasterController::~PlanMasterController()
 
 }
 
-void PlanMasterController::start(bool flyView)
+void PlanMasterController::start(void)
 {
-    _flyView = flyView;
-    _missionController.start(_flyView);
-    _geoFenceController.start(_flyView);
-    _rallyPointController.start(_flyView);
+    _missionController.start    (_flyView);
+    _geoFenceController.start   (_flyView);
+    _rallyPointController.start (_flyView);
 
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
@@ -139,7 +130,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         disconnect(_managerVehicle->missionManager(),       nullptr, nullptr, nullptr);
         disconnect(_managerVehicle->geoFenceManager(),      nullptr, nullptr, nullptr);
         disconnect(_managerVehicle->rallyPointManager(),    nullptr, nullptr, nullptr);
-        disconnect(_managerVehicle,                         &Vehicle::capabilityBitsChanged, this, &PlanMasterController::_updateSupportsTerrain);
     }
 
     bool newOffline = false;
@@ -153,8 +143,8 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
         // Update controllerVehicle to the currently connected vehicle
         AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
-        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType(_managerVehicle->firmwareType()));
-        appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(_managerVehicle->vehicleType()));
+        appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::firmwareClass(_managerVehicle->firmwareType()));
+        appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(_managerVehicle->vehicleType()));
 
         // We use these signals to sequence upload and download to the multiple controller/managers
         connect(_managerVehicle->missionManager(),      &MissionManager::newMissionItemsAvailable,  this, &PlanMasterController::_loadMissionComplete);
@@ -165,40 +155,58 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
 
-    // Change in capabilities will affect terrain support
-    connect(_managerVehicle, &Vehicle::capabilityBitsChanged, this, &PlanMasterController::_updateSupportsTerrain);
-
+    _offline = newOffline;
+    emit offlineChanged(offline());
     emit managerVehicleChanged(_managerVehicle);
 
-    // Vehicle changed so we need to signal everything
-    _offline = newOffline;
-    emit containsItemsChanged(containsItems());
-    emit syncInProgressChanged();
-    emit dirtyChanged(dirty());
-    emit offlineChanged(offline());
-    _updateSupportsTerrain();
-
-    if (!_flyView) {
-        if (!offline()) {
-            // We are in Plan view and we have a newly connected vehicle:
-            //  - If there is no plan available in Plan view show the one from the vehicle
-            //  - Otherwise leave the current plan alone
-            if (!containsItems()) {
-                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan view is empty so loading from manager";
-                _showPlanFromManagerVehicle();
-            }
-        }
-    } else {
-        if (offline()) {
-            // No more active vehicle, clear mission
-            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is offline clearing plan";
+    if (_flyView) {
+        // We are in the Fly View
+        if (newOffline) {
+            // No active vehicle, clear mission
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly View - No active vehicle, clearing stale plan";
             removeAll();
         } else {
             // Fly view has changed to a new active vehicle, update to show correct mission
-            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly view is online so loading from manager";
+            qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Fly View - New active vehicle, loading new plan from manager vehicle";
             _showPlanFromManagerVehicle();
         }
+    } else {
+        // We are in the Plan view.
+        if (containsItems()) {
+            // The plan view has a stale plan in it
+            if (dirty()) {
+                // Plan is dirty, the user must decide what to do in all cases
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous dirty plan exists, no new active vehicle, sending promptForPlanUsageOnVehicleChange signal";
+                emit promptForPlanUsageOnVehicleChange();
+            } else {
+                // Plan is not dirty
+                if (newOffline) {
+                    // The active vehicle went away with no new active vehicle
+                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, no new active vehicle, clear stale plan";
+                    removeAll();
+                } else {
+                    // We are transitioning from one active vehicle to another. Show the plan from the new vehicle.
+                    qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - Previous clean plan exists, new active vehicle, loading from new manager vehicle";
+                    _showPlanFromManagerVehicle();
+                }
+            }
+        } else {
+            // There is no previous Plan in the view
+            if (newOffline) {
+                // Nothing special to do in this case
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, no longer connected to vehicle, nothing to do";
+            } else {
+                // Just show the plan from the new vehicle
+                qCDebug(PlanMasterControllerLog) << "_activeVehicleChanged: Plan View - No previous plan, new active vehicle, loading from new manager vehicle";
+                _showPlanFromManagerVehicle();
+            }
+        }
     }
+
+    // Vehicle changed so we need to signal everything
+    emit containsItemsChanged(containsItems());
+    emit syncInProgressChanged();
+    emit dirtyChanged(dirty());
 
     _updatePlanCreatorsList();
 }
@@ -636,11 +644,15 @@ void PlanMasterController::_updatePlanCreatorsList(void)
     }
 }
 
-void PlanMasterController::_updateSupportsTerrain(void)
+void PlanMasterController::showPlanFromManagerVehicle(void)
 {
-    bool supportsTerrain = _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_TERRAIN;
-    if (supportsTerrain != _supportsTerrain) {
-        _supportsTerrain = supportsTerrain;
-        emit supportsTerrainChanged(supportsTerrain);
+    if (offline()) {
+        // There is no new vehicle so clear any previous plan
+        qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - No new vehicle, clear any previous plan";
+        removeAll();
+    } else {
+        // We have a new active vehicle, show the plan from that
+        qCDebug(PlanMasterControllerLog) << "showPlanFromManagerVehicle: Plan View - New vehicle available, show plan from new manager vehicle";
+        _showPlanFromManagerVehicle();
     }
 }

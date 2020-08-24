@@ -7,18 +7,13 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Support for Intel Hex firmware file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
 #include "JsonHelper.h"
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
-#include "ParameterManager.h"
+#include "CompInfoParam.h"
 #include "Bootloader.h"
 
 #include <QDebug>
@@ -292,7 +287,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         }
 
         // Cache this file with the system
-        ParameterManager::cacheMetaDataFile(parameterFilename, firmwareType);
+        CompInfoParam::_cachePX4MetaDataFile(parameterFilename);
     }
 
     // Decompress the airframe xml and save to file

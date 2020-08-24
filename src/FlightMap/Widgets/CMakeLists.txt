@@ -1,22 +1,19 @@
 add_custom_target(FligthMapWidgetsQml
-SOURCES
-    CenterMapDropButton.qml
-    HealthPageWidget.qml
-    CameraPageWidget.qml
-    QGCAttitudeWidget.qml
-    QGCArtificialHorizon.qml
-    QGCPitchIndicator.qml
-    InstrumentSwipeView.qml
-    QGCInstrumentWidget.qml
-    QGCAttitudeHUD.qml
-    QGCMapToolButton.qml
-    QGCWaypointEditor.qml
-    QGCInstrumentWidgetAlternate.qml
-    ValuePageWidget.qml
-    CenterMapDropPanel.qml
-    VideoPageWidget.qml
-    MapFitFunctions.qml
-    VibrationPageWidget.qml
-    CompassRing.qml
-    QGCCompassWidget.qml
+	SOURCES
+		CenterMapDropButton.qml
+		CenterMapDropPanel.qml
+		CompassRing.qml
+		InstrumentSwipeView.qml
+		MapFitFunctions.qml
+		PhotoVideoControl.qml
+		QGCArtificialHorizon.qml
+		QGCAttitudeHUD.qml
+		QGCAttitudeWidget.qml
+		QGCCompassWidget.qml
+		QGCInstrumentWidget.qml
+		QGCInstrumentWidgetAlternate.qml
+		QGCMapToolButton.qml
+		QGCPitchIndicator.qml
+		QGCWaypointEditor.qml
 )
+

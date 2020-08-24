@@ -15,18 +15,19 @@
 #include "QGCLoggingCategory.h"
 #include "KMLPlanDomDocument.h"
 #include "QGCGeoBoundingCube.h"
+#include "QGroundControlQmlGlobal.h"
 
 #include <QHash>
 
 class FlightPathSegment;
 class VisualMissionItem;
 class MissionItem;
-class MissionSettingsItem;
 class AppSettings;
 class MissionManager;
 class SimpleMissionItem;
 class ComplexMissionItem;
 class MissionSettingsItem;
+class TakeoffMissionItem;
 class QDomDocument;
 class PlanViewSettings;
 
@@ -43,28 +44,30 @@ public:
     MissionController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~MissionController();
 
-    typedef struct _MissionFlightStatus_t {
-        double  maxTelemetryDistance;
-        double  totalDistance;
-        double  totalTime;
-        double  hoverDistance;
-        double  hoverTime;
-        double  cruiseDistance;
-        double  cruiseTime;
-        double  cruiseSpeed;
-        double  hoverSpeed;
-        double  vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state
-        double  vehicleYaw;
-        double  gimbalYaw;              ///< NaN signals yaw was never changed
-        double  gimbalPitch;            ///< NaN signals pitch was never changed
-        int     mAhBattery;             ///< 0 for not available
-        double  hoverAmps;              ///< Amp consumption during hover
-        double  cruiseAmps;             ///< Amp consumption during cruise
-        double  ampMinutesAvailable;    ///< Amp minutes available from single battery
-        double  hoverAmpsTotal;         ///< Total hover amps used
-        double  cruiseAmpsTotal;        ///< Total cruise amps used
-        int     batteryChangePoint;     ///< -1 for not supported, 0 for not needed
-        int     batteriesRequired;      ///< -1 for not supported
+    typedef struct {
+        double                      maxTelemetryDistance;
+        double                      totalDistance;
+        double                      totalTime;
+        double                      hoverDistance;
+        double                      hoverTime;
+        double                      cruiseDistance;
+        double                      cruiseTime;
+        int                         mAhBattery;             ///< 0 for not available
+        double                      hoverAmps;              ///< Amp consumption during hover
+        double                      cruiseAmps;             ///< Amp consumption during cruise
+        double                      ampMinutesAvailable;    ///< Amp minutes available from single battery
+        double                      hoverAmpsTotal;         ///< Total hover amps used
+        double                      cruiseAmpsTotal;        ///< Total cruise amps used
+        int                         batteryChangePoint;     ///< -1 for not supported, 0 for not needed
+        int                         batteriesRequired;      ///< -1 for not supported
+        double                      vehicleYaw;
+        double                      gimbalYaw;              ///< NaN signals yaw was never changed
+        double                      gimbalPitch;            ///< NaN signals pitch was never changed
+        // The following values are the state prior to executing this item
+        QGCMAVLink::VehicleClass_t  vtolMode;               ///< Either VehicleClassFixedWing, VehicleClassMultiRotor, VehicleClassGeneric (mode unknown)
+        double                      cruiseSpeed;
+        double                      hoverSpeed;
+        double                      vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
@@ -83,6 +86,7 @@ public:
     Q_PROPERTY(int                  currentPlanViewSeqNum           READ currentPlanViewSeqNum          NOTIFY currentPlanViewSeqNumChanged)
     Q_PROPERTY(int                  currentPlanViewVIIndex          READ currentPlanViewVIIndex         NOTIFY currentPlanViewVIIndexChanged)
     Q_PROPERTY(VisualMissionItem*   currentPlanViewItem             READ currentPlanViewItem            NOTIFY currentPlanViewItemChanged)
+    Q_PROPERTY(TakeoffMissionItem*  takeoffMissionItem              READ takeoffMissionItem             NOTIFY takeoffMissionItemChanged)
     Q_PROPERTY(double               missionDistance                 READ missionDistance                NOTIFY missionDistanceChanged)
     Q_PROPERTY(double               missionTime                     READ missionTime                    NOTIFY missionTimeChanged)
     Q_PROPERTY(double               missionHoverDistance            READ missionHoverDistance           NOTIFY missionHoverDistanceChanged)
@@ -104,6 +108,9 @@ public:
     Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
     Q_PROPERTY(double               minAMSLAltitude                 MEMBER _minAMSLAltitude             NOTIFY minAMSLAltitudeChanged)          ///< Minimum altitude associated with this mission. Used to calculate percentages for terrain status.
     Q_PROPERTY(double               maxAMSLAltitude                 MEMBER _maxAMSLAltitude             NOTIFY maxAMSLAltitudeChanged)          ///< Maximum altitude associated with this mission. Used to calculate percentages for terrain status.
+
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode globalAltitudeMode         READ globalAltitudeMode         WRITE setGlobalAltitudeMode NOTIFY globalAltitudeModeChanged)   ///< AltitudeModeNone indicates the plan can used mixed modes
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode globalAltitudeModeDefault  READ globalAltitudeModeDefault  NOTIFY globalAltitudeModeChanged)                               ///< Default to use for newly created items
 
     Q_INVOKABLE void removeVisualItem(int viIndex);
 
@@ -167,6 +174,16 @@ public:
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     Q_INVOKABLE void setCurrentPlanViewSeqNum(int sequenceNumber, bool force);
 
+    enum SendToVehiclePreCheckState {
+        SendToVehiclePreCheckStateOk,                       // Ok to send plan to vehicle
+        SendToVehiclePreCheckStateNoActiveVehicle,          // There is no active vehicle
+        SendToVehiclePreCheckStateFirwmareVehicleMismatch,  // Firmware/Vehicle type for plan mismatch with actual vehicle
+        SendToVehiclePreCheckStateActiveMission,            // Vehicle is currently flying a mission
+    };
+    Q_ENUM(SendToVehiclePreCheckState)
+
+    Q_INVOKABLE SendToVehiclePreCheckState sendToVehiclePreCheck(void);
+
     /// Determines if the mission has all data needed to be saved or sent to the vehicle.
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
     /// a nightmare of circular header dependency problems.
@@ -209,6 +226,7 @@ public:
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
+    TakeoffMissionItem* takeoffMissionItem          (void) const { return _takeoffMissionItem; }
     double              progressPct                 (void) const { return _progressPct; }
     QString             surveyComplexItemName       (void) const;
     QString             corridorScanComplexItemName (void) const;
@@ -236,6 +254,10 @@ public:
 
     bool isEmpty                    (void) const;
 
+    QGroundControlQmlGlobal::AltitudeMode globalAltitudeMode(void);
+    QGroundControlQmlGlobal::AltitudeMode globalAltitudeModeDefault(void);
+    void setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altMode);
+
 signals:
     void visualItemsChanged                 (void);
     void waypointPathChanged                (void);
@@ -260,6 +282,7 @@ signals:
     void currentPlanViewSeqNumChanged       (void);
     void currentPlanViewVIIndexChanged      (void);
     void currentPlanViewItemChanged         (void);
+    void takeoffMissionItemChanged          (void);
     void missionBoundingCubeChanged         (void);
     void missionItemCountChanged            (int missionItemCount);
     void onlyInsertTakeoffValidChanged      (void);
@@ -274,6 +297,7 @@ signals:
     void recalcTerrainProfile               (void);
     void _recalcMissionFlightStatusSignal   (void);
     void _recalcFlightPathSegmentsSignal    (void);
+    void globalAltitudeModeChanged          (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle   (bool removeAllRequested);
@@ -328,6 +352,8 @@ private:
     bool                    _isROIBeginItem                     (SimpleMissionItem* simpleItem);
     bool                    _isROICancelItem                    (SimpleMissionItem* simpleItem);
     FlightPathSegment*      _createFlightPathSegmentWorker      (VisualItemPair& pair);
+    void                    _allItemsRemoved                    (void);
+    void                    _firstItemAdded                     (void);
 
     static double           _calcDistanceToHome                 (VisualMissionItem* currentItem, VisualMissionItem* homeItem);
     static double           _normalizeLat                       (double lat);
@@ -356,6 +382,7 @@ private:
     int                         _currentPlanViewSeqNum =        -1;
     int                         _currentPlanViewVIIndex =       -1;
     VisualMissionItem*          _currentPlanViewItem =          nullptr;
+    TakeoffMissionItem*         _takeoffMissionItem =           nullptr;
     QTimer                      _updateTimer;
     QGCGeoBoundingCube          _travelBoundingCube;
     QGeoCoordinate              _takeoffCoordinate;
@@ -371,6 +398,8 @@ private:
     double                      _maxAMSLAltitude =              0;
     bool                        _missionContainsVTOLTakeoff =   false;
 
+    QGroundControlQmlGlobal::AltitudeMode _globalAltMode = QGroundControlQmlGlobal::AltitudeModeRelative;
+
     static const char*  _settingsGroup;
 
     // Json file keys for persistence
@@ -382,6 +411,7 @@ private:
     static const char*  _jsonItemsKey;
     static const char*  _jsonPlannedHomePositionKey;
     static const char*  _jsonParamsKey;
+    static const char*  _jsonGlobalPlanAltitudeModeKey;
 
     // Deprecated V1 format keys
     static const char*  _jsonMavAutopilotKey;

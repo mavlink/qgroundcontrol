@@ -44,6 +44,7 @@ void ADSBVehicleManager::_cleanupStaleVehicles()
         if (adsbVehicle->expired()) {
             qCDebug(ADSBVehicleManagerLog) << "Expired" << QStringLiteral("%1").arg(adsbVehicle->icaoAddress(), 0, 16);
             _adsbVehicles.removeAt(i);
+            _adsbICAOMap.remove(adsbVehicle->icaoAddress());
             adsbVehicle->deleteLater();
         }
     }

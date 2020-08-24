@@ -21,9 +21,9 @@ public:
     // Most individual settings related to PlanView are still in AppSettings due to historical reasons.
 
     DEFINE_SETTINGFACT(displayPresetsTabFirst)
-    DEFINE_SETTINGFACT(aboveTerrainWarning)
     DEFINE_SETTINGFACT(showMissionItemStatus)
     DEFINE_SETTINGFACT(useConditionGate)
     DEFINE_SETTINGFACT(takeoffItemNotRequired)
     DEFINE_SETTINGFACT(showGimbalOnlyWhenSet)
+    DEFINE_SETTINGFACT(vtolTransitionDistance)
 };

@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.12
-import QtQuick.Shapes   1.12
-import QtQuick.Layouts  1.2
-import QtCharts         2.3
+import QtQuick  2.12
+import QtCharts 2.3
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -35,6 +33,7 @@ Rectangle {
     property real _minAMSLAltitude:     isNaN(missionController.minAMSLAltitude) ? 0 : missionController.minAMSLAltitude
     property real _maxAMSLAltitude:     isNaN(missionController.maxAMSLAltitude) ? 100 : missionController.maxAMSLAltitude
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
+    property var  _unitsConversion:     QGroundControl.unitsConversion
 
     function yPosFromAlt(alt) {
         var fullHeight = terrainProfileFlickable.height
@@ -48,9 +47,7 @@ Rectangle {
         anchors.top:            parent.bottom
         width:                  parent.height
         font.pointSize:         ScreenTools.smallFontPointSize
-        text:                   qsTr("Height AMSL (%1)").arg(
-                                    QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                                )
+        text:                   qsTr("Height AMSL (%1)").arg(_unitsConversion.appSettingsHorizontalDistanceUnitsString)
         horizontalAlignment:    Text.AlignHCenter
         rotation:               -90
         transformOrigin:        Item.TopLeft
@@ -84,7 +81,7 @@ Rectangle {
                 ValueAxis {
                     id:                         axisX
                     min:                        0
-                    max:                        missionController.missionDistance
+                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionDistance)
                     lineVisible:                true
                     labelsFont.family:          "Fixed"
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
@@ -95,8 +92,8 @@ Rectangle {
 
                 ValueAxis {
                     id:                         axisY
-                    min:                        _minAMSLAltitude
-                    max:                        _maxAMSLAltitude
+                    min:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
+                    max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
                     lineVisible:                true
                     labelsFont.family:          "Fixed"
                     labelsFont.pointSize:       ScreenTools.smallFontPointSize
@@ -111,8 +108,8 @@ Rectangle {
                     axisY:      axisY
                     visible:    true
 
-                    XYPoint { x: 0; y: _minAMSLAltitude }
-                    XYPoint { x: _missionDistance; y: _maxAMSLAltitude }
+                    XYPoint { x: 0; y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude) }
+                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
                 }
             }
 

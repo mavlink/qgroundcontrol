@@ -10,12 +10,13 @@
 import QGroundControl.Controls 1.0
 
 ToolStripAction {
-    property var    guidedController
     property int    actionID
     property string message
 
+    property var _guidedController: globals.guidedControllerFlyView
+
     onTriggered: {
-        guidedActionsController.closeAll()
-        guidedController.confirmAction(actionID)
+        _guidedController.closeAll()
+        _guidedController.confirmAction(actionID)
     }
 }

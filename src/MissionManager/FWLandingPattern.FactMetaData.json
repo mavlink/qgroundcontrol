@@ -5,75 +5,75 @@
 [
 {
     "name":             "LandingDistance",
-    "shortDescription": "Distance between landing and loiter points.",
+    "shortDesc": "Distance between landing and loiter points.",
     "type":             "double",
     "units":            "m",
     "min":              10,
     "decimalPlaces":    1,
-    "defaultValue":     300.0
+    "default":     300.0
 },
 {
     "name":             "LandingHeading",
-    "shortDescription": "Heading from loiter point to land point.",
+    "shortDesc": "Heading from loiter point to land point.",
     "type":             "double",
     "units":            "deg",
     "min":              0.0,
     "max":              360.0,
     "decimalPlaces":    0,
-    "defaultValue":     270.0
+    "default":     270.0
 },
 {
     "name":             "LoiterAltitude",
-    "shortDescription": "Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will proceed to land.",
+    "shortDesc": "Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will proceed to land.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
-    "defaultValue":     40.0
+    "default":     40.0
 },
 {
     "name":             "LoiterRadius",
-    "shortDescription": "Loiter radius.",
+    "shortDesc": "Loiter radius.",
     "type":             "double",
     "decimalPlaces":    1,
     "min":              1,
     "units":            "m",
-    "defaultValue":     75.0
+    "default":     75.0
 },
 {
     "name":             "LandingAltitude",
-    "shortDescription": "Altitude for landing point.",
+    "shortDesc": "Altitude for landing point.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
-    "defaultValue":     0.0
+    "default":     0.0
 },
 {
     "name":             "GlideSlope",
-    "shortDescription": "The glide slope between the loiter and landing point.",
+    "shortDesc": "The glide slope between the loiter and landing point.",
     "type":             "double",
     "units":            "deg",
     "min":              0.1,
     "max":              90,
     "decimalPlaces":    1,
-    "defaultValue":     6.0
+    "default":     6.0
 },
 {
     "name":             "ValueSetIsDistance",
-    "shortDescription": "Value controller loiter point is distance",
+    "shortDesc": "Value controller loiter point is distance",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "StopTakingPhotos",
-    "shortDescription": "Stop taking photos",
+    "shortDesc": "Stop taking photos",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "StopTakingVideo",
-    "shortDescription": "Stop taking video",
+    "shortDesc": "Stop taking video",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 }
 ]
 }

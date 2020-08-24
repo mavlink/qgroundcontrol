@@ -191,7 +191,7 @@ QGCCameraParamIO::_sendParameter()
         _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         &p);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     _paramWriteTimer.start();
 }
 
@@ -364,6 +364,6 @@ QGCCameraParamIO::paramRequest(bool reset)
         static_cast<uint8_t>(_control->compID()),
         param_id,
         -1);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     _paramRequestTimer.start();
 }

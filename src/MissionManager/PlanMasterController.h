@@ -35,6 +35,7 @@ public:
 
     ~PlanMasterController();
 
+    Q_PROPERTY(bool                     flyView                 MEMBER _flyView)
     Q_PROPERTY(Vehicle*                 controllerVehicle       READ controllerVehicle                      CONSTANT)                       ///< Offline controller vehicle
     Q_PROPERTY(Vehicle*                 managerVehicle          READ managerVehicle                         NOTIFY managerVehicleChanged)   ///< Either active vehicle or _controllerVehicle if no active vehicle
     Q_PROPERTY(MissionController*       missionController       READ missionController                      CONSTANT)
@@ -50,10 +51,9 @@ public:
     Q_PROPERTY(QStringList              loadNameFilters         READ loadNameFilters                        CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList              saveNameFilters         READ saveNameFilters                        CONSTANT)                       ///< File filter list saving plan files
     Q_PROPERTY(QmlObjectListModel*      planCreators            MEMBER _planCreators                        NOTIFY planCreatorsChanged)
-    Q_PROPERTY(bool                     supportsTerrain         READ supportsTerrain                        NOTIFY supportsTerrainChanged)
 
     /// Should be called immediately upon Component.onCompleted.
-    Q_INVOKABLE void start(bool flyView);
+    Q_INVOKABLE void start(void);
 
     /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
     ///     @param deleteWhenSendCmplete The PlanMasterController object should be deleted after the first send is completed.
@@ -63,6 +63,9 @@ public:
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
     /// a nightmare of circular header dependency problems.
     Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
+
+    /// Replaces any current plan with the plan from the manager vehicle even if offline.
+    Q_INVOKABLE void showPlanFromManagerVehicle(void);
 
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
@@ -93,7 +96,8 @@ public:
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     bool        isEmpty         (void) const;
-    bool        supportsTerrain (void) const { return _supportsTerrain; }
+
+    void        setFlyView(bool flyView) { _flyView = flyView; }
 
     QJsonDocument saveToJson    ();
 
@@ -107,14 +111,14 @@ public:
     static const char*  kJsonRallyPointsObjectKey;
 
 signals:
-    void containsItemsChanged   (bool containsItems);
-    void syncInProgressChanged  (void);
-    void dirtyChanged           (bool dirty);
-    void offlineChanged  		(bool offlineEditing);
-    void currentPlanFileChanged ();
-    void planCreatorsChanged    (QmlObjectListModel* planCreators);
-    void managerVehicleChanged  (Vehicle* managerVehicle);
-    void supportsTerrainChanged (bool supportsTerrain);
+    void containsItemsChanged               (bool containsItems);
+    void syncInProgressChanged              (void);
+    void dirtyChanged                       (bool dirty);
+    void offlineChanged                     (bool offlineEditing);
+    void currentPlanFileChanged             (void);
+    void planCreatorsChanged                (QmlObjectListModel* planCreators);
+    void managerVehicleChanged              (Vehicle* managerVehicle);
+    void promptForPlanUsageOnVehicleChange  (void);
 
 private slots:
     void _activeVehicleChanged      (Vehicle* activeVehicle);
@@ -125,7 +129,6 @@ private slots:
     void _sendGeoFenceComplete      (void);
     void _sendRallyPointsComplete   (void);
     void _updatePlanCreatorsList    (void);
-    void _updateSupportsTerrain     (void);
 #if defined(QGC_AIRMAP_ENABLED)
     void _startFlightPlanning       (void);
 #endif
@@ -149,5 +152,4 @@ private:
     QString                 _currentPlanFile;
     bool                    _deleteWhenSendCompleted =  false;
     QmlObjectListModel*     _planCreators =             nullptr;
-    bool                    _supportsTerrain =          false;
 };

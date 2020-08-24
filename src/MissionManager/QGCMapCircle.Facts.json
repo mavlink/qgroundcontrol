@@ -5,7 +5,7 @@
 [
 {
     "name":             "Radius",
-    "shortDescription": "Radius for geofence circle.",
+    "shortDesc": "Radius for geofence circle.",
     "type":             "double",
     "decimalPlaces":    1,
     "min":              0.1,

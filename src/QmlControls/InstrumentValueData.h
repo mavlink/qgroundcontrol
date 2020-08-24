@@ -33,8 +33,8 @@ public:
     explicit InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent);
 
     Q_PROPERTY(FactValueGrid*       factValueGrid       MEMBER _factValueGrid                               CONSTANT)
-    Q_PROPERTY(QStringList          factGroupNames      MEMBER  _factGroupNames                             NOTIFY factGroupNamesChanged)
-    Q_PROPERTY(QStringList          factValueNames      MEMBER  _factValueNames                             NOTIFY factValueNamesChanged)
+    Q_PROPERTY(QStringList          factGroupNames      READ    factGroupNames                              NOTIFY factGroupNamesChanged)
+    Q_PROPERTY(QStringList          factValueNames      READ    factValueNames                              NOTIFY factValueNamesChanged)
     Q_PROPERTY(QString              factGroupName       READ    factGroupName                               NOTIFY factGroupNameChanged)
     Q_PROPERTY(QString              factName            READ    factName                                    NOTIFY factNameChanged)
     Q_PROPERTY(Fact*                fact                READ    fact                                        NOTIFY factChanged)
@@ -58,6 +58,8 @@ public:
     Q_INVOKABLE void    addRangeValue   (void);
     Q_INVOKABLE void    removeRangeValue(int index);
 
+    QStringList     factGroupNames          (void) const;
+    QStringList     factValueNames          (void) const;
     QString         factGroupName           (void) const { return _factGroupName; }
     QString         factName                (void) const { return _factName; }
     Fact*           fact                    (void) { return _fact; }
@@ -88,8 +90,8 @@ signals:
     void textChanged            (QString text);
     void showUnitsChanged       (bool showUnits);
     void iconChanged            (const QString& icon);
-    void factGroupNamesChanged  (const QStringList& factGroupNames);
-    void factValueNamesChanged  (const QStringList& factValueNames);
+    void factGroupNamesChanged  (void);
+    void factValueNamesChanged  (void);
     void rangeTypeChanged       (RangeType rangeType);
     void rangeValuesChanged     (const QVariantList& rangeValues);
     void rangeColorsChanged     (const QVariantList& rangeColors);
@@ -103,12 +105,14 @@ private slots:
     void _resetRangeInfo        (void);
     void _updateRanges          (void);
     void _activeVehicleChanged  (Vehicle* activeVehicle);
+    void _lookForMissingFact    (void);
 
 private:
     int  _currentRangeIndex     (const QVariant& value);
     void _updateColor           (void);
     void _updateIcon            (void);
     void _updateOpacity         (void);
+    void _setFactWorker         (void);
 
     FactValueGrid*          _factValueGrid =        nullptr;
     Vehicle*                _activeVehicle =        nullptr;
@@ -119,8 +123,6 @@ private:
     QString                 _text;
     bool                    _showUnits =            true;
     QString                 _icon;
-    QStringList             _factGroupNames;
-    QStringList             _factValueNames;
     QColor                  _currentColor;
     double                  _currentOpacity =       1.0;
     QString                 _currentIcon;

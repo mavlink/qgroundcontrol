@@ -23,11 +23,12 @@ GuidedAltitudeSlider            1.0 GuidedAltitudeSlider.qml
 GuidedActionTakeoff             1.0 GuidedActionTakeoff.qml
 GuidedToolStripAction           1.0 GuidedToolStripAction.qml
 MultiVehicleList                1.0 MultiVehicleList.qml
-MultiVehiclePanel               1.0 MultiVehiclePanel.qml
 PreFlightBatteryCheck           1.0 PreFlightBatteryCheck.qml
 PreFlightGPSCheck               1.0 PreFlightGPSCheck.qml
 PreFlightRCCheck                1.0 PreFlightRCCheck.qml
 PreFlightSensorsHealthCheck     1.0 PreFlightSensorsHealthCheck.qml
 PreFlightSoundCheck             1.0 PreFlightSoundCheck.qml
+ProximityRadarVideoView         1.0 ProximityRadarVideoView.qml
 TerrainProgress                 1.0 TerrainProgress.qml
+TelemetryValuesBar              1.0 TelemetryValuesBar.qml
 VehicleWarnings                 1.0 VehicleWarnings.qml

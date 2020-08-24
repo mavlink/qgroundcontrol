@@ -21,10 +21,6 @@
 
 #include "LinkInterface.h"
 
-#ifndef __mobile__
-class FileManager;
-#endif
-
 /**
  * @brief Interface for all robots.
  *
@@ -42,41 +38,6 @@ public:
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
-
-#ifndef __mobile__
-    virtual FileManager* getFileManager() = 0;
-#endif
-
-    enum StartCalibrationType {
-        StartCalibrationRadio,
-        StartCalibrationGyro,
-        StartCalibrationMag,
-        StartCalibrationAirspeed,
-        StartCalibrationAccel,
-        StartCalibrationLevel,
-        StartCalibrationPressure,
-        StartCalibrationEsc,
-        StartCalibrationCopyTrims,
-        StartCalibrationUavcanEsc,
-        StartCalibrationCompassMot,
-    };
-
-    enum StartBusConfigType {
-        StartBusConfigActuators,
-        EndBusConfigActuators,
-    };
-
-    /// Starts the specified calibration
-    virtual void startCalibration(StartCalibrationType calType) = 0;
-
-    /// Ends any current calibration
-    virtual void stopCalibration(void) = 0;
-
-    /// Starts the specified bus configuration
-    virtual void startBusConfig(StartBusConfigType calType) = 0;
-
-    /// Ends any current bus configuration
-    virtual void stopBusConfig(void) = 0;
 
 public slots:
     /** @brief Order the robot to pair its receiver **/

@@ -219,56 +219,48 @@ void APMAirframeComponentController::loadParameters(const QString& paramFile)
     QString paramFileUrl = QStringLiteral("https://api.github.com/repos/ArduPilot/ardupilot/contents/Tools/Frame_params/%1?ref=master");
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
-    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_githubJsonDownloadFinished);
-    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_githubJsonDownloadError);
+    connect(downloader, &QGCFileDownload::downloadComplete, this, &APMAirframeComponentController::_githubJsonDownloadComplete);
     downloader->download(paramFileUrl.arg(paramFile));
 }
 
-void APMAirframeComponentController::_githubJsonDownloadFinished(QString remoteFile, QString localFile)
+void APMAirframeComponentController::_githubJsonDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
 {
-    Q_UNUSED(remoteFile);
+    if (errorMsg.isEmpty()) {
+        QFile jsonFile(localFile);
+        if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Unable to open github json file" << localFile << jsonFile.errorString();
+            qgcApp()->restoreOverrideCursor();
+            return;
+        }
+        QByteArray bytes = jsonFile.readAll();
+        jsonFile.close();
 
-    QFile jsonFile(localFile);
-    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Unable to open github json file" << localFile << jsonFile.errorString();
+        QJsonParseError jsonParseError;
+        QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
+        if (jsonParseError.error != QJsonParseError::NoError) {
+            qWarning() <<  "Unable to open json document" << localFile << jsonParseError.errorString();
+            qgcApp()->restoreOverrideCursor();
+            return;
+        }
+        QJsonObject json = doc.object();
+
+        QGCFileDownload* downloader = new QGCFileDownload(this);
+        connect(downloader, &QGCFileDownload::downloadComplete, this, &APMAirframeComponentController::_paramFileDownloadComplete);
+        downloader->download(json[QLatin1Literal("download_url")].toString());
+    } else {
+        qgcApp()->showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
         qgcApp()->restoreOverrideCursor();
-        return;
     }
-    QByteArray bytes = jsonFile.readAll();
-    jsonFile.close();
+}
 
-    QJsonParseError jsonParseError;
-    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        qWarning() <<  "Unable to open json document" << localFile << jsonParseError.errorString();
+void APMAirframeComponentController::_paramFileDownloadComplete(QString /*remoteFile*/, QString localFile, QString errorMsg)
+{
+    if (errorMsg.isEmpty()) {
+        _loadParametersFromDownloadFile(localFile);
+    } else {
+        qgcApp()->showAppMessage(tr("Param file download failed: %1").arg(errorMsg));
         qgcApp()->restoreOverrideCursor();
-        return;
     }
-    QJsonObject json = doc.object();
-
-    QGCFileDownload* downloader = new QGCFileDownload(this);
-    connect(downloader, &QGCFileDownload::downloadFinished, this, &APMAirframeComponentController::_paramFileDownloadFinished);
-    connect(downloader, &QGCFileDownload::error, this, &APMAirframeComponentController::_paramFileDownloadError);
-    downloader->download(json[QLatin1Literal("download_url")].toString());
-}
-
-void APMAirframeComponentController::_githubJsonDownloadError(QString errorMsg)
-{
-    qgcApp()->showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
-    qgcApp()->restoreOverrideCursor();
-}
-
-void APMAirframeComponentController::_paramFileDownloadFinished(QString remoteFile, QString localFile)
-{
-    Q_UNUSED(remoteFile);
-
-    _loadParametersFromDownloadFile(localFile);
-}
-
-void APMAirframeComponentController::_paramFileDownloadError(QString errorMsg)
-{
-    qgcApp()->showAppMessage(tr("Param file download failed: %1").arg(errorMsg));
-    qgcApp()->restoreOverrideCursor();
 }
 
 APMFrameClass::APMFrameClass(const QString& name, bool copter, int frameClass, Fact* frameTypeFact, QObject* parent)

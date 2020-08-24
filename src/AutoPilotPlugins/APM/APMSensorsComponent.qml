@@ -91,6 +91,7 @@ SetupPage {
                 case _calTypeCompass:
                     _orientationsDialogShowCompass = true
                     _orientationDialogHelp = orientationHelpCal
+                    _singleCompassSettingsComponentShowPriority = false
                     dialogTitle = qsTr("Calibrate Compass")
                     buttons |= StandardButton.Cancel
                     break
@@ -108,6 +109,28 @@ SetupPage {
                 }
 
                 mainWindow.showComponentDialog(orientationsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, buttons)
+            }
+
+            function compassLabel(index) {
+                var label = qsTr("Compass %1 ").arg(index+1)
+                var addOpenParan = true
+                var addComma = false
+                if (sensorParams.compassPrimaryFactAvailable) {
+                    label += sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")
+                    addComma = true
+                    addOpenParan = false
+                }
+                if (sensorParams.rgCompassExternalParamAvailable[index]) {
+                    if (addOpenParan) {
+                        label += "("
+                    }
+                    if (addComma) {
+                        label += qsTr(", ")
+                    }
+                    label += sensorParams.rgCompassExternal[index] ? qsTr("external") : qsTr("internal")
+                }
+                label += ")"
+                return label
             }
 
             APMSensorParams {
@@ -142,6 +165,7 @@ SetupPage {
                         mainWindow.showComponentDialog(postCalibrationComponent, qsTr("Compass calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
+                        _singleCompassSettingsComponentShowPriority = true
                         mainWindow.showComponentDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     }
@@ -154,7 +178,7 @@ SetupPage {
 
             Component.onCompleted: {
                 var usingUDP = controller.usingUDPLink()
-                var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
+                var isSub = globals.activeVehicle.sub;
                 if (usingUDP && !isSub) {
                     mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."))
                 }
@@ -188,6 +212,8 @@ SetupPage {
                     anchors.right:  parent.right
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
                     visible:        sensorParams.rgCompassAvailable[index] && sensorParams.rgCompassUseFact[index].value
+
+                    property int _index: index
 
                     property real greenMaxThreshold:   8 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
                     property real yellowMaxThreshold:  15 * (sensorParams.rgCompassExternal[index] ? 1 : 2)
@@ -230,26 +256,13 @@ SetupPage {
                         }
                     }
 
-                    Column {
+                    Loader {
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                         anchors.left:       parent.left
                         anchors.right:      parent.right
-                        spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
+                        sourceComponent:    singleCompassSettingsComponent
 
-                        QGCLabel {
-                            text: qsTr("Compass ") + (index+1) + " " +
-                                  (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")) +
-                                  (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                       (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal" )) :
-                                       "") +
-                                  ")"
-                        }
-
-                        FactCheckBox {
-                            text:       qsTr("Use Compass")
-                            fact:       sensorParams.rgCompassUseFact[index]
-                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
-                        }
+                        property int index: _index
                     }
                 }
             }
@@ -314,11 +327,12 @@ SetupPage {
                                 controller.vehicle.rebootVehicle()
                                 hideDialog()
                             }
-                       }
+                        }
                     }
                 }
             }
 
+            property bool _singleCompassSettingsComponentShowPriority: true
             Component {
                 id: singleCompassSettingsComponent
 
@@ -327,12 +341,7 @@ SetupPage {
                     visible: sensorParams.rgCompassAvailable[index]
 
                     QGCLabel {
-                        text: qsTr("Compass ") + (index+1) + " " +
-                              (sensorParams.rgCompassPrimary[index] ? qsTr("(primary") :qsTr( "(secondary")) +
-                              (sensorParams.rgCompassExternalParamAvailable[index] ?
-                                   (sensorParams.rgCompassExternal[index] ? qsTr(", external") : qsTr(", internal") ) :
-                                   "") +
-                              ")"
+                        text: compassLabel(index)
                     }
 
                     Column {
@@ -340,10 +349,46 @@ SetupPage {
                         anchors.left:       parent.left
                         spacing:            Math.round(ScreenTools.defaultFontPixelHeight / 4)
 
-                        FactCheckBox {
-                            text:       qsTr("Use Compass")
-                            fact:       sensorParams.rgCompassUseFact[index]
-                            visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth
+
+                            FactCheckBox {
+                                id:         useCompassCheckBox
+                                text:       qsTr("Use Compass")
+                                fact:       sensorParams.rgCompassUseFact[index]
+                                visible:    sensorParams.rgCompassUseParamAvailable[index] && !sensorParams.rgCompassPrimary[index]
+                            }
+
+                            QGCComboBox {
+                                model:      [ qsTr("Priority 1"), qsTr("Priority 2"), qsTr("Priority 3"), qsTr("Not Set") ]
+                                visible:    _singleCompassSettingsComponentShowPriority && sensorParams.compassPrioFactsAvailable && useCompassCheckBox.visible && useCompassCheckBox.checked
+
+                                property int _compassIndex: index
+
+                                function selectPriorityfromParams() {
+                                    if (visible) {
+                                        currentIndex = 3
+                                        var compassId = sensorParams.rgCompassId[_compassIndex].rawValue
+                                        for (var prioIndex=0; prioIndex<3; prioIndex++) {
+                                            if (compassId == sensorParams.rgCompassPrio[prioIndex].rawValue) {
+                                                currentIndex = prioIndex
+                                                break
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Component.onCompleted: selectPriorityfromParams()
+
+                                onActivated: {
+                                    if (index == 3) {
+                                        // User cannot select Not Set
+                                        selectPriorityfromParams()
+                                    } else {
+                                        sensorParams.rgCompassPrio[index].rawValue = sensorParams.rgCompassId[_compassIndex].rawValue
+                                    }
+                                }
+                            }
                         }
 
                         Column {
@@ -517,12 +562,32 @@ SetupPage {
                         wrapMode:       Text.WordWrap
                         text:           _helpText
 
-                        readonly property string _altText:      activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
+                        readonly property string _altText:      globals.activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
                         readonly property string _helpText:     qsTr("Pressure calibration will set the %1 to zero at the current pressure reading. %2").arg(_altText).arg(_helpTextFW)
-                        readonly property string _helpTextFW:   activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
+                        readonly property string _helpTextFW:   globals.activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
                     }
                 } // QGCViewDialog
             } // Component - calibratePressureDialogComponent
+
+            Component {
+                id: calibrateGyroDialogComponent
+
+                QGCViewDialog {
+                    id: calibrateGyroDialog
+
+                    function accept() {
+                        controller.calibrateGyro()
+                        calibrateGyroDialog.hideDialog()
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.\n\nClick Ok to start calibration.")
+                    }
+                }
+            }
 
             QGCFlickable {
                 id:             buttonFlickable
@@ -578,16 +643,23 @@ SetupPage {
 
                     QGCButton {
                         width:      _buttonWidth
+                        text:       qsTr("Gyro")
+                        visible:    globals.activeVehicle && (globals.activeVehicle.multiRotor | globals.activeVehicle.rover)
+                        onClicked:  mainWindow.showComponentDialog(calibrateGyroDialogComponent, qsTr("Calibrate Gyro"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    }
+
+                    QGCButton {
+                        width:      _buttonWidth
                         text:       _calibratePressureText
                         onClicked:  mainWindow.showComponentDialog(calibratePressureDialogComponent, _calibratePressureText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
 
-                        readonly property string _calibratePressureText: activeVehicle.fixedWing ? qsTr("Cal Baro/Airspeed") : qsTr("Calibrate Pressure")
+                        readonly property string _calibratePressureText: globals.activeVehicle.fixedWing ? qsTr("Baro/Airspeed") : qsTr("Pressure")
                     }
 
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
-                        visible:    activeVehicle ? activeVehicle.supportsMotorInterference : false
+                        visible:    globals.activeVehicle ? globals.activeVehicle.supportsMotorInterference : false
 
                         onClicked:  mainWindow.showComponentDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), mainWindow.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
