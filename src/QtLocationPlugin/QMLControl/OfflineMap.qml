@@ -210,7 +210,6 @@ Item {
         id:             fileDialog
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         nameFilters:    ["Tile Sets (*.qgctiledb)"]
-        fileExtension:  "qgctiledb"
 
         onAcceptedForSave: {
             if (QGroundControl.mapEngineManager.exportSets(file)) {

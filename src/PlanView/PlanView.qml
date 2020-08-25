@@ -271,8 +271,6 @@ Item {
             fileDialog.planFiles =      true
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    _planMasterController.loadNameFilters
-            fileDialog.fileExtension =  _appSettings.planFileExtension
-            fileDialog.fileExtension2 = _appSettings.missionFileExtension
             fileDialog.openForLoad()
         }
 
@@ -284,8 +282,6 @@ Item {
             fileDialog.planFiles =      true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    _planMasterController.saveNameFilters
-            fileDialog.fileExtension =  _appSettings.planFileExtension
-            fileDialog.fileExtension2 = _appSettings.missionFileExtension
             fileDialog.openForSave()
         }
 
@@ -301,8 +297,6 @@ Item {
             fileDialog.planFiles =      false
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLFilters
-            fileDialog.fileExtension =  _appSettings.kmlFileExtension
-            fileDialog.fileExtension2 = ""
             fileDialog.openForSave()
         }
     }

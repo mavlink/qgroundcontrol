@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/HackFileDialog.qml">src/QmlControls/HackAndroidFileDialog.qml</file>
-    </qresource>
-</RCC>

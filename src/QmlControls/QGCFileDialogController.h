@@ -24,13 +24,11 @@ class QGCFileDialogController : public QObject
 
 public:
     /// Return all file in the specified path which match the specified extension
-    Q_INVOKABLE QStringList getFiles(const QString& directoryPath, const QStringList& fileExtensions);
+    Q_INVOKABLE QStringList getFiles(const QString& directoryPath, const QStringList& nameFilters);
 
-    /// Returns the specified file name with the extension added it needed
-    Q_INVOKABLE QString filenameWithExtension(const QString& filename, const QStringList& rgFileExtensions);
-
-    /// Returns the fully qualified file name from the specified parts
-    Q_INVOKABLE QString fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& rgFileExtensions);
+    /// Returns the fully qualified file name from the specified parts.
+    /// If filename has no file extension the first file extension is nameFilters is added to the filename.
+    Q_INVOKABLE QString fullyQualifiedFilename(const QString& directoryPath, const QString& filename, const QStringList& nameFilters = QStringList());
 
     /// Check for file existence of specified fully qualified file name
     Q_INVOKABLE bool fileExists(const QString& filename);
