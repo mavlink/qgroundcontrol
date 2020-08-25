@@ -15,41 +15,14 @@ Item {
     visible:    false
 
     property string folder              // Due to Qt bug with file url parsing this must be an absolute path
-    property var    nameFilters
-    property string fileExtension       // Primary file extension to search for
-    property string fileExtension2: ""  // Secondary file extension to search for
+    property var    nameFilters:    []  // Important: Only name filters with simple wildcarding like *.foo are supported.
     property string title
     property bool   selectExisting
     property bool   selectFolder
 
-    property bool   _openForLoad:   true
-    property real   _margins:       ScreenTools.defaultFontPixelHeight / 2
-    property bool   _mobileDlg:     QGroundControl.corePlugin.options.useMobileFileDialog
-    property var    _rgExtensions
-    property string _mobileShortPath
-
-    Component.onCompleted: {
-        setupFileExtensions()
-        _updateMobileShortPath()
-    }
-
-    onFileExtensionChanged:     setupFileExtensions()
-    onFileExtension2Changed:    setupFileExtensions()
-    onFolderChanged:            _updateMobileShortPath()
-
-    function _updateMobileShortPath() {
-        if (ScreenTools.isMobile) {
-            _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
-        }
-    }
-
-    function setupFileExtensions() {
-        if (fileExtension2 == "") {
-            _rgExtensions = [ fileExtension ]
-        } else {
-            _rgExtensions = [ fileExtension, fileExtension2 ]
-        }
-    }
+    signal acceptedForLoad(string file)
+    signal acceptedForSave(string file)
+    signal rejected
 
     function openForLoad() {
         _openForLoad = true
@@ -73,17 +46,48 @@ Item {
         fullFileDialog.close()
     }
 
-    signal acceptedForLoad(string file)
-    signal acceptedForSave(string file)
-    signal rejected
+    property bool   _openForLoad:   true
+    property real   _margins:       ScreenTools.defaultFontPixelHeight / 2
+    property bool   _mobileDlg:     QGroundControl.corePlugin.options.useMobileFileDialog
+    property var    _rgExtensions
+    property string _mobileShortPath
+
+    Component.onCompleted: {
+        _setupFileExtensions()
+        _updateMobileShortPath()
+    }
+
+    onFolderChanged:        _updateMobileShortPath()
+    onNameFiltersChanged:   _setupFileExtensions()
+
+    function _updateMobileShortPath() {
+        if (ScreenTools.isMobile) {
+            _mobileShortPath = controller.fullFolderPathToShortMobilePath(folder);
+        }
+    }
+
+    function _setupFileExtensions() {
+        _rgExtensions = [ ]
+        for (var i=0; i<_root.nameFilters.length; i++) {
+            var filter = _root.nameFilters[i]
+            var regExp = /^.*\((.*)\)$/
+            var result = regExp.exec(filter)
+            if (result.length === 2) {
+                filter = result[1]
+            }
+            var rgFilters = filter.split(" ")
+            for (var j=0; j<rgFilters.length; j++) {
+                if (!_mobileDlg || (rgFilters[j] !== "*" && rgFilters[j] !== "*.*")) {
+                    _rgExtensions.push(rgFilters[j])
+                }
+            }
+        }
+    }
 
     QGCFileDialogController { id: controller }
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    // On Qt 5.9 android versions there is the following bug: https://bugreports.qt.io/browse/QTBUG-61424
-    // This prevents FileDialog from being used. So we have a temp hack workaround for it which just no-ops
-    // the FileDialog fallback mechanism on android 5.9 builds.
-    HackFileDialog {
+    FileDialog {
         id:             fullFileDialog
         folder:         "file:///" + _root.folder
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
@@ -130,12 +134,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
+                                _root.acceptedForLoad(controller.fullyQualifiedFilename(folder, modelData))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
                                 hamburgerMenu.popup()
                             }
 
@@ -149,6 +153,7 @@ Item {
                                 QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
+                                        console.log("hamburgerMenu.fileToDelete", hamburgerMenu.fileToDelete)
                                         controller.deleteFile(hamburgerMenu.fileToDelete)
                                         fileRepeater.model = controller.getFiles(folder, _rgExtensions)
                                     }
@@ -243,12 +248,12 @@ Item {
 
                             onClicked: {
                                 hideDialog()
-                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData, _rgExtensions))
+                                _root.acceptedForSave(controller.fullyQualifiedFilename(folder, modelData))
                             }
 
                             onHamburgerClicked: {
                                 highlight = true
-                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData, _rgExtensions)
+                                hamburgerMenu.fileToDelete = controller.fullyQualifiedFilename(folder, modelData)
                                 hamburgerMenu.popup()
                             }
 
