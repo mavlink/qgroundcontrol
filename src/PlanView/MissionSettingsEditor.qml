@@ -221,6 +221,16 @@ Rectangle {
                 }
 
                 QGCLabel {
+                    Layout.columnSpan:      2
+                    Layout.alignment:       Qt.AlignHCenter
+                    Layout.fillWidth:       true
+                    wrapMode:               Text.WordWrap
+                    font.pointSize:         ScreenTools.smallFontPointSize
+                    text:                   qsTr("The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.")
+                    visible:                _showCruiseSpeed || _showHoverSpeed
+                }
+
+                QGCLabel {
                     text:               qsTr("Cruise speed")
                     visible:            _showCruiseSpeed
                     Layout.fillWidth:   true
