@@ -37,6 +37,8 @@ public:
     Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
+    Q_PROPERTY(bool             isLoiterItem            READ isLoiterItem                                       NOTIFY isLoiterItemChanged)
+    Q_PROPERTY(double           radius                  READ radius                 WRITE setRadius             NOTIFY radiusChanged)
 
     /// Optional sections
     Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
@@ -70,6 +72,8 @@ public:
     QGroundControlQmlGlobal::AltitudeMode altitudeMode(void) const { return _altitudeMode; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
+    bool            isLoiterItem        (void) const;
+    double          radius              (void) const;
 
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }
@@ -89,6 +93,7 @@ public:
     void setAltPercent      (double altPercent);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
+    void setRadius          (double radius);
 
     virtual bool load(QTextStream &loadStream);
     virtual bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
@@ -137,6 +142,8 @@ signals:
     void cameraSectionChanged       (QObject* cameraSection);
     void speedSectionChanged        (QObject* cameraSection);
     void altitudeModeChanged        (void);
+    void isLoiterItemChanged        (void);
+    void radiusChanged              (double radius);
 
 private slots:
     void _setDirty                              (void);
@@ -154,6 +161,7 @@ private slots:
     void _setDefaultsForCommand                 (void);
     void _possibleVehicleYawChanged             (void);
     void _signalIfVTOLTransitionCommand         (void);
+    void _possibleRadiusChanged                 (void);
 
 private:
     void _connectSignals        (void);

@@ -89,6 +89,16 @@ Item {
         onSpecifiesCoordinateChanged:   updateDragArea()
     }
 
+    Connections {
+        target: _missionItem.isSimpleItem ? _missionItem : null
+
+        onRadiusChanged: {
+            // why is binding not working?
+            _mapCircle.radius.rawValue = Math.abs(_missionItem.radius)
+            _mapCircle.clockwiseRotation = _missionItem.radius >= 0
+        }
+    }
+
     // Control which is used to drag items
     Component {
         id: dragAreaComponent
@@ -99,7 +109,10 @@ Item {
             itemCoordinate: _missionItem.coordinate
             visible:        _root.interactive
 
-            onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
+            onItemCoordinateChanged: {
+                _missionItem.coordinate = itemCoordinate
+                loiterMapCircleVisuals.center = itemCoordinate
+            }
         }
     }
 
@@ -114,6 +127,34 @@ Item {
             sequenceNumber: _missionItem.sequenceNumber
             onClicked:      if(_root.interactive)  _root.clicked(_missionItem.sequenceNumber)
             opacity:        _root.opacity
+        }
+    }
+
+    QGCMapCircleVisuals {
+        id:                      loiterMapCircleVisuals
+        mapControl:              _root.map
+        mapCircle:               _mapCircle
+        visible:                 _root.interactive && _missionItem.isSimpleItem && _missionItem.isLoiterItem && (vehicle.fixedWing || vehicle.vtol)
+        center:                  _missionItem.coordinate
+        centerDragHandleVisible: false
+        borderColor:             _missionItem.terrainCollision ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
+
+        property alias center:   _mapCircle.center
+
+        function updateMissionItem() {
+            _missionItem.radius = _mapCircle.clockwiseRotation ? _mapCircle.radius.rawValue : -_mapCircle.radius.rawValue
+        }
+
+        QGCMapCircle {
+            id:                 _mapCircle
+            interactive:        _root.interactive && _missionItem.isCurrentItem && map.planView
+            showRotation:       true
+            onClockwiseRotationChanged: loiterMapCircleVisuals.updateMissionItem()
+        }
+
+        Connections {
+            target:            _mapCircle.radius
+            onRawValueChanged: loiterMapCircleVisuals.updateMissionItem()
         }
     }
 }

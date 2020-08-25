@@ -173,6 +173,10 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param1Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
     connect(&_missionItem._param4Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleVehicleYawChanged);
 
+    // For NAV_LOITER_X commands, they must emit a radiusChanged signal
+    connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
+    connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
+    
     // Exit coordinate is the same as entrance coordinate
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::exitCoordinateChanged);
 
@@ -190,6 +194,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::specifiesAltitudeOnlyChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isStandaloneCoordinateChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLandCommandChanged);
+    connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLoiterItemChanged);
 
     // Whenever these properties change the ui model changes as well
     connect(this,                               &SimpleMissionItem::commandChanged,         this, &SimpleMissionItem::_rebuildFacts);
@@ -411,6 +416,11 @@ QString SimpleMissionItem::abbreviation() const
     case MAV_CMD_DO_SET_ROI:
     case MAV_CMD_DO_SET_ROI_LOCATION:
         return tr("ROI");
+    case MAV_CMD_NAV_LOITER_TIME:
+    case MAV_CMD_NAV_LOITER_TURNS:
+    case MAV_CMD_NAV_LOITER_UNLIM:
+    case MAV_CMD_NAV_LOITER_TO_ALT:
+        return tr("Loiter");
     default:
         return QString();
     }
@@ -530,6 +540,28 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
 bool SimpleMissionItem::specifiesAltitude(void) const
 {
     return specifiesCoordinate() || specifiesAltitudeOnly();
+}
+
+bool SimpleMissionItem::isLoiterItem() const
+{
+    switch(command()) {
+    case MAV_CMD_NAV_LOITER_UNLIM:
+    case MAV_CMD_NAV_LOITER_TURNS:
+    case MAV_CMD_NAV_LOITER_TIME:
+    case MAV_CMD_NAV_LOITER_TO_ALT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+double SimpleMissionItem::radius() const
+{
+    if (isLoiterItem()) {
+        return command() == MAV_CMD_NAV_LOITER_TO_ALT ? missionItem().param2() : missionItem().param3();
+    } else {
+        return qQNaN();
+    }
 }
 
 void SimpleMissionItem::_rebuildComboBoxFacts(void)
@@ -802,6 +834,17 @@ void SimpleMissionItem::setCommand(int command)
     }
 }
 
+void SimpleMissionItem::setRadius(double radius)
+{
+    if (isLoiterItem()) {
+        const MAV_CMD command = static_cast<MAV_CMD>(this->command());
+        if (command == MAV_CMD_NAV_LOITER_TO_ALT)
+            _missionItem.setParam2(radius);
+        else
+            _missionItem.setParam3(radius);
+    }
+}
+
 void SimpleMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     // We only use lat/lon from coordinate. This keeps param7 and the altitude value which is kept to the side in sync.
@@ -1038,5 +1081,12 @@ void SimpleMissionItem::_signalIfVTOLTransitionCommand(void)
     if (mavCommand() == MAV_CMD_DO_VTOL_TRANSITION) {
         // This will cause a MissionController recalc
         emit currentVTOLModeChanged();
+    }
+}
+
+void SimpleMissionItem::_possibleRadiusChanged(void)
+{
+    if (isLoiterItem()) {
+        emit radiusChanged(radius());
     }
 }
