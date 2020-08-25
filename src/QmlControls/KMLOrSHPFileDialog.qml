@@ -19,6 +19,4 @@ QGCFileDialog {
     title:          qsTr("Select Polygon File")
     selectExisting: true
     nameFilters:    ShapeFileHelper.fileDialogKMLOrSHPFilters
-    fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
-    fileExtension2: QGroundControl.settingsManager.appSettings.shpFileExtension
 }

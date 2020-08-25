@@ -128,7 +128,6 @@ Item {
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    ShapeFileHelper.fileDialogKMLFilters
-        fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
 
         onAcceptedForLoad: {
             mapPolyline.loadKMLFile(file)
