@@ -22,7 +22,8 @@ QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 
 const char* CompInfoParam::_jsonScopeKey                = "scope";
 const char* CompInfoParam::_jsonParametersKey           = "parameters";
-const char* CompInfoParam::_cachedMetaDataFilePrefix    =   "ParameterFactMetaData";
+const char* CompInfoParam::_cachedMetaDataFilePrefix    = "ParameterFactMetaData";
+const char* CompInfoParam::_parameterIndexTag           = "<#>";
 
 CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)
@@ -84,10 +85,20 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
     if (_opaqueParameterMetaData) {
         return vehicle->firmwarePlugin()->_getMetaDataForFact(_opaqueParameterMetaData, name, type, vehicle->vehicleType());
     } else {
+        QString indexTagName = name;
         if (!_nameToMetaDataMap.contains(name)) {
+            // Checked for indexed parameter names: "FOO<#>_BAR" will match "FOO1_BAR"
+            QRegularExpression regex("\\d+");
+            indexTagName = indexTagName.replace(regex, _parameterIndexTag);
+            if (!_nameToMetaDataMap.contains(indexTagName)) {
+                indexTagName.clear();
+            }
+        }
+        if (indexTagName.isEmpty()) {
+            indexTagName = name;
             _nameToMetaDataMap[name] = new FactMetaData(type, this);
         }
-        return _nameToMetaDataMap[name];
+        return _nameToMetaDataMap[indexTagName];
     }
 }
 
