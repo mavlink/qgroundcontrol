@@ -76,30 +76,58 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
         }
 
         FactMetaData* newMetaData = FactMetaData::createFromJsonObject(parameterValue.toObject(), emptyDefineMap, this);
-        _nameToMetaDataMap[newMetaData->name()] = newMetaData;
+
+        QRegularExpression      regexNameIncludesRegex("/\\(.+\\)/");
+        QRegularExpressionMatch match = regexNameIncludesRegex.match(newMetaData->name());
+        if (match.hasMatch()) {
+            QString regexParamName = newMetaData->name();
+            regexParamName.replace(QRegularExpression("/(\\(.+\\))/"), "\\1");
+            newMetaData->setName(regexParamName);
+            _regexNameMetaDataList.append(RegexFactMetaDataPair_t(newMetaData->name(), newMetaData));
+        } else {
+            _nameToMetaDataMap[newMetaData->name()] = newMetaData;
+        }
     }
 }
 
 FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaData::ValueType_t type)
 {
+    FactMetaData* factMetaData = nullptr;
+
     if (_opaqueParameterMetaData) {
-        return vehicle->firmwarePlugin()->_getMetaDataForFact(_opaqueParameterMetaData, name, type, vehicle->vehicleType());
+        factMetaData = vehicle->firmwarePlugin()->_getMetaDataForFact(_opaqueParameterMetaData, name, type, vehicle->vehicleType());
     } else {
-        QString indexTagName = name;
-        if (!_nameToMetaDataMap.contains(name)) {
-            // Checked for indexed parameter names: "FOO<#>_BAR" will match "FOO1_BAR"
-            QRegularExpression regex("\\d+");
-            indexTagName = indexTagName.replace(regex, _parameterIndexTag);
-            if (!_nameToMetaDataMap.contains(indexTagName)) {
-                indexTagName.clear();
+        if (_nameToMetaDataMap.contains(name)) {
+            factMetaData = _nameToMetaDataMap[name];
+        } else {
+            for (int i=0; i<_regexNameMetaDataList.count(); i++) {
+                const RegexFactMetaDataPair_t& pair = _regexNameMetaDataList[i];
+                QString regexParamName = pair.first;
+                QRegularExpression regex(regexParamName);
+                QRegularExpressionMatch match = regex.match(name);
+                QStringList captured = match.capturedTexts();
+                if (captured.count() == 2) {
+                    factMetaData = new FactMetaData(*pair.second, this);
+                    factMetaData->setName(name);
+
+                    QString shortDescription = factMetaData->shortDescription();
+                    shortDescription.replace("/1", captured[1]);
+                    factMetaData->setShortDescription(shortDescription);
+                    QString longDescription = factMetaData->shortDescription();
+                    longDescription.replace("/1", captured[1]);
+                    factMetaData->setLongDescription(longDescription);
+                }
             }
+
+            if (!factMetaData) {
+                factMetaData = new FactMetaData(type, this);
+            }
+            _nameToMetaDataMap[name] = factMetaData;
         }
-        if (indexTagName.isEmpty()) {
-            indexTagName = name;
-            _nameToMetaDataMap[name] = new FactMetaData(type, this);
-        }
-        return _nameToMetaDataMap[indexTagName];
     }
+
+
+    return factMetaData;
 }
 
 bool CompInfoParam::_isParameterVolatile(const QString& name)
