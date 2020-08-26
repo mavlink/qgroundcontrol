@@ -20,6 +20,7 @@ const char* VehicleDistanceSensorFactGroup::_rotationYaw270FactName =   "rotatio
 const char* VehicleDistanceSensorFactGroup::_rotationYaw315FactName =   "rotationYaw315";
 const char* VehicleDistanceSensorFactGroup::_rotationPitch90FactName =  "rotationPitch90";
 const char* VehicleDistanceSensorFactGroup::_rotationPitch270FactName = "rotationPitch270";
+const char* VehicleDistanceSensorFactGroup::_minDistanceFactName =      "minDistance";
 const char* VehicleDistanceSensorFactGroup::_maxDistanceFactName =      "maxDistance";
 
 VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
@@ -34,6 +35,7 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     , _rotationYaw315Fact   (0, _rotationYaw315FactName,    FactMetaData::valueTypeDouble)
     , _rotationPitch90Fact  (0, _rotationPitch90FactName,   FactMetaData::valueTypeDouble)
     , _rotationPitch270Fact (0, _rotationPitch270FactName,  FactMetaData::valueTypeDouble)
+    , _minDistanceFact      (0, _minDistanceFactName,       FactMetaData::valueTypeDouble)
     , _maxDistanceFact      (0, _maxDistanceFactName,       FactMetaData::valueTypeDouble)
 {
     _addFact(&_rotationNoneFact,        _rotationNoneFactName);
@@ -46,19 +48,8 @@ VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
     _addFact(&_rotationYaw315Fact,      _rotationYaw315FactName);
     _addFact(&_rotationPitch90Fact,     _rotationPitch90FactName);
     _addFact(&_rotationPitch270Fact,    _rotationPitch270FactName);
+    _addFact(&_minDistanceFact,         _minDistanceFactName);
     _addFact(&_maxDistanceFact,         _maxDistanceFactName);
-
-    // Start out as not available "--.--"
-    _rotationNoneFact.setRawValue(qQNaN());
-    _rotationYaw45Fact.setRawValue(qQNaN());
-    _rotationYaw135Fact.setRawValue(qQNaN());
-    _rotationYaw90Fact.setRawValue(qQNaN());
-    _rotationYaw180Fact.setRawValue(qQNaN());
-    _rotationYaw225Fact.setRawValue(qQNaN());
-    _rotationYaw270Fact.setRawValue(qQNaN());
-    _rotationPitch90Fact.setRawValue(qQNaN());
-    _rotationPitch270Fact.setRawValue(qQNaN());
-    _maxDistanceFact.setRawValue(qQNaN());
 }
 
 void VehicleDistanceSensorFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& message)
@@ -95,6 +86,8 @@ void VehicleDistanceSensorFactGroup::handleMessage(Vehicle* /* vehicle */, mavli
         if (orientation2Fact.orientation == distanceSensor.orientation) {
             orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
         }
-    maxDistance()->setRawValue(distanceSensor.max_distance/100.0);
     }
+
+    maxDistance()->setRawValue(distanceSensor.max_distance / 100.0);
+    _setTelemetryAvailable(true);
 }

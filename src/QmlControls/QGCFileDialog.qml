@@ -153,7 +153,6 @@ Item {
                                 QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
-                                        console.log("hamburgerMenu.fileToDelete", hamburgerMenu.fileToDelete)
                                         controller.deleteFile(hamburgerMenu.fileToDelete)
                                         fileRepeater.model = controller.getFiles(folder, _rgExtensions)
                                     }
