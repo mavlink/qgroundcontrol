@@ -25,7 +25,7 @@ linux {
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        DEFINES += QGC_GST_MICROHARD_ENABLED
+        DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         linux-clang {
             message("Linux clang")
@@ -41,14 +41,14 @@ linux {
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        DEFINES += QGC_GST_MICROHARD_ENABLED
+        DEFINES += QGC_GST_MICROHARD_ENABLED 
     } else : android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_ENABLE_BLUETOOTH
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        DEFINES += QGC_GST_MICROHARD_ENABLED
+        DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CXXFLAGS_WARN_ON += -Werror \
             -Wno-unused-parameter \             # gst_plugins-good has these errors
             -Wno-implicit-fallthrough \         # gst_plugins-good has these errors
@@ -82,7 +82,7 @@ linux {
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        DEFINES += QGC_GST_MICROHARD_ENABLED
+        DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         QMAKE_CFLAGS -= -Zc:strictStrings
         QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
@@ -106,7 +106,7 @@ linux {
         CONFIG  += x86_64
         CONFIG  -= x86
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        DEFINES += QGC_GST_MICROHARD_ENABLED
+        DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
@@ -188,18 +188,13 @@ exists ($$PWD/.git) {
     } else {
         # development version "Development branch:sha date"
         GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
-        VERSION     = 0.0.0
+        VERSION         = 0.0.0
     }
 
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
         message(QGroundControl version $${MAC_VERSION} build $${MAC_BUILD} describe $${GIT_VERSION})
-    } AndroidBuild {
-        ANDROID_VERSION_NAME = $${GIT_VERSION}
-        ANDROID_VERSION_CODE = $$split(VERSION, .)
-        ANDROID_VERSION_CODE = $$system(echo $((100000*$$member(ANDROID_VERSION_CODE, 0)+10000*$$member(ANDROID_VERSION_CODE, 1)+1000*$$member(ANDROID_VERSION_CODE, 2))))
-        message(QGroundControl ANDROID_VERSION_NAME \'$${ANDROID_VERSION_NAME}\' ANDROID_VERSION_CODE \'$${ANDROID_VERSION_CODE}\')
     } else {
         message(QGroundControl $${GIT_VERSION})
     }
