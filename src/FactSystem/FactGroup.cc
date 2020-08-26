@@ -25,6 +25,7 @@ FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* 
 {
     _setupTimer();
     _nameToFactMetaDataMap = FactMetaData::createMapFromJsonFile(metaDataFile, this);
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 FactGroup::FactGroup(int updateRateMsecs, QObject* parent, bool ignoreCamelCase)
@@ -33,6 +34,7 @@ FactGroup::FactGroup(int updateRateMsecs, QObject* parent, bool ignoreCamelCase)
     , _ignoreCamelCase(ignoreCamelCase)
 {
     _setupTimer();
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 void FactGroup::_loadFromJsonArray(const QJsonArray jsonArray)
@@ -129,7 +131,7 @@ void FactGroup::_addFact(Fact* fact, const QString& name)
 
     fact->setSendValueChangedSignals(_updateRateMSecs == 0);
     if (_nameToFactMetaDataMap.contains(name)) {
-        fact->setMetaData(_nameToFactMetaDataMap[name]);
+        fact->setMetaData(_nameToFactMetaDataMap[name], true /* setDefaultFromMetaData */);
     }
     _nameToFactMap[name] = fact;
     _factNames.append(name);
@@ -181,4 +183,12 @@ QString FactGroup::_camelCase(const QString& text)
 void FactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_message_t& /* message */)
 {
     // Default implementation does nothing
+}
+
+void FactGroup::_setTelemetryAvailable (bool telemetryAvailable)
+{
+    if (telemetryAvailable != _telemetryAvailable) {
+        _telemetryAvailable = telemetryAvailable;
+        emit telemetryAvailableChanged(_telemetryAvailable);
+    }
 }

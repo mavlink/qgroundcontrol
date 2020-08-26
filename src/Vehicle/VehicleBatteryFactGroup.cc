@@ -110,6 +110,7 @@ void VehicleBatteryFactGroup::_handleHighLatency(Vehicle* vehicle, mavlink_messa
 
     VehicleBatteryFactGroup* group = _findOrAddBatteryGroupById(vehicle, 0);
     group->percentRemaining()->setRawValue(highLatency.battery_remaining == UINT8_MAX ? qQNaN() : highLatency.battery_remaining);
+    group->_setTelemetryAvailable(true);
 }
 
 void VehicleBatteryFactGroup::_handleHighLatency2(Vehicle* vehicle, mavlink_message_t& message)
@@ -119,6 +120,7 @@ void VehicleBatteryFactGroup::_handleHighLatency2(Vehicle* vehicle, mavlink_mess
 
     VehicleBatteryFactGroup* group = _findOrAddBatteryGroupById(vehicle, 0);
     group->percentRemaining()->setRawValue(highLatency2.battery == -1 ? qQNaN() : highLatency2.battery);
+    group->_setTelemetryAvailable(true);
 }
 
 void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_message_t& message)
@@ -151,6 +153,7 @@ void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_mes
     group->timeRemaining()->setRawValue     (batteryStatus.time_remaining == 0 ?        qQNaN() : batteryStatus.time_remaining);
     group->chargeState()->setRawValue       (batteryStatus.charge_state);
     group->instantPower()->setRawValue      (totalVoltage * group->current()->rawValue().toDouble());
+    group->_setTelemetryAvailable(true);
 }
 
 VehicleBatteryFactGroup* VehicleBatteryFactGroup::_findOrAddBatteryGroupById(Vehicle* vehicle, uint8_t batteryId)

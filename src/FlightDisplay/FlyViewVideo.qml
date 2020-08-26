@@ -70,7 +70,7 @@ Item {
     }
 
     ProximityRadarVideoView{
-        anchors.fill: parent
-        vehicle: QGroundControl.multiVehicleManager.activeVehicle
+        anchors.fill:   parent
+        vehicle:        QGroundControl.multiVehicleManager.activeVehicle
     }
 }

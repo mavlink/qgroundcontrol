@@ -5,71 +5,97 @@
 [
 {
     "name":             "rotationNone",
-    "shortDesc": "Forward",
+    "shortDesc":        "Forward",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw45",
-    "shortDesc": "Forward/Right",
+    "shortDesc":        "Forward/Right",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw90",
-    "shortDesc": "Right",
+    "shortDesc":        "Right",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw135",
-    "shortDesc": "Rear/Right",
+    "shortDesc":        "Rear/Right",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw180",
-    "shortDesc": "Rear",
+    "shortDesc":        "Rear",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw225",
-    "shortDesc": "Rear/Left",
+    "shortDesc":        "Rear/Left",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw270",
-    "shortDesc": "Left",
+    "shortDesc":        "Left",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw315",
-    "shortDesc": "Forward/Left",
+    "shortDesc":        "Forward/Left",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch90",
-    "shortDesc": "Up",
+    "shortDesc":        "Up",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch270",
-    "shortDesc": "Down",
+    "shortDesc":        "Down",
     "type":             "double",
+    "default":          null,
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "minDistance",
+    "shortDesc":        "Minimum distance sensor can detect",
+    "type":             "double",
+    "default":          null,
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "maxDistance",
+    "shortDesc":        "Maximum distance sensor can detect",
+    "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 }
