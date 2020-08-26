@@ -983,7 +983,7 @@ void LinkManager::_activeLinkCheck(void)
         qgcApp()->showAppMessage(
             foundNSHPrompt ?
                 tr("Please check to make sure you have an SD Card inserted in your Vehicle and try again.") :
-                tr("Your Vehicle is not responding. If this continues, shutdown %1, restart the Vehicle letting it boot completely, then start %1.").arg(qgcApp()->applicationName()));
+                tr("Vehicle on port %1 is not responding. If this continues, shutdown %2, restart the Vehicle letting it boot completely, then start %2.").arg(link->getSerialConfig()->portName()).arg(qgcApp()->applicationName()));
     }
 }
 #endif
