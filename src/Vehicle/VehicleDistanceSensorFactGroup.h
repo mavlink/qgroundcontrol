@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(Fact* rotationYaw315     READ rotationYaw315     CONSTANT)
     Q_PROPERTY(Fact* rotationPitch90    READ rotationPitch90    CONSTANT)
     Q_PROPERTY(Fact* rotationPitch270   READ rotationPitch270   CONSTANT)
+    Q_PROPERTY(Fact* minDistance        READ minDistance        CONSTANT)
     Q_PROPERTY(Fact* maxDistance        READ maxDistance        CONSTANT)
 
     Fact* rotationNone      () { return &_rotationNoneFact; }
@@ -43,6 +44,7 @@ public:
     Fact* rotationYaw315    () { return &_rotationYaw315Fact; }
     Fact* rotationPitch90   () { return &_rotationPitch90Fact; }
     Fact* rotationPitch270  () { return &_rotationPitch270Fact; }
+    Fact* minDistance       () { return &_minDistanceFact; }
     Fact* maxDistance       () { return &_maxDistanceFact; }
 
     // Overrides from FactGroup
@@ -58,6 +60,7 @@ public:
     static const char* _rotationYaw315FactName;
     static const char* _rotationPitch90FactName;
     static const char* _rotationPitch270FactName;
+    static const char* _minDistanceFactName;
     static const char* _maxDistanceFactName;
 
 private:
@@ -71,5 +74,6 @@ private:
     Fact _rotationYaw315Fact;
     Fact _rotationPitch90Fact;
     Fact _rotationPitch270Fact;
+    Fact _minDistanceFact;
     Fact _maxDistanceFact;
 };
