@@ -30,6 +30,7 @@ void VehicleClockFactGroup::_updateAllValues()
 {
     _currentTimeFact.setRawValue(QTime::currentTime().toString());
     _currentDateFact.setRawValue(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
+    _setTelemetryAvailable(true);
 
     FactGroup::_updateAllValues();
 }
