@@ -44,8 +44,11 @@ private:
     static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin   (MAV_AUTOPILOT firmwareType);
     static QString          _parameterMetaDataFile          (Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion);
 
+    typedef QPair<QString /* regexName */, FactMetaData*> RegexFactMetaDataPair_t;
+
     bool                                _noJsonMetadata             = true;
     FactMetaData::NameToMetaDataMap_t   _nameToMetaDataMap;
+    QList<RegexFactMetaDataPair_t>      _regexNameMetaDataList;
     QObject*                            _opaqueParameterMetaData    = nullptr;
 
     static const char* _cachedMetaDataFilePrefix;
