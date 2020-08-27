@@ -15,7 +15,7 @@ Rectangle {
     property var    _logReplayLink: null
 
     function pickLogFile() {
-        if (mainWindow.activeVehicle) {
+        if (globals.activeVehicle) {
             mainWindow.showMessageDialog(qsTr("Log Replay"), qsTr("You must close all connections prior to replaying a log."))
             return
         }
@@ -28,8 +28,7 @@ Rectangle {
     QGCFileDialog {
         id:                 filePicker
         title:              qsTr("Select Telemetery Log")
-        nameFilters:        [qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)")]
-        fileExtension:      _logFileExtension
+        nameFilters:        [ qsTr("Telemetry Logs (*.%1)").arg(_logFileExtension), qsTr("All Files (*)") ]
         selectExisting:     true
         folder:             QGroundControl.settingsManager.appSettings.telemetrySavePath
         onAcceptedForLoad: {

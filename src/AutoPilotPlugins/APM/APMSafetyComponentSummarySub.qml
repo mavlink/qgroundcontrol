@@ -10,7 +10,7 @@ import QGroundControl.Palette      1.0
 Item {
     anchors.fill:   parent
 
-    property bool   _firmware34: activeVehicle.versionCompare(3, 5, 0) < 0
+    property bool   _firmware34: globals.activeVehicle.versionCompare(3, 5, 0) < 0
 
     FactPanelController { id: controller; }
 

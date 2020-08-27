@@ -26,6 +26,8 @@ Item {
 
     property bool showIndicator: true
 
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     Component {
         id: gpsInfo
 
@@ -45,29 +47,29 @@ Item {
 
                 QGCLabel {
                     id:             gpsLabel
-                    text:           (activeVehicle && activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
+                    text:           (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? qsTr("GPS Status") : qsTr("GPS Data Unavailable")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 GridLayout {
                     id:                 gpsGrid
-                    visible:            (activeVehicle && activeVehicle.gps.count.value >= 0)
+                    visible:            (_activeVehicle && _activeVehicle.gps.count.value >= 0)
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     columnSpacing:      ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter: parent.horizontalCenter
                     columns: 2
 
                     QGCLabel { text: qsTr("GPS Count:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.count.valueString : qsTr("N/A", "No data to display") }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.count.valueString : qsTr("N/A", "No data to display") }
                     QGCLabel { text: qsTr("GPS Lock:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.lock.enumStringValue : qsTr("N/A", "No data to display") }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.lock.enumStringValue : qsTr("N/A", "No data to display") }
                     QGCLabel { text: qsTr("HDOP:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.hdop.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.hdop.valueString : qsTr("--.--", "No data to display") }
                     QGCLabel { text: qsTr("VDOP:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.vdop.valueString : qsTr("--.--", "No data to display") }
                     QGCLabel { text: qsTr("Course Over Ground:") }
-                    QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
+                    QGCLabel { text: _activeVehicle ? _activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
                 }
             }
         }
@@ -81,7 +83,7 @@ Item {
         source:             "/qmlimages/Gps.svg"
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
-        opacity:            (activeVehicle && activeVehicle.gps.count.value >= 0) ? 1 : 0.5
+        opacity:            (_activeVehicle && _activeVehicle.gps.count.value >= 0) ? 1 : 0.5
         color:              qgcPal.buttonText
     }
 
@@ -93,16 +95,16 @@ Item {
 
         QGCLabel {
             anchors.horizontalCenter:   hdopValue.horizontalCenter
-            visible:                    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
+            visible:                    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
             color:                      qgcPal.buttonText
-            text:                       activeVehicle ? activeVehicle.gps.count.valueString : ""
+            text:                       _activeVehicle ? _activeVehicle.gps.count.valueString : ""
         }
 
         QGCLabel {
             id:         hdopValue
-            visible:    activeVehicle && !isNaN(activeVehicle.gps.hdop.value)
+            visible:    _activeVehicle && !isNaN(_activeVehicle.gps.hdop.value)
             color:      qgcPal.buttonText
-            text:       activeVehicle ? activeVehicle.gps.hdop.value.toFixed(1) : ""
+            text:       _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
         }
     }
 

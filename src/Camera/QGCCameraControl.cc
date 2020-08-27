@@ -387,10 +387,7 @@ QGCCameraControl::takePhoto()
             _captureInfoRetries = 0;
             //-- Capture local image as well
             if(qgcApp()->toolbox()->videoManager()) {
-                QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-                QDir().mkpath(photoPath);
-                photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-                qgcApp()->toolbox()->videoManager()->grabImage(photoPath);
+                qgcApp()->toolbox()->videoManager()->grabImage();
             }
             return true;
         }
@@ -1590,7 +1587,7 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         qCDebug(CameraControlLog) << "All stream handlers done";
         _streamInfoTimer.stop();
         emit autoStreamChanged();
-        emit _vehicle->dynamicCameras()->streamChanged();
+        emit _vehicle->cameraManager()->streamChanged();
     }
 }
 
@@ -1636,7 +1633,7 @@ QGCCameraControl::setCurrentStream(int stream)
                 _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
             }
             emit currentStreamChanged();
-            emit _vehicle->dynamicCameras()->streamChanged();
+            emit _vehicle->cameraManager()->streamChanged();
         }
     }
 }
@@ -1786,7 +1783,7 @@ QGCCameraControl::_streamTimeout()
         //-- If we have at least one stream, work with what we have.
         if(_streams.count()) {
             emit autoStreamChanged();
-            emit _vehicle->dynamicCameras()->streamChanged();
+            emit _vehicle->cameraManager()->streamChanged();
         }
         return;
     }
@@ -2140,7 +2137,7 @@ QGCCameraControl::wb()
 Fact*
 QGCCameraControl::mode()
 {
-    return _paramComplete ? getFact(kCAM_MODE) : nullptr;
+    return _paramComplete && factExists(kCAM_MODE) ? getFact(kCAM_MODE) : nullptr;
 }
 
 //-----------------------------------------------------------------------------

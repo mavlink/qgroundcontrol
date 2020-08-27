@@ -9,8 +9,9 @@
 
 import QtQuick 2.12
 
-import QGroundControl           1.0
-import QGroundControl.Controls  1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Controllers   1.0
 
 Item {
     id:         _root
@@ -66,5 +67,10 @@ Item {
         anchors.fill:       parent
         enabled:            pipState.state === pipState.fullState
         onDoubleClicked:    QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+    }
+
+    ProximityRadarVideoView{
+        anchors.fill: parent
+        vehicle: QGroundControl.multiVehicleManager.activeVehicle
     }
 }

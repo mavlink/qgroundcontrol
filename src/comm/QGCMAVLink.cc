@@ -23,6 +23,12 @@ constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassMultiRotor;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassVTOL;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassGeneric;
 
+QGCMAVLink::QGCMAVLink(QObject* parent)
+    : QObject(parent)
+{
+
+}
+
 QList<QGCMAVLink::FirmwareClass_t> QGCMAVLink::allFirmwareClasses(void)
 {
     static const QList<QGCMAVLink::FirmwareClass_t> classes = {

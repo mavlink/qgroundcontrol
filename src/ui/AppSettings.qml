@@ -49,8 +49,6 @@ Rectangle {
         flickableDirection: Flickable.VerticalFlick
         clip:               true
 
-        ExclusiveGroup { id: panelActionGroup }
-
         ColumnLayout {
             id:         buttonColumn
             spacing:    _verticalMargin
@@ -62,7 +60,7 @@ Rectangle {
                 QGCButton {
                     height:             _buttonHeight
                     text:               modelData.title
-                    exclusiveGroup:     panelActionGroup
+                    autoExclusive:      true
                     Layout.fillWidth:   true
 
                     onClicked: {

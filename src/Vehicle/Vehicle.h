@@ -26,6 +26,15 @@
 #include "QGCMapCircle.h"
 #include "TerrainFactGroup.h"
 #include "SysStatusSensorInfo.h"
+#include "VehicleClockFactGroup.h"
+#include "VehicleDistanceSensorFactGroup.h"
+#include "VehicleWindFactGroup.h"
+#include "VehicleGPSFactGroup.h"
+#include "VehicleSetpointFactGroup.h"
+#include "VehicleTemperatureFactGroup.h"
+#include "VehicleVibrationFactGroup.h"
+#include "VehicleEscStatusFactGroup.h"
+#include "VehicleEstimatorStatusFactGroup.h"
 
 class UAS;
 class UASInterface;
@@ -47,6 +56,7 @@ class TerrainProtocolHandler;
 class ComponentInformationManager;
 class FTPManager;
 class InitialConnectStateMachine;
+class VehicleBatteryFactGroup;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -55,505 +65,6 @@ class AirspaceVehicleManager;
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
 class Vehicle;
-
-class VehicleDistanceSensorFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleDistanceSensorFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* rotationNone       READ rotationNone       CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw45      READ rotationYaw45      CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw90      READ rotationYaw90      CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw135     READ rotationYaw135     CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw180     READ rotationYaw180     CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw225     READ rotationYaw225     CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw270     READ rotationYaw270     CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw315     READ rotationYaw315     CONSTANT)
-    Q_PROPERTY(Fact* rotationPitch90    READ rotationPitch90    CONSTANT)
-    Q_PROPERTY(Fact* rotationPitch270   READ rotationPitch270   CONSTANT)
-
-    Fact* rotationNone      () { return &_rotationNoneFact; }
-    Fact* rotationYaw45     () { return &_rotationYaw45Fact; }
-    Fact* rotationYaw90     () { return &_rotationYaw90Fact; }
-    Fact* rotationYaw135    () { return &_rotationYaw90Fact; }
-    Fact* rotationYaw180    () { return &_rotationYaw180Fact; }
-    Fact* rotationYaw225    () { return &_rotationYaw180Fact; }
-    Fact* rotationYaw270    () { return &_rotationYaw270Fact; }
-    Fact* rotationYaw315    () { return &_rotationYaw315Fact; }
-    Fact* rotationPitch90   () { return &_rotationPitch90Fact; }
-    Fact* rotationPitch270  () { return &_rotationPitch270Fact; }
-
-    static const char* _rotationNoneFactName;
-    static const char* _rotationYaw45FactName;
-    static const char* _rotationYaw90FactName;
-    static const char* _rotationYaw135FactName;
-    static const char* _rotationYaw180FactName;
-    static const char* _rotationYaw225FactName;
-    static const char* _rotationYaw270FactName;
-    static const char* _rotationYaw315FactName;
-    static const char* _rotationPitch90FactName;
-    static const char* _rotationPitch270FactName;
-
-private:
-    Fact _rotationNoneFact;
-    Fact _rotationYaw45Fact;
-    Fact _rotationYaw90Fact;
-    Fact _rotationYaw135Fact;
-    Fact _rotationYaw180Fact;
-    Fact _rotationYaw225Fact;
-    Fact _rotationYaw270Fact;
-    Fact _rotationYaw315Fact;
-    Fact _rotationPitch90Fact;
-    Fact _rotationPitch270Fact;
-};
-
-class VehicleSetpointFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleSetpointFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* roll       READ roll       CONSTANT)
-    Q_PROPERTY(Fact* pitch      READ pitch      CONSTANT)
-    Q_PROPERTY(Fact* yaw        READ yaw        CONSTANT)
-    Q_PROPERTY(Fact* rollRate   READ rollRate   CONSTANT)
-    Q_PROPERTY(Fact* pitchRate  READ pitchRate  CONSTANT)
-    Q_PROPERTY(Fact* yawRate    READ yawRate    CONSTANT)
-
-    Fact* roll      () { return &_rollFact; }
-    Fact* pitch     () { return &_pitchFact; }
-    Fact* yaw       () { return &_yawFact; }
-    Fact* rollRate  () { return &_rollRateFact; }
-    Fact* pitchRate () { return &_pitchRateFact; }
-    Fact* yawRate   () { return &_yawRateFact; }
-
-    static const char* _rollFactName;
-    static const char* _pitchFactName;
-    static const char* _yawFactName;
-    static const char* _rollRateFactName;
-    static const char* _pitchRateFactName;
-    static const char* _yawRateFactName;
-
-private:
-    Fact _rollFact;
-    Fact _pitchFact;
-    Fact _yawFact;
-    Fact _rollRateFact;
-    Fact _pitchRateFact;
-    Fact _yawRateFact;
-};
-
-class VehicleVibrationFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleVibrationFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* xAxis      READ xAxis      CONSTANT)
-    Q_PROPERTY(Fact* yAxis      READ yAxis      CONSTANT)
-    Q_PROPERTY(Fact* zAxis      READ zAxis      CONSTANT)
-    Q_PROPERTY(Fact* clipCount1 READ clipCount1 CONSTANT)
-    Q_PROPERTY(Fact* clipCount2 READ clipCount2 CONSTANT)
-    Q_PROPERTY(Fact* clipCount3 READ clipCount3 CONSTANT)
-
-    Fact* xAxis         () { return &_xAxisFact; }
-    Fact* yAxis         () { return &_yAxisFact; }
-    Fact* zAxis         () { return &_zAxisFact; }
-    Fact* clipCount1    () { return &_clipCount1Fact; }
-    Fact* clipCount2    () { return &_clipCount2Fact; }
-    Fact* clipCount3    () { return &_clipCount3Fact; }
-
-    static const char* _xAxisFactName;
-    static const char* _yAxisFactName;
-    static const char* _zAxisFactName;
-    static const char* _clipCount1FactName;
-    static const char* _clipCount2FactName;
-    static const char* _clipCount3FactName;
-
-private:
-    Fact        _xAxisFact;
-    Fact        _yAxisFact;
-    Fact        _zAxisFact;
-    Fact        _clipCount1Fact;
-    Fact        _clipCount2Fact;
-    Fact        _clipCount3Fact;
-};
-
-class VehicleWindFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleWindFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* direction      READ direction      CONSTANT)
-    Q_PROPERTY(Fact* speed          READ speed          CONSTANT)
-    Q_PROPERTY(Fact* verticalSpeed  READ verticalSpeed  CONSTANT)
-
-    Fact* direction     () { return &_directionFact; }
-    Fact* speed         () { return &_speedFact; }
-    Fact* verticalSpeed () { return &_verticalSpeedFact; }
-
-    static const char* _directionFactName;
-    static const char* _speedFactName;
-    static const char* _verticalSpeedFactName;
-
-private:
-    Fact        _directionFact;
-    Fact        _speedFact;
-    Fact        _verticalSpeedFact;
-};
-
-class VehicleGPSFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleGPSFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* lat                READ lat                CONSTANT)
-    Q_PROPERTY(Fact* lon                READ lon                CONSTANT)
-    Q_PROPERTY(Fact* mgrs               READ mgrs               CONSTANT)
-    Q_PROPERTY(Fact* hdop               READ hdop               CONSTANT)
-    Q_PROPERTY(Fact* vdop               READ vdop               CONSTANT)
-    Q_PROPERTY(Fact* courseOverGround   READ courseOverGround   CONSTANT)
-    Q_PROPERTY(Fact* count              READ count              CONSTANT)
-    Q_PROPERTY(Fact* lock               READ lock               CONSTANT)
-
-    Fact* lat               () { return &_latFact; }
-    Fact* lon               () { return &_lonFact; }
-    Fact* mgrs              () { return &_mgrsFact; }
-    Fact* hdop              () { return &_hdopFact; }
-    Fact* vdop              () { return &_vdopFact; }
-    Fact* courseOverGround  () { return &_courseOverGroundFact; }
-    Fact* count             () { return &_countFact; }
-    Fact* lock              () { return &_lockFact; }
-
-    static const char* _latFactName;
-    static const char* _lonFactName;
-    static const char* _mgrsFactName;
-    static const char* _hdopFactName;
-    static const char* _vdopFactName;
-    static const char* _courseOverGroundFactName;
-    static const char* _countFactName;
-    static const char* _lockFactName;
-
-private:
-    Fact        _latFact;
-    Fact        _lonFact;
-    Fact        _mgrsFact;
-    Fact        _hdopFact;
-    Fact        _vdopFact;
-    Fact        _courseOverGroundFact;
-    Fact        _countFact;
-    Fact        _lockFact;
-};
-
-class VehicleBatteryFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleBatteryFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* voltage            READ voltage            CONSTANT)
-    Q_PROPERTY(Fact* percentRemaining   READ percentRemaining   CONSTANT)
-    Q_PROPERTY(Fact* mahConsumed        READ mahConsumed        CONSTANT)
-    Q_PROPERTY(Fact* current            READ current            CONSTANT)
-    Q_PROPERTY(Fact* temperature        READ temperature        CONSTANT)
-    Q_PROPERTY(Fact* instantPower       READ instantPower       CONSTANT)
-    Q_PROPERTY(Fact* timeRemaining      READ timeRemaining      CONSTANT)
-    Q_PROPERTY(Fact* chargeState        READ chargeState        CONSTANT)
-
-    Fact* voltage                   () { return &_voltageFact; }
-    Fact* percentRemaining          () { return &_percentRemainingFact; }
-    Fact* mahConsumed               () { return &_mahConsumedFact; }
-    Fact* current                   () { return &_currentFact; }
-    Fact* temperature               () { return &_temperatureFact; }
-    Fact* instantPower              () { return &_instantPowerFact; }
-    Fact* timeRemaining             () { return &_timeRemainingFact; }
-    Fact* chargeState               () { return &_chargeStateFact; }
-
-    static const char* _voltageFactName;
-    static const char* _percentRemainingFactName;
-    static const char* _mahConsumedFactName;
-    static const char* _currentFactName;
-    static const char* _temperatureFactName;
-    static const char* _instantPowerFactName;
-    static const char* _timeRemainingFactName;
-    static const char* _chargeStateFactName;
-
-    static const char* _settingsGroup;
-
-private:
-    Fact            _voltageFact;
-    Fact            _percentRemainingFact;
-    Fact            _mahConsumedFact;
-    Fact            _currentFact;
-    Fact            _temperatureFact;
-    Fact            _instantPowerFact;
-    Fact            _timeRemainingFact;
-    Fact            _chargeStateFact;
-};
-
-class VehicleTemperatureFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleTemperatureFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* temperature1       READ temperature1       CONSTANT)
-    Q_PROPERTY(Fact* temperature2       READ temperature2       CONSTANT)
-    Q_PROPERTY(Fact* temperature3       READ temperature3       CONSTANT)
-
-    Fact* temperature1 () { return &_temperature1Fact; }
-    Fact* temperature2 () { return &_temperature2Fact; }
-    Fact* temperature3 () { return &_temperature3Fact; }
-
-    static const char* _temperature1FactName;
-    static const char* _temperature2FactName;
-    static const char* _temperature3FactName;
-
-    static const char* _settingsGroup;
-
-    static const double _temperatureUnavailable;
-
-private:
-    Fact            _temperature1Fact;
-    Fact            _temperature2Fact;
-    Fact            _temperature3Fact;
-};
-
-class VehicleClockFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleClockFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* currentTime        READ currentTime        CONSTANT)
-    Q_PROPERTY(Fact* currentDate        READ currentDate        CONSTANT)
-
-    Fact* currentTime () { return &_currentTimeFact; }
-    Fact* currentDate () { return &_currentDateFact; }
-
-    static const char* _currentTimeFactName;
-    static const char* _currentDateFactName;
-
-    static const char* _settingsGroup;
-
-private slots:
-    void _updateAllValues() override;
-
-private:
-    Fact            _currentTimeFact;
-    Fact            _currentDateFact;
-};
-
-class VehicleEscStatusFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleEscStatusFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* index              READ index              CONSTANT)
-
-    Q_PROPERTY(Fact* rpmFirst           READ rpmFirst           CONSTANT)
-    Q_PROPERTY(Fact* rpmSecond          READ rpmSecond          CONSTANT)
-    Q_PROPERTY(Fact* rpmThird           READ rpmThird           CONSTANT)
-    Q_PROPERTY(Fact* rpmFourth          READ rpmFourth          CONSTANT)
-
-    Q_PROPERTY(Fact* currentFirst       READ currentFirst       CONSTANT)
-    Q_PROPERTY(Fact* currentSecond      READ currentSecond      CONSTANT)
-    Q_PROPERTY(Fact* currentThird       READ currentThird       CONSTANT)
-    Q_PROPERTY(Fact* currentFourth      READ currentFourth      CONSTANT)
-
-    Q_PROPERTY(Fact* voltageFirst       READ voltageFirst       CONSTANT)
-    Q_PROPERTY(Fact* voltageSecond      READ voltageSecond      CONSTANT)
-    Q_PROPERTY(Fact* voltageThird       READ voltageThird       CONSTANT)
-    Q_PROPERTY(Fact* voltageFourth      READ voltageFourth      CONSTANT)
-
-    Fact* index                         () { return &_indexFact; }
-
-    Fact* rpmFirst                      () { return &_rpmFirstFact; }
-    Fact* rpmSecond                     () { return &_rpmSecondFact; }
-    Fact* rpmThird                      () { return &_rpmThirdFact; }
-    Fact* rpmFourth                     () { return &_rpmFourthFact; }
-
-    Fact* currentFirst                  () { return &_currentFirstFact; }
-    Fact* currentSecond                 () { return &_currentSecondFact; }
-    Fact* currentThird                  () { return &_currentThirdFact; }
-    Fact* currentFourth                 () { return &_currentFourthFact; }
-
-    Fact* voltageFirst                  () { return &_voltageFirstFact; }
-    Fact* voltageSecond                 () { return &_voltageSecondFact; }
-    Fact* voltageThird                  () { return &_voltageThirdFact; }
-    Fact* voltageFourth                 () { return &_voltageFourthFact; }
-
-    static const char* _indexFactName;
-
-    static const char* _rpmFirstFactName;
-    static const char* _rpmSecondFactName;
-    static const char* _rpmThirdFactName;
-    static const char* _rpmFourthFactName;
-
-    static const char* _currentFirstFactName;
-    static const char* _currentSecondFactName;
-    static const char* _currentThirdFactName;
-    static const char* _currentFourthFactName;
-
-    static const char* _voltageFirstFactName;
-    static const char* _voltageSecondFactName;
-    static const char* _voltageThirdFactName;
-    static const char* _voltageFourthFactName;
-private:
-    Fact _indexFact;
-
-    Fact _rpmFirstFact;
-    Fact _rpmSecondFact;
-    Fact _rpmThirdFact;
-    Fact _rpmFourthFact;
-
-    Fact _currentFirstFact;
-    Fact _currentSecondFact;
-    Fact _currentThirdFact;
-    Fact _currentFourthFact;
-
-    Fact _voltageFirstFact;
-    Fact _voltageSecondFact;
-    Fact _voltageThirdFact;
-    Fact _voltageFourthFact;
-};
-
-class VehicleEstimatorStatusFactGroup : public FactGroup
-{
-    Q_OBJECT
-
-public:
-    VehicleEstimatorStatusFactGroup(QObject* parent = nullptr);
-
-    Q_PROPERTY(Fact* goodAttitudeEstimate           READ goodAttitudeEstimate           CONSTANT)
-    Q_PROPERTY(Fact* goodHorizVelEstimate           READ goodHorizVelEstimate           CONSTANT)
-    Q_PROPERTY(Fact* goodVertVelEstimate            READ goodVertVelEstimate            CONSTANT)
-    Q_PROPERTY(Fact* goodHorizPosRelEstimate        READ goodHorizPosRelEstimate        CONSTANT)
-    Q_PROPERTY(Fact* goodHorizPosAbsEstimate        READ goodHorizPosAbsEstimate        CONSTANT)
-    Q_PROPERTY(Fact* goodVertPosAbsEstimate         READ goodVertPosAbsEstimate         CONSTANT)
-    Q_PROPERTY(Fact* goodVertPosAGLEstimate         READ goodVertPosAGLEstimate         CONSTANT)
-    Q_PROPERTY(Fact* goodConstPosModeEstimate       READ goodConstPosModeEstimate       CONSTANT)
-    Q_PROPERTY(Fact* goodPredHorizPosRelEstimate    READ goodPredHorizPosRelEstimate    CONSTANT)
-    Q_PROPERTY(Fact* goodPredHorizPosAbsEstimate    READ goodPredHorizPosAbsEstimate    CONSTANT)
-    Q_PROPERTY(Fact* gpsGlitch                      READ gpsGlitch                      CONSTANT)
-    Q_PROPERTY(Fact* accelError                     READ accelError                     CONSTANT)
-    Q_PROPERTY(Fact* velRatio                       READ velRatio                       CONSTANT)
-    Q_PROPERTY(Fact* horizPosRatio                  READ horizPosRatio                  CONSTANT)
-    Q_PROPERTY(Fact* vertPosRatio                   READ vertPosRatio                   CONSTANT)
-    Q_PROPERTY(Fact* magRatio                       READ magRatio                       CONSTANT)
-    Q_PROPERTY(Fact* haglRatio                      READ haglRatio                      CONSTANT)
-    Q_PROPERTY(Fact* tasRatio                       READ tasRatio                       CONSTANT)
-    Q_PROPERTY(Fact* horizPosAccuracy               READ horizPosAccuracy               CONSTANT)
-    Q_PROPERTY(Fact* vertPosAccuracy                READ vertPosAccuracy                CONSTANT)
-
-    Fact* goodAttitudeEstimate          () { return &_goodAttitudeEstimateFact; }
-    Fact* goodHorizVelEstimate          () { return &_goodHorizVelEstimateFact; }
-    Fact* goodVertVelEstimate           () { return &_goodVertVelEstimateFact; }
-    Fact* goodHorizPosRelEstimate       () { return &_goodHorizPosRelEstimateFact; }
-    Fact* goodHorizPosAbsEstimate       () { return &_goodHorizPosAbsEstimateFact; }
-    Fact* goodVertPosAbsEstimate        () { return &_goodVertPosAbsEstimateFact; }
-    Fact* goodVertPosAGLEstimate        () { return &_goodVertPosAGLEstimateFact; }
-    Fact* goodConstPosModeEstimate      () { return &_goodConstPosModeEstimateFact; }
-    Fact* goodPredHorizPosRelEstimate   () { return &_goodPredHorizPosRelEstimateFact; }
-    Fact* goodPredHorizPosAbsEstimate   () { return &_goodPredHorizPosAbsEstimateFact; }
-    Fact* gpsGlitch                     () { return &_gpsGlitchFact; }
-    Fact* accelError                    () { return &_accelErrorFact; }
-    Fact* velRatio                      () { return &_velRatioFact; }
-    Fact* horizPosRatio                 () { return &_horizPosRatioFact; }
-    Fact* vertPosRatio                  () { return &_vertPosRatioFact; }
-    Fact* magRatio                      () { return &_magRatioFact; }
-    Fact* haglRatio                     () { return &_haglRatioFact; }
-    Fact* tasRatio                      () { return &_tasRatioFact; }
-    Fact* horizPosAccuracy              () { return &_horizPosAccuracyFact; }
-    Fact* vertPosAccuracy               () { return &_vertPosAccuracyFact; }
-
-    static const char* _goodAttitudeEstimateFactName;
-    static const char* _goodHorizVelEstimateFactName;
-    static const char* _goodVertVelEstimateFactName;
-    static const char* _goodHorizPosRelEstimateFactName;
-    static const char* _goodHorizPosAbsEstimateFactName;
-    static const char* _goodVertPosAbsEstimateFactName;
-    static const char* _goodVertPosAGLEstimateFactName;
-    static const char* _goodConstPosModeEstimateFactName;
-    static const char* _goodPredHorizPosRelEstimateFactName;
-    static const char* _goodPredHorizPosAbsEstimateFactName;
-    static const char* _gpsGlitchFactName;
-    static const char* _accelErrorFactName;
-    static const char* _velRatioFactName;
-    static const char* _horizPosRatioFactName;
-    static const char* _vertPosRatioFactName;
-    static const char* _magRatioFactName;
-    static const char* _haglRatioFactName;
-    static const char* _tasRatioFactName;
-    static const char* _horizPosAccuracyFactName;
-    static const char* _vertPosAccuracyFactName;
-
-private:
-    Fact _goodAttitudeEstimateFact;
-    Fact _goodHorizVelEstimateFact;
-    Fact _goodVertVelEstimateFact;
-    Fact _goodHorizPosRelEstimateFact;
-    Fact _goodHorizPosAbsEstimateFact;
-    Fact _goodVertPosAbsEstimateFact;
-    Fact _goodVertPosAGLEstimateFact;
-    Fact _goodConstPosModeEstimateFact;
-    Fact _goodPredHorizPosRelEstimateFact;
-    Fact _goodPredHorizPosAbsEstimateFact;
-    Fact _gpsGlitchFact;
-    Fact _accelErrorFact;
-    Fact _velRatioFact;
-    Fact _horizPosRatioFact;
-    Fact _vertPosRatioFact;
-    Fact _magRatioFact;
-    Fact _haglRatioFact;
-    Fact _tasRatioFact;
-    Fact _horizPosAccuracyFact;
-    Fact _vertPosAccuracyFact;
-
-#if 0
-    typedef enum ESTIMATOR_STATUS_FLAGS
-    {
-       ESTIMATOR_ATTITUDE=1, /* True if the attitude estimate is good | */
-       ESTIMATOR_VELOCITY_HORIZ=2, /* True if the horizontal velocity estimate is good | */
-       ESTIMATOR_VELOCITY_VERT=4, /* True if the  vertical velocity estimate is good | */
-       ESTIMATOR_POS_HORIZ_REL=8, /* True if the horizontal position (relative) estimate is good | */
-       ESTIMATOR_POS_HORIZ_ABS=16, /* True if the horizontal position (absolute) estimate is good | */
-       ESTIMATOR_POS_VERT_ABS=32, /* True if the vertical position (absolute) estimate is good | */
-       ESTIMATOR_POS_VERT_AGL=64, /* True if the vertical position (above ground) estimate is good | */
-       ESTIMATOR_CONST_POS_MODE=128, /* True if the EKF is in a constant position mode and is not using external measurements (eg GPS or optical flow) | */
-       ESTIMATOR_PRED_POS_HORIZ_REL=256, /* True if the EKF has sufficient data to enter a mode that will provide a (relative) position estimate | */
-       ESTIMATOR_PRED_POS_HORIZ_ABS=512, /* True if the EKF has sufficient data to enter a mode that will provide a (absolute) position estimate | */
-       ESTIMATOR_GPS_GLITCH=1024, /* True if the EKF has detected a GPS glitch | */
-       ESTIMATOR_ACCEL_ERROR=2048, /* True if the EKF has detected bad accelerometer data | */
-
-        typedef struct __mavlink_estimator_status_t {
-         uint64_t time_usec; /*< Timestamp (micros since boot or Unix epoch)*/
-         float vel_ratio; /*< Velocity innovation test ratio*/
-         float pos_horiz_ratio; /*< Horizontal position innovation test ratio*/
-         float pos_vert_ratio; /*< Vertical position innovation test ratio*/
-         float mag_ratio; /*< Magnetometer innovation test ratio*/
-         float hagl_ratio; /*< Height above terrain innovation test ratio*/
-         float tas_ratio; /*< True airspeed innovation test ratio*/
-         float pos_horiz_accuracy; /*< Horizontal position 1-STD accuracy relative to the EKF local origin (m)*/
-         float pos_vert_accuracy; /*< Vertical position 1-STD accuracy relative to the EKF local origin (m)*/
-         uint16_t flags; /*< Integer bitmask indicating which EKF outputs are valid. See definition for ESTIMATOR_STATUS_FLAGS.*/
-        } mavlink_estimator_status_t;
-    };
-#endif
-};
 
 class Vehicle : public FactGroup
 {
@@ -639,8 +150,7 @@ public:
     Q_PROPERTY(bool                 messageTypeError        READ messageTypeError                                       NOTIFY messageTypeChanged)
     Q_PROPERTY(int                  newMessageCount         READ newMessageCount                                        NOTIFY newMessageCountChanged)
     Q_PROPERTY(int                  messageCount            READ messageCount                                           NOTIFY messageCountChanged)
-    Q_PROPERTY(QString              formatedMessages        READ formatedMessages                                       NOTIFY formatedMessagesChanged)
-    Q_PROPERTY(QString              formatedMessage         READ formatedMessage                                        NOTIFY formatedMessageChanged)
+    Q_PROPERTY(QString              formattedMessages       READ formattedMessages                                      NOTIFY formattedMessagesChanged)
     Q_PROPERTY(QString              latestError             READ latestError                                            NOTIFY latestErrorChanged)
     Q_PROPERTY(bool                 joystickEnabled         READ joystickEnabled        WRITE setJoystickEnabled        NOTIFY joystickEnabledChanged)
     Q_PROPERTY(bool                 active                  READ active                 WRITE setActive                 NOTIFY activeChanged)
@@ -701,7 +211,7 @@ public:
     Q_PROPERTY(QVariantList         modeIndicators          READ modeIndicators                                         NOTIFY modeIndicatorsChanged)
     Q_PROPERTY(bool              initialPlanRequestComplete READ initialPlanRequestComplete                             NOTIFY initialPlanRequestCompleteChanged)
     Q_PROPERTY(QVariantList         staticCameraList        READ staticCameraList                                       CONSTANT)
-    Q_PROPERTY(QGCCameraManager*    dynamicCameras          READ dynamicCameras                                         NOTIFY dynamicCamerasChanged)
+    Q_PROPERTY(QGCCameraManager*    cameraManager           READ cameraManager                                          NOTIFY cameraManagerChanged)
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
@@ -764,17 +274,17 @@ public:
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
     Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
-    Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* battery2          READ battery2FactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* wind              READ windFactGroup              CONSTANT)
-    Q_PROPERTY(FactGroup* vibration         READ vibrationFactGroup         CONSTANT)
-    Q_PROPERTY(FactGroup* temperature       READ temperatureFactGroup       CONSTANT)
-    Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
-    Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
-    Q_PROPERTY(FactGroup* escStatus         READ escStatusFactGroup         CONSTANT)
-    Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
-    Q_PROPERTY(FactGroup* terrain           READ terrainFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup*           gps             READ gpsFactGroup               CONSTANT)
+    Q_PROPERTY(FactGroup*           wind            READ windFactGroup              CONSTANT)
+    Q_PROPERTY(FactGroup*           vibration       READ vibrationFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup*           temperature     READ temperatureFactGroup       CONSTANT)
+    Q_PROPERTY(FactGroup*           clock           READ clockFactGroup             CONSTANT)
+    Q_PROPERTY(FactGroup*           setpoint        READ setpointFactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup*           escStatus       READ escStatusFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup*           estimatorStatus READ estimatorStatusFactGroup   CONSTANT)
+    Q_PROPERTY(FactGroup*           terrain         READ terrainFactGroup           CONSTANT)
+    Q_PROPERTY(FactGroup*           distanceSensors READ distanceSensorFactGroup    CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -792,7 +302,7 @@ public:
     Q_INVOKABLE void resetCounters  ();
 
     // Called when the message drop-down is invoked to clear current count
-    Q_INVOKABLE void        resetMessages();
+    Q_INVOKABLE void resetMessages();
 
     Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
     Q_INVOKABLE void disconnectInactiveVehicle();
@@ -848,7 +358,6 @@ public:
     /// Clear Messages
     Q_INVOKABLE void clearMessages();
 
-    Q_INVOKABLE void triggerCamera();
     Q_INVOKABLE void sendPlan(QString planFile);
 
     /// Used to check if running current version is equal or higher than the one being compared.
@@ -868,6 +377,7 @@ public:
     Q_INVOKABLE void gimbalPitchStep    (int direction);
     Q_INVOKABLE void gimbalYawStep      (int direction);
     Q_INVOKABLE void centerGimbal       ();
+    Q_INVOKABLE void forceArm           ();
 
     /// Sends PARAM_MAP_RC message to vehicle
     Q_INVOKABLE void sendParamMapRC(const QString& paramName, double scale, double centerValue, int tuningID, double minValue, double maxValue);
@@ -997,8 +507,7 @@ public:
     bool            messageTypeError        () { return _currentMessageType == MessageError; }
     int             newMessageCount         () { return _currentMessageCount; }
     int             messageCount            () { return _messageCount; }
-    QString         formatedMessages        ();
-    QString         formatedMessage         () { return _formatedMessage; }
+    QString         formattedMessages       ();
     QString         latestError             () { return _latestError; }
     float           latitude                () { return static_cast<float>(_coordinate.latitude()); }
     float           longitude               () { return static_cast<float>(_coordinate.longitude()); }
@@ -1057,6 +566,27 @@ public:
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
 
+    enum CalibrationType {
+        CalibrationRadio,
+        CalibrationGyro,
+        CalibrationMag,
+        CalibrationAccel,
+        CalibrationLevel,
+        CalibrationEsc,
+        CalibrationCopyTrims,
+        CalibrationAPMCompassMot,
+        CalibrationAPMPressureAirspeed,
+        CalibrationAPMPreFlight,
+        CalibrationPX4Airspeed,
+        CalibrationPX4Pressure,
+    };
+
+    void startCalibration   (CalibrationType calType);
+    void stopCalibration    (void);
+
+    void startUAVCANBusConfig(void);
+    void stopUAVCANBusConfig(void);
+
     Fact* roll                              () { return &_rollFact; }
     Fact* pitch                             () { return &_pitchFact; }
     Fact* heading                           () { return &_headingFact; }
@@ -1078,8 +608,6 @@ public:
     Fact* throttlePct                       () { return &_throttlePctFact; }
 
     FactGroup* gpsFactGroup                 () { return &_gpsFactGroup; }
-    FactGroup* battery1FactGroup            () { return &_battery1FactGroup; }
-    FactGroup* battery2FactGroup            () { return &_battery2FactGroup; }
     FactGroup* windFactGroup                () { return &_windFactGroup; }
     FactGroup* vibrationFactGroup           () { return &_vibrationFactGroup; }
     FactGroup* temperatureFactGroup         () { return &_temperatureFactGroup; }
@@ -1089,6 +617,7 @@ public:
     FactGroup* escStatusFactGroup           () { return &_escStatusFactGroup; }
     FactGroup* estimatorStatusFactGroup     () { return &_estimatorStatusFactGroup; }
     FactGroup* terrainFactGroup             () { return &_terrainFactGroup; }
+    QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -1207,7 +736,7 @@ public:
     bool capabilitiesKnown      () const { return _capabilityBitsKnown; }
     uint64_t capabilityBits     () const { return _capabilityBits; }    // Change signalled by capabilityBitsChanged
 
-    QGCCameraManager*           dynamicCameras      () { return _cameras; }
+    QGCCameraManager*           cameraManager       () { return _cameraManager; }
     QString                     hobbsMeter          ();
 
     /// The vehicle is responsible for making the initial request for the Plan.
@@ -1267,7 +796,7 @@ signals:
     void defaultHoverSpeedChanged       (double hoverSpeed);
     void firmwareTypeChanged            ();
     void vehicleTypeChanged             ();
-    void dynamicCamerasChanged          ();
+    void cameraManagerChanged           ();
     void hobbsMeterChanged              ();
     void capabilitiesKnownChanged       (bool capabilitiesKnown);
     void initialPlanRequestCompleteChanged(bool initialPlanRequestComplete);
@@ -1286,8 +815,8 @@ signals:
     void messageTypeChanged             ();
     void newMessageCountChanged         ();
     void messageCountChanged            ();
-    void formatedMessagesChanged        ();
-    void formatedMessageChanged         ();
+    void formattedMessagesChanged       ();
+    void newFormattedMessage            (QString formattedMessage);
     void latestErrorChanged             ();
     void longitudeChanged               ();
     void currentConfigChanged           ();
@@ -1403,8 +932,6 @@ private:
     void _handleRCChannels              (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);
     void _handleSysStatus               (mavlink_message_t& message);
-    void _handleWindCov                 (mavlink_message_t& message);
-    void _handleVibration               (mavlink_message_t& message);
     void _handleExtendedSysState        (mavlink_message_t& message);
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleCommandLong             (mavlink_message_t& message);
@@ -1412,18 +939,11 @@ private:
     void _handleGlobalPositionInt       (mavlink_message_t& message);
     void _handleAltitude                (mavlink_message_t& message);
     void _handleVfrHud                  (mavlink_message_t& message);
-    void _handleScaledPressure          (mavlink_message_t& message);
-    void _handleScaledPressure2         (mavlink_message_t& message);
-    void _handleScaledPressure3         (mavlink_message_t& message);
     void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleAttitudeWorker          (double rollRadians, double pitchRadians, double yawRadians);
     void _handleAttitude                (mavlink_message_t& message);
     void _handleAttitudeQuaternion      (mavlink_message_t& message);
-    void _handleAttitudeTarget          (mavlink_message_t& message);
-    void _handleDistanceSensor          (mavlink_message_t& message);
-    void _handleEscStatus               (mavlink_message_t& message);
-    void _handleEstimatorStatus         (mavlink_message_t& message);
     void _handleStatusText              (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
     void _handleMessageInterval         (const mavlink_message_t& message);
@@ -1432,7 +952,6 @@ private:
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback          (const mavlink_message_t& message);
-    void _handleWind                    (mavlink_message_t& message);
 #endif
     void _handleCameraImageCaptured     (const mavlink_message_t& message);
     void _handleADSBVehicle             (const mavlink_message_t& message);
@@ -1457,7 +976,6 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
-    void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
 
@@ -1498,7 +1016,6 @@ private:
     MessageType_t   _currentMessageType;
     QString         _latestError;
     int             _updateCount;
-    QString         _formatedMessage;
     int             _rcRSSI;
     double          _rcRSSIstore;
     bool            _autoDisconnect;    ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
@@ -1535,7 +1052,7 @@ private:
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 
-    QGCCameraManager* _cameras;
+    QGCCameraManager* _cameraManager = nullptr;
 
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
@@ -1618,9 +1135,6 @@ private:
 
     QString _gitHash;
     quint64 _uid;
-
-    QElapsedTimer   _lastBatteryAnnouncement;
-    int     _lastAnnouncedLowBatteryPercent;
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
     bool _priorityLinkCommanded;
@@ -1706,6 +1220,8 @@ private:
 
     void _sendMavCommandWorker(bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
 
+    QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
+
     // FactGroup facts
 
     Fact _rollFact;
@@ -1730,8 +1246,6 @@ private:
     Fact _throttlePctFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
-    VehicleBatteryFactGroup         _battery1FactGroup;
-    VehicleBatteryFactGroup         _battery2FactGroup;
     VehicleWindFactGroup            _windFactGroup;
     VehicleVibrationFactGroup       _vibrationFactGroup;
     VehicleTemperatureFactGroup     _temperatureFactGroup;
@@ -1741,6 +1255,7 @@ private:
     VehicleEscStatusFactGroup       _escStatusFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
     TerrainFactGroup                _terrainFactGroup;
+    QmlObjectListModel              _batteryFactGroupListModel;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
 
@@ -1766,8 +1281,6 @@ private:
     static const char* _throttlePctFactName;
 
     static const char* _gpsFactGroupName;
-    static const char* _battery1FactGroupName;
-    static const char* _battery2FactGroupName;
     static const char* _windFactGroupName;
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
@@ -1784,4 +1297,5 @@ private:
     static const char* _joystickEnabledSettingsKey;
 
     friend class InitialConnectStateMachine;
+    friend class VehicleBatteryFactGroup;       // Allow VehicleBatteryFactGroup to call _addFactGroup
 };

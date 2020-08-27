@@ -26,7 +26,7 @@ SetupPage {
     id:             firmwarePage
     pageComponent:  firmwarePageComponent
     pageName:       qsTr("Firmware")
-    showAdvanced:   activeVehicle && activeVehicle.apmFirmware
+    showAdvanced:   globals.activeVehicle && globals.activeVehicle.apmFirmware
 
     Component {
         id: firmwarePageComponent
@@ -97,7 +97,7 @@ SetupPage {
                 property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
                 onActiveVehicleChanged: {
-                    if (!activeVehicle) {
+                    if (!globals.activeVehicle) {
                         statusTextArea.append(plugInText)
                     }
                 }
@@ -303,7 +303,7 @@ SetupPage {
                             id:             mainColumn
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            spacing:        defaultTextHeight
+                            spacing:        globals.defaultTextHeight
 
                             QGCLabel {
                                 width:      parent.width
@@ -511,7 +511,7 @@ SetupPage {
                 id:         flashBootloaderButton
                 text:       qsTr("Flash ChibiOS Bootloader")
                 visible:    firmwarePage.advanced
-                onClicked:  activeVehicle.flashBootloader()
+                onClicked:  globals.activeVehicle.flashBootloader()
             }
 
             TextArea {

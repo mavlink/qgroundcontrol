@@ -43,7 +43,6 @@ MissionItemStatus                       1.0 MissionItemStatus.qml
 ModeSwitchDisplay                       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay                  1.0 MultiRotorMotorDisplay.qml
 OfflineMapButton                        1.0 OfflineMapButton.qml
-PageView                                1.0 PageView.qml
 ParameterEditor                         1.0 ParameterEditor.qml
 ParameterEditorDialog                   1.0 ParameterEditorDialog.qml
 PIDTuning                               1.0 PIDTuning.qml
@@ -108,7 +107,5 @@ TransectStyleMapVisuals                 1.0 TransectStyleMapVisuals.qml
 ToolStrip                               1.0 ToolStrip.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
-VerticalFactValueGrid                   1.0 VerticalFactValueGrid.qml
-ViewWidget                              1.0 ViewWidget.qml
 QGCHoverButton                          1.0 QGCHoverButton.qml
 MAVLinkChart                            1.0 MAVLinkChart.qml

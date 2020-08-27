@@ -357,7 +357,7 @@
       "maxValue": 1
     },
     {
-      "name": "BAT1_A_PER_V",
+      "name": "BAT<#>_A_PER_V",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -370,7 +370,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT1_CAPACITY",
+      "name": "BAT<#>_CAPACITY",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -385,7 +385,7 @@
       "maxValue": 100000
     },
     {
-      "name": "BAT1_I_CHANNEL",
+      "name": "BAT<#>_I_CHANNEL",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -398,7 +398,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT1_N_CELLS",
+      "name": "BAT<#>_N_CELLS",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -473,12 +473,12 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT1_R_INTERNAL",
+      "name": "BAT<#>_R_INTERNAL",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
       "shortDesc": "Explicitly defines the per cell internal resistance for battery 1",
-      "longDesc": "If non-negative, then this will be used in place of BAT1_V_LOAD_DROP for all calculations.",
+      "longDesc": "If non-negative, then this will be used in place of BAT<#>_V_LOAD_DROP for all calculations.",
       "units": "Ohm",
       "default": -1,
       "increment": 0.01,
@@ -488,7 +488,7 @@
       "maxValue": 0.2
     },
     {
-      "name": "BAT1_SOURCE",
+      "name": "BAT<#>_SOURCE",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -515,7 +515,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT1_V_CHANNEL",
+      "name": "BAT<#>_V_CHANNEL",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -528,7 +528,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT1_V_CHARGED",
+      "name": "BAT<#>_V_CHARGED",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -543,7 +543,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT1_V_DIV",
+      "name": "BAT<#>_V_DIV",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -556,7 +556,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT1_V_EMPTY",
+      "name": "BAT<#>_V_EMPTY",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -571,241 +571,12 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT1_V_LOAD_DROP",
+      "name": "BAT<#>_V_LOAD_DROP",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
       "shortDesc": "Voltage drop per cell on full throttle",
-      "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT1_R_INTERNAL is set.",
-      "units": "V",
-      "default": 0.3,
-      "increment": 0.01,
-      "rebootRequired": true,
-      "decimalPlaces": 2,
-      "minValue": 0.07,
-      "maxValue": 0.5
-    },
-    {
-      "name": "BAT2_A_PER_V",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 current per volt (A/V)",
-      "longDesc": "The voltage seen by the ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.",
-      "default": -1,
-      "rebootRequired": true,
-      "decimalPlaces": 8,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "BAT2_CAPACITY",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 capacity",
-      "longDesc": "Defines the capacity of battery 2 in mAh.",
-      "units": "mAh",
-      "default": -1,
-      "increment": 50,
-      "rebootRequired": true,
-      "decimalPlaces": 0,
-      "minValue": -1,
-      "maxValue": 100000
-    },
-    {
-      "name": "BAT2_I_CHANNEL",
-      "type": "Int32",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 Current ADC Channel",
-      "longDesc": "This parameter specifies the ADC channel used to monitor current of main power battery. A value of -1 means to use the board default.",
-      "default": -1,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "BAT2_N_CELLS",
-      "type": "Int32",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Number of cells for battery 2",
-      "longDesc": "Defines the number of cells the attached battery consists of.",
-      "default": 0,
-      "values": [
-        {
-          "value": 2,
-          "description": "2S Battery"
-        },
-        {
-          "value": 3,
-          "description": "3S Battery"
-        },
-        {
-          "value": 4,
-          "description": "4S Battery"
-        },
-        {
-          "value": 5,
-          "description": "5S Battery"
-        },
-        {
-          "value": 6,
-          "description": "6S Battery"
-        },
-        {
-          "value": 7,
-          "description": "7S Battery"
-        },
-        {
-          "value": 8,
-          "description": "8S Battery"
-        },
-        {
-          "value": 9,
-          "description": "9S Battery"
-        },
-        {
-          "value": 10,
-          "description": "10S Battery"
-        },
-        {
-          "value": 11,
-          "description": "11S Battery"
-        },
-        {
-          "value": 12,
-          "description": "12S Battery"
-        },
-        {
-          "value": 13,
-          "description": "13S Battery"
-        },
-        {
-          "value": 14,
-          "description": "14S Battery"
-        },
-        {
-          "value": 15,
-          "description": "15S Battery"
-        },
-        {
-          "value": 16,
-          "description": "16S Battery"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "BAT2_R_INTERNAL",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Explicitly defines the per cell internal resistance for battery 2",
-      "longDesc": "If non-negative, then this will be used in place of BAT2_V_LOAD_DROP for all calculations.",
-      "units": "Ohm",
-      "default": -1,
-      "increment": 0.01,
-      "rebootRequired": true,
-      "decimalPlaces": 2,
-      "minValue": -1,
-      "maxValue": 0.2
-    },
-    {
-      "name": "BAT2_SOURCE",
-      "type": "Int32",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 monitoring source",
-      "longDesc": "This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Power Module"
-        },
-        {
-          "value": 1,
-          "description": "External"
-        },
-        {
-          "value": 2,
-          "description": "ESCs"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "BAT2_V_CHANNEL",
-      "type": "Int32",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 Voltage ADC Channel",
-      "longDesc": "This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.",
-      "default": -1,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "BAT2_V_CHARGED",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Full cell voltage (5C load)",
-      "longDesc": "Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V",
-      "units": "V",
-      "default": 4.05,
-      "increment": 0.01,
-      "rebootRequired": true,
-      "decimalPlaces": 2,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "BAT2_V_DIV",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Battery 2 voltage divider (V divider)",
-      "longDesc": "This is the divider from battery 2 voltage to ADC voltage. If using e.g. Mauch power modules the value from the datasheet can be applied straight here. A value of -1 means to use the board default.",
-      "default": -1,
-      "rebootRequired": true,
-      "decimalPlaces": 8,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "BAT2_V_EMPTY",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Empty cell voltage (5C load)",
-      "longDesc": "Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.",
-      "units": "V",
-      "default": 3.5,
-      "increment": 0.01,
-      "rebootRequired": true,
-      "decimalPlaces": 2,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "BAT2_V_LOAD_DROP",
-      "type": "Float",
-      "group": "Battery Calibration",
-      "category": "Standard",
-      "shortDesc": "Voltage drop per cell on full throttle",
-      "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT2_R_INTERNAL is set.",
+      "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT<#>_R_INTERNAL is set.",
       "units": "V",
       "default": 0.3,
       "increment": 0.01,
@@ -819,7 +590,7 @@
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_ADC_CHANNEL",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_ADC_CHANNEL",
       "default": -1,
       "decimalPlaces": 3,
       "minValue": -2.14748e+09,
@@ -830,7 +601,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_A_PER_V",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_A_PER_V",
       "default": -1,
       "decimalPlaces": 8,
       "minValue": -3.40282e+38,
@@ -841,7 +612,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_CAPACITY instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_CAPACITY instead",
       "longDesc": "Defines the capacity of battery 1.",
       "units": "mAh",
       "default": -1,
@@ -913,7 +684,7 @@
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_N_CELLS instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_N_CELLS instead",
       "longDesc": "Defines the number of cells the attached battery consists of.",
       "units": "S",
       "default": 0,
@@ -993,7 +764,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_R_INTERNAL instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_R_INTERNAL instead",
       "longDesc": "If non-negative, then this will be used in place of BAT_V_LOAD_DROP for all calculations.",
       "units": "Ohms",
       "default": -1,
@@ -1007,7 +778,7 @@
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_SOURCE instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_SOURCE instead",
       "longDesc": "Battery monitoring source. This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages.",
       "default": 0,
       "values": [
@@ -1029,7 +800,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_V_CHARGED instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_V_CHARGED instead",
       "longDesc": "Defines the voltage where a single cell of battery 1 is considered full under a mild load. This will never be the nominal voltage of 4.2V",
       "units": "V",
       "default": 4.05,
@@ -1044,7 +815,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_V_DIV",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_V_DIV",
       "default": -1,
       "decimalPlaces": 8,
       "minValue": -3.40282e+38,
@@ -1055,7 +826,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_V_EMPTY instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_V_EMPTY instead",
       "longDesc": "Defines the voltage where a single cell of battery 1 is considered empty. The voltage should be chosen before the steep dropoff to 2.8V. A typical lithium battery can only be discharged down to 10% before it drops off to a voltage level damaging the cells.",
       "units": "V",
       "default": 3.5,
@@ -1070,7 +841,7 @@
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
-      "shortDesc": "This parameter is deprecated. Please use BAT1_V_LOAD_DROP instead",
+      "shortDesc": "This parameter is deprecated. Please use BAT<#>_V_LOAD_DROP instead",
       "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT_R_INTERNAL is set.",
       "units": "V",
       "default": 0.3,
@@ -1093,7 +864,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_EN",
+      "name": "CAL_ACC<#>_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1104,7 +875,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_ACC0_ID",
+      "name": "CAL_ACC<#>_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1115,7 +886,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_ACC0_XOFF",
+      "name": "CAL_ACC<#>_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1126,7 +897,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_XSCALE",
+      "name": "CAL_ACC<#>_XSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1137,7 +908,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_YOFF",
+      "name": "CAL_ACC<#>_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1148,7 +919,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_YSCALE",
+      "name": "CAL_ACC<#>_YSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1159,7 +930,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_ZOFF",
+      "name": "CAL_ACC<#>_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1170,183 +941,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC0_ZSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Z-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer 1 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_ACC1_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of the Accelerometer that the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_ACC1_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_XSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer X-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_YSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Y-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC1_ZSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Z-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer 2 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_ACC2_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of the Accelerometer that the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_ACC2_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_XSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer X-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_YSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Y-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Accelerometer Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_ACC2_ZSCALE",
+      "name": "CAL_ACC<#>_ZSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1419,7 +1014,7 @@
       "maxValue": 2
     },
     {
-      "name": "CAL_GYRO0_EN",
+      "name": "CAL_GYRO<#>_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1430,7 +1025,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_GYRO0_ID",
+      "name": "CAL_GYRO<#>_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1441,7 +1036,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_GYRO0_XOFF",
+      "name": "CAL_GYRO<#>_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1452,7 +1047,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_GYRO0_YOFF",
+      "name": "CAL_GYRO<#>_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1463,117 +1058,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_GYRO0_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO1_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro 1 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_GYRO1_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of the Gyro that the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_GYRO1_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO1_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO1_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO2_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro 2 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_GYRO2_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of the Gyro that the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_GYRO2_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO2_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Gyro Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_GYRO2_ZOFF",
+      "name": "CAL_GYRO<#>_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1595,7 +1080,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG0_EN",
+      "name": "CAL_MAG<#>_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1606,7 +1091,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG0_ID",
+      "name": "CAL_MAG<#>_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1617,7 +1102,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG0_ROT",
+      "name": "CAL_MAG<#>_ROT",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1740,7 +1225,7 @@
       "maxValue": 30
     },
     {
-      "name": "CAL_MAG0_XCOMP",
+      "name": "CAL_MAG<#>_XCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1751,7 +1236,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_XOFF",
+      "name": "CAL_MAG<#>_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1762,7 +1247,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_XSCALE",
+      "name": "CAL_MAG<#>_XSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1773,7 +1258,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_YCOMP",
+      "name": "CAL_MAG<#>_YCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1784,7 +1269,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_YOFF",
+      "name": "CAL_MAG<#>_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1795,7 +1280,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_YSCALE",
+      "name": "CAL_MAG<#>_YSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1806,7 +1291,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_ZCOMP",
+      "name": "CAL_MAG<#>_ZCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1817,7 +1302,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_ZOFF",
+      "name": "CAL_MAG<#>_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1828,739 +1313,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG0_ZSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Mag 1 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG1_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of Magnetometer the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG1_ROT",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Rotation of magnetometer 1 relative to airframe",
-      "longDesc": "An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.",
-      "default": -1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Internal mag"
-        },
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        },
-        {
-          "value": 8,
-          "description": "Roll 180°"
-        },
-        {
-          "value": 9,
-          "description": "Roll 180°, Yaw 45°"
-        },
-        {
-          "value": 10,
-          "description": "Roll 180°, Yaw 90°"
-        },
-        {
-          "value": 11,
-          "description": "Roll 180°, Yaw 135°"
-        },
-        {
-          "value": 12,
-          "description": "Pitch 180°"
-        },
-        {
-          "value": 13,
-          "description": "Roll 180°, Yaw 225°"
-        },
-        {
-          "value": 14,
-          "description": "Roll 180°, Yaw 270°"
-        },
-        {
-          "value": 15,
-          "description": "Roll 180°, Yaw 315°"
-        },
-        {
-          "value": 16,
-          "description": "Roll 90°"
-        },
-        {
-          "value": 17,
-          "description": "Roll 90°, Yaw 45°"
-        },
-        {
-          "value": 18,
-          "description": "Roll 90°, Yaw 90°"
-        },
-        {
-          "value": 19,
-          "description": "Roll 90°, Yaw 135°"
-        },
-        {
-          "value": 20,
-          "description": "Roll 270°"
-        },
-        {
-          "value": 21,
-          "description": "Roll 270°, Yaw 45°"
-        },
-        {
-          "value": 22,
-          "description": "Roll 270°, Yaw 90°"
-        },
-        {
-          "value": 23,
-          "description": "Roll 270°, Yaw 135°"
-        },
-        {
-          "value": 24,
-          "description": "Pitch 90°"
-        },
-        {
-          "value": 25,
-          "description": "Pitch 270°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 30
-    },
-    {
-      "name": "CAL_MAG1_XCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_XSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_YCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_YSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_ZCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG1_ZSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Mag 2 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG2_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of Magnetometer the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG2_ROT",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Rotation of magnetometer 2 relative to airframe",
-      "longDesc": "An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.",
-      "default": -1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Internal mag"
-        },
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        },
-        {
-          "value": 8,
-          "description": "Roll 180°"
-        },
-        {
-          "value": 9,
-          "description": "Roll 180°, Yaw 45°"
-        },
-        {
-          "value": 10,
-          "description": "Roll 180°, Yaw 90°"
-        },
-        {
-          "value": 11,
-          "description": "Roll 180°, Yaw 135°"
-        },
-        {
-          "value": 12,
-          "description": "Pitch 180°"
-        },
-        {
-          "value": 13,
-          "description": "Roll 180°, Yaw 225°"
-        },
-        {
-          "value": 14,
-          "description": "Roll 180°, Yaw 270°"
-        },
-        {
-          "value": 15,
-          "description": "Roll 180°, Yaw 315°"
-        },
-        {
-          "value": 16,
-          "description": "Roll 90°"
-        },
-        {
-          "value": 17,
-          "description": "Roll 90°, Yaw 45°"
-        },
-        {
-          "value": 18,
-          "description": "Roll 90°, Yaw 90°"
-        },
-        {
-          "value": 19,
-          "description": "Roll 90°, Yaw 135°"
-        },
-        {
-          "value": 20,
-          "description": "Roll 270°"
-        },
-        {
-          "value": 21,
-          "description": "Roll 270°, Yaw 45°"
-        },
-        {
-          "value": 22,
-          "description": "Roll 270°, Yaw 90°"
-        },
-        {
-          "value": 23,
-          "description": "Roll 270°, Yaw 135°"
-        },
-        {
-          "value": 24,
-          "description": "Pitch 90°"
-        },
-        {
-          "value": 25,
-          "description": "Pitch 270°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 30
-    },
-    {
-      "name": "CAL_MAG2_XCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_XSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_YCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_YSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_ZCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG2_ZSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_EN",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Mag 3 enabled",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG3_ID",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "ID of Magnetometer the calibration is for",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "CAL_MAG3_ROT",
-      "type": "Int32",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Rotation of magnetometer 2 relative to airframe",
-      "longDesc": "An internal magnetometer will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.",
-      "default": -1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Internal mag"
-        },
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        },
-        {
-          "value": 8,
-          "description": "Roll 180°"
-        },
-        {
-          "value": 9,
-          "description": "Roll 180°, Yaw 45°"
-        },
-        {
-          "value": 10,
-          "description": "Roll 180°, Yaw 90°"
-        },
-        {
-          "value": 11,
-          "description": "Roll 180°, Yaw 135°"
-        },
-        {
-          "value": 12,
-          "description": "Pitch 180°"
-        },
-        {
-          "value": 13,
-          "description": "Roll 180°, Yaw 225°"
-        },
-        {
-          "value": 14,
-          "description": "Roll 180°, Yaw 270°"
-        },
-        {
-          "value": 15,
-          "description": "Roll 180°, Yaw 315°"
-        },
-        {
-          "value": 16,
-          "description": "Roll 90°"
-        },
-        {
-          "value": 17,
-          "description": "Roll 90°, Yaw 45°"
-        },
-        {
-          "value": 18,
-          "description": "Roll 90°, Yaw 90°"
-        },
-        {
-          "value": 19,
-          "description": "Roll 90°, Yaw 135°"
-        },
-        {
-          "value": 20,
-          "description": "Roll 270°"
-        },
-        {
-          "value": 21,
-          "description": "Roll 270°, Yaw 45°"
-        },
-        {
-          "value": 22,
-          "description": "Roll 270°, Yaw 90°"
-        },
-        {
-          "value": 23,
-          "description": "Roll 270°, Yaw 135°"
-        },
-        {
-          "value": 24,
-          "description": "Pitch 90°"
-        },
-        {
-          "value": 25,
-          "description": "Pitch 270°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 30
-    },
-    {
-      "name": "CAL_MAG3_XCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between X component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_XOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_XSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer X-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_YCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Y component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_YOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_YSCALE",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Y-axis scaling factor",
-      "default": 1,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_ZCOMP",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Coefficient describing linear relationship between Z component of magnetometer in body frame axis and either current or throttle depending on value of CAL_MAG_COMP_TYP Unit for throttle-based compensation is [G] and for current-based compensation [G/kA]",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_ZOFF",
-      "type": "Float",
-      "group": "Sensor Calibration",
-      "category": "System",
-      "shortDesc": "Magnetometer Z-axis offset",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": -3.40282e+38,
-      "maxValue": 3.40282e+38
-    },
-    {
-      "name": "CAL_MAG3_ZSCALE",
+      "name": "CAL_MAG<#>_ZSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -7567,68 +6320,13 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "GPS_1_CONFIG",
+      "name": "GPS_<#>_CONFIG",
       "type": "Int32",
       "group": "GPS",
       "category": "Standard",
       "shortDesc": "Serial Configuration for Main GPS",
       "longDesc": "Configure on which serial port to run Main GPS.",
       "default": 201,
-      "values": [
-        {
-          "value": 0,
-          "description": "Disabled"
-        },
-        {
-          "value": 6,
-          "description": "UART 6"
-        },
-        {
-          "value": 101,
-          "description": "TELEM 1"
-        },
-        {
-          "value": 102,
-          "description": "TELEM 2"
-        },
-        {
-          "value": 103,
-          "description": "TELEM 3"
-        },
-        {
-          "value": 104,
-          "description": "TELEM/SERIAL 4"
-        },
-        {
-          "value": 201,
-          "description": "GPS 1"
-        },
-        {
-          "value": 202,
-          "description": "GPS 2"
-        },
-        {
-          "value": 203,
-          "description": "GPS 3"
-        },
-        {
-          "value": 300,
-          "description": "Radio Controller"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "GPS_2_CONFIG",
-      "type": "Int32",
-      "group": "GPS",
-      "category": "Standard",
-      "shortDesc": "Serial Configuration for Secondary GPS",
-      "longDesc": "Configure on which serial port to run Secondary GPS.",
-      "default": 0,
       "values": [
         {
           "value": 0,
@@ -8880,7 +7578,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "MAV_0_CONFIG",
+      "name": "MAV_<#>_CONFIG",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -8935,7 +7633,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_0_FORWARD",
+      "name": "MAV_<#>_FORWARD",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -8948,7 +7646,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_0_MODE",
+      "name": "MAV_<#>_MODE",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -8995,7 +7693,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_0_RADIO_CTL",
+      "name": "MAV_<#>_RADIO_CTL",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -9008,7 +7706,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_0_RATE",
+      "name": "MAV_<#>_RATE",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -9016,290 +7714,6 @@
       "longDesc": "Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).",
       "units": "B/s",
       "default": 1200,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_1_CONFIG",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Serial Configuration for MAVLink (instance 1)",
-      "longDesc": "Configure on which serial port to run MAVLink.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Disabled"
-        },
-        {
-          "value": 6,
-          "description": "UART 6"
-        },
-        {
-          "value": 101,
-          "description": "TELEM 1"
-        },
-        {
-          "value": 102,
-          "description": "TELEM 2"
-        },
-        {
-          "value": 103,
-          "description": "TELEM 3"
-        },
-        {
-          "value": 104,
-          "description": "TELEM/SERIAL 4"
-        },
-        {
-          "value": 201,
-          "description": "GPS 1"
-        },
-        {
-          "value": 202,
-          "description": "GPS 2"
-        },
-        {
-          "value": 203,
-          "description": "GPS 3"
-        },
-        {
-          "value": 300,
-          "description": "Radio Controller"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_1_FORWARD",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Enable MAVLink Message forwarding for instance 1",
-      "longDesc": "If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).",
-      "default": 0,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_1_MODE",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "MAVLink Mode for instance 1",
-      "longDesc": "The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.",
-      "default": 2,
-      "values": [
-        {
-          "value": 0,
-          "description": "Normal"
-        },
-        {
-          "value": 1,
-          "description": "Custom"
-        },
-        {
-          "value": 2,
-          "description": "Onboard"
-        },
-        {
-          "value": 3,
-          "description": "OSD"
-        },
-        {
-          "value": 4,
-          "description": "Magic"
-        },
-        {
-          "value": 5,
-          "description": "Config"
-        },
-        {
-          "value": 7,
-          "description": "Minimal"
-        },
-        {
-          "value": 8,
-          "description": "External Vision"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_1_RADIO_CTL",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Enable software throttling of mavlink on instance 1",
-      "longDesc": "If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.",
-      "default": 1,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_1_RATE",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Maximum MAVLink sending rate for instance 1",
-      "longDesc": "Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).",
-      "units": "B/s",
-      "default": 0,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_2_CONFIG",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Serial Configuration for MAVLink (instance 2)",
-      "longDesc": "Configure on which serial port to run MAVLink.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Disabled"
-        },
-        {
-          "value": 6,
-          "description": "UART 6"
-        },
-        {
-          "value": 101,
-          "description": "TELEM 1"
-        },
-        {
-          "value": 102,
-          "description": "TELEM 2"
-        },
-        {
-          "value": 103,
-          "description": "TELEM 3"
-        },
-        {
-          "value": 104,
-          "description": "TELEM/SERIAL 4"
-        },
-        {
-          "value": 201,
-          "description": "GPS 1"
-        },
-        {
-          "value": 202,
-          "description": "GPS 2"
-        },
-        {
-          "value": 203,
-          "description": "GPS 3"
-        },
-        {
-          "value": 300,
-          "description": "Radio Controller"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_2_FORWARD",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Enable MAVLink Message forwarding for instance 2",
-      "longDesc": "If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).",
-      "default": 0,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_2_MODE",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "MAVLink Mode for instance 2",
-      "longDesc": "The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Normal"
-        },
-        {
-          "value": 1,
-          "description": "Custom"
-        },
-        {
-          "value": 2,
-          "description": "Onboard"
-        },
-        {
-          "value": 3,
-          "description": "OSD"
-        },
-        {
-          "value": 4,
-          "description": "Magic"
-        },
-        {
-          "value": 5,
-          "description": "Config"
-        },
-        {
-          "value": 7,
-          "description": "Minimal"
-        },
-        {
-          "value": 8,
-          "description": "External Vision"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_2_RADIO_CTL",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Enable software throttling of mavlink on instance 2",
-      "longDesc": "If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.",
-      "default": 1,
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "MAV_2_RATE",
-      "type": "Int32",
-      "group": "MAVLink",
-      "category": "Standard",
-      "shortDesc": "Maximum MAVLink sending rate for instance 2",
-      "longDesc": "Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0 a value of half of the theoretical maximum bandwidth is used. This corresponds to baudrate/20 Bytes/s (baudrate/10 = maximum data rate on 8N1-configured links).",
-      "units": "B/s",
-      "default": 0,
       "rebootRequired": true,
       "decimalPlaces": 3,
       "minValue": 0,
@@ -13414,7 +11828,7 @@
       "maxValue": 1000
     },
     {
-      "name": "RC10_DZ",
+      "name": "RC<#>_DZ",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -13426,7 +11840,7 @@
       "maxValue": 100
     },
     {
-      "name": "RC10_MAX",
+      "name": "RC<#>_MAX",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -13439,7 +11853,7 @@
       "maxValue": 2200
     },
     {
-      "name": "RC10_MIN",
+      "name": "RC<#>_MIN",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -13452,7 +11866,7 @@
       "maxValue": 1500
     },
     {
-      "name": "RC10_REV",
+      "name": "RC<#>_REV",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -13474,1256 +11888,11 @@
       "maxValue": 1
     },
     {
-      "name": "RC10_TRIM",
+      "name": "RC<#>_TRIM",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
       "shortDesc": "RC channel 10 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC11_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 11 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC11_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 11 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC11_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 11 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC11_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 11 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC11_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 11 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC12_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 12 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC12_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 12 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC12_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 12 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC12_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 12 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC12_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 12 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC13_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 13 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC13_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 13 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC13_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 13 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC13_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 13 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC13_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 13 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC14_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 14 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC14_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 14 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC14_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 14 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC14_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 14 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC14_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 14 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC15_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 15 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC15_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 15 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC15_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 15 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC15_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 15 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC15_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 15 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC16_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 16 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC16_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 16 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC16_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 16 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC16_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 16 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC16_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 16 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC17_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 17 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC17_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 17 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC17_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 17 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC17_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 17 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC17_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 17 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC18_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 18 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC18_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 18 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC18_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 18 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC18_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 18 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC18_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 18 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC1_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 1 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "units": "us",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC1_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 1 maximum",
-      "longDesc": "Maximum value for RC channel 1",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC1_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 1 minimum",
-      "longDesc": "Minimum value for RC channel 1",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC1_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 1 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC1_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 1 trim",
-      "longDesc": "Mid point value (same as min for throttle)",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC2_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 2 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "units": "us",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC2_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 2 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC2_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 2 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC2_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 2 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC2_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 2 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC3_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 3 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "units": "us",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC3_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 3 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC3_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 3 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC3_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 3 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC3_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 3 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC4_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 4 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "units": "us",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC4_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 4 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC4_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 4 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC4_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 4 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC4_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 4 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC5_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 5 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC5_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 5 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC5_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 5 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC5_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 5 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC5_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 5 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC6_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 6 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC6_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 6 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC6_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 6 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC6_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 6 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC6_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 6 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC7_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 7 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC7_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 7 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC7_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 7 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC7_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 7 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC7_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 7 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC8_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 8 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 10,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC8_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 8 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC8_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 8 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC8_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 8 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC8_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 8 trim",
-      "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
-      "units": "us",
-      "default": 1500,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC9_DZ",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 9 dead zone",
-      "longDesc": "The +- range of this value around the trim value will be considered as zero.",
-      "default": 0,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 100
-    },
-    {
-      "name": "RC9_MAX",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 9 maximum",
-      "longDesc": "Maximum value for this channel.",
-      "units": "us",
-      "default": 2000,
-      "decimalPlaces": 3,
-      "minValue": 1500,
-      "maxValue": 2200
-    },
-    {
-      "name": "RC9_MIN",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 9 minimum",
-      "longDesc": "Minimum value for this channel.",
-      "units": "us",
-      "default": 1000,
-      "decimalPlaces": 3,
-      "minValue": 800,
-      "maxValue": 1500
-    },
-    {
-      "name": "RC9_REV",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 9 reverse",
-      "longDesc": "Set to -1 to reverse channel.",
-      "default": 1,
-      "values": [
-        {
-          "value": -1,
-          "description": "Reverse"
-        },
-        {
-          "value": 1,
-          "description": "Normal"
-        }
-      ],
-      "decimalPlaces": 3,
-      "minValue": -1,
-      "maxValue": 1
-    },
-    {
-      "name": "RC9_TRIM",
-      "type": "Float",
-      "group": "Radio Calibration",
-      "category": "Standard",
-      "shortDesc": "RC channel 9 trim",
       "longDesc": "Mid point value (has to be set to the same as min for throttle channel).",
       "units": "us",
       "default": 1500,
@@ -18980,7 +16149,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SENS_MB12_0_ROT",
+      "name": "SENS_MB12_<#>_ROT",
       "type": "Int32",
       "group": "Sensors",
       "category": "Standard",
@@ -19027,1045 +16196,11 @@
       "maxValue": 7
     },
     {
-      "name": "SENS_MB12_10_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 10 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_11_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 12 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_1_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 1 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_2_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 2 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_3_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 3 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_4_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 4 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_5_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 5 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_6_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 6 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_7_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 7 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_8_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 8 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MB12_9_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MaxBotix MB12XX Sensor 9 Rotation",
-      "longDesc": "This parameter defines the rotation of the sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT0_ROT",
+      "name": "SENS_MPDT<#>_ROT",
       "type": "Int32",
       "group": "Sensors",
       "category": "Standard",
       "shortDesc": "MappyDot Sensor 0 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT10_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 10 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT11_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 12 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT1_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 1 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT2_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 2 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT3_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 3 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT4_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 4 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT5_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 5 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT6_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 6 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT7_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 7 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT8_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 8 Rotation",
-      "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "No rotation"
-        },
-        {
-          "value": 1,
-          "description": "Yaw 45°"
-        },
-        {
-          "value": 2,
-          "description": "Yaw 90°"
-        },
-        {
-          "value": 3,
-          "description": "Yaw 135°"
-        },
-        {
-          "value": 4,
-          "description": "Yaw 180°"
-        },
-        {
-          "value": 5,
-          "description": "Yaw 225°"
-        },
-        {
-          "value": 6,
-          "description": "Yaw 270°"
-        },
-        {
-          "value": 7,
-          "description": "Yaw 315°"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": 0,
-      "maxValue": 7
-    },
-    {
-      "name": "SENS_MPDT9_ROT",
-      "type": "Int32",
-      "group": "Sensors",
-      "category": "Standard",
-      "shortDesc": "MappyDot Sensor 9 Rotation",
       "longDesc": "This parameter defines the rotation of the Mappydot sensor relative to the platform.",
       "default": 0,
       "values": [
@@ -20284,250 +16419,12 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SER_GPS1_BAUD",
+      "name": "SER_GPS<#>_BAUD",
       "type": "Int32",
       "group": "Serial",
       "category": "Standard",
       "shortDesc": "Baudrate for the GPS 1 Serial Port",
       "longDesc": "Configure the Baudrate for the GPS 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Auto"
-        },
-        {
-          "value": 50,
-          "description": "50 8N1"
-        },
-        {
-          "value": 75,
-          "description": "75 8N1"
-        },
-        {
-          "value": 110,
-          "description": "110 8N1"
-        },
-        {
-          "value": 134,
-          "description": "134 8N1"
-        },
-        {
-          "value": 150,
-          "description": "150 8N1"
-        },
-        {
-          "value": 200,
-          "description": "200 8N1"
-        },
-        {
-          "value": 300,
-          "description": "300 8N1"
-        },
-        {
-          "value": 600,
-          "description": "600 8N1"
-        },
-        {
-          "value": 1200,
-          "description": "1200 8N1"
-        },
-        {
-          "value": 1800,
-          "description": "1800 8N1"
-        },
-        {
-          "value": 2400,
-          "description": "2400 8N1"
-        },
-        {
-          "value": 4800,
-          "description": "4800 8N1"
-        },
-        {
-          "value": 9600,
-          "description": "9600 8N1"
-        },
-        {
-          "value": 19200,
-          "description": "19200 8N1"
-        },
-        {
-          "value": 38400,
-          "description": "38400 8N1"
-        },
-        {
-          "value": 57600,
-          "description": "57600 8N1"
-        },
-        {
-          "value": 115200,
-          "description": "115200 8N1"
-        },
-        {
-          "value": 230400,
-          "description": "230400 8N1"
-        },
-        {
-          "value": 460800,
-          "description": "460800 8N1"
-        },
-        {
-          "value": 500000,
-          "description": "500000 8N1"
-        },
-        {
-          "value": 921600,
-          "description": "921600 8N1"
-        },
-        {
-          "value": 1e+06,
-          "description": "1000000 8N1"
-        },
-        {
-          "value": 1.5e+06,
-          "description": "1500000 8N1"
-        },
-        {
-          "value": 2e+06,
-          "description": "2000000 8N1"
-        },
-        {
-          "value": 3e+06,
-          "description": "3000000 8N1"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "SER_GPS2_BAUD",
-      "type": "Int32",
-      "group": "Serial",
-      "category": "Standard",
-      "shortDesc": "Baudrate for the GPS 2 Serial Port",
-      "longDesc": "Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
-      "default": 0,
-      "values": [
-        {
-          "value": 0,
-          "description": "Auto"
-        },
-        {
-          "value": 50,
-          "description": "50 8N1"
-        },
-        {
-          "value": 75,
-          "description": "75 8N1"
-        },
-        {
-          "value": 110,
-          "description": "110 8N1"
-        },
-        {
-          "value": 134,
-          "description": "134 8N1"
-        },
-        {
-          "value": 150,
-          "description": "150 8N1"
-        },
-        {
-          "value": 200,
-          "description": "200 8N1"
-        },
-        {
-          "value": 300,
-          "description": "300 8N1"
-        },
-        {
-          "value": 600,
-          "description": "600 8N1"
-        },
-        {
-          "value": 1200,
-          "description": "1200 8N1"
-        },
-        {
-          "value": 1800,
-          "description": "1800 8N1"
-        },
-        {
-          "value": 2400,
-          "description": "2400 8N1"
-        },
-        {
-          "value": 4800,
-          "description": "4800 8N1"
-        },
-        {
-          "value": 9600,
-          "description": "9600 8N1"
-        },
-        {
-          "value": 19200,
-          "description": "19200 8N1"
-        },
-        {
-          "value": 38400,
-          "description": "38400 8N1"
-        },
-        {
-          "value": 57600,
-          "description": "57600 8N1"
-        },
-        {
-          "value": 115200,
-          "description": "115200 8N1"
-        },
-        {
-          "value": 230400,
-          "description": "230400 8N1"
-        },
-        {
-          "value": 460800,
-          "description": "460800 8N1"
-        },
-        {
-          "value": 500000,
-          "description": "500000 8N1"
-        },
-        {
-          "value": 921600,
-          "description": "921600 8N1"
-        },
-        {
-          "value": 1e+06,
-          "description": "1000000 8N1"
-        },
-        {
-          "value": 1.5e+06,
-          "description": "1500000 8N1"
-        },
-        {
-          "value": 2e+06,
-          "description": "2000000 8N1"
-        },
-        {
-          "value": 3e+06,
-          "description": "3000000 8N1"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "SER_GPS3_BAUD",
-      "type": "Int32",
-      "group": "Serial",
-      "category": "Standard",
-      "shortDesc": "Baudrate for the GPS 3 Serial Port",
-      "longDesc": "Configure the Baudrate for the GPS 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
       "default": 0,
       "values": [
         {
@@ -20760,369 +16657,12 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SER_TEL1_BAUD",
+      "name": "SER_TEL<#>_BAUD",
       "type": "Int32",
       "group": "Serial",
       "category": "Standard",
       "shortDesc": "Baudrate for the TELEM 1 Serial Port",
       "longDesc": "Configure the Baudrate for the TELEM 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
-      "default": 57600,
-      "values": [
-        {
-          "value": 0,
-          "description": "Auto"
-        },
-        {
-          "value": 50,
-          "description": "50 8N1"
-        },
-        {
-          "value": 75,
-          "description": "75 8N1"
-        },
-        {
-          "value": 110,
-          "description": "110 8N1"
-        },
-        {
-          "value": 134,
-          "description": "134 8N1"
-        },
-        {
-          "value": 150,
-          "description": "150 8N1"
-        },
-        {
-          "value": 200,
-          "description": "200 8N1"
-        },
-        {
-          "value": 300,
-          "description": "300 8N1"
-        },
-        {
-          "value": 600,
-          "description": "600 8N1"
-        },
-        {
-          "value": 1200,
-          "description": "1200 8N1"
-        },
-        {
-          "value": 1800,
-          "description": "1800 8N1"
-        },
-        {
-          "value": 2400,
-          "description": "2400 8N1"
-        },
-        {
-          "value": 4800,
-          "description": "4800 8N1"
-        },
-        {
-          "value": 9600,
-          "description": "9600 8N1"
-        },
-        {
-          "value": 19200,
-          "description": "19200 8N1"
-        },
-        {
-          "value": 38400,
-          "description": "38400 8N1"
-        },
-        {
-          "value": 57600,
-          "description": "57600 8N1"
-        },
-        {
-          "value": 115200,
-          "description": "115200 8N1"
-        },
-        {
-          "value": 230400,
-          "description": "230400 8N1"
-        },
-        {
-          "value": 460800,
-          "description": "460800 8N1"
-        },
-        {
-          "value": 500000,
-          "description": "500000 8N1"
-        },
-        {
-          "value": 921600,
-          "description": "921600 8N1"
-        },
-        {
-          "value": 1e+06,
-          "description": "1000000 8N1"
-        },
-        {
-          "value": 1.5e+06,
-          "description": "1500000 8N1"
-        },
-        {
-          "value": 2e+06,
-          "description": "2000000 8N1"
-        },
-        {
-          "value": 3e+06,
-          "description": "3000000 8N1"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "SER_TEL2_BAUD",
-      "type": "Int32",
-      "group": "Serial",
-      "category": "Standard",
-      "shortDesc": "Baudrate for the TELEM 2 Serial Port",
-      "longDesc": "Configure the Baudrate for the TELEM 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
-      "default": 921600,
-      "values": [
-        {
-          "value": 0,
-          "description": "Auto"
-        },
-        {
-          "value": 50,
-          "description": "50 8N1"
-        },
-        {
-          "value": 75,
-          "description": "75 8N1"
-        },
-        {
-          "value": 110,
-          "description": "110 8N1"
-        },
-        {
-          "value": 134,
-          "description": "134 8N1"
-        },
-        {
-          "value": 150,
-          "description": "150 8N1"
-        },
-        {
-          "value": 200,
-          "description": "200 8N1"
-        },
-        {
-          "value": 300,
-          "description": "300 8N1"
-        },
-        {
-          "value": 600,
-          "description": "600 8N1"
-        },
-        {
-          "value": 1200,
-          "description": "1200 8N1"
-        },
-        {
-          "value": 1800,
-          "description": "1800 8N1"
-        },
-        {
-          "value": 2400,
-          "description": "2400 8N1"
-        },
-        {
-          "value": 4800,
-          "description": "4800 8N1"
-        },
-        {
-          "value": 9600,
-          "description": "9600 8N1"
-        },
-        {
-          "value": 19200,
-          "description": "19200 8N1"
-        },
-        {
-          "value": 38400,
-          "description": "38400 8N1"
-        },
-        {
-          "value": 57600,
-          "description": "57600 8N1"
-        },
-        {
-          "value": 115200,
-          "description": "115200 8N1"
-        },
-        {
-          "value": 230400,
-          "description": "230400 8N1"
-        },
-        {
-          "value": 460800,
-          "description": "460800 8N1"
-        },
-        {
-          "value": 500000,
-          "description": "500000 8N1"
-        },
-        {
-          "value": 921600,
-          "description": "921600 8N1"
-        },
-        {
-          "value": 1e+06,
-          "description": "1000000 8N1"
-        },
-        {
-          "value": 1.5e+06,
-          "description": "1500000 8N1"
-        },
-        {
-          "value": 2e+06,
-          "description": "2000000 8N1"
-        },
-        {
-          "value": 3e+06,
-          "description": "3000000 8N1"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "SER_TEL3_BAUD",
-      "type": "Int32",
-      "group": "Serial",
-      "category": "Standard",
-      "shortDesc": "Baudrate for the TELEM 3 Serial Port",
-      "longDesc": "Configure the Baudrate for the TELEM 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
-      "default": 57600,
-      "values": [
-        {
-          "value": 0,
-          "description": "Auto"
-        },
-        {
-          "value": 50,
-          "description": "50 8N1"
-        },
-        {
-          "value": 75,
-          "description": "75 8N1"
-        },
-        {
-          "value": 110,
-          "description": "110 8N1"
-        },
-        {
-          "value": 134,
-          "description": "134 8N1"
-        },
-        {
-          "value": 150,
-          "description": "150 8N1"
-        },
-        {
-          "value": 200,
-          "description": "200 8N1"
-        },
-        {
-          "value": 300,
-          "description": "300 8N1"
-        },
-        {
-          "value": 600,
-          "description": "600 8N1"
-        },
-        {
-          "value": 1200,
-          "description": "1200 8N1"
-        },
-        {
-          "value": 1800,
-          "description": "1800 8N1"
-        },
-        {
-          "value": 2400,
-          "description": "2400 8N1"
-        },
-        {
-          "value": 4800,
-          "description": "4800 8N1"
-        },
-        {
-          "value": 9600,
-          "description": "9600 8N1"
-        },
-        {
-          "value": 19200,
-          "description": "19200 8N1"
-        },
-        {
-          "value": 38400,
-          "description": "38400 8N1"
-        },
-        {
-          "value": 57600,
-          "description": "57600 8N1"
-        },
-        {
-          "value": 115200,
-          "description": "115200 8N1"
-        },
-        {
-          "value": 230400,
-          "description": "230400 8N1"
-        },
-        {
-          "value": 460800,
-          "description": "460800 8N1"
-        },
-        {
-          "value": 500000,
-          "description": "500000 8N1"
-        },
-        {
-          "value": 921600,
-          "description": "921600 8N1"
-        },
-        {
-          "value": 1e+06,
-          "description": "1000000 8N1"
-        },
-        {
-          "value": 1.5e+06,
-          "description": "1500000 8N1"
-        },
-        {
-          "value": 2e+06,
-          "description": "2000000 8N1"
-        },
-        {
-          "value": 3e+06,
-          "description": "3000000 8N1"
-        }
-      ],
-      "rebootRequired": true,
-      "decimalPlaces": 3,
-      "minValue": -2.14748e+09,
-      "maxValue": 2.14748e+09
-    },
-    {
-      "name": "SER_TEL4_BAUD",
-      "type": "Int32",
-      "group": "Serial",
-      "category": "Standard",
-      "shortDesc": "Baudrate for the TELEM/SERIAL 4 Serial Port",
-      "longDesc": "Configure the Baudrate for the TELEM/SERIAL 4 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.",
       "default": 57600,
       "values": [
         {

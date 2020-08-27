@@ -24,7 +24,7 @@ SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
 
-    property bool _oldFW:   activeVehicle.versionCompare(3 ,5 ,2) < 0
+    property bool _oldFW:   globals.activeVehicle.versionCompare(3 ,5 ,2) < 0
 
     APMAirframeComponentController { id: controller; }
 

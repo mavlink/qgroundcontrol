@@ -48,6 +48,7 @@
 #include "FTPManager.h"
 #include "ComponentInformationManager.h"
 #include "InitialConnectStateMachine.h"
+#include "VehicleBatteryFactGroup.h"
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -86,8 +87,6 @@ const char* Vehicle::_hobbsFactName =               "hobbs";
 const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
-const char* Vehicle::_battery1FactGroupName =           "battery";
-const char* Vehicle::_battery2FactGroupName =           "battery2";
 const char* Vehicle::_windFactGroupName =               "wind";
 const char* Vehicle::_vibrationFactGroupName =          "vibration";
 const char* Vehicle::_temperatureFactGroupName =        "temperature";
@@ -150,7 +149,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryRNoise(0)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
-    , _cameras(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -184,7 +182,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _uid(0)
-    , _lastAnnouncedLowBatteryPercent(100)
     , _priorityLinkCommanded(false)
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
@@ -210,8 +207,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _battery1FactGroup(this)
-    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
@@ -284,13 +279,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_orbitTelemetryTimer, &QTimer::timeout, this, &Vehicle::_orbitTelemetryTimeout);
 
     // Create camera manager instance
-    _cameras = _firmwarePlugin->createCameraManager(this);
-    emit dynamicCamerasChanged();
+    _cameraManager = _firmwarePlugin->createCameraManager(this);
+    emit cameraManagerChanged();
 
     // Start csv logger
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
-    _lastBatteryAnnouncement.start();
 }
 
 // Disconnected Vehicle for offline editing
@@ -340,7 +334,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _capabilityBits(MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
-    , _cameras(nullptr)
+    , _cameraManager(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -374,7 +368,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _firmwareVersionType(FIRMWARE_VERSION_TYPE_OFFICIAL)
     , _gitHash(versionNotSetValue)
     , _uid(0)
-    , _lastAnnouncedLowBatteryPercent(100)
     , _orbitActive(false)
     , _pidTuningTelemetryMode(false)
     , _pidTuningWaitingForRates(false)
@@ -399,8 +392,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _battery1FactGroup(this)
-    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _clockFactGroup(this)
@@ -507,8 +498,6 @@ void Vehicle::_commonInit()
     _addFact(&_hobbsFact,               _hobbsFactName);
 
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
-    _addFactGroup(&_battery1FactGroup,          _battery1FactGroupName);
-    _addFactGroup(&_battery2FactGroup,          _battery2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
@@ -576,13 +565,13 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-    if(_cameras) {
-        // because of _cameras QML bindings check for nullptr won't work in the binding pipeline
+    if(_cameraManager) {
+        // because of _cameraManager QML bindings check for nullptr won't work in the binding pipeline
         // the dangling pointer access will cause a runtime fault
-        auto tmpCameras = _cameras;
-        _cameras = nullptr;
+        auto tmpCameras = _cameraManager;
+        _cameraManager = nullptr;
         delete tmpCameras;
-        emit dynamicCamerasChanged();
+        emit cameraManagerChanged();
         qApp->processEvents();
     }
 }
@@ -718,6 +707,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     _waitForMavlinkMessageMessageReceived(message);
 
+    // Battery fact groups are created dynamically as new batteries are discovered
+    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+
+    // Let the fact groups take a whack at the mavlink traffic
+    QStringList groupNames = factGroupNames();
+    for (int i=0; i<groupNames.count(); i++) {
+        FactGroup* factGroup = getFactGroup(groupNames[i]);
+        factGroup->handleMessage(this, message);
+    }
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
@@ -749,9 +748,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_SCALED_IMU3:
         emit mavlinkScaledImu3(message);
         break;
-    case MAVLINK_MSG_ID_VIBRATION:
-        _handleVibration(message);
-        break;
     case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
         _handleExtendedSysState(message);
         break;
@@ -760,9 +756,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_COMMAND_LONG:
         _handleCommandLong(message);
-        break;
-    case MAVLINK_MSG_ID_WIND_COV:
-        _handleWindCov(message);
         break;
     case MAVLINK_MSG_ID_LOGGING_DATA:
         _handleMavlinkLoggingData(message);
@@ -782,15 +775,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE:
-        _handleScaledPressure(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE2:
-        _handleScaledPressure2(message);
-        break;
-    case MAVLINK_MSG_ID_SCALED_PRESSURE3:
-        _handleScaledPressure3(message);
-        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
@@ -808,18 +792,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
         _handleAttitudeQuaternion(message);
-        break;
-    case MAVLINK_MSG_ID_ATTITUDE_TARGET:
-        _handleAttitudeTarget(message);
-        break;
-    case MAVLINK_MSG_ID_DISTANCE_SENSOR:
-        _handleDistanceSensor(message);
-        break;
-    case MAVLINK_MSG_ID_ESC_STATUS:
-        _handleEscStatus(message);
-        break;
-    case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
-        _handleEstimatorStatus(message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
         _handleStatusText(message);
@@ -852,9 +824,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 #if !defined(NO_ARDUPILOT_DIALECT)
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
-        break;
-    case MAVLINK_MSG_ID_WIND:
-        _handleWind(message);
         break;
 #endif
     }
@@ -1058,120 +1027,6 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
 }
 
-void Vehicle::_handleEscStatus(mavlink_message_t& message)
-{
-    mavlink_esc_status_t content;
-    mavlink_msg_esc_status_decode(&message, &content);
-
-    _escStatusFactGroup.index()->setRawValue(content.index);
-
-    _escStatusFactGroup.rpmFirst()->setRawValue(content.rpm[0]);
-    _escStatusFactGroup.rpmSecond()->setRawValue(content.rpm[1]);
-    _escStatusFactGroup.rpmThird()->setRawValue(content.rpm[2]);
-    _escStatusFactGroup.rpmFourth()->setRawValue(content.rpm[3]);
-
-    _escStatusFactGroup.currentFirst()->setRawValue(content.current[0]);
-    _escStatusFactGroup.currentSecond()->setRawValue(content.current[1]);
-    _escStatusFactGroup.currentThird()->setRawValue(content.current[2]);
-    _escStatusFactGroup.currentFourth()->setRawValue(content.current[3]);
-
-    _escStatusFactGroup.voltageFirst()->setRawValue(content.voltage[0]);
-    _escStatusFactGroup.voltageSecond()->setRawValue(content.voltage[1]);
-    _escStatusFactGroup.voltageThird()->setRawValue(content.voltage[2]);
-    _escStatusFactGroup.voltageFourth()->setRawValue(content.voltage[3]);
-}
-
-void Vehicle::_handleEstimatorStatus(mavlink_message_t& message)
-{
-    mavlink_estimator_status_t estimatorStatus;
-    mavlink_msg_estimator_status_decode(&message, &estimatorStatus);
-
-    _estimatorStatusFactGroup.goodAttitudeEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_ATTITUDE));
-    _estimatorStatusFactGroup.goodHorizVelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_VELOCITY_HORIZ));
-    _estimatorStatusFactGroup.goodVertVelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_VELOCITY_VERT));
-    _estimatorStatusFactGroup.goodHorizPosRelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_HORIZ_REL));
-    _estimatorStatusFactGroup.goodHorizPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_HORIZ_ABS));
-    _estimatorStatusFactGroup.goodVertPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_VERT_ABS));
-    _estimatorStatusFactGroup.goodVertPosAGLEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_VERT_AGL));
-    _estimatorStatusFactGroup.goodConstPosModeEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_CONST_POS_MODE));
-    _estimatorStatusFactGroup.goodPredHorizPosRelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_PRED_POS_HORIZ_REL));
-    _estimatorStatusFactGroup.goodPredHorizPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_PRED_POS_HORIZ_ABS));
-    _estimatorStatusFactGroup.gpsGlitch()->setRawValue(estimatorStatus.flags & ESTIMATOR_GPS_GLITCH ? true : false);
-    _estimatorStatusFactGroup.accelError()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_ACCEL_ERROR));
-    _estimatorStatusFactGroup.velRatio()->setRawValue(estimatorStatus.vel_ratio);
-    _estimatorStatusFactGroup.horizPosRatio()->setRawValue(estimatorStatus.pos_horiz_ratio);
-    _estimatorStatusFactGroup.vertPosRatio()->setRawValue(estimatorStatus.pos_vert_ratio);
-    _estimatorStatusFactGroup.magRatio()->setRawValue(estimatorStatus.mag_ratio);
-    _estimatorStatusFactGroup.haglRatio()->setRawValue(estimatorStatus.hagl_ratio);
-    _estimatorStatusFactGroup.tasRatio()->setRawValue(estimatorStatus.tas_ratio);
-    _estimatorStatusFactGroup.horizPosAccuracy()->setRawValue(estimatorStatus.pos_horiz_accuracy);
-    _estimatorStatusFactGroup.vertPosAccuracy()->setRawValue(estimatorStatus.pos_vert_accuracy);
-
-#if 0
-    typedef enum ESTIMATOR_STATUS_FLAGS
-    {
-        ESTIMATOR_ATTITUDE=1, /* True if the attitude estimate is good | */
-        ESTIMATOR_VELOCITY_HORIZ=2, /* True if the horizontal velocity estimate is good | */
-        ESTIMATOR_VELOCITY_VERT=4, /* True if the  vertical velocity estimate is good | */
-        ESTIMATOR_POS_HORIZ_REL=8, /* True if the horizontal position (relative) estimate is good | */
-        ESTIMATOR_POS_HORIZ_ABS=16, /* True if the horizontal position (absolute) estimate is good | */
-        ESTIMATOR_POS_VERT_ABS=32, /* True if the vertical position (absolute) estimate is good | */
-        ESTIMATOR_POS_VERT_AGL=64, /* True if the vertical position (above ground) estimate is good | */
-        ESTIMATOR_CONST_POS_MODE=128, /* True if the EKF is in a constant position mode and is not using external measurements (eg GPS or optical flow) | */
-        ESTIMATOR_PRED_POS_HORIZ_REL=256, /* True if the EKF has sufficient data to enter a mode that will provide a (relative) position estimate | */
-        ESTIMATOR_PRED_POS_HORIZ_ABS=512, /* True if the EKF has sufficient data to enter a mode that will provide a (absolute) position estimate | */
-        ESTIMATOR_GPS_GLITCH=1024, /* True if the EKF has detected a GPS glitch | */
-        ESTIMATOR_ACCEL_ERROR=2048, /* True if the EKF has detected bad accelerometer data | */
-
-        typedef struct __mavlink_estimator_status_t {
-            uint64_t time_usec; /*< Timestamp (micros since boot or Unix epoch)*/
-            float vel_ratio; /*< Velocity innovation test ratio*/
-            float pos_horiz_ratio; /*< Horizontal position innovation test ratio*/
-            float pos_vert_ratio; /*< Vertical position innovation test ratio*/
-            float mag_ratio; /*< Magnetometer innovation test ratio*/
-            float hagl_ratio; /*< Height above terrain innovation test ratio*/
-            float tas_ratio; /*< True airspeed innovation test ratio*/
-            float pos_horiz_accuracy; /*< Horizontal position 1-STD accuracy relative to the EKF local origin (m)*/
-            float pos_vert_accuracy; /*< Vertical position 1-STD accuracy relative to the EKF local origin (m)*/
-            uint16_t flags; /*< Integer bitmask indicating which EKF outputs are valid. See definition for ESTIMATOR_STATUS_FLAGS.*/
-        } mavlink_estimator_status_t;
-    };
-#endif
-}
-
-void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
-{
-    mavlink_distance_sensor_t distanceSensor;
-
-    mavlink_msg_distance_sensor_decode(&message, &distanceSensor);
-
-    struct orientation2Fact_s {
-        MAV_SENSOR_ORIENTATION  orientation;
-        Fact*                   fact;
-    };
-
-    orientation2Fact_s rgOrientation2Fact[] =
-    {
-        { MAV_SENSOR_ROTATION_NONE,         _distanceSensorFactGroup.rotationNone() },
-        { MAV_SENSOR_ROTATION_YAW_45,       _distanceSensorFactGroup.rotationYaw45() },
-        { MAV_SENSOR_ROTATION_YAW_90,       _distanceSensorFactGroup.rotationYaw90() },
-        { MAV_SENSOR_ROTATION_YAW_135,      _distanceSensorFactGroup.rotationYaw135() },
-        { MAV_SENSOR_ROTATION_YAW_180,      _distanceSensorFactGroup.rotationYaw180() },
-        { MAV_SENSOR_ROTATION_YAW_225,      _distanceSensorFactGroup.rotationYaw225() },
-        { MAV_SENSOR_ROTATION_YAW_270,      _distanceSensorFactGroup.rotationYaw270() },
-        { MAV_SENSOR_ROTATION_YAW_315,      _distanceSensorFactGroup.rotationYaw315() },
-        { MAV_SENSOR_ROTATION_PITCH_90,     _distanceSensorFactGroup.rotationPitch90() },
-        { MAV_SENSOR_ROTATION_PITCH_270,    _distanceSensorFactGroup.rotationPitch270() },
-    };
-
-    for (size_t i=0; i<sizeof(rgOrientation2Fact)/sizeof(rgOrientation2Fact[0]); i++) {
-        const orientation2Fact_s& orientation2Fact = rgOrientation2Fact[i];
-        if (orientation2Fact.orientation == distanceSensor.orientation) {
-            orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
-        }
-    }
-}
-
 // Ignore warnings from mavlink headers for both GCC/Clang and MSVC
 #ifdef __GNUC__
 
@@ -1189,24 +1044,6 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
 #else
 #pragma warning(push, 0)
 #endif
-
-void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
-{
-    mavlink_attitude_target_t attitudeTarget;
-
-    mavlink_msg_attitude_target_decode(&message, &attitudeTarget);
-
-    float roll, pitch, yaw;
-    mavlink_quaternion_to_euler(attitudeTarget.q, &roll, &pitch, &yaw);
-
-    _setpointFactGroup.roll()->setRawValue(qRadiansToDegrees(roll));
-    _setpointFactGroup.pitch()->setRawValue(qRadiansToDegrees(pitch));
-    _setpointFactGroup.yaw()->setRawValue(qRadiansToDegrees(yaw));
-
-    _setpointFactGroup.rollRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_roll_rate));
-    _setpointFactGroup.pitchRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_pitch_rate));
-    _setpointFactGroup.yawRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_yaw_rate));
-}
 
 void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, double yawRadians)
 {
@@ -1290,15 +1127,6 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
             }
         }
     }
-
-    _gpsFactGroup.lat()->setRawValue(gpsRawInt.lat * 1e-7);
-    _gpsFactGroup.lon()->setRawValue(gpsRawInt.lon * 1e-7);
-    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(gpsRawInt.lat * 1e-7, gpsRawInt.lon * 1e-7)));
-    _gpsFactGroup.count()->setRawValue(gpsRawInt.satellites_visible == 255 ? 0 : gpsRawInt.satellites_visible);
-    _gpsFactGroup.hdop()->setRawValue(gpsRawInt.eph == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.eph / 100.0);
-    _gpsFactGroup.vdop()->setRawValue(gpsRawInt.epv == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.epv / 100.0);
-    _gpsFactGroup.courseOverGround()->setRawValue(gpsRawInt.cog == UINT16_MAX ? std::numeric_limits<double>::quiet_NaN() : gpsRawInt.cog / 100.0);
-    _gpsFactGroup.lock()->setRawValue(gpsRawInt.fix_type);
 }
 
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
@@ -1354,8 +1182,8 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
         const double altitude;
     } coordinate {
         highLatency.latitude  / (double)1E7,
-        highLatency.longitude  / (double)1E7,
-        static_cast<double>(highLatency.altitude_amsl)
+                highLatency.longitude  / (double)1E7,
+                static_cast<double>(highLatency.altitude_amsl)
     };
 
     _coordinate.setLatitude(coordinate.latitude);
@@ -1367,19 +1195,8 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
     _groundSpeedFact.setRawValue((double)highLatency.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency.climb_rate / 10.0);
     _headingFact.setRawValue((double)highLatency.heading * 2.0);
-    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeRelativeFact.setRawValue(qQNaN());
     _altitudeAMSLFact.setRawValue(coordinate.altitude);
-
-    _windFactGroup.speed()->setRawValue((double)highLatency.airspeed / 5.0);
-
-    _battery1FactGroup.percentRemaining()->setRawValue(highLatency.battery_remaining);
-
-    _temperatureFactGroup.temperature1()->setRawValue(highLatency.temperature_air);
-
-    _gpsFactGroup.lat()->setRawValue(coordinate.latitude);
-    _gpsFactGroup.lon()->setRawValue(coordinate.longitude);
-    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(coordinate.latitude, coordinate.longitude)));
-    _gpsFactGroup.count()->setRawValue(0);
 }
 
 void Vehicle::_handleHighLatency2(mavlink_message_t& message)
@@ -1414,22 +1231,8 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _groundSpeedFact.setRawValue((double)highLatency2.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency2.climb_rate / 10.0);
     _headingFact.setRawValue((double)highLatency2.heading * 2.0);
-    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeRelativeFact.setRawValue(qQNaN());
     _altitudeAMSLFact.setRawValue(highLatency2.altitude);
-
-    _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
-    _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
-
-    _battery1FactGroup.percentRemaining()->setRawValue(highLatency2.battery);
-
-    _temperatureFactGroup.temperature1()->setRawValue(highLatency2.temperature_air);
-
-    _gpsFactGroup.lat()->setRawValue(highLatency2.latitude * 1e-7);
-    _gpsFactGroup.lon()->setRawValue(highLatency2.longitude * 1e-7);
-    _gpsFactGroup.mgrs()->setRawValue(convertGeoToMGRS(QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7)));
-    _gpsFactGroup.count()->setRawValue(0);
-    _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
-    _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
 
     struct failure2Sensor_s {
         HL_FAILURE_FLAG         failureBit;
@@ -1592,87 +1395,11 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleVibration(mavlink_message_t& message)
-{
-    mavlink_vibration_t vibration;
-    mavlink_msg_vibration_decode(&message, &vibration);
-
-    _vibrationFactGroup.xAxis()->setRawValue(vibration.vibration_x);
-    _vibrationFactGroup.yAxis()->setRawValue(vibration.vibration_y);
-    _vibrationFactGroup.zAxis()->setRawValue(vibration.vibration_z);
-    _vibrationFactGroup.clipCount1()->setRawValue(vibration.clipping_0);
-    _vibrationFactGroup.clipCount2()->setRawValue(vibration.clipping_1);
-    _vibrationFactGroup.clipCount3()->setRawValue(vibration.clipping_2);
-}
-
-void Vehicle::_handleWindCov(mavlink_message_t& message)
-{
-    mavlink_wind_cov_t wind;
-    mavlink_msg_wind_cov_decode(&message, &wind);
-
-    float direction = qRadiansToDegrees(qAtan2(wind.wind_y, wind.wind_x));
-    float speed = qSqrt(qPow(wind.wind_x, 2) + qPow(wind.wind_y, 2));
-
-    if (direction < 0) {
-        direction += 360;
-    }
-
-    _windFactGroup.direction()->setRawValue(direction);
-    _windFactGroup.speed()->setRawValue(speed);
-    _windFactGroup.verticalSpeed()->setRawValue(0);
-}
-
-#if !defined(NO_ARDUPILOT_DIALECT)
-void Vehicle::_handleWind(mavlink_message_t& message)
-{
-    mavlink_wind_t wind;
-    mavlink_msg_wind_decode(&message, &wind);
-
-    // We don't want negative wind angles
-    float direction = wind.direction;
-    if (direction < 0) {
-        direction += 360;
-    }
-    _windFactGroup.direction()->setRawValue(direction);
-    _windFactGroup.speed()->setRawValue(wind.speed);
-    _windFactGroup.verticalSpeed()->setRawValue(wind.speed_z);
-}
-#endif
-
 bool Vehicle::_apmArmingNotRequired()
 {
     QString armingRequireParam("ARMING_REQUIRE");
     return _parameterManager->parameterExists(FactSystem::defaultComponentId, armingRequireParam) &&
             _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
-}
-
-void Vehicle::_batteryStatusWorker(int batteryId, double voltage, double current, double batteryRemainingPct)
-{
-    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (batteryId == 0) {
-        pBatteryFactGroup = &_battery1FactGroup;
-    } else if (batteryId == 1) {
-        pBatteryFactGroup = &_battery2FactGroup;
-    } else {
-        return;
-    }
-
-    pBatteryFactGroup->voltage()->setRawValue(voltage);
-    pBatteryFactGroup->current()->setRawValue(current);
-    pBatteryFactGroup->instantPower()->setRawValue(voltage * current);
-    pBatteryFactGroup->percentRemaining()->setRawValue(batteryRemainingPct);
-
-    //-- Low battery warning
-    if (batteryId == 0 && !qIsNaN(batteryRemainingPct)) {
-        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
-        if (batteryRemainingPct < warnThreshold &&
-                batteryRemainingPct < _lastAnnouncedLowBatteryPercent &&
-                _lastBatteryAnnouncement.elapsed() > (batteryRemainingPct < warnThreshold * 0.5 ? 15000 : 30000)) {
-            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(static_cast<int>(batteryRemainingPct)));
-            _lastBatteryAnnouncement.start();
-            _lastAnnouncedLowBatteryPercent = static_cast<int>(batteryRemainingPct);
-        }
-    }
 }
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
@@ -1726,52 +1453,64 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _onboardControlSensorsUnhealthy = newSensorsUnhealthy;
         emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
-
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    _batteryStatusWorker(0 /* batteryId */,
-                         sysStatus.voltage_battery == UINT16_MAX ? qQNaN() : static_cast<double>(sysStatus.voltage_battery) / 1000.0,
-                         sysStatus.current_battery == -1 ? qQNaN() : static_cast<double>(sysStatus.current_battery) / 100.0,
-                         sysStatus.battery_remaining == -1 ? qQNaN() : sysStatus.battery_remaining);
 }
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 {
-    mavlink_battery_status_t bat_status;
-    mavlink_msg_battery_status_decode(&message, &bat_status);
+    mavlink_battery_status_t batteryStatus;
+    mavlink_msg_battery_status_decode(&message, &batteryStatus);
 
-    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (bat_status.id == 0) {
-        pBatteryFactGroup = &_battery1FactGroup;
-    } else if (bat_status.id == 1) {
-        pBatteryFactGroup = &_battery2FactGroup;
-    } else {
-        return;
+    if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryStatus.id)) {
+        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
     }
 
-    double voltage = qQNaN();
-    for (int i=0; i<10; i++) {
-        double cellVoltage = bat_status.voltages[i] == UINT16_MAX ? qQNaN() : static_cast<double>(bat_status.voltages[i]) / 1000.0;
-        if (qIsNaN(cellVoltage)) {
-            break;
+    QString batteryMessage;
+
+    switch (batteryStatus.charge_state) {
+    case MAV_BATTERY_CHARGE_STATE_OK:
+        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        break;
+    case MAV_BATTERY_CHARGE_STATE_LOW:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level low");
         }
-        if (i == 0) {
-            voltage = cellVoltage;
+        break;
+    case MAV_BATTERY_CHARGE_STATE_CRITICAL:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level is critical");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_EMERGENCY:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 level emergency");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_FAILED:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 failed");
+        }
+        break;
+    case MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
+        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+            batteryMessage = tr("battery %1 unhealthy");
+        }
+        break;
+    }
+
+    if (!batteryMessage.isEmpty()) {
+        QString batteryIdStr("%1");
+        if (_batteryFactGroupListModel.count() > 1) {
+            batteryIdStr = batteryIdStr.arg(batteryStatus.id);
         } else {
-            voltage += cellVoltage;
+            batteryIdStr = batteryIdStr.arg("");
         }
-    }
-
-    pBatteryFactGroup->temperature()->setRawValue(bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
-    pBatteryFactGroup->mahConsumed()->setRawValue(bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
-    pBatteryFactGroup->chargeState()->setRawValue(bat_status.charge_state);
-    pBatteryFactGroup->timeRemaining()->setRawValue(bat_status.time_remaining == 0 ? qQNaN() : bat_status.time_remaining);
-
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    if (bat_status.id != 0) {
-        _batteryStatusWorker(bat_status.id,
-                             voltage,
-                             bat_status.current_battery == -1 ? qQNaN() : (double)bat_status.current_battery / 100.0,
-                             bat_status.battery_remaining == -1 ? qQNaN() : bat_status.battery_remaining);
+        _say(tr("warning"));
+        _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
     }
 }
 
@@ -1806,7 +1545,7 @@ void Vehicle::_updateArmed(bool armed)
             _flightTimerStart();
             _clearCameraTriggerPoints();
             // Reset battery warning
-            _lastAnnouncedLowBatteryPercent = 100;
+            _lowestBatteryChargeStateAnnouncedMap.clear();
         } else {
             _trajectoryPoints->stop();
             _flightTimerStop();
@@ -1990,24 +1729,6 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 #else
 #pragma warning(pop, 0)
 #endif
-
-void Vehicle::_handleScaledPressure(mavlink_message_t& message) {
-    mavlink_scaled_pressure_t pressure;
-    mavlink_msg_scaled_pressure_decode(&message, &pressure);
-    _temperatureFactGroup.temperature1()->setRawValue(pressure.temperature / 100.0);
-}
-
-void Vehicle::_handleScaledPressure2(mavlink_message_t& message) {
-    mavlink_scaled_pressure2_t pressure;
-    mavlink_msg_scaled_pressure2_decode(&message, &pressure);
-    _temperatureFactGroup.temperature2()->setRawValue(pressure.temperature / 100.0);
-}
-
-void Vehicle::_handleScaledPressure3(mavlink_message_t& message) {
-    mavlink_scaled_pressure3_t pressure;
-    mavlink_msg_scaled_pressure3_decode(&message, &pressure);
-    _temperatureFactGroup.temperature3()->setRawValue(pressure.temperature / 100.0);
-}
 
 bool Vehicle::_containsLink(LinkInterface* link)
 {
@@ -2241,7 +1962,7 @@ bool Vehicle::xConfigMotors()
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-QString Vehicle::formatedMessages()
+QString Vehicle::formattedMessages()
 {
     QString messages;
     for(UASMessage* message: _toolbox->uasMessageHandler()->messages()) {
@@ -2257,10 +1978,8 @@ void Vehicle::clearMessages()
 
 void Vehicle::_handletextMessageReceived(UASMessage* message)
 {
-    if(message)
-    {
-        _formatedMessage = message->getFormatedText();
-        emit formatedMessageChanged();
+    if (message) {
+        emit newFormattedMessage(message->getFormatedText());
     }
 }
 
@@ -2424,6 +2143,15 @@ void Vehicle::setArmed(bool armed)
                    MAV_CMD_COMPONENT_ARM_DISARM,
                    true,    // show error if fails
                    armed ? 1.0f : 0.0f);
+}
+
+void Vehicle::forceArm(void)
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_COMPONENT_ARM_DISARM,
+                   true,    // show error if fails
+                   1.0f,    // arm
+                   2989);   // force arm
 }
 
 bool Vehicle::flightModeSetAvailable()
@@ -3604,6 +3332,103 @@ void Vehicle::rebootVehicle()
     sendMessageOnLinkThreadSafe(priorityLink(), msg);
 }
 
+void Vehicle::startCalibration(Vehicle::CalibrationType calType)
+{
+    float param1 = 0;
+    float param2 = 0;
+    float param3 = 0;
+    float param4 = 0;
+    float param5 = 0;
+    float param6 = 0;
+    float param7 = 0;
+
+    switch (calType) {
+    case CalibrationGyro:
+        param1 = 1;
+        break;
+    case CalibrationMag:
+        param2 = 1;
+        break;
+    case CalibrationRadio:
+        param4 = 1;
+        break;
+    case CalibrationCopyTrims:
+        param4 = 2;
+        break;
+    case CalibrationAccel:
+        param5 = 1;
+        break;
+    case CalibrationLevel:
+        param5 = 2;
+        break;
+    case CalibrationEsc:
+        param7 = 1;
+        break;
+    case CalibrationPX4Airspeed:
+        param6 = 1;
+        break;
+    case CalibrationPX4Pressure:
+        param3 = 1;
+        break;
+    case CalibrationAPMCompassMot:
+        param6 = 1;
+        break;
+    case CalibrationAPMPressureAirspeed:
+        param3 = 1;
+        break;
+    case CalibrationAPMPreFlight:
+        param3 = 1; // GroundPressure/Airspeed
+        if (multiRotor() || rover()) {
+            // Gyro cal for ArduCopter only
+            param1 = 1;
+        }
+    }
+
+    // We can't use sendMavCommand here since we have no idea how long it will be before the command returns a result. This in turn
+    // causes the retry logic to break down.
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack_chan(_mavlink->getSystemId(),
+                                       _mavlink->getComponentId(),
+                                       priorityLink()->mavlinkChannel(),
+                                       &msg,
+                                       id(),
+                                       defaultComponentId(),            // target component
+                                       MAV_CMD_PREFLIGHT_CALIBRATION,    // command id
+                                       0,                                // 0=first transmission of command
+                                       param1, param2, param3, param4, param5, param6, param7);
+    sendMessageOnLinkThreadSafe(priorityLink(), msg);
+}
+
+void Vehicle::stopCalibration(void)
+{
+    sendMavCommand(defaultComponentId(),    // target component
+                   MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
+                   true,                              // showError
+                   0,                                 // gyro cal
+                   0,                                 // mag cal
+                   0,                                 // ground pressure
+                   0,                                 // radio cal
+                   0,                                 // accel cal
+                   0,                                 // airspeed cal
+                   0);                                // unused
+}
+
+void Vehicle::startUAVCANBusConfig(void)
+{
+    sendMavCommand(defaultComponentId(),        // target component
+                   MAV_CMD_PREFLIGHT_UAVCAN,    // command id
+                   true,                        // showError
+                   1);                          // start config
+}
+
+void Vehicle::stopUAVCANBusConfig(void)
+{
+    sendMavCommand(defaultComponentId(),        // target component
+                   MAV_CMD_PREFLIGHT_UAVCAN,    // command id
+                   true,                        // showError
+                   0);                          // stop config
+}
+
 void Vehicle::setSoloFirmware(bool soloFirmware)
 {
     if (soloFirmware != _soloFirmware) {
@@ -3636,17 +3461,6 @@ void Vehicle::setOfflineEditingDefaultComponentId(int defaultComponentId)
     }
 }
 
-void Vehicle::triggerCamera()
-{
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_DO_DIGICAM_CONTROL,
-                   true,                            // show errors
-                   0.0, 0.0, 0.0, 0.0,              // param 1-4 unused
-                   1.0,                             // trigger camera
-                   0.0,                             // param 6 unused
-                   1.0);                            // test shot flag
-}
-
 void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
 {
     if (_vtolInFwdFlight != vtolInFwdFlight) {
@@ -3656,43 +3470,6 @@ void Vehicle::setVtolInFwdFlight(bool vtolInFwdFlight)
                        vtolInFwdFlight ? MAV_VTOL_STATE_FW : MAV_VTOL_STATE_MC, // transition state
                        0, 0, 0, 0, 0, 0);                                       // param 2-7 unused
     }
-}
-
-const char* VehicleGPSFactGroup::_latFactName =                 "lat";
-const char* VehicleGPSFactGroup::_lonFactName =                 "lon";
-const char* VehicleGPSFactGroup::_mgrsFactName =                "mgrs";
-const char* VehicleGPSFactGroup::_hdopFactName =                "hdop";
-const char* VehicleGPSFactGroup::_vdopFactName =                "vdop";
-const char* VehicleGPSFactGroup::_courseOverGroundFactName =    "courseOverGround";
-const char* VehicleGPSFactGroup::_countFactName =               "count";
-const char* VehicleGPSFactGroup::_lockFactName =                "lock";
-
-VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
-    , _latFact              (0, _latFactName,               FactMetaData::valueTypeDouble)
-    , _lonFact              (0, _lonFactName,               FactMetaData::valueTypeDouble)
-    , _mgrsFact             (0, _mgrsFactName,              FactMetaData::valueTypeString)
-    , _hdopFact             (0, _hdopFactName,              FactMetaData::valueTypeDouble)
-    , _vdopFact             (0, _vdopFactName,              FactMetaData::valueTypeDouble)
-    , _courseOverGroundFact (0, _courseOverGroundFactName,  FactMetaData::valueTypeDouble)
-    , _countFact            (0, _countFactName,             FactMetaData::valueTypeInt32)
-    , _lockFact             (0, _lockFactName,              FactMetaData::valueTypeInt32)
-{
-    _addFact(&_latFact,                 _latFactName);
-    _addFact(&_lonFact,                 _lonFactName);
-    _addFact(&_mgrsFact,                _mgrsFactName);
-    _addFact(&_hdopFact,                _hdopFactName);
-    _addFact(&_vdopFact,                _vdopFactName);
-    _addFact(&_courseOverGroundFact,    _courseOverGroundFactName);
-    _addFact(&_lockFact,                _lockFactName);
-    _addFact(&_countFact,               _countFactName);
-
-    _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _mgrsFact.setRawValue("");
-    _hdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _vdopFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _courseOverGroundFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
 void Vehicle::startMavlinkLog()
@@ -4333,341 +4110,4 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 static_cast<int16_t>(newYawCommand),
                 buttons);
     sendMessageOnLinkThreadSafe(priorityLink(), message);
-}
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-
-const char* VehicleBatteryFactGroup::_voltageFactName =                     "voltage";
-const char* VehicleBatteryFactGroup::_percentRemainingFactName =            "percentRemaining";
-const char* VehicleBatteryFactGroup::_mahConsumedFactName =                 "mahConsumed";
-const char* VehicleBatteryFactGroup::_currentFactName =                     "current";
-const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
-const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
-const char* VehicleBatteryFactGroup::_timeRemainingFactName =               "timeRemaining";
-const char* VehicleBatteryFactGroup::_chargeStateFactName =                 "chargeState";
-
-const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
-
-VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent)
-    , _voltageFact                  (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
-    , _percentRemainingFact         (0, _percentRemainingFactName,          FactMetaData::valueTypeDouble)
-    , _mahConsumedFact              (0, _mahConsumedFactName,               FactMetaData::valueTypeDouble)
-    , _currentFact                  (0, _currentFactName,                   FactMetaData::valueTypeDouble)
-    , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
-    , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeDouble)
-    , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeDouble)
-    , _chargeStateFact              (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
-{
-    _addFact(&_voltageFact,                 _voltageFactName);
-    _addFact(&_percentRemainingFact,        _percentRemainingFactName);
-    _addFact(&_mahConsumedFact,             _mahConsumedFactName);
-    _addFact(&_currentFact,                 _currentFactName);
-    _addFact(&_temperatureFact,             _temperatureFactName);
-    _addFact(&_instantPowerFact,            _instantPowerFactName);
-    _addFact(&_timeRemainingFact,           _timeRemainingFactName);
-    _addFact(&_chargeStateFact,             _chargeStateFactName);
-
-    // Start out as not available
-    _voltageFact.setRawValue            (qQNaN());
-    _percentRemainingFact.setRawValue   (qQNaN());
-    _mahConsumedFact.setRawValue        (qQNaN());
-    _currentFact.setRawValue            (qQNaN());
-    _temperatureFact.setRawValue        (qQNaN());
-    _instantPowerFact.setRawValue       (qQNaN());
-    _timeRemainingFact.setRawValue      (qQNaN());
-    _chargeStateFact.setRawValue        (MAV_BATTERY_CHARGE_STATE_UNDEFINED);
-}
-
-const char* VehicleWindFactGroup::_directionFactName =      "direction";
-const char* VehicleWindFactGroup::_speedFactName =          "speed";
-const char* VehicleWindFactGroup::_verticalSpeedFactName =  "verticalSpeed";
-
-VehicleWindFactGroup::VehicleWindFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/WindFact.json", parent)
-    , _directionFact    (0, _directionFactName,     FactMetaData::valueTypeDouble)
-    , _speedFact        (0, _speedFactName,         FactMetaData::valueTypeDouble)
-    , _verticalSpeedFact(0, _verticalSpeedFactName, FactMetaData::valueTypeDouble)
-{
-    _addFact(&_directionFact,       _directionFactName);
-    _addFact(&_speedFact,           _speedFactName);
-    _addFact(&_verticalSpeedFact,   _verticalSpeedFactName);
-
-    // Start out as not available "--.--"
-    _directionFact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _speedFact.setRawValue          (std::numeric_limits<float>::quiet_NaN());
-    _verticalSpeedFact.setRawValue  (std::numeric_limits<float>::quiet_NaN());
-}
-
-const char* VehicleVibrationFactGroup::_xAxisFactName =      "xAxis";
-const char* VehicleVibrationFactGroup::_yAxisFactName =      "yAxis";
-const char* VehicleVibrationFactGroup::_zAxisFactName =      "zAxis";
-const char* VehicleVibrationFactGroup::_clipCount1FactName = "clipCount1";
-const char* VehicleVibrationFactGroup::_clipCount2FactName = "clipCount2";
-const char* VehicleVibrationFactGroup::_clipCount3FactName = "clipCount3";
-
-VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/VibrationFact.json", parent)
-    , _xAxisFact        (0, _xAxisFactName,         FactMetaData::valueTypeDouble)
-    , _yAxisFact        (0, _yAxisFactName,         FactMetaData::valueTypeDouble)
-    , _zAxisFact        (0, _zAxisFactName,         FactMetaData::valueTypeDouble)
-    , _clipCount1Fact   (0, _clipCount1FactName,    FactMetaData::valueTypeUint32)
-    , _clipCount2Fact   (0, _clipCount2FactName,    FactMetaData::valueTypeUint32)
-    , _clipCount3Fact   (0, _clipCount3FactName,    FactMetaData::valueTypeUint32)
-{
-    _addFact(&_xAxisFact,       _xAxisFactName);
-    _addFact(&_yAxisFact,       _yAxisFactName);
-    _addFact(&_zAxisFact,       _zAxisFactName);
-    _addFact(&_clipCount1Fact,  _clipCount1FactName);
-    _addFact(&_clipCount2Fact,  _clipCount2FactName);
-    _addFact(&_clipCount3Fact,  _clipCount3FactName);
-
-    // Start out as not available "--.--"
-    _xAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _zAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-}
-
-const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
-const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
-const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
-
-VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/TemperatureFact.json", parent)
-    , _temperature1Fact    (0, _temperature1FactName,     FactMetaData::valueTypeDouble)
-    , _temperature2Fact    (0, _temperature2FactName,     FactMetaData::valueTypeDouble)
-    , _temperature3Fact    (0, _temperature3FactName,     FactMetaData::valueTypeDouble)
-{
-    _addFact(&_temperature1Fact,       _temperature1FactName);
-    _addFact(&_temperature2Fact,       _temperature2FactName);
-    _addFact(&_temperature3Fact,       _temperature3FactName);
-
-    // Start out as not available "--.--"
-    _temperature1Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _temperature2Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-    _temperature3Fact.setRawValue      (std::numeric_limits<float>::quiet_NaN());
-}
-
-const char* VehicleClockFactGroup::_currentTimeFactName = "currentTime";
-const char* VehicleClockFactGroup::_currentDateFactName = "currentDate";
-
-VehicleClockFactGroup::VehicleClockFactGroup(QObject* parent)
-    : FactGroup(1000, ":/json/Vehicle/ClockFact.json", parent)
-    , _currentTimeFact  (0, _currentTimeFactName,    FactMetaData::valueTypeString)
-    , _currentDateFact  (0, _currentDateFactName,    FactMetaData::valueTypeString)
-{
-    _addFact(&_currentTimeFact, _currentTimeFactName);
-    _addFact(&_currentDateFact, _currentDateFactName);
-
-    // Start out as not available "--.--"
-    _currentTimeFact.setRawValue    (std::numeric_limits<float>::quiet_NaN());
-    _currentDateFact.setRawValue    (std::numeric_limits<float>::quiet_NaN());
-}
-
-void VehicleClockFactGroup::_updateAllValues()
-{
-    _currentTimeFact.setRawValue(QTime::currentTime().toString());
-    _currentDateFact.setRawValue(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
-
-    FactGroup::_updateAllValues();
-}
-
-const char* VehicleSetpointFactGroup::_rollFactName =       "roll";
-const char* VehicleSetpointFactGroup::_pitchFactName =      "pitch";
-const char* VehicleSetpointFactGroup::_yawFactName =        "yaw";
-const char* VehicleSetpointFactGroup::_rollRateFactName =   "rollRate";
-const char* VehicleSetpointFactGroup::_pitchRateFactName =  "pitchRate";
-const char* VehicleSetpointFactGroup::_yawRateFactName =    "yawRate";
-
-VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
-    : FactGroup     (1000, ":/json/Vehicle/SetpointFact.json", parent)
-    , _rollFact     (0, _rollFactName,      FactMetaData::valueTypeDouble)
-    , _pitchFact    (0, _pitchFactName,     FactMetaData::valueTypeDouble)
-    , _yawFact      (0, _yawFactName,       FactMetaData::valueTypeDouble)
-    , _rollRateFact (0, _rollRateFactName,  FactMetaData::valueTypeDouble)
-    , _pitchRateFact(0, _pitchRateFactName, FactMetaData::valueTypeDouble)
-    , _yawRateFact  (0, _yawRateFactName,   FactMetaData::valueTypeDouble)
-{
-    _addFact(&_rollFact,        _rollFactName);
-    _addFact(&_pitchFact,       _pitchFactName);
-    _addFact(&_yawFact,         _yawFactName);
-    _addFact(&_rollRateFact,    _rollRateFactName);
-    _addFact(&_pitchRateFact,   _pitchRateFactName);
-    _addFact(&_yawRateFact,     _yawRateFactName);
-
-    // Start out as not available "--.--"
-    _rollFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _pitchFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yawFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rollRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _pitchRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _yawRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-}
-
-const char* VehicleDistanceSensorFactGroup::_rotationNoneFactName =     "rotationNone";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw45FactName =    "rotationYaw45";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw90FactName =    "rotationYaw90";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw135FactName =   "rotationYaw135";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw180FactName =   "rotationYaw180";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw225FactName =   "rotationYaw225";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw270FactName =   "rotationYaw270";
-const char* VehicleDistanceSensorFactGroup::_rotationYaw315FactName =   "rotationYaw315";
-const char* VehicleDistanceSensorFactGroup::_rotationPitch90FactName =  "rotationPitch90";
-const char* VehicleDistanceSensorFactGroup::_rotationPitch270FactName = "rotationPitch270";
-
-VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
-    : FactGroup             (1000, ":/json/Vehicle/DistanceSensorFact.json", parent)
-    , _rotationNoneFact     (0, _rotationNoneFactName,      FactMetaData::valueTypeDouble)
-    , _rotationYaw45Fact    (0, _rotationYaw45FactName,     FactMetaData::valueTypeDouble)
-    , _rotationYaw90Fact    (0, _rotationYaw90FactName,     FactMetaData::valueTypeDouble)
-    , _rotationYaw135Fact   (0, _rotationYaw135FactName,    FactMetaData::valueTypeDouble)
-    , _rotationYaw180Fact   (0, _rotationYaw180FactName,    FactMetaData::valueTypeDouble)
-    , _rotationYaw225Fact   (0, _rotationYaw225FactName,    FactMetaData::valueTypeDouble)
-    , _rotationYaw270Fact   (0, _rotationYaw270FactName,    FactMetaData::valueTypeDouble)
-    , _rotationYaw315Fact   (0, _rotationYaw315FactName,    FactMetaData::valueTypeDouble)
-    , _rotationPitch90Fact  (0, _rotationPitch90FactName,   FactMetaData::valueTypeDouble)
-    , _rotationPitch270Fact (0, _rotationPitch270FactName,  FactMetaData::valueTypeDouble)
-{
-    _addFact(&_rotationNoneFact,        _rotationNoneFactName);
-    _addFact(&_rotationYaw45Fact,       _rotationYaw45FactName);
-    _addFact(&_rotationYaw90Fact,       _rotationYaw90FactName);
-    _addFact(&_rotationYaw135Fact,      _rotationYaw135FactName);
-    _addFact(&_rotationYaw180Fact,      _rotationYaw180FactName);
-    _addFact(&_rotationYaw225Fact,      _rotationYaw225FactName);
-    _addFact(&_rotationYaw270Fact,      _rotationYaw270FactName);
-    _addFact(&_rotationYaw315Fact,      _rotationYaw315FactName);
-    _addFact(&_rotationPitch90Fact,     _rotationPitch90FactName);
-    _addFact(&_rotationPitch270Fact,    _rotationPitch270FactName);
-
-    // Start out as not available "--.--"
-    _rotationNoneFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw45Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw135Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw180Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw225Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationYaw270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationPitch90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-    _rotationPitch270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
-}
-
-const char* VehicleEscStatusFactGroup::_indexFactName =                             "index";
-
-const char* VehicleEscStatusFactGroup::_rpmFirstFactName =                          "rpm1";
-const char* VehicleEscStatusFactGroup::_rpmSecondFactName =                         "rpm2";
-const char* VehicleEscStatusFactGroup::_rpmThirdFactName =                          "rpm3";
-const char* VehicleEscStatusFactGroup::_rpmFourthFactName =                         "rpm4";
-
-const char* VehicleEscStatusFactGroup::_currentFirstFactName =                      "current1";
-const char* VehicleEscStatusFactGroup::_currentSecondFactName =                     "current2";
-const char* VehicleEscStatusFactGroup::_currentThirdFactName =                      "current3";
-const char* VehicleEscStatusFactGroup::_currentFourthFactName =                     "current4";
-
-const char* VehicleEscStatusFactGroup::_voltageFirstFactName =                      "voltage1";
-const char* VehicleEscStatusFactGroup::_voltageSecondFactName =                     "voltage2";
-const char* VehicleEscStatusFactGroup::_voltageThirdFactName =                      "voltage3";
-const char* VehicleEscStatusFactGroup::_voltageFourthFactName =                     "voltage4";
-
-VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
-    : FactGroup                         (1000, ":/json/Vehicle/EsсStatusFactGroup.json", parent)
-    , _indexFact                        (0, _indexFactName,                         FactMetaData::valueTypeUint8)
-
-    , _rpmFirstFact                     (0, _rpmFirstFactName,                      FactMetaData::valueTypeFloat)
-    , _rpmSecondFact                    (0, _rpmSecondFactName,                     FactMetaData::valueTypeFloat)
-    , _rpmThirdFact                     (0, _rpmThirdFactName,                      FactMetaData::valueTypeFloat)
-    , _rpmFourthFact                    (0, _rpmFourthFactName,                     FactMetaData::valueTypeFloat)
-
-    , _currentFirstFact                 (0, _currentFirstFactName,                  FactMetaData::valueTypeFloat)
-    , _currentSecondFact                (0, _currentSecondFactName,                 FactMetaData::valueTypeFloat)
-    , _currentThirdFact                 (0, _currentThirdFactName,                  FactMetaData::valueTypeFloat)
-    , _currentFourthFact                (0, _currentFourthFactName,                 FactMetaData::valueTypeFloat)
-
-    , _voltageFirstFact                 (0, _voltageFirstFactName,                  FactMetaData::valueTypeFloat)
-    , _voltageSecondFact                (0, _voltageSecondFactName,                 FactMetaData::valueTypeFloat)
-    , _voltageThirdFact                 (0, _voltageThirdFactName,                  FactMetaData::valueTypeFloat)
-    , _voltageFourthFact                (0, _voltageFourthFactName,                 FactMetaData::valueTypeFloat)
-{
-    _addFact(&_indexFact,               _indexFactName);
-
-    _addFact(&_rpmFirstFact,            _rpmFirstFactName);
-    _addFact(&_rpmSecondFact,           _rpmSecondFactName);
-    _addFact(&_rpmThirdFact,            _rpmThirdFactName);
-    _addFact(&_rpmFourthFact,           _rpmFourthFactName);
-
-    _addFact(&_currentFirstFact,        _currentFirstFactName);
-    _addFact(&_currentSecondFact,       _currentSecondFactName);
-    _addFact(&_currentThirdFact,        _currentThirdFactName);
-    _addFact(&_currentFourthFact,       _currentFourthFactName);
-
-    _addFact(&_voltageFirstFact,        _voltageFirstFactName);
-    _addFact(&_voltageSecondFact,       _voltageSecondFactName);
-    _addFact(&_voltageThirdFact,        _voltageThirdFactName);
-    _addFact(&_voltageFourthFact,       _voltageFourthFactName);
-}
-
-const char* VehicleEstimatorStatusFactGroup::_goodAttitudeEstimateFactName =        "goodAttitudeEsimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizVelEstimateFactName =        "goodHorizVelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertVelEstimateFactName =         "goodVertVelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizPosRelEstimateFactName =     "goodHorizPosRelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodHorizPosAbsEstimateFactName =     "goodHorizPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertPosAbsEstimateFactName =      "goodVertPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodVertPosAGLEstimateFactName =      "goodVertPosAGLEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodConstPosModeEstimateFactName =    "goodConstPosModeEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodPredHorizPosRelEstimateFactName = "goodPredHorizPosRelEstimate";
-const char* VehicleEstimatorStatusFactGroup::_goodPredHorizPosAbsEstimateFactName = "goodPredHorizPosAbsEstimate";
-const char* VehicleEstimatorStatusFactGroup::_gpsGlitchFactName =                   "gpsGlitch";
-const char* VehicleEstimatorStatusFactGroup::_accelErrorFactName =                  "accelError";
-const char* VehicleEstimatorStatusFactGroup::_velRatioFactName =                    "velRatio";
-const char* VehicleEstimatorStatusFactGroup::_horizPosRatioFactName =               "horizPosRatio";
-const char* VehicleEstimatorStatusFactGroup::_vertPosRatioFactName =                "vertPosRatio";
-const char* VehicleEstimatorStatusFactGroup::_magRatioFactName =                    "magRatio";
-const char* VehicleEstimatorStatusFactGroup::_haglRatioFactName =                   "haglRatio";
-const char* VehicleEstimatorStatusFactGroup::_tasRatioFactName =                    "tasRatio";
-const char* VehicleEstimatorStatusFactGroup::_horizPosAccuracyFactName =            "horizPosAccuracy";
-const char* VehicleEstimatorStatusFactGroup::_vertPosAccuracyFactName =             "vertPosAccuracy";
-
-VehicleEstimatorStatusFactGroup::VehicleEstimatorStatusFactGroup(QObject* parent)
-    : FactGroup                         (500, ":/json/Vehicle/EstimatorStatusFactGroup.json", parent)
-    , _goodAttitudeEstimateFact         (0, _goodAttitudeEstimateFactName,          FactMetaData::valueTypeBool)
-    , _goodHorizVelEstimateFact         (0, _goodHorizVelEstimateFactName,          FactMetaData::valueTypeBool)
-    , _goodVertVelEstimateFact          (0, _goodVertVelEstimateFactName,           FactMetaData::valueTypeBool)
-    , _goodHorizPosRelEstimateFact      (0, _goodHorizPosRelEstimateFactName,       FactMetaData::valueTypeBool)
-    , _goodHorizPosAbsEstimateFact      (0, _goodHorizPosAbsEstimateFactName,       FactMetaData::valueTypeBool)
-    , _goodVertPosAbsEstimateFact       (0, _goodVertPosAbsEstimateFactName,        FactMetaData::valueTypeBool)
-    , _goodVertPosAGLEstimateFact       (0, _goodVertPosAGLEstimateFactName,        FactMetaData::valueTypeBool)
-    , _goodConstPosModeEstimateFact     (0, _goodConstPosModeEstimateFactName,      FactMetaData::valueTypeBool)
-    , _goodPredHorizPosRelEstimateFact  (0, _goodPredHorizPosRelEstimateFactName,   FactMetaData::valueTypeBool)
-    , _goodPredHorizPosAbsEstimateFact  (0, _goodPredHorizPosAbsEstimateFactName,   FactMetaData::valueTypeBool)
-    , _gpsGlitchFact                    (0, _gpsGlitchFactName,                     FactMetaData::valueTypeBool)
-    , _accelErrorFact                   (0, _accelErrorFactName,                    FactMetaData::valueTypeBool)
-    , _velRatioFact                     (0, _velRatioFactName,                      FactMetaData::valueTypeFloat)
-    , _horizPosRatioFact                (0, _horizPosRatioFactName,                 FactMetaData::valueTypeFloat)
-    , _vertPosRatioFact                 (0, _vertPosRatioFactName,                  FactMetaData::valueTypeFloat)
-    , _magRatioFact                     (0, _magRatioFactName,                      FactMetaData::valueTypeFloat)
-    , _haglRatioFact                    (0, _haglRatioFactName,                     FactMetaData::valueTypeFloat)
-    , _tasRatioFact                     (0, _tasRatioFactName,                      FactMetaData::valueTypeFloat)
-    , _horizPosAccuracyFact             (0, _horizPosAccuracyFactName,              FactMetaData::valueTypeFloat)
-    , _vertPosAccuracyFact              (0, _vertPosAccuracyFactName,               FactMetaData::valueTypeFloat)
-{
-    _addFact(&_goodAttitudeEstimateFact,        _goodAttitudeEstimateFactName);
-    _addFact(&_goodHorizVelEstimateFact,        _goodHorizVelEstimateFactName);
-    _addFact(&_goodVertVelEstimateFact,         _goodVertVelEstimateFactName);
-    _addFact(&_goodHorizPosRelEstimateFact,     _goodHorizPosRelEstimateFactName);
-    _addFact(&_goodHorizPosAbsEstimateFact,     _goodHorizPosAbsEstimateFactName);
-    _addFact(&_goodVertPosAbsEstimateFact,      _goodVertPosAbsEstimateFactName);
-    _addFact(&_goodVertPosAGLEstimateFact,      _goodVertPosAGLEstimateFactName);
-    _addFact(&_goodConstPosModeEstimateFact,    _goodConstPosModeEstimateFactName);
-    _addFact(&_goodPredHorizPosRelEstimateFact, _goodPredHorizPosRelEstimateFactName);
-    _addFact(&_goodPredHorizPosAbsEstimateFact, _goodPredHorizPosAbsEstimateFactName);
-    _addFact(&_gpsGlitchFact,                   _gpsGlitchFactName);
-    _addFact(&_accelErrorFact,                  _accelErrorFactName);
-    _addFact(&_velRatioFact,                    _velRatioFactName);
-    _addFact(&_horizPosRatioFact,               _horizPosRatioFactName);
-    _addFact(&_vertPosRatioFact,                _vertPosRatioFactName);
-    _addFact(&_magRatioFact,                    _magRatioFactName);
-    _addFact(&_haglRatioFact,                   _haglRatioFactName);
-    _addFact(&_tasRatioFact,                    _tasRatioFactName);
-    _addFact(&_horizPosAccuracyFact,            _horizPosAccuracyFactName);
-    _addFact(&_vertPosAccuracyFact,             _vertPosAccuracyFactName);
 }

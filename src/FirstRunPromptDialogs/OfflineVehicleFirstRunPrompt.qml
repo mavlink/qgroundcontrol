@@ -23,9 +23,6 @@ FirstRunPrompt {
 
     property real   _margins:               ScreenTools.defaultFontPixelWidth
     property var    _appSettings:           QGroundControl.settingsManager.appSettings
-    property var    _offlineVehicle:        QGroundControl.multiVehicleManager.offlineEditingVehicle
-    property bool   _showCruiseSpeed:       !_offlineVehicle.multiRotor
-    property bool   _showHoverSpeed:        _offlineVehicle.multiRotor || _offlineVehicle.vtol
     property bool   _multipleFirmware:      !QGroundControl.singleFirmwareSupport
     property bool   _multipleVehicleTypes:  !QGroundControl.singleVehicleSupport
     property real   _fieldWidth:            ScreenTools.defaultFontPixelWidth * 16
@@ -76,28 +73,6 @@ FirstRunPrompt {
                     fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                     indexModel:             false
                     visible:                _multipleVehicleTypes
-                }
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text:               qsTr("Mission Cruise Speed")
-                    visible:            _showCruiseSpeed
-                }
-                FactTextField {
-                    Layout.preferredWidth:  _fieldWidth
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingCruiseSpeed
-                    visible:                _showCruiseSpeed
-                }
-
-                QGCLabel {
-                    Layout.fillWidth:   true
-                    text:               qsTr("Mission Hover Speed")
-                    visible:            _showHoverSpeed
-                }
-                FactTextField {
-                    Layout.preferredWidth:  _fieldWidth
-                    fact:                   QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
-                    visible:                _showHoverSpeed
                 }
             }
         }

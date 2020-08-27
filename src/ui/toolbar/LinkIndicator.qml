@@ -27,9 +27,11 @@ Item {
 
     property bool showIndicator: false
 
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
     QGCLabel {
         id:                     priorityLinkSelector
-        text:                   activeVehicle ? activeVehicle.priorityLinkName : qsTr("N/A", "No data to display")
+        text:                   _activeVehicle ? _activeVehicle.priorityLinkName : qsTr("N/A", "No data to display")
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
@@ -39,12 +41,12 @@ Item {
         Component {
             id: linkSelectionMenuItemComponent
             QGCMenuItem {
-                onTriggered: activeVehicle.priorityLinkName = text
+                onTriggered: _activeVehicle.priorityLinkName = text
             }
         }
         property var linkSelectionMenuItems: []
         function updatelinkSelectionMenu() {
-            if (activeVehicle) {
+            if (_activeVehicle) {
                 // Remove old menu items
                 var i
                 for (i = 0; i < linkSelectionMenuItems.length; i++) {
@@ -54,9 +56,9 @@ Item {
 
                 // Add new items
                 var has_hl = false;
-                var links = activeVehicle.links
+                var links = _activeVehicle.links
                 for (i = 0; i < links.length; i++) {
-                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(activeVehicle.id)})
+                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(_activeVehicle.id)})
                     linkSelectionMenuItems.push(menuItem)
                     linkSelectionMenu.insertItem(i, menuItem)
 
@@ -77,17 +79,17 @@ Item {
         }
 
         Connections {
-            target:                 activeVehicle
-            onLinksChanged:         priorityLinkSelector.updatelinkSelectionMenu()
+            target:         _activeVehicle
+            onLinksChanged: priorityLinkSelector.updatelinkSelectionMenu()
         }
 
         Connections {
-            target:                     activeVehicle
+            target:                     _activeVehicle
             onLinksPropertiesChanged:   priorityLinkSelector.updatelinkSelectionMenu()
         }
 
         MouseArea {
-            visible:        activeVehicle
+            visible:        _activeVehicle
             anchors.fill:   parent
             onClicked:      linkSelectionMenu.popup()
         }

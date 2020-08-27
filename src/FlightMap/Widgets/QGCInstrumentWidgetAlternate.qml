@@ -27,11 +27,9 @@ Rectangle {
     //  property real maxHeight
     //  property bool showValues - true: show value pages
 
-    property real   _innerRadius:       (width - (_topBottomMargin * 2)) / 2
-    property real   _outerRadius:       _innerRadius + _topBottomMargin * 2
-    property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
-    property real   _topBottomMargin:   (width * 0.05) / 2
-    property real   _availableValueHeight: maxHeight - (attitude.height + compass.height)
+    property real   _innerRadius:   (width - (_topBottomMargin * 2)) / 2
+    property real   _outerRadius:   _innerRadius + _topBottomMargin * 2
+    property real   _margins:       (width * 0.05) / 2
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
@@ -41,51 +39,20 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     QGCAttitudeWidget {
-        id:                   attitude
-        anchors.topMargin :   _topBottomMargin
-        anchors.bottomMargin: _topBottomMargin
-        anchors.top:          parent.top
-        size:                 _innerRadius * 2
-        vehicle:              activeVehicle
-        anchors.horizontalCenter: parent.horizontalCenter
-    }
-
-    Item {
-        id:                 _valuesItem
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 4
-        anchors.bottomMargin:  ScreenTools.defaultFontPixelHeight / 4
-        anchors.top:        attitude.bottom
-        anchors.bottom:     compass.top
-        width:              parent.width
-        height:             _valuesWidget.height
-        visible:            showValues
-
-        // Prevent all clicks from going through to lower layers
-        DeadMouseArea {
-            anchors.fill: parent
-        }
-
-        Rectangle {
-            anchors.fill:   _valuesWidget
-            color:          qgcPal.window
-        }
-
-        PageView {
-            id:                 _valuesWidget
-            anchors.margins:    1
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            maxHeight:          _availableValueHeight
-        }
+        id:                         attitude
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.margins :           _margins
+        anchors.top:                parent.top
+        size:                       _innerRadius * 2
+        vehicle:                    globals.activeVehicle
     }
 
     QGCCompassWidget {
         id:                         compass
-        anchors.bottom :            parent.bottom
-        anchors.bottomMargin:       _topBottomMargin
-        anchors.topMargin:          _topBottomMargin
-        size:                       _innerRadius * 2
-        vehicle:                    activeVehicle
         anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.margins:            _margins
+        anchors.top:                attitude.bottom
+        size:                       _innerRadius * 2
+        vehicle:                    globals.activeVehicle
     }
 }
