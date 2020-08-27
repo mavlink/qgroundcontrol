@@ -9682,6 +9682,23 @@ How often the sensor is readout</short_desc>
     <parameter category="System" default="0" name="SENS_TEMP_ID" type="INT32">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
     </parameter>
+    <parameter default="0" name="SENS_TFLOW_CFG" type="INT32">
+      <short_desc>Serial Configuration for ThoneFlow-3901U optical flow sensor</short_desc>
+      <long_desc>Configure on which serial port to run ThoneFlow-3901U optical flow sensor.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
+        <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SENS_TFMINI_CFG" type="INT32">
       <short_desc>Serial Configuration for Benewake TFmini Rangefinder</short_desc>
       <long_desc>Configure on which serial port to run Benewake TFmini Rangefinder.</long_desc>
