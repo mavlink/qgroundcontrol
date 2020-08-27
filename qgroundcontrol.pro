@@ -86,17 +86,34 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # is present. It's useful to run "regular" builds to make sure you didn't
 # break anything.
 
+CUSTOM_DIR = $$PWD/custom
+
 contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
-    exists($$PWD/custom/custom.pri) {
+    CUSTOM_PRI = $$join(CUSTOM_DIR, "/custom.pri", '', '')
+    exists($$CUSTOM_PRI) {
         message("Found custom build")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
         # CUSTOMCLASS  = YourIQGCCorePluginDerivation
         # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
-        include($$PWD/custom/custom.pri)
+        include($$CUSTOM_PRI)
+    } else {
+        CUSTOM_PRI = $$PWD/../custom/custom.pri
+        exists($$CUSTOM_PRI) {
+            message("*** Found custom build ***")
+            CONFIG  += CustomBuild
+            DEFINES += QGC_CUSTOM_BUILD
+            # custom.pri must define:
+            # CUSTOMCLASS  = YourIQGCCorePluginDerivation
+            # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
+            include($$CUSTOM_PRI)
+            CUSTOM_DIR = $$PWD/../custom
+            } else {
+                message("No custom build -> Skipping")
+            }
     }
 }
 
@@ -327,27 +344,27 @@ include(QGCExternalLibs.pri)
 #
 
 CustomBuild {
-    exists($$PWD/custom/qgroundcontrol.qrc) {
+    exists($$join(CUSTOM_DIR, /qgroundcontrol.qrc, '', '')) {
         message("Using custom qgroundcontrol.qrc")
-        RESOURCES += $$PWD/custom/qgroundcontrol.qrc
+        RESOURCES += $$join(CUSTOM_DIR, /qgroundcontrol.qrc, '', '')
     } else {
         RESOURCES += $$PWD/qgroundcontrol.qrc
     }
-    exists($$PWD/custom/qgcresources.qrc) {
+    exists($$join(CUSTOM_DIR, /qgcresources.qrc, '', '')) {
         message("Using custom qgcresources.qrc")
-        RESOURCES += $$PWD/custom/qgcresources.qrc
+        RESOURCES += $$join(CUSTOM_DIR, /qgcresources.qrc, '', '')
     } else {
         RESOURCES += $$PWD/qgcresources.qrc
     }
-    exists($$PWD/custom/qgcimages.qrc) {
+    exists($$join(CUSTOM_DIR, /qgcimages.qrc, '', '')) {
         message("Using custom qgcimages.qrc")
-        RESOURCES += $$PWD/custom/qgcimages.qrc
+        RESOURCES += $$join(CUSTOM_DIR, /qgcimages.qrc, '', '')
     } else {
         RESOURCES += $$PWD/qgcimages.qrc
     }
-    exists($$PWD/custom/InstrumentValueIcons.qrc) {
+    exists($$join(CUSTOM_DIR, /InstrumentValueIcons.qrc, '', '')) {
         message("Using custom InstrumentValueIcons.qrc")
-        RESOURCES += $$PWD/custom/InstrumentValueIcons.qrc
+        RESOURCES += $$join(CUSTOM_DIR, /InstrumentValueIcons.qrc, '', '')
     } else {
         RESOURCES += $$PWD/resources/InstrumentValueIcons/InstrumentValueIcons.qrc
     }
