@@ -484,7 +484,7 @@ Item {
                     onClicked:   _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
                     opacity:     _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
                     interactive: _editingLayer == _layerMission
-                    vehicle:     globals.activeVehicle
+                    vehicle:     QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
                 }
             }
 

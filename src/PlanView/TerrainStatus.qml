@@ -34,7 +34,7 @@ Rectangle {
     property real _maxAMSLAltitude:     isNaN(missionController.maxAMSLAltitude) ? 100 : missionController.maxAMSLAltitude
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
     property var  _unitsConversion:     QGroundControl.unitsConversion
-    property var  _vehicle:             globals.activeVehicle
+    property var  _vehicle:             QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
 
     function yPosFromAlt(alt) {
         var fullHeight = terrainProfileFlickable.height
