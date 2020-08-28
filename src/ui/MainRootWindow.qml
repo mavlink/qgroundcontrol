@@ -78,7 +78,7 @@ ApplicationWindow {
     QtObject {
         id: globals
 
-        readonly property var       activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+        readonly property var       activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
         readonly property real      defaultTextHeight:              ScreenTools.defaultFontPixelHeight
         readonly property real      defaultTextWidth:               ScreenTools.defaultFontPixelWidth
         readonly property var       planMasterControllerFlyView:    flightView.planController

@@ -34,7 +34,7 @@ Rectangle {
     property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
     property var  _unitsConversion:     QGroundControl.unitsConversion
-    property var  _vehicle:             globals.activeVehicle
+    property var  _vehicle:             QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
 
     QGCPalette { id: qgcPal }
 
