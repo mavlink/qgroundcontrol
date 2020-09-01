@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh-CN" sourcelanguage="en">
+<TS version="2.1" language="az" sourcelanguage="en">
   <context>
     <name>SubmarineFact.json</name>
     <message>
@@ -238,19 +238,19 @@
       <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Mission Item Index</source>
-      <translation>任务项目索引</translation>
+      <translation type="unfinished">Mission Item Index</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Alt (Rel)</source>
-      <translation>高度(相对)</translation>
+      <translation type="unfinished">Alt (Rel)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePct].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Throttle %</source>
-      <translation>油门 %</translation>
+      <translation type="unfinished">Throttle %</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDescription, </extracomment>
