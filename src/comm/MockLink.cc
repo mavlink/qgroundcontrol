@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
@@ -27,11 +26,6 @@
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "MockLinkLog")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "MockLinkVerboseLog")
-
-/// @file
-///     @brief Mock implementation of a Link.
-///
-///     @author Don Gagne <don@thegagnes.com>
 
 // Vehicle position is set close to default Gazebo vehicle location. This allows for multi-vehicle
 // testing of a gazebo vehicle and a mocklink vehicle
@@ -410,12 +404,14 @@ void MockLink::_sendBatteryStatus(void)
     mavlink_message_t   msg;
     uint16_t            rgVoltages[10];
     uint16_t            rgVoltagesNone[10];
+    uint16_t            rgVoltagesExtNone[4];
 
     for (int i=0; i<10; i++) {
         rgVoltages[i]       = UINT16_MAX;
         rgVoltagesNone[i]   = UINT16_MAX;
     }
     rgVoltages[0] = rgVoltages[1] = rgVoltages[2] = 4200;
+    memset(rgVoltagesExtNone, 0, sizeof(rgVoltagesExtNone));
 
     mavlink_msg_battery_status_pack_chan(
                 _vehicleSystemId,
@@ -432,7 +428,8 @@ void MockLink::_sendBatteryStatus(void)
                 -1,                         // energy consumed not supported
                 _battery1PctRemaining,
                 _battery1TimeRemaining,
-                _battery1ChargeState);
+                _battery1ChargeState,
+                rgVoltagesExtNone);
     respondWithMavlinkMessage(msg);
 
     mavlink_msg_battery_status_pack_chan(
@@ -450,7 +447,8 @@ void MockLink::_sendBatteryStatus(void)
                 -1,                         // energy consumed not supported
                 _battery2PctRemaining,
                 _battery2TimeRemaining,
-                _battery2ChargeState);
+                _battery2ChargeState,
+                rgVoltagesExtNone);
     respondWithMavlinkMessage(msg);
 }
 
