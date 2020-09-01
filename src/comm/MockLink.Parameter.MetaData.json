@@ -357,7 +357,7 @@
       "maxValue": 1
     },
     {
-      "name": "BAT/(\\d+)/_A_PER_V",
+      "name": "BAT{n}_A_PER_V",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -370,7 +370,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT/(\\d+)/_CAPACITY",
+      "name": "BAT{n}_CAPACITY",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -385,7 +385,7 @@
       "maxValue": 100000
     },
     {
-      "name": "BAT/(\\d+)/_I_CHANNEL",
+      "name": "BAT{n}_I_CHANNEL",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -398,7 +398,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT/(\\d+)/_N_CELLS",
+      "name": "BAT{n}_N_CELLS",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -473,12 +473,12 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT/(\\d+)/_R_INTERNAL",
+      "name": "BAT{n}_R_INTERNAL",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
       "shortDesc": "Explicitly defines the per cell internal resistance for battery 1",
-      "longDesc": "If non-negative, then this will be used in place of BAT/(\\d+)/_V_LOAD_DROP for all calculations.",
+      "longDesc": "If non-negative, then this will be used in place of BAT{n}_V_LOAD_DROP for all calculations.",
       "units": "Ohm",
       "default": -1,
       "increment": 0.01,
@@ -488,7 +488,7 @@
       "maxValue": 0.2
     },
     {
-      "name": "BAT/(\\d+)/_SOURCE",
+      "name": "BAT{n}_SOURCE",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -515,7 +515,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT/(\\d+)/_V_CHANNEL",
+      "name": "BAT{n}_V_CHANNEL",
       "type": "Int32",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -528,7 +528,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "BAT/(\\d+)/_V_CHARGED",
+      "name": "BAT{n}_V_CHARGED",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -543,7 +543,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT/(\\d+)/_V_DIV",
+      "name": "BAT{n}_V_DIV",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -556,7 +556,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT/(\\d+)/_V_EMPTY",
+      "name": "BAT{n}_V_EMPTY",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
@@ -571,12 +571,12 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "BAT/(\\d+)/_V_LOAD_DROP",
+      "name": "BAT{n}_V_LOAD_DROP",
       "type": "Float",
       "group": "Battery Calibration",
       "category": "Standard",
       "shortDesc": "Voltage drop per cell on full throttle",
-      "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT/(\\d+)/_R_INTERNAL is set.",
+      "longDesc": "This implicitely defines the internal resistance to maximum current ratio for battery 1 and assumes linearity. A good value to use is the difference between the 5C and 20-25C load. Not used if BAT{n}_R_INTERNAL is set.",
       "units": "V",
       "default": 0.3,
       "increment": 0.01,
@@ -864,7 +864,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_EN",
+      "name": "CAL_ACC{n}_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -875,7 +875,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_ACC/(\\d+)/_ID",
+      "name": "CAL_ACC{n}_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -886,7 +886,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_ACC/(\\d+)/_XOFF",
+      "name": "CAL_ACC{n}_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -897,7 +897,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_XSCALE",
+      "name": "CAL_ACC{n}_XSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -908,7 +908,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_YOFF",
+      "name": "CAL_ACC{n}_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -919,7 +919,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_YSCALE",
+      "name": "CAL_ACC{n}_YSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -930,7 +930,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_ZOFF",
+      "name": "CAL_ACC{n}_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -941,7 +941,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_ACC/(\\d+)/_ZSCALE",
+      "name": "CAL_ACC{n}_ZSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1014,7 +1014,7 @@
       "maxValue": 2
     },
     {
-      "name": "CAL_GYRO/(\\d+)/_EN",
+      "name": "CAL_GYRO{n}_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1025,7 +1025,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_GYRO/(\\d+)/_ID",
+      "name": "CAL_GYRO{n}_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1036,7 +1036,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_GYRO/(\\d+)/_XOFF",
+      "name": "CAL_GYRO{n}_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1047,7 +1047,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_GYRO/(\\d+)/_YOFF",
+      "name": "CAL_GYRO{n}_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1058,7 +1058,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_GYRO/(\\d+)/_ZOFF",
+      "name": "CAL_GYRO{n}_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1080,7 +1080,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG/(\\d+)/_EN",
+      "name": "CAL_MAG{n}_EN",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1091,7 +1091,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG/(\\d+)/_ID",
+      "name": "CAL_MAG{n}_ID",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1102,7 +1102,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "CAL_MAG/(\\d+)/_ROT",
+      "name": "CAL_MAG{n}_ROT",
       "type": "Int32",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1225,7 +1225,7 @@
       "maxValue": 30
     },
     {
-      "name": "CAL_MAG/(\\d+)/_XCOMP",
+      "name": "CAL_MAG{n}_XCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1236,7 +1236,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_XOFF",
+      "name": "CAL_MAG{n}_XOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1247,7 +1247,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_XSCALE",
+      "name": "CAL_MAG{n}_XSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1258,7 +1258,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_YCOMP",
+      "name": "CAL_MAG{n}_YCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1269,7 +1269,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_YOFF",
+      "name": "CAL_MAG{n}_YOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1280,7 +1280,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_YSCALE",
+      "name": "CAL_MAG{n}_YSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1291,7 +1291,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_ZCOMP",
+      "name": "CAL_MAG{n}_ZCOMP",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1302,7 +1302,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_ZOFF",
+      "name": "CAL_MAG{n}_ZOFF",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -1313,7 +1313,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "CAL_MAG/(\\d+)/_ZSCALE",
+      "name": "CAL_MAG{n}_ZSCALE",
       "type": "Float",
       "group": "Sensor Calibration",
       "category": "System",
@@ -6320,7 +6320,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "GPS_/(\\d+)/_CONFIG",
+      "name": "GPS_{n}_CONFIG",
       "type": "Int32",
       "group": "GPS",
       "category": "Standard",
@@ -7578,7 +7578,7 @@
       "maxValue": 3.40282e+38
     },
     {
-      "name": "MAV_/(\\d+)/_CONFIG",
+      "name": "MAV_{n}_CONFIG",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -7633,7 +7633,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_/(\\d+)/_FORWARD",
+      "name": "MAV_{n}_FORWARD",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -7646,7 +7646,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_/(\\d+)/_MODE",
+      "name": "MAV_{n}_MODE",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -7693,7 +7693,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_/(\\d+)/_RADIO_CTL",
+      "name": "MAV_{n}_RADIO_CTL",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -7706,7 +7706,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "MAV_/(\\d+)/_RATE",
+      "name": "MAV_{n}_RATE",
       "type": "Int32",
       "group": "MAVLink",
       "category": "Standard",
@@ -11828,7 +11828,7 @@
       "maxValue": 1000
     },
     {
-      "name": "RC/(\\d+)/_DZ",
+      "name": "RC{n}_DZ",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -11840,7 +11840,7 @@
       "maxValue": 100
     },
     {
-      "name": "RC/(\\d+)/_MAX",
+      "name": "RC{n}_MAX",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -11853,7 +11853,7 @@
       "maxValue": 2200
     },
     {
-      "name": "RC/(\\d+)/_MIN",
+      "name": "RC{n}_MIN",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -11866,7 +11866,7 @@
       "maxValue": 1500
     },
     {
-      "name": "RC/(\\d+)/_REV",
+      "name": "RC{n}_REV",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -11888,7 +11888,7 @@
       "maxValue": 1
     },
     {
-      "name": "RC/(\\d+)/_TRIM",
+      "name": "RC{n}_TRIM",
       "type": "Float",
       "group": "Radio Calibration",
       "category": "Standard",
@@ -16149,7 +16149,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SENS_MB12_/(\\d+)/_ROT",
+      "name": "SENS_MB12_{n}_ROT",
       "type": "Int32",
       "group": "Sensors",
       "category": "Standard",
@@ -16196,7 +16196,7 @@
       "maxValue": 7
     },
     {
-      "name": "SENS_MPDT/(\\d+)/_ROT",
+      "name": "SENS_MPDT{n}_ROT",
       "type": "Int32",
       "group": "Sensors",
       "category": "Standard",
@@ -16419,7 +16419,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SER_GPS/(\\d+)/_BAUD",
+      "name": "SER_GPS{n}_BAUD",
       "type": "Int32",
       "group": "Serial",
       "category": "Standard",
@@ -16657,7 +16657,7 @@
       "maxValue": 2.14748e+09
     },
     {
-      "name": "SER_TEL/(\\d+)/_BAUD",
+      "name": "SER_TEL{n}_BAUD",
       "type": "Int32",
       "group": "Serial",
       "category": "Standard",

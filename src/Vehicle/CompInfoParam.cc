@@ -23,7 +23,7 @@ QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 const char* CompInfoParam::_jsonScopeKey                = "scope";
 const char* CompInfoParam::_jsonParametersKey           = "parameters";
 const char* CompInfoParam::_cachedMetaDataFilePrefix    = "ParameterFactMetaData";
-const char* CompInfoParam::_parameterIndexTag           = "<#>";
+const char* CompInfoParam::_indexedNameTag              = "{n}";
 
 CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
     : CompInfo(COMP_METADATA_TYPE_PARAMETER, compId, vehicle, parent)
@@ -77,13 +77,8 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
 
         FactMetaData* newMetaData = FactMetaData::createFromJsonObject(parameterValue.toObject(), emptyDefineMap, this);
 
-        QRegularExpression      regexNameIncludesRegex("/\\(.+\\)/");
-        QRegularExpressionMatch match = regexNameIncludesRegex.match(newMetaData->name());
-        if (match.hasMatch()) {
-            QString regexParamName = newMetaData->name();
-            regexParamName.replace(QRegularExpression("/(\\(.+\\))/"), "\\1");
-            newMetaData->setName(regexParamName);
-            _regexNameMetaDataList.append(RegexFactMetaDataPair_t(newMetaData->name(), newMetaData));
+        if (newMetaData->name().contains(_indexedNameTag)) {
+            _indexedNameMetaDataList.append(RegexFactMetaDataPair_t(newMetaData->name(), newMetaData));
         } else {
             _nameToMetaDataMap[newMetaData->name()] = newMetaData;
         }
@@ -100,21 +95,27 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
         if (_nameToMetaDataMap.contains(name)) {
             factMetaData = _nameToMetaDataMap[name];
         } else {
-            for (int i=0; i<_regexNameMetaDataList.count(); i++) {
-                const RegexFactMetaDataPair_t& pair = _regexNameMetaDataList[i];
-                QString regexParamName = pair.first;
-                QRegularExpression regex(regexParamName);
+            // We didn't get any direct matches. Try an indexed name.
+            for (int i=0; i<_indexedNameMetaDataList.count(); i++) {
+                const RegexFactMetaDataPair_t& pair = _indexedNameMetaDataList[i];
+
+                QString indexedName = pair.first;
+                QString indexedRegex("(\\d+)");
+                indexedName.replace(_indexedNameTag, indexedRegex);
+
+                QRegularExpression      regex(indexedName);
                 QRegularExpressionMatch match = regex.match(name);
+
                 QStringList captured = match.capturedTexts();
                 if (captured.count() == 2) {
                     factMetaData = new FactMetaData(*pair.second, this);
                     factMetaData->setName(name);
 
                     QString shortDescription = factMetaData->shortDescription();
-                    shortDescription.replace("/1", captured[1]);
+                    shortDescription.replace(_indexedNameTag, captured[1]);
                     factMetaData->setShortDescription(shortDescription);
                     QString longDescription = factMetaData->shortDescription();
-                    longDescription.replace("/1", captured[1]);
+                    longDescription.replace(_indexedNameTag, captured[1]);
                     factMetaData->setLongDescription(longDescription);
                 }
             }
