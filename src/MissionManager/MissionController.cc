@@ -392,14 +392,14 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
 
 VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
-    if (_managerVehicle->fixedWing()) {
+    if (_controllerVehicle->fixedWing()) {
         FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(FixedWingLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
         return fwLanding;
-    } else if (_managerVehicle->vtol()) {
+    } else if (_controllerVehicle->vtol()) {
         VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(VTOLLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
         return vtolLanding;
     } else {
-        return _insertSimpleMissionItemWorker(coordinate, _managerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
+        return _insertSimpleMissionItemWorker(coordinate, _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
     }
 }
 
@@ -1240,7 +1240,7 @@ void MissionController::_recalcFlightPathSegments(void)
     bool                firstCoordinateNotFound =   true;
     VisualMissionItem*  lastFlyThroughVI =          qobject_cast<VisualMissionItem*>(_visualItems->get(0));
     bool                linkEndToHome =             false;
-    bool                linkStartToHome =           _managerVehicle->rover() ? true : false;
+    bool                linkStartToHome =           _controllerVehicle->rover() ? true : false;
     bool                foundRTL =                  false;
     bool                homePositionValid =         _settingsItem->coordinate().isValid();
     bool                roiActive =                 false;

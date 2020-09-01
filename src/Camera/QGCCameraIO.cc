@@ -356,14 +356,15 @@ QGCCameraParamIO::paramRequest(bool reset)
     strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_read_pack_chan(
-        static_cast<uint8_t>(_pMavlink->getSystemId()),
-        static_cast<uint8_t>(_pMavlink->getComponentId()),
-        _vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        static_cast<uint8_t>(_vehicle->id()),
-        static_cast<uint8_t>(_control->compID()),
-        param_id,
-        -1);
+                static_cast<uint8_t>(_pMavlink->getSystemId()),
+                static_cast<uint8_t>(_pMavlink->getComponentId()),
+                _vehicle->priorityLink()->mavlinkChannel(),
+                &msg,
+                static_cast<uint8_t>(_vehicle->id()),
+                static_cast<uint8_t>(_control->compID()),
+                param_id,
+                -1,
+                0);                                                 // trimmed messages = false
     _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     _paramRequestTimer.start();
 }
