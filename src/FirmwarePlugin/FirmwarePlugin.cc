@@ -532,6 +532,22 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
+                    "Sony a6000 35mm",
+                    tr("Sony"),
+                    tr("a6000 35mm"),
+                    23.5,               // sensorWidth
+                    15.6,               // sensorHeight
+                    6000,               // imageWidth
+                    4000,               // imageHeight
+                    35,                 // focalLength
+                    true,               // true: landscape orientation
+                    false,              // true: camera is fixed orientation
+                    2.0,                // minimum trigger interval
+                    "",
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
                     "Sony a6300 Zeiss 21mm f/2.8",
                     tr("Sony"),
                     tr("a6300 Zeiss 21mm f/2.8"),
@@ -541,7 +557,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     4000,               // imageHeight
                     21,                 // focalLength
                     true,               // true: landscape orientation
-                    true,               // true: camera is fixed orientation
+                    false,              // true: camera is fixed orientation
                     2.0,                // minimum trigger interval
                     tr("Sony a6300 Zeiss 21mm f/2.8"),// SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);              // parent
@@ -557,7 +573,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     4000,                               // imageHeight
                     28,                                 // focalLength
                     true,                               // true: landscape orientation
-                    true,                               // true: camera is fixed orientation
+                    false,              // true: camera is fixed orientation
                     2.0,                                // minimum trigger interval
                     tr("Sony a6300 Sony 28mm f/2.0"),   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);                              // parent
@@ -596,6 +612,38 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
+                    "Sony a7r III 35mm",
+                    tr("Sony"),
+                    tr("a7r III 35mm"),
+                    35.9,               // sensorWidth
+                    24.0,               // sensorHeight
+                    7952,               // imageWidth
+                    5304,               // imageHeight
+                    35,                 // focalLength
+                    true,               // true: landscape orientation
+                    false,              // true: camera is fixed orientation
+                    2.0,                // minimum trigger interval
+                    "",
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+                    "Sony a7r IV 35mm",
+                    tr("Sony"),
+                    tr("a7r IV 35mm"),
+                    35.7,               // sensorWidth
+                    23.8,               // sensorHeight
+                    9504,               // imageWidth
+                    6336,               // imageHeight
+                    35,                 // focalLength
+                    true,               // true: landscape orientation
+                    false,               // true: camera is fixed orientation
+                    2.0,                // minimum trigger interval
+                    "",
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
                     "Sony DSC-QX30U @ 4.3mm f/3.5",
                     tr("Sony"),
                     tr("DSC-QX30U @ 4.3mm f/3.5"),
@@ -610,7 +658,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     tr("Sony DSC-QX30U @ 4.3mm f/3.5"), // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);                              // parent
         _cameraList.append(QVariant::fromValue(metaData));
-        
+
         metaData = new CameraMetaData(
                     "Sony DSC-RX0",
                     tr("Sony"),
@@ -624,6 +672,22 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     false,              // true: camera is fixed orientation
                     0,                  // minimum trigger interval
                     tr("Sony DSC-RX0"),// SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+                    "Sony DSC-RX1R II 35mm",
+                    tr("Sony"),
+                    tr("DSC-RX1R II 35mm"),
+                    35.9,             // sensorWidth
+                    24.0,             // sensorHeight
+                    7952,               // imageWidth
+                    5304,               // imageHeight
+                    35,                 // focalLength
+                    true,               // true: landscape orientation
+                    false,              // true: camera is fixed orientation
+                    2.0,                // minimum trigger interval
+                    "",
                     this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
@@ -755,7 +819,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
                     1080,               // imageHeight
                     1.9,                // focalLength
                     true,               // true: landscape orientation
-                    true,               // true: camera is fixed orientation
+                    false,              // true: camera is fixed orientation
                     0,                  // minimum trigger interval
                     tr("Flir Duo R"),   // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
                     this);              // parent
