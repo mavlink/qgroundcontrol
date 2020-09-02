@@ -1288,7 +1288,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
       <values>
         <value code="0">Altitude/Manual. Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
-        <value code="1">Land/Terminate.  Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
+        <value code="1">Land/Terminate. Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
       </values>
     </parameter>
     <parameter default="1" name="COM_POS_FS_DELAY" type="INT32">
@@ -1369,8 +1369,8 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <min>0</min>
       <max>3</max>
       <bitmask>
-        <bit index="0"> Enable override in auto modes</bit>
-        <bit index="1"> Enable override in offboard mode</bit>
+        <bit index="0">Enable override in auto modes</bit>
+        <bit index="1">Enable override in offboard mode</bit>
       </bitmask>
     </parameter>
     <parameter default="50.0" name="COM_RC_STICK_OV" type="FLOAT">
@@ -9681,6 +9681,23 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter category="System" default="0" name="SENS_TEMP_ID" type="INT32">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
+    </parameter>
+    <parameter default="0" name="SENS_TFLOW_CFG" type="INT32">
+      <short_desc>Serial Configuration for ThoneFlow-3901U optical flow sensor</short_desc>
+      <long_desc>Configure on which serial port to run ThoneFlow-3901U optical flow sensor.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="203">GPS 3</value>
+        <value code="300">Radio Controller</value>
+      </values>
     </parameter>
     <parameter default="0" name="SENS_TFMINI_CFG" type="INT32">
       <short_desc>Serial Configuration for Benewake TFmini Rangefinder</short_desc>

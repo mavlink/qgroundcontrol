@@ -546,7 +546,7 @@ QString Fact::group(void) const
 void Fact::setMetaData(FactMetaData* metaData, bool setDefaultFromMetaData)
 {
     _metaData = metaData;
-    if (setDefaultFromMetaData) {
+    if (setDefaultFromMetaData && metaData->defaultValueAvailable()) {
         setRawValue(rawDefaultValue());
     }
     emit valueChanged(cookedValue());

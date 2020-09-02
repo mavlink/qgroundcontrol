@@ -225,6 +225,8 @@
         <file alias="QGroundControl/FlightDisplay/PreFlightSensorsHealthCheck.qml">src/FlightDisplay/PreFlightSensorsHealthCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightSoundCheck.qml">src/FlightDisplay/PreFlightSoundCheck.qml</file>
         <file alias="QGroundControl/FlightDisplay/PreFlightCheckListShowAction.qml">src/FlightDisplay/PreFlightCheckListShowAction.qml</file>
+        <file alias="QGroundControl/FlightDisplay/ProximityRadarValues.qml">src/FlightDisplay/ProximityRadarValues.qml</file>
+        <file alias="QGroundControl/FlightDisplay/ProximityRadarVideoView.qml">src/FlightDisplay/ProximityRadarVideoView.qml</file>
         <file alias="QGroundControl/FlightDisplay/TerrainProgress.qml">src/FlightDisplay/TerrainProgress.qml</file>
         <file alias="QGroundControl/FlightDisplay/TelemetryValuesBar.qml">src/FlightDisplay/TelemetryValuesBar.qml</file>
         <file alias="QGroundControl/FlightDisplay/VehicleWarnings.qml">src/FlightDisplay/VehicleWarnings.qml</file>
@@ -244,6 +246,7 @@
         <file alias="QGroundControl/FlightMap/PhotoVideoControl.qml">src/FlightMap/Widgets/PhotoVideoControl.qml</file>
         <file alias="QGroundControl/FlightMap/PlanMapItems.qml">src/FlightMap/MapItems/PlanMapItems.qml</file>
         <file alias="QGroundControl/FlightMap/PolygonEditor.qml">src/FlightMap/MapItems/PolygonEditor.qml</file>
+        <file alias="QGroundControl/FlightMap/ProximityRadarMapView.qml">src/FlightMap/MapItems/ProximityRadarMapView.qml</file>
         <file alias="QGroundControl/FlightMap/QGCArtificialHorizon.qml">src/FlightMap/Widgets/QGCArtificialHorizon.qml</file>
         <file alias="QGroundControl/FlightMap/QGCAttitudeHUD.qml">src/FlightMap/Widgets/QGCAttitudeHUD.qml</file>
         <file alias="QGroundControl/FlightMap/QGCAttitudeWidget.qml">src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
@@ -271,8 +274,6 @@
         <file alias="VibrationPage.qml">src/AnalyzeView/VibrationPage.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
         <file alias="VTOLLandingPatternEditor.qml">src/PlanView/VTOLLandingPatternEditor.qml</file>
-        <file alias="QGroundControl/FlightMap/ProximityRadarMapView.qml">src/FlightMap/MapItems/ProximityRadarMapView.qml</file>
-        <file alias="QGroundControl/FlightDisplay/ProximityRadarVideoView.qml">src/FlightDisplay/ProximityRadarVideoView.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>

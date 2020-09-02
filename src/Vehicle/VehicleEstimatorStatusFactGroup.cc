@@ -105,4 +105,6 @@ void VehicleEstimatorStatusFactGroup::handleMessage(Vehicle* /* vehicle */, mavl
     tasRatio()->setRawValue                     (estimatorStatus.tas_ratio);
     horizPosAccuracy()->setRawValue             (estimatorStatus.pos_horiz_accuracy);
     vertPosAccuracy()->setRawValue              (estimatorStatus.pos_vert_accuracy);
+
+    _setTelemetryAvailable(true);
 }

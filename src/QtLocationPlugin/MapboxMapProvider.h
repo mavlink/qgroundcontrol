@@ -151,3 +151,12 @@ public:
         : MapboxMapProvider(QStringLiteral("mapbox.high-contrast"), AVERAGE_TILE_SIZE,
                             QGeoMapType::CustomMap, parent) {}
 };
+
+class MapboxCustomMapProvider : public MapboxMapProvider {
+    Q_OBJECT
+
+public:
+    MapboxCustomMapProvider(QObject* parent = nullptr)
+        : MapboxMapProvider(QStringLiteral("mapbox.custom"), AVERAGE_TILE_SIZE,
+                            QGeoMapType::CustomMap, parent) {}
+};

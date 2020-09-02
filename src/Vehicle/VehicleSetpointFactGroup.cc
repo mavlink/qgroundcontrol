@@ -64,4 +64,6 @@ void VehicleSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_mes
     rollRate()->setRawValue (qRadiansToDegrees(attitudeTarget.body_roll_rate));
     pitchRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_pitch_rate));
     yawRate()->setRawValue  (qRadiansToDegrees(attitudeTarget.body_yaw_rate));
+
+    _setTelemetryAvailable(true);
 }
