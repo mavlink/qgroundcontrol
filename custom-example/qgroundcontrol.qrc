@@ -316,6 +316,7 @@
 		<file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
 		<file alias="Vehicle/ClockFact.json">../src/Vehicle/ClockFact.json</file>
 		<file alias="Vehicle/DistanceSensorFact.json">../src/Vehicle/DistanceSensorFact.json</file>
+		<file alias="Vehicle/EscStatusFactGroup.json">../src/Vehicle/EscStatusFactGroup.json</file>
 		<file alias="Vehicle/EstimatorStatusFactGroup.json">../src/Vehicle/EstimatorStatusFactGroup.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
 		<file alias="Vehicle/GPSRTKFact.json">../src/Vehicle/GPSRTKFact.json</file>

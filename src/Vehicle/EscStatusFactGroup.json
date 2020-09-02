@@ -1,0 +1,106 @@
+{
+    "version":  1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "index",
+    "shortDesc":        "Index Of The First ESC In This Message",
+    "type":             "uint8",
+    "default":          0
+},
+{
+    "name":             "rpmFirst",
+    "shortDesc":        "Rotation Per Minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmSecond",
+    "shortDesc":        "Rotation Per Minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmThird",
+    "shortDesc":        "Rotation Per Minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "rpmFourth",
+    "shortDesc":        "Rotation Per Minute",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentFirst",
+    "shortDesc":        "Current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "A"
+
+},
+{
+    "name":             "currentSecond",
+    "shortDesc":        "Current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "A"
+},
+{
+    "name":             "currentThird",
+    "shortDesc":        "Current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "A"
+},
+{
+    "name":             "currentFourth",
+    "shortDesc":        "Current",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "A"
+},
+{
+    "name":             "voltageFirst",
+    "shortDesc":        "Voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "v"
+},
+{
+    "name":             "voltageSecond",
+    "shortDesc":        "Voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "v"
+},
+{
+    "name":             "voltageThird",
+    "shortDesc":        "Voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "v"
+},
+{
+    "name":             "voltageFourth",
+    "shortDesc":        "Voltage",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null,
+    "units":            "v"
+}
+]
+}
