@@ -7,7 +7,7 @@
     "name":             "index",
     "shortDesc":        "Index Of The First ESC In This Message",
     "type":             "uint8",
-    "default":          null
+    "default":          0
 },
 {
     "name":             "rpmFirst",
