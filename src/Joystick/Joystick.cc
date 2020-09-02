@@ -63,6 +63,7 @@ const char* Joystick::_buttonActionToggleCameraMode =   QT_TR_NOOP("Toggle Camer
 const char* Joystick::_buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
 const char* Joystick::_buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
 const char* Joystick::_buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
+const char* Joystick::_buttonActionTrigCamToggleVid =   QT_TR_NOOP("Trigger Camera / Video");
 const char* Joystick::_buttonActionGimbalDown =         QT_TR_NOOP("Gimbal Down");
 const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
 const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
@@ -1861,6 +1862,8 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit stopVideoRecord();
     } else if(action == _buttonActionToggleVideoRecord) {
         if (buttonDown) emit toggleVideoRecord();
+    } else if(action == _buttonActionTrigCamToggleVid) {
+        if (buttonDown) emit triggerCamToggleVid();
     } else if(action == _buttonActionGimbalUp) {
         if (buttonDown) _pitchStep(1);
     } else if(action == _buttonActionGimbalDown) {
@@ -1983,6 +1986,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStartVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionStopVideoRecord));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleVideoRecord));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionTrigCamToggleVid));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalDown,    true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalUp,      true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));

@@ -321,6 +321,7 @@ signals:
     void startVideoRecord           ();
     void stopVideoRecord            ();
     void toggleVideoRecord          ();
+    void triggerCamToggleVid        ();
     void toggleThermal              ();
     void switchThermalOn            ();
     void switchThermalOff           ();
@@ -469,6 +470,7 @@ private:
     static const char* _buttonActionStartVideoRecord;
     static const char* _buttonActionStopVideoRecord;
     static const char* _buttonActionToggleVideoRecord;
+    static const char* _buttonActionTrigCamToggleVid;
     static const char* _buttonActionGimbalDown;
     static const char* _buttonActionGimbalUp;
     static const char* _buttonActionGimbalLeft;
