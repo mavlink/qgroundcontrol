@@ -624,12 +624,54 @@ Rectangle {
                         width:  previewGrid.width
                         height: 60
                         radius: 3
-                        color:  palette.alertBackground
+                        color:  palette.alertBackgroundWarning
                         border.color: palette.alertBorder
                         border.width: 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Label {
-                            text: "Alert Message"
+                            text: "Warning Alert Message"
+                            color: palette.alertText
+                            anchors.centerIn: parent
+                        }
+                    }
+                    Rectangle {
+                        width:  previewGrid.width
+                        height: 60
+                        radius: 3
+                        color:  palette.alertBackgroundCaution
+                        border.color: palette.alertBorder
+                        border.width: 1
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Label {
+                            text: "Caution Alert Message"
+                            color: palette.alertText
+                            anchors.centerIn: parent
+                        }
+                    }
+                    Rectangle {
+                        width:  previewGrid.width
+                        height: 60
+                        radius: 3
+                        color:  palette.alertBackgroundAdvisory
+                        border.color: palette.alertBorder
+                        border.width: 1
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Label {
+                            text: "Advisory Alert Message"
+                            color: palette.alertText
+                            anchors.centerIn: parent
+                        }
+                    }
+                    Rectangle {
+                        width:  previewGrid.width
+                        height: 60
+                        radius: 3
+                        color:  palette.alertBackgroundNormal
+                        border.color: palette.alertBorder
+                        border.width: 1
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Label {
+                            text: "Normal Alert Message"
                             color: palette.alertText
                             anchors.centerIn: parent
                         }

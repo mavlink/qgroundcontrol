@@ -573,13 +573,21 @@ ApplicationWindow {
 
     property var    _vehicleMessageQueue:      []
     property string _vehicleMessage:     ""
+    property var    _vehicleMessageSeverity: 0
 
-    function showCriticalVehicleMessage(message) {
+    function showCriticalVehicleMessage(message, severity) {
         indicatorPopup.close()
         if (criticalVehicleMessagePopup.visible || QGroundControl.videoManager.fullScreen) {
             _vehicleMessageQueue.push(message)
+            if (_vehicleMessageQueue.length == 1) {
+                _vehicleMessageSeverity = severity
+            }
+            else if (severity < _vehicleMessageSeverity) {
+                _vehicleMessageSeverity = severity
+            }
         } else {
             _vehicleMessage = message
+            _vehicleMessageSeverity = severity
             criticalVehicleMessagePopup.open()
         }
     }
@@ -595,6 +603,7 @@ ApplicationWindow {
         closePolicy:        Popup.CloseOnEscape
 
         background: Rectangle {
+            id:             criticalVehicleMessagePopupBackgroundRect
             anchors.fill:   parent
             color:          qgcPal.alertBackground
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
@@ -604,6 +613,19 @@ ApplicationWindow {
 
         onOpened: {
             criticalVehicleMessageText.text = mainWindow._vehicleMessage
+
+            if (mainWindow._vehicleMessageSeverity <= 3) {      // <= MAV_SEVERITY_ERROR
+                criticalVehicleMessagePopupBackgroundRect.color = qgcPal.alertBackgroundWarning
+            }
+            else if (mainWindow._vehicleMessageSeverity <= 4) { // <= MAV_SEVERITY_WARNING
+                criticalVehicleMessagePopupBackgroundRect.color = qgcPal.alertBackgroundCaution
+            }
+            else if (mainWindow._vehicleMessageSeverity <= 5) { // <= MAV_SEVERITY_NOTICE
+                criticalVehicleMessagePopupBackgroundRect.color = qgcPal.alertBackgroundAdvisory
+            }
+            else {                                              // >= MAV_SEVERITY_INFO
+                criticalVehicleMessagePopupBackgroundRect.color = qgcPal.alertBackgroundNormal
+            }
         }
 
         onClosed: {
