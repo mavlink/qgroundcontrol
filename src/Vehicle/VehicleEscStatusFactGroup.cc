@@ -28,7 +28,7 @@ const char* VehicleEscStatusFactGroup::_voltageThirdFactName =                  
 const char* VehicleEscStatusFactGroup::_voltageFourthFactName =                     "voltage4";
 
 VehicleEscStatusFactGroup::VehicleEscStatusFactGroup(QObject* parent)
-    : FactGroup                         (1000, ":/json/Vehicle/EsсStatusFactGroup.json", parent)
+    : FactGroup                         (1000, ":/json/Vehicle/EscStatusFactGroup.json", parent)
     , _indexFact                        (0, _indexFactName,                         FactMetaData::valueTypeUint8)
 
     , _rpmFirstFact                     (0, _rpmFirstFactName,                      FactMetaData::valueTypeFloat)
