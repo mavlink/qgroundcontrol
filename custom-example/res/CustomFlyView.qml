@@ -339,27 +339,27 @@ Item {
             Item {
                 Layout.rowSpan:         3
                 Layout.column:          6
-                Layout.minimumWidth:    mainIsMap ? parent.height * 1.25 : 0
+                Layout.minimumWidth:    parent.height * 1.25
                 Layout.fillHeight:      true
                 Layout.fillWidth:       true
                 //-- Large circle
                 Rectangle {
-                    height:             mainIsMap ? parent.height : 0
-                    width:              mainIsMap ? height : 0
+                    height:             parent.height
+                    width:              height
                     radius:             height * 0.5
                     border.color:       qgcPal.text
                     border.width:       1
                     color:              Qt.rgba(0,0,0,0)
                     anchors.centerIn:   parent
-                    visible:            mainIsMap
+                    visible:            true
                 }
                 //-- North Label
                 Rectangle {
-                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
-                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 2 : 0
+                    height:             ScreenTools.defaultFontPixelHeight * 0.75
+                    width:              ScreenTools.defaultFontPixelWidth  * 2
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
                     color:              qgcPal.windowShade
-                    visible:            mainIsMap
+                    visible:            true
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.25
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -374,11 +374,11 @@ Item {
                 Image {
                     id:                 compassNeedle
                     anchors.centerIn:   parent
-                    height:             mainIsMap ? parent.height * 0.75 : 0
+                    height:             parent.height * 0.75
                     width:              height
                     source:             "/custom/img/compass_needle.svg"
                     fillMode:           Image.PreserveAspectFit
-                    visible:            mainIsMap
+                    visible:            true
                     sourceSize.height:  height
                     transform: [
                         Rotation {
@@ -389,11 +389,11 @@ Item {
                 }
                 //-- Heading
                 Rectangle {
-                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
-                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 3.5 : 0
+                    height:             ScreenTools.defaultFontPixelHeight * 0.75
+                    width:              ScreenTools.defaultFontPixelWidth  * 3.5
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
                     color:              qgcPal.windowShade
-                    visible:            mainIsMap
+                    visible:            true
                     anchors.bottom:         parent.bottom
                     anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * -0.25
                     anchors.horizontalCenter: parent.horizontalCenter
