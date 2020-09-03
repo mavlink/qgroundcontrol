@@ -605,7 +605,7 @@ ApplicationWindow {
         background: Rectangle {
             id:             criticalVehicleMessagePopupBackgroundRect
             anchors.fill:   parent
-            color:          qgcPal.alertBackground
+            color:          qgcPal.alertBackgroundWarning
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
             border.color:   qgcPal.alertBorder
             border.width:   2
