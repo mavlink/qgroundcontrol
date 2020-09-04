@@ -36,7 +36,8 @@ const char* TransectStyleComplexItem::_jsonTransectStyleComplexItemKey =    "Tra
 const char* TransectStyleComplexItem::_jsonCameraCalcKey =                  "CameraCalc";
 const char* TransectStyleComplexItem::_jsonVisualTransectPointsKey =        "VisualTransectPoints";
 const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
-const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "FollowTerrain";
+const char* TransectStyleComplexItem::_jsonTerrainFollowKey =               "FollowTerrain";
+const char* TransectStyleComplexItem::_jsonTerrainFlightSpeed =             "TerrainFlightSpeed";
 const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "CameraShots";
 
 TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterController, bool flyView, QString settingsGroup, QObject* parent)
@@ -149,13 +150,14 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
     innerObject[cameraTriggerInTurnAroundName] =    _cameraTriggerInTurnAroundFact.rawValue().toBool();
     innerObject[hoverAndCaptureName] =              _hoverAndCaptureFact.rawValue().toBool();
     innerObject[refly90DegreesName] =               _refly90DegreesFact.rawValue().toBool();
-    innerObject[_jsonFollowTerrainKey] =            _followTerrain;
+    innerObject[_jsonTerrainFollowKey] =            _followTerrain;
     innerObject[_jsonCameraShotsKey] =              _cameraShots;
 
     if (_followTerrain) {
-        innerObject[terrainAdjustToleranceName] =       _terrainAdjustToleranceFact.rawValue().toDouble();
-        innerObject[terrainAdjustMaxClimbRateName] =    _terrainAdjustMaxClimbRateFact.rawValue().toDouble();
-        innerObject[terrainAdjustMaxDescentRateName] =  _terrainAdjustMaxDescentRateFact.rawValue().toDouble();
+        innerObject[terrainAdjustToleranceName]         = _terrainAdjustToleranceFact.rawValue().toDouble();
+        innerObject[terrainAdjustMaxClimbRateName]      = _terrainAdjustMaxClimbRateFact.rawValue().toDouble();
+        innerObject[terrainAdjustMaxDescentRateName]    = _terrainAdjustMaxDescentRateFact.rawValue().toDouble();
+        innerObject[_jsonTerrainFlightSpeed]            = _vehicleSpeed;
     }
 
     QJsonObject cameraCalcObject;
@@ -222,8 +224,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         { _jsonCameraCalcKey,               QJsonValue::Object, true },
         { _jsonVisualTransectPointsKey,     QJsonValue::Array,  !forPresets },
         { _jsonItemsKey,                    QJsonValue::Array,  !forPresets },
-        { _jsonFollowTerrainKey,            QJsonValue::Bool,   true },
-        { _jsonCameraShotsKey,              QJsonValue::Double, false },    // Not required since it was missing from initial implementation
+        { _jsonTerrainFollowKey,            QJsonValue::Bool,   true },
+        { _jsonCameraShotsKey,              QJsonValue::Double, false },        // Not required since it was missing from initial implementation
     };
     if (!JsonHelper::validateKeys(innerObject, innerKeyInfoList, errorString)) {
         return false;
@@ -262,7 +264,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
     _cameraTriggerInTurnAroundFact.setRawValue  (innerObject[cameraTriggerInTurnAroundName].toBool());
     _hoverAndCaptureFact.setRawValue            (innerObject[hoverAndCaptureName].toBool());
     _refly90DegreesFact.setRawValue             (innerObject[refly90DegreesName].toBool());
-    _followTerrain = innerObject[_jsonFollowTerrainKey].toBool();
+    _followTerrain = innerObject[_jsonTerrainFollowKey].toBool();
 
     // These two keys where not included in initial implementation so they are optional. Without them the values will be
     // incorrect when loaded though.
@@ -275,6 +277,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
             { terrainAdjustToleranceName,       QJsonValue::Double, true },
             { terrainAdjustMaxClimbRateName,    QJsonValue::Double, true },
             { terrainAdjustMaxDescentRateName,  QJsonValue::Double, true },
+            { _jsonTerrainFlightSpeed,          QJsonValue::Double, false },        // Not required since it was missing from initial implementation
         };
         if (!JsonHelper::validateKeys(innerObject, followTerrainKeyInfoList, errorString)) {
             return false;
@@ -283,6 +286,9 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         _terrainAdjustToleranceFact.setRawValue         (innerObject[terrainAdjustToleranceName].toDouble());
         _terrainAdjustMaxClimbRateFact.setRawValue      (innerObject[terrainAdjustMaxClimbRateName].toDouble());
         _terrainAdjustMaxDescentRateFact.setRawValue    (innerObject[terrainAdjustMaxDescentRateName].toDouble());
+        if (innerObject.contains(_jsonTerrainFlightSpeed)) {
+            _vehicleSpeed = innerObject[_jsonTerrainFlightSpeed].toDouble();
+        }
 
         if (!forPresets) {
             // We have to grovel through mission items to determine min/max alt
@@ -622,6 +628,7 @@ TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSa
         terrainReady = true;
     }
     bool polygonNotReady = !_surveyAreaPolygon.isValid();
+    qDebug() << polygonNotReady << _wizardMode << terrainReady;
     return (polygonNotReady || _wizardMode) ?
                 NotReadyForSaveData :
                 (terrainReady ? ReadyForSave : NotReadyForSaveTerrain);
