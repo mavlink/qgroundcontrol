@@ -163,8 +163,6 @@ add_subdirectory(libs)
 add_subdirectory(src)
 
 set(QGC_RESOURCES
-	#HackAndroidFileDialog.qrc
-	HackFileDialog.qrc
 	qgcresources.qrc
 	qgroundcontrol.qrc
 	qgcimages.qrc

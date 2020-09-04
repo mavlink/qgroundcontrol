@@ -44,10 +44,30 @@ add_library(Vehicle
 	TerrainProtocolHandler.h
 	TrajectoryPoints.cc
 	TrajectoryPoints.h
+	VehicleBatteryFactGroup.cc
+	VehicleBatteryFactGroup.h
 	Vehicle.cc
+	VehicleClockFactGroup.cc
+	VehicleClockFactGroup.h
+	VehicleDistanceSensorFactGroup.cc
+	VehicleDistanceSensorFactGroup.h
+	VehicleEscStatusFactGroup.cc
+	VehicleEscStatusFactGroup.h
+	VehicleEstimatorStatusFactGroup.cc
+	VehicleEstimatorStatusFactGroup.h
+	VehicleGPSFactGroup.cc
+	VehicleGPSFactGroup.h
 	Vehicle.h
 	VehicleObjectAvoidance.cc
 	VehicleObjectAvoidance.h
+	VehicleSetpointFactGroup.cc
+	VehicleSetpointFactGroup.h
+	VehicleTemperatureFactGroup.cc
+	VehicleTemperatureFactGroup.h
+	VehicleVibrationFactGroup.cc
+	VehicleVibrationFactGroup.h
+	VehicleWindFactGroup.cc
+	VehicleWindFactGroup.h
 
 	${EXTRA_SRC}
 )
