@@ -42,6 +42,7 @@ public:
 
     Q_INVOKABLE void setLandingHeadingToTakeoffHeading();
 
+    // These are virtual so the Facts can be created with their own specific FactGroup metadata
     virtual Fact* loiterAltitude          (void) = 0;
     virtual Fact* loiterRadius            (void) = 0;
     virtual Fact* landingAltitude         (void) = 0;
@@ -70,10 +71,14 @@ signals:
     void _updateFlightPathSegmentsSignal(void);
 
 protected slots:
-    virtual void _recalcFromHeadingAndDistanceChange(void) = 0;
-    void _updateFlightPathSegmentsDontCallDirectly(void);
+    void _updateFlightPathSegmentsDontCallDirectly  (void);
+    void _recalcFromHeadingAndDistanceChange        (void);
+    void _recalcFromCoordinateChange                (void);
 
 protected:
+    virtual void _calcGlideSlope(void) = 0;
+
+    void    _init       (void);
     QPointF _rotatePoint(const QPointF& point, const QPointF& origin, double angle);
 
     int             _sequenceNumber =               0;
@@ -85,4 +90,7 @@ protected:
     bool            _ignoreRecalcSignals =          false;
     bool            _loiterClockwise =              true;
     bool            _altitudesAreRelative =         true;
+
+private slots:
+    void    _recalcFromRadiusChange(void);
 };

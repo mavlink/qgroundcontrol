@@ -91,9 +91,6 @@ public:
     static const char* stopTakingVideoName;
 
 private slots:
-    void    _recalcFromHeadingAndDistanceChange         (void) final;
-    void    _recalcFromCoordinateChange                 (void);
-    void    _recalcFromRadiusChange                     (void);
     void    _updateLoiterCoodinateAltitudeFromFact      (void);
     void    _updateLandingCoodinateAltitudeFromFact     (void);
     double  _mathematicAngleToHeading                   (double angle);
@@ -102,6 +99,7 @@ private slots:
     void    _signalLastSequenceNumberChanged            (void);
 
 private:
+    void _calcGlideSlope(void) final;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
