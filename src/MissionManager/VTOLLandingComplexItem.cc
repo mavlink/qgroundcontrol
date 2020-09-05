@@ -55,6 +55,8 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
     _editorQml = "qrc:/qml/VTOLLandingPatternEditor.qml";
     _isIncomplete = false;
 
+    _init();
+
     // We adjust landing distance meta data to Plan View settings unless there was a custom build override
     if (QGC::fuzzyCompare(_landingDistanceFact.rawValue().toDouble(), _landingDistanceFact.rawDefaultValue().toDouble())) {
         Fact* vtolTransitionDistanceFact = qgcApp()->toolbox()->settingsManager()->planViewSettings()->vtolTransitionDistance();
@@ -66,15 +68,6 @@ VTOLLandingComplexItem::VTOLLandingComplexItem(PlanMasterController* masterContr
 
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact);
     connect(&_landingAltitudeFact,      &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_updateLandingCoodinateAltitudeFromFact);
-
-    connect(&_landingDistanceFact,      &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_recalcFromHeadingAndDistanceChange);
-    connect(&_landingHeadingFact,       &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_recalcFromHeadingAndDistanceChange);
-
-    connect(&_loiterRadiusFact,         &Fact::valueChanged,                                    this, &VTOLLandingComplexItem::_recalcFromRadiusChange);
-    connect(this,                       &VTOLLandingComplexItem::loiterClockwiseChanged,        this, &VTOLLandingComplexItem::_recalcFromRadiusChange);
-
-    connect(this,                       &VTOLLandingComplexItem::loiterCoordinateChanged,       this, &VTOLLandingComplexItem::_recalcFromCoordinateChange);
-    connect(this,                       &VTOLLandingComplexItem::landingCoordinateChanged,      this, &VTOLLandingComplexItem::_recalcFromCoordinateChange);
 
     connect(this,                       &VTOLLandingComplexItem::altitudesAreRelativeChanged,   this, &VTOLLandingComplexItem::_amslEntryAltChanged);
     connect(this,                       &VTOLLandingComplexItem::altitudesAreRelativeChanged,   this, &VTOLLandingComplexItem::_amslExitAltChanged);
@@ -483,123 +476,6 @@ double VTOLLandingComplexItem::_headingToMathematicAngle(double heading)
     return heading - 90 * -1;
 }
 
-void VTOLLandingComplexItem::_recalcFromRadiusChange(void)
-{
-    // Fixed:
-    //      land
-    //      loiter tangent
-    //      distance
-    //      radius
-    //      heading
-    // Adjusted:
-    //      loiter
-
-    if (!_ignoreRecalcSignals) {
-        // These are our known values
-        double radius  = _loiterRadiusFact.rawValue().toDouble();
-        double landToTangentDistance = _landingDistanceFact.rawValue().toDouble();
-        double heading = _landingHeadingFact.rawValue().toDouble();
-
-        double landToLoiterDistance = _landingCoordinate.distanceTo(_loiterCoordinate);
-        if (landToLoiterDistance < radius) {
-            // Degnenerate case: Move tangent to loiter point
-            _loiterTangentCoordinate = _loiterCoordinate;
-
-            double heading = _landingCoordinate.azimuthTo(_loiterTangentCoordinate);
-
-            _ignoreRecalcSignals = true;
-            _landingHeadingFact.setRawValue(heading);
-            emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
-            _ignoreRecalcSignals = false;
-        } else {
-            double landToLoiterDistance = qSqrt(qPow(radius, 2) + qPow(landToTangentDistance, 2));
-            double angleLoiterToTangent = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise ? -1 : 1);
-
-            _loiterCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToLoiterDistance, heading + 180 + angleLoiterToTangent);
-            _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
-
-            _ignoreRecalcSignals = true;
-            emit loiterCoordinateChanged(_loiterCoordinate);
-            emit coordinateChanged(_loiterCoordinate);
-            _ignoreRecalcSignals = false;
-        }
-    }
-}
-
-void VTOLLandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
-{
-    // Fixed:
-    //      land
-    //      heading
-    //      distance
-    //      radius
-    // Adjusted:
-    //      loiter
-    //      loiter tangent
-    //      glide slope
-
-    if (!_ignoreRecalcSignals && _landingCoordSet) {
-        // These are our known values
-        double radius                   = _loiterRadiusFact.rawValue().toDouble();
-        double landToTangentDistance    = _landingDistanceFact.rawValue().toDouble();
-        double heading                  = _landingHeadingFact.rawValue().toDouble();
-
-        // Heading is from loiter to land, hence +180
-        _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
-
-        // Loiter coord is 90 degrees counter clockwise from tangent coord
-        _loiterCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 - 90);
-        _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
-
-        _ignoreRecalcSignals = true;
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
-        emit loiterCoordinateChanged(_loiterCoordinate);
-        emit coordinateChanged(_loiterCoordinate);
-        _ignoreRecalcSignals = false;
-    }
-}
-
-void VTOLLandingComplexItem::_recalcFromCoordinateChange(void)
-{
-    // Fixed:
-    //      land
-    //      loiter
-    //      radius
-    // Adjusted:
-    //      loiter tangent
-    //      heading
-    //      distance
-    //      glide slope
-
-    if (!_ignoreRecalcSignals && _landingCoordSet) {
-        // These are our known values
-        double radius = _loiterRadiusFact.rawValue().toDouble();
-        double landToLoiterDistance = _landingCoordinate.distanceTo(_loiterCoordinate);
-        double landToLoiterHeading = _landingCoordinate.azimuthTo(_loiterCoordinate);
-
-        double landToTangentDistance;
-        if (landToLoiterDistance < radius) {
-            // Degenerate case, set tangent to loiter coordinate
-            _loiterTangentCoordinate = _loiterCoordinate;
-            landToTangentDistance = _landingCoordinate.distanceTo(_loiterTangentCoordinate);
-        } else {
-            double loiterToTangentAngle = qRadiansToDegrees(qAsin(radius/landToLoiterDistance)) * (_loiterClockwise ? 1 : -1);
-            landToTangentDistance = qSqrt(qPow(landToLoiterDistance, 2) - qPow(radius, 2));
-
-            _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, landToLoiterHeading + loiterToTangentAngle);
-
-        }
-
-        double heading = _loiterTangentCoordinate.azimuthTo(_landingCoordinate);
-
-        _ignoreRecalcSignals = true;
-        _landingHeadingFact.setRawValue(heading);
-        _landingDistanceFact.setRawValue(landToTangentDistance);
-        emit loiterTangentCoordinateChanged(_loiterTangentCoordinate);
-        _ignoreRecalcSignals = false;
-    }
-}
-
 void VTOLLandingComplexItem::_updateLoiterCoodinateAltitudeFromFact(void)
 {
     _loiterCoordinate.setAltitude(_loiterAltitudeFact.rawValue().toDouble());
@@ -643,4 +519,9 @@ double VTOLLandingComplexItem::amslExitAlt(void) const
 {
     return _landingAltitudeFact.rawValue().toDouble() + (_altitudesAreRelative ? _missionController->plannedHomePosition().altitude() : 0);
 
+}
+
+void VTOLLandingComplexItem::_calcGlideSlope(void)
+{
+    // No glide slope calc for VTOL
 }
