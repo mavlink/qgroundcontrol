@@ -7,61 +7,61 @@
       <extracomment>.QGC.MetaData.Facts[lights2].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Lights 2 level</source>
-      <translation type="unfinished">Lights 2 level</translation>
+      <translation>İşıqlar 2ci səviyyə</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[inputHold].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Input Hold</source>
-      <translation type="unfinished">Input Hold</translation>
+      <translation>Giriş kontrol</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
+      <translation>Deaktiv,Aktiv,Mövcud deyil</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lights1].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Lights 1 level</source>
-      <translation type="unfinished">Lights 1 level</translation>
+      <translation>İşıqlar 1ci səviyyə</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tetherTurns].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Tether Turns</source>
-      <translation type="unfinished">Tether Turns</translation>
+      <translation>Bağlantı Növbələri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation type="unfinished">Disabled,Enabled</translation>
+      <translation>Deaktiv,Aktiv</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[cameraTilt].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Camera Tilt</source>
-      <translation type="unfinished">Camera Tilt</translation>
+      <translation>Kamera Əyimi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Rangefinder</source>
-      <translation type="unfinished">Rangefinder</translation>
+      <translation>Məsafəölçən</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pilotGain].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Pilot Gain</source>
-      <translation type="unfinished">Pilot Gain</translation>
+      <translation>Pilot Qazancı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollPitchToggle].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Roll/Pitch Toggle</source>
-      <translation type="unfinished">Roll/Pitch Toggle</translation>
+      <translation>Roll/Pitch Keçidi</translation>
     </message>
   </context>
   <context>
@@ -70,37 +70,37 @@
       <extracomment>.QGC.MetaData.Facts[pitchRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Pitch Rate Setpoint</source>
-      <translation type="unfinished">Pitch Rate Setpoint</translation>
+      <translation>Pitch Dərəcəsi Təyinat nöqtəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitch].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Pitch Setpoint</source>
-      <translation type="unfinished">Pitch Setpoint</translation>
+      <translation>Pitch Təyinat nöqtəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yaw].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Yaw Setpoint</source>
-      <translation type="unfinished">Yaw Setpoint</translation>
+      <translation>Yaw təyinat nöqtəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yawRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Yaw Rate Setpoint</source>
-      <translation type="unfinished">Yaw Rate Setpoint</translation>
+      <translation>Yaw dərəcə təyinat nöqtəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[roll].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Roll Setpoint</source>
-      <translation type="unfinished">Roll Setpoint</translation>
+      <translation>Roll təyinat nöqtəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Roll Rate Setpoint</source>
-      <translation type="unfinished">Roll Rate Setpoint</translation>
+      <translation>Roll dərəcə təyinat nöqtəsi</translation>
     </message>
   </context>
   <context>
@@ -109,31 +109,31 @@
       <extracomment>.QGC.MetaData.Facts[accelError].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Accel Error</source>
-      <translation type="unfinished">Accel Error</translation>
+      <translation>Aksel Error</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[haglRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>HAGL Ratio</source>
-      <translation type="unfinished">HAGL Ratio</translation>
+      <translation>HAGL kəsri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vertPosAccuracy].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Vert Pos Accuracy</source>
-      <translation type="unfinished">Vert Pos Accuracy</translation>
+      <translation>Şaquli Poz Dəqiqliyi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosAccuracy].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Horiz Pos Accuracy</source>
-      <translation type="unfinished">Horiz Pos Accuracy</translation>
+      <translation>Üfüqi Poz Dəqiqliyi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodConstPosModeEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Const Pos Mode Estimate</source>
-      <translation type="unfinished">Good Const Pos Mode Estimate</translation>
+      <translation>Yaxşı Sabit Poz Rejim Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDescription, </extracomment>
