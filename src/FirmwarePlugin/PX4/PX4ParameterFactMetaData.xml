@@ -10877,6 +10877,16 @@ How often the sensor is readout</short_desc>
       <max>125</max>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_RNG_MAX" default="200.0" type="FLOAT">
+      <short_desc>UAVCAN rangefinder maximum range</short_desc>
+      <long_desc>This parameter defines the maximum valid range for a rangefinder connected via UAVCAN.</long_desc>
+      <unit>m</unit>
+    </parameter>
+    <parameter name="UAVCAN_RNG_MIN" default="0.3" type="FLOAT">
+      <short_desc>UAVCAN rangefinder minimum range</short_desc>
+      <long_desc>This parameter defines the minimum valid range for a rangefinder connected via UAVCAN.</long_desc>
+      <unit>m</unit>
+    </parameter>
   </group>
   <group name="UUV Attitude Control">
     <parameter name="UUV_DIRCT_PITCH" default="0.0" type="FLOAT">
