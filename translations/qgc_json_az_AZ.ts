@@ -139,91 +139,91 @@
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Pred Horiz Pos Abs Estimate</source>
-      <translation type="unfinished">Good Pred Horiz Pos Abs Estimate</translation>
+      <translation>Yaxşı Təxmin Üfüqi Poz Mütləq Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodAttitudeEsimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Attitude Esimate</source>
-      <translation type="unfinished">Good Attitude Esimate</translation>
+      <translation>Yaxşı Münasibət Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizVelEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Vel Estimate</source>
-      <translation type="unfinished">Good Horiz Vel Estimate</translation>
+      <translation>Yaxşı Üfüqi Sürət Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertPosAbsEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Pos Abs Estimate</source>
-      <translation type="unfinished">Good Vert Pos Abs Estimate</translation>
+      <translation>Yaxşı Şaquli Poz Mütləq Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Horiz Pos Ratio</source>
-      <translation type="unfinished">Horiz Pos Ratio</translation>
+      <translation>Üfüqi Poz Kəsr</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[velRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Vel Ratio</source>
-      <translation type="unfinished">Vel Ratio</translation>
+      <translation>Sürət kəsri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertPosAGLEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Pos AGL Estimate</source>
-      <translation type="unfinished">Good Vert Pos AGL Estimate</translation>
+      <translation>Yaxşı Şaquli Poz AGL Təxmin</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizPosRelEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Pos Rel Estimate</source>
-      <translation type="unfinished">Good Horiz Pos Rel Estimate</translation>
+      <translation>Yaxşı Üfüqi Poz Nisbi Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[magRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Mag Ratio</source>
-      <translation type="unfinished">Mag Ratio</translation>
+      <translation>Böyüklük kəsri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tasRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>TAS Ratio</source>
-      <translation type="unfinished">TAS Ratio</translation>
+      <translation>TAS kəsri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vertPosRatio].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Vert Pos Ratio</source>
-      <translation type="unfinished">Vert Pos Ratio</translation>
+      <translation>Şaquli Poz Kəsri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gpsGlitch].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Gps Glitch</source>
-      <translation type="unfinished">Gps Glitch</translation>
+      <translation>GPS pozuntusu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertVelEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Vel Estimate</source>
-      <translation type="unfinished">Good Vert Vel Estimate</translation>
+      <translation>Yaxşı Şaquli Sürət Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizPosAbsEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Pos Abs Estimate</source>
-      <translation type="unfinished">Good Horiz Pos Abs Estimate</translation>
+      <translation>Yaxşı Üfüqi Poz Mütləq Təxmini</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosRelEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Pred Horiz Pos Rel Estimate</source>
-      <translation type="unfinished">Good Pred Horiz Pos Rel Estimate</translation>
+      <translation>Yaxşı Təxmin Üfüqi Poz Nisbi Təxmini</translation>
     </message>
   </context>
   <context>
@@ -232,121 +232,121 @@
       <extracomment>.QGC.MetaData.Facts[headingToNextWP].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Next WP Heading</source>
-      <translation type="unfinished">Next WP Heading</translation>
+      <translation>Növbəti WP-a səfər</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[missionItemIndex].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Mission Item Index</source>
-      <translation type="unfinished">Mission Item Index</translation>
+      <translation>Missiya bənd indeksi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeRelative].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Alt (Rel)</source>
-      <translation type="unfinished">Alt (Rel)</translation>
+      <translation>Yüks.(Nisbi)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[throttlePct].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Throttle %</source>
-      <translation type="unfinished">Throttle %</translation>
+      <translation>Qəza %</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Air Speed</source>
-      <translation type="unfinished">Air Speed</translation>
+      <translation>Hava sürəti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Alt (AMSL)</source>
-      <translation type="unfinished">Alt (AMSL)</translation>
+      <translation>Yüks.(AMSL)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[hobbs].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Hobbs Meter</source>
-      <translation type="unfinished">Hobbs Meter</translation>
+      <translation>Hobbs metr</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[groundSpeed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Ground Speed</source>
-      <translation type="unfinished">Ground Speed</translation>
+      <translation>Yer sürəti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yawRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Yaw Rate</source>
-      <translation type="unfinished">Yaw Rate</translation>
+      <translation>Yaw dərəcəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Distance to Home</source>
-      <translation type="unfinished">Distance to Home</translation>
+      <translation>Evə qədər məsafə</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[heading].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Heading</source>
-      <translation type="unfinished">Heading</translation>
+      <translation>Səfər etmək</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToHome].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Heading to Home</source>
-      <translation type="unfinished">Heading to Home</translation>
+      <translation>Evə səfər edir</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[climbRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Climb Rate</source>
-      <translation type="unfinished">Climb Rate</translation>
+      <translation>Dırmanma sürəti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitch].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Pitch</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Roll Rate</source>
-      <translation type="unfinished">Roll Rate</translation>
+      <translation>Roll dərəcəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightTime].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Flight Time</source>
-      <translation type="unfinished">Flight Time</translation>
+      <translation>Uçuş müddəti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitchRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Pitch Rate</source>
-      <translation type="unfinished">Pitch Rate</translation>
+      <translation>Pitch dərəcəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[flightDistance].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Flight Distance</source>
-      <translation type="unfinished">Flight Distance</translation>
+      <translation>Uçuş uzunluğu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[roll].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>Roll</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToGCS].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Distance to GCS</source>
-      <translation type="unfinished">Distance to GCS</translation>
+      <translation>GCS-a məsafə</translation>
     </message>
   </context>
   <context>
@@ -355,19 +355,19 @@
       <extracomment>.QGC.MetaData.Facts[temperature3].shortDescription, </extracomment>
       <location filename="../src/Vehicle/TemperatureFact.json"/>
       <source>Temperature (3)</source>
-      <translation type="unfinished">Temperature (3)</translation>
+      <translation>Temperatur (3)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[temperature2].shortDescription, </extracomment>
       <location filename="../src/Vehicle/TemperatureFact.json"/>
       <source>Temperature (2)</source>
-      <translation type="unfinished">Temperature (2)</translation>
+      <translation>Temperatur (2)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[temperature1].shortDescription, </extracomment>
       <location filename="../src/Vehicle/TemperatureFact.json"/>
       <source>Temperature (1)</source>
-      <translation type="unfinished">Temperature (1)</translation>
+      <translation>Temperatur (1)</translation>
     </message>
   </context>
   <context>
@@ -376,19 +376,19 @@
       <extracomment>.QGC.MetaData.Facts[verticalSpeed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/WindFact.json"/>
       <source>Wind Spd (vert)</source>
-      <translation type="unfinished">Wind Spd (vert)</translation>
+      <translation>Külək Sürəti (şaquli)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[direction].shortDescription, </extracomment>
       <location filename="../src/Vehicle/WindFact.json"/>
       <source>Wind Direction</source>
-      <translation type="unfinished">Wind Direction</translation>
+      <translation>Küləyin istiqaməti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[speed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/WindFact.json"/>
       <source>Wind Spd</source>
-      <translation type="unfinished">Wind Spd</translation>
+      <translation>Küləyin sürəti</translation>
     </message>
   </context>
   <context>
@@ -397,55 +397,55 @@
       <extracomment>.QGC.MetaData.Facts[lock].enumStrings, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</source>
-      <translation type="unfinished">None,None,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)</translation>
+      <translation>Yox,Yox,2D Kilid,3D Kilid,3D DGPS Kilidi,3D RTK GPS Kilidi (dəyişkən),3D RTK GPS Kilidi (sabit),Statik (sabit)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vdop].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>VDOP</source>
-      <translation type="unfinished">VDOP</translation>
+      <translation>VDOP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[hdop].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>HDOP</source>
-      <translation type="unfinished">HDOP</translation>
+      <translation>HDOP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[count].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>Sat Count</source>
-      <translation type="unfinished">Sat Count</translation>
+      <translation>Sat sayısı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mgrs].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>MGRS Position</source>
-      <translation type="unfinished">MGRS Position</translation>
+      <translation>MGRS pozisiyası</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lon].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>Longitude</source>
-      <translation type="unfinished">Longitude</translation>
+      <translation>Uzunluq</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[courseOverGround].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>Course Over Ground</source>
-      <translation type="unfinished">Course Over Ground</translation>
+      <translation>Torpaq üstündəki kurs</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lat].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>Latitude</source>
-      <translation type="unfinished">Latitude</translation>
+      <translation>Enlik</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[lock].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSFact.json"/>
       <source>GPS Lock</source>
-      <translation type="unfinished">GPS Lock</translation>
+      <translation>GPS Kilidi</translation>
     </message>
   </context>
   <context>
@@ -454,13 +454,13 @@
       <extracomment>.QGC.MetaData.Facts[currentDate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/ClockFact.json"/>
       <source>Date</source>
-      <translation type="unfinished">Date</translation>
+      <translation>Tarix</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentTime].shortDescription, </extracomment>
       <location filename="../src/Vehicle/ClockFact.json"/>
       <source>Time</source>
-      <translation type="unfinished">Time</translation>
+      <translation>Vaxt</translation>
     </message>
   </context>
   <context>
@@ -469,37 +469,37 @@
       <extracomment>.QGC.MetaData.Facts[clipCount3].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Clip Count (3)</source>
-      <translation type="unfinished">Clip Count (3)</translation>
+      <translation>Klip Sayısı (3)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount1].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Clip Count (1)</source>
-      <translation type="unfinished">Clip Count (1)</translation>
+      <translation>Klip Sayısı (1)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yAxis].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Vibe yAxis</source>
-      <translation type="unfinished">Vibe yAxis</translation>
+      <translation>Vibe yOxu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[xAxis].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Vibe xAxis</source>
-      <translation type="unfinished">Vibe xAxis</translation>
+      <translation>Vibe xOxu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clipCount2].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Clip Count (2)</source>
-      <translation type="unfinished">Clip Count (2)</translation>
+      <translation>Klip Sayısı (2)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[zAxis].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VibrationFact.json"/>
       <source>Vibe zAxis</source>
-      <translation type="unfinished">Vibe zAxis</translation>
+      <translation>Vibe zOxu</translation>
     </message>
   </context>
   <context>
@@ -508,55 +508,55 @@
       <extracomment>.QGC.MetaData.Facts[active].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Survey-In Active</source>
-      <translation type="unfinished">Survey-In Active</translation>
+      <translation>Dolanma Aktiv</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Current Survey-In Accuracy</source>
-      <translation type="unfinished">Current Survey-In Accuracy</translation>
+      <translation>Hazırkı Dolanma Dəqiqliyi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Current Survey-In Altitude</source>
-      <translation type="unfinished">Current Survey-In Altitude</translation>
+      <translation>Hazırki Dolanma Yüksəkiyi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[valid].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Survey-In Valid</source>
-      <translation type="unfinished">Survey-In Valid</translation>
+      <translation>Dolnma Yararlı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Current Survey-In Longitude</source>
-      <translation type="unfinished">Current Survey-In Longitude</translation>
+      <translation>Hazırki Dolanma Uzunluğu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[connected].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Connected</source>
-      <translation type="unfinished">Connected</translation>
+      <translation>Qoşuldu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentDuration].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Current Survey-In Duration</source>
-      <translation type="unfinished">Current Survey-In Duration</translation>
+      <translation>Hazırki Dolanma Müddəti</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[numSatellites].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Number of Satellites</source>
-      <translation type="unfinished">Number of Satellites</translation>
+      <translation>Peyklərin Sayı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDescription, </extracomment>
       <location filename="../src/Vehicle/GPSRTKFact.json"/>
       <source>Current Survey-In Latitude</source>
-      <translation type="unfinished">Current Survey-In Latitude</translation>
+      <translation>Hazırki Dolanma Enliyi</translation>
     </message>
   </context>
   <context>
@@ -565,55 +565,55 @@
       <extracomment>.QGC.MetaData.Facts[instantPower].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Watts</source>
-      <translation type="unfinished">Watts</translation>
+      <translation>Watt</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[temperature].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>Temperatur</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[timeRemaining].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Time Remaining</source>
-      <translation type="unfinished">Time Remaining</translation>
+      <translation>Qalan vaxt</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mahConsumed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Consumed</source>
-      <translation type="unfinished">Consumed</translation>
+      <translation>Xərclənən</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[percentRemaining].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Percent</source>
-      <translation type="unfinished">Percent</translation>
+      <translation>Faiz</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[current].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Current</source>
-      <translation type="unfinished">Current</translation>
+      <translation>Hazırki</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[voltage].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Voltage</source>
-      <translation type="unfinished">Voltage</translation>
+      <translation>Gərginlik</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[chargeState].enumStrings, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>n/a,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy</source>
-      <translation type="unfinished">n/a,Normal Operation,Low Battery State,Critical Battery State,Emergency Battery State,Battery Failed,Battery Unhealthy</translation>
+      <translation>bilinmir,Normal Operasiya,Az Batereya Vəziyyəti,Kritik Batereya Vəziyyəti, Təcili Batereya Vəziyyəti,Batereya Xəta Verdi, Batereya Zədəli</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[chargeState].shortDescription, </extracomment>
       <location filename="../src/Vehicle/BatteryFact.json"/>
       <source>Charge State</source>
-      <translation type="unfinished">Charge State</translation>
+      <translation>Şarj vəziyyəti</translation>
     </message>
   </context>
   <context>
@@ -622,61 +622,61 @@
       <extracomment>.QGC.MetaData.Facts[rotationYaw90].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Right</source>
-      <translation type="unfinished">Right</translation>
+      <translation>Sağ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw225].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Rear/Left</source>
-      <translation type="unfinished">Rear/Left</translation>
+      <translation>Arxa/Sol</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw45].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Forward/Right</source>
-      <translation type="unfinished">Forward/Right</translation>
+      <translation>İrəli/Sağ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw135].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Rear/Right</source>
-      <translation type="unfinished">Rear/Right</translation>
+      <translation>Arxa/Sağ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw315].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Forward/Left</source>
-      <translation type="unfinished">Forward/Left</translation>
+      <translation>İrəli/Sol</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationPitch90].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Up</source>
-      <translation type="unfinished">Up</translation>
+      <translation>Yuxarı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationPitch270].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Down</source>
-      <translation type="unfinished">Down</translation>
+      <translation>Aşağı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationNone].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Forward</source>
-      <translation type="unfinished">Forward</translation>
+      <translation>İrəli</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw180].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Rear</source>
-      <translation type="unfinished">Rear</translation>
+      <translation>Arxa</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rotationYaw270].shortDescription, </extracomment>
       <location filename="../src/Vehicle/DistanceSensorFact.json"/>
       <source>Left</source>
-      <translation type="unfinished">Left</translation>
+      <translation>Sol</translation>
     </message>
   </context>
   <context>
@@ -685,13 +685,13 @@
       <extracomment>.QGC.MetaData.Facts[blocksPending].shortDescription, </extracomment>
       <location filename="../src/Vehicle/TerrainFactGroup.json"/>
       <source>Blocks Pending</source>
-      <translation type="unfinished">Blocks Pending</translation>
+      <translation>Bloklar Gözləyir</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[blocksLoaded].shortDescription, </extracomment>
       <location filename="../src/Vehicle/TerrainFactGroup.json"/>
       <source>Blocks Loaded</source>
-      <translation type="unfinished">Blocks Loaded</translation>
+      <translation>Bloklar Yüklənir</translation>
     </message>
   </context>
   <context>
@@ -700,19 +700,19 @@
       <extracomment>.QGC.MetaData.Facts[distance].shortDescription, </extracomment>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
       <source>Horizontal distance from ground station to vehicle</source>
-      <translation type="unfinished">Horizontal distance from ground station to vehicle</translation>
+      <translation>Yer stansiyasından aparata qədər üfüqi məsafə</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[height].shortDescription, </extracomment>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
       <source>Vertical distance from Launch (home) position to vehicle</source>
-      <translation type="unfinished">Vertical distance from Launch (home) position to vehicle</translation>
+      <translation>Qalxış nöqtəsindən (ev) aparata qədər şaquli məsafə</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[angle].shortDescription, </extracomment>
       <location filename="../src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json"/>
       <source>Angle from ground station to vehicle</source>
-      <translation type="unfinished">Angle from ground station to vehicle</translation>
+      <translation>Yer stansiyası ilə aparat arasında dərəcə</translation>
     </message>
   </context>
   <context>
@@ -721,13 +721,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoFixedWing.json"/>
       <source>Center,Tangent</source>
-      <translation type="unfinished">Center,Tangent</translation>
+      <translation>Mərkəz,Toxunan</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoFixedWing.json"/>
       <source>Exit loiter from</source>
-      <translation type="unfinished">Exit loiter from</translation>
+      <translation>dən Loiteri Çıx</translation>
     </message>
   </context>
   <context>
@@ -736,73 +736,73 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>Aktiv</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Land using VTOL mode.</source>
-      <translation type="unfinished">Land using VTOL mode.</translation>
+      <translation>VTOL rejimi ilə eniş et.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Takeoff to specified altitude.</source>
-      <translation type="unfinished">Takeoff to specified altitude.</translation>
+      <translation>Verilmiş yüksəkliyə qalxış.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param3.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>Yaw</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param2.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>Roll</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>VTOL</source>
-      <translation type="unfinished">VTOL</translation>
+      <translation>VTOL</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>On,Off</source>
-      <translation type="unfinished">On,Off</translation>
+      <translation>Aç/Qapat</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_RELAY].param2.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Setting</source>
-      <translation type="unfinished">Setting</translation>
+      <translation>Tənzimləmə</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_MOUNT_CONTROL].param1.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Pitch</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_FENCE_ENABLE].param1.enumStrings, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Enable,Disable</source>
-      <translation type="unfinished">Enable,Disable</translation>
+      <translation>Aktiv/Deaktiv</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Take off from the ground and ascend to specified altitude.</source>
-      <translation type="unfinished">Take off from the ground and ascend to specified altitude.</translation>
+      <translation>Yerdən qalxış və verilmiş yüksəkliyə qalxmaq.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, </extracomment>
       <location filename="../src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json"/>
       <source>Heading</source>
-      <translation type="unfinished">Heading</translation>
+      <translation>Səfər etmək</translation>
     </message>
   </context>
   <context>
@@ -811,25 +811,25 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description, </extracomment>
       <location filename="../src/FirmwarePlugin/PX4/PX4-MavCmdInfoMultiRotor.json"/>
       <source>Travel to a position and Loiter indefinitely.</source>
-      <translation type="unfinished">Travel to a position and Loiter indefinitely.</translation>
+      <translation>Bir pozisiyaya səyahət et və qeyri-müəyyən Loiter et.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description, </extracomment>
       <location filename="../src/FirmwarePlugin/PX4/PX4-MavCmdInfoMultiRotor.json"/>
       <source>Travel to a position and Loiter for an amount of time.</source>
-      <translation type="unfinished">Travel to a position and Loiter for an amount of time.</translation>
+      <translation>Bir pozisiyaya səyahət et və bəlli vaxt Loiter et.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description, </extracomment>
       <location filename="../src/FirmwarePlugin/PX4/PX4-MavCmdInfoMultiRotor.json"/>
       <source>Hover straight up to specified altitude. Then travel to specified position.</source>
-      <translation type="unfinished">Hover straight up to specified altitude. Then travel to specified position.</translation>
+      <translation>Verilən yüksəkliyə qalx. Sonra verilən pozisiyaya get.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].description, </extracomment>
       <location filename="../src/FirmwarePlugin/PX4/PX4-MavCmdInfoMultiRotor.json"/>
       <source>Travel to a position and Loiter for a number of turns.</source>
-      <translation type="unfinished">Travel to a position and Loiter for a number of turns.</translation>
+      <translation>Pozisiyaya get və bir neçə dəfə Loiter et.</translation>
     </message>
   </context>
   <context>
@@ -838,49 +838,49 @@
       <extracomment>.QGC.MetaData.Facts[apiKey].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>AirMap API Key</source>
-      <translation type="unfinished">AirMap API Key</translation>
+      <translation>AirMap API açarı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[password].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>AirMap Password</source>
-      <translation type="unfinished">AirMap Password</translation>
+      <translation>AirMap Şifrəsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableTelemetry].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>Enable AirMap Telemetry</source>
-      <translation type="unfinished">Enable AirMap Telemetry</translation>
+      <translation>AirMap Telemetriyasını aç</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableAirMap].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>Enable AirMap</source>
-      <translation type="unfinished">Enable AirMap</translation>
+      <translation>AirMapi aç</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clientID].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>AirMap Client ID</source>
-      <translation type="unfinished">AirMap Client ID</translation>
+      <translation>AirMap Client IDsi</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[userName].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>AirMap User Name</source>
-      <translation type="unfinished">AirMap User Name</translation>
+      <translation>AirMap İstifadəçi adı</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableAirspace].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>Show Airspace on Map (Experimental)</source>
-      <translation type="unfinished">Show Airspace on Map (Experimental)</translation>
+      <translation>Hava boşluğunu xəritədə göstər (Eksperimental)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[usePersonalApiKey].shortDescription, </extracomment>
       <location filename="../src/Airmap/AirMap.SettingsGroup.json"/>
       <source>Use Personal AirMap API Key</source>
-      <translation type="unfinished">Use Personal AirMap API Key</translation>
+      <translation>Şəxsi AirMap Açarı istifadə et</translation>
     </message>
   </context>
   <context>
@@ -889,7 +889,7 @@
       <extracomment>.QGC.MetaData.Facts[PlannedHomePositionAltitude].shortDescription, </extracomment>
       <location filename="../src/MissionManager/MissionSettings.FactMetaData.json"/>
       <source>Launch position altitude</source>
-      <translation type="unfinished">Launch position altitude</translation>
+      <translation>Mövqe hündürlüyünü başladın</translation>
     </message>
   </context>
   <context>
@@ -898,55 +898,55 @@
       <extracomment>.QGC.MetaData.Facts[StopTakingVideo].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Stop taking video</source>
-      <translation type="unfinished">Stop taking video</translation>
+      <translation>Video çəkməyi dayandırın</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[StopTakingPhotos].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Stop taking photos</source>
-      <translation type="unfinished">Stop taking photos</translation>
+      <translation>Şəkil çəkməyi dayandırın</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterAltitude].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will proceed to land.</source>
-      <translation type="unfinished">Aircraft will proceed to the loiter point and loiter downwards until it reaches this approach altitude. Once altitude is reached the aircraft will proceed to land.</translation>
+      <translation>Aparat bu yanaşma hündürlüyünə çatana qədər Loiter nöqtəsinə və Loiterdən aşağıya doğru irəliləyəcək. Hündürlüyə çatdıqdan sonra aparat eniş edəcək.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingAltitude].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Altitude for landing point.</source>
-      <translation type="unfinished">Altitude for landing point.</translation>
+      <translation>Eniş nöqtəsi üçün hündürlük.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ValueSetIsDistance].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Value controller loiter point is distance</source>
-      <translation type="unfinished">Value controller loiter point is distance</translation>
+      <translation>Dəyər tənzimləyicisinin loiter nöqtəsi məsafədir</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LoiterRadius].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Loiter radius.</source>
-      <translation type="unfinished">Loiter radius.</translation>
+      <translation>Loiter radiusu.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingDistance].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Distance between landing and loiter points.</source>
-      <translation type="unfinished">Distance between landing and loiter points.</translation>
+      <translation>Eniş və loiter nöqtələri arasındakı məsafə.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[LandingHeading].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>Heading from loiter point to land point.</source>
-      <translation type="unfinished">Heading from loiter point to land point.</translation>
+      <translation>Loiter nöqtəsindən eniş nöqtəsinə səfər.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GlideSlope].shortDescription, </extracomment>
       <location filename="../src/MissionManager/FWLandingPattern.FactMetaData.json"/>
       <source>The glide slope between the loiter and landing point.</source>
-      <translation type="unfinished">The glide slope between the loiter and landing point.</translation>
+      <translation>Loiter və eniş nöqtəsi arasındakı yamac.</translation>
     </message>
   </context>
   <context>
@@ -955,37 +955,37 @@
       <extracomment>.mavCmdInfo[Override testing].description, .mavCmdInfo[Override testing].category, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4</source>
-      <translation type="unfinished">override fw 4</translation>
+      <translation>Üzərindən keçmək fw 4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 7</source>
-      <translation type="unfinished">override fw 4 7</translation>
+      <translation>Üzərindən keçmək fw 4 7</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 5</source>
-      <translation type="unfinished">override fw 4 5</translation>
+      <translation>Üzərindən keçmək fw 4 5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param7.enumStrings, .mavCmdInfo[Override testing].param5.enumStrings, .mavCmdInfo[Override testing].param3.enumStrings, .mavCmdInfo[Override testing].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
+      <translation>1,2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 3</source>
-      <translation type="unfinished">override fw 4 3</translation>
+      <translation>Üzərindən keçmək fw 4 3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[Override testing].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoFixedWing.json"/>
       <source>override fw 4 1</source>
-      <translation type="unfinished">override fw 4 1</translation>
+      <translation>Üzərindən keçmək fw 4 1</translation>
     </message>
   </context>
   <context>
@@ -994,79 +994,79 @@
       <extracomment>.mavCmdInfo[UNITTEST_3].category, .mavCmdInfo[UNITTEST_4].category, .mavCmdInfo[UNITTEST_5].category, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>category</source>
-      <translation type="unfinished">category</translation>
+      <translation>kateqoriya</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_5].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 5</source>
-      <translation type="unfinished">Unit Test 5</translation>
+      <translation>Vahid Test 5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_2].param1.label, .mavCmdInfo[UNITTEST_3].param1.label, .mavCmdInfo[UNITTEST_4].param1.label, .mavCmdInfo[UNITTEST_5].param1.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param1</source>
-      <translation type="unfinished">param1</translation>
+      <translation>param1</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_4].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 4</source>
-      <translation type="unfinished">Unit Test 4</translation>
+      <translation>Vahid Test 5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param7.enumStrings, .mavCmdInfo[UNITTEST_3].param6.enumStrings, .mavCmdInfo[UNITTEST_3].param5.enumStrings, .mavCmdInfo[UNITTEST_3].param4.enumStrings, .mavCmdInfo[UNITTEST_3].param3.enumStrings, .mavCmdInfo[UNITTEST_3].param2.enumStrings, .mavCmdInfo[UNITTEST_3].param1.enumStrings, .mavCmdInfo[UNITTEST_4].param7.enumStrings, .mavCmdInfo[UNITTEST_4].param6.enumStrings, .mavCmdInfo[UNITTEST_4].param5.enumStrings, .mavCmdInfo[UNITTEST_4].param4.enumStrings, .mavCmdInfo[UNITTEST_4].param3.enumStrings, .mavCmdInfo[UNITTEST_4].param2.enumStrings, .mavCmdInfo[UNITTEST_4].param1.enumStrings, .mavCmdInfo[UNITTEST_5].param7.enumStrings, .mavCmdInfo[UNITTEST_5].param6.enumStrings, .mavCmdInfo[UNITTEST_5].param5.enumStrings, .mavCmdInfo[UNITTEST_5].param4.enumStrings, .mavCmdInfo[UNITTEST_5].param3.enumStrings, .mavCmdInfo[UNITTEST_5].param2.enumStrings, .mavCmdInfo[UNITTEST_5].param1.enumStrings, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>1,2</source>
-      <translation type="unfinished">1,2</translation>
+      <translation>1.2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param7.label, .mavCmdInfo[UNITTEST_4].param7.label, .mavCmdInfo[UNITTEST_5].param7.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param7</source>
-      <translation type="unfinished">param7</translation>
+      <translation>param7</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param6.label, .mavCmdInfo[UNITTEST_4].param6.label, .mavCmdInfo[UNITTEST_5].param6.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param6</source>
-      <translation type="unfinished">param6</translation>
+      <translation>param7</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param5.label, .mavCmdInfo[UNITTEST_4].param5.label, .mavCmdInfo[UNITTEST_5].param5.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param5</source>
-      <translation type="unfinished">param5</translation>
+      <translation>param5</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param4.label, .mavCmdInfo[UNITTEST_4].param4.label, .mavCmdInfo[UNITTEST_5].param4.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param4</source>
-      <translation type="unfinished">param4</translation>
+      <translation>param4</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param3.label, .mavCmdInfo[UNITTEST_4].param3.label, .mavCmdInfo[UNITTEST_5].param3.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param3</source>
-      <translation type="unfinished">param3</translation>
+      <translation>param3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].param2.label, .mavCmdInfo[UNITTEST_4].param2.label, .mavCmdInfo[UNITTEST_5].param2.label, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>param2</source>
-      <translation type="unfinished">param2</translation>
+      <translation>param2</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].friendlyName, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>Unit Test 3</source>
-      <translation type="unfinished">Unit Test 3</translation>
+      <translation>Vahid Test 3</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[UNITTEST_3].description, .mavCmdInfo[UNITTEST_4].description, .mavCmdInfo[UNITTEST_5].description, </extracomment>
       <location filename="../src/MissionManager/UnitTest/UT-MavCmdInfoCommon.json"/>
       <source>description</source>
-      <translation type="unfinished">description</translation>
+      <translation>açıqlama</translation>
     </message>
   </context>
   <context>
@@ -1075,55 +1075,55 @@
       <extracomment>.QGC.MetaData.Facts[FocalLength].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Focal length of camera lens.</source>
-      <translation type="unfinished">Focal length of camera lens.</translation>
+      <translation>Kamera obyektivinin fokus uzunluğu.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SensorHeight].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Height of camera image sensor.</source>
-      <translation type="unfinished">Height of camera image sensor.</translation>
+      <translation>Kamera görüntü sensorunun hündürlüyü.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[FixedOrientation].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera orientation ix fixed and cannot be changed.</source>
-      <translation type="unfinished">Camera orientation ix fixed and cannot be changed.</translation>
+      <translation>Kamera istiqaməti sabitdir və dəyişdirilə bilməz.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ImageWidth].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera image resolution width.</source>
-      <translation type="unfinished">Camera image resolution width.</translation>
+      <translation>Kamera görüntü eni.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[SensorWidth].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Width of camera image sensor.</source>
-      <translation type="unfinished">Width of camera image sensor.</translation>
+      <translation>Kamera görüntü sensorunun eni.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[ImageHeight].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera image resolution height.</source>
-      <translation type="unfinished">Camera image resolution height.</translation>
+      <translation>Kamera görüntü hündürlüyü.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Landscape].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera on vehicle is in landscape orientation.</source>
-      <translation type="unfinished">Camera on vehicle is in landscape orientation.</translation>
+      <translation>Vasitədəki kamera landscape rejimindədir.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Name].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Camera name.</source>
-      <translation type="unfinished">Camera name.</translation>
+      <translation>Kamera adı.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[MinTriggerInterval].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSpec.FactMetaData.json"/>
       <source>Minimum amount of time between each camera trigger.</source>
-      <translation type="unfinished">Minimum amount of time between each camera trigger.</translation>
+      <translation>Hər bir kamera tətikləyicisi arasında minimum vaxt miqdarı.</translation>
     </message>
   </context>
   <context>
@@ -1132,31 +1132,31 @@
       <extracomment>.QGC.MetaData.Facts[Altitude].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Altitude for the bottom layer of the structure scan.</source>
-      <translation type="unfinished">Altitude for the bottom layer of the structure scan.</translation>
+      <translation>Quruluşun taramasının alt təbəqəsi üçün hündürlük.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[TurnaroundDistance].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Amount of additional distance to add outside the survey area for vehicle turnaround.</source>
-      <translation type="unfinished">Amount of additional distance to add outside the survey area for vehicle turnaround.</translation>
+      <translation>Vasitə dönüşü üçün araşdırma sahəsindən kənarda əlavə olunacaq məsafənin miqdarı.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CorridorWidth].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Corridor width. Specify 0 width for a single pass scan.</source>
-      <translation type="unfinished">Corridor width. Specify 0 width for a single pass scan.</translation>
+      <translation>Dəhlizin eni. Vahid keçid tarama üçün 0 genişlik göstərin.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[GridSpacing].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Amount of spacing in between parallel grid lines.</source>
-      <translation type="unfinished">Amount of spacing in between parallel grid lines.</translation>
+      <translation>Paralel grid xətləri arasındakı boşluq miqdarı.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[Trigger distance].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CorridorScan.SettingsGroup.json"/>
       <source>Distance between each triggering of the camera. 0 specifies not camera trigger.</source>
-      <translation type="unfinished">Distance between each triggering of the camera. 0 specifies not camera trigger.</translation>
+      <translation>Kameranın hər tətiklənməsi arasındakı məsafə. 0 kamera tetikleyicisini göstərmir.</translation>
     </message>
   </context>
   <context>
@@ -1165,7 +1165,7 @@
       <extracomment>.QGC.MetaData.Facts[FlightSpeed].shortDescription, </extracomment>
       <location filename="../src/MissionManager/SpeedSection.FactMetaData.json"/>
       <source>Set the current flight speed</source>
-      <translation type="unfinished">Set the current flight speed</translation>
+      <translation>Mövcud uçuş sürətini təyin edin</translation>
     </message>
   </context>
   <context>
@@ -1174,13 +1174,13 @@
       <extracomment>.QGC.MetaData.Facts[CameraAction].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify whether the camera should take photos or video</source>
-      <translation type="unfinished">Specify whether the camera should take photos or video</translation>
+      <translation>Kameranın foto yoxsa video çəkməyini təyin edin</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraPhotoIntervalDistance].shortDescription, </extracomment>
       <location filename="../src/MissionManager/CameraSection.FactMetaData.json"/>
       <source>Specify the distance between each photo</source>
-      <translation type="unfinished">Specify the distance between each photo</translation>
+      <translation>Hər fotoşəkil arasındakı məsafəni göstərin</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[CameraMode].shortDescription, </extracomment>
