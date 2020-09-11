@@ -22,7 +22,6 @@ linux {
         message("Linux build")
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
-        DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED
         QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
@@ -36,14 +35,12 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
-        DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
     } else : android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_ENABLE_BLUETOOTH
-        DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         QMAKE_CXXFLAGS += -Wno-unused-command-line-argument
@@ -74,7 +71,6 @@ linux {
         CONFIG += WindowsBuild
         CONFIG += WarningsAsErrorsOn
         DEFINES += __STDC_LIMIT_MACROS
-        DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
     } else {
@@ -86,7 +82,6 @@ linux {
         CONFIG  += MacBuild
         CONFIG  += x86_64
         CONFIG  -= x86
-        DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
@@ -113,7 +108,6 @@ linux {
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
-    DEFINES += QGC_GST_TAISYNC_ENABLED
     QMAKE_IOS_DEPLOYMENT_TARGET = 11.0
     QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie

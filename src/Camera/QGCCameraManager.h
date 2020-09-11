@@ -69,6 +69,7 @@ protected slots:
     virtual void    _startVideoRecording    ();
     virtual void    _stopVideoRecording     ();
     virtual void    _toggleVideoRecording   ();
+    virtual void    _triggerCamToggleVid    ();
     virtual void    _toggleThermal          ();
     virtual void    _switchThermalOn        ();
     virtual void    _switchThermalOff       ();
