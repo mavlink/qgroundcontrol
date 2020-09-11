@@ -97,7 +97,6 @@ if (GST_FOUND)
     )
     add_definitions(
         -DQGC_GST_STREAMING
-        -DQGC_GST_TAISYNC_ENABLED
         -DQGC_GST_MICROHARD_ENABLED
     )
 endif()

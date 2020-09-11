@@ -416,6 +416,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         disconnect(_activeJoystick, &Joystick::startVideoRecord,    this, &QGCCameraManager::_startVideoRecording);
         disconnect(_activeJoystick, &Joystick::stopVideoRecord,     this, &QGCCameraManager::_stopVideoRecording);
         disconnect(_activeJoystick, &Joystick::toggleVideoRecord,   this, &QGCCameraManager::_toggleVideoRecording);
+        disconnect(_activeJoystick, &Joystick::triggerCamToggleVid, this, &QGCCameraManager::_triggerCamToggleVid);
         disconnect(_activeJoystick, &Joystick::toggleThermal,       this, &QGCCameraManager::_toggleThermal);
         disconnect(_activeJoystick, &Joystick::switchThermalOn,     this, &QGCCameraManager::_switchThermalOn);
         disconnect(_activeJoystick, &Joystick::switchThermalOff,    this, &QGCCameraManager::_switchThermalOff);
@@ -433,6 +434,7 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         connect(_activeJoystick, &Joystick::startVideoRecord,       this, &QGCCameraManager::_startVideoRecording);
         connect(_activeJoystick, &Joystick::stopVideoRecord,        this, &QGCCameraManager::_stopVideoRecording);
         connect(_activeJoystick, &Joystick::toggleVideoRecord,      this, &QGCCameraManager::_toggleVideoRecording);
+        connect(_activeJoystick, &Joystick::triggerCamToggleVid,    this, &QGCCameraManager::_triggerCamToggleVid);
         connect(_activeJoystick, &Joystick::toggleThermal,          this, &QGCCameraManager::_toggleThermal);
         connect(_activeJoystick, &Joystick::switchThermalOn,        this, &QGCCameraManager::_switchThermalOn);
         connect(_activeJoystick, &Joystick::switchThermalOff,       this, &QGCCameraManager::_switchThermalOff);
@@ -487,6 +489,20 @@ QGCCameraManager::_toggleVideoRecording()
     QGCCameraControl* pCamera = currentCameraInstance();
     if(pCamera) {
         pCamera->toggleVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_triggerCamToggleVid()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        if(pCamera->cameraMode() == QGCCameraControl::CAM_MODE_PHOTO || pCamera->cameraMode() == QGCCameraControl::CAM_MODE_SURVEY) {
+            pCamera->takePhoto();
+        } else if(pCamera->cameraMode() == QGCCameraControl::CAM_MODE_VIDEO) {
+            pCamera->toggleVideo();
+        }
     }
 }
 
