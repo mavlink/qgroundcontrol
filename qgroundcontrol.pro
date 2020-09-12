@@ -101,10 +101,10 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
         # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
         include($$CUSTOM_PRI)
     } else {
-        CUSTOM_PRI = $$PWD/../custom/custom.pri
+        CUSTOM_PRI = $$PWD/../qgc-custom/custom.pri
         exists($$CUSTOM_PRI) {
             message("*** Found custom build ***")
-            CUSTOM_DIR = $$PWD/../custom
+            CUSTOM_DIR = $$PWD/../qgc-custom
             CONFIG  += CustomBuild
             DEFINES += QGC_CUSTOM_BUILD
             # custom.pri must define:
