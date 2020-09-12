@@ -485,13 +485,8 @@ FlightMap {
     QGCMapCircleVisuals {
         id:             orbitTelemetryCircle
         mapControl:     parent
-        mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : _placeholderMapCircle
+        mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : null
         visible:        _activeVehicle ? _activeVehicle.orbitActive : false
-
-        // to prevent null references in QGCMapCircleVisuals
-        QGCMapCircle {
-            id:                 _placeholderMapCircle
-        }
     }
 
     MapQuickItem {

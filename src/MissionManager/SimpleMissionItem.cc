@@ -192,6 +192,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isStandaloneCoordinateChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLandCommandChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLoiterItemChanged);
+    connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::showLoiterRadiusChanged);
 
     // Whenever these properties change the ui model changes as well
     connect(this,                               &SimpleMissionItem::commandChanged,         this, &SimpleMissionItem::_rebuildFacts);
@@ -545,7 +546,24 @@ bool SimpleMissionItem::isLoiterItem() const
     }
 }
 
-double SimpleMissionItem::radius() const
+bool SimpleMissionItem::showLoiterRadius() const
+{
+    if (specifiesCoordinate() && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()))  {
+        switch (command()) {
+        case MAV_CMD_NAV_LOITER_UNLIM:
+        case MAV_CMD_NAV_LOITER_TURNS:
+        case MAV_CMD_NAV_LOITER_TIME:
+        case MAV_CMD_NAV_LOITER_TO_ALT:
+            return true;
+        default:
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+double SimpleMissionItem::loiterRadius() const
 {
     if (isLoiterItem()) {
         return command() == MAV_CMD_NAV_LOITER_TO_ALT ? missionItem().param2() : missionItem().param3();
@@ -1076,6 +1094,6 @@ void SimpleMissionItem::_signalIfVTOLTransitionCommand(void)
 void SimpleMissionItem::_possibleRadiusChanged(void)
 {
     if (isLoiterItem()) {
-        emit radiusChanged(radius());
+        emit loiterRadiusChanged(loiterRadius());
     }
 }
