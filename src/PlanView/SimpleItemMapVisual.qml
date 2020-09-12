@@ -28,6 +28,7 @@ Item {
 
     property var    _missionItem:       object
     property var    _itemVisual
+    property var    _loiterVisual
     property var    _dragArea
     property bool   _itemVisualShowing: false
     property bool   _dragAreaShowing:   false
@@ -37,6 +38,7 @@ Item {
     function hideItemVisuals() {
         if (_itemVisualShowing) {
             _itemVisual.destroy()
+            _loiterVisual.destroy()
             _itemVisualShowing = false
         }
     }
@@ -45,6 +47,8 @@ Item {
         if (!_itemVisualShowing) {
             _itemVisual = indicatorComponent.createObject(map)
             map.addMapItem(_itemVisual)
+            _loiterVisual = loiterComponent.createObject(map)
+            map.addMapItem(_loiterVisual)
             _itemVisualShowing = true
         }
     }
@@ -92,10 +96,15 @@ Item {
     Connections {
         target: _missionItem.isSimpleItem ? _missionItem : null
 
-        onRadiusChanged: {
-            // why is binding not working?
-            _mapCircle.radius.rawValue = Math.abs(_missionItem.radius)
-            _mapCircle.clockwiseRotation = _missionItem.radius >= 0
+        onLoiterRadiusChanged: {
+            _loiterVisual.blockSignals = true
+            _loiterVisual.clockwiseRotation = _missionItem.loiterRadius>= 0
+            _loiterVisual.blockSignals = false
+            _loiterVisual.radius.rawValue = Math.abs(_missionItem.loiterRadius)
+        }
+
+        onCoordinateChanged: {
+            _loiterVisual.coordinate = _missionItem.coordinate
         }
     }
 
@@ -104,15 +113,11 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
-            mapControl:     _root.map
-            itemIndicator:  _itemVisual
-            itemCoordinate: _missionItem.coordinate
-            visible:        _root.interactive
-
-            onItemCoordinateChanged: {
-                _missionItem.coordinate = itemCoordinate
-                loiterMapCircleVisuals.center = itemCoordinate
-            }
+            mapControl:              _root.map
+            itemIndicator:           _itemVisual
+            itemCoordinate:          _missionItem.coordinate
+            visible:                 _root.interactive
+            onItemCoordinateChanged: _missionItem.coordinate = itemCoordinate
         }
     }
 
@@ -130,31 +135,46 @@ Item {
         }
     }
 
-    QGCMapCircleVisuals {
-        id:                      loiterMapCircleVisuals
-        mapControl:              _root.map
-        mapCircle:               _mapCircle
-        visible:                 _root.interactive && _missionItem.isSimpleItem && _missionItem.isLoiterItem && (vehicle.fixedWing || vehicle.vtol)
-        center:                  _missionItem.coordinate
-        centerDragHandleVisible: false
-        borderColor:             _missionItem.terrainCollision ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
+    Component  {
+        id: loiterComponent
 
-        property alias center:   _mapCircle.center
+        MapQuickItem {
+            id:                               loiterMapQuickItem
+            coordinate:                       _root._missionItem.coordinate
+            visible:                          _root.interactive && _missionItem.isSimpleItem && _missionItem.showLoiterRadius
 
-        function updateMissionItem() {
-            _missionItem.radius = _mapCircle.clockwiseRotation ? _mapCircle.radius.rawValue : -_mapCircle.radius.rawValue
-        }
+            property alias blockSignals:      loiterMapCircleVisuals.blockSignals
+            property alias radius:            _mapCircle.radius
+            property alias clockwiseRotation: _mapCircle.clockwiseRotation
 
-        QGCMapCircle {
-            id:                 _mapCircle
-            interactive:        _root.interactive && _missionItem.isCurrentItem && map.planView
-            showRotation:       true
-            onClockwiseRotationChanged: loiterMapCircleVisuals.updateMissionItem()
-        }
+            onCoordinateChanged:              _mapCircle.center = coordinate
 
-        Connections {
-            target:            _mapCircle.radius
-            onRawValueChanged: loiterMapCircleVisuals.updateMissionItem()
+            sourceItem: QGCMapCircleVisuals {
+                id:                      loiterMapCircleVisuals
+                mapControl:              _root.map
+                mapCircle:               _mapCircle
+                centerDragHandleVisible: false
+                borderColor:             _missionItem.terrainCollision ? "red" : QGroundControl.globalPalette.mapMissionTrajectory
+
+                property bool blockSignals: false
+
+                function updateMissionItem() {
+                    _missionItem.loiterRadius = _mapCircle.clockwiseRotation ? _mapCircle.radius.rawValue : -_mapCircle.radius.rawValue
+                }
+
+                QGCMapCircle {
+                    id:                         _mapCircle
+                    center:                     loiterMapQuickItem.coordinate
+                    interactive:                _root.interactive && _missionItem.isCurrentItem && map.planView
+                    showRotation:               true
+                    onClockwiseRotationChanged: if(!blockSignals) loiterMapCircleVisuals.updateMissionItem()
+                }
+
+                Connections {
+                    target:            _mapCircle.radius
+                    onRawValueChanged: if(!blockSignals) loiterMapCircleVisuals.updateMissionItem()
+                }
+            }
         }
     }
 }

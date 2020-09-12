@@ -34,7 +34,6 @@ Rectangle {
     property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
     property var  _unitsConversion:     QGroundControl.unitsConversion
-    property var  _vehicle:             QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
 
     QGCPalette { id: qgcPal }
 
@@ -141,30 +140,6 @@ Rectangle {
                                 label:                      object.abbreviation.charAt(0)
                                 index:                      object.abbreviation.charAt(0) > 'A' && object.abbreviation.charAt(0) < 'z' ? -1 : object.sequenceNumber
                                 onClicked:                  root.setCurrentSeqNum(object.sequenceNumber)
-                            }
-                        }
-
-                        Rectangle {
-                            id:             loiterItem
-                            width:          (Math.abs(object.radius)*2 * terrainProfile.pixelsPerMeter)
-                            height:         patternNameLabel.height
-                            x:              (object.distanceFromStart * terrainProfile.pixelsPerMeter) - (width/2)
-                            y:              chart.plotArea.height - (_altitude * (chart.plotArea.height / (terrainProfile.maxAMSAlt - terrainProfile.minAMSAlt))) - height / 2
-                            color:          qgcPal.mapMissionTrajectory
-                            opacity:        0.5
-                            visible:        object.isSimpleItem && object.isLoiterItem && (_vehicle.fixedWing || _vehicle.vtol)
-
-                            property real _altitude: object.altitude ? object.altitude.rawValue : 0
-
-                            QGCMouseArea {
-                                anchors.fill:   parent
-                                onClicked:      root.setCurrentSeqNum(object.sequenceNumber)
-                            }
-
-                            QGCLabel {
-                                id:                         loiterPatternNameLabel
-                                anchors.horizontalCenter:   parent.horizontalCenter
-                                text:                       "Loiter"
                             }
                         }
 

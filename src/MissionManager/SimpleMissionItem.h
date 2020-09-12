@@ -38,7 +38,8 @@ public:
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(bool             isLoiterItem            READ isLoiterItem                                       NOTIFY isLoiterItemChanged)
-    Q_PROPERTY(double           radius                  READ radius                 WRITE setRadius             NOTIFY radiusChanged)
+    Q_PROPERTY(bool             showLoiterRadius        READ showLoiterRadius                                   NOTIFY showLoiterRadiusChanged)
+    Q_PROPERTY(double           loiterRadius            READ loiterRadius           WRITE setRadius             NOTIFY loiterRadiusChanged)
 
     /// Optional sections
     Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
@@ -73,7 +74,8 @@ public:
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
     bool            isLoiterItem        (void) const;
-    double          radius              (void) const;
+    bool            showLoiterRadius    (void) const;
+    double          loiterRadius        (void) const;
 
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }
@@ -93,7 +95,7 @@ public:
     void setAltPercent      (double altPercent);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
-    void setRadius          (double radius);
+    void setRadius          (double loiterRadius);
 
     virtual bool load(QTextStream &loadStream);
     virtual bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
@@ -143,7 +145,8 @@ signals:
     void speedSectionChanged        (QObject* cameraSection);
     void altitudeModeChanged        (void);
     void isLoiterItemChanged        (void);
-    void radiusChanged              (double radius);
+    void showLoiterRadiusChanged    (void);
+    void loiterRadiusChanged        (double loiterRadius);
 
 private slots:
     void _setDirty                              (void);
