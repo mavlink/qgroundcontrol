@@ -8145,9 +8145,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_ACC0_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_ACC0_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_ACC0_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Accelerometer 0 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8177,9 +8178,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_ACC1_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_ACC1_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_ACC1_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Accelerometer 1 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8209,9 +8211,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_ACC2_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Accelerometer that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_ACC2_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_ACC2_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Accelerometer 2 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8241,9 +8244,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_GYRO0_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_GYRO0_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_GYRO0_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Gyro 0 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8264,9 +8268,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_GYRO1_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_GYRO1_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_GYRO1_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Gyro 1 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8287,9 +8292,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_GYRO2_ID" default="0" type="INT32" category="System">
       <short_desc>ID of the Gyro that the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_GYRO2_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_GYRO2_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Gyro 2 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8310,9 +8316,10 @@ Particularly useful for testing different low-battery behaviour</short_desc>
     <parameter name="CAL_MAG0_ID" default="0" type="INT32" category="System">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_MAG0_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_MAG0_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Mag 0 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8428,9 +8435,10 @@ for current-based compensation [G/kA]</short_desc>
     <parameter name="CAL_MAG1_ID" default="0" type="INT32" category="System">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_MAG1_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_MAG1_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Mag 1 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8546,9 +8554,10 @@ for current-based compensation [G/kA]</short_desc>
     <parameter name="CAL_MAG2_ID" default="0" type="INT32" category="System">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_MAG2_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_MAG2_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Mag 2 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
@@ -8664,9 +8673,10 @@ for current-based compensation [G/kA]</short_desc>
     <parameter name="CAL_MAG3_ID" default="0" type="INT32" category="System">
       <short_desc>ID of Magnetometer the calibration is for</short_desc>
     </parameter>
-    <parameter name="CAL_MAG3_PRIO" default="50" type="INT32" category="System">
+    <parameter name="CAL_MAG3_PRIO" default="-1" type="INT32" category="System">
       <short_desc>Mag 3 priority</short_desc>
       <values>
+        <value code="-1"> Uninitialized</value>
         <value code="0">  Disabled</value>
         <value code="1">  Min</value>
         <value code="25"> Low</value>
