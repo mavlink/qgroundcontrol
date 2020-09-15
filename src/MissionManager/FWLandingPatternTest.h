@@ -25,30 +25,16 @@ public:
     void cleanup(void) override;
 
 private slots:
-    void _testDirty                 (void);
-    void _testItemCount             (void);
-    void _testDefaults              (void);
-    void _testAppendSectionItems    (void);
-    void _testSaveLoad              (void);
+    void _testDirty     (void);
+    void _testDefaults  (void);
+    void _testSaveLoad  (void);
 
 private:
     void _validateItem(FixedWingLandingComplexItem* newItem);
 
-    enum {
-        dirtyChangedIndex = 0,
-        maxSignalIndex,
-    };
-
-    enum {
-        dirtyChangedMask = 1 << dirtyChangedIndex,
-    };
-
-    static const size_t cSignals = maxSignalIndex;
-    const char*         rgSignals[cSignals];
-
-    FixedWingLandingComplexItem*    _fwItem =                   nullptr;
-    MultiSignalSpy*                 _multiSpy =                 nullptr;
-    SimpleMissionItem*              _validStopVideoItem =       nullptr;
-    SimpleMissionItem*              _validStopDistanceItem =    nullptr;
-    SimpleMissionItem*              _validStopTimeItem =        nullptr;
+    FixedWingLandingComplexItem*    _fwItem                 = nullptr;
+    MultiSignalSpy*                 _viSpy                  = nullptr;
+    SimpleMissionItem*              _validStopVideoItem     = nullptr;
+    SimpleMissionItem*              _validStopDistanceItem  = nullptr;
+    SimpleMissionItem*              _validStopTimeItem      = nullptr;
 };

@@ -30,7 +30,7 @@ public:
     void cleanup(void) override;
 
 protected:
-    void _createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy);
+    void _createSpy(VisualMissionItem* visualItem, MultiSignalSpy** visualSpy);
 
     enum {
         altDifferenceChangedIndex = 0,
