@@ -662,12 +662,12 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
         _amslEntryAltChanged();
         _amslExitAltChanged();
 
-        _minAMSLAltitude = 0;
-        _maxAMSLAltitude = 0;
+        _minAMSLAltitude = qQNaN();
+        _maxAMSLAltitude = qQNaN();
         for (const QList<CoordInfo_t>& transect: _transects) {
             for (const CoordInfo_t& coordInfo: transect) {
-                _minAMSLAltitude = qMin(_minAMSLAltitude, coordInfo.coord.altitude());
-                _maxAMSLAltitude = qMax(_maxAMSLAltitude, coordInfo.coord.altitude());
+                _minAMSLAltitude = std::fmin(_minAMSLAltitude, coordInfo.coord.altitude());
+                _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, coordInfo.coord.altitude());
             }
         }
         emit minAMSLAltitudeChanged(_minAMSLAltitude);
