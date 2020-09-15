@@ -51,28 +51,26 @@ Rectangle {
         spacing:            _margin
         visible:            !editorColumnNeedLandingPoint.visible
 
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            wrapMode:       Text.WordWrap
-            font.pointSize: ScreenTools.smallFontPointSize
-            text:           qsTr("Loiter down to specified altitude. Fly to land point while transitioning. Hover straight down to land.")
-        }
-
         SectionHeader {
-            id:             loiterPointSection
+            id:             finalApproachSection
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("Loiter point")
+            text:           qsTr("Final approach")
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            loiterPointSection.checked
+            visible:            finalApproachSection.checked
 
             Item { width: 1; height: _spacer }
+
+            FactCheckBox {
+                text:       qsTr("Use loiter to altitude")
+                fact:       missionItem.useLoiterToAlt
+                visible:    missionItem.useLoiterToAlt.visible
+            }
 
             GridLayout {
                 anchors.left:    parent.left
@@ -83,24 +81,28 @@ Rectangle {
 
                 AltitudeFactTextField {
                     Layout.fillWidth:   true
-                    fact:               missionItem.loiterAltitude
+                    fact:               missionItem.finalApproachAltitude
                     altitudeMode:       _altitudeMode
                 }
 
-                QGCLabel { text: qsTr("Radius") }
+                QGCLabel {
+                    text:       qsTr("Radius")
+                    visible:    missionItem.useLoiterToAlt.rawValue
+                }
 
                 FactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.loiterRadius
+                    visible:            missionItem.useLoiterToAlt.rawValue
                 }
             }
 
             Item { width: 1; height: _spacer }
 
-            QGCCheckBox {
-                text:           qsTr("Loiter clockwise")
-                checked:        missionItem.loiterClockwise
-                onClicked:      missionItem.loiterClockwise = checked
+            FactCheckBox {
+                text:       qsTr("Loiter clockwise")
+                fact:       missionItem.loiterClockwise
+                visible:    missionItem.useLoiterToAlt.rawValue
             }
 
             QGCButton {
@@ -222,7 +224,7 @@ Rectangle {
                 wrapMode:               Text.WordWrap
                 color:                  qgcPal.warningText
                 font.pointSize:         ScreenTools.smallFontPointSize
-                text:                   qsTr("* Avoid tailwind from loiter to land.")
+                text:                   qsTr("* Avoid tailwind on approach to land.")
             }
 
             QGCLabel {

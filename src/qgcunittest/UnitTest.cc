@@ -525,3 +525,8 @@ bool UnitTest::fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordi
 {
     return coord1.distanceTo(coord2) < 1.0;
 }
+
+QGeoCoordinate UnitTest::changeCoordinateValue(const QGeoCoordinate& coordinate)
+{
+    return coordinate.atDistanceAndAzimuth(1, 0);
+}

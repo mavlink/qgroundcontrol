@@ -33,9 +33,10 @@ Item {
     property var    _mouseArea
     property var    _dragAreas:                 [ ]
     property var    _flightPath
-    property real   _landingAreaBearing:        _missionItem.landingCoordinate.azimuthTo(_missionItem.loiterTangentCoordinate)
     property var    _loiterPointObject
     property var    _landingPointObject
+    property bool   _useLoiterToAlt:            _missionItem.useLoiterToAlt.rawValue
+    property real   _landingAreaBearing:            _missionItem.landingCoordinate.azimuthTo(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate)
 
     function hideItemVisuals() {
         objMgr.destroyObjects()
@@ -43,7 +44,7 @@ Item {
 
     function showItemVisuals() {
         if (objMgr.rgDynamicObjects.length === 0) {
-            _loiterPointObject = objMgr.createObject(loiterPointComponent, map, true /* parentObjectIsMap */)
+            _loiterPointObject = objMgr.createObject(finalApproachPointComponent, map, true /* parentObjectIsMap */)
             _landingPointObject = objMgr.createObject(landingPointComponent, map, true /* parentObjectIsMap */)
 
             var rgComponents = [ flightPathComponent, loiterRadiusComponent ]
@@ -80,7 +81,11 @@ Item {
     }
 
     function _setFlightPath() {
-        _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        if (_useLoiterToAlt) {
+            _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        } else {
+            _flightPath = [ _missionItem.finalApproachCoordinate, _missionItem.landingCoordinate ]
+        }
     }
 
     QGCDynamicObjectManager {
@@ -104,6 +109,8 @@ Item {
         hideMouseArea()
         hideItemVisuals()
     }
+
+    on_UseLoiterToAltChanged: _setFlightPath()
 
     Connections {
         target: _missionItem
@@ -141,6 +148,7 @@ Item {
 
         onLandingCoordinateChanged:         _setFlightPath()
         onLoiterTangentCoordinateChanged:   _setFlightPath()
+        onFinalApproachCoordinateChanged:   _setFlightPath()
     }
 
     // Mouse area to capture landing point coordindate
@@ -164,16 +172,28 @@ Item {
         }
     }
 
-    // Control which is used to drag the loiter point
+    // Control which is used to drag the final approach point
     Component {
         id: loiterDragAreaComponent
 
         MissionItemIndicatorDrag {
             mapControl:     _root.map
             itemIndicator:  _loiterPointObject
-            itemCoordinate: _missionItem.loiterCoordinate
+            itemCoordinate: _missionItem.finalApproachCoordinate
 
-            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+            property bool _preventReentrancy: false
+
+            onItemCoordinateChanged: {
+                if (!_preventReentrancy) {
+                    if (Drag.active) {
+                        _preventReentrancy = true
+                        var angle = _missionItem.landingCoordinate.azimuthTo(itemCoordinate)
+                        var distance = _missionItem.landingCoordinate.distanceTo(_missionItem.finalApproachCoordinate)
+                        _missionItem.finalApproachCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(distance, angle)
+                        _preventReentrancy = false
+                    }
+                }
+            }
         }
     }
 
@@ -202,20 +222,20 @@ Item {
         }
     }
 
-    // Loiter point
+    // Final approach point
     Component {
-        id: loiterPointComponent
+        id: finalApproachPointComponent
 
         MapQuickItem {
             anchorPoint.x:  sourceItem.anchorPointX
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
-            coordinate:     _missionItem.loiterCoordinate
+            coordinate:     _missionItem.finalApproachCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      qsTr("Loiter")
+                label:      _useLoiterToAlt ? qsTr("Loiter") : qsTr("Approach")
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
@@ -249,11 +269,12 @@ Item {
 
         MapCircle {
             z:              QGroundControl.zOrderMapItems
-            center:         _missionItem.loiterCoordinate
+            center:         _missionItem.finalApproachCoordinate
             radius:         _missionItem.loiterRadius.rawValue
             border.width:   2
             border.color:   "green"
             color:          "transparent"
+            visible:        _useLoiterToAlt
         }
     }
 }

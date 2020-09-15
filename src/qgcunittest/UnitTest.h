@@ -100,6 +100,8 @@ public:
     ///     @param increment 0 use standard increment, other increment by specified amount if double value
     void changeFactValue(Fact* fact, double increment = 0);
 
+    QGeoCoordinate changeCoordinateValue(const QGeoCoordinate& coordinate);
+
     /// Returns true is the position of the two coordinates is less then a meter from each other.
     /// Does not check altitude.
     static bool fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordinate& coord2);
