@@ -2153,8 +2153,10 @@ void MissionController::setDirty(bool dirty)
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, PlanMasterController* masterController)
 {
-    // First we look for a Fixed Wing Landing Pattern which is at the end
-    FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, masterController);
+    // First we look for a Landing Patterns which are at the end
+    if (!FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, masterController)) {
+        VTOLLandingComplexItem::scanForItem(visualItems, _flyView, masterController);
+    }
 
     int scanIndex = 0;
     while (scanIndex < visualItems->count()) {

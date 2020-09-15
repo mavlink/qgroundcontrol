@@ -55,10 +55,10 @@ void VisualMissionItemTest::cleanup(void)
     _masterController->deleteLater();
 }
 
-void VisualMissionItemTest::_createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy)
+void VisualMissionItemTest::_createSpy(VisualMissionItem* visualItem, MultiSignalSpy** visualSpy)
 {
     *visualSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(simpleItem, rgVisualItemSignals, cVisualItemSignals), true);
+    QCOMPARE(spy->init(visualItem, rgVisualItemSignals, cVisualItemSignals), true);
     *visualSpy = spy;
 }

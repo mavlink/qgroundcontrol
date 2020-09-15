@@ -52,19 +52,25 @@ Rectangle {
         visible:            !editorColumnNeedLandingPoint.visible
 
         SectionHeader {
-            id:             loiterPointSection
+            id:             finalApproachSection
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("Loiter point")
+            text:           qsTr("Final approach")
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            loiterPointSection.checked
+            visible:            finalApproachSection.checked
 
             Item { width: 1; height: _spacer }
+
+            FactCheckBox {
+                text:       qsTr("Use loiter to altitude")
+                fact:       missionItem.useLoiterToAlt
+                visible:    missionItem.useLoiterToAlt.visible
+            }
 
             GridLayout {
                 anchors.left:    parent.left
@@ -75,24 +81,28 @@ Rectangle {
 
                 AltitudeFactTextField {
                     Layout.fillWidth:   true
-                    fact:               missionItem.loiterAltitude
+                    fact:               missionItem.finalApproachAltitude
                     altitudeMode:       _altitudeMode
                 }
 
-                QGCLabel { text: qsTr("Radius") }
+                QGCLabel {
+                    text:       qsTr("Radius")
+                    visible:    missionItem.useLoiterToAlt.rawValue
+                }
 
                 FactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.loiterRadius
+                    visible:            missionItem.useLoiterToAlt.rawValue
                 }
             }
 
             Item { width: 1; height: _spacer }
 
-            QGCCheckBox {
-                text:           qsTr("Loiter clockwise")
-                checked:        missionItem.loiterClockwise
-                onClicked:      missionItem.loiterClockwise = checked
+            FactCheckBox {
+                text:       qsTr("Loiter clockwise")
+                fact:       missionItem.loiterClockwise
+                visible:    missionItem.useLoiterToAlt.rawValue
             }
 
             QGCButton {
@@ -139,7 +149,7 @@ Rectangle {
 
                 QGCRadioButton {
                     id:                 specifyLandingDistance
-                    text:               qsTr("Landing Dist")
+                    text:               qsTr("Distance")
                     checked:            missionItem.valueSetIsDistance.rawValue
                     onClicked:          missionItem.valueSetIsDistance.rawValue = checked
                     Layout.fillWidth:   true

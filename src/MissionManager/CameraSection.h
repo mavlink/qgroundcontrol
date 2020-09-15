@@ -17,6 +17,8 @@
 #define VIDEO_CAPTURE_STATUS_INTERVAL 0.2   //-- Send capture status every 5 seconds
 
 class PlanMasterController;
+class CameraSectionTest;
+
 
 class CameraSection : public Section
 {
@@ -131,4 +133,6 @@ private:
     static const char* _cameraPhotoIntervalDistanceName;
     static const char* _cameraPhotoIntervalTimeName;
     static const char* _cameraModeName;
+
+    friend CameraSectionTest;
 };
