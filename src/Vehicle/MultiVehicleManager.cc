@@ -81,7 +81,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         // Special case for PX4 Flow
         if (vehicleId != 81 || componentId != 50) {
             // Don't create vehicles for components other than the autopilot
-            qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component "
+            qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
                                               << link->getName()
                                               << vehicleId
                                               << componentId
