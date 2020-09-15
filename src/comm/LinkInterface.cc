@@ -34,6 +34,7 @@ bool LinkInterface::link_active(int vehicle_id) const
 
 /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
 /// set into the link when it is added to LinkManager
+[[gnu::noinline]]
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
     if (!_mavlinkChannelSet) {
@@ -210,6 +211,7 @@ void LinkInterface::stopMavlinkMessagesTimer() {
     _mavlinkMessagesTimers.clear();
 }
 
+[[gnu::noinline]]
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
 {
     QByteArray byteArray(bytes, length);

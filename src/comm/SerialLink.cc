@@ -296,6 +296,7 @@ void SerialLink::linkError(QSerialPort::SerialPortError error)
  *
  * @return True if link is connected, false otherwise.
  **/
+[[gnu::noinline]]
 bool SerialLink::isConnected() const
 {
     bool isConnected = false;

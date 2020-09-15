@@ -213,6 +213,7 @@ void BluetoothLink::deviceError(QBluetoothSocket::SocketError error)
     emit communicationError(tr("Bluetooth Link Error"), _targetSocket->errorString());
 }
 
+[[gnu::noinline]]
 bool BluetoothLink::isConnected() const
 {
     return _connectState;
