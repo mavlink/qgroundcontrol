@@ -126,7 +126,6 @@ public:
     /// Returns whether this link is high latency or not. High latency links should only perform
     /// minimal communication with vehicle.
     ///     signals: highLatencyChanged
-    [[gnu::noinline]]
     bool highLatency(void) const { return _highLatency; }
 
     bool decodedFirstMavlinkPacket(void) const { return _decodedFirstMavlinkPacket; }

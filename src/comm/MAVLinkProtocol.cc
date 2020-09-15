@@ -408,7 +408,6 @@ QString MAVLinkProtocol::getName()
 }
 
 /** @return System id of this application */
-[[gnu::noinline]]
 int MAVLinkProtocol::getSystemId()
 {
     return systemId;
@@ -420,7 +419,6 @@ void MAVLinkProtocol::setSystemId(int id)
 }
 
 /** @return Component id of this application */
-[[gnu::noinline]]
 int MAVLinkProtocol::getComponentId()
 {
     return MAV_COMP_ID_MISSIONPLANNER;

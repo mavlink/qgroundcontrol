@@ -307,7 +307,6 @@ bool UDPLink::_hardwareConnect()
  *
  * @return True if link is connected, false otherwise.
  **/
-[[gnu::noinline]]
 bool UDPLink::isConnected() const
 {
     return _connectState;

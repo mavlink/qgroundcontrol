@@ -194,7 +194,6 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
  *
  * @return True if link is connected, false otherwise.
  **/
-[[gnu::noinline]]
 bool TCPLink::isConnected() const
 {
     return _socketIsConnected;
