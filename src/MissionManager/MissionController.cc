@@ -319,8 +319,7 @@ VisualMissionItem* MissionController::_insertSimpleMissionItemWorker(QGeoCoordin
     _initVisualItem(newItem);
 
     if (newItem->specifiesAltitude()) {
-        const MissionCommandUIInfo* uiInfo = qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, command);
-        if (!uiInfo->isLandCommand()) {
+        if (!qgcApp()->toolbox()->missionCommandTree()->isLandCommand(command)) {
             double  prevAltitude;
             int     prevAltitudeMode;
 
