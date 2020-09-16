@@ -161,6 +161,22 @@ QString MissionCommandTree::rawName(MAV_CMD command)
     }
 }
 
+bool MissionCommandTree::isLandCommand(MAV_CMD command)
+{
+    MissionCommandList *    commandList =   _staticCommandTree[QGCMAVLink::FirmwareClassGeneric][QGCMAVLink::VehicleClassGeneric];
+    MissionCommandUIInfo*   uiInfo =        commandList->getUIInfo(command);
+
+    return uiInfo ? uiInfo->isLandCommand() : false;
+}
+
+bool MissionCommandTree::isTakeoffCommand(MAV_CMD command)
+{
+    MissionCommandList *    commandList =   _staticCommandTree[QGCMAVLink::FirmwareClassGeneric][QGCMAVLink::VehicleClassGeneric];
+    MissionCommandUIInfo*   uiInfo =        commandList->getUIInfo(command);
+
+    return uiInfo ? uiInfo->isTakeoffCommand() : false;
+}
+
 const QList<MAV_CMD>& MissionCommandTree::allCommandIds(void) const
 {
     return _staticCommandTree[QGCMAVLink::FirmwareClassGeneric][QGCMAVLink::VehicleClassGeneric]->commandIds();
