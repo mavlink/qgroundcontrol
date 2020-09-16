@@ -451,19 +451,21 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
 
         const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
-        for (int i=1; i<=7; i++) {
-            bool showUI;
-            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
+        if (uiInfo) {
+            for (int i=1; i<=7; i++) {
+                bool showUI;
+                const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
 
-            if (showUI && paramInfo && paramInfo->enumStrings().count() == 0 && !paramInfo->nanUnchanged()) {
-                Fact*               paramFact =     rgParamFacts[i-1];
-                FactMetaData*       paramMetaData = rgParamMetaData[i-1];
+                if (showUI && paramInfo && paramInfo->enumStrings().count() == 0 && !paramInfo->nanUnchanged()) {
+                    Fact*               paramFact =     rgParamFacts[i-1];
+                    FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
-                paramFact->_setName(paramInfo->label());
-                paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
-                paramMetaData->setRawUnits(paramInfo->units());
-                paramFact->setMetaData(paramMetaData);
-                _textFieldFacts.append(paramFact);
+                    paramFact->_setName(paramInfo->label());
+                    paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
+                    paramMetaData->setRawUnits(paramInfo->units());
+                    paramFact->setMetaData(paramMetaData);
+                    _textFieldFacts.append(paramFact);
+                }
             }
         }
 
@@ -490,26 +492,28 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
 
         const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
-        for (int i=1; i<=7; i++) {
-            bool showUI;
-            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
+        if (uiInfo) {
+            for (int i=1; i<=7; i++) {
+                bool showUI;
+                const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
 
-            if (showUI && paramInfo && paramInfo->nanUnchanged()) {
-                // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
-                // and not _controllerVehicle which is always offline.
-                Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-                if (!firmwareVehicle) {
-                    firmwareVehicle = _controllerVehicle;
+                if (showUI && paramInfo && paramInfo->nanUnchanged()) {
+                    // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
+                    // and not _controllerVehicle which is always offline.
+                    Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
+                    if (!firmwareVehicle) {
+                        firmwareVehicle = _controllerVehicle;
+                    }
+
+                    Fact*               paramFact =     rgParamFacts[i-1];
+                    FactMetaData*       paramMetaData = rgParamMetaData[i-1];
+
+                    paramFact->_setName(paramInfo->label());
+                    paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
+                    paramMetaData->setRawUnits(paramInfo->units());
+                    paramFact->setMetaData(paramMetaData);
+                    _nanFacts.append(paramFact);
                 }
-
-                Fact*               paramFact =     rgParamFacts[i-1];
-                FactMetaData*       paramMetaData = rgParamMetaData[i-1];
-
-                paramFact->_setName(paramInfo->label());
-                paramMetaData->setDecimalPlaces(paramInfo->decimalPlaces());
-                paramMetaData->setRawUnits(paramInfo->units());
-                paramFact->setMetaData(paramMetaData);
-                _nanFacts.append(paramFact);
             }
         }
 
@@ -778,7 +782,8 @@ void SimpleMissionItem::_sendFriendlyEditAllowedChanged(void)
 
 QString SimpleMissionItem::category(void) const
 {
-    return _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()))->category();
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, static_cast<MAV_CMD>(command()));
+    return uiInfo ? uiInfo->category() : QString();
 }
 
 void SimpleMissionItem::setCommand(int command)
@@ -923,7 +928,7 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
     MAV_CMD command = static_cast<MAV_CMD>(this->command());
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
 
-    if (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly()) {
+    if (uiInfo && (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly())) {
         switch (static_cast<MAV_CMD>(this->command())) {
         case MAV_CMD_NAV_LAND:
         case MAV_CMD_NAV_VTOL_LAND:
@@ -989,9 +994,7 @@ void SimpleMissionItem::_possibleAdditionalTimeDelayChanged(void)
 
 bool SimpleMissionItem::isLandCommand(void) const
 {
-    MAV_CMD command = static_cast<MAV_CMD>(this->command());
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_controllerVehicle, _previousVTOLMode, command);
-    return uiInfo->isLandCommand();
+    return _commandTree->isLandCommand(static_cast<MAV_CMD>(this->command()));
 }
 
 QGeoCoordinate SimpleMissionItem::coordinate(void) const

@@ -55,6 +55,9 @@ public:
     /// Returns the raw name for the specified command
     QString rawName(MAV_CMD command);
 
+    bool isLandCommand(MAV_CMD command);
+    bool isTakeoffCommand(MAV_CMD command);
+
     const QList<MAV_CMD>& allCommandIds(void) const;
 
     Q_INVOKABLE QStringList categoriesForVehicle(Vehicle* vehicle) { return _availableCategoriesForVehicle(vehicle); }
