@@ -340,6 +340,7 @@ bool QGCSerialPortInfo::isSystemPort(QSerialPortInfo* port)
     // MAC OS
     if (port->systemLocation().contains("tty.MALS")
         || port->systemLocation().contains("tty.SOC")
+        || port->systemLocation().contains("cu.Bluetooth-Incoming-Port")
         || port->systemLocation().contains("tty.Bluetooth-Incoming-Port")
         // We open these by their cu.usbserial and cu.usbmodem handles
         // already. We don't want to open them twice and conflict
