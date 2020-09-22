@@ -901,7 +901,7 @@ Set to 2 to use heading from motion capture</short_desc>
 - one arm = 0
 - two step arm = 1
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
-      <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
+      <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 1000 msec of timeout - authentication method = during arm</long_desc>
     </parameter>
     <parameter name="COM_ARM_AUTH_REQ" default="0" type="INT32">
       <short_desc>Require arm authorization to arm</short_desc>
@@ -8100,14 +8100,6 @@ to takeoff is reached</short_desc>
     </parameter>
   </group>
   <group name="SITL">
-    <parameter name="SIM_ACCEL_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block accelerometer data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation accelerometer data.</long_desc>
-    </parameter>
-    <parameter name="SIM_BARO_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block barometer data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation barometer data.</long_desc>
-    </parameter>
     <parameter name="SIM_BAT_DRAIN" default="60" type="FLOAT">
       <short_desc>Simulator Battery drain interval</short_desc>
       <min>1</min>
@@ -8123,22 +8115,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <max>100</max>
       <unit>%</unit>
       <increment>0.1</increment>
-    </parameter>
-    <parameter name="SIM_DPRES_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block differential pressure data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation differential pressure data.</long_desc>
-    </parameter>
-    <parameter name="SIM_GPS_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block GPS data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation GPS data.</long_desc>
-    </parameter>
-    <parameter name="SIM_GYRO_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block gyroscope data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation gyroscope data.</long_desc>
-    </parameter>
-    <parameter name="SIM_MAG_BLOCK" default="0" type="INT32">
-      <short_desc>Simulator block magnetometer data</short_desc>
-      <long_desc>Enable to block the publication of any incoming simulation magnetometer data.</long_desc>
     </parameter>
   </group>
   <group name="Sensor Calibration">
@@ -9218,6 +9194,14 @@ How often the sensor is readout</short_desc>
         <value code="7">Yaw 315°</value>
       </values>
     </parameter>
+    <parameter name="SENS_IMU_MODE" default="1" type="INT32" category="System">
+      <short_desc>Sensors hub IMU mode</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Publish primary IMU selection</value>
+      </values>
+    </parameter>
     <parameter name="SENS_IMU_TEMP" default="55.0" type="FLOAT" category="System">
       <short_desc>Target IMU temperature</short_desc>
       <min>0</min>
@@ -9254,6 +9238,14 @@ How often the sensor is readout</short_desc>
         <value code="202">GPS 2</value>
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
+    <parameter name="SENS_MAG_MODE" default="1" type="INT32" category="System">
+      <short_desc>Sensors hub mag mode</short_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Publish all magnetometers</value>
+        <value code="1">Publish primary magnetometer</value>
       </values>
     </parameter>
     <parameter name="SENS_MAG_RATE" default="50.0" type="FLOAT">
@@ -10296,6 +10288,10 @@ How often the sensor is readout</short_desc>
       <short_desc>Minimum starting temperature for thermal calibration</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
+    </parameter>
+    <parameter name="SYS_FAILURE_EN" default="0" type="INT32">
+      <short_desc>Enable failure injection</short_desc>
+      <long_desc>If enabled allows MAVLink INJECT_FAILURE commands. WARNING: the failures can easily cause crashes and are to be used with caution!</long_desc>
     </parameter>
     <parameter name="SYS_HAS_BARO" default="1" type="INT32">
       <short_desc>Control if the vehicle has a barometer</short_desc>
