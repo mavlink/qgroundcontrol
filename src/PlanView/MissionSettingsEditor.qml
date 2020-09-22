@@ -37,6 +37,7 @@ Rectangle {
     property bool   _showCameraSection:             (_waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI) && !_controllerVehicle.apmFirmware
     property bool   _simpleMissionStart:            QGroundControl.corePlugin.options.showSimpleMissionStart
     property bool   _showFlightSpeed:               !_controllerVehicle.vtol && !_simpleMissionStart && !_controllerVehicle.apmFirmware
+    property bool   _allowFWVehicleTypeSelection:   _noMissionItemsAdded && !globals.activeVehicle
 
     readonly property string _firmwareLabel:    qsTr("Firmware")
     readonly property string _vehicleLabel:     qsTr("Vehicle")
@@ -197,11 +198,11 @@ Rectangle {
                     fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareClass
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
-                    visible:                _multipleFirmware && _noMissionItemsAdded
+                    visible:                _multipleFirmware && _allowFWVehicleTypeSelection
                 }
                 QGCLabel {
                     text:       _controllerVehicle.firmwareTypeString
-                    visible:    _multipleFirmware && !_noMissionItemsAdded
+                    visible:    _multipleFirmware && !_allowFWVehicleTypeSelection
                 }
 
                 QGCLabel {
@@ -213,11 +214,11 @@ Rectangle {
                     fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
-                    visible:                _multipleVehicleTypes && _noMissionItemsAdded
+                    visible:                _multipleVehicleTypes && _allowFWVehicleTypeSelection
                 }
                 QGCLabel {
                     text:       _controllerVehicle.vehicleTypeString
-                    visible:    _multipleVehicleTypes && !_noMissionItemsAdded
+                    visible:    _multipleVehicleTypes && !_allowFWVehicleTypeSelection
                 }
 
                 QGCLabel {

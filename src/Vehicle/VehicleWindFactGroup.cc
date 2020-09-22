@@ -59,6 +59,7 @@ void VehicleWindFactGroup::_handleHighLatency(mavlink_message_t& message)
     mavlink_high_latency_t highLatency;
     mavlink_msg_high_latency_decode(&message, &highLatency);
     speed()->setRawValue((double)highLatency.airspeed / 5.0);
+    _setTelemetryAvailable(true);
 }
 
 void VehicleWindFactGroup::_handleHighLatency2(mavlink_message_t& message)
@@ -67,6 +68,7 @@ void VehicleWindFactGroup::_handleHighLatency2(mavlink_message_t& message)
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
     direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     speed()->setRawValue((double)highLatency2.windspeed / 5.0);
+    _setTelemetryAvailable(true);
 }
 
 void VehicleWindFactGroup::_handleWindCov(mavlink_message_t& message)
@@ -84,6 +86,7 @@ void VehicleWindFactGroup::_handleWindCov(mavlink_message_t& message)
     this->direction()->setRawValue(direction);
     this->speed()->setRawValue(speed);
     verticalSpeed()->setRawValue(0);
+    _setTelemetryAvailable(true);
 }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -100,5 +103,6 @@ void VehicleWindFactGroup::_handleWind(mavlink_message_t& message)
     this->direction()->setRawValue(direction);
     speed()->setRawValue(wind.speed);
     verticalSpeed()->setRawValue(wind.speed_z);
+    _setTelemetryAvailable(true);
 }
 #endif

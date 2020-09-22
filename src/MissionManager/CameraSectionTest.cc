@@ -12,6 +12,8 @@
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 
+#include <functional>
+
 CameraSectionTest::CameraSectionTest(void)
     : _spyCamera                        (nullptr)
     , _spySection                       (nullptr)
@@ -44,11 +46,24 @@ void CameraSectionTest::init(void)
 
     _validGimbalItem = new SimpleMissionItem(_masterController,
                                              false, // flyView
-                                             MissionItem(0, MAV_CMD_DO_MOUNT_CONTROL, MAV_FRAME_MISSION, 10.1234, 0, 20.1234, 0, 0, 0, MAV_MOUNT_MODE_MAVLINK_TARGETING, true, false),
+                                             MissionItem(0,
+                                                         MAV_CMD_DO_MOUNT_CONTROL,
+                                                         MAV_FRAME_MISSION,
+                                                         10.1234, 0, 20.1234,               // pitch, roll, yaw
+                                                         0, 0, 0,                           // alt, lat, lon (all 0 since unused)
+                                                         MAV_MOUNT_MODE_MAVLINK_TARGETING,  // control gimbal with pitch, roll, yaw settings
+                                                         true, false),
                                              this);
     _validTimeItem = new SimpleMissionItem(_masterController,
                                            false, // flyView
-                                           MissionItem(0, MAV_CMD_IMAGE_START_CAPTURE, MAV_FRAME_MISSION, 0, 48, 0, NAN, NAN, NAN, NAN, true, false),
+                                           MissionItem(0,
+                                                       MAV_CMD_IMAGE_START_CAPTURE,
+                                                       MAV_FRAME_MISSION,
+                                                       0,                           // Reserved, must be 0
+                                                       48,                          // time interval
+                                                       0,                           // 0 = capture forever
+                                                       NAN, NAN, NAN, NAN,          // Reserved
+                                                       true, false),
                                            this);
     _validDistanceItem = new SimpleMissionItem(_masterController,
                                                false, // flyView
@@ -615,12 +630,12 @@ void CameraSectionTest::_testScanForGimbalSection(void)
     Mission Param #5	WIP: latitude in degrees * 1E7, set if appropriate mount mode.
     Mission Param #6	WIP: longitude in degrees * 1E7, set if appropriate mount mode.
     Mission Param #7	MAV_MOUNT_MODE enum value
-*/
+    */
 
     // Gimbal command but incorrect settings
 
     SimpleMissionItem invalidSimpleItem(_masterController, false /* flyView */, _validGimbalItem->missionItem(), nullptr);
-    invalidSimpleItem.missionItem().setParam2(10);    // roll is not supported
+    invalidSimpleItem.missionItem().setParam2(10);    // roll is not supported, should be 0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -629,7 +644,7 @@ void CameraSectionTest::_testScanForGimbalSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validGimbalItem->missionItem();
-    invalidSimpleItem.missionItem().setParam4(10);    // alt is not supported
+    invalidSimpleItem.missionItem().setParam4(10);    // alt is not supported, should be 0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -638,7 +653,7 @@ void CameraSectionTest::_testScanForGimbalSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validGimbalItem->missionItem();
-    invalidSimpleItem.missionItem().setParam5(10);    // lat is not supported
+    invalidSimpleItem.missionItem().setParam5(10);    // lat is not supported, should be 0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -647,7 +662,7 @@ void CameraSectionTest::_testScanForGimbalSection(void)
     visualItems.clear();
 
     invalidSimpleItem.missionItem() = _validGimbalItem->missionItem();
-    invalidSimpleItem.missionItem().setParam6(10);    // lon is not supported
+    invalidSimpleItem.missionItem().setParam6(10);    // lon is not supported, should be 0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
@@ -709,14 +724,27 @@ void CameraSectionTest::_testScanForCameraModeSection(void)
     */
 
     // Mode command but incorrect settings
+
     SimpleMissionItem invalidSimpleItem(_masterController, false /* flyView */, _validCameraPhotoModeItem->missionItem(), nullptr);
-    invalidSimpleItem.missionItem().setParam3(1);   // Param3 should be NaN
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->specifyCameraMode(), false);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
+    std::function<void(MissionItem&, double)> rgSetParamFns[] = {
+            &MissionItem::setParam1,
+            &MissionItem::setParam2,
+            &MissionItem::setParam3,
+            &MissionItem::setParam4,
+            &MissionItem::setParam5,
+            &MissionItem::setParam6,
+            &MissionItem::setParam7
+    };
+
+    for (int fnIndex=2; fnIndex<7; fnIndex++) {
+        rgSetParamFns[fnIndex](invalidSimpleItem.missionItem(), 0); // should be NaN
+        visualItems.append(&invalidSimpleItem);
+        QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
+        QCOMPARE(visualItems.count(), 1);
+        QCOMPARE(_cameraSection->specifyCameraMode(), false);
+        QCOMPARE(_cameraSection->settingsSpecified(), false);
+        visualItems.clear();
+    }
 }
 
 void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
@@ -1134,4 +1162,26 @@ SimpleMissionItem* CameraSectionTest::createValidStopTimeItem(PlanMasterControll
                                  false, // flyView
                                  MissionItem(1, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_FRAME_MISSION, 0, qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), true, false),
                                  parent);
+}
+
+SimpleMissionItem* CameraSectionTest::createInvalidStopVideoItem(PlanMasterController* masterController, QObject* parent)
+{
+    SimpleMissionItem* invalidSimpleItem = createValidStopVideoItem(masterController, parent);
+    invalidSimpleItem->missionItem().setParam1(10);    // must be  0 to be valid for scan
+    return invalidSimpleItem;
+}
+
+
+SimpleMissionItem* CameraSectionTest::createInvalidStopDistanceItem(PlanMasterController* masterController, QObject* parent)
+{
+    SimpleMissionItem* invalidSimpleItem = createValidStopDistanceItem(masterController, parent);
+    invalidSimpleItem->missionItem().setParam2(-1);    // Should be 0
+    return invalidSimpleItem;
+}
+
+SimpleMissionItem* CameraSectionTest::createInvalidStopTimeItem(PlanMasterController* masterController, QObject* parent)
+{
+    SimpleMissionItem* invalidSimpleItem = createValidStopTimeItem(masterController, parent);
+    invalidSimpleItem->missionItem().setParam1(1);    // Should be 0
+    return invalidSimpleItem;
 }

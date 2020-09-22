@@ -14,7 +14,6 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "QGCLoggingCategory.h"
-#include "GstVideoReceiver.h"
 #include "SettingsManager.h"
 
 #include <QTranslator>

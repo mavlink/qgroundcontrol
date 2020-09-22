@@ -1174,12 +1174,13 @@ QGCCameraControl::_requestAllParameters()
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_list_pack_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        _vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        static_cast<uint8_t>(_vehicle->id()),
-        static_cast<uint8_t>(compID()));
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                _vehicle->priorityLink()->mavlinkChannel(),
+                &msg,
+                static_cast<uint8_t>(_vehicle->id()),
+                static_cast<uint8_t>(compID()),
+                0);                                                 // trimmed messages = false
     _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
     qCDebug(CameraControlVerboseLog) << "Request all parameters";
 }
