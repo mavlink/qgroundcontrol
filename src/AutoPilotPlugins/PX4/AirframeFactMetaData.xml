@@ -875,9 +875,8 @@
     </airframe>
   </airframe_group>
   <airframe_group name="VTOL Octoplane" image="VTOLPlaneOcto">
-    <airframe name="Generic Octoplane VTOL" id="13050" maintainer="">
+    <airframe name="Generic Octoplane VTOL" id="13050" maintainer="John Doe &lt;john@example.com&gt;">
       <class>VTOL</class>
-      <maintainer />
       <type>VTOL Octoplane</type>
       <output name="MAIN1">motor 1</output>
       <output name="MAIN2">motor 2</output>
