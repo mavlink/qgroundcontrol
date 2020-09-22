@@ -29,10 +29,16 @@ def process(src, exclusion, dst):
     file3.close()
 
 def main():
-    if(os.path.isfile(qgc_exc)):
-        process(os.path.join("../",qgc_rc), qgc_exc, qgc_rc)
-    if(os.path.isfile(res_exc)):
-        process(os.path.join("../",res_rc), res_exc, res_rc)
+    if (os.path.isfile(qgc_exc)):
+        qrc_path = os.path.join("../", qgc_rc)
+        if (!os.path.exists(qrc_path)):
+            qrc_path = os.path.join("./qgroundcontrol/", qgc_rc)
+        process(qrc_path, qgc_exc, qgc_rc)
+    if (os.path.isfile(res_exc)):
+        res_path = os.path.join("../", res_rc)
+        if (!os.path.exists(res_path)):
+            res_path = os.path.join("./qgroundcontrol/", res_rc)
+        process(res_path, res_exc, res_rc)
 
 if __name__ == '__main__':
     main()
