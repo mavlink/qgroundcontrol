@@ -4689,7 +4689,7 @@ Setting this parameter to 0 disables the filter</short_desc>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="MPC_LAND_ALT1" default="5.0" type="FLOAT">
+    <parameter name="MPC_LAND_ALT1" default="10.0" type="FLOAT">
       <short_desc>Altitude for 1. step of slow landing (descend)</short_desc>
       <long_desc>Below this altitude: - descending velocity gets limited to a value between "MPC_Z_VEL_MAX" and "MPC_LAND_SPEED" - horizontal velocity gets limited to a value between "MPC_VEL_MANUAL" and "MPC_LAND_VEL_XY" for a smooth descent and landing experience. Value needs to be higher than "MPC_LAND_ALT2"</long_desc>
       <min>0</min>
@@ -4697,7 +4697,7 @@ Setting this parameter to 0 disables the filter</short_desc>
       <unit>m</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter name="MPC_LAND_ALT2" default="2.0" type="FLOAT">
+    <parameter name="MPC_LAND_ALT2" default="5.0" type="FLOAT">
       <short_desc>Altitude for 2. step of slow landing (landing)</short_desc>
       <long_desc>Below this altitude descending and horizontal velocities get limited to "MPC_LAND_SPEED" and "MPC_LAND_VEL_XY", respectively. Value needs to be lower than "MPC_LAND_ALT1"</long_desc>
       <min>0</min>
