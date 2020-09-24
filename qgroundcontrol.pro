@@ -86,14 +86,14 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # is present. It's useful to run "regular" builds to make sure you didn't
 # break anything.
 
-CUSTOM_DIR = $$PWD/custom
+CUSTOM_DIR = $$PWD/qgc-custom
 
 contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
-    CUSTOM_PRI = $$PWD/custom/custom.pri
+    CUSTOM_PRI = $$PWD/qgc-custom/custom.pri
     exists($$CUSTOM_PRI) {
-        message("* Found custom build *")
+        message("*** Found Custom Build at ./qgc-custom/ ***")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
@@ -103,7 +103,7 @@ contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     } else {
         CUSTOM_PRI = $$PWD/../qgc-custom/custom.pri
         exists($$CUSTOM_PRI) {
-            message("*** Found custom build ***")
+            message("*** Found Custom Build at ../qgc-custom/ ***")
             CUSTOM_DIR = $$PWD/../qgc-custom
             CONFIG  += CustomBuild
             DEFINES += QGC_CUSTOM_BUILD
