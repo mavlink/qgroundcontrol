@@ -1365,7 +1365,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     </parameter>
     <parameter name="COM_RC_OVERRIDE" default="1" type="INT32">
       <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
-      <long_desc>When RC stick override is enabled, moving the RC sticks immediately gives control back to the pilot (switches to manual position mode): bit 0: Enable for auto modes (except for in critical battery reaction), bit 1: Enable for offboard mode. Only has an effect on multicopters, and VTOLS in multicopter mode.</long_desc>
+      <long_desc>When RC stick override is enabled, moving the RC sticks according to COM_RC_STICK_OV immediately gives control back to the pilot (switches to manual position mode): bit 0: Enable for auto modes (except for in critical battery reaction), bit 1: Enable for offboard mode. Only has an effect on multicopters, and VTOLS in multicopter mode.</long_desc>
       <min>0</min>
       <max>3</max>
       <bitmask>
@@ -1373,9 +1373,9 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <bit index="1">Enable override in offboard mode</bit>
       </bitmask>
     </parameter>
-    <parameter name="COM_RC_STICK_OV" default="50.0" type="FLOAT">
+    <parameter name="COM_RC_STICK_OV" default="30.0" type="FLOAT">
       <short_desc>RC stick override threshold</short_desc>
-      <long_desc>If an RC stick is moved more than by this amount the system will interpret this as override request by the pilot.</long_desc>
+      <long_desc>If COM_RC_OVERRIDE is enabled and the joystick input controlling the horizontally axis (right stick for RC in mode 2) is moved more than this threshold from the center the autopilot switches to position mode and the pilot takes over control.</long_desc>
       <min>5</min>
       <max>80</max>
       <unit>%</unit>
