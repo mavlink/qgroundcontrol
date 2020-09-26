@@ -1762,17 +1762,6 @@ Sets the number of standard deviations used by the innovation consistency test</
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EKF2_GPS_MASK" default="0" type="INT32">
-      <short_desc>Multi GPS Blending Control Mask</short_desc>
-      <long_desc>Set bits in the following positions to set which GPS accuracy metrics will be used to calculate the blending weight. Set to zero to disable and always used first GPS instance. 0 : Set to true to use speed accuracy 1 : Set to true to use horizontal position accuracy 2 : Set to true to use vertical position accuracy</long_desc>
-      <min>0</min>
-      <max>7</max>
-      <bitmask>
-        <bit index="0">use speed accuracy</bit>
-        <bit index="1">use hpos accuracy</bit>
-        <bit index="2">use vpos accuracy</bit>
-      </bitmask>
-    </parameter>
     <parameter name="EKF2_GPS_POS_X" default="0.0" type="FLOAT">
       <short_desc>X position of GPS antenna in body frame (forward axis with origin relative to vehicle centre of gravity)</short_desc>
       <unit>m</unit>
@@ -1801,14 +1790,6 @@ Sets the number of standard deviations used by the innovation consistency test</
       <max>10.0</max>
       <unit>m</unit>
       <decimal>2</decimal>
-    </parameter>
-    <parameter name="EKF2_GPS_TAU" default="10.0" type="FLOAT">
-      <short_desc>Multi GPS Blending Time Constant</short_desc>
-      <long_desc>Sets the longest time constant that will be applied to the calculation of GPS position and height offsets used to correct data from multiple GPS data for steady state position differences.</long_desc>
-      <min>1.0</min>
-      <max>100.0</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
     </parameter>
     <parameter name="EKF2_GPS_V_GATE" default="5.0" type="FLOAT">
       <short_desc>Gate size for GPS velocity fusion</short_desc>
@@ -9185,6 +9166,25 @@ How often the sensor is readout</short_desc>
         <value code="6">Yaw 270°</value>
         <value code="7">Yaw 315°</value>
       </values>
+    </parameter>
+    <parameter name="SENS_GPS_MASK" default="0" type="INT32">
+      <short_desc>Multi GPS Blending Control Mask</short_desc>
+      <long_desc>Set bits in the following positions to set which GPS accuracy metrics will be used to calculate the blending weight. Set to zero to disable and always used first GPS instance. 0 : Set to true to use speed accuracy 1 : Set to true to use horizontal position accuracy 2 : Set to true to use vertical position accuracy</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <bitmask>
+        <bit index="0">use speed accuracy</bit>
+        <bit index="1">use hpos accuracy</bit>
+        <bit index="2">use vpos accuracy</bit>
+      </bitmask>
+    </parameter>
+    <parameter name="SENS_GPS_TAU" default="10.0" type="FLOAT">
+      <short_desc>Multi GPS Blending Time Constant</short_desc>
+      <long_desc>Sets the longest time constant that will be applied to the calculation of GPS position and height offsets used to correct data from multiple GPS data for steady state position differences.</long_desc>
+      <min>1.0</min>
+      <max>100.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="SENS_IMU_MODE" default="1" type="INT32" category="System">
       <short_desc>Sensors hub IMU mode</short_desc>
