@@ -27,17 +27,17 @@ install:
       Write-Host "Installed" -ForegroundColor Green
   - ps: |
       Write-Host "Installing GStreamer..." -ForegroundColor Cyan
-      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-x86_64-1.14.4.msi"
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-msvc-x86_64-1.18.1.msi"
       Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-x86_64-1.14.4.msi', $msiPath)
+      (New-Object Net.WebClient).DownloadFile('https://s3.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-msvc-x86_64-1.18.1.msi', $msiPath)
       Write-Host "Installing..."
       cmd /c start /wait msiexec /package $msiPath /passive ADDLOCAL=ALL
       Write-Host "Installed" -ForegroundColor Green
   - ps: |
       Write-Host "Installing GStreamer dev..." -ForegroundColor Cyan
-      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-devel-x86_64-1.14.4.msi"
+      $msiPath = "$($env:USERPROFILE)\gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi"
       Write-Host "Downloading..."
-      (New-Object Net.WebClient).DownloadFile('https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-x86_64-1.14.4.msi', $msiPath)
+      (New-Object Net.WebClient).DownloadFile('https://s3.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-devel-msvc-x86_64-1.18.1.msi', $msiPath)
       Write-Host "Installing..."
       cmd /c start /wait msiexec /package $msiPath /passive ADDLOCAL=ALL
       Write-Host "Installed" -ForegroundColor Green
