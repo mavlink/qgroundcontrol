@@ -115,6 +115,31 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 #endif
 #endif
 
+static void
+blacklist()
+{
+    GstRegistry* reg;
+
+    if ((reg = gst_registry_get()) == nullptr) {
+        return;
+    }
+
+    GstPluginFeature* plugin;
+    plugin = gst_registry_lookup_feature(reg, "bcmdec");
+    if (plugin != nullptr) {
+        qCCritical(VideoReceiverLog) << "Disable bcmdec";
+        gst_plugin_feature_set_rank(plugin, GST_RANK_NONE);
+        gst_object_unref(plugin);
+    }
+
+    plugin = gst_registry_lookup_feature(reg, "avdec_h264");
+    if (plugin != nullptr) {
+        qCCritical(VideoReceiverLog) << "Downgrade avdec_h264 rank";
+        gst_plugin_feature_set_rank(plugin, GST_RANK_MARGINAL + 1);
+        gst_object_unref(plugin);
+    }
+}
+
 void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
 {
 #if defined(QGC_GST_STREAMING)
@@ -180,6 +205,8 @@ void initializeVideoStreaming(int &argc, char* argv[], int gstDebuglevel)
 #if defined(__ios__)
     gst_ios_post_init();
 #endif
+
+    blacklist();
 
     /* the plugin must be loaded before loading the qml file to register the
      * GstGLVideoItem qml item
