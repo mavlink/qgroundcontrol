@@ -134,7 +134,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
 #endif
     case LinkConfiguration::TypeLast:
         break;
-    }LinkManager::_linkDisconnected
+    }
 
     QScopedPointer<LinkInterface> scopedLink(link);
 
