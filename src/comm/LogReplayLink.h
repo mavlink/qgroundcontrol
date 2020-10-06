@@ -9,11 +9,12 @@
 
 #pragma once
 
-#include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 
 #include <QTimer>
 #include <QFile>
+
+class LinkManager;
 
 class LogReplayLinkConfiguration : public LinkConfiguration
 {
@@ -31,13 +32,12 @@ public:
     QString logFilenameShort(void);
 
     // Virtuals from LinkConfiguration
-    LinkType    type                    () { return LinkConfiguration::TypeLogReplay; }
-    void        copyFrom                (LinkConfiguration* source);
-    void        loadSettings            (QSettings& settings, const QString& root);
-    void        saveSettings            (QSettings& settings, const QString& root);
-    void        updateSettings          ();
-    QString     settingsURL             () { return "LogReplaySettings.qml"; }
-    QString     settingsTitle           () { return tr("Log Replay Link Settings"); }
+    LinkType    type                    (void) override                                         { return LinkConfiguration::TypeLogReplay; }
+    void        copyFrom                (LinkConfiguration* source) override;
+    void        loadSettings            (QSettings& settings, const QString& root) override;
+    void        saveSettings            (QSettings& settings, const QString& root) override;
+    QString     settingsURL             (void) override                                         { return "LogReplaySettings.qml"; }
+    QString     settingsTitle           (void) override                                          { return tr("Log Replay Link Settings"); }
 
 signals:
     void fileNameChanged();
@@ -55,6 +55,8 @@ class LogReplayLink : public LinkInterface
     friend class LinkManager;
 
 public:
+    ~LogReplayLink();
+
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
 
@@ -62,25 +64,15 @@ public:
     void pause          (void) { emit _pauseOnThread(); }
     void movePlayhead   (qreal percentComplete);
 
-    // Virtuals from LinkInterface
-    virtual QString getName             (void) const { return _config->name(); }
-    virtual void    requestReset        (void){ }
-    virtual bool    isConnected         (void) const { return _connected; }
-    virtual qint64  getConnectionSpeed  (void) const { return 100000000; }
-    virtual qint64  bytesAvailable      (void) { return 0; }
-    virtual bool    isLogReplay         (void) { return true; }
-
-    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
-    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
-    bool connect    (void);
-    bool disconnect (void);
+    // overrides from LinkInterface
+    QString getName             (void) const override { return _config->name(); }
+    bool    isConnected         (void) const override { return _connected; }
+    bool    isLogReplay         (void) override { return true; }
+    void    disconnect          (void) override;
 
 public slots:
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
     void setPlaybackSpeed(qreal playbackSpeed) { emit _setPlaybackSpeedOnThread(playbackSpeed); }
-
-private slots:
-    virtual void _writeBytes(const QByteArray bytes);
 
 signals:
     void logFileStats                   (int logDurationSecs);
@@ -96,6 +88,9 @@ signals:
     void _setPlaybackSpeedOnThread  (qreal playbackSpeed);
 
 private slots:
+    // LinkInterface overrides
+    void _writeBytes(const QByteArray bytes) override;
+
     void _readNextLogEntry  (void);
     void _play              (void);
     void _pause             (void);
@@ -103,8 +98,10 @@ private slots:
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    LogReplayLink(SharedLinkConfigurationPointer& config);
-    ~LogReplayLink();
+    LogReplayLink(SharedLinkConfigurationPtr& config);
+
+    // LinkInterface overrides
+    bool _connect(void) override;
 
     void    _replayError                (const QString& errorMsg);
     quint64 _parseTimestamp             (const QByteArray& bytes);
@@ -116,12 +113,8 @@ private:
     void    _resetPlaybackToBeginning   (void);
     void    _signalCurrentLogTimeSecs   (void);
 
-    // Virtuals from LinkInterface
-    virtual bool _connect   (void);
-    virtual void _disconnect(void);
-
-    // Virtuals from QThread
-    virtual void run(void);
+    // QThread overrides
+    void run(void) override;
 
     LogReplayLinkConfiguration* _logReplayConfig;
 

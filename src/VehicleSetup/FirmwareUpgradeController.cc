@@ -17,6 +17,7 @@
 #include "SettingsManager.h"
 #include "QGCZlib.h"
 #include "JsonHelper.h"
+#include "LinkManager.h"
 
 #include <QStandardPaths>
 #include <QRegularExpression>
@@ -180,7 +181,7 @@ QStringList FirmwareUpgradeController::availableBoardsName(void)
     QStringList names;
 
     auto ports = QGCSerialPortInfo::availablePorts();
-    for(const auto info : ports) {
+    for (const auto& info : ports) {
         if(info.canFlash()) {
             info.getBoardInfo(boardType, boardName);
             names.append(boardName);

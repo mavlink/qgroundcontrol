@@ -7,11 +7,8 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "QGroundControlQmlGlobal.h"
+#include "LinkManager.h"
 
 #include <QSettings>
 #include <QLineF>
@@ -164,14 +161,13 @@ void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText)
 void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
 #ifdef QT_DEBUG
-    LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
+    QList<SharedLinkInterfacePtr> sharedLinks = _toolbox->linkManager()->links();
 
-    for (int i=0; i<linkManager->links().count(); i++) {
-        LinkInterface* link = linkManager->links()[i];
+    for (int i=0; i<sharedLinks.count(); i++) {
+        LinkInterface* link = sharedLinks[i].get();
         MockLink* mockLink = qobject_cast<MockLink*>(link);
-
         if (mockLink) {
-            linkManager->disconnectLink(mockLink);
+            mockLink->disconnect();
             return;
         }
     }

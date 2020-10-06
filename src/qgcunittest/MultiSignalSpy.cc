@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include "MultiSignalSpy.h"
 #include <QEventLoop>
 #include <QCoreApplication>

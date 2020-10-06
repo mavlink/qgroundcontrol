@@ -128,7 +128,7 @@ SetupPage {
                             statusTextArea.append(qsTr("Detected [%1]: ").arg(availableDevices.length) + availableDevices.join(", "))
                         }
                         if (QGroundControl.multiVehicleManager.activeVehicle) {
-                            QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
+                            QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.autoDisconnect = true
                         }
                     } else {
                         // We end up here when we detect a board plugged in after we've started upgrade

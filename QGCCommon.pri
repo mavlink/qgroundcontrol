@@ -31,6 +31,7 @@ linux {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
         } else {
+            #QMAKE_CXXFLAGS += -H # Handy for debugging why something is getting built when an include file is touched
             QMAKE_CXXFLAGS_WARN_ON += -Werror \
                 -Wno-deprecated-copy \      # These come from mavlink headers
                 -Wno-unused-parameter \     # gst_plugins-good has these errors

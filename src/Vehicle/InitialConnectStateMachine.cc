@@ -57,8 +57,8 @@ void InitialConnectStateMachine::_stateRequestCapabilities(StateMachine* stateMa
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
-    LinkInterface* link = vehicle->priorityLink();
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
+    LinkInterface* link = vehicle->vehicleLinkManager()->primaryLink();
+    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
         qCDebug(InitialConnectStateMachineLog) << "Skipping capability request due to link type";
         connectMachine->advance();
     } else {
@@ -154,9 +154,9 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
-    LinkInterface*              link            = vehicle->priorityLink();
+    LinkInterface*              link            = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
+    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
         qCDebug(InitialConnectStateMachineLog) << "Skipping protocol version request due to link type";
         connectMachine->advance();
     } else {
@@ -244,9 +244,9 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
-    LinkInterface*              link            = vehicle->priorityLink();
+    LinkInterface*              link            = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
+    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to link type";
         vehicle->_firstMissionLoadComplete();
     } else {

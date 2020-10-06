@@ -1051,8 +1051,8 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionRe
     mavlink_message_t message;
     mavlink_msg_follow_target_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
                                           static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                          vehicle->priorityLink()->mavlinkChannel(),
+                                          vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                           &message,
                                           &follow_target);
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), message);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), message);
 }

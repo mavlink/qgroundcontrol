@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef MissionManager_H
-#define MissionManager_H
+#pragma once
 
 #include "PlanManager.h"
 
@@ -47,5 +45,3 @@ private:
 
     int _cachedLastCurrentIndex;
 };
-
-#endif

@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "MissionManager.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
@@ -62,7 +58,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     missionItem.current =           altChangeOnly ? 3 : 2;
     missionItem.autocontinue =      true;
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     mavlink_msg_mission_item_encode_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                          _dedicatedLink->mavlinkChannel(),

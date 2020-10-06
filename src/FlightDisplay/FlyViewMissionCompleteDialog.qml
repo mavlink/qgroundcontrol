@@ -85,7 +85,7 @@ Item {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Remove plan from vehicle")
-                        visible:            !_activeVehicle.connectionLost// && !_activeVehicle.apmFirmware  // ArduPilot has a bug somewhere with mission clear
+                        visible:            !_activeVehicle.communicationLost// && !_activeVehicle.apmFirmware  // ArduPilot has a bug somewhere with mission clear
                         onClicked: {
                             _planController.removeAllFromVehicle()
                             hideDialog()
@@ -108,7 +108,7 @@ Item {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !_activeVehicle.connectionLost && globals.guidedControllerFlyView.showResumeMission
+                        visible:            !_activeVehicle.communicationLost && globals.guidedControllerFlyView.showResumeMission
 
                         QGCButton {
                             Layout.fillWidth:   true

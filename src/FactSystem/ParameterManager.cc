@@ -81,7 +81,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _waitingForDefaultComponent       (false)
     , _saveRequired                     (false)
     , _metaDataAddedToFacts             (false)
-    , _logReplay                        (vehicle->priorityLink() && vehicle->priorityLink()->isLogReplay())
+    , _logReplay                        (vehicle->vehicleLinkManager()->primaryLink() && vehicle->vehicleLinkManager()->primaryLink()->isLogReplay())
     , _parameterSetMajorVersion         (-1)
     , _prevWaitingReadParamIndexCount   (0)
     , _prevWaitingReadParamNameCount    (0)
@@ -477,7 +477,11 @@ void ParameterManager::_valueUpdated(const QVariant& value)
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
-    if (_vehicle->highLatencyLink() || _logReplay) {
+    if (!_vehicle->vehicleLinkManager()->primaryLink()) {
+        return;
+    }
+
+    if (_vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency() || _logReplay) {
         // These links don't load params
         _parametersReady = true;
         _missingParameters = true;
@@ -511,11 +515,11 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack_chan(mavlink->getSystemId(),
                                              mavlink->getComponentId(),
-                                             _vehicle->priorityLink()->mavlinkChannel(),
+                                             _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                              &msg,
                                              _vehicle->id(),
                                              componentId);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 
     QString what = (componentId == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Request to refresh all parameters for component ID:" << what;
@@ -814,13 +818,13 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
     strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
     mavlink_msg_param_request_read_pack_chan(_mavlink->getSystemId(),   // QGC system id
                                              _mavlink->getComponentId(),     // QGC component id
-                                             _vehicle->priorityLink()->mavlinkChannel(),
+                                             _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                              &msg,                           // Pack into this mavlink_message_t
                                              _vehicle->id(),                 // Target system id
                                              componentId,                    // Target component id
                                              fixedParamName,                 // Named parameter being requested
                                              paramIndex);                    // Parameter index being requested, -1 for named
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 }
 
 void ParameterManager::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
@@ -876,10 +880,10 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
     mavlink_message_t msg;
     mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
                                       _mavlink->getComponentId(),
-                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                       &msg,
                                       &p);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 }
 
 void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
@@ -975,10 +979,10 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         mavlink_message_t msg;
         mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
                                           _mavlink->getComponentId(),
-                                          _vehicle->priorityLink()->mavlinkChannel(),
+                                          _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                           &msg,
                                           &p);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 
         // Give the user some feedback things loaded properly
         QVariantAnimation *ani = new QVariantAnimation(this);

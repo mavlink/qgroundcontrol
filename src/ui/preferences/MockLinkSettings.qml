@@ -21,6 +21,7 @@ Column {
     id:                 mockLinkSettings
     spacing:            ScreenTools.defaultFontPixelHeight * 0.5
     anchors.margins:    ScreenTools.defaultFontPixelWidth
+
     function saveSettings() {
         if(px4Firmware.checked)
             subEditConfig.firmware = 12         // Hardcoded MAV_AUTOPILOT_PX4
@@ -34,7 +35,9 @@ Column {
         else
             subEditConfig.firmware = 0
         subEditConfig.sendStatus = sendStatus.checked
+        subEditConfig.incrementVehicleId = incrementVehicleId.checked
     }
+
     Component.onCompleted: {
         if(subEditConfig.firmware === 12)       // Hardcoded MAV_AUTOPILOT_PX4
             px4Firmware.checked = true
@@ -47,10 +50,17 @@ Column {
         else
             copterVehicle.checked = true
         sendStatus.checked = subEditConfig.sendStatus
+        incrementVehicleId.checked = subEditConfig.incrementVehicleId
     }
+
     QGCCheckBox {
         id:             sendStatus
         text:           qsTr("Send Status Text and Voice")
+        checked:        false
+    }
+    QGCCheckBox {
+        id:             incrementVehicleId
+        text:           qsTr("Increment Vehicle Id")
         checked:        false
     }
     Item {

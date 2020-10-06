@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick                              2.11
 import QtQuick.Controls                     2.4
 
@@ -18,80 +17,59 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.Vehicle               1.0
 
-//-------------------------------------------------------------------------
-//-- Link Indicator
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          priorityLinkSelector.width
+    width:          primaryLinkSelector.width
 
     property bool showIndicator: false
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
+    property var _rgLinkNames:      _activeVehicle ? _activeVehicle.vehicleLinkManager.linkNames : [ ]
+    property var _rgLinkStatus:     _activeVehicle ? _activeVehicle.vehicleLinkManager.linkStatuses : [ ]
+    property var _rgMenuItems:      [ ]
+
+    function updateLinkSelectionMenu() {
+        // Remove old menu items
+        var i
+        for (i = 0; i < _rgMenuItems.length; i++) {
+            linkSelectionMenu.removeItem(_rgMenuItems[i])
+        }
+        _rgMenuItems.length = 0
+
+        // Add new items
+        for (i = 0; i < _rgLinkNames.length; i++) {
+            var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": _rgLinkNames[i] + " " + _rgLinkStatus[i] })
+            _rgMenuItems.push(menuItem)
+            linkSelectionMenu.insertItem(i, menuItem)
+        }
+
+        showIndicator = _rgLinkNames.length > 1
+    }
+
+    Component.onCompleted:  updateLinkSelectionMenu()
+    on_RgLinkNamesChanged:  updateLinkSelectionMenu()
+    on_RgLinkStatusChanged: updateLinkSelectionMenu()
 
     QGCLabel {
-        id:                     priorityLinkSelector
-        text:                   _activeVehicle ? _activeVehicle.priorityLinkName : qsTr("N/A", "No data to display")
+        id:                     primaryLinkSelector
+        anchors.verticalCenter: parent.verticalCenter
+        text:                   _activeVehicle ? _activeVehicle.vehicleLinkManager.primaryLinkName : ""
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
-        anchors.verticalCenter: parent.verticalCenter
-        QGCMenu {
-            id: linkSelectionMenu
-        }
-        Component {
-            id: linkSelectionMenuItemComponent
-            QGCMenuItem {
-                onTriggered: _activeVehicle.priorityLinkName = text
-            }
-        }
-        property var linkSelectionMenuItems: []
-        function updatelinkSelectionMenu() {
-            if (_activeVehicle) {
-                // Remove old menu items
-                var i
-                for (i = 0; i < linkSelectionMenuItems.length; i++) {
-                    linkSelectionMenu.removeItem(linkSelectionMenuItems[i])
-                }
-                linkSelectionMenuItems.length = 0
-
-                // Add new items
-                var has_hl = false;
-                var links = _activeVehicle.links
-                for (i = 0; i < links.length; i++) {
-                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(_activeVehicle.id)})
-                    linkSelectionMenuItems.push(menuItem)
-                    linkSelectionMenu.insertItem(i, menuItem)
-
-                    if (links[i].getHighLatency()) {
-                        has_hl = true
-                    }
-                }
-
-                showIndicator = links.length > 1 && has_hl
-            }
-        }
-
-        Component.onCompleted: priorityLinkSelector.updatelinkSelectionMenu()
-
-        Connections {
-            target:                 QGroundControl.multiVehicleManager
-            onActiveVehicleChanged: priorityLinkSelector.updatelinkSelectionMenu()
-        }
-
-        Connections {
-            target:         _activeVehicle
-            onLinksChanged: priorityLinkSelector.updatelinkSelectionMenu()
-        }
-
-        Connections {
-            target:                     _activeVehicle
-            onLinksPropertiesChanged:   priorityLinkSelector.updatelinkSelectionMenu()
-        }
 
         MouseArea {
-            visible:        _activeVehicle
             anchors.fill:   parent
             onClicked:      linkSelectionMenu.popup()
+        }
+    }
+
+    QGCMenu { id: linkSelectionMenu }
+
+    Component {
+        id: linkSelectionMenuItemComponent
+        QGCMenuItem {
+            onTriggered: _activeVehicle.vehicleLinkManager.primaryLinkName = text
         }
     }
 }

@@ -1106,6 +1106,7 @@
             "category":     "Camera",
             "friendlyEdit": true
         },
+        { "id": 2600, "rawName": "MAV_CMD_CONTROL_HIGH_LATENCY", "friendlyName": "Control high latency link" },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
         {
             "id":           3000,
