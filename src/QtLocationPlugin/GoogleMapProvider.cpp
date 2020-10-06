@@ -111,7 +111,7 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(QNetworkAccessManager* network
         const QString url = QStringLiteral("http://maps.google.com/maps/api/js?v=3.2&sensor=false");
         qheader.setUrl(QUrl(url));
         QByteArray ua;
-        ua.append(getQGCMapEngine()->userAgent());
+        ua.append(getQGCMapEngine()->userAgent().toLatin1());
         qheader.setRawHeader("User-Agent", ua);
         _googleReply = networkManager->get(qheader);
         connect(_googleReply, &QNetworkReply::finished, this, &GoogleMapProvider::_googleVersionCompleted);
