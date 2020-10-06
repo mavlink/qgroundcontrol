@@ -58,7 +58,7 @@ bool MultiSignalSpy::init(QObject*        signalEmitter,    ///< [in] object whi
     for (size_t i=0; i<_cSignals; i++) {
         _rgSpys[i] = new QSignalSpy(_signalEmitter, _rgSignals[i]);
         if (!_rgSpys[i]->isValid()) {
-            qDebug() << "Invalid signal";
+            qDebug() << "Invalid signal: index" << i;
             return false;
         }
     }

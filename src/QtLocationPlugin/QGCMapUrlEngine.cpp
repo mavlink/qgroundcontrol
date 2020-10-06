@@ -76,6 +76,12 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
 
     _providersTable["Airmap Elevation"] = new AirmapElevationProvider(this);
+
+    _providersTable["Japan-GSI Contour"] = new JapanStdMapProvider(this);
+    _providersTable["Japan-GSI Seamless"] = new JapanSeamlessMapProvider(this);
+    _providersTable["Japan-GSI Anaglyph"] = new JapanAnaglyphMapProvider(this);
+    _providersTable["Japan-GSI Slope"] = new JapanSlopeMapProvider(this);
+    _providersTable["Japan-GSI Relief"] = new JapanReliefMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {

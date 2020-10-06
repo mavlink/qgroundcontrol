@@ -1071,7 +1071,7 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
 
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle)
 {
-    const static QString baseUrl("http://firmware.ardupilot.org/%1/stable/PX4/git-version.txt");
+    const static QString baseUrl("http://firmware.ardupilot.org/%1/stable/Pixhawk1/git-version.txt");
 
     if (qobject_cast<ArduPlaneFirmwarePlugin*>(vehicle->firmwarePlugin())) {
         return baseUrl.arg("Plane");

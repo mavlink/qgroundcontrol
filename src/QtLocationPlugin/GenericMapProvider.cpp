@@ -8,6 +8,41 @@
  ****************************************************************************/
 #include "GenericMapProvider.h"
 
+static const QString JapanStdMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std/%1/%2/%3.png");
+
+QString JapanStdMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return JapanStdMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+static const QString JapanSeamlessMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/%1/%2/%3.jpg");
+
+QString JapanSeamlessMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return JapanSeamlessMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+static const QString JapanAnaglyphMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/anaglyphmap_color/%1/%2/%3.png");
+
+QString JapanAnaglyphMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return JapanAnaglyphMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+static const QString JapanSlopeMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/slopemap/%1/%2/%3.png");
+
+QString JapanSlopeMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return JapanSlopeMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+static const QString JapanReliefMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/relief/%1/%2/%3.png");
+
+QString JapanReliefMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    return JapanReliefMapUrl.arg(zoom).arg(x).arg(y);
+}
+
 static const QString StatkartMapUrl = QStringLiteral("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3");
 
 QString StatkartMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
