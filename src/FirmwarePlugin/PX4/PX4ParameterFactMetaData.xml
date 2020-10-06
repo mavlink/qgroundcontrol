@@ -4123,16 +4123,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="1">Mission (if valid)</value>
       </values>
     </parameter>
-    <parameter name="MIS_ALTMODE" default="1" type="INT32">
-      <short_desc>Altitude setpoint mode</short_desc>
-      <long_desc>0: the system will follow a zero order hold altitude setpoint 1: the system will follow a first order hold altitude setpoint values follow the definition in enum mission_altitude_mode</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">Zero Order Hold</value>
-        <value code="1">First Order Hold</value>
-      </values>
-    </parameter>
     <parameter name="MIS_DIST_1WP" default="900" type="FLOAT">
       <short_desc>Maximal horizontal distance from home to first waypoint</short_desc>
       <long_desc>Failsafe check to prevent running mission stored from previous flight at a new takeoff location. Set a value of zero or less to disable. The mission will not be started if the current waypoint is more distant than MIS_DIS_1WP from the home position.</long_desc>
