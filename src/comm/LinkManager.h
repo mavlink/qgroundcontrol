@@ -148,6 +148,7 @@ private:
     void                _addUDPAutoConnectLink      (void);
     void                _addMAVLinkForwardingLink   (void);
     void                _freeMavlinkChannel         (int channel);
+    bool                _isSerialPortConnected      (void);
 
 #ifndef NO_SERIAL_LINK
     bool                _portAlreadyConnected       (const QString& portName);

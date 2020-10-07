@@ -116,7 +116,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
+    _targetSocket->connectToService(QBluetoothAddress(qobject_cast<BluetoothConfiguration*>(_config.get())->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
 #endif
     return true;
 }

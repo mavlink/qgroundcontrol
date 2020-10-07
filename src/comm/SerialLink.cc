@@ -23,6 +23,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
 #include "QGCSerialPortInfo.h"
+#include "LinkManager.h"
 
 QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 

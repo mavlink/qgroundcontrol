@@ -448,14 +448,17 @@ void LinkManager::_updateAutoConnectLinks(void)
 #endif
 
 #ifndef NO_SERIAL_LINK
-    QStringList currentPorts;
-    QList<QGCSerialPortInfo> portList;
+    QStringList                 currentPorts;
+    QList<QGCSerialPortInfo>    portList;
 #ifdef __android__
     // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
     // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
     // bug after we connect the first serial port we stop probing for additional ports.
-    if (!_sharedAutoconnectConfigurations.count()) {
+    if (!_isSerialPortConnected()) {
         portList = QGCSerialPortInfo::availablePorts();
+    }
+    else {
+        qDebug() << "Skipping serial port list";
     }
 #else
     portList = QGCSerialPortInfo::availablePorts();
@@ -568,50 +571,8 @@ void LinkManager::_updateAutoConnectLinks(void)
             }
     }
 
-#if 0   // FIXME...
-#ifndef __android__
-    // Android builds only support a single serial connection. Repeatedly calling availablePorts after that one serial
-    // port is connected leaks file handles due to a bug somewhere in android serial code. In order to work around that
-    // bug after we connect the first serial port we stop probing for additional ports. That means we must rely on
-    // the port disconnecting itself when the radio is pulled to signal communication list as opposed to automatically
-    // closing the Link.
-
-    // FIXME: Can't we detect this through signalling
-
-    // Now we go through the current configuration list and make sure any dynamic config has gone away
-    QList<LinkConfiguration*>  _confToDelete;
-    for (int i=0; i<_sharedAutoconnectConfigurations.count(); i++) {
-        SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(_sharedAutoconnectConfigurations[i].get());
-        if (serialConfig) {
-            if (!currentPorts.contains(serialConfig->portName())) {
-                if (serialConfig->link()) {
-                    if (serialConfig->link()->isConnected()) {
-                        if (false/*serialConfig->link()->active()*/) {
-                            // We don't remove links which are still connected which have been active with a vehicle on them
-                            // even though at this point the cable may have been pulled. Instead we wait for the user to
-                            // Disconnect. Once the user disconnects, the link will be removed.
-                            continue;
-                        }
-                    }
-                }
-                _confToDelete.append(serialConfig);
-            }
-        } else {
-            qWarning() << "Internal error";
-        }
-    }
-
-    // Now remove all configs that are gone
-    for (LinkConfiguration* pDeleteConfig: _confToDelete) {
-        qCDebug(LinkManagerLog) << "Removing unused autoconnect config" << pDeleteConfig->name();
-        if (pDeleteConfig->link()) {
-            // Disconnect will also delete the shared config for the link
-            disconnectLink(pDeleteConfig->link());
-        }
-    }
-
+#ifndef __mobile__
     // Check for RTK GPS connection gone
-#if !defined(__mobile__)
     if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
         qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
         _toolbox->gpsManager()->disconnectGPS();
@@ -619,8 +580,6 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
 #endif
 
-#endif
-#endif
 #endif // NO_SERIAL_LINK
 }
 
@@ -908,4 +867,15 @@ LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
     } else {
         return nullptr;
     }
+}
+
+bool LinkManager::_isSerialPortConnected(void)
+{
+    for (SharedLinkInterfacePtr link: _rgLinks) {
+        if (qobject_cast<SerialLink*>(link.get())) {
+            return true;
+        }
+    }
+
+    return false;
 }
