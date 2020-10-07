@@ -67,13 +67,13 @@ static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& ad
 
 UDPLink::UDPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface     (config)
-#if defined(QGC_ZEROCONF_ENABLED)
-    , _dnssServiceRef   (nullptr)
-#endif
     , _running          (false)
     , _socket           (nullptr)
     , _udpConfig        (qobject_cast<UDPConfiguration*>(config.get()))
     , _connectState     (false)
+#if defined(QGC_ZEROCONF_ENABLED)
+    , _dnssServiceRef   (nullptr)
+#endif
 {
     if (!_udpConfig) {
         qWarning() << "Internal error";
