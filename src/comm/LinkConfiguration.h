@@ -11,6 +11,8 @@
 
 #include <QSettings>
 
+#include <memory>
+
 class LinkInterface;
 
 /// Interface holding link specific settings.
@@ -24,7 +26,7 @@ public:
     virtual ~LinkConfiguration() {}
 
     Q_PROPERTY(QString          name                READ name           WRITE setName           NOTIFY nameChanged)
-    Q_PROPERTY(LinkInterface*   link                READ link           WRITE setLink           NOTIFY linkChanged)
+    Q_PROPERTY(LinkInterface*   link                READ link                                   NOTIFY linkChanged)
     Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
@@ -37,10 +39,10 @@ public:
     // Property accessors
 
     QString         name(void) const { return _name; }
-    LinkInterface*  link(void)  { return _link; }
+    LinkInterface*  link(void)  { return _link.lock().get(); }
 
     void            setName(const QString name);
-    void            setLink(LinkInterface* link);
+    void            setLink(std::shared_ptr<LinkInterface> link);
 
     ///  The link types supported by QGC
     ///  Any changes here MUST be reflected in LinkManager::linkTypeStrings()
@@ -61,19 +63,8 @@ public:
     };
     Q_ENUM(LinkType)
 
-    /*!
-     *
-     * Is this a dynamic configuration? (non persistent)
-     * @return True if this is an automatically added configuration.
-     */
-    bool isDynamic() { return _dynamic; }
-
-    /*!
-     *
-     * Is this an Auto Connect configuration?
-     * @return True if this is an Auto Connect configuration (connects automatically at boot time).
-     */
-    bool isAutoConnect() { return _autoConnect; }
+    bool isDynamic      () { return _dynamic; }     ///< Not persisted
+    bool isAutoConnect  () { return _autoConnect; }
 
     /*!
      *
@@ -154,13 +145,6 @@ public:
     virtual QString settingsTitle   () = 0;
 
     /*!
-     * @brief Update settings
-     *
-     * After editing the settings, use this method to tell the connected link (if any) to reload its configuration.
-     */
-    virtual void updateSettings() {}
-
-    /*!
      * @brief Copy instance data
      *
      * When manipulating data, you create a copy of the configuration using the copy constructor,
@@ -198,11 +182,12 @@ signals:
     void nameChanged        (const QString& name);
     void dynamicChanged     ();
     void autoConnectChanged ();
-    void linkChanged        (LinkInterface* link);
     void highLatencyChanged ();
+    void linkChanged        ();
 
 protected:
-    LinkInterface* _link; ///< Link currently using this configuration (if any)
+    std::weak_ptr<LinkInterface> _link; ///< Link currently using this configuration (if any)
+
 private:
     QString _name;
     bool    _dynamic;       ///< A connection added automatically and not persistent (unless it's edited).
@@ -210,5 +195,6 @@ private:
     bool    _highLatency;
 };
 
-typedef QSharedPointer<LinkConfiguration> SharedLinkConfigurationPointer;
+typedef std::shared_ptr<LinkConfiguration>  SharedLinkConfigurationPtr;
+typedef std::weak_ptr<LinkConfiguration>    WeakLinkConfigurationPtr;
 

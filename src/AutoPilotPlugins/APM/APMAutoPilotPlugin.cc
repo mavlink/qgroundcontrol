@@ -198,6 +198,8 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
 void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 {
     bool cubeBlackFound = false;
+#if 0
+    // FIXME: Put back
     for (const QVariant& varLink: _vehicle->links()) {
         SerialLink* serialLink = varLink.value<SerialLink*>();
         if (serialLink && QSerialPortInfo(*serialLink->_hackAccessToPort()).description().contains(QStringLiteral("CubeBlack"))) {
@@ -205,6 +207,7 @@ void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
         }
 
     }
+#endif
     if (!cubeBlackFound) {
         return;
     }

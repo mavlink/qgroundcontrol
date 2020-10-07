@@ -39,11 +39,14 @@ Rectangle {
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
     property var    _corePlugin:                    QGroundControl.corePlugin
 
-    function showSummaryPanel()
-    {
+    function showSummaryPanel() {
         if (mainWindow.preventViewSwitch()) {
             return
         }
+        _showSummaryPanel()
+    }
+
+    function _showSummaryPanel() {
         if (_fullParameterVehicleAvailable) {
             if (QGroundControl.multiVehicleManager.activeVehicle.autopilot.vehicleComponents.length === 0) {
                 panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
@@ -88,13 +91,13 @@ Rectangle {
         }
     }
 
-    Component.onCompleted: showSummaryPanel()
+    Component.onCompleted: _showSummaryPanel()
 
     Connections {
         target: QGroundControl.corePlugin
         onShowAdvancedUIChanged: {
             if(!QGroundControl.corePlugin.showAdvancedUI) {
-                showSummaryPanel()
+                _showSummaryPanel()
             }
         }
     }
@@ -109,7 +112,7 @@ Rectangle {
                     //      The summary panel is already showing and the active vehicle goes away
                     //      The active vehicle goes away and we are not on the Firmware panel.
                     summaryButton.checked = true
-                    showSummaryPanel()
+                    _showSummaryPanel()
                 }
             }
         }
@@ -246,7 +249,7 @@ Rectangle {
             SubMenuButton {
                 id:                 px4FlowButton
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.priorityLink.isPX4Flow : false
+                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.primaryLink.isPX4Flow : false
                 setupIndicator:     false
                 text:               qsTr("PX4Flow")
                 Layout.fillWidth:   true
@@ -284,7 +287,7 @@ Rectangle {
                 setupIndicator:     false
                 exclusiveGroup:     setupButtonGroup
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
-                                    !QGroundControl.multiVehicleManager.activeVehicle.highLatencyLink &&
+                                    !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink &&
                                     _corePlugin.showAdvancedUI
                 text:               qsTr("Parameters")
                 Layout.fillWidth:   true

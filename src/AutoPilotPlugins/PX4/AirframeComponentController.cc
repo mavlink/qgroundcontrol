@@ -7,15 +7,12 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "AirframeComponentController.h"
 #include "AirframeComponentAirframes.h"
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "LinkManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>

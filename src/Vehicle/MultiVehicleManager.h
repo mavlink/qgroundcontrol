@@ -40,16 +40,11 @@ public:
 
     Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                         NOTIFY activeVehicleAvailableChanged)
     Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
-    /// The current, active vehicle
     Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
-    /// The list of all connected vehicles
     Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
-    /// Enable sending heartbeats to the vehicle (defaults to true)
     Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
-    /// A disconnected vehicle used for offline editing. It will match the vehicle type specified in Settings.
     Q_PROPERTY(Vehicle*             offlineEditingVehicle           READ offlineEditingVehicle                                          CONSTANT)
-    /// The current vehicle's last known location
-    Q_PROPERTY(QGeoCoordinate       lastKnownLocation               READ lastKnownLocation                                              NOTIFY lastKnownLocationChanged)
+    Q_PROPERTY(QGeoCoordinate       lastKnownLocation               READ lastKnownLocation                                              NOTIFY lastKnownLocationChanged) //< Current vehicles last know location
 
     // Methods
 
@@ -72,12 +67,6 @@ public:
     void setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled);
 
     Vehicle* offlineEditingVehicle(void) { return _offlineEditingVehicle; }
-
-    /// Determines if the link is in use by a Vehicle
-    ///     @param link Link to test against
-    ///     @param skipVehicle Don't consider this Vehicle as part of the test
-    /// @return true: link is in use by one or more Vehicles
-    bool linkInUse(LinkInterface* link, Vehicle* skipVehicle);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);

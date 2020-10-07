@@ -970,11 +970,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     mavlink_msg_set_position_target_local_ned_encode_chan(
                 static_cast<uint8_t>(mavlink->getSystemId()),
                 static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->priorityLink()->mavlinkChannel(),
+                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                 &msg,
                 &cmd);
 
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), msg);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), msg);
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -1103,7 +1103,7 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
     mavlink_msg_rc_channels_encode_chan(
                 static_cast<uint8_t>(mavlink->getSystemId()),
                 static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->priorityLink()->mavlinkChannel(),
+                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                 message,
                 &channels);
 }
@@ -1120,7 +1120,7 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
     mavlink_msg_rc_channels_raw_encode_chan(
                 static_cast<uint8_t>(mavlink->getSystemId()),
                 static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->priorityLink()->mavlinkChannel(),
+                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                 message,
                 &channels);
 }
@@ -1165,8 +1165,8 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
     mavlink_message_t message;
     mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
                                           static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                          vehicle->priorityLink()->mavlinkChannel(),
+                                          vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                           &message,
                                           &globalPositionInt);
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->priorityLink(), message);
+    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), message);
 }

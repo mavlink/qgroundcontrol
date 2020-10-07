@@ -107,6 +107,7 @@
 #include "ToolStripAction.h"
 #include "ToolStripActionList.h"
 #include "QGCMAVLink.h"
+#include "VehicleLinkManager.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -528,6 +529,8 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<QGCCameraControl>        (kQGCVehicle,                       1, 0, "QGCCameraControl",           kRefOnly);
     qmlRegisterUncreatableType<QGCVideoStreamInfo>      (kQGCVehicle,                       1, 0, "QGCVideoStreamInfo",         kRefOnly);
     qmlRegisterUncreatableType<LinkInterface>           (kQGCVehicle,                       1, 0, "LinkInterface",              kRefOnly);
+    qmlRegisterUncreatableType<VehicleLinkManager>      (kQGCVehicle,                       1, 0, "VehicleLinkManager",         kRefOnly);
+
     qmlRegisterUncreatableType<MissionController>       (kQGCControllers,                   1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>      (kQGCControllers,                   1, 0, "GeoFenceController",         kRefOnly);
     qmlRegisterUncreatableType<RallyPointController>    (kQGCControllers,                   1, 0, "RallyPointController",       kRefOnly);
@@ -816,7 +819,7 @@ void QGCApplication::showAppMessage(const QString& message, const QString& title
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
     } else if (runningUnitTests()) {
         // Unit tests can run without UI
-        qDebug() << "QGCApplication::showAppMessage unittest" << message << dialogTitle;
+        qDebug() << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
     } else {
         // UI isn't ready yet
         _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));
@@ -847,7 +850,7 @@ QQuickItem* QGCApplication::mainRootWindow()
 void QGCApplication::showSetupView()
 {
     if(_rootQmlObject()) {
-        QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
+        QMetaObject::invokeMethod(_rootQmlObject(), "showSetupTool");
     }
 }
 

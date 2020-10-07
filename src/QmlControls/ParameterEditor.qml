@@ -344,8 +344,8 @@ Item {
 
         QGCViewDialog {
             function accept() {
-                _activeVehicle.rebootVehicle()
                 hideDialog()
+                _activeVehicle.rebootVehicle()
             }
 
             QGCLabel {
