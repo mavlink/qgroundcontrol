@@ -14,5 +14,6 @@
 	<file alias="PolygonMissingNode.kml">src/MissionManager/UnitTest/PolygonMissingNode.kml</file>
 	<file alias="PolygonBadXml.kml">src/MissionManager/UnitTest/PolygonBadXml.kml</file>
 	<file alias="PolygonBadCoordinatesNode.kml">src/MissionManager/UnitTest/PolygonBadCoordinatesNode.kml</file>
+	<file alias="MockLinkOptionsDlg.qml">src/comm/MockLinkOptionsDlg.qml</file>
     </qresource>
 </RCC>

@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef PlanManager_H
-#define PlanManager_H
+#pragma once
 
 #include <QObject>
 #include <QLoggingCategory>
@@ -159,5 +158,3 @@ protected:
 private:
     void _setTransactionInProgress(TransactionType_t type);
 };
-
-#endif

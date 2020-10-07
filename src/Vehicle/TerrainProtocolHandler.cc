@@ -139,14 +139,14 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate& swCorner, ui
             mavlink_msg_terrain_data_pack_chan(
                         qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                        _vehicle->priorityLink()->mavlinkChannel(),
+                        _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                         &msg,
                         _currentTerrainRequest.lat,
                         _currentTerrainRequest.lon,
                         _currentTerrainRequest.grid_spacing,
                         gridBit,
                         terrainData);
-            _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+            _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
         }
     }
 }

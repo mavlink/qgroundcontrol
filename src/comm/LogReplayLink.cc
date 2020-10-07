@@ -55,20 +55,15 @@ void LogReplayLinkConfiguration::loadSettings(QSettings& settings, const QString
     settings.endGroup();
 }
 
-void LogReplayLinkConfiguration::updateSettings(void)
-{
-    // Doesn't support changing filename on the fly is already connected
-}
-
 QString LogReplayLinkConfiguration::logFilenameShort(void)
 {
     QFileInfo fi(_logFilename);
     return fi.fileName();
 }
 
-LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
+LogReplayLink::LogReplayLink(SharedLinkConfigurationPtr& config)
     : LinkInterface     (config)
-    , _logReplayConfig  (qobject_cast<LogReplayLinkConfiguration*>(config.data()))
+    , _logReplayConfig  (qobject_cast<LogReplayLinkConfiguration*>(config.get()))
     , _connected        (false)
     , _playbackSpeed    (1)
 {
@@ -90,7 +85,7 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
 
 LogReplayLink::~LogReplayLink(void)
 {
-    _disconnect();
+    disconnect();
 }
 
 bool LogReplayLink::_connect(void)
@@ -98,12 +93,6 @@ bool LogReplayLink::_connect(void)
     // Disallow replay when any links are connected
     if (qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()) {
         emit communicationError(_errorTitle, tr("You must close all connections prior to replaying a log."));
-        return false;
-    }
-
-    _mavlinkChannel = qgcApp()->toolbox()->linkManager()->_reserveMavlinkChannel();
-    if (_mavlinkChannel == 0) {
-        qWarning() << "No mavlink channels available";
         return false;
     }
 
@@ -115,17 +104,12 @@ bool LogReplayLink::_connect(void)
     return true;
 }
 
-void LogReplayLink::_disconnect(void)
+void LogReplayLink::disconnect(void)
 {
     if (_connected) {
         quit();
         wait();
         _connected = false;
-
-        if (_mavlinkChannel != 0) {
-            qgcApp()->toolbox()->linkManager()->_freeMavlinkChannel(_mavlinkChannel);
-        }
-
         emit disconnected();
     }
 }

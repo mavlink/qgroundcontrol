@@ -14,21 +14,20 @@
 #include <QGeoCoordinate>
 
 /// @file
-///     @brief This class allows you to keep track of signal counts on a set of signals associated with an object.
-///     Mainly used for writing object unit tests.
+///     @brief Works just like MultiSignalSpy but the signal arrays are setup automatically through introspection on
+///     QMetaObject information. So no need to set up array an index/mask enums.
 
-#define MULTISPY_ENUM_SIGNAL_INDEX(signalName) signalName##index,
-#define MULTISPY_ENUM_SIGNAL_MASK(signalName) signalName##mask = 1 << signalName##index,
-
-class MultiSignalSpy : public QObject
+class MultiSignalSpyV2 : public QObject
 {
     Q_OBJECT
     
 public:
-    MultiSignalSpy(QObject* parent = nullptr);
-    ~MultiSignalSpy();
+    MultiSignalSpyV2(QObject* parent = nullptr);
+    ~MultiSignalSpyV2();
 
-    bool init(QObject* signalEmitter, const char** rgSignals, size_t cSignals);
+    bool init(QObject* signalEmitter);
+
+    quint32 signalNameToMask(const char* signalName);
 
     /// @param mask bit mask specifying which signals to check. The lowest order bit represents
     ///     index 0 into the rgSignals array and so on up the bit mask.
@@ -51,31 +50,30 @@ public:
     bool checkNoSignalByMask(quint32 mask);
     bool checkNoSignals(void);
 
-    void clearSignalByIndex(quint32 index);
+    void clearSignal(const char* signalName);
     void clearSignalsByMask(quint32 mask);
     void clearAllSignals(void);
 
-    bool waitForSignalByIndex(quint32 index, int msec);
+    bool waitForSignal(const char* signalName, int msec);
     
-    QSignalSpy* getSpyByIndex(quint32 index);
+    QSignalSpy* getSpy(const char* signalName);
 
     // Returns the value type for the first parameter of the signal
-    bool pullBoolFromSignalIndex(quint32 index);
-    int pullIntFromSignalIndex(quint32 index);
-    QGeoCoordinate pullQGeoCoordinateFromSignalIndex(quint32 index);
+    bool            pullBoolFromSignal          (const char* signalName);
+    int             pullIntFromSignal           (const char* signalName);
+    QGeoCoordinate  pullQGeoCoordinateFromSignal(const char* signalName);
 
 private:
     // QObject overrides
     void timerEvent(QTimerEvent * event);
     
-    void _printSignalState(quint32 mask);
-    bool _checkSignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed);
-    bool _checkOnlySignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed);
+    void _printSignalState              (quint32 mask);
+    bool _checkSignalByMaskWorker       (quint32 mask, bool multipleSignalsAllowed);
+    bool _checkOnlySignalByMaskWorker   (quint32 mask, bool multipleSignalsAllowed);
 
-    QObject*        _signalEmitter;
-    const char**    _rgSignals;
-    QSignalSpy**    _rgSpys;
-    size_t          _cSignals;
-    bool            _timeout;
+    QObject*            _signalEmitter = nullptr;
+    QStringList         _rgSignalNames;
+    QList<QSignalSpy*>  _rgSpys;
+    bool                _timeout;
 };
 

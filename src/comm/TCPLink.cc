@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #include <QTimer>
 #include <QList>
 #include <QDebug>
@@ -24,9 +23,9 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-TCPLink::TCPLink(SharedLinkConfigurationPointer& config)
+TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
-    , _tcpConfig(qobject_cast<TCPConfiguration*>(config.data()))
+    , _tcpConfig(qobject_cast<TCPConfiguration*>(config.get()))
     , _socket(nullptr)
     , _socketIsConnected(false)
 {
@@ -36,7 +35,7 @@ TCPLink::TCPLink(SharedLinkConfigurationPointer& config)
 
 TCPLink::~TCPLink()
 {
-    _disconnect();
+    disconnect();
     // Tell the thread to exit
     quit();
     // Wait for it to exit
@@ -82,16 +81,9 @@ void TCPLink::_writeBytes(const QByteArray data)
     if (_socket) {
         _socket->write(data);
         emit bytesSent(this, data);
-        _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
     }
 }
 
-/**
- * @brief Read a number of bytes from the interface.
- *
- * @param data Pointer to the data byte array to write the bytes to
- * @param maxLength The maximum number of bytes to write
- **/
 void TCPLink::readBytes()
 {
     if (_socket) {
@@ -102,7 +94,6 @@ void TCPLink::readBytes()
             buffer.resize(byteCount);
             _socket->read(buffer.data(), buffer.size());
             emit bytesReceived(this, buffer);
-            _logInputDataRate(byteCount, QDateTime::currentMSecsSinceEpoch());
 #ifdef TCPLINK_READWRITE_DEBUG
             writeDebugBytes(buffer.data(), buffer.size());
 #endif
@@ -110,12 +101,7 @@ void TCPLink::readBytes()
     }
 }
 
-/**
- * @brief Disconnect the connection.
- *
- * @return True if connection has been disconnected, false if connection couldn't be disconnected.
- **/
-void TCPLink::_disconnect(void)
+void TCPLink::disconnect(void)
 {
     quit();
     wait();
@@ -129,11 +115,6 @@ void TCPLink::_disconnect(void)
     }
 }
 
-/**
- * @brief Connect the connection.
- *
- * @return True if connection has been established, false if connection couldn't be established.
- **/
 bool TCPLink::_connect(void)
 {
     if (isRunning())
@@ -204,21 +185,6 @@ QString TCPLink::getName() const
     return _tcpConfig->name();
 }
 
-qint64 TCPLink::getConnectionSpeed() const
-{
-    return 54000000; // 54 Mbit
-}
-
-qint64 TCPLink::getCurrentInDataRate() const
-{
-    return 0;
-}
-
-qint64 TCPLink::getCurrentOutDataRate() const
-{
-    return 0;
-}
-
 void TCPLink::waitForBytesWritten(int msecs)
 {
     Q_ASSERT(_socket);
@@ -229,15 +195,6 @@ void TCPLink::waitForReadyRead(int msecs)
 {
     Q_ASSERT(_socket);
     _socket->waitForReadyRead(msecs);
-}
-
-void TCPLink::_restartConnection()
-{
-    if(this->isConnected())
-    {
-        _disconnect();
-        _connect();
-    }
 }
 
 //--------------------------------------------------------------------------
@@ -331,14 +288,4 @@ void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
     QString address = settings.value("host", _address.toString()).toString();
     _address = QHostAddress(address);
     settings.endGroup();
-}
-
-void TCPConfiguration::updateSettings()
-{
-    if(_link) {
-        auto* ulink = qobject_cast<TCPLink*>(_link);
-        if(ulink) {
-            ulink->_restartConnection();
-        }
-    }
 }

@@ -596,11 +596,11 @@ void UAS::requestImage()
         mavlink_message_t msg;
         mavlink_msg_data_transmission_handshake_pack_chan(mavlink->getSystemId(),
                                                           mavlink->getComponentId(),
-                                                          _vehicle->priorityLink()->mavlinkChannel(),
+                                                          _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                                           &msg,
                                                           MAVLINK_DATA_STREAM_IMG_JPEG,
                                                           0, 0, 0, 0, 0, 50);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
     }
 }
 

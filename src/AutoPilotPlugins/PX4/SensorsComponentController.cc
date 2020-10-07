@@ -65,7 +65,7 @@ SensorsComponentController::SensorsComponentController(void)
 
 bool SensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    return _vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
 }
 
 /// Appends the specified text to the status log area in the ui

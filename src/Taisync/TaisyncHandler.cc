@@ -103,6 +103,6 @@ TaisyncHandler::_socketDisconnected()
         _tcpSocket->close();
         _tcpSocket->deleteLater();
         _tcpSocket = nullptr;
+        emit disconnected();
     }
-    emit disconnected();
 }

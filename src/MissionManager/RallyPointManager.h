@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef RallyPointManager_H
-#define RallyPointManager_H
+#pragma once
 
 #include <QObject>
 #include <QGeoCoordinate>
@@ -23,7 +22,7 @@ Q_DECLARE_LOGGING_CATEGORY(RallyPointManagerLog)
 
 /// This is the base class for firmware specific rally point managers. A rally point manager is responsible
 /// for communicating with the vehicle to set/get rally points.
-class RallyPointManager : public QObject
+class RallyPointManager : public PlanManager
 {
     Q_OBJECT
     
@@ -31,27 +30,11 @@ public:
     RallyPointManager(Vehicle* vehicle);
     ~RallyPointManager();
     
-    /// Returns true if GeoFence is supported by this vehicle
-    virtual bool supported(void) const;
-
-    /// Returns true if the manager is currently communicating with the vehicle
-    virtual bool inProgress(void) const { return false; }
-
-    /// Load the current settings from the vehicle
-    ///     Signals loadComplete when done
-    virtual void loadFromVehicle(void);
-
-    /// Send the current settings to the vehicle
-    ///     Signals sendComplete when done
-    virtual void sendToVehicle(const QList<QGeoCoordinate>& rgPoints);
-
-    /// Remove all rally points from the vehicle
-    ///     Signals removeAllCompleted when done
-    virtual void removeAll(void);
-
-    QList<QGeoCoordinate> points(void) const { return _rgPoints; }
-
-    virtual QString editorQml(void) const { return QStringLiteral("qrc:/FirmwarePlugin/RallyPointEditor.qml"); }
+    bool                    supported       (void) const;
+    void                    sendToVehicle   (const QList<QGeoCoordinate>& rgPoints);
+    void                    removeAll       (void);
+    QString                 editorQml       (void) const                            { return QStringLiteral("qrc:/FirmwarePlugin/RallyPointEditor.qml"); }
+    QList<QGeoCoordinate>   points          (void) const                            { return _rgPoints; }
 
     /// Error codes returned in error signal
     typedef enum {
@@ -75,10 +58,6 @@ private slots:
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
-    Vehicle*                _vehicle;
-    PlanManager             _planManager;
-    QList<QGeoCoordinate>   _rgPoints;
-    QList<QGeoCoordinate>   _rgSendPoints;
+    QList<QGeoCoordinate> _rgPoints;
+    QList<QGeoCoordinate> _rgSendPoints;
 };
-
-#endif

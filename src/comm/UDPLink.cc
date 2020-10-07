@@ -65,15 +65,15 @@ static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& ad
     return false;
 }
 
-UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
+UDPLink::UDPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface     (config)
+    , _running          (false)
+    , _socket           (nullptr)
+    , _udpConfig        (qobject_cast<UDPConfiguration*>(config.get()))
+    , _connectState     (false)
 #if defined(QGC_ZEROCONF_ENABLED)
     , _dnssServiceRef   (nullptr)
 #endif
-    , _running          (false)
-    , _socket           (nullptr)
-    , _udpConfig        (qobject_cast<UDPConfiguration*>(config.data()))
-    , _connectState     (false)
 {
     if (!_udpConfig) {
         qWarning() << "Internal error";
@@ -88,7 +88,8 @@ UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
 
 UDPLink::~UDPLink()
 {
-    _disconnect();
+    qDebug() << "~UDPLink";
+    disconnect();
     // Tell the thread to exit
     _running = false;
     // Clear client list
@@ -100,10 +101,6 @@ UDPLink::~UDPLink()
     this->deleteLater();
 }
 
-/**
- * @brief Runs the thread
- *
- **/
 void UDPLink::run()
 {
     if (_hardwareConnect()) {
@@ -112,14 +109,6 @@ void UDPLink::run()
     if (_socket) {
         _deregisterZeroconf();
         _socket->close();
-    }
-}
-
-void UDPLink::_restartConnection()
-{
-    if (this->isConnected()) {
-        _disconnect();
-        _connect();
     }
 }
 
@@ -182,18 +171,9 @@ void UDPLink::_writeDataGram(const QByteArray data, const UDPCLient* target)
     //qDebug() << "UDP Out" << target->address << target->port;
     if(_socket->writeDatagram(data, target->address, target->port) < 0) {
         qWarning() << "Error writing to" << target->address << target->port;
-    } else {
-        // Only log rate if data actually got sent. Not sure about this as
-        // "host not there" takes time too regardless of size of data. In fact,
-        // 1 byte or "UDP frame size" bytes are the same as that's the data
-        // unit sent by UDP.
-        _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
     }
 }
 
-/**
- * @brief Read a number of bytes from the interface.
- **/
 void UDPLink::readBytes()
 {
     if (!_socket) {
@@ -214,7 +194,6 @@ void UDPLink::readBytes()
             emit bytesReceived(this, databuffer);
             databuffer.clear();
         }
-        _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
         // TODO: This doesn't validade the sender. Anything sending UDP packets to this port gets
         // added to the list and will start receiving datagrams from here. Even a port scanner
         // would trigger this.
@@ -237,12 +216,7 @@ void UDPLink::readBytes()
     }
 }
 
-/**
- * @brief Disconnect the connection.
- *
- * @return True if connection has been disconnected, false if connection couldn't be disconnected.
- **/
-void UDPLink::_disconnect(void)
+void UDPLink::disconnect(void)
 {
     _running = false;
     quit();
@@ -256,11 +230,6 @@ void UDPLink::_disconnect(void)
     _connectState = false;
 }
 
-/**
- * @brief Connect the connection.
- *
- * @return True if connection has been established, false if connection couldn't be established.
- **/
 bool UDPLink::_connect(void)
 {
     if (this->isRunning() || _running) {
@@ -302,29 +271,9 @@ bool UDPLink::_hardwareConnect()
     return _connectState;
 }
 
-/**
- * @brief Check if connection is active.
- *
- * @return True if link is connected, false otherwise.
- **/
 bool UDPLink::isConnected() const
 {
     return _connectState;
-}
-
-qint64 UDPLink::getConnectionSpeed() const
-{
-    return 54000000; // 54 Mbit
-}
-
-qint64 UDPLink::getCurrentInDataRate() const
-{
-    return 0;
-}
-
-qint64 UDPLink::getCurrentOutDataRate() const
-{
-    return 0;
 }
 
 void UDPLink::_registerZeroconf(uint16_t port, const std::string &regType)
@@ -499,16 +448,6 @@ void UDPConfiguration::loadSettings(QSettings& settings, const QString& root)
     }
     settings.endGroup();
     _updateHostList();
-}
-
-void UDPConfiguration::updateSettings()
-{
-    if (_link) {
-        UDPLink* ulink = dynamic_cast<UDPLink*>(_link);
-        if(ulink) {
-            ulink->_restartConnection();
-        }
-    }
 }
 
 void UDPConfiguration::_updateHostList()

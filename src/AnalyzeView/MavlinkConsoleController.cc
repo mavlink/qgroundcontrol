@@ -116,12 +116,12 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
         uint8_t flags = SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
         if (close) flags = 0;
         auto protocol = qgcApp()->toolbox()->mavlinkProtocol();
-        auto priority_link = _vehicle->priorityLink();
+        auto link = _vehicle->vehicleLinkManager()->primaryLink();
         mavlink_message_t msg;
         mavlink_msg_serial_control_pack_chan(
                     protocol->getSystemId(),
                     protocol->getComponentId(),
-                    priority_link->mavlinkChannel(),
+                    link->mavlinkChannel(),
                     &msg,
                     SERIAL_CONTROL_DEV_SHELL,
                     flags,
@@ -129,7 +129,7 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
                     0,
                     chunk.size(),
                     reinterpret_cast<uint8_t*>(chunk.data()));
-        _vehicle->sendMessageOnLinkThreadSafe(priority_link, msg);
+        _vehicle->sendMessageOnLinkThreadSafe(link, msg);
         data.remove(0, chunk.size());
     }
 }

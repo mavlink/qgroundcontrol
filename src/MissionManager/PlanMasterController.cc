@@ -213,7 +213,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    if (_managerVehicle->highLatencyLink()) {
+    if (_managerVehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency()) {
         qgcApp()->showAppMessage(tr("Download not supported on high latency links."));
         return;
     }
@@ -320,7 +320,7 @@ void PlanMasterController::_startFlightPlanning(void) {
 
 void PlanMasterController::sendToVehicle(void)
 {
-    if (_managerVehicle->highLatencyLink()) {
+    if (_managerVehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency()) {
         qgcApp()->showAppMessage(tr("Upload not supported on high latency links."));
         return;
     }

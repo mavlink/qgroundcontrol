@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <QElapsedTimer>
@@ -17,43 +16,41 @@
 
 #include "MockLinkMissionItemHandler.h"
 #include "MockLinkFTP.h"
-#include "LinkManager.h"
 #include "QGCMAVLink.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
 Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
+
+class LinkManager;
 
 class MockConfiguration : public LinkConfiguration
 {
     Q_OBJECT
 
 public:
-
-    Q_PROPERTY(int      firmware    READ firmware           WRITE setFirmware       NOTIFY firmwareChanged)
-    Q_PROPERTY(int      vehicle     READ vehicle            WRITE setVehicle        NOTIFY vehicleChanged)
-    Q_PROPERTY(bool     sendStatus  READ sendStatusText     WRITE setSendStatusText NOTIFY sendStatusChanged)
-    Q_PROPERTY(bool     highLatency READ highLatency        WRITE setHighLatency    NOTIFY highLatencyChanged)
-
-    // QML Access
-    int     firmware        () { return (int)_firmwareType; }
-    void    setFirmware     (int type) { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
-    int     vehicle         () { return (int)_vehicleType; }
-    bool    highLatency     () const { return _highLatency; }
-    void    setVehicle      (int type) { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
-    void    setHighLatency  (bool latency) { _highLatency = latency; emit highLatencyChanged(); }
-
     MockConfiguration(const QString& name);
     MockConfiguration(MockConfiguration* source);
 
-    MAV_AUTOPILOT firmwareType(void) { return _firmwareType; }
-    void setFirmwareType(MAV_AUTOPILOT firmwareType) { _firmwareType = firmwareType; emit firmwareChanged(); }
+    Q_PROPERTY(int      firmware            READ firmware           WRITE setFirmware           NOTIFY firmwareChanged)
+    Q_PROPERTY(int      vehicle             READ vehicle            WRITE setVehicle            NOTIFY vehicleChanged)
+    Q_PROPERTY(bool     sendStatus          READ sendStatusText     WRITE setSendStatusText     NOTIFY sendStatusChanged)
+    Q_PROPERTY(bool     incrementVehicleId  READ incrementVehicleId WRITE setIncrementVehicleId NOTIFY incrementVehicleIdChanged)
 
-    MAV_TYPE vehicleType(void) { return _vehicleType; }
-    void setVehicleType(MAV_TYPE vehicleType) { _vehicleType = vehicleType; emit vehicleChanged(); }
+    int     firmware                (void)                      { return (int)_firmwareType; }
+    void    setFirmware             (int type)                  { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
+    int     vehicle                 (void)                      { return (int)_vehicleType; }
+    bool    incrementVehicleId      (void)                      { return _incrementVehicleId; }
+    void    setVehicle              (int type)                  { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
+    void    setIncrementVehicleId   (bool incrementVehicleId)   { _incrementVehicleId = incrementVehicleId; emit incrementVehicleIdChanged(); }
 
-    /// @param sendStatusText true: mavlink status text messages will be sent for each severity, as well as voice output info message
-    bool sendStatusText(void) { return _sendStatusText; }
-    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
+
+    MAV_AUTOPILOT   firmwareType        (void)                          { return _firmwareType; }
+    MAV_TYPE        vehicleType         (void)                          { return _vehicleType; }
+    bool            sendStatusText      (void)                          { return _sendStatusText; }
+
+    void            setFirmwareType     (MAV_AUTOPILOT firmwareType)    { _firmwareType = firmwareType; emit firmwareChanged(); }
+    void            setVehicleType      (MAV_TYPE vehicleType)          { _vehicleType = vehicleType; emit vehicleChanged(); }
+    void            setSendStatusText   (bool sendStatusText)           { _sendStatusText = sendStatusText; emit sendStatusChanged(); }
 
     typedef enum {
         FailNone,                           // No failures
@@ -65,31 +62,30 @@ public:
     void setFailureMode(FailureMode_t failureMode) { _failureMode = failureMode; }
 
     // Overrides from LinkConfiguration
-    LinkType    type            (void) { return LinkConfiguration::TypeMock; }
-    void        copyFrom        (LinkConfiguration* source);
-    void        loadSettings    (QSettings& settings, const QString& root);
-    void        saveSettings    (QSettings& settings, const QString& root);
-    void        updateSettings  (void);
-    QString     settingsURL     () { return "MockLinkSettings.qml"; }
-    QString     settingsTitle   () { return tr("Mock Link Settings"); }
+    LinkType    type            (void) override                                         { return LinkConfiguration::TypeMock; }
+    void        copyFrom        (LinkConfiguration* source) override;
+    void        loadSettings    (QSettings& settings, const QString& root) override;
+    void        saveSettings    (QSettings& settings, const QString& root) override;
+    QString     settingsURL     (void) override                                         { return "MockLinkSettings.qml"; }
+    QString     settingsTitle   (void) override                                         { return tr("Mock Link Settings"); }
 
 signals:
-    void firmwareChanged    ();
-    void vehicleChanged     ();
-    void sendStatusChanged  ();
-    void highLatencyChanged ();
+    void firmwareChanged            (void);
+    void vehicleChanged             (void);
+    void sendStatusChanged          (void);
+    void incrementVehicleIdChanged  (void);
 
 private:
-    MAV_AUTOPILOT   _firmwareType;
-    MAV_TYPE        _vehicleType;
-    bool            _sendStatusText;
-    bool            _highLatency;
-    FailureMode_t   _failureMode;
+    MAV_AUTOPILOT   _firmwareType       = MAV_AUTOPILOT_PX4;
+    MAV_TYPE        _vehicleType        = MAV_TYPE_QUADROTOR;
+    bool            _sendStatusText     = false;
+    FailureMode_t   _failureMode        = FailNone;
+    bool            _incrementVehicleId = true;
 
     static const char* _firmwareTypeKey;
     static const char* _vehicleTypeKey;
     static const char* _sendStatusTextKey;
-    static const char* _highLatencyKey;
+    static const char* _incrementVehicleIdKey;
     static const char* _failureModeKey;
 };
 
@@ -98,15 +94,14 @@ class MockLink : public LinkInterface
     Q_OBJECT
 
 public:
-    MockLink(SharedLinkConfigurationPointer& config);
+    MockLink(SharedLinkConfigurationPtr& config);
     ~MockLink(void);
 
-    // MockLink methods
-    int vehicleId(void) { return _vehicleSystemId; }
-    MAV_AUTOPILOT getFirmwareType(void) { return _firmwareType; }
-    void setFirmwareType(MAV_AUTOPILOT autopilot) { _firmwareType = autopilot; }
-    void setSendStatusText(bool sendStatusText) { _sendStatusText = sendStatusText; }
-    void setFailureMode(MockConfiguration::FailureMode_t failureMode) { _failureMode = failureMode; }
+    int             vehicleId           (void)                                          { return _vehicleSystemId; }
+    MAV_AUTOPILOT   getFirmwareType     (void)                                          { return _firmwareType; }
+    void            setFirmwareType     (MAV_AUTOPILOT autopilot)                       { _firmwareType = autopilot; }
+    void            setSendStatusText   (bool sendStatusText)                           { _sendStatusText = sendStatusText; }
+    void            setFailureMode      (MockConfiguration::FailureMode_t failureMode)  { _failureMode = failureMode; }
 
     /// APM stack has strange handling of the first item of the mission list. If it has no
     /// onboard mission items, sometimes it sends back a home position in position 0 and
@@ -123,14 +118,8 @@ public:
 
     // Overrides from LinkInterface
     QString getName             (void) const override { return _name; }
-    void    requestReset        (void) override { }
     bool    isConnected         (void) const override { return _connected; }
-    qint64  getConnectionSpeed  (void) const override { return 100000000; }
-
-    // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
-    // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
-    bool connect(void);
-    bool disconnect(void);
+    void    disconnect          (void) override;
 
     /// Sets a failure mode for unit testingqgcm
     ///     @param failureMode Type of failure to simulate
@@ -154,6 +143,8 @@ public:
     /// Returns the filename for the simulated log file. Only available after a download is requested.
     QString logDownloadFile(void) { return _logDownloadFilename; }
 
+    Q_INVOKABLE void setCommLost                    (bool commLost)   { _commLost = commLost; }
+    Q_INVOKABLE void simulateConnectionRemoved      (void);
     static MockLink* startPX4MockLink               (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startGenericMockLink           (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startNoInitialConnectMockLink  (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -180,21 +171,21 @@ public:
     void setRequestMessageFailureMode(RequestMessageFailureMode_t failureMode) { _requestMessageFailureMode = failureMode; }
 
 signals:
-    void writeBytesQueuedSignal(const QByteArray bytes);
+    void writeBytesQueuedSignal                 (const QByteArray bytes);
+    void highLatencyTransmissionEnabledChanged  (bool highLatencyTransmissionEnabled);
 
 private slots:
+    // LinkInterface overrides
     void _writeBytes(const QByteArray bytes) final;
-    void _writeBytesQueued(const QByteArray bytes);
 
-private slots:
+    void _writeBytesQueued(const QByteArray bytes);
     void _run1HzTasks(void);
     void _run10HzTasks(void);
     void _run500HzTasks(void);
 
 private:
-    // From LinkInterface
-    bool _connect(void) final;
-    void _disconnect(void) final;
+    // LinkInterface overrides
+    bool _connect(void) override;
 
     // QThread override
     void run(void) final;
@@ -241,37 +232,36 @@ private:
 
     MockLinkMissionItemHandler  _missionItemHandler;
 
-    QString _name;
-    bool    _connected;
-    int     _mavlinkChannel;
+    QString                     _name;
+    bool                        _connected;
+    int                         _mavlinkChannel;
 
-    uint8_t _vehicleSystemId;
-    uint8_t _vehicleComponentId;
+    uint8_t                     _vehicleSystemId;
+    uint8_t                     _vehicleComponentId;
 
-    bool    _inNSH;
-    bool    _mavlinkStarted;
+    bool                        _inNSH;
+    bool                        _mavlinkStarted;
 
-    QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
-    QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
-
-    uint8_t     _mavBaseMode;
-    uint32_t    _mavCustomMode;
-    uint8_t     _mavState;
+    uint8_t                     _mavBaseMode;
+    uint32_t                    _mavCustomMode;
+    uint8_t                     _mavState;
 
     QElapsedTimer               _runningTime;
-    static const int32_t        _batteryMaxTimeRemaining    = 15 * 60;
-    int8_t                      _battery1PctRemaining       = 100;
-    int32_t                     _battery1TimeRemaining      = _batteryMaxTimeRemaining;
-    MAV_BATTERY_CHARGE_STATE    _battery1ChargeState        = MAV_BATTERY_CHARGE_STATE_OK;
-    int8_t                      _battery2PctRemaining       = 100;
-    int32_t                     _battery2TimeRemaining      = _batteryMaxTimeRemaining;
-    MAV_BATTERY_CHARGE_STATE    _battery2ChargeState        = MAV_BATTERY_CHARGE_STATE_OK;
+    static const int32_t        _batteryMaxTimeRemaining        = 15 * 60;
+    int8_t                      _battery1PctRemaining           = 100;
+    int32_t                     _battery1TimeRemaining          = _batteryMaxTimeRemaining;
+    MAV_BATTERY_CHARGE_STATE    _battery1ChargeState            = MAV_BATTERY_CHARGE_STATE_OK;
+    int8_t                      _battery2PctRemaining           = 100;
+    int32_t                     _battery2TimeRemaining          = _batteryMaxTimeRemaining;
+    MAV_BATTERY_CHARGE_STATE    _battery2ChargeState            = MAV_BATTERY_CHARGE_STATE_OK;
 
-    MAV_AUTOPILOT       _firmwareType;
-    MAV_TYPE            _vehicleType;
-    double              _vehicleLatitude;
-    double              _vehicleLongitude;
-    double              _vehicleAltitude;
+    MAV_AUTOPILOT               _firmwareType;
+    MAV_TYPE                    _vehicleType;
+    double                      _vehicleLatitude;
+    double                      _vehicleLongitude;
+    double                      _vehicleAltitude;
+    bool                        _commLost                       = false;
+    bool                        _highLatencyTransmissionEnabled = true;
 
     MockLinkFTP* _mockLinkFTP = nullptr;
 
@@ -288,7 +278,7 @@ private:
     static const uint16_t _logDownloadLogId = 0;        ///< Id of siumulated log file
     static const uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
 
-    QString _logDownloadFilename;           ///< Filename for log download which is in progress
+    QString     _logDownloadFilename;       ///< Filename for log download which is in progress
     uint32_t    _logDownloadCurrentOffset;  ///< Current offset we are sending from
     uint32_t    _logDownloadBytesRemaining; ///< Number of bytes still to send, 0 = send inactive
 
@@ -296,6 +286,9 @@ private:
     double          _adsbAngle;
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
+
+    QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
+    QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
 
     static double       _defaultVehicleLatitude;
     static double       _defaultVehicleLongitude;
