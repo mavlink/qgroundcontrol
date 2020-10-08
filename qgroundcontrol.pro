@@ -1413,7 +1413,7 @@ AndroidBuild {
 # Localization
 #
 
-TRANSLATIONS += $$files($$PWD/localization/qgc_*.ts)
+TRANSLATIONS += $$files($$PWD/translations/qgc_*.ts)
 CONFIG+=lrelease embed_translations
 
 #-------------------------------------------------------------------------------------
