@@ -1054,7 +1054,7 @@ Item {
                             MessageDialog {
                                 id:                 formatPrompt
                                 title:              qsTr("Format Camera Storage")
-                                text:               qsTr("Confirm erasing images and photo log?")
+                                text:               qsTr("Confirm erasing images?")
                                 standardButtons:    StandardButton.Yes | StandardButton.No
                                 onNo: formatPrompt.close()
                                 onYes: {
