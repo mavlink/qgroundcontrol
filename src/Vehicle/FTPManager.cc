@@ -544,7 +544,7 @@ void FTPManager::listDirectory(const QString& dirPath)
         return;
     }
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
@@ -594,7 +594,7 @@ bool FTPManager::_downloadWorker(const QString& from, const QString& toDir)
         return false;
     }
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     if (!_dedicatedLink) {
         qCDebug(FTPManagerLog) << "Cannot download. Vehicle has no priority link";
         return false;
@@ -646,7 +646,7 @@ void FTPManager::upload(const QString& /*toPath*/, const QFileInfo& /*uploadFile
         return;
     }
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;

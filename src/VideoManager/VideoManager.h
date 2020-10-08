@@ -136,7 +136,7 @@ protected slots:
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
-    void _connectionLostChanged     (bool connectionLost);
+    void _communicationLostChanged  (bool communicationLost);
 
 protected:
     friend class FinishVideoInitialization;

@@ -121,16 +121,17 @@ Rectangle {
         QGCButton {
             text:       qsTr("Connect")
             enabled:    _currentSelection && !_currentSelection.link
-            onClicked: {
-                QGroundControl.linkManager.createConnectedLink(_currentSelection)
-            }
+            onClicked:  QGroundControl.linkManager.createConnectedLink(_currentSelection)
         }
         QGCButton {
             text:       qsTr("Disconnect")
             enabled:    _currentSelection && _currentSelection.link
-            onClicked: {
-                QGroundControl.linkManager.disconnectLink(_currentSelection.link, false)
-            }
+            onClicked:  _currentSelection.link.disconnect()
+        }
+        QGCButton {
+            text:       qsTr("MockLink Options")
+            visible:    _currentSelection && _currentSelection.link && _currentSelection.link.isMockLink
+            onClicked:  mainWindow.showPopupDialogFromSource("qrc:/unittest/MockLinkOptionsDlg.qml", { link: _currentSelection.link })
         }
     }
 

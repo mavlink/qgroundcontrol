@@ -44,6 +44,7 @@ public:
         QRTL          = 21,
         QAUTOTUNE     = 22,
         QACRO         = 23,
+        THERMAL       = 24,
     };
 
     APMPlaneMode(uint32_t mode, bool settable);

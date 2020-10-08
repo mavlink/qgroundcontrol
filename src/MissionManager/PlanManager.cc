@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "PlanManager.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
@@ -109,7 +105,7 @@ void PlanManager::_writeMissionCount(void)
 
     mavlink_message_t message;
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     mavlink_msg_mission_count_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                         qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                         _dedicatedLink->mavlinkChannel(),
@@ -152,7 +148,7 @@ void PlanManager::_requestList(void)
     _itemIndicesToRead.clear();
     _clearMissionItems();
 
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     mavlink_msg_mission_request_list_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                                _dedicatedLink->mavlinkChannel(),
@@ -920,7 +916,7 @@ void PlanManager::_removeAllWorker(void)
     emit progressPct(0);
 
     _connectToMavlink();
-    _dedicatedLink = _vehicle->priorityLink();
+    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
     mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                             qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
                                             _dedicatedLink->mavlinkChannel(),
@@ -928,7 +924,7 @@ void PlanManager::_removeAllWorker(void)
                                             _vehicle->id(),
                                             MAV_COMP_ID_AUTOPILOT1,
                                             _planType);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), message);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), message);
     _startAckTimeout(AckMissionClearAll);
 }
 

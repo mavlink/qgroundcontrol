@@ -188,10 +188,10 @@ QGCCameraParamIO::_sendParameter()
     mavlink_msg_param_ext_set_encode_chan(
         static_cast<uint8_t>(_pMavlink->getSystemId()),
         static_cast<uint8_t>(_pMavlink->getComponentId()),
-        _vehicle->priorityLink()->mavlinkChannel(),
+        _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
         &msg,
         &p);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
     _paramWriteTimer.start();
 }
 
@@ -358,13 +358,13 @@ QGCCameraParamIO::paramRequest(bool reset)
     mavlink_msg_param_ext_request_read_pack_chan(
                 static_cast<uint8_t>(_pMavlink->getSystemId()),
                 static_cast<uint8_t>(_pMavlink->getComponentId()),
-                _vehicle->priorityLink()->mavlinkChannel(),
+                _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                 &msg,
                 static_cast<uint8_t>(_vehicle->id()),
                 static_cast<uint8_t>(_control->compID()),
                 param_id,
                 -1,
                 0);                                                 // trimmed messages = false
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
     _paramRequestTimer.start();
 }

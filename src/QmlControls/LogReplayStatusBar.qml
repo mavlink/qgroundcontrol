@@ -111,7 +111,7 @@ Rectangle {
             onClicked: {
                 var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
                 if (activeVehicle) {
-                    activeVehicle.disconnectInactiveVehicle()
+                    activeVehicle.closeVehicle()
                 }
                 QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue = false
             }

@@ -552,7 +552,7 @@ VideoManager::setfullScreen(bool f)
 {
     if(f) {
         //-- No can do if no vehicle or connection lost
-        if(!_activeVehicle || _activeVehicle->connectionLost()) {
+        if(!_activeVehicle || _activeVehicle->vehicleLinkManager()->communicationLost()) {
             f = false;
         }
     }
@@ -792,7 +792,7 @@ void
 VideoManager::_setActiveVehicle(Vehicle* vehicle)
 {
     if(_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
+        disconnect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
         if(_activeVehicle->cameraManager()) {
             QGCCameraControl* pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
             if(pCamera) {
@@ -803,7 +803,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
-        connect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
+        connect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
         if(_activeVehicle->cameraManager()) {
             connect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartAllVideos);
             QGCCameraControl* pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
@@ -821,7 +821,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
 
 //----------------------------------------------------------------------------------------
 void
-VideoManager::_connectionLostChanged(bool connectionLost)
+VideoManager::_communicationLostChanged(bool connectionLost)
 {
     if(connectionLost) {
         //-- Disable full screen video if connection is lost

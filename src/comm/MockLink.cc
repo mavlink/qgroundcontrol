@@ -10,6 +10,7 @@
 #include "MockLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCApplication.h"
+#include "LinkManager.h"
 
 #ifdef UNITTEST_BUILD
 #include "UnitTest.h"
@@ -41,11 +42,11 @@ double      MockLink::_defaultVehicleAltitude =     19.0;
 int         MockLink::_nextVehicleSystemId =        128;
 const char* MockLink::_failParam =                  "COM_FLTMODE6";
 
-const char* MockConfiguration::_firmwareTypeKey =   "FirmwareType";
-const char* MockConfiguration::_vehicleTypeKey =    "VehicleType";
-const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
-const char* MockConfiguration::_highLatencyKey =    "HighLatency";
-const char* MockConfiguration::_failureModeKey =    "FailureMode";
+const char* MockConfiguration::_firmwareTypeKey         = "FirmwareType";
+const char* MockConfiguration::_vehicleTypeKey          = "VehicleType";
+const char* MockConfiguration::_sendStatusTextKey       = "SendStatusText";
+const char* MockConfiguration::_incrementVehicleIdKey   = "IncrementVehicleId";
+const char* MockConfiguration::_failureModeKey          = "FailureMode";
 
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED;
@@ -54,21 +55,19 @@ constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
 constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
 
-MockLink::MockLink(SharedLinkConfigurationPointer& config)
+MockLink::MockLink(SharedLinkConfigurationPtr& config)
     : LinkInterface                         (config)
     , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
     , _name                                 ("MockLink")
     , _connected                            (false)
     , _mavlinkChannel                       (0)
-    , _vehicleSystemId                      (_nextVehicleSystemId++)
+    , _vehicleComponentId                   (MAV_COMP_ID_AUTOPILOT1)
     , _inNSH                                (false)
     , _mavlinkStarted                       (true)
     , _mavBaseMode                          (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
     , _mavState                             (MAV_STATE_STANDBY)
     , _firmwareType                         (MAV_AUTOPILOT_PX4)
     , _vehicleType                          (MAV_TYPE_QUADROTOR)
-    , _vehicleLatitude                      (_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))     // Slight offset for each vehicle
-    , _vehicleLongitude                     (_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleAltitude                      (_defaultVehicleAltitude)
     , _sendStatusText                       (false)
     , _apmSendHomePositionOnEmptyList       (false)
@@ -81,12 +80,16 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _logDownloadBytesRemaining            (0)
     , _adsbAngle                            (0)
 {
-    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.data());
-    _firmwareType = mockConfig->firmwareType();
-    _vehicleType = mockConfig->vehicleType();
-    _sendStatusText = mockConfig->sendStatusText();
-    _highLatency = mockConfig->highLatency();
-    _failureMode = mockConfig->failureMode();
+    qDebug() << "MockLink" << this;
+
+    MockConfiguration* mockConfig = qobject_cast<MockConfiguration*>(_config.get());
+    _firmwareType       = mockConfig->firmwareType();
+    _vehicleType        = mockConfig->vehicleType();
+    _sendStatusText     = mockConfig->sendStatusText();
+    _failureMode        = mockConfig->failureMode();
+    _vehicleSystemId    = mockConfig->incrementVehicleId() ?  _nextVehicleSystemId++ : _nextVehicleSystemId;
+    _vehicleLatitude    = _defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001);
+    _vehicleLongitude   = _defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001);
 
     QObject::connect(this, &MockLink::writeBytesQueuedSignal, this, &MockLink::_writeBytesQueued, Qt::QueuedConnection);
 
@@ -108,21 +111,17 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
 
 MockLink::~MockLink(void)
 {
-    _disconnect();
+    disconnect();
     if (!_logDownloadFilename.isEmpty()) {
         QFile::remove(_logDownloadFilename);
     }
+    qDebug() << "~MockLink" << this;
 }
 
 bool MockLink::_connect(void)
 {
     if (!_connected) {
         _connected = true;
-        _mavlinkChannel = qgcApp()->toolbox()->linkManager()->_reserveMavlinkChannel();
-        if (_mavlinkChannel == 0) {
-            qWarning() << "No mavlink channels available";
-            return false;
-        }
         // MockLinks use Mavlink 2.0
         mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(_mavlinkChannel);
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
@@ -133,12 +132,9 @@ bool MockLink::_connect(void)
     return true;
 }
 
-void MockLink::_disconnect(void)
+void MockLink::disconnect(void)
 {
     if (_connected) {
-        if (_mavlinkChannel != 0) {
-            qgcApp()->toolbox()->linkManager()->_freeMavlinkChannel(_mavlinkChannel);
-        }
         _connected = false;
         quit();
         wait();
@@ -160,6 +156,11 @@ void MockLink::run(void)
     timer10HzTasks.start(100);
     timer500HzTasks.start(2);
 
+    // Send first set right away
+    _run1HzTasks();
+    _run10HzTasks();
+    _run500HzTasks();
+
     exec();
 
     QObject::disconnect(&timer1HzTasks,  &QTimer::timeout, this, &MockLink::_run1HzTasks);
@@ -172,7 +173,7 @@ void MockLink::run(void)
 void MockLink::_run1HzTasks(void)
 {
     if (_mavlinkStarted && _connected) {
-        if (_highLatency) {
+        if (linkConfiguration()->isHighLatency() && _highLatencyTransmissionEnabled) {
             _sendHighLatency2();
         } else {
             _sendVibration();
@@ -199,7 +200,7 @@ void MockLink::_run1HzTasks(void)
 
 void MockLink::_run10HzTasks(void)
 {
-    if (_highLatency) {
+    if (linkConfiguration()->isHighLatency()) {
         return;
     }
 
@@ -216,7 +217,7 @@ void MockLink::_run10HzTasks(void)
 
 void MockLink::_run500HzTasks(void)
 {
-    if (_highLatency) {
+    if (linkConfiguration()->isHighLatency()) {
         return;
     }
 
@@ -479,11 +480,13 @@ void MockLink::_sendVibration(void)
 
 void MockLink::respondWithMavlinkMessage(const mavlink_message_t& msg)
 {
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    if (!_commLost) {
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
 
-    int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
-    QByteArray bytes((char *)buffer, cBuffer);
-    emit bytesReceived(this, bytes);
+        int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
+        QByteArray bytes((char *)buffer, cBuffer);
+        emit bytesReceived(this, bytes);
+    }
 }
 
 /// @brief Called when QGC wants to write bytes to the MAV
@@ -1004,6 +1007,15 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         _handlePreFlightCalibration(request);
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_CONTROL_HIGH_LATENCY:
+        if (linkConfiguration()->isHighLatency()) {
+            _highLatencyTransmissionEnabled = static_cast<int>(request.param1) != 0;
+            emit highLatencyTransmissionEnabledChanged(_highLatencyTransmissionEnabled);
+            commandResult = MAV_RESULT_ACCEPTED;
+        } else {
+            commandResult = MAV_RESULT_FAILED;
+        }
+        break;
     case MAV_CMD_PREFLIGHT_STORAGE:
         commandResult = MAV_RESULT_ACCEPTED;
         break;
@@ -1269,11 +1281,6 @@ void MockLink::_sendStatusTextMessages(void)
 
 MockConfiguration::MockConfiguration(const QString& name)
     : LinkConfiguration(name)
-    , _firmwareType     (MAV_AUTOPILOT_PX4)
-    , _vehicleType      (MAV_TYPE_QUADROTOR)
-    , _sendStatusText   (false)
-    , _highLatency      (false)
-    , _failureMode      (FailNone)
 {
 
 }
@@ -1281,11 +1288,11 @@ MockConfiguration::MockConfiguration(const QString& name)
 MockConfiguration::MockConfiguration(MockConfiguration* source)
     : LinkConfiguration(source)
 {
-    _firmwareType =     source->_firmwareType;
-    _vehicleType =      source->_vehicleType;
-    _sendStatusText =   source->_sendStatusText;
-    _highLatency =      source->_highLatency;
-    _failureMode =      source->_failureMode;
+    _firmwareType       = source->_firmwareType;
+    _vehicleType        = source->_vehicleType;
+    _sendStatusText     = source->_sendStatusText;
+    _incrementVehicleId = source->_incrementVehicleId;
+    _failureMode        = source->_failureMode;
 }
 
 void MockConfiguration::copyFrom(LinkConfiguration *source)
@@ -1298,21 +1305,21 @@ void MockConfiguration::copyFrom(LinkConfiguration *source)
         return;
     }
 
-    _firmwareType =     usource->_firmwareType;
-    _vehicleType =      usource->_vehicleType;
-    _sendStatusText =   usource->_sendStatusText;
-    _highLatency =      usource->_highLatency;
-    _failureMode =      usource->_failureMode;
+    _firmwareType       = usource->_firmwareType;
+    _vehicleType        = usource->_vehicleType;
+    _sendStatusText     = usource->_sendStatusText;
+    _incrementVehicleId = usource->_incrementVehicleId;
+    _failureMode        = usource->_failureMode;
 }
 
 void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    settings.setValue(_firmwareTypeKey, (int)_firmwareType);
-    settings.setValue(_vehicleTypeKey, (int)_vehicleType);
-    settings.setValue(_sendStatusTextKey, _sendStatusText);
-    settings.setValue(_highLatencyKey, _highLatency);
-    settings.setValue(_failureModeKey, (int)_failureMode);
+    settings.setValue(_firmwareTypeKey,         (int)_firmwareType);
+    settings.setValue(_vehicleTypeKey,          (int)_vehicleType);
+    settings.setValue(_sendStatusTextKey,       _sendStatusText);
+    settings.setValue(_incrementVehicleIdKey,   _incrementVehicleId);
+    settings.setValue(_failureModeKey,          (int)_failureMode);
     settings.sync();
     settings.endGroup();
 }
@@ -1320,34 +1327,26 @@ void MockConfiguration::saveSettings(QSettings& settings, const QString& root)
 void MockConfiguration::loadSettings(QSettings& settings, const QString& root)
 {
     settings.beginGroup(root);
-    _firmwareType = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
-    _vehicleType = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
-    _sendStatusText = settings.value(_sendStatusTextKey, false).toBool();
-    _highLatency = settings.value(_highLatencyKey, false).toBool();
-    _failureMode = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
+    _firmwareType       = (MAV_AUTOPILOT)settings.value(_firmwareTypeKey, (int)MAV_AUTOPILOT_PX4).toInt();
+    _vehicleType        = (MAV_TYPE)settings.value(_vehicleTypeKey, (int)MAV_TYPE_QUADROTOR).toInt();
+    _sendStatusText     = settings.value(_sendStatusTextKey, false).toBool();
+    _incrementVehicleId = settings.value(_incrementVehicleIdKey, true).toBool();
+    _failureMode        = (FailureMode_t)settings.value(_failureModeKey, (int)FailNone).toInt();
     settings.endGroup();
 }
 
-void MockConfiguration::updateSettings()
-{
-    if (_link) {
-        MockLink* ulink = dynamic_cast<MockLink*>(_link);
-        if (ulink) {
-            // Restart connect not supported
-            qWarning() << "updateSettings not supported";
-            //ulink->_restartConnection();
-        }
-    }
-}
-
-MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
+MockLink* MockLink::_startMockLink(MockConfiguration* mockConfig)
 {
     LinkManager* linkMgr = qgcApp()->toolbox()->linkManager();
 
     mockConfig->setDynamic(true);
-    SharedLinkConfigurationPointer config = linkMgr->addConfiguration(mockConfig);
+    SharedLinkConfigurationPtr config = linkMgr->addConfiguration(mockConfig);
 
-    return qobject_cast<MockLink*>(linkMgr->createConnectedLink(config));
+    if (linkMgr->createConnectedLink(config)) {
+        return qobject_cast<MockLink*>(config->link());
+    } else {
+        return nullptr;
+    }
 }
 
 MockLink* MockLink::_startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
@@ -1650,4 +1649,10 @@ void MockLink::_sendParameterMetaData(void)
                                                 0,                              // comp_translation_uid
                                                 translationURI);
     respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::simulateConnectionRemoved(void)
+{
+    _commLost = true;
+    _connectionRemoved();
 }

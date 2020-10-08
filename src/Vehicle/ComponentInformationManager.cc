@@ -174,9 +174,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    LinkInterface*                      link            = vehicle->priorityLink();
+    LinkInterface*                      link            = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->highLatency() || link->isPX4Flow() || link->isLogReplay()) {
+    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
         qCDebug(ComponentInformationManagerLog) << QStringLiteral("Skipping component information % 1 request due to link type").arg(requestMachine->typeToString());
         stateMachine->advance();
     } else {

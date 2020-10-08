@@ -30,7 +30,7 @@ Rectangle {
     readonly property int simpleToolbar:    2
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _communicationLost: _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
     property color  _mainStatusBGColor: qgcPal.brandingPurple
 
     QGCPalette { id: qgcPal }
@@ -80,7 +80,7 @@ Rectangle {
         QGCButton {
             id:                 disconnectButton
             text:               qsTr("Disconnect")
-            onClicked:          _activeVehicle.disconnectInactiveVehicle()
+            onClicked:          _activeVehicle.closeVehicle()
             visible:            _activeVehicle && _communicationLost && currentToolbar === flyViewToolbar
         }
     }

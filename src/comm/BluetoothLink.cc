@@ -7,14 +7,6 @@
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Definition of Bluetooth connection for unmanned vehicles
- *   @author Gus Grubba <gus@auterion.com>
- *
- */
-
 #include <QtGlobal>
 #include <QTimer>
 #include <QList>
@@ -29,23 +21,17 @@
 #include "QGCApplication.h"
 #include "BluetoothLink.h"
 #include "QGC.h"
+#include "LinkManager.h"
 
-BluetoothLink::BluetoothLink(SharedLinkConfigurationPointer& config)
-    : LinkInterface(config)
-    , _config(qobject_cast<BluetoothConfiguration*>(config.data()))
-    , _connectState(false)
-    , _targetSocket(nullptr)
-#ifdef __ios__
-    , _discoveryAgent(nullptr)
-#endif
-    , _shutDown(false)
+BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr& config)
+    : LinkInterface     (config)
 {
 
 }
 
 BluetoothLink::~BluetoothLink()
 {
-    _disconnect();
+    disconnect();
 #ifdef __ios__
     if(_discoveryAgent) {
         _shutDown = true;
@@ -58,15 +44,7 @@ BluetoothLink::~BluetoothLink()
 
 void BluetoothLink::run()
 {
-}
 
-void BluetoothLink::_restartConnection()
-{
-    if(this->isConnected())
-    {
-        _disconnect();
-        _connect();
-    }
 }
 
 QString BluetoothLink::getName() const
@@ -79,7 +57,6 @@ void BluetoothLink::_writeBytes(const QByteArray bytes)
     if (_targetSocket) {
         if(_targetSocket->write(bytes) > 0) {
             emit bytesSent(this, bytes);
-            _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
         } else {
             qWarning() << "Bluetooth write error";
         }
@@ -94,12 +71,11 @@ void BluetoothLink::readBytes()
             datagram.resize(_targetSocket->bytesAvailable());
             _targetSocket->read(datagram.data(), datagram.size());
             emit bytesReceived(this, datagram);
-            _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
         }
     }
 }
 
-void BluetoothLink::_disconnect(void)
+void BluetoothLink::disconnect(void)
 {
 #ifdef __ios__
     if(_discoveryAgent) {
@@ -109,8 +85,7 @@ void BluetoothLink::_disconnect(void)
         _discoveryAgent = nullptr;
     }
 #endif
-    if(_targetSocket)
-    {
+    if(_targetSocket) {
         _targetSocket->deleteLater();
         _targetSocket = nullptr;
         emit disconnected();
@@ -141,7 +116,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
+    _targetSocket->connectToService(QBluetoothAddress(qobject_cast<BluetoothConfiguration*>(_config.get())->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
 #endif
     return true;
 }
@@ -218,21 +193,6 @@ bool BluetoothLink::isConnected() const
     return _connectState;
 }
 
-qint64 BluetoothLink::getConnectionSpeed() const
-{
-    return 1000000; // 1 Mbit
-}
-
-qint64 BluetoothLink::getCurrentInDataRate() const
-{
-    return 0;
-}
-
-qint64 BluetoothLink::getCurrentOutDataRate() const
-{
-    return 0;
-}
-
 //--------------------------------------------------------------------------
 //-- BluetoothConfiguration
 
@@ -301,16 +261,6 @@ void BluetoothConfiguration::loadSettings(QSettings& settings, const QString& ro
     settings.endGroup();
 }
 
-void BluetoothConfiguration::updateSettings()
-{
-    if(_link) {
-        auto* ulink = qobject_cast<BluetoothLink*>(_link);
-        if(ulink) {
-            ulink->_restartConnection();
-        }
-    }
-}
-
 void BluetoothConfiguration::stopScan()
 {
     if(_deviceDiscover)
@@ -324,15 +274,12 @@ void BluetoothConfiguration::stopScan()
 
 void BluetoothConfiguration::startScan()
 {
-    if(!_deviceDiscover)
-    {
+    if(!_deviceDiscover) {
         _deviceDiscover = new QBluetoothDeviceDiscoveryAgent(this);
         connect(_deviceDiscover, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,  this, &BluetoothConfiguration::deviceDiscovered);
         connect(_deviceDiscover, &QBluetoothDeviceDiscoveryAgent::finished,          this, &BluetoothConfiguration::doneScanning);
         emit scanningChanged();
-    }
-    else
-    {
+    } else {
         _deviceDiscover->stop();
     }
     _nameList.clear();

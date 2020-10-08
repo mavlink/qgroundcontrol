@@ -10,7 +10,6 @@
 #pragma once
 
 #include "PX4FirmwareUpgradeThread.h"
-#include "LinkManager.h"
 #include "FirmwareImage.h"
 #include "Fact.h"
 

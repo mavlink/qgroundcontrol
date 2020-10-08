@@ -7,12 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @brief Base class for all unit tests
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 #ifndef __mobile__
 #pragma once
 
@@ -27,7 +21,7 @@
 #include "MissionItem.h"
 
 #define UT_REGISTER_TEST(className)             static UnitTestWrapper<className> className(#className, false);
-#define UT_REGISTER_TEST_STANDALONE(className)  static UnitTestWrapper<className> className(#className, true);
+#define UT_REGISTER_TEST_STANDALONE(className)  static UnitTestWrapper<className> className(#className, true);  // Test will only be run with specifically called to from command line
 
 class QGCMessageBox;
 class QGCQFileDialog;

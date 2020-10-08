@@ -11,7 +11,6 @@
 
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
-#include "LinkManager.h"
 #include "SettingsFact.h"
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
@@ -39,6 +38,7 @@ class MicrohardManager;
 #endif
 
 class QGCToolbox;
+class LinkManager;
 
 class QGroundControlQmlGlobal : public QGCTool
 {

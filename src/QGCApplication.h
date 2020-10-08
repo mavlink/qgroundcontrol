@@ -22,7 +22,6 @@
 #include <private/qobject_p.h>
 
 #include "LinkConfiguration.h"
-#include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "FlightMapSettings.h"
 #include "FirmwarePluginManager.h"

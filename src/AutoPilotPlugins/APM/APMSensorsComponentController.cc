@@ -150,7 +150,7 @@ void APMSensorsComponentController::_resetInternalState(void)
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
-    _vehicle->setConnectionLostEnabled(true);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(true);
 
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
@@ -292,7 +292,7 @@ void APMSensorsComponentController::calibrateCompass(void)
 void APMSensorsComponentController::calibrateAccel(void)
 {
     _calTypeInProgress = CalTypeAccel;
-    _vehicle->setConnectionLostEnabled(false);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _vehicle->startCalibration(Vehicle::CalibrationAccel);
 }
@@ -300,7 +300,7 @@ void APMSensorsComponentController::calibrateAccel(void)
 void APMSensorsComponentController::calibrateMotorInterference(void)
 {
     _calTypeInProgress = CalTypeCompassMot;
-    _vehicle->setConnectionLostEnabled(false);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds."));
     _appendStatusLog(tr("Quickly bring the throttle back down to zero"));
@@ -311,7 +311,7 @@ void APMSensorsComponentController::calibrateMotorInterference(void)
 void APMSensorsComponentController::levelHorizon(void)
 {
     _calTypeInProgress = CalTypeLevelHorizon;
-    _vehicle->setConnectionLostEnabled(false);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Hold the vehicle in its level flight position."));
     _vehicle->startCalibration(Vehicle::CalibrationLevel);
@@ -320,7 +320,7 @@ void APMSensorsComponentController::levelHorizon(void)
 void APMSensorsComponentController::calibratePressure(void)
 {
     _calTypeInProgress = CalTypePressure;
-    _vehicle->setConnectionLostEnabled(false);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Requesting pressure calibration..."));
     _vehicle->startCalibration(Vehicle::CalibrationAPMPressureAirspeed);
@@ -329,7 +329,7 @@ void APMSensorsComponentController::calibratePressure(void)
 void APMSensorsComponentController::calibrateGyro(void)
 {
     _calTypeInProgress = CalTypeGyro;
-    _vehicle->setConnectionLostEnabled(false);
+    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
     _startLogCalibration();
     _appendStatusLog(tr("Requesting gyro calibration..."));
     _vehicle->startCalibration(Vehicle::CalibrationGyro);
@@ -507,7 +507,7 @@ void APMSensorsComponentController::nextClicked(void)
     mavlink_message_t       msg;
     mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                       qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                      _vehicle->priorityLink()->mavlinkChannel(),
+                                      _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                                       &msg,
                                       0,    // command
                                       1,    // result
@@ -516,7 +516,7 @@ void APMSensorsComponentController::nextClicked(void)
                                       0,    // target_system
                                       0);   // target_component
 
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 
     if (_calTypeInProgress == CalTypeCompassMot) {
         _stopCalibration(StopCalibrationSuccess);
@@ -535,7 +535,7 @@ bool APMSensorsComponentController::accelSetupNeeded(void) const
 
 bool APMSensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    return _vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
 }
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)

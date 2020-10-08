@@ -474,11 +474,11 @@ LogDownloadController::_requestLogData(uint16_t id, uint32_t offset, uint32_t co
         mavlink_msg_log_request_data_pack_chan(
                     qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                     qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                    _vehicle->priorityLink()->mavlinkChannel(),
+                    _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                     &msg,
                     qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId(),
                     id, offset, count);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
     }
 }
 
@@ -502,13 +502,13 @@ LogDownloadController::_requestLogList(uint32_t start, uint32_t end)
         mavlink_msg_log_request_list_pack_chan(
                     qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                     qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                    _vehicle->priorityLink()->mavlinkChannel(),
+                    _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                     &msg,
                     _vehicle->id(),
                     _vehicle->defaultComponentId(),
                     start,
                     end);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
         //-- Wait 5 seconds before bitching about not getting anything
         _timer.start(5000);
     }
@@ -646,7 +646,7 @@ LogDownloadController::_setDownloading(bool active)
 {
     if (_downloadingLogs != active) {
         _downloadingLogs = active;
-        _vehicle->setConnectionLostEnabled(!active);
+        _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
         emit downloadingLogsChanged();
     }
 }
@@ -657,7 +657,7 @@ LogDownloadController::_setListing(bool active)
 {
     if (_requestingLogEntries != active) {
         _requestingLogEntries = active;
-        _vehicle->setConnectionLostEnabled(!active);
+        _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
         emit requestingListChanged();
     }
 }
@@ -671,10 +671,10 @@ LogDownloadController::eraseAll(void)
         mavlink_msg_log_erase_pack_chan(
                     qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                     qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                    _vehicle->priorityLink()->mavlinkChannel(),
+                    _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
                     &msg,
                     qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->id(), qgcApp()->toolbox()->multiVehicleManager()->activeVehicle()->defaultComponentId());
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->priorityLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
         refresh();
     }
 }
