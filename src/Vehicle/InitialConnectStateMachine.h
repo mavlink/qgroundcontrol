@@ -12,6 +12,7 @@
 #include "StateMachine.h"
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
 
@@ -38,8 +39,8 @@ private:
     static void _stateRequestRallyPoints                (StateMachine* stateMachine);
     static void _stateSignalInitialConnectComplete      (StateMachine* stateMachine);
 
-    static void _capabilitiesCmdResultHandler           (void* resultHandlerData, int compId, MAV_RESULT result, bool noResponsefromVehicle);
-    static void _protocolVersionCmdResultHandler        (void* resultHandlerData, int compId, MAV_RESULT result, bool noResponsefromVehicle);
+    static void _capabilitiesCmdResultHandler           (void* resultHandlerData, int compId, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _protocolVersionCmdResultHandler        (void* resultHandlerData, int compId, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode);
 
     static void _waitForAutopilotVersionResultHandler   (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
     static void _waitForProtocolVersionResultHandler    (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);

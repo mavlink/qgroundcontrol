@@ -387,11 +387,14 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     checkedUserNonMavlink = true;
                 } else {
                     warnedUserNonMavlink = true;
+#if 0
+                    // FIXME: I will fix this up in another pull. It is incorrect. Count should be link based not global.
                     // Disconnect the link since it's some other device and
                     // QGC clinging on to it and feeding it data might have unintended
                     // side effects (e.g. if its a modem)
                     qDebug() << "disconnected link" << link->getName() << "as it contained no MAVLink data";
                     QMetaObject::invokeMethod(_linkMgr, "disconnectLink", Q_ARG( LinkInterface*, link ) );
+#endif
                     return;
                 }
             }
@@ -543,7 +546,7 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     QString filter(QString("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
 
-    for(const QFileInfo fileInfo: fileInfoList) {
+    for(const QFileInfo& fileInfo: fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }
 }

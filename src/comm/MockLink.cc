@@ -47,6 +47,13 @@ const char* MockConfiguration::_sendStatusTextKey = "SendStatusText";
 const char* MockConfiguration::_highLatencyKey =    "HighLatency";
 const char* MockConfiguration::_failureModeKey =    "FailureMode";
 
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
+
 MockLink::MockLink(SharedLinkConfigurationPointer& config)
     : LinkInterface                         (config)
     , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
@@ -54,7 +61,6 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _connected                            (false)
     , _mavlinkChannel                       (0)
     , _vehicleSystemId                      (_nextVehicleSystemId++)
-    , _vehicleComponentId                   (MAV_COMP_ID_AUTOPILOT1)
     , _inNSH                                (false)
     , _mavlinkStarted                       (true)
     , _mavBaseMode                          (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_CUSTOM_MODE_ENABLED)
@@ -983,6 +989,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 
     mavlink_msg_command_long_decode(&msg, &request);
 
+    _sendMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+
     switch (request.command) {
     case MAV_CMD_COMPONENT_ARM_DISARM:
         if (request.param1 == 0.0f) {
@@ -1040,9 +1048,9 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         }
         break;
     case MAV_CMD_MOCKLINK_NO_RESPONSE:
+    case MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY:
         // No response
         return;
-        break;
     }
 
     mavlink_message_t commandAck;

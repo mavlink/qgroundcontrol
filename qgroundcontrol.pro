@@ -499,7 +499,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/qgcunittest/TCPLoopBackServer.h \
         src/qgcunittest/UnitTest.h \
         src/Vehicle/FTPManagerTest.h \
-        src/Vehicle/InitialConnectTest.h \
         src/Vehicle/RequestMessageTest.h \
         src/Vehicle/SendMavCommandWithHandlerTest.h \
         src/Vehicle/SendMavCommandWithSignallingTest.h \
@@ -548,7 +547,6 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { 
         src/qgcunittest/UnitTest.cc \
         src/qgcunittest/UnitTestList.cc \
         src/Vehicle/FTPManagerTest.cc \
-        src/Vehicle/InitialConnectTest.cc \
         src/Vehicle/RequestMessageTest.cc \
         src/Vehicle/SendMavCommandWithHandlerTest.cc \
         src/Vehicle/SendMavCommandWithSignallingTest.cc \

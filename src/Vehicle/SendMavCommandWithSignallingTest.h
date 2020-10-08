@@ -10,19 +10,25 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "Vehicle.h"
 
 class SendMavCommandWithSignallingTest : public UnitTest
 {
     Q_OBJECT
     
 private slots:
-    void _noFailure             (void);
-    void _failureShowError      (void);
-    void _failureNoShowError    (void);
-    void _noFailureAfterRetry   (void);
-    void _failureAfterRetry     (void);
-    void _failureAfterNoReponse (void);
-    void _unexpectedAck         (void);
+    void _performTestCases(void);
+    void _duplicateCommand(void);
 
 private:
+    typedef struct {
+        MAV_CMD                             command;
+        MAV_RESULT                          expectedCommandResult;
+        Vehicle::MavCmdResultFailureCode_t  expectedFailureCode;
+        int                                 expectedSendCount;
+    } TestCase_t;
+
+    void _testCaseWorker(TestCase_t& testCase);
+
+    static TestCase_t _rgTestCases[];
 };

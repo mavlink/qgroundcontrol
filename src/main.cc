@@ -292,6 +292,8 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
+    qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("Vehicle::MavCmdResultFailureCode_t");
+
     // We statically link our own QtLocation plugin
 
 #ifdef Q_OS_WIN
