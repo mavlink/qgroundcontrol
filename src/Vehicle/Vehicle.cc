@@ -2638,7 +2638,7 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
     entry.rgParam[5]        = param6;
     entry.rgParam[6]        = param7;
     entry.maxTries          = _sendMavCommandShouldRetry(command) ? _mavCommandMaxRetryCount : 1;
-    entry.ackTimeoutMSecs   = priorityLink()->getLinkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
+    entry.ackTimeoutMSecs   = _vehicleLinkManager->primaryLink()->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
     entry.elapsedTimer.start();
 
     _mavCommandList.append(entry);
@@ -2966,15 +2966,21 @@ QString Vehicle::firmwareVersionTypeString() const
     }
 }
 
-void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, bool noResponsefromVehicle)
+void Vehicle::_rebootCommandResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode)
 {
     Vehicle* vehicle = static_cast<Vehicle*>(resultHandlerData);
 
     if (commandResult != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(VehicleLog) << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN no response from vehicle";
-        } else {
+        switch (failureCode) {
+        case MavCmdResultCommandResultOnly:
             qCDebug(VehicleLog) << QStringLiteral("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN error(%1)").arg(commandResult);
+            break;
+        case MavCmdResultFailureNoResponseToCommand:
+            qCDebug(VehicleLog) << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN failed: no response from vehicle";
+            break;
+        case MavCmdResultFailureDuplicateCommand:
+            qCDebug(VehicleLog) << "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN failed: duplicate command";
+            break;
         }
         qgcApp()->showAppMessage(tr("Vehicle reboot failed."));
     } else {

@@ -39,7 +39,6 @@
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "FTPManager.h"
-#include "InitialConnectStateMachine.h"
 
 class UAS;
 class UASInterface;
@@ -62,6 +61,7 @@ class SendMavCommandWithHandlerTest;
 class RequestMessageTest;
 class LinkInterface;
 class LinkManager;
+class InitialConnectStateMachine;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -74,6 +74,7 @@ class Vehicle : public FactGroup
     Q_OBJECT
 
     friend class InitialConnectStateMachine;
+    friend class VehicleLinkManager;
     friend class VehicleBatteryFactGroup;           // Allow VehicleBatteryFactGroup to call _addFactGroup
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
@@ -635,7 +636,7 @@ public:
         MavCmdResultFailureDuplicateCommand,    ///< Unabled to send command since duplicate is already being waited on for response
     } MavCmdResultFailureCode_t;
 
-    /// Callback for sendMavCommandWithHandle
+    /// Callback for sendMavCommandWithHandler
     ///     @param resultHandleData     Opaque data passed in to sendMavCommand call
     ///     @param commandResult        Ack result for command send
     ///     @param failureCode          Failure reason
@@ -940,7 +941,7 @@ private:
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
 
-    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, bool noResponsefromVehicle);
+    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
