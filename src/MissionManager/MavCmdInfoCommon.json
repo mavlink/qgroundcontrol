@@ -913,6 +913,23 @@
                 "enumValues":       "0,1",
                 "default":          0,
                 "decimalPlaces":    0
+            },
+            "param4": {
+                "label":            "Positions",
+                "default":          3,
+                "decimalPlaces":    0
+            },
+            "param5": {
+                "label":            "Roll Angle",
+                "default":          30,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param6": {
+                "label":            "Pitch Angle",
+                "default":          -90,
+                "units":            "deg",
+                "decimalPlaces":    0
             }
         },
         {
