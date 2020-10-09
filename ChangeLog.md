@@ -4,7 +4,11 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.10 - Not yet released
+## 4.0.11 - Not yet release
+* Fix battery id handling for multiple batteries
+
+## 4.0.10 - Stable
+* Fix crashes in UDPLink
 
 ## 4.0.9 - Stable
 
