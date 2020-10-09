@@ -49,7 +49,9 @@
 #include "ComponentInformationManager.h"
 #include "InitialConnectStateMachine.h"
 #include "VehicleBatteryFactGroup.h"
+#ifdef QT_DEBUG
 #include "MockLink.h"
+#endif
 
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
