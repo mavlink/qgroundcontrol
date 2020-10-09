@@ -1,6 +1,6 @@
 # QGroundControl string translations
 
-QGC uses the standard Qt Linguist mechanisms for string translation. QGC uses crowd sourced string translation through a [Crowdin project](https://crowdin.com/project/qgroundcontrol for translation).
+QGC uses the standard Qt Linguist mechanisms for string translation. QGC uses crowd sourced string translation through a [Crowdin project](https://crowdin.com/project/qgroundcontrol) for translation.
 
 ## `source qgc-lupdate.sh`
 Run this command to update the translations files for both Qt and Json. Crowdin will automatically pull these up and submit a pull request back when new translations are available.
@@ -9,7 +9,7 @@ Run this command to update the translations files for both Qt and Json. Crowdin 
 These are coded using the standard Qt tr() for C++ and qsTr() for Qml mechanisms.
 
 ## Translating strings within Json files
-QGC uses json files internally for metadata. These files need to be translated as well. There is a [python parser](https://github.com/mavlink/qgroundcontrol/blob/master/localization/qgc-lupdate-json.py) which is used to find all the json files in the source tree and pull all the strings out for translation. This parser outputs the localization file for json strings in Qt .ts file format.
+QGC uses json files internally for metadata. These files need to be translated as well. There is a [python json parser](https://github.com/mavlink/qgroundcontrol/blob/master/translations/qgc-lupdate-json.py) which is used to find all the json files in the source tree and pull all the strings out for translation. This parser outputs the localization file for json strings in Qt .ts file format.
 
 In order for the parser to know which strings must be translated additional keys must be available at the root object level.
 
