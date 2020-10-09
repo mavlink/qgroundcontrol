@@ -72,17 +72,24 @@ void InitialConnectStateMachine::_stateRequestCapabilities(StateMachine* stateMa
     }
 }
 
-void InitialConnectStateMachine::_capabilitiesCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, bool noResponsefromVehicle)
+void InitialConnectStateMachine::_capabilitiesCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(resultHandlerData);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
     if (result != MAV_RESULT_ACCEPTED) {
-        if (noResponsefromVehicle) {
-            qCDebug(InitialConnectStateMachineLog) << "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES no response from vehicle";
-        } else {
+        switch (failureCode) {
+        case Vehicle::MavCmdResultCommandResultOnly:
             qCDebug(InitialConnectStateMachineLog) << QStringLiteral("MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES error(%1)").arg(result);
+            break;
+        case Vehicle::MavCmdResultFailureNoResponseToCommand:
+            qCDebug(InitialConnectStateMachineLog) << "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES no response from vehicle";
+            break;
+        case Vehicle::MavCmdResultFailureDuplicateCommand:
+            qCDebug(InitialConnectStateMachineLog) << "Internal Error: MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES could not be sent due to duplicate command";
+            break;
         }
+
         qCDebug(InitialConnectStateMachineLog) << "Setting no capabilities";
         vehicle->_setCapabilities(0);
         vehicle->_waitForMavlinkMessageClear();
@@ -170,16 +177,22 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
     }
 }
 
-void InitialConnectStateMachine::_protocolVersionCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, bool noResponsefromVehicle)
+void InitialConnectStateMachine::_protocolVersionCmdResultHandler(void* resultHandlerData, int /*compId*/, MAV_RESULT result, Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     if (result != MAV_RESULT_ACCEPTED) {
         InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(resultHandlerData);
         Vehicle*                    vehicle         = connectMachine->_vehicle;
 
-        if (noResponsefromVehicle) {
-            qCDebug(InitialConnectStateMachineLog) << "MAV_CMD_REQUEST_PROTOCOL_VERSION no response from vehicle";
-        } else {
+        switch (failureCode) {
+        case Vehicle::MavCmdResultCommandResultOnly:
             qCDebug(InitialConnectStateMachineLog) << QStringLiteral("MAV_CMD_REQUEST_PROTOCOL_VERSION error(%1)").arg(result);
+            break;
+        case Vehicle::MavCmdResultFailureNoResponseToCommand:
+            qCDebug(InitialConnectStateMachineLog) << "MAV_CMD_REQUEST_PROTOCOL_VERSION no response from vehicle";
+            break;
+        case Vehicle::MavCmdResultFailureDuplicateCommand:
+            qCDebug(InitialConnectStateMachineLog) << "Internal Error: MAV_CMD_REQUEST_PROTOCOL_VERSION could not be sent due to duplicate command";
+            break;
         }
 
         // _mavlinkProtocolRequestMaxProtoVersion stays at 0 to indicate unknown

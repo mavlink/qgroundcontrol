@@ -39,7 +39,6 @@
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "FTPManager.h"
-#include "InitialConnectStateMachine.h"
 
 class UAS;
 class UASInterface;
@@ -57,8 +56,12 @@ class TrajectoryPoints;
 class TerrainProtocolHandler;
 class ComponentInformationManager;
 class VehicleBatteryFactGroup;
+class SendMavCommandWithSignallingTest;
+class SendMavCommandWithHandlerTest;
+class RequestMessageTest;
 class LinkInterface;
 class LinkManager;
+class InitialConnectStateMachine;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -69,6 +72,14 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 class Vehicle : public FactGroup
 {
     Q_OBJECT
+
+    friend class InitialConnectStateMachine;
+    friend class VehicleLinkManager;
+    friend class VehicleBatteryFactGroup;           // Allow VehicleBatteryFactGroup to call _addFactGroup
+    friend class SendMavCommandWithSignallingTest;  // Unit test
+    friend class SendMavCommandWithHandlerTest;     // Unit test
+    friend class RequestMessageTest;                // Unit test
+
 
 public:
     Vehicle(LinkInterface*          link,
@@ -617,25 +628,19 @@ public:
     void sendMavCommandInt(int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     /// Same as sendMavCommand but available from Qml.
-    Q_INVOKABLE void sendCommand(int compId, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0)
-    {
-        sendMavCommand(
-            compId, static_cast<MAV_CMD>(command),
-            showError,
-            static_cast<float>(param1),
-            static_cast<float>(param2),
-            static_cast<float>(param3),
-            static_cast<float>(param4),
-            static_cast<float>(param5),
-            static_cast<float>(param6),
-            static_cast<float>(param7));
-    }
+    Q_INVOKABLE void sendCommand(int compId, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
 
-    /// Callback for sendMavCommandWithHandle
+    typedef enum {
+        MavCmdResultCommandResultOnly,          ///< commandResult specifies full success/fail info
+        MavCmdResultFailureNoResponseToCommand, ///< No response from vehicle to command
+        MavCmdResultFailureDuplicateCommand,    ///< Unabled to send command since duplicate is already being waited on for response
+    } MavCmdResultFailureCode_t;
+
+    /// Callback for sendMavCommandWithHandler
     ///     @param resultHandleData     Opaque data passed in to sendMavCommand call
     ///     @param commandResult        Ack result for command send
-    ///     @param noReponseFromVehicle true: The vehicle did not responsed to the COMMAND_LONG message
-    typedef void (*MavCmdResultHandler)(void* resultHandlerData, int compId, MAV_RESULT commandResult, bool noResponsefromVehicle);
+    ///     @param failureCode          Failure reason
+    typedef void (*MavCmdResultHandler)(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
     /// Sends the command and calls the callback with the result
     ///     @param resultHandler    Callback for result, nullptr for no callback
@@ -647,13 +652,14 @@ public:
         RequestMessageFailureCommandError,
         RequestMessageFailureCommandNotAcked,
         RequestMessageFailureMessageNotReceived,
+        RequestMessageFailureDuplicateCommand,    ///< Unabled to send command since duplicate is already being waited on for response
     } RequestMessageResultHandlerFailureCode_t;
 
     /// Callback for requestMessage
     ///     @param resultHandlerData    Opaque data which was passed in to requestMessage call
     ///     @param commandResult        Result from ack to REQUEST_MESSAGE command
-    ///     @param noResponseToCommand  true: Vehicle never acked the REQUEST_MESSAGE command
-    ///     @param messageNotReceived   true: Vehicle never sent requested message
+    ///     @param failureCode          Failure code
+    ///     @param message              Received message which was requested
     typedef void (*RequestMessageResultHandler)(void* resultHandlerData, MAV_RESULT commandResult, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
     /// Requests the vehicle to send the specified message. Will retry a number of times.
@@ -829,12 +835,12 @@ signals:
     void mavlinkLogData                 (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
 
     /// Signalled in response to usage of sendMavCommand
-    ///     @param vehicleId Vehicle which command was sent to
-    ///     @param component Component which command was sent to
-    ///     @param command MAV_CMD Command which was sent
-    ///     @param result MAV_RESULT returned in ack
-    ///     @param noResponseFromVehicle true: vehicle did not respond to command, false: vehicle responsed, MAV_RESULT in result
-    void mavCommandResult               (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    ///     @param vehicleId        Vehicle which command was sent to
+    ///     @param targetComponent  Component which command was sent to
+    ///     @param command          Command which was sent
+    ///     @param ackResult        MAV_RESULT returned in ack
+    ///     @param failureCode      More detailed failure code Vehicle::MavCmdResultFailureCode_t
+    void mavCommandResult               (int vehicleId, int targetComponent, int command, int ackResult, int failureCode);
 
     // MAVlink Serial Data
     void mavlinkSerialControl           (uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
@@ -866,7 +872,7 @@ private slots:
     void _firstMissionLoadComplete          ();
     void _firstGeoFenceLoadComplete         ();
     void _firstRallyPointLoadComplete       ();
-    void _sendMavCommandAgain               ();
+    void _sendMavCommandResponseTimeoutCheck();
     void _clearCameraTriggerPoints          ();
     void _updateDistanceHeadingToHome       ();
     void _updateMissionItemIndex            ();
@@ -922,7 +928,6 @@ private:
     void _handleMavlinkLoggingData      (mavlink_message_t& message);
     void _handleMavlinkLoggingDataAcked (mavlink_message_t& message);
     void _ackMavlinkLogData             (uint16_t sequence);
-    void _sendNextQueuedMavCommand      ();
     void _commonInit                    ();
     void _setupAutoDisarmSignalling     ();
     void _setCapabilities               (uint64_t capabilityBits);
@@ -936,7 +941,7 @@ private:
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
 
-    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, bool noResponsefromVehicle);
+    static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1137,29 +1142,36 @@ private:
         void*                       resultHandlerData;
     } RequestMessageInfo_t;
 
-    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, bool noResponsefromVehicle);
+    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, MavCmdResultFailureCode_t failureCode);
     static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
     typedef struct {
-        int                 compId;
-        bool                commandInt;     // true: use COMMAND_INT, false: use COMMAND_LONG
+        int                 targetCompId        = MAV_COMP_ID_AUTOPILOT1;
+        bool                useCommandInt       = false;
         MAV_CMD             command;
         MAV_FRAME           frame;
-        float               rgParam[7];
-        bool                showError;
-        bool                requestMessage; // true: this is from a requestMessage call
+        float               rgParam[7]          = { 0 };
+        bool                showError           = true;
+        bool                requestMessage      = false;                        // true: this is from a requestMessage call
         MavCmdResultHandler resultHandler;
-        void*               resultHandlerData;
-    } MavCommandQueueEntry_t;
+        void*               resultHandlerData   = nullptr;
+        int                 maxTries            = _mavCommandMaxRetryCount;
+        int                 tryCount            = 0;
+        QElapsedTimer       elapsedTimer;
+        int                 ackTimeoutMSecs     = _mavCommandAckTimeoutMSecs;
+    } MavCommandListEntry_t;
 
-    QQueue<MavCommandQueueEntry_t>  _mavCommandQueue;
-    QTimer                          _mavCommandAckTimer;
-    int                             _mavCommandRetryCount;
-    static const int                _mavCommandMaxRetryCount =              3;
-    static const int                _mavCommandAckTimeoutMSecs =            3000;
-    static const int                _mavCommandAckTimeoutMSecsHighLatency = 120000;
+    QList<MavCommandListEntry_t>    _mavCommandList;
+    QTimer                          _mavCommandResponseCheckTimer;
+    static const int                _mavCommandMaxRetryCount                = 3;
+    static const int                _mavCommandResponseCheckTimeoutMSecs    = 500;
+    static const int                _mavCommandAckTimeoutMSecs              = 3000;
+    static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
-    void _sendMavCommandWorker(bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+    void _sendMavCommandWorker  (bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+    void _sendMavCommandFromList(MavCommandListEntry_t& commandEntry);
+    int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
+    bool _sendMavCommandShouldRetry(MAV_CMD command);
 
     QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
 
@@ -1243,8 +1255,6 @@ private:
     // Settings keys
     static const char* _settingsGroup;
     static const char* _joystickEnabledSettingsKey;
-
-    friend class InitialConnectStateMachine;
-    friend class VehicleBatteryFactGroup;       // Allow VehicleBatteryFactGroup to call _addFactGroup
-    friend class VehicleLinkManager;
 };
+
+Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)

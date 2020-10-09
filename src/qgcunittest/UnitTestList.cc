@@ -44,7 +44,6 @@
 #include "CameraCalcTest.h"
 #include "FWLandingPatternTest.h"
 #include "RequestMessageTest.h"
-#include "InitialConnectTest.h"
 #include "FTPManagerTest.h"
 #include "MissionCommandTreeEditorTest.h"
 #include "VehicleLinkManagerTest.h"
@@ -60,7 +59,6 @@ UT_REGISTER_TEST(SendMavCommandWithSignallingTest)
 UT_REGISTER_TEST(SendMavCommandWithHandlerTest)
 UT_REGISTER_TEST(RequestMessageTest)
 UT_REGISTER_TEST(FTPManagerTest)
-UT_REGISTER_TEST(InitialConnectTest)
 UT_REGISTER_TEST(MissionItemTest)
 UT_REGISTER_TEST(SimpleMissionItemTest)
 UT_REGISTER_TEST(MissionControllerTest)

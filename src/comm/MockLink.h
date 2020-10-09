@@ -153,12 +153,16 @@ public:
     static MockLink* startAPMArduSubMockLink        (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink* startAPMArduRoverMockLink      (bool sendStatusText, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
 
-    // Special commands for testing COMMAND_LONG handlers
-    static const MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED            = MAV_CMD_USER_1;
-    static const MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED              = MAV_CMD_USER_2;
-    static const MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED    = MAV_CMD_USER_3;
-    static const MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED      = MAV_CMD_USER_4;
-    static const MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE                       = MAV_CMD_USER_5;
+    // Special commands for testing COMMAND_LONG handlers. By default all commands except for MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY should retry.
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED            = MAV_CMD_USER_1;
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED              = MAV_CMD_USER_2;
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED    = MAV_CMD_USER_3;
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED      = MAV_CMD_USER_4;
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE                       = MAV_CMD_USER_5;
+    static constexpr MAV_CMD MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY              = static_cast<MAV_CMD>(MAV_CMD_USER_5 + 1);
+
+    void clearSendMavCommandCounts(void) { _sendMavCommandCountMap.clear(); }
+    int sendMavCommandCount(MAV_CMD command) { return _sendMavCommandCountMap[command]; }
 
     // Special message ids for testing requestMessage support
     typedef enum {
@@ -237,7 +241,7 @@ private:
     int                         _mavlinkChannel;
 
     uint8_t                     _vehicleSystemId;
-    uint8_t                     _vehicleComponentId;
+    uint8_t                     _vehicleComponentId             = MAV_COMP_ID_AUTOPILOT1;
 
     bool                        _inNSH;
     bool                        _mavlinkStarted;
@@ -287,6 +291,7 @@ private:
 
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
 
+    QMap<MAV_CMD, int>  _sendMavCommandCountMap;
     QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
     QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
 
