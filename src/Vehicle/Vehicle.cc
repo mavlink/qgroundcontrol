@@ -1573,35 +1573,6 @@ bool Vehicle::_apmArmingNotRequired()
             _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
-void Vehicle::_batteryStatusWorker(int batteryId, double voltage, double current, double batteryRemainingPct)
-{
-    VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (batteryId == 0) {
-        pBatteryFactGroup = &_battery1FactGroup;
-    } else if (batteryId == 1) {
-        pBatteryFactGroup = &_battery2FactGroup;
-    } else {
-        return;
-    }
-
-    pBatteryFactGroup->voltage()->setRawValue(voltage);
-    pBatteryFactGroup->current()->setRawValue(current);
-    pBatteryFactGroup->instantPower()->setRawValue(voltage * current);
-    pBatteryFactGroup->percentRemaining()->setRawValue(batteryRemainingPct);
-
-    //-- Low battery warning
-    if (batteryId == 0 && !qIsNaN(batteryRemainingPct)) {
-        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
-        if (batteryRemainingPct < warnThreshold &&
-                batteryRemainingPct < _lastAnnouncedLowBatteryPercent &&
-                _lastBatteryAnnouncement.elapsed() > (batteryRemainingPct < warnThreshold * 0.5 ? 15000 : 30000)) {
-            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(static_cast<int>(batteryRemainingPct)));
-            _lastBatteryAnnouncement.start();
-            _lastAnnouncedLowBatteryPercent = static_cast<int>(batteryRemainingPct);
-        }
-    }
-}
-
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
 {
     mavlink_sys_status_t sysStatus;
@@ -1633,12 +1604,6 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         emit unhealthySensorsChanged();
         emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
-
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    _batteryStatusWorker(0 /* batteryId */,
-                         sysStatus.voltage_battery == UINT16_MAX ? qQNaN() : static_cast<double>(sysStatus.voltage_battery) / 1000.0,
-                         sysStatus.current_battery == -1 ? qQNaN() : static_cast<double>(sysStatus.current_battery) / 100.0,
-                         sysStatus.battery_remaining == -1 ? qQNaN() : sysStatus.battery_remaining);
 }
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
@@ -1646,10 +1611,17 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     mavlink_battery_status_t bat_status;
     mavlink_msg_battery_status_decode(&message, &bat_status);
 
+    // We need to track the lowest battery id we see wo that we know what is the first/second battery
+    if (_lowestBatteryIdSeen == -1) {
+        _lowestBatteryIdSeen = bat_status.id;
+    } else {
+        _lowestBatteryIdSeen = qMin(_lowestBatteryIdSeen, static_cast<int>(bat_status.id));
+    }
+
     VehicleBatteryFactGroup* pBatteryFactGroup = nullptr;
-    if (bat_status.id == 0) {
+    if (bat_status.id == _lowestBatteryIdSeen) {
         pBatteryFactGroup = &_battery1FactGroup;
-    } else if (bat_status.id == 1) {
+    } else if (bat_status.id == _lowestBatteryIdSeen+1) {
         pBatteryFactGroup = &_battery2FactGroup;
     } else {
         return;
@@ -1668,17 +1640,28 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         }
     }
 
-    pBatteryFactGroup->temperature()->setRawValue(bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
-    pBatteryFactGroup->mahConsumed()->setRawValue(bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
-    pBatteryFactGroup->chargeState()->setRawValue(bat_status.charge_state);
-    pBatteryFactGroup->timeRemaining()->setRawValue(bat_status.time_remaining == 0 ? qQNaN() : bat_status.time_remaining);
+    double current              = bat_status.current_battery == -1 ? qQNaN() : (double)bat_status.current_battery / 100.0;
+    double batteryRemainingPct  = bat_status.battery_remaining == -1 ? qQNaN() : bat_status.battery_remaining;
 
-    // BATTERY_STATUS is currently unreliable on PX4 stack so we rely on SYS_STATUS for partial battery 0 information to work around it
-    if (bat_status.id != 0) {
-        _batteryStatusWorker(bat_status.id,
-                             voltage,
-                             bat_status.current_battery == -1 ? qQNaN() : (double)bat_status.current_battery / 100.0,
-                             bat_status.battery_remaining == -1 ? qQNaN() : bat_status.battery_remaining);
+    pBatteryFactGroup->temperature()->setRawValue       (bat_status.temperature == INT16_MAX ? qQNaN() : static_cast<double>(bat_status.temperature) / 100.0);
+    pBatteryFactGroup->mahConsumed()->setRawValue       (bat_status.current_consumed == -1  ? qQNaN() : bat_status.current_consumed);
+    pBatteryFactGroup->chargeState()->setRawValue       (bat_status.charge_state);
+    pBatteryFactGroup->timeRemaining()->setRawValue     (bat_status.time_remaining == 0 ? qQNaN() : bat_status.time_remaining);
+    pBatteryFactGroup->voltage()->setRawValue           (voltage);
+    pBatteryFactGroup->current()->setRawValue           (current);
+    pBatteryFactGroup->instantPower()->setRawValue      (voltage * current);
+    pBatteryFactGroup->percentRemaining()->setRawValue  (batteryRemainingPct);
+
+    //-- Low battery warning
+    if (bat_status.id == _lowestBatteryIdSeen && !qIsNaN(batteryRemainingPct)) {
+        int warnThreshold = _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt();
+        if (batteryRemainingPct < warnThreshold &&
+                batteryRemainingPct < _lastAnnouncedLowBatteryPercent &&
+                _lastBatteryAnnouncement.elapsed() > (batteryRemainingPct < warnThreshold * 0.5 ? 15000 : 30000)) {
+            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(static_cast<int>(batteryRemainingPct)));
+            _lastBatteryAnnouncement.start();
+            _lastAnnouncedLowBatteryPercent = static_cast<int>(batteryRemainingPct);
+        }
     }
 }
 

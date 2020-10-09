@@ -1346,7 +1346,6 @@ private:
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
-    void _batteryStatusWorker           (int batteryId, double voltage, double current, double batteryRemainingPct);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1578,6 +1577,8 @@ private:
     VehicleSetpointFactGroup        _setpointFactGroup;
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
     VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
+
+    int _lowestBatteryIdSeen = -1;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;

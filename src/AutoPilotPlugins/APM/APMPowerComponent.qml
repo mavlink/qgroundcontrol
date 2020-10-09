@@ -79,9 +79,10 @@ SetupPage {
 
                             QGCLabel { text: qsTr("Battery1 monitor:") }
                             FactComboBox {
-                                id:         monitor1Combo
-                                fact:       _batt1Monitor
-                                indexModel: false
+                                id:             monitor1Combo
+                                fact:           _batt1Monitor
+                                indexModel:     false
+                                sizeToContents: true
                             }
                         }
 
@@ -164,9 +165,10 @@ SetupPage {
 
                             QGCLabel { text: qsTr("Battery2 monitor:") }
                             FactComboBox {
-                                id:         monitor2Combo
-                                fact:       _batt2Monitor
-                                indexModel: false
+                                id:             monitor2Combo
+                                fact:           _batt2Monitor
+                                indexModel:     false
+                                sizeToContents: true
                             }
                         }
 
