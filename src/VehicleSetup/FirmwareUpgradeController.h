@@ -224,6 +224,8 @@ private:
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4CUAVX7Fireware;
+    QHash<FirmwareIdentifier, QString> _rgCUAVNoraFireware;
+
 
     // Hash map for ArduPilot ChibiOS lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
