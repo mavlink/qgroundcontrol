@@ -1036,6 +1036,34 @@ Item {
                             }
                         }
                     }
+                    //-------------------------------------------
+                    //-- Format Storage
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:       qsTr("Storage")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCButton {
+                            text:       qsTr("Format")
+                            onClicked:  formatPrompt.open()
+                            width:      _editFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            MessageDialog {
+                                id:                 formatPrompt
+                                title:              qsTr("Format Camera Storage")
+                                text:               qsTr("Confirm erasing images?")
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                onNo: formatPrompt.close()
+                                onYes: {
+                                    _camera.formatCard()
+                                    formatPrompt.close()
+                                }
+                            }
+                        }
+                    }
                     Rectangle {
                         color:      qgcPal.button
                         height:     1
