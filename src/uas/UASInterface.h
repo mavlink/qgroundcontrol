@@ -49,20 +49,6 @@ signals:
     /** @brief The robot is disconnected **/
     void disconnected();
 
-    /** @brief A value of the robot has changed.
-      *
-      * Typically this is used to send lowlevel information like the battery voltage to the plotting facilities of
-      * the groundstation. The data here should be converted to human-readable values before being passed, so ideally
-      * SI units.
-      *
-      * @param uasId ID of this system
-      * @param name name of the value, e.g. "battery voltage"
-      * @param unit The units this variable is in as an abbreviation. For system-dependent (such as raw ADC values) use "raw", for bitfields use "bits", for true/false or on/off use "bool", for unitless values use "-".
-      * @param value the value that changed
-      * @param msec the timestamp of the message, in milliseconds
-      */
-    void valueChanged(const int uasid, const QString& name, const QString& unit, const QVariant &value,const quint64 msecs);
-
     void parameterUpdate(int uas, int component, QString parameterName, int parameterCount, int parameterId, int type, QVariant value);
 
     /**

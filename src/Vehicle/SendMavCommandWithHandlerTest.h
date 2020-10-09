@@ -10,6 +10,7 @@
 #pragma once
 
 #include "UnitTest.h"
+#include "Vehicle.h"
 
 class SendMavCommandWithHandlerTest : public UnitTest
 {
@@ -17,17 +18,23 @@ class SendMavCommandWithHandlerTest : public UnitTest
     
 private slots:
     void _performTestCases(void);
+    void _compIdAllFailure(void);
+    void _duplicateCommand(void);
 
 private:
     typedef struct {
-        MAV_CMD     command;
-        MAV_RESULT  expectedCommandResult;
-        bool        expectedNoResponseFromVehicle;
+        MAV_CMD                             command;
+        MAV_RESULT                          expectedCommandResult;
+        Vehicle::MavCmdResultFailureCode_t  expectedFailureCode;
+        int                                 expectedSendCount;
     } TestCase_t;
 
     void _testCaseWorker(TestCase_t& testCase);
 
-    static void _mavCmdResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, bool noResponsefromVehicle);
+    static void _mavCmdResultHandler            (void* resultHandlerData, int compId, MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void _compIdAllMavCmdResultHandler   (void* resultHandlerData, int compId, MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
+
+    static bool _handlerCalled;
 
     static TestCase_t _rgTestCases[];
 };
