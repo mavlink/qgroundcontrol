@@ -9320,6 +9320,20 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="IMU_GYRO_FFT_MAX" default="200.0" type="FLOAT">
+      <short_desc>IMU gyro FFT maximum frequency</short_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="IMU_GYRO_FFT_MIN" default="30.0" type="FLOAT">
+      <short_desc>IMU gyro FFT minimum frequency</short_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="IMU_GYRO_NF_BW" default="20.0" type="FLOAT">
       <short_desc>Notch filter bandwidth for gyro</short_desc>
       <long_desc>The frequency width of the stop band for the 2nd order notch filter on the primary gyro. See "IMU_GYRO_NF_FREQ" to activate the filter and to set the notch frequency. Applies to both angular velocity and angular acceleration sent to the controllers.</long_desc>
@@ -10747,6 +10761,10 @@ How often the sensor is readout</short_desc>
       <short_desc>Minimum starting temperature for thermal calibration</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
+    </parameter>
+    <parameter name="SYS_FAC_CAL_MODE" default="0" type="INT32">
+      <short_desc>Enable factory calibration mode</short_desc>
+      <long_desc>If enabled, future sensor calibrations will be stored to /fs/mtd_caldata. Note: this is only supported on boards with a separate calibration storage /fs/mtd_caldata.</long_desc>
     </parameter>
     <parameter name="SYS_FAILURE_EN" default="0" type="INT32">
       <short_desc>Enable failure injection</short_desc>
