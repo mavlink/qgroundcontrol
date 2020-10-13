@@ -866,6 +866,7 @@ void RadioComponentController::_loadSettings(void)
     settings.beginGroup(_settingsGroup);
     _transmitterMode = settings.value(_settingsKeyTransmitterMode, 2).toInt();
     settings.endGroup();
+
     if (!(_transmitterMode == 1 || _transmitterMode == 2)) {
         _transmitterMode = 2;
     }
