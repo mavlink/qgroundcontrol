@@ -49,8 +49,6 @@ signals:
     /** @brief The robot is disconnected **/
     void disconnected();
 
-    void parameterUpdate(int uas, int component, QString parameterName, int parameterCount, int parameterId, int type, QVariant value);
-
     /**
      * @brief The battery status has been updated
      *

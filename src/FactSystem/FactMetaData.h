@@ -194,6 +194,8 @@ public:
 
     static const int kDefaultDecimalPlaces = 3;  ///< Default value for decimal places if not specified/known
     static const int kUnknownDecimalPlaces = -1; ///< Number of decimal places to specify is not known
+    static const char* kDefaultCategory;
+    static const char* kDefaultGroup;
 
     static ValueType_t stringToType(const QString& typeString, bool& unknownType);
     static QString typeToString(ValueType_t type);

@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Fact_H
-#define Fact_H
+#pragma once
 
 #include "FactMetaData.h"
 
@@ -215,5 +210,3 @@ protected:
     FactValueSliderListModel*   _valueSliderModel;
     bool                        _ignoreQGCRebootRequired;
 };
-
-#endif

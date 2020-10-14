@@ -601,6 +601,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         return;
     }
     _ftpManager->mavlinkMessageReceived(message);
+    _parameterManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);
 
@@ -2616,7 +2617,7 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
             emit mavCommandResult(_id, targetCompId, command, MAV_RESULT_FAILED, failureCode);
         }
         if (showError) {
-            qgcApp()->showAppMessage(tr("Unabled to send command: %1. %2").arg(compIdAll ? tr("Internal error") : tr("Waiting on previous response to same command.")));
+            qgcApp()->showAppMessage(tr("Unable to send command: %1.").arg(compIdAll ? tr("Internal error - MAV_COMP_ID_ALL not supported") : tr("Waiting on previous response to same command.")));
         }
 
         return;

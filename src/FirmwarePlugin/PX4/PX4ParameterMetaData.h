@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef PX4ParameterMetaData_H
-#define PX4ParameterMetaData_H
+#pragma once
 
 #include <QObject>
 #include <QMap>
@@ -60,5 +58,3 @@ private:
     bool                                _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
     FactMetaData::NameToMetaDataMap_t   _mapParameterName2FactMetaData;             ///< Maps from a parameter name to FactMetaData
 };
-
-#endif

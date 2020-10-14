@@ -4,6 +4,8 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* Load Parameters From File: Support loading parameters which don't currently existing on the vehicle.
+* Load Parameters From File: Add dialog which shows diff of file and vehicle params. Selective param upload from file.
 * Video Streaming: New camera control supports capturing individual images from the stream
 * Fly: Press and hold on arm button will change it to Force Arm. Click again to force arm.
 * VTOL: General setting for transition distance which affects Plan takeoff, landing pattern creation
