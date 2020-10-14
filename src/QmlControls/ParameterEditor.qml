@@ -26,15 +26,15 @@ Item {
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10 // Dynamic adjusted at runtime
-    property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
+    property bool   _searchFilter:      searchText.text.trim() != "" || controller.showModifiedOnly  ///< true: showing results of search
     property var    _searchResults      ///< List of parameter names from search results
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _showRCToParam:     _activeVehicle.px4Firmware
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
+    property var    _controller:        controller
 
     ParameterEditorController {
-        id:                 controller
-        onShowErrorMessage: mainWindow.showMessageDialog(qsTr("Parameter Load Errors"), errorMsg)
+        id: controller
     }
 
     ExclusiveGroup { id: sectionGroup }
@@ -82,12 +82,11 @@ Item {
         }
 
         QGCCheckBox {
-            text:       qsTr("Show modified only")
-            checked:    controller.showModifiedOnly
+            text:                   qsTr("Show modified only")
             anchors.verticalCenter: parent.verticalCenter
-            onClicked: {
-                controller.showModifiedOnly = !controller.showModifiedOnly
-            }
+            checked:                controller.showModifiedOnly
+            onClicked:              controller.showModifiedOnly = checked
+            visible:                QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
         }
     } // Row - Header
 
@@ -155,7 +154,7 @@ Item {
         pixelAligned:       true
         contentHeight:      groupedViewCategoryColumn.height
         flickableDirection: Flickable.VerticalFlick
-        visible:            !_searchFilter && !controller.showModifiedOnly
+        visible:            !_searchFilter
 
         ColumnLayout {
             id:             groupedViewCategoryColumn
@@ -170,41 +169,36 @@ Item {
                     Layout.fillWidth:   true
                     spacing:            Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
 
-                    readonly property string category: modelData
 
                     SectionHeader {
                         id:             categoryHeader
                         anchors.left:   parent.left
                         anchors.right:  parent.right
-                        text:           category
-                        checked:        controller.currentCategory === text
+                        text:           object.name
+                        checked:        object == controller.currentCategory
                         exclusiveGroup: sectionGroup
 
                         onCheckedChanged: {
                             if (checked) {
-                                controller.currentCategory  = category
-                                controller.currentGroup     = controller.getGroupsForCategory(category)[0]
+                                controller.currentCategory  = object
                             }
                         }
                     }
 
                     Repeater {
-                        model: categoryHeader.checked ? controller.getGroupsForCategory(category) : 0
+                        model: categoryHeader.checked ? object.groups : 0
 
                         QGCButton {
                             width:          ScreenTools.defaultFontPixelWidth * 25
-                            text:           groupName
+                            text:           object.name
                             height:         _rowHeight
-                            checked:        controller.currentGroup === text
+                            checked:        object == controller.currentGroup
                             autoExclusive:  true
-
-                            readonly property string groupName: modelData
 
                             onClicked: {
                                 if (!checked) _rowWidth = 10
                                 checked = true
-                                controller.currentCategory  = category
-                                controller.currentGroup     = groupName
+                                controller.currentGroup = object
                             }
                         }
                     }
@@ -217,7 +211,7 @@ Item {
     QGCListView {
         id:                 editorListView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.left:       (_searchFilter || controller.showModifiedOnly) ? parent.left : groupScroll.right
+        anchors.left:       _searchFilter ? parent.left : groupScroll.right
         anchors.right:      parent.right
         anchors.top:        header.bottom
         anchors.bottom:     parent.bottom
@@ -295,8 +289,10 @@ Item {
         }
 
         onAcceptedForLoad: {
-            controller.loadFromFile(file)
             close()
+            if (controller.buildDiffFromFile(file)) {
+                mainWindow.showPopupDialogFromComponent(parameterDiffDialog)
+            }
         }
     }
 
@@ -353,6 +349,14 @@ Item {
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Ok to reboot vehicle.")
             }
+        }
+    }
+
+    Component {
+        id: parameterDiffDialog
+
+        ParameterDiffDialog {
+            paramController: _controller
         }
     }
 }

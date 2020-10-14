@@ -102,7 +102,11 @@ bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type)
 
 CompInfoParam* ComponentInformationManager::compInfoParam(uint8_t compId)
 {
-    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_PARAMETER) ? qobject_cast<CompInfoParam*>(_compInfoMap[compId][COMP_METADATA_TYPE_PARAMETER]) : nullptr;
+    if (!_compInfoMap.contains(compId)) {
+        // Create default info
+        _compInfoMap[compId][COMP_METADATA_TYPE_PARAMETER] = new CompInfoParam(compId, _vehicle, this);
+    }
+    return qobject_cast<CompInfoParam*>(_compInfoMap[compId][COMP_METADATA_TYPE_PARAMETER]);
 }
 
 CompInfoVersion* ComponentInformationManager::compInfoVersion(uint8_t compId)

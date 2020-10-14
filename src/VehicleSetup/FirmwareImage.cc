@@ -238,7 +238,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QStringList requiredKeys;
     requiredKeys << _jsonBoardIdKey << _jsonImageKey << _jsonImageSizeKey;
     if (!JsonHelper::validateRequiredKeys(px4Json, requiredKeys, errorString)) {
-        emit statusMessage(tr("Firmware file mission required key: %1").arg(errorString));
+        emit statusMessage(tr("Firmware file missing required key: %1").arg(errorString));
         return false;
     }
 
