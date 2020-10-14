@@ -164,6 +164,41 @@ Rectangle {
                     }
                 }
 
+                SectionHeader {
+                    id:             camposHeader
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    text:           qsTr("CAMPOS")
+                    visible:        _missionItem.cameraCalc.campos.value
+                }
+
+                GridLayout {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    columnSpacing:  _margin
+                    rowSpacing:     _margin
+                    columns:        2
+                    visible:        camposHeader.checked && _missionItem.cameraCalc.campos.value
+
+                    QGCLabel { text: qsTr("Positions") }
+                    FactTextField {
+                        fact:                   _missionItem.cameraCalc.camposPositions
+                        Layout.fillWidth:       true
+                    }
+
+                    QGCLabel { text: qsTr("Roll Angle") }
+                    FactTextField {
+                        fact:                   _missionItem.cameraCalc.camposRollAngle
+                        Layout.fillWidth:       true
+                    }
+
+                    QGCLabel { text: qsTr("Pitch Angle") }
+                    FactTextField {
+                        fact:                   _missionItem.cameraCalc.camposPitchAngle
+                        Layout.fillWidth:       true
+                    }
+                }
+
                 QGCButton {
                     text:               qsTr("Rotate Entry Point")
                     onClicked:          _missionItem.rotateEntryPoint();
@@ -195,6 +230,12 @@ Rectangle {
                                 text:       qsTr("Images in turnarounds"),
                                 fact:       _missionItem.cameraTriggerInTurnAround,
                                 enabled:    _missionItem.hoverAndCaptureAllowed ? !_missionItem.hoverAndCapture.rawValue : true,
+                                visible:    true
+                            },
+                            {
+                                text:       qsTr("Enable CAMPOS"),
+                                fact:       _missionItem.cameraCalc.campos,
+                                enabled:    true,
                                 visible:    true
                             },
                             {

@@ -68,6 +68,40 @@
     "min":              0,
     "units":            "m",
     "default":          25
+},
+{
+    "name":             "Campos",
+    "shortDesc": "Camera Auto Mount Pseudo Oblique Solution",
+    "type":             "bool",
+    "default":     false
+},
+{
+    "name":             "CamposPositions",
+    "shortDesc": "Number of positions to move the camera within the roll angle limits",
+    "type":             "double",
+    "min:":             0,
+    "decimalPlaces":    0,
+    "default":     3
+},
+{
+    "name":             "CamposRollAngle",
+    "shortDesc": "The angle limits that the camera will be rolled to left and right of the neutral",
+    "type":             "double",
+    "units":            "deg",
+    "min":              0.0,
+    "max":              90.0,
+    "decimalPlaces":    1,
+    "default":     30.0
+},
+{
+    "name":             "CamposPitchAngle",
+    "shortDesc": "The pitch angle that the camera will remain while in CAMPOS mode",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -180.0,
+    "max":              180.0,
+    "decimalPlaces":    1,
+    "default":     -90.0
 }
 ]
 }

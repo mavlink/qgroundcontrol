@@ -35,7 +35,12 @@ public:
     Q_PROPERTY(Fact*            frontalOverlap              READ frontalOverlap                                                 CONSTANT)
     Q_PROPERTY(Fact*            sideOverlap                 READ sideOverlap                                                    CONSTANT)
     Q_PROPERTY(Fact*            adjustedFootprintSide       READ adjustedFootprintSide                                          CONSTANT)                                   ///< Side footprint adjusted down for overlap
-    Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                                   ///< Frontal footprint adjusted down for overlap
+    Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                               ///< Frontal footprint adjusted down for overlap
+
+    Q_PROPERTY(Fact*            campos                      READ campos                                                         CONSTANT)
+    Q_PROPERTY(Fact*            camposPositions             READ camposPositions                                                CONSTANT)
+    Q_PROPERTY(Fact*            camposRollAngle             READ camposRollAngle                                                CONSTANT)
+    Q_PROPERTY(Fact*            camposPitchAngle            READ camposPitchAngle                                               CONSTANT)
 
     // When we are creating a manual grid we still use CameraCalc to store the manual grid information. It's a bastardization of what
     // CameraCalc is meant for but it greatly simplifies code and persistance of manual grids.
@@ -61,6 +66,11 @@ public:
     Fact* sideOverlap               (void) { return &_sideOverlapFact; }
     Fact* adjustedFootprintSide     (void) { return &_adjustedFootprintSideFact; }
     Fact* adjustedFootprintFrontal  (void) { return &_adjustedFootprintFrontalFact; }
+
+    Fact* campos                    (void) { return &_camposFact; }
+    Fact* camposPositions           (void) { return &_camposPositionsFact; }
+    Fact* camposRollAngle           (void) { return &_camposRollAngleFact; }
+    Fact* camposPitchAngle          (void) { return &_camposPitchAngleFact; }
 
     const Fact* valueSetIsDistance          (void) const { return &_valueSetIsDistanceFact; }
     const Fact* distanceToSurface           (void) const { return &_distanceToSurfaceFact; }
@@ -96,6 +106,11 @@ public:
     static const char* sideOverlapName;
     static const char* adjustedFootprintSideName;
     static const char* adjustedFootprintFrontalName;
+
+    static const char* camposName;
+    static const char* camposPositionsName;
+    static const char* camposRollAngleName;
+    static const char* camposPitchAngleName;
 
 signals:
     void dirtyChanged                       (bool dirty);
@@ -142,6 +157,11 @@ private:
     SettingsFact _adjustedFootprintSideFact;
     SettingsFact _adjustedFootprintFrontalFact;
 
+    SettingsFact    _camposFact;
+    SettingsFact    _camposPositionsFact;
+    SettingsFact    _camposRollAngleFact;
+    SettingsFact    _camposPitchAngleFact;
+
     // The following are deprecated usage and only included in order to convert older formats
 
     enum CameraSpecType {
@@ -151,4 +171,9 @@ private:
     };
 
     static const char* _jsonCameraSpecTypeKey;
+
+    static const char* _jsonCamposKey;
+    static const char* _jsonCamposPositionsKey;
+    static const char* _jsonCamposRollAngleKey;
+    static const char* _jsonCamposPitchAngleKey;
 };

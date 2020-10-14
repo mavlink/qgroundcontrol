@@ -12,6 +12,7 @@
 #include "Vehicle.h"
 #include "CameraMetaData.h"
 #include "PlanMasterController.h"
+#include <cmath>
 
 #include <QQmlEngine>
 
@@ -25,7 +26,17 @@ const char* CameraCalc::sideOverlapName =                   "SideOverlap";
 const char* CameraCalc::adjustedFootprintFrontalName =      "AdjustedFootprintFrontal";
 const char* CameraCalc::adjustedFootprintSideName =         "AdjustedFootprintSide";
 
+const char* CameraCalc::camposName =                 "Campos";
+const char* CameraCalc::camposPositionsName =        "CamposPositions";
+const char* CameraCalc::camposRollAngleName =        "CamposRollAngle";
+const char* CameraCalc::camposPitchAngleName =       "CamposPitchAngle";
+
 const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
+
+const char* CameraCalc::_jsonCamposKey =                         "campos";
+const char* CameraCalc::_jsonCamposPositionsKey =                "camposPositions";
+const char* CameraCalc::_jsonCamposRollAngleKey =                "camposRollAngle";
+const char* CameraCalc::_jsonCamposPitchAngleKey =               "camposPitchAngle";
 
 CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
@@ -39,6 +50,11 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
     , _sideOverlapFact              (settingsGroup, _metaDataMap[sideOverlapName])
     , _adjustedFootprintSideFact    (settingsGroup, _metaDataMap[adjustedFootprintSideName])
     , _adjustedFootprintFrontalFact (settingsGroup, _metaDataMap[adjustedFootprintFrontalName])
+
+    , _camposFact                   (settingsGroup, _metaDataMap[camposName])
+    , _camposPositionsFact          (settingsGroup, _metaDataMap[camposPositionsName])
+    , _camposRollAngleFact          (settingsGroup, _metaDataMap[camposRollAngleName])
+    , _camposPitchAngleFact         (settingsGroup, _metaDataMap[camposPitchAngleName])
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
@@ -51,6 +67,11 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
     connect(&_adjustedFootprintFrontalFact, &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(this,                           &CameraCalc::distanceToSurfaceRelativeChanged,  this, &CameraCalc::_setDirty);
+
+    connect(&_camposFact,                   &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_camposPositionsFact,          &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_camposRollAngleFact,          &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_camposPitchAngleFact,         &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
 
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::_cameraNameChanged);
     connect(&_cameraNameFact,               &Fact::valueChanged,                            this, &CameraCalc::isManualCameraChanged);
@@ -66,6 +87,11 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
     connect(imageHeight(),              &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(focalLength(),              &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(landscape(),                &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
+
+    connect(&_camposFact,               &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
+    connect(&_camposPositionsFact,      &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
+    connect(&_camposRollAngleFact,      &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
+    connect(&_camposPitchAngleFact,     &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
 
     // Build the brand list from known cameras
     _cameraBrandList.append(xlatManualCameraName());
@@ -175,6 +201,18 @@ void CameraCalc::_recalcTriggerDistance(void)
         _imageFootprintSide  =      (imageHeight * imageDensity) / 100.0;
         _imageFootprintFrontal =    (imageWidth  * imageDensity) / 100.0;
     }
+
+    if (_camposFact.rawValue().toBool()) {
+        //find half the angle of view
+        double halfAOV = atan(0.5 * _imageFootprintSide / _distanceToSurfaceFact.rawValue().toDouble());
+
+        //compute the adjusted horizontal field of view with the addition of the roll angle set
+        double camposHFOV = 2 * tan(halfAOV + _camposRollAngleFact.rawValue().toDouble() * M_PI / 180.0) * _distanceToSurfaceFact.rawValue().toDouble();
+
+        _imageFootprintSide = camposHFOV;
+        _imageFootprintFrontal /= _camposPositionsFact.rawValue().toDouble();
+    }
+
     _adjustedFootprintSideFact.setRawValue      (_imageFootprintSide * ((100.0 - _sideOverlapFact.rawValue().toDouble()) / 100.0));
     _adjustedFootprintFrontalFact.setRawValue   (_imageFootprintFrontal * ((100.0 - _frontalOverlapFact.rawValue().toDouble()) / 100.0));
 
@@ -192,6 +230,11 @@ void CameraCalc::save(QJsonObject& json) const
     json[distanceToSurfaceName] =           _distanceToSurfaceFact.rawValue().toDouble();
     json[distanceToSurfaceRelativeName] =   _distanceToSurfaceRelative;
     json[cameraNameName] =                  _cameraNameFact.rawValue().toString();
+
+    json[_jsonCamposKey] =                  _camposFact.rawValue().toBool();
+    json[_jsonCamposPositionsKey] =         _camposPositionsFact.rawValue().toInt();
+    json[_jsonCamposRollAngleKey] =         _camposRollAngleFact.rawValue().toDouble();
+    json[_jsonCamposPitchAngleKey] =        _camposPitchAngleFact.rawValue().toDouble();
 
     if (!isManualCamera()) {
         CameraSpec::save(json);
@@ -233,6 +276,11 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         { adjustedFootprintFrontalName,     QJsonValue::Double, true },
         { distanceToSurfaceName,            QJsonValue::Double, true },
         { distanceToSurfaceRelativeName,    QJsonValue::Bool,   true },
+        
+        { _jsonCamposKey,                   QJsonValue::Bool,   false },
+        { _jsonCamposPositionsKey,          QJsonValue::Double, false },
+        { _jsonCamposRollAngleKey,          QJsonValue::Double, false },
+        { _jsonCamposPitchAngleKey,         QJsonValue::Double, false },
     };
     if (!JsonHelper::validateKeys(v1Json, keyInfoList1, errorString)) {
         return false;
