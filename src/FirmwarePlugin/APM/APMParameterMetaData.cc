@@ -242,9 +242,6 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 QString group = _groupFromParameterName(name);
 
                 QString category = xml.attributes().value("user").toString();
-                if (category.isEmpty()) {
-                    category = QStringLiteral("Advanced");
-                }
 
                 QString shortDescription = xml.attributes().value("humanName").toString();
                 QString longDescription = xml.attributes().value("documentation").toString();
@@ -266,7 +263,9 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
                 qCDebug(APMParameterMetaDataVerboseLog) << "inserting metadata for field" << name;
                 rawMetaData->name = name;
-                rawMetaData->category = category;
+                if (!category.isEmpty()) {
+                    rawMetaData->category = category;
+                }
                 rawMetaData->group = group;
                 rawMetaData->shortDescription = shortDescription;
                 rawMetaData->longDescription = longDescription;
@@ -448,7 +447,9 @@ FactMetaData* APMParameterMetaData::getMetaDataForFact(const QString& name, MAV_
     }
 
     metaData->setName(rawMetaData->name);
-    metaData->setCategory(rawMetaData->category);
+    if (!rawMetaData->category.isEmpty()) {
+        metaData->setCategory(rawMetaData->category);
+    }
     metaData->setGroup(rawMetaData->group);
     metaData->setVehicleRebootRequired(rawMetaData->rebootRequired);
 

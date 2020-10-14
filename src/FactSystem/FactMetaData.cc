@@ -36,9 +36,8 @@ const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 const qreal FactMetaData::UnitConsts_s::ouncesToGrams =         28.3495;
 const qreal FactMetaData::UnitConsts_s::poundsToGrams =         453.592;
 
-
-static const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
-static const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
+const char* FactMetaData::kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
+const char* FactMetaData::kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
 
 const char* FactMetaData::qgcFileType =                 "FactMetaData";
 const char* FactMetaData::_jsonMetaDataDefinesName =    "QGC.MetaData.Defines";

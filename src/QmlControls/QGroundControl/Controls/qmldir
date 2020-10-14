@@ -43,6 +43,7 @@ MissionItemStatus                       1.0 MissionItemStatus.qml
 ModeSwitchDisplay                       1.0 ModeSwitchDisplay.qml
 MultiRotorMotorDisplay                  1.0 MultiRotorMotorDisplay.qml
 OfflineMapButton                        1.0 OfflineMapButton.qml
+ParameterDiffDialog                     1.0 ParameterDiffDialog.qml
 ParameterEditor                         1.0 ParameterEditor.qml
 ParameterEditorDialog                   1.0 ParameterEditorDialog.qml
 PIDTuning                               1.0 PIDTuning.qml

@@ -56,7 +56,6 @@ public:
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     QString             missionCommandOverrides         (QGCMAVLink::VehicleClass_t vehicleClass) const override;
-    QString             getVersionParam                 (void) override { return QString("SYS_PARAM_VER"); }
     FactMetaData*       _getMetaDataForFact             (QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) override;
     QString             _internalParameterMetaDataFile  (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QString(":/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml"); }
     void                _getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) override;

@@ -209,9 +209,6 @@ public:
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void);
 
-    /// Returns the parameter which is used to identify the version number of parameter set
-    virtual QString getVersionParam(void) { return QString(); }
-
     /// Returns the parameter set version info pulled from inside the meta data file. -1 if not found.
     /// Note: The implementation for this must not vary by vehicle type.
     /// Important: Only CompInfoParam code should use this method

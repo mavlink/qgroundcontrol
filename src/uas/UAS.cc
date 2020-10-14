@@ -145,21 +145,6 @@ void UAS::receiveMessage(mavlink_message_t message)
     {
         switch (message.msgid)
         {
-        case MAVLINK_MSG_ID_PARAM_VALUE:
-        {
-            mavlink_param_value_t rawValue;
-            mavlink_msg_param_value_decode(&message, &rawValue);
-            QByteArray bytes(rawValue.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
-            // Construct a string stopping at the first NUL (0) character, else copy the whole
-            // byte array (max MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN, so safe)
-            QString parameterName(bytes);
-            mavlink_param_union_t paramVal;
-            paramVal.param_float = rawValue.param_value;
-            paramVal.type = rawValue.param_type;
-
-            processParamValueMsg(message, parameterName,rawValue,paramVal);
-         }
-            break;
 
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
         {
@@ -522,61 +507,6 @@ quint64 UAS::getUptime() const
     {
         return QGC::groundTimeMilliseconds() - startTime;
     }
-}
-
-//TODO update this to use the parameter manager / param data model instead
-void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName, const mavlink_param_value_t& rawValue,  mavlink_param_union_t& paramUnion)
-{
-    int compId = msg.compid;
-
-    QVariant paramValue;
-
-    // Insert with correct type
-
-    switch (rawValue.param_type) {
-        case MAV_PARAM_TYPE_REAL32:
-            paramValue = QVariant(paramUnion.param_float);
-            break;
-
-        case MAV_PARAM_TYPE_UINT8:
-            paramValue = QVariant(paramUnion.param_uint8);
-            break;
-
-        case MAV_PARAM_TYPE_INT8:
-            paramValue = QVariant(paramUnion.param_int8);
-            break;
-
-        case MAV_PARAM_TYPE_UINT16:
-            paramValue = QVariant(paramUnion.param_uint16);
-            break;
-
-        case MAV_PARAM_TYPE_INT16:
-            paramValue = QVariant(paramUnion.param_int16);
-            break;
-
-        case MAV_PARAM_TYPE_UINT32:
-            paramValue = QVariant(paramUnion.param_uint32);
-            break;
-
-        case MAV_PARAM_TYPE_INT32:
-            paramValue = QVariant(paramUnion.param_int32);
-            break;
-
-        //-- Note: These are not handled above:
-        //
-        //   MAV_PARAM_TYPE_UINT64
-        //   MAV_PARAM_TYPE_INT64
-        //   MAV_PARAM_TYPE_REAL64
-        //
-        //   No space in message (the only storage allocation is a "float") and not present in mavlink_param_union_t
-
-        default:
-            qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << rawValue.param_type;
-    }
-
-    qCDebug(UASLog) << "Received PARAM_VALUE" << paramName << paramValue << rawValue.param_type;
-
-    emit parameterUpdate(uasId, compId, paramName, rawValue.param_count, rawValue.param_index, rawValue.param_type, paramValue);
 }
 
 /**

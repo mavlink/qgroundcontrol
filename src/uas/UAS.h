@@ -196,8 +196,6 @@ protected:
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 
-    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
-
     bool connectionLost; ///< Flag indicates a timed out connection
     quint64 connectionLossTime; ///< Time the connection was interrupted
     quint64 lastVoltageWarning; ///< Time at which the last voltage warning occurred

@@ -12,6 +12,7 @@ TabButton {
     id:             control
     font.pointSize: ScreenTools.defaultFontPointSize
     font.family:    ScreenTools.normalFontFamily
+    icon.color:     _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
 
     property bool _showHighlight: (pressed | hovered | checked)
 
@@ -22,7 +23,6 @@ TabButton {
         mirrored:   control.mirrored
         display:    control.display
         icon:       control.icon
-        text:       control.text
         font:       control.font
         color:      _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
     }
