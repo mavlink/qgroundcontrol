@@ -1018,7 +1018,23 @@ void TransectStyleComplexItem::_appendConditionGate(QList<MissionItem*>& items, 
 
 void TransectStyleComplexItem::_appendCameraTriggerDistance(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, float triggerDistance)
 {
-    MissionItem* item = new MissionItem(seqNum++,
+    MissionItem* item ;
+    if (_cameraCalc.campos()->rawValue().toBool()) {
+        item = new MissionItem(seqNum++,
+                                        MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                        MAV_FRAME_MISSION,
+                                        triggerDistance,
+                                        0,                                                      // shutter integration (ignore)
+                                        1,                                                      // 1 - trigger one image immediately, both and entry and exit to get full coverage
+                                        _cameraCalc.camposPositions()->rawValue().toInt(),      // number of positions to be used in CAMPOS mode
+                                        _cameraCalc.camposRollAngle()->rawValue().toDouble(),   // the angle limits to roll the camera to left and right of neutral
+                                        _cameraCalc.camposPitchAngle()->rawValue().toDouble(),  // the fixed pitch angle
+                                        0,                                                      // param7 - unused
+                                        true,                                                   // autoContinue
+                                        false,                                                  // isCurrentItem
+                                        missionItemParent);        
+    } else {
+        item = new MissionItem(seqNum++,
                                         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                         MAV_FRAME_MISSION,
                                         triggerDistance,
@@ -1028,6 +1044,7 @@ void TransectStyleComplexItem::_appendCameraTriggerDistance(QList<MissionItem*>&
                                         true,                           // autoContinue
                                         false,                          // isCurrentItem
                                         missionItemParent);
+    }
     items.append(item);
 }
 
