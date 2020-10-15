@@ -373,8 +373,12 @@ Rectangle {
 
             QGCViewDialog {
                 function accept() {
-                    if (presetNameField.text != "") {
-                        _missionItem.savePreset(presetNameField.text)
+                    if (presetNameField.text.includes("/")){  // form validation because savePreset will fail silently if presetNameField includes "/"
+                        presetNameError.text = "/ is not allowed in preset names"
+                    } else if(presetNameField.text === ""){
+                        presetNameError.text = "Preset name must not be empty"
+                    } else {
+                        missionItem.savePreset(presetNameField.text)
                         hideDialog()
                     }
                 }
@@ -397,6 +401,10 @@ Rectangle {
                     QGCTextField {
                         id:                 presetNameField
                         Layout.fillWidth:   true
+                    }
+                    QGCLabel {
+                        id:                 presetNameError
+                        color:              "red"
                     }
                 }
             }
