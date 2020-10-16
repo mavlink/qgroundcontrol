@@ -106,6 +106,8 @@ void TCPLink::disconnect(void)
     quit();
     wait();
     if (_socket) {
+        // This prevents stale signal from calling the link after it has been deleted
+        QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
         _socketIsConnected = false;
         _socket->disconnectFromHost(); // Disconnect tcp
         _socket->waitForDisconnected();        
