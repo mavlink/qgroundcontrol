@@ -418,7 +418,8 @@ SetupPage {
                     title:   qsTr("Calculate Voltage Divider")
                     buttons: StandardButton.Close
 
-                    property var _controller: controller
+                    property var        _controller:        controller
+                    property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery" + (dialogProperties.batteryIndex - 1))
 
                     BatteryParams {
                         id:             batParams
@@ -443,7 +444,7 @@ SetupPage {
                             QGCTextField { id: measuredVoltage }
 
                             QGCLabel { text: qsTr("Vehicle voltage:") }
-                            QGCLabel { text: controller.vehicle.battery.voltage.valueString }
+                            QGCLabel { text: _batteryFactGroup.voltage.valueString }
 
                             QGCLabel { text: qsTr("Voltage divider:") }
                             FactLabel { fact: batParams.battVoltageDivider }
@@ -457,7 +458,7 @@ SetupPage {
                                 if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue)) {
                                     return
                                 }
-                                var newVoltageDivider = (measuredVoltageValue * batParams.battVoltageDivider.value) / controller.vehicle.battery.voltage.value
+                                var newVoltageDivider = (measuredVoltageValue * batParams.battVoltageDivider.value) / _batteryFactGroup.voltage.value
                                 if (newVoltageDivider > 0) {
                                     batParams.battVoltageDivider.value = newVoltageDivider
                                 }
@@ -474,7 +475,8 @@ SetupPage {
                     title:   qsTr("Calculate Amps per Volt")
                     buttons: StandardButton.Close
 
-                    property var _controller: controller
+                    property var        _controller:        controller
+                    property FactGroup  _batteryFactGroup:  controller.vehicle.getFactGroup("battery" + (dialogProperties.batteryIndex - 1))
 
                     BatteryParams {
                         id:             batParams
@@ -499,7 +501,7 @@ SetupPage {
                             QGCTextField { id: measuredCurrent }
 
                             QGCLabel { text: qsTr("Vehicle current:") }
-                            QGCLabel { text: controller.vehicle.battery.current.valueString }
+                            QGCLabel { text: _batteryFactGroup.current.valueString }
 
                             QGCLabel { text: qsTr("Amps per volt:") }
                             FactLabel { fact: batParams.battAmpsPerVolt }
@@ -513,7 +515,7 @@ SetupPage {
                                 if (measuredCurrentValue === 0 || isNaN(measuredCurrentValue)) {
                                     return
                                 }
-                                var newAmpsPerVolt = (measuredCurrentValue * batParams.battAmpsPerVolt.value) / controller.vehicle.battery.current.value
+                                var newAmpsPerVolt = (measuredCurrentValue * batParams.battAmpsPerVolt.value) / _batteryFactGroup.current.value
                                 if (newAmpsPerVolt != 0) {
                                     batParams.battAmpsPerVolt.value = newAmpsPerVolt
                                 }
