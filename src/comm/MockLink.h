@@ -66,6 +66,8 @@ public:
     void        copyFrom        (LinkConfiguration* source) override;
     void        loadSettings    (QSettings& settings, const QString& root) override;
     void        saveSettings    (QSettings& settings, const QString& root) override;
+    bool        isAutoConnectAllowed (void) override                                        { return false; }
+    bool        isHighLatencyAllowed (void) override                                        { return false; }
     QString     settingsURL     (void) override                                         { return "MockLinkSettings.qml"; }
     QString     settingsTitle   (void) override                                         { return tr("Mock Link Settings"); }
 

@@ -95,14 +95,14 @@ public:
      * Is Auto Connect allowed for this type?
      * @return True if this type can be set as an Auto Connect configuration
      */
-    virtual bool isAutoConnectAllowed() { return false; }
+    virtual bool isAutoConnectAllowed() { return true; }
 
     /*!
      *
      * Is High Latency allowed for this type?
      * @return True if this type can be set as an High Latency configuration
      */
-    virtual bool isHighLatencyAllowed() { return false; }
+    virtual bool isHighLatencyAllowed() { return true; }
 
     /*!
      * @brief Connection type
