@@ -241,7 +241,7 @@ void TerrainAirMapQuery::_parsePathData(const QJsonValue& pathJson)
     double lonStep = stepArray[1].toDouble();
 
     QList<double> heights;
-    for (const QJsonValue& profileValue: profileArray) {
+    for (QJsonValue profileValue: profileArray) {
         heights.append(profileValue.toDouble());
     }
 
