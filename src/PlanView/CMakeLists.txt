@@ -26,7 +26,13 @@ add_custom_target(PlanViewQml
 		StructureScanMapVisual.qml
 		SurveyItemEditor.qml
 		SurveyMapVisual.qml
+		TakeoffItemMapVisual.qml
+		TerrainStatus.qml
 		TransectStyleComplexItemStats.qml
+		TransectStyleComplexItemTabBar.qml
+		TransectStyleComplexItemTerrainFollow.qml
 		TransectStyleMapVisuals.qml
+		VTOLLandingPatternEditor.qml
+		VTOLLandingPatternMapVisual.qml
 )
 
