@@ -37,6 +37,8 @@ add_custom_target(FligthDisplayQml
 		PreFlightRCCheck.qml
 		PreFlightSensorsHealthCheck.qml
 		PreFlightSoundCheck.qml
+		ProximityRadarValues.qml
+		ProximityRadarVideoView.qml
 		RoverChecklist.qml
 		SubChecklist.qml
 		TelemetryValuesBar.qml

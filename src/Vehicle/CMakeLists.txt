@@ -4,14 +4,14 @@ if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
 		FTPManagerTest.cc
 		FTPManagerTest.h
-		InitialConnectTest.cc
-		InitialConnectTest.h
 		RequestMessageTest.cc
 		RequestMessageTest.h
 		SendMavCommandWithHandlerTest.cc
 		SendMavCommandWithHandlerTest.h
 		SendMavCommandWithSignallingTest.cc
 		SendMavCommandWithSignallingTest.h
+		VehicleLinkManagerTest.cc
+		VehicleLinkManagerTest.h
 	)
 endif()
 
