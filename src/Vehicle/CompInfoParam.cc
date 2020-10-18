@@ -67,7 +67,7 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
     }
 
     QJsonArray rgParameters = jsonObj[_jsonParametersKey].toArray();
-    for (const QJsonValue& parameterValue: rgParameters) {
+    for (QJsonValue parameterValue: rgParameters) {
         QMap<QString, QString> emptyDefineMap;
 
         if (!parameterValue.isObject()) {
