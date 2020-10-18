@@ -10,6 +10,10 @@ if(BUILD_TESTING)
 		CorridorScanComplexItemTest.h
 		FWLandingPatternTest.cc
 		FWLandingPatternTest.h
+		LandingComplexItemTest.cc
+		LandingComplexItemTest.h
+		MissionCommandTreeEditorTest.cc
+		MissionCommandTreeEditorTest.h
 		MissionCommandTreeTest.cc
 		MissionCommandTreeTest.h
 		MissionControllerManagerTest.cc
@@ -38,10 +42,10 @@ if(BUILD_TESTING)
 		StructureScanComplexItemTest.h
 		SurveyComplexItemTest.cc
 		SurveyComplexItemTest.h
-		TransectStyleComplexItemTest.cc
-		TransectStyleComplexItemTest.h
 		TransectStyleComplexItemTestBase.cc
 		TransectStyleComplexItemTestBase.h
+		TransectStyleComplexItemTest.cc
+		TransectStyleComplexItemTest.h
 		VisualMissionItemTest.cc
 		VisualMissionItemTest.h
 	)
@@ -105,11 +109,12 @@ add_library(MissionManager
 	QGCMapPolyline.cc
 	QGCMapPolyline.h
 	RallyPoint.cc
-	RallyPoint.h
 	RallyPointController.cc
 	RallyPointController.h
+	RallyPoint.h
 	RallyPointManager.cc
 	RallyPointManager.h
+	Section.h
 	SimpleMissionItem.cc
 	SimpleMissionItem.h
 	SpeedSection.cc
@@ -138,8 +143,10 @@ add_library(MissionManager
 
 add_custom_Target(MisionManagerQml
 	SOURCES
-		QGCMapCircleVisuals.qml  
-		QGCMapPolygonVisuals.qml  
+		MapLineArrow.qml
+		MissionCommandTreeEditorTestWindow.qml
+		QGCMapCircleVisuals.qml
+		QGCMapPolygonVisuals.qml
 		QGCMapPolylineVisuals.qml
 )
 

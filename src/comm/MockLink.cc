@@ -436,7 +436,9 @@ void MockLink::_sendBatteryStatus(void)
                 _battery1PctRemaining,
                 _battery1TimeRemaining,
                 _battery1ChargeState,
-                rgVoltagesExtNone);
+                rgVoltagesExtNone,
+                0, // MAV_BATTERY_MODE
+                0); // MAV_BATTERY_FAULT
     respondWithMavlinkMessage(msg);
 
     mavlink_msg_battery_status_pack_chan(
@@ -455,7 +457,10 @@ void MockLink::_sendBatteryStatus(void)
                 _battery2PctRemaining,
                 _battery2TimeRemaining,
                 _battery2ChargeState,
-                rgVoltagesExtNone);
+                rgVoltagesExtNone,
+                0, // MAV_BATTERY_MODE
+                0); // MAV_BATTERY_FAULT
+
     respondWithMavlinkMessage(msg);
 }
 
