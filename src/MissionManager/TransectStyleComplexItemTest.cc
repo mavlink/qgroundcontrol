@@ -221,7 +221,7 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void) {
     QCOMPARE(_transectStyleItem->transects().size(), 1);
     for (const auto& transect : _transectStyleItem->transects()) {
         QCOMPARE(transect.size(), 4);
-        for (const auto pt : transect) {
+        for (const auto& pt : transect) {
             QCOMPARE(pt.coord.altitude(), expectedTerrainValues.front());
             expectedTerrainValues.pop_front();
         }
