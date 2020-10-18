@@ -58,6 +58,8 @@ add_library(Vehicle
 	VehicleGPSFactGroup.cc
 	VehicleGPSFactGroup.h
 	Vehicle.h
+	VehicleLinkManager.cc
+	VehicleLinkManager.h
 	VehicleObjectAvoidance.cc
 	VehicleObjectAvoidance.h
 	VehicleSetpointFactGroup.cc
