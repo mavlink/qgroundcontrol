@@ -79,6 +79,8 @@ void SerialLink::_writeBytes(const QByteArray data)
 void SerialLink::disconnect(void)
 {
     if (_port) {
+        // This prevents stale signals from calling the link after it has been deleted
+        QObject::disconnect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
         _port->close();
         _port->deleteLater();
         _port = nullptr;

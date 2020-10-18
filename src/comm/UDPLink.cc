@@ -222,6 +222,8 @@ void UDPLink::disconnect(void)
     quit();
     wait();
     if (_socket) {
+        // This prevents stale signal from calling the link after it has been deleted
+        QObject::disconnect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         // Make sure delete happen on correct thread
         _socket->deleteLater();
         _socket = nullptr;
