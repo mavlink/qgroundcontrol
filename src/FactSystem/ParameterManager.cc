@@ -390,8 +390,6 @@ void ParameterManager::_handleParamValue(int componentId, QString parameterName,
         emit factAdded(componentId, fact);
     }
 
-    _dataMutex.unlock();
-
     fact->_containerSetRawValue(parameterValue);
 
     // Update param cache. The param cache is only used on PX4 Firmware since ArduPilot and Solo have volatile params
@@ -416,8 +414,6 @@ void ParameterManager::_handleParamValue(int componentId, QString parameterName,
 /// Writes the parameter update to mavlink, sets up for write wait
 void ParameterManager::_factRawValueUpdateWorker(int componentId, const QString& name, FactMetaData::ValueType_t valueType, const QVariant& rawValue)
 {
-    _dataMutex.lock();
-
     if (_waitingWriteParamNameMap.contains(componentId)) {
         if (_waitingWriteParamNameMap[componentId].contains(name)) {
             _waitingWriteParamNameMap[componentId].remove(name);
@@ -431,8 +427,6 @@ void ParameterManager::_factRawValueUpdateWorker(int componentId, const QString&
     } else {
         qWarning() << "Internal error ParameterManager::_factValueUpdateWorker: component id not found" << componentId;
     }
-
-    _dataMutex.unlock();
 
     _sendParamSetToVehicle(componentId, name, valueType, rawValue);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Update parameter (_waitingParamTimeoutTimer started) - compId:name:rawValue" << componentId << name << rawValue;
@@ -465,8 +459,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
         emit missingParametersChanged(_missingParameters);
     }
 
-    _dataMutex.lock();
-
     if (!_initialLoadComplete) {
         _initialRequestTimeoutTimer.start();
     }
@@ -481,8 +473,6 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
             _waitingReadParamIndexMap[cid][waitingIndex] = 0;
         }
     }
-
-    _dataMutex.unlock();
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
@@ -517,8 +507,6 @@ void ParameterManager::refreshParameter(int componentId, const QString& paramNam
     componentId = _actualComponentId(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParameter - name:" << paramName << ")";
 
-    _dataMutex.lock();
-
     if (_waitingReadParamNameMap.contains(componentId)) {
         QString mappedParamName = _remapParamNameToVersion(paramName);
 
@@ -534,8 +522,6 @@ void ParameterManager::refreshParameter(int componentId, const QString& paramNam
     } else {
         qWarning() << "Internal error";
     }
-
-    _dataMutex.unlock();
 
     _readParameterRaw(componentId, paramName, -1);
 }
