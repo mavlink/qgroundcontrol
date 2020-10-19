@@ -115,9 +115,8 @@ class SerialLink : public LinkInterface
 
 public:
     // LinkInterface overrides
-    QString getName     (void) const override;
-    bool    isConnected (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
     /// Don't even think of calling this method!
     QSerialPort* _hackAccessToPort(void) { return _port; }

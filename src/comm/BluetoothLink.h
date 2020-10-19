@@ -129,9 +129,8 @@ public:
     void run(void) override;
 
     // LinkConfiguration overrides
-    bool    isConnected (void) const override;
-    QString getName     (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
 public slots:
     void    readBytes           (void);
