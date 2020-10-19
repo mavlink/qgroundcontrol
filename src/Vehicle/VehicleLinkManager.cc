@@ -171,7 +171,7 @@ void VehicleLinkManager::_addLink(LinkInterface* link)
         qCWarning(VehicleLinkManagerLog) << "_addLink call with link which is already in the list";
         return;
     } else {
-        qCDebug(VehicleLinkManagerLog) << "_addLink:" << link->getName() << QString("%1").arg((qulonglong)link, 0, 16);
+        qCDebug(VehicleLinkManagerLog) << "_addLink:" << link->linkConfiguration()->name() << QString("%1").arg((qulonglong)link, 0, 16);
 
         link->addVehicleReference();
 
