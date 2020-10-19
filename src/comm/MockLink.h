@@ -117,9 +117,8 @@ public:
     MockLinkFTP* mockLinkFTP(void) { return _mockLinkFTP; }
 
     // Overrides from LinkInterface
-    QString getName             (void) const override { return _name; }
-    bool    isConnected         (void) const override { return _connected; }
-    void    disconnect          (void) override;
+    bool isConnected(void) const override { return _connected; }
+    void disconnect (void) override;
 
     /// Sets a failure mode for unit testingqgcm
     ///     @param failureMode Type of failure to simulate

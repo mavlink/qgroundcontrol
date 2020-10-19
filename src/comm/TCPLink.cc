@@ -107,7 +107,7 @@ void TCPLink::disconnect(void)
     wait();
     if (_socket) {
         // This prevents stale signal from calling the link after it has been deleted
-        QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
+        QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
         _socketIsConnected = false;
         _socket->disconnectFromHost(); // Disconnect tcp
         _socket->waitForDisconnected();        
@@ -155,7 +155,7 @@ bool TCPLink::_hardwareConnect()
         // Whether a failed connection emits an error signal or not is platform specific.
         // So in cases where it is not emitted, we emit one ourselves.
         if (errorSpy.count() == 0) {
-            emit communicationError(tr("Link Error"), tr("Error on link %1. Connection failed").arg(getName()));
+            emit communicationError(tr("Link Error"), tr("Error on link %1. Connection failed").arg(_config->name()));
         }
         delete _socket;
         _socket = nullptr;
@@ -169,7 +169,7 @@ bool TCPLink::_hardwareConnect()
 void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 {
     Q_UNUSED(socketError);
-    emit communicationError(tr("Link Error"), tr("Error on link %1. Error on socket: %2.").arg(getName()).arg(_socket->errorString()));
+    emit communicationError(tr("Link Error"), tr("Error on link %1. Error on socket: %2.").arg(_config->name()).arg(_socket->errorString()));
 }
 
 /**
@@ -180,11 +180,6 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 bool TCPLink::isConnected() const
 {
     return _socketIsConnected;
-}
-
-QString TCPLink::getName() const
-{
-    return _tcpConfig->name();
 }
 
 void TCPLink::waitForBytesWritten(int msecs)

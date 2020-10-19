@@ -112,11 +112,6 @@ void UDPLink::run()
     }
 }
 
-QString UDPLink::getName() const
-{
-    return _udpConfig->name();
-}
-
 bool UDPLink::_isIpLocal(const QHostAddress& add)
 {
     // In simulation and testing setups the vehicle and the GCS can be

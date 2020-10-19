@@ -181,8 +181,6 @@ private:
     QTimer _initialRequestTimeoutTimer;
     QTimer _waitingParamTimeoutTimer;
 
-    QMutex _dataMutex;
-
     Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     static const char* _jsonParametersKey;
