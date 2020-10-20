@@ -72,72 +72,74 @@ WindowsBuild {
 }
 
 LinuxBuild {
-    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
+    !contains (CONFIG, QGC_LINUX_DISABLE_QT_INSTALL) {
+        QMAKE_POST_LINK += && mkdir -p $$DESTDIR/Qt/libs && mkdir -p $$DESTDIR/Qt/plugins
 
-    # QT_INSTALL_LIBS
-    QT_LIB_LIST += \
-        libQt5Charts.so.5 \
-        libQt5Core.so.5 \
-        libQt5DBus.so.5 \
-        libQt5Gui.so.5 \
-        libQt5Location.so.5 \
-        libQt5Multimedia.so.5 \
-        libQt5MultimediaQuick.so.5 \
-        libQt5Network.so.5 \
-        libQt5OpenGL.so.5 \
-        libQt5Positioning.so.5 \
-        libQt5PositioningQuick.so.5 \
-        libQt5PrintSupport.so.5 \
-        libQt5Qml.so.5 \
-        libQt5Quick.so.5 \
-        libQt5QuickControls2.so.5 \
-        libQt5QuickTemplates2.so.5 \
-        libQt5QuickWidgets.so.5 \
-        libQt5SerialPort.so.5 \
-        libQt5Sql.so.5 \
-        libQt5Svg.so.5 \
-        libQt5Test.so.5 \
-        libQt5Widgets.so.5 \
-        libQt5X11Extras.so.5 \
-        libQt5XcbQpa.so.5 \
-        libQt5Xml.so.5 \
-        libicui18n.so* \
-        libQt5TextToSpeech.so.5
-
-    !contains(DEFINES, __rasp_pi2__) {
-        # Some Qt distributions link with *.so.56
+        # QT_INSTALL_LIBS
         QT_LIB_LIST += \
-            libicudata.so.56 \
-            libicui18n.so.56 \
-            libicuuc.so.56
+            libQt5Charts.so.5 \
+            libQt5Core.so.5 \
+            libQt5DBus.so.5 \
+            libQt5Gui.so.5 \
+            libQt5Location.so.5 \
+            libQt5Multimedia.so.5 \
+            libQt5MultimediaQuick.so.5 \
+            libQt5Network.so.5 \
+            libQt5OpenGL.so.5 \
+            libQt5Positioning.so.5 \
+            libQt5PositioningQuick.so.5 \
+            libQt5PrintSupport.so.5 \
+            libQt5Qml.so.5 \
+            libQt5Quick.so.5 \
+            libQt5QuickControls2.so.5 \
+            libQt5QuickTemplates2.so.5 \
+            libQt5QuickWidgets.so.5 \
+            libQt5SerialPort.so.5 \
+            libQt5Sql.so.5 \
+            libQt5Svg.so.5 \
+            libQt5Test.so.5 \
+            libQt5Widgets.so.5 \
+            libQt5X11Extras.so.5 \
+            libQt5XcbQpa.so.5 \
+            libQt5Xml.so.5 \
+            libicui18n.so* \
+            libQt5TextToSpeech.so.5
+
+        !contains(DEFINES, __rasp_pi2__) {
+            # Some Qt distributions link with *.so.56
+            QT_LIB_LIST += \
+                libicudata.so.56 \
+                libicui18n.so.56 \
+                libicuuc.so.56
+        }
+
+        for(QT_LIB, QT_LIB_LIST) {
+            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
+        }
+
+        # QT_INSTALL_PLUGINS
+        QT_PLUGIN_LIST = \
+            bearer \
+            geoservices \
+            iconengines \
+            imageformats \
+            platforminputcontexts \
+            platforms \
+            position \
+            sqldrivers \
+            texttospeech
+
+        !contains(DEFINES, __rasp_pi2__) {
+            QT_PLUGIN_LIST += xcbglintegrations
+        }
+
+        for(QT_PLUGIN, QT_PLUGIN_LIST) {
+            QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
+        }
+
+        # QT_INSTALL_QML
+        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
     }
-
-    for(QT_LIB, QT_LIB_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
-    }
-
-    # QT_INSTALL_PLUGINS
-    QT_PLUGIN_LIST = \
-        bearer \
-        geoservices \
-        iconengines \
-        imageformats \
-        platforminputcontexts \
-        platforms \
-        position \
-        sqldrivers \
-        texttospeech
-
-    !contains(DEFINES, __rasp_pi2__) {
-        QT_PLUGIN_LIST += xcbglintegrations
-    }
-
-    for(QT_PLUGIN, QT_PLUGIN_LIST) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_PLUGINS]/$$QT_PLUGIN $$DESTDIR/Qt/plugins/
-    }
-
-    # QT_INSTALL_QML
-    QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
 
     # Airmap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
