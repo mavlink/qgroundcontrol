@@ -145,7 +145,7 @@ Item {
         var width = initialVertices[0].distanceTo(initialVertices[1])
         var height = initialVertices[1].distanceTo(initialVertices[2])
         var radius = Math.min(width, height) / 2
-        var center = initialVertices[4]
+        var center = initialVertices[0].atDistanceAndAzimuth(width / 2, 90).atDistanceAndAzimuth(height / 2, 180)
         _createCircularPolygon(center, radius)
     }
 
