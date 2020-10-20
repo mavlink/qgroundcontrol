@@ -33,7 +33,9 @@ Rectangle {
     property Fact _savePath:                            QGroundControl.settingsManager.appSettings.savePath
     property Fact _appFontPointSize:                    QGroundControl.settingsManager.appSettings.appFontPointSize
     property Fact _userBrandImageIndoor:                QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
+    property Fact _userBrandImageIndoorMargin:          QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoorMargin
     property Fact _userBrandImageOutdoor:               QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
+    property Fact _userBrandImageOutdoorMargin:         QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoorMargin
     property Fact _virtualJoystick:                     QGroundControl.settingsManager.appSettings.virtualJoystick
     property Fact _virtualJoystickAutoCenterThrottle:   QGroundControl.settingsManager.appSettings.virtualJoystickAutoCenterThrottle
 
@@ -61,6 +63,7 @@ Rectangle {
 
     property string gpsDisabled: "Disabled"
     property string gpsUdpPort:  "UDP Port"
+
 
     readonly property real _internalWidthRatio: 0.8
 
@@ -1058,6 +1061,24 @@ Rectangle {
                             }
 
                             QGCLabel {
+                                text:           qsTr("Indoor Image Margin")
+                                visible:        userBrandImageIndoorMargin.visible
+                            }
+                            SpinBox {
+                                id:                     userBrandImageIndoorMargin
+                                decimals:               0
+                                value:                  _userBrandImageIndoorMargin.value > 0 ? _userBrandImageIndoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
+                                minimumValue: 1
+                                maximumValue: 20
+                                onValueChanged:  {
+                                    _userBrandImageIndoorMargin.value = value
+                                    userBrandImageIndoorMargin.value = value
+                                }
+                                Layout.columnSpan: 2
+                            }
+                            
+
+                            QGCLabel {
                                 text:       qsTr("Outdoor Image")
                                 visible:    _userBrandImageOutdoor.visible
                             }
@@ -1078,6 +1099,25 @@ Rectangle {
                                     onAcceptedForLoad:  _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }
                             }
+
+
+                            QGCLabel {
+                                text:           qsTr("Outdoor Image Margin")
+                                visible:        userBrandImageOutdoorMargin.visible
+                            }
+                            SpinBox {
+                                id:                     userBrandImageOutdoorMargin
+                                decimals:               0
+                                value:                  _userBrandImageOutdoorMargin.value > 0 ? _userBrandImageOutdoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
+                                minimumValue: 1
+                                maximumValue: 20
+                                onValueChanged:  {
+                                    _userBrandImageOutdoorMargin.value = value
+                                    userBrandImageOutdoorMargin.value = value
+                                }
+                                Layout.columnSpan: 2
+                            }
+
                             QGCButton {
                                 text:               qsTr("Reset Default Brand Image")
                                 Layout.columnSpan:  3
@@ -1085,6 +1125,8 @@ Rectangle {
                                 onClicked:  {
                                     _userBrandImageIndoor.rawValue = ""
                                     _userBrandImageOutdoor.rawValue = ""
+                                    userBrandImageIndoorMargin.value = ScreenTools.defaultFontPixelHeight * 0.66
+                                    userBrandImageOutdoorMargin.value = ScreenTools.defaultFontPixelHeight * 0.66
                                 }
                             }
                         }

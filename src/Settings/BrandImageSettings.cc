@@ -18,4 +18,6 @@ DECLARE_SETTINGGROUP(BrandImage, "Branding")
 }
 
 DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageIndoor)
+DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageIndoorMargin)
 DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageOutdoor)
+DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageOutdoorMargin)

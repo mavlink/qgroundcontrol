@@ -114,7 +114,7 @@ Rectangle {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+        anchors.margins:        _brandImageMargin
         visible:                currentToolbar !== planViewToolbar && _activeVehicle && !_communicationLost && x > (toolsFlickable.x + toolsFlickable.contentWidth + ScreenTools.defaultFontPixelWidth)
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
@@ -123,11 +123,14 @@ Rectangle {
         property bool   _outdoorPalette:        qgcPal.globalTheme === QGCPalette.Light
         property bool   _corePluginBranding:    QGroundControl.corePlugin.brandImageIndoor.length != 0
         property string _userBrandImageIndoor:  QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor.value
+        property double _userBrandImageIndoorMargin:  QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoorMargin.value > 0 ? QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
         property string _userBrandImageOutdoor: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor.value
+        property double _userBrandImageOutdoorMargin: QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoorMargin.value > 0 ? QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
         property bool   _userBrandingIndoor:    _userBrandImageIndoor.length != 0
         property bool   _userBrandingOutdoor:   _userBrandImageOutdoor.length != 0
         property string _brandImageIndoor:      brandImageIndoor()
         property string _brandImageOutdoor:     brandImageOutdoor()
+        property string _brandImageMargin:      brandImageMargin()
 
         function brandImageIndoor() {
             if (_userBrandingIndoor) {
@@ -146,6 +149,30 @@ Rectangle {
         }
 
         function brandImageOutdoor() {
+            if (_userBrandingOutdoor) {
+                return _userBrandingOutdoor
+            } else {
+                if (_userBrandingIndoor) {
+                    return _userBrandingIndoor
+                } else {
+                    if (_corePluginBranding) {
+                        return QGroundControl.corePlugin.brandImageOutdoor
+                    } else {
+                        return _activeVehicle ? _activeVehicle.brandImageOutdoor : ""
+                    }
+                }
+            }
+        }  
+        
+        function brandImageMargin() {
+            if (_userBrandingIndoor) {
+                return _userBrandImageIndoorMargin
+            } else {
+                return _userBrandImageOutdoorMargin
+            }
+        }
+
+        function brandImageOutdoorMargin() {
             if (_userBrandingOutdoor) {
                 return _userBrandingOutdoor
             } else {

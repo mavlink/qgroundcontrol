@@ -22,5 +22,7 @@ public:
     BrandImageSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
     DEFINE_SETTINGFACT(userBrandImageIndoor)
+    DEFINE_SETTINGFACT(userBrandImageIndoorMargin)
     DEFINE_SETTINGFACT(userBrandImageOutdoor)
+    DEFINE_SETTINGFACT(userBrandImageOutdoorMargin)
 };
