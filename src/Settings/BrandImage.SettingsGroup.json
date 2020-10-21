@@ -14,8 +14,8 @@
     "name":             "userBrandImageIndoorMargin",
     "shortDesc": "User-selected brand image margin",
     "longDesc":  "Define the margin for the indoor image",
-    "type":             "uint32",
-    "default":     ""
+    "type":             "double",
+    "default":     "0"
 },
 {
     "name":             "userBrandImageOutdoor",
@@ -28,8 +28,8 @@
     "name":             "userBrandImageOutdoorMargin",
     "shortDesc": "User-selected brand image margin",
     "longDesc":  "Define the margin for the outdoor image",
-    "type":             "uint32",
-    "default":     ""
+    "type":             "double",
+    "default":     "0"
 }
 ]
 }

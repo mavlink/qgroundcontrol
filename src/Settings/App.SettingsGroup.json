@@ -187,7 +187,7 @@
     "shortDesc": "User-selected brand image margin",
     "longDesc":  "Define the margin for the indoor image",
     "type":             "double",
-    "default":     ""
+    "default":     0
 },
 {
     "name":             "userBrandImageOutdoor",
@@ -201,7 +201,7 @@
     "shortDesc": "User-selected brand image margin",
     "longDesc":  "Define the margin for the outdoor image",
     "type":             "double",
-    "default":     ""
+    "default":     0
 },
 {
     "name":             "mapboxToken",
