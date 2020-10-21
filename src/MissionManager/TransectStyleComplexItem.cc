@@ -628,7 +628,7 @@ TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSa
         terrainReady = true;
     }
     bool polygonNotReady = !_surveyAreaPolygon.isValid();
-    qDebug() << polygonNotReady << _wizardMode << terrainReady;
+    //qDebug() << polygonNotReady << _wizardMode << terrainReady;
     return (polygonNotReady || _wizardMode) ?
                 NotReadyForSaveData :
                 (terrainReady ? ReadyForSave : NotReadyForSaveTerrain);
