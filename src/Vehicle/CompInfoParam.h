@@ -34,9 +34,6 @@ public:
     // Overrides from CompInfo
     void setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName) override;
 
-    // The following methods are used to support the old non-COMPONENT_INFORMATION based mechanism to get parameter meta data
-    bool _isParameterVolatile       (const QString& name);
-
     static void _cachePX4MetaDataFile(const QString& metaDataFile);
 
 private:
