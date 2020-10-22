@@ -9584,7 +9584,7 @@ How often the sensor is readout</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_SF0X" default="1" type="INT32">
-      <short_desc>Lightware Laser Rangefinder hardware model</short_desc>
+      <short_desc>Lightware Laser Rangefinder hardware model (serial)</short_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="1">SF02</value>
@@ -10140,8 +10140,8 @@ How often the sensor is readout</short_desc>
       </values>
     </parameter>
     <parameter name="SENS_SF0X_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Lightware Laser Rangefinder</short_desc>
-      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder.</long_desc>
+      <short_desc>Serial Configuration for Lightware Laser Rangefinder (serial)</short_desc>
+      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder (serial).</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Disabled</value>
