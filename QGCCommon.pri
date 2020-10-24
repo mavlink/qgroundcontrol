@@ -231,13 +231,6 @@ CONFIG(debug, debug|release) {
 
 SOURCE_DIR = $$IN_PWD
 
-!iOSBuild {
-    OBJECTS_DIR  = $${OUT_PWD}/obj
-    MOC_DIR      = $${OUT_PWD}/moc
-    UI_DIR       = $${OUT_PWD}/ui
-    RCC_DIR      = $${OUT_PWD}/rcc
-}
-
 LANGUAGE = C++
 
 LOCATION_PLUGIN_DESTDIR = $${OUT_PWD}/src/QtLocationPlugin
