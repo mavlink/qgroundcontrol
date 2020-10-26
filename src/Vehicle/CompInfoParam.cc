@@ -142,18 +142,6 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
     return factMetaData;
 }
 
-bool CompInfoParam::_isParameterVolatile(const QString& name)
-{
-    if (_noJsonMetadata) {
-        QObject* opaqueMetaData = _getOpaqueParameterMetaData();
-        if (opaqueMetaData) {
-            return vehicle->firmwarePlugin()->_isParameterVolatile(opaqueMetaData, name, vehicle->vehicleType());
-        }
-    }
-
-    return _nameToMetaDataMap.contains(name) ? _nameToMetaDataMap[name]->volatileValue() : false;
-}
-
 FirmwarePlugin* CompInfoParam::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
 {
     FirmwarePluginManager*  pluginMgr               = qgcApp()->toolbox()->firmwarePluginManager();

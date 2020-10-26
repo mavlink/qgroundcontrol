@@ -229,11 +229,6 @@ public:
     /// Important: Only CompInfoParam code should use this method
     virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) { return nullptr; }
 
-    /// Returns the FactMetaData associated with the parameter name
-    ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    /// Important: Only CompInfoParam code should use this method
-    virtual bool _isParameterVolatile(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return false; }
-
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass);
 
