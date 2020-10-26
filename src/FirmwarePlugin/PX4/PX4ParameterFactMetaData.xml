@@ -2034,7 +2034,7 @@ Baro and Magnetometer data will be averaged before downsampling, other data will
       <max>10000000</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="EKF2_OF_DELAY" default="5" type="FLOAT">
+    <parameter name="EKF2_OF_DELAY" default="20" type="FLOAT">
       <short_desc>Optical flow measurement delay relative to IMU measurements
 Assumes measurement is timestamped at trailing edge of integration period</short_desc>
       <min>0</min>
