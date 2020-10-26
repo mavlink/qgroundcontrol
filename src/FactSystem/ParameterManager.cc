@@ -832,11 +832,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
     /* compute the crc of the local cache to check against the remote */
 
     for (const QString& name: cacheMap.keys()) {
-        if (_vehicle->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1)->_isParameterVolatile(name)) {
+        const ParamTypeVal&             paramTypeVal    = cacheMap[name];
+        const FactMetaData::ValueType_t fact_type       = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
+
+        if (_vehicle->compInfoManager()->compInfoParam(MAV_COMP_ID_AUTOPILOT1)->factMetaDataForName(name, fact_type)->volatileValue()) {
             // Does not take part in CRC
             qCDebug(ParameterManagerLog) << "Volatile parameter" << name;
         } else {
-            const ParamTypeVal& paramTypeVal = cacheMap[name];
             const void *vdat = paramTypeVal.second.constData();
             const FactMetaData::ValueType_t fact_type = static_cast<FactMetaData::ValueType_t>(paramTypeVal.first);
             crc32_value = QGC::crc32((const uint8_t *)qPrintable(name), name.length(),  crc32_value);
