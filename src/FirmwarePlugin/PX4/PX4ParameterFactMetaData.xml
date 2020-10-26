@@ -1889,7 +1889,7 @@ If no airspeed measurements are avalable, the EKF-GSF AHRS calculation will assu
 This is the amount of X-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1898,7 +1898,7 @@ This is the amount of X-axis magnetometer bias learned by the EKF and saved from
 This is the amount of Y-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1907,7 +1907,7 @@ This is the amount of Y-axis magnetometer bias learned by the EKF and saved from
 This is the amount of Z-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1921,7 +1921,7 @@ Smaller values make the saved mag bias learn slower from flight to flight. Large
     <parameter name="EKF2_MAGB_VREF" default="2.5E-7" type="FLOAT">
       <short_desc>State variance assumed for magnetometer bias storage.
 This is a reference variance used to calculate the fraction of learned magnetometer bias that will be used to update the stored value. Smaller values will make the stored bias data adjust more slowly from flight to flight. Larger values will make it adjust faster</short_desc>
-      <unit>mgauss^2</unit>
+      <unit>gauss^2</unit>
       <decimal>8</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
