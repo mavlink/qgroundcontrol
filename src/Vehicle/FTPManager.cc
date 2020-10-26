@@ -45,6 +45,7 @@ bool FTPManager::download(const QString& from, const QString& toDir)
         { &FTPManager::_openFileROBegin,            &FTPManager::_openFileROAckOrNak,           &FTPManager::_openFileROTimeout },
         { &FTPManager::_burstReadFileBegin,         &FTPManager::_burstReadFileAckOrNak,        &FTPManager::_burstReadFileTimeout },
         { &FTPManager::_fillMissingBlocksBegin,     &FTPManager::_fillMissingBlocksAckOrNak,    &FTPManager::_fillMissingBlocksTimeout },
+        { &FTPManager::_resetSessionsBegin,         &FTPManager::_resetSessionsAckOrNak,        &FTPManager::_resetSessionsTimeout },
         { &FTPManager::_downloadCompleteNoError,    nullptr,                                    nullptr },
     };
     for (size_t i=0; i<sizeof(rgDownloadStateMachine)/sizeof(rgDownloadStateMachine[0]); i++) {
@@ -72,6 +73,8 @@ bool FTPManager::download(const QString& from, const QString& toDir)
     lastDirSlashIndex++; // move past slash
 
     _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
+
+    qDebug() << _downloadState.fullPathOnVehicle << _downloadState.fileName;
 
     _startStateMachine();
 
@@ -229,7 +232,7 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
             _downloadComplete(tr("Download failed"));
         }
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
-        qCDebug(FTPManagerLog) << "_handlOpenFileROAck: Nak - %1" << _errorMsgFromNak(ackOrNak);
+        qCDebug(FTPManagerLog) << "_handlOpenFileROAck: Nak -" << _errorMsgFromNak(ackOrNak);
         _downloadComplete(tr("Download failed"));
     }
 }
@@ -333,7 +336,7 @@ void FTPManager::_burstReadFileAckOrNak(const MavlinkFTP::Request* ackOrNak)
             qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak EOF";
             _advanceStateMachine();
         } else {
-            qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Nak - %1" << _errorMsgFromNak(ackOrNak);
+            qCDebug(FTPManagerLog) << "_burstReadFileAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
             _downloadComplete(tr("Download failed"));
         }
     }
@@ -460,7 +463,7 @@ void FTPManager::_fillMissingBlocksAckOrNak(const MavlinkFTP::Request* ackOrNak)
             }
         }
 
-        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Nak - %1" << _errorMsgFromNak(ackOrNak);
+        qCDebug(FTPManagerLog) << "_fillMissingBlocksAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
         _downloadComplete(tr("Download failed"));
     }
 
@@ -481,7 +484,7 @@ void FTPManager::_fillMissingBlocksTimeout(void)
 void FTPManager::_resetSessionsBegin(void)
 {
     MavlinkFTP::Request request;
-    request.hdr.opcode  = MavlinkFTP::kCmdTerminateSession;
+    request.hdr.opcode  = MavlinkFTP::kCmdResetSessions;
     request.hdr.size    = 0;
     _sendRequestExpectAck(&request);
 }
@@ -505,7 +508,7 @@ void FTPManager::_resetSessionsAckOrNak(const MavlinkFTP::Request* ackOrNak)
         qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Ack";
         _advanceStateMachine();
     } else if (ackOrNak->hdr.opcode == MavlinkFTP::kRspNak) {
-        qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Nak - %1" << _errorMsgFromNak(ackOrNak);
+        qCDebug(FTPManagerLog) << "_resetSessionsAckOrNak: Nak -" << _errorMsgFromNak(ackOrNak);
         _downloadComplete(QString());
     }
 }

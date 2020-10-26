@@ -38,7 +38,6 @@ public:
     /// Signals downloadComplete, commandError, commandProgress
     bool download(const QString& from, const QString& toDir);
 
-
 signals:
     void downloadComplete(const QString& file, const QString& errorMsg);
     
