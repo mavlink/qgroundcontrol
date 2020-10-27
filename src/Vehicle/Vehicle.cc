@@ -600,7 +600,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     if (!_terrainProtocolHandler->mavlinkMessageReceived(message)) {
         return;
     }
-    _ftpManager->mavlinkMessageReceived(message);
+    _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
 
     _waitForMavlinkMessageMessageReceived(message);

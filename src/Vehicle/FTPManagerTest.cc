@@ -17,6 +17,11 @@ const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
     {  "/version.json" },
 };
 
+void FTPManagerTest::cleanup(void)
+{
+    _disconnectMockLink();
+}
+
 void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
