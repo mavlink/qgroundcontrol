@@ -85,15 +85,18 @@ Item {
             if(activeVehicle) {
                 //-- Let video stream close
                 QGroundControl.settingsManager.videoSettings.rtspTimeout.rawValue = 1
+                if(!activeVehicle.autoDisconnect) {
+                    //-- Close connection.
+                    activeVehicle.disconnectInactiveVehicle()
+                }
                 if(!activeVehicle.armed) {
-                    //-- If it wasn't already set to auto-disconnect
                     if(!activeVehicle.autoDisconnect) {
-                        //-- Vehicle is not armed. Close connection and tell user.
-                        activeVehicle.disconnectInactiveVehicle()
+                        //-- Vehicle is not armed. Just tell user.
                         connectionLostDisarmedDialog.open()
                     }
                 } else {
                     //-- Vehicle is armed. Show doom dialog.
+                    showMissionCompleteDialog = false
                     connectionLostArmed.open()
                 }
             }
@@ -141,8 +144,9 @@ Item {
     Connections {
         target: QGroundControl.multiVehicleManager
         onVehicleAdded: {
-            //-- Dismiss comm lost dialog if open
+            //-- Dismiss comm lost dialogs if open
             connectionLostDisarmedDialog.close()
+            connectionLostArmed.close()
         }
     }
     //-------------------------------------------------------------------------
