@@ -215,8 +215,9 @@ QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QStri
 
 void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson(const QString& fileName, const QString& errorMsg)
 {
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteMetaDataJson fileName:errorMsg" << fileName << errorMsg;
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson fileName:errorMsg" << fileName << errorMsg;
 
+    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
     if (errorMsg.isEmpty()) {
         _jsonMetadataFileName = _downloadCompleteJsonWorker(fileName, "metadata.json");
     }
@@ -226,14 +227,14 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson(const QSt
 
 void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson(const QString& fileName, const QString& errorMsg)
 {
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_downloadCompleteTranslationJson fileName:errorMsg" << fileName << errorMsg;
-
     QString jsonTranslationFileName;
-    if (errorMsg.isEmpty()) {
-        jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
-    }
 
-    _compInfo->setJson(_jsonMetadataFileName, jsonTranslationFileName);
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson fileName:errorMsg" << fileName << errorMsg;
+
+    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
+    if (errorMsg.isEmpty()) {
+        _jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
+    }
 
     advance();
 }
@@ -242,6 +243,7 @@ void RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson(QString 
 {
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
 
+    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
     if (errorMsg.isEmpty()) {
         _jsonMetadataFileName = _downloadCompleteJsonWorker(localFile, "metadata.json");
     }
@@ -251,14 +253,14 @@ void RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson(QString 
 
 void RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson(QString remoteFile, QString localFile, QString errorMsg)
 {
+    QString jsonTranslationFileName;
+
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
 
-    QString jsonTranslationFileName;
+    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
     if (errorMsg.isEmpty()) {
-        jsonTranslationFileName = _downloadCompleteJsonWorker(localFile, "translation.json");
+        _jsonTranslationFileName = _downloadCompleteJsonWorker(localFile, "translation.json");
     }
-
-    _compInfo->setJson(_jsonMetadataFileName, jsonTranslationFileName);
 
     advance();
 }
@@ -318,6 +320,14 @@ void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateM
     CompInfo*                           compInfo        = requestMachine->compInfo();
 
     compInfo->setJson(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
+
+    if (!requestMachine->_jsonMetadataFileName.isEmpty()) {
+        QFile(requestMachine->_jsonMetadataFileName).remove();
+    }
+    if (!requestMachine->_jsonTranslationFileName.isEmpty()) {
+        QFile(requestMachine->_jsonTranslationFileName).remove();
+    }
+
     requestMachine->advance();
 }
 

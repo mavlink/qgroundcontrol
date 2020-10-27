@@ -20,6 +20,9 @@ private slots:
     void _performTestCases          (void);
     void _testLostPackets           (void);
 
+    // Overrides from UnitTest
+    void cleanup(void) override;
+
 private:
     typedef struct {
         const char* file;
