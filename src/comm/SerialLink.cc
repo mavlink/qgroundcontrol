@@ -72,13 +72,15 @@ void SerialLink::_writeBytes(const QByteArray data)
     } else {
         // Error occurred
         qWarning() << "Serial port not writeable";
-        _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
+        _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(_config->name()));
     }
 }
 
 void SerialLink::disconnect(void)
 {
     if (_port) {
+        // This prevents stale signals from calling the link after it has been deleted
+        QObject::disconnect(_port, &QIODevice::readyRead, this, &SerialLink::_readBytes);
         _port->close();
         _port->deleteLater();
         _port = nullptr;
@@ -200,7 +202,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     }
 #endif
     if (!_port->isOpen() ) {
-        qDebug() << "open failed" << _port->errorString() << _port->error() << getName() << "autconnect:" << _config->isAutoConnect();
+        qDebug() << "open failed" << _port->errorString() << _port->error() << _config->name() << "autconnect:" << _config->isAutoConnect();
         error = _port->error();
         errorString = _port->errorString();
         _port->close();
@@ -239,7 +241,7 @@ void SerialLink::_readBytes(void)
     } else {
         // Error occurred
         qWarning() << "Serial port not readable";
-        _emitLinkError(tr("Could not read data - link %1 is disconnected!").arg(getName()));
+        _emitLinkError(tr("Could not read data - link %1 is disconnected!").arg(_config->name()));
     }
 }
 
@@ -273,16 +275,11 @@ bool SerialLink::isConnected() const
     return isConnected;
 }
 
-QString SerialLink::getName() const
-{
-    return _serialConfig->name();
-}
-
 void SerialLink::_emitLinkError(const QString& errorMsg)
 {
     QString msg("Error on link %1. %2");
     qDebug() << errorMsg;
-    emit communicationError(tr("Link Error"), msg.arg(getName()).arg(errorMsg));
+    emit communicationError(tr("Link Error"), msg.arg(_config->name()).arg(errorMsg));
 }
 
 //--------------------------------------------------------------------------

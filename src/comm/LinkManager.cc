@@ -198,10 +198,15 @@ void LinkManager::_linkDisconnected(void)
         return;
     }
 
+    disconnect(link, &LinkInterface::communicationError,  _app,                &QGCApplication::criticalMessageBoxOnMainThread);
+    disconnect(link, &LinkInterface::bytesReceived,       _mavlinkProtocol,    &MAVLinkProtocol::receiveBytes);
+    disconnect(link, &LinkInterface::bytesSent,           _mavlinkProtocol,    &MAVLinkProtocol::logSentBytes);
+    disconnect(link, &LinkInterface::disconnected,        this,                &LinkManager::_linkDisconnected);
+
     _freeMavlinkChannel(link->mavlinkChannel());
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
-            qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" <<_rgLinks[i]->getName() << _rgLinks[i].use_count();
+            qCDebug(LinkManagerLog) << "LinkManager::_linkDisconnected" << _rgLinks[i]->linkConfiguration()->name() << _rgLinks[i].use_count();
             _rgLinks.removeAt(i);
             return;
         }

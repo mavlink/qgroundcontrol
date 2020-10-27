@@ -81,9 +81,8 @@ public:
     void        signalBytesWritten  (void);
 
     // LinkInterface overrides
-    QString getName     (void) const override;
-    bool    isConnected (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
 public slots:
     void waitForBytesWritten(int msecs);

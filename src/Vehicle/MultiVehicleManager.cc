@@ -83,7 +83,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         if (vehicleId != 81 || componentId != 50) {
             // Don't create vehicles for components other than the autopilot
             qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
-                                              << link->getName()
+                                              << link->linkConfiguration()->name()
                                               << vehicleId
                                               << componentId
                                               << vehicleFirmwareType
@@ -112,7 +112,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:componentId:vehicleFirmwareType:vehicleType "
-                                      << link->getName()
+                                      << link->linkConfiguration()->name()
                                       << vehicleId
                                       << componentId
                                       << vehicleFirmwareType

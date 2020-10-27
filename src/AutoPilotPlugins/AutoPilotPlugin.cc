@@ -61,7 +61,7 @@ void AutoPilotPlugin::parametersReadyPreChecks(void)
     _recalcSetupComplete();
 
     // Connect signals in order to keep setupComplete up to date
-    for(const QVariant componentVariant: vehicleComponents()) {
+    for(QVariant componentVariant: vehicleComponents()) {
         VehicleComponent* component = qobject_cast<VehicleComponent*>(qvariant_cast<QObject *>(componentVariant));
         if (component) {
             connect(component, &VehicleComponent::setupCompleteChanged, this, &AutoPilotPlugin::_recalcSetupComplete);

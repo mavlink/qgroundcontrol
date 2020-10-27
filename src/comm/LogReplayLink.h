@@ -65,10 +65,9 @@ public:
     void movePlayhead   (qreal percentComplete);
 
     // overrides from LinkInterface
-    QString getName             (void) const override { return _config->name(); }
-    bool    isConnected         (void) const override { return _connected; }
-    bool    isLogReplay         (void) override { return true; }
-    void    disconnect          (void) override;
+    bool isConnected(void) const override { return _connected; }
+    bool isLogReplay(void) override { return true; }
+    void disconnect (void) override;
 
 public slots:
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X

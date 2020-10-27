@@ -423,6 +423,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
       <reboot_required>True</reboot_required>
       <values>
+        <value code="-1">Disabled</value>
         <value code="0">Power Module</value>
         <value code="1">External</value>
         <value code="2">ESCs</value>
@@ -518,11 +519,12 @@ Set to 2 to use heading from motion capture</short_desc>
       <increment>0.01</increment>
       <reboot_required>True</reboot_required>
     </parameter>
-    <parameter name="BAT2_SOURCE" default="0" type="INT32">
+    <parameter name="BAT2_SOURCE" default="-1" type="INT32">
       <short_desc>Battery 2 monitoring source</short_desc>
       <long_desc>This parameter controls the source of battery data. The value 'Power Module' means that measurements are expected to come from a power module. If the value is set to 'External' then the system expects to receive mavlink battery status messages. If the value is set to 'ESCs', the battery information are taken from the esc_status message. This requires the ESC to provide both voltage as well as current.</long_desc>
       <reboot_required>True</reboot_required>
       <values>
+        <value code="-1">Disabled</value>
         <value code="0">Power Module</value>
         <value code="1">External</value>
         <value code="2">ESCs</value>
@@ -1887,7 +1889,7 @@ If no airspeed measurements are avalable, the EKF-GSF AHRS calculation will assu
 This is the amount of X-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1896,7 +1898,7 @@ This is the amount of X-axis magnetometer bias learned by the EKF and saved from
 This is the amount of Y-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1905,7 +1907,7 @@ This is the amount of Y-axis magnetometer bias learned by the EKF and saved from
 This is the amount of Z-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
       <min>-0.5</min>
       <max>0.5</max>
-      <unit>mgauss</unit>
+      <unit>gauss</unit>
       <decimal>3</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -1919,7 +1921,7 @@ Smaller values make the saved mag bias learn slower from flight to flight. Large
     <parameter name="EKF2_MAGB_VREF" default="2.5E-7" type="FLOAT">
       <short_desc>State variance assumed for magnetometer bias storage.
 This is a reference variance used to calculate the fraction of learned magnetometer bias that will be used to update the stored value. Smaller values will make the stored bias data adjust more slowly from flight to flight. Larger values will make it adjust faster</short_desc>
-      <unit>mgauss^2</unit>
+      <unit>gauss^2</unit>
       <decimal>8</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -2032,7 +2034,7 @@ Baro and Magnetometer data will be averaged before downsampling, other data will
       <max>10000000</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="EKF2_OF_DELAY" default="5" type="FLOAT">
+    <parameter name="EKF2_OF_DELAY" default="20" type="FLOAT">
       <short_desc>Optical flow measurement delay relative to IMU measurements
 Assumes measurement is timestamped at trailing edge of integration period</short_desc>
       <min>0</min>
@@ -9320,6 +9322,10 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32">
+      <short_desc>IMU gyro FFT enable</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="IMU_GYRO_FFT_MAX" default="200.0" type="FLOAT">
       <short_desc>IMU gyro FFT maximum frequency</short_desc>
       <min>1</min>
@@ -9327,7 +9333,7 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MIN" default="30.0" type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MIN" default="50.0" type="FLOAT">
       <short_desc>IMU gyro FFT minimum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
@@ -9582,7 +9588,7 @@ How often the sensor is readout</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SENS_EN_SF0X" default="1" type="INT32">
-      <short_desc>Lightware Laser Rangefinder hardware model</short_desc>
+      <short_desc>Lightware Laser Rangefinder hardware model (serial)</short_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="1">SF02</value>
@@ -10138,8 +10144,8 @@ How often the sensor is readout</short_desc>
       </values>
     </parameter>
     <parameter name="SENS_SF0X_CFG" default="0" type="INT32">
-      <short_desc>Serial Configuration for Lightware Laser Rangefinder</short_desc>
-      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder.</long_desc>
+      <short_desc>Serial Configuration for Lightware Laser Rangefinder (serial)</short_desc>
+      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder (serial).</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Disabled</value>

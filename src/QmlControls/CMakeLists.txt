@@ -55,7 +55,6 @@ add_custom_target(QmlControlsQml
 		FlightModeDropdown.qml
 		FlightModeMenu.qml
 		HackAndroidFileDialog.qml
-		HackFileDialog.qml
 		HeightIndicator.qml
 		HorizontalFactValueGrid.qml
 		IndicatorButton.qml
@@ -74,8 +73,9 @@ add_custom_target(QmlControlsQml
 		ModeSwitchDisplay.qml
 		MultiRotorMotorDisplay.qml
 		OfflineMapButton.qml
-		ParameterEditor.qml
+		ParameterDiffDialog.qml
 		ParameterEditorDialog.qml
+		ParameterEditor.qml
 		PIDTuning.qml
 		PreFlightCheckButton.qml
 		PreFlightCheckGroup.qml
@@ -88,24 +88,24 @@ add_custom_target(QmlControlsQml
 		QGCControlDebug.qml
 		QGCDynamicObjectManager.qml
 		QGCFileDialog.qml
-		QGCFlickable.qml
 		QGCFlickableHorizontalIndicator.qml
+		QGCFlickable.qml
 		QGCFlickableVerticalIndicator.qml
 		QGCGroupBox.qml
 		QGCHoverButton.qml
 		QGCLabel.qml
 		QGCListView.qml
 		QGCMapLabel.qml
-		QGCMenu.qml
 		QGCMenuItem.qml
+		QGCMenu.qml
 		QGCMenuSeparator.qml
 		QGCMouseArea.qml
 		QGCMovableItem.qml
 		QGCOptionsComboBox.qml
 		QGCPipOverlay.qml
 		QGCPipState.qml
-		QGCPopupDialog.qml
 		QGCPopupDialogContainer.qml
+		QGCPopupDialog.qml
 		QGCRadioButton.qml
 		QGCSlider.qml
 		QGCSwitch.qml
@@ -114,8 +114,8 @@ add_custom_target(QmlControlsQml
 		QGCTextField.qml
 		QGCToolBarButton.qml
 		QGCToolInsets.qml
-		QGCViewDialog.qml
 		QGCViewDialogContainer.qml
+		QGCViewDialog.qml
 		QGCViewMessage.qml
 		QmlTest.qml
 		RCChannelMonitor.qml

@@ -112,11 +112,6 @@ void UDPLink::run()
     }
 }
 
-QString UDPLink::getName() const
-{
-    return _udpConfig->name();
-}
-
 bool UDPLink::_isIpLocal(const QHostAddress& add)
 {
     // In simulation and testing setups the vehicle and the GCS can be
@@ -222,6 +217,8 @@ void UDPLink::disconnect(void)
     quit();
     wait();
     if (_socket) {
+        // This prevents stale signal from calling the link after it has been deleted
+        QObject::disconnect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         // Make sure delete happen on correct thread
         _socket->deleteLater();
         _socket = nullptr;

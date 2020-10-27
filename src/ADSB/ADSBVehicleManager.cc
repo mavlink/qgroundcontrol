@@ -83,6 +83,7 @@ ADSBTCPLink::ADSBTCPLink(const QString& hostAddress, int port, QObject* parent)
 ADSBTCPLink::~ADSBTCPLink(void)
 {
     if (_socket) {
+        QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &ADSBTCPLink::_readBytes);
         _socket->disconnectFromHost();
         _socket->deleteLater();
         _socket = nullptr;

@@ -59,7 +59,7 @@ void CompInfoVersion::setJson(const QString& metadataJsonFileName, const QString
     }
 
     QJsonArray rgSupportedTypes = jsonObj[_jsonSupportedCompMetadataTypesKey].toArray();
-    for (const QJsonValue& typeValue: rgSupportedTypes) {
+    for (QJsonValue typeValue: rgSupportedTypes) {
         _supportedTypes.append(static_cast<COMP_METADATA_TYPE>(typeValue.toInt()));
     }
 }

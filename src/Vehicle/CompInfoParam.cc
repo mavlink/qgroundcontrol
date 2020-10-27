@@ -31,8 +31,10 @@ CompInfoParam::CompInfoParam(uint8_t compId, Vehicle* vehicle, QObject* parent)
 
 }
 
-void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& /*translationJsonFileName*/)
+void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName)
 {
+    qCDebug(CompInfoParamLog) << "setJson: metadataJsonFileName:translationJsonFileName" << metadataJsonFileName << translationJsonFileName;
+
     if (metadataJsonFileName.isEmpty()) {
         // This will fall back to using the old FirmwarePlugin mechanism for parameter meta data.
         // In this case paramter metadata is loaded through the _parameterMajorVersionKnown call which happens after parameter are downloaded
@@ -67,7 +69,7 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
     }
 
     QJsonArray rgParameters = jsonObj[_jsonParametersKey].toArray();
-    for (const QJsonValue& parameterValue: rgParameters) {
+    for (QJsonValue parameterValue: rgParameters) {
         QMap<QString, QString> emptyDefineMap;
 
         if (!parameterValue.isObject()) {
@@ -140,18 +142,6 @@ FactMetaData* CompInfoParam::factMetaDataForName(const QString& name, FactMetaDa
     }
 
     return factMetaData;
-}
-
-bool CompInfoParam::_isParameterVolatile(const QString& name)
-{
-    if (_noJsonMetadata) {
-        QObject* opaqueMetaData = _getOpaqueParameterMetaData();
-        if (opaqueMetaData) {
-            return vehicle->firmwarePlugin()->_isParameterVolatile(opaqueMetaData, name, vehicle->vehicleType());
-        }
-    }
-
-    return _nameToMetaDataMap.contains(name) ? _nameToMetaDataMap[name]->volatileValue() : false;
 }
 
 FirmwarePlugin* CompInfoParam::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
