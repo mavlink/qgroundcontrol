@@ -182,7 +182,10 @@ void UDPLink::readBytes()
         QHostAddress sender;
         quint16 senderPort;
         //-- Note: This call is broken in Qt 5.9.3 on Windows. It always returns a blank sender and 0 for the port.
-        _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+        qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+        if (slen == -1) {
+            break;
+        }
         databuffer.append(datagram);
         //-- Wait a bit before sending it over
         if (databuffer.size() > 10 * 1024) {
