@@ -22,14 +22,12 @@
 #include <QFile>
 #include <QTranslator>
 
-const char* JsonHelper::_enumStringsJsonKey =       "enumStrings";
-const char* JsonHelper::_enumValuesJsonKey =        "enumValues";
-const char* JsonHelper::jsonVersionKey =            "version";
-const char* JsonHelper::jsonGroundStationKey =      "groundStation";
-const char* JsonHelper::jsonGroundStationValue =    "QGroundControl";
-const char* JsonHelper::jsonFileTypeKey =           "fileType";
-const char* JsonHelper::_translateKeysKey =         "translateKeys";
-const char* JsonHelper::_arrayIDKeysKey =           "_arrayIDKeys";
+const char* JsonHelper::jsonVersionKey                      = "version";
+const char* JsonHelper::jsonGroundStationKey                = "groundStation";
+const char* JsonHelper::jsonGroundStationValue              = "QGroundControl";
+const char* JsonHelper::jsonFileTypeKey                     = "fileType";
+const char* JsonHelper::_translateKeysKey                   = "translateKeys";
+const char* JsonHelper::_arrayIDKeysKey                     = "_arrayIDKeys";
 
 bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
@@ -157,63 +155,6 @@ bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringLi
     }
 
     return true;
-}
-
-bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    if(jsonObject.value(_enumStringsJsonKey).isArray()) {
-        // "enumStrings": ["Auto" , "Manual", "Shutter Priority", "Aperture Priority"],
-        QJsonArray jArray = jsonObject.value(_enumStringsJsonKey).toArray();
-        for(int i = 0; i < jArray.count(); ++i) {
-            enumStrings << jArray.at(i).toString();
-        }
-    } else {
-        // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
-        QString value = jsonObject.value(_enumStringsJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        enumStrings = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
-#else
-        enumStrings = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
-#endif
-    }
-
-    if(jsonObject.value(_enumValuesJsonKey).isArray()) {
-        // "enumValues": [0, 1, 2, 3, 4, 5],
-        QJsonArray jArray = jsonObject.value(_enumValuesJsonKey).toArray();
-        // This should probably be a variant list and not a string list.
-        for(int i = 0; i < jArray.count(); ++i) {
-            if(jArray.at(i).isString())
-                enumValues << jArray.at(i).toString();
-            else
-                enumValues << QString::number(jArray.at(i).toDouble());
-        }
-    } else {
-        // "enumValues": "0,1,2,3,4,5",
-        QString value = jsonObject.value(_enumValuesJsonKey).toString();
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        enumValues = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
-#else
-        enumValues = defineMap.value(value, value).split(",", Qt::SkipEmptyParts);
-#endif
-    }
-
-    if (enumStrings.count() != enumValues.count()) {
-        errorString = QObject::tr("enum strings/values count mismatch in %3 strings:values %1:%2").arg(enumStrings.count()).arg(enumValues.count()).arg(valueName);
-        return false;
-    }
-
-    return true;
-}
-
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
-}
-
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    QMap<QString, QString> defineMap;
-    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
 }
 
 bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)

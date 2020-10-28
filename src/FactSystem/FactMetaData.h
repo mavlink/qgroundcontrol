@@ -54,8 +54,10 @@ public:
     FactMetaData(ValueType_t type, const QString name, QObject* parent = nullptr);
     FactMetaData(const FactMetaData& other, QObject* parent = nullptr);
 
+    typedef QMap<QString, QString> DefineMap_t;
+
     static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
-    static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, QMap<QString, QString>& defineMap, QObject* metaDataParent);
+    static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, DefineMap_t& defineMap, QObject* metaDataParent);
 
     static FactMetaData* createFromJsonObject(const QJsonObject& json, QMap<QString, QString>& defineMap, QObject* metaDataParent);
 
@@ -204,10 +206,9 @@ public:
     static const char* qgcFileType;
 
 private:
-    QVariant _minForType(void) const;
-    QVariant _maxForType(void) const;
-    void _setAppSettingsTranslators(void);
-
+    QVariant _minForType                (void) const;
+    QVariant _maxForType                (void) const;
+    void    _setAppSettingsTranslators  (void);
 
     /// Clamp a value to be within cookedMin and cookedMax
     template<class T>
@@ -231,6 +232,10 @@ private:
 
     bool isInRawMinLimit(const QVariant& variantValue) const;
     bool isInRawMaxLimit(const QVariant& variantValue) const;
+
+    static bool _parseEnum          (const QJsonObject& jsonObject, DefineMap_t defineMap, QStringList& rgDescriptions, QStringList& rgValues, QString& errorString);
+    static bool _parseValuesArray   (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
+    static bool _parseBitmaskArray  (const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString);
 
     // Built in translators
     static QVariant _defaultTranslator(const QVariant& from) { return from; }
@@ -366,6 +371,14 @@ private:
     static const char* _categoryJsonKey;
     static const char* _groupJsonKey;
     static const char* _volatileJsonKey;
+    static const char* _enumStringsJsonKey;
+    static const char* _enumValuesJsonKey;
+    static const char* _enumValuesArrayJsonKey;
+    static const char* _enumBitmaskArrayJsonKey;
+    static const char* _enumValuesArrayValueJsonKey;
+    static const char* _enumValuesArrayDescriptionJsonKey;
+    static const char* _enumBitmaskArrayIndexJsonKey;
+    static const char* _enumBitmaskArrayDescriptionJsonKey;
 
     static const char* _jsonMetaDataDefinesName;
     static const char* _jsonMetaDataFactsName;
