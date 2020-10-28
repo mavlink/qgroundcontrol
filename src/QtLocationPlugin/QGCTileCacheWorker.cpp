@@ -1137,7 +1137,7 @@ QGCCacheWorker::_testInternet()
         To test if you have Internet connection, the code tests a connection to
         8.8.8.8:53 (google DNS). It appears that some routers are now blocking TCP
         connections to port 53. So instead, we use a TCP connection to "github.com"
-        (80). On exit, if the look up for “github.com” is under way, a call to abort
+        (80). On exit, if the look up for "github.com" is under way, a call to abort
         the lookup is made. This abort call on Android has no effect, and the code
         blocks for a full minute. So to work around the issue, we continue a direct
         TCP connection to 8.8.8.8:53 on Android and do the lookup/connect on the
