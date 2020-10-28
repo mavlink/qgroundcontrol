@@ -3729,7 +3729,8 @@ void Vehicle::clearAllParamMapRC(void)
 
 void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons)
 {
-    if (_vehicleLinkManager->primaryLink()->linkConfiguration()->isHighLatency()) {
+    LinkInterface* pPrimaryLink = vehicleLinkManager()->primaryLink();
+    if (pPrimaryLink == nullptr || pPrimaryLink->linkConfiguration()->isHighLatency()) {
         return;
     }
 
@@ -3745,7 +3746,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     mavlink_msg_manual_control_pack_chan(
                 static_cast<uint8_t>(_mavlink->getSystemId()),
                 static_cast<uint8_t>(_mavlink->getComponentId()),
-                vehicleLinkManager()->primaryLink()->mavlinkChannel(),
+                pPrimaryLink->mavlinkChannel(),
                 &message,
                 static_cast<uint8_t>(_id),
                 static_cast<int16_t>(newPitchCommand),
@@ -3753,5 +3754,5 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
                 static_cast<int16_t>(newThrustCommand),
                 static_cast<int16_t>(newYawCommand),
                 buttons);
-    sendMessageOnLinkThreadSafe(vehicleLinkManager()->primaryLink(), message);
+    sendMessageOnLinkThreadSafe(pPrimaryLink, message);
 }
