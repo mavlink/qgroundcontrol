@@ -2018,7 +2018,7 @@ Baro and Magnetometer data will be averaged before downsampling, other data will
       <short_desc>Multi-EKF IMUs</short_desc>
       <long_desc>Maximum number of IMUs to use for Multi-EKF. Set 0 to disable. Requires SENS_IMU_MODE 0.</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>4</max>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="EKF2_MULTI_MAG" default="0" type="INT32">
