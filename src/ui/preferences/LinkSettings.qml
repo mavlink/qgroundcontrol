@@ -300,7 +300,6 @@ Rectangle {
                             QGCCheckBox {
                                 text:               qsTr("Automatically Connect on Start")
                                 checked:            false
-                                enabled:            editConfig ? editConfig.autoConnectAllowed : false
                                 onCheckedChanged: {
                                     if(editConfig) {
                                         editConfig.autoConnect = checked
@@ -314,7 +313,6 @@ Rectangle {
                             QGCCheckBox {
                                 text:               qsTr("High Latency")
                                 checked:            false
-                                enabled:            editConfig ? editConfig.highLatencyAllowed : false
                                 onCheckedChanged: {
                                     if(editConfig) {
                                         editConfig.highLatency = checked
