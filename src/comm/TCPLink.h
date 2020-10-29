@@ -52,7 +52,6 @@ public:
     //LinkConfiguration overrides
     LinkType    type                (void) override                                         { return LinkConfiguration::TypeTcp; }
     void        copyFrom            (LinkConfiguration* source) override;
-    bool        isHighLatencyAllowed(void) override                                         { return true; }
     void        loadSettings        (QSettings& settings, const QString& root) override;
     void        saveSettings        (QSettings& settings, const QString& root) override;
     QString     settingsURL         (void) override                                         { return "TcpSettings.qml"; }

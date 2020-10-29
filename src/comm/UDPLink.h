@@ -75,8 +75,6 @@ public:
     void        copyFrom             (LinkConfiguration* source) override;
     void        loadSettings         (QSettings& settings, const QString& root) override;
     void        saveSettings         (QSettings& settings, const QString& root) override;
-    bool        isAutoConnectAllowed (void) override                                        { return true; }
-    bool        isHighLatencyAllowed (void) override                                        { return true; }
     QString     settingsURL          (void) override                                        { return "UdpSettings.qml"; }
     QString     settingsTitle        (void) override                                        { return tr("UDP Link Settings"); }
 
