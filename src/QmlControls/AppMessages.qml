@@ -27,75 +27,59 @@ Item {
     property bool loaded: false
 
     Component {
-        id: filtersDialogComponent
-        QGCViewDialog {
-            QGCFlickable {
-                anchors.fill: parent
+        id: filtersPopupDialog
 
-                contentHeight:  categoryColumn.height
-                clip:           true
+        QGCPopupDialog {
+            title:      qsTr("Turn on logging categories")
+            buttons:    StandardButton.Close
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.fillHeight: true
+            ColumnLayout {
+                RowLayout {
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    Layout.fillWidth:   true
+
+                    QGCLabel { text: qsTr("Search:") }
+
+                    QGCTextField {
+                        id: searchText
+                        text: ""
                         Layout.fillWidth: true
-
-                        QGCLabel {
-                            text: qsTr("Search:")
-                        }
-
-                        QGCTextField {
-                            id: searchText
-                            text: ""
-                            Layout.fillWidth: true
-                            enabled: true
-                        }
-
-                        QGCButton {
-                            text: qsTr("Clear")
-                            onClicked: searchText.text = ""
-                        }
+                        enabled: true
                     }
 
-                    Row {
-                        spacing:    ScreenTools.defaultFontPixelHeight / 2
-                        QGCButton {
-                            text: qsTr("Clear All")
-                            onClicked: categoryRepeater.setAllLogs(false)
+                    QGCButton {
+                        text: qsTr("Clear")
+                        onClicked: searchText.text = ""
+                    }
+                }
+
+                QGCButton {
+                    text: qsTr("Clear All")
+                    onClicked: categoryRepeater.setAllLogs(false)
+                }
+
+                Repeater {
+                    id:     categoryRepeater
+                    model:  QGroundControl.loggingCategories()
+
+                    function setAllLogs(value) {
+                        var logCategories = QGroundControl.loggingCategories()
+                        for (var category of logCategories) {
+                            QGroundControl.setCategoryLoggingOn(category, value)
                         }
+                        QGroundControl.updateLoggingFilterRules()
+                        // Update model for repeater
+                        categoryRepeater.model = undefined
+                        categoryRepeater.model = QGroundControl.loggingCategories()
                     }
 
-                    Column {
-                        id:         categoryColumn
-                        spacing:    ScreenTools.defaultFontPixelHeight / 2
-
-                        Repeater {
-                            id:     categoryRepeater
-                            model:  QGroundControl.loggingCategories()
-
-                            function setAllLogs(value) {
-                                var logCategories = QGroundControl.loggingCategories()
-                                for (var category of logCategories) {
-                                    QGroundControl.setCategoryLoggingOn(category, value)
-                                }
-                                QGroundControl.updateLoggingFilterRules()
-                                // Update model for repeater
-                                categoryRepeater.model = undefined
-                                categoryRepeater.model = QGroundControl.loggingCategories()
-                            }
-
-                            QGCCheckBox {
-                                text:       modelData
-                                visible:    searchText.text ? text.match(`(${searchText.text})`, "i") : true
-                                checked:    QGroundControl.categoryLoggingOn(modelData)
-                                onClicked:  {
-                                    QGroundControl.setCategoryLoggingOn(modelData, checked)
-                                    QGroundControl.updateLoggingFilterRules()
-                                }
-                            }
+                    QGCCheckBox {
+                        text:       modelData
+                        visible:    searchText.text ? text.match(`(${searchText.text})`, "i") : true
+                        checked:    QGroundControl.categoryLoggingOn(modelData)
+                        onClicked:  {
+                            QGroundControl.setCategoryLoggingOn(modelData, checked)
+                            QGroundControl.updateLoggingFilterRules()
                         }
                     }
                 }
@@ -225,7 +209,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.right:  parent.right
                 text:           qsTr("Set Logging")
-                onClicked:      mainWindow.showComponentDialog(filtersDialogComponent, qsTr("Turn on logging categories"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                onClicked:      mainWindow.showPopupDialogFromComponent(filtersPopupDialog)
             }
         }
     }
