@@ -19,13 +19,15 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo   = "No Video Available";
-const char* VideoSettings::videoDisabled        = "Video Stream Disabled";
-const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
-const char* VideoSettings::videoSourceUDPH264   = "UDP h.264 Video Stream";
-const char* VideoSettings::videoSourceUDPH265   = "UDP h.265 Video Stream";
-const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
-const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSourceNoVideo           = "No Video Available";
+const char* VideoSettings::videoDisabled                = "Video Stream Disabled";
+const char* VideoSettings::videoSourceRTSP              = "RTSP Video Stream";
+const char* VideoSettings::videoSourceUDPH264           = "UDP h.264 Video Stream";
+const char* VideoSettings::videoSourceUDPH265           = "UDP h.265 Video Stream";
+const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Stream";
+const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSource3DRSolo           = "3DR Solo";
+const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -41,6 +43,8 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #endif
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSource3DRSolo);
+    videoSourceList.append(videoSourceParrotDiscovery);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
