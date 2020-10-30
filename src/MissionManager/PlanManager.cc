@@ -394,8 +394,8 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         param2 =        missionItem.param2;
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
-        param5 =        (double)missionItem.x / qPow(10.0, 7.0);
-        param6 =        (double)missionItem.y / qPow(10.0, 7.0);
+        param5 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.x : (double)missionItem.x * 1e-7;
+        param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.x * 1e-7;
         param7 =        (double)missionItem.z;
         autoContinue =  missionItem.autocontinue;
         isCurrentItem = missionItem.current;
@@ -556,8 +556,8 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                                item->param2(),
                                                item->param3(),
                                                item->param4(),
-                                               item->param5() * qPow(10.0, 7.0),
-                                               item->param6() * qPow(10.0, 7.0),
+                                               item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
+                                               item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
                                                item->param7(),
                                                _planType);
     } else {
