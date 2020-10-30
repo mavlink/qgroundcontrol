@@ -23,29 +23,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
-class APMFirmwareVersion
-{
-public:
-    APMFirmwareVersion(const QString &versionText = "");
-    bool isValid() const;
-    bool isBeta() const;
-    bool isDev() const;
-    bool operator<(const APMFirmwareVersion& other) const;
-    QString versionString() const { return _versionString; }
-    QString vehicleType() const { return _vehicleType; }
-    int majorNumber() const { return _major; }
-    int minorNumber() const { return _minor; }
-    int patchNumber() const { return _patch; }
-
-private:
-    void _parseVersion(const QString &versionText);
-    QString _versionString;
-    QString _vehicleType;
-    int     _major;
-    int     _minor;
-    int     _patch;
-};
-
 class APMCustomMode
 {
 public:
@@ -118,16 +95,14 @@ private slots:
     void _artooSocketError(QAbstractSocket::SocketError socketError);
 
 private:
-    void _adjustSeverity(mavlink_message_t* message) const;
     void _adjustCalibrationMessageSeverity(mavlink_message_t* message) const;
-    static bool _isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion);
     void _setInfoSeverity(mavlink_message_t* message) const;
     QString _getMessageText(mavlink_message_t* message) const;
     void _handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message);
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSetThreadSafe(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
-    void _soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware);
+    void _soloVideoHandshake(void);
     bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
     void _handleRCChannels(Vehicle* vehicle, mavlink_message_t* message);
     void _handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t* message);
@@ -144,16 +119,6 @@ private:
 
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;
-};
-
-class APMFirmwarePluginInstanceData : public QObject
-{
-    Q_OBJECT
-
-public:
-    APMFirmwarePluginInstanceData(QObject* parent = nullptr);
-
-    bool                    textSeverityAdjustmentNeeded;
 };
 
 #endif
