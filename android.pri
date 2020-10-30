@@ -4,6 +4,12 @@ QT += androidextras
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
 
+# This automatically sets application version in AndroidManifest.xml
+ANDROID_VERSION_CODE = $$section(GIT_VERSION_CODE, ".", 0, 0)
+ANDROID_VERSION_NAME = $${GIT_VERSION_CODE}
+message(ANDROID_VERSION_CODE $${ANDROID_VERSION_CODE})
+message(ANDROID_VERSION_NAME $${ANDROID_VERSION_NAME})
+
 exists($$PWD/custom/android) {
     message("Merging $$PWD/custom/android/ -> $$PWD/android/")
 
