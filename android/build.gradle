@@ -1,26 +1,23 @@
 buildscript {
-
     repositories {
-        maven  {
-            url "https://repo1.maven.org/maven2"
-        }
+        google()
+        jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.0'
+        classpath 'com.android.tools.build:gradle:3.6.0'
     }
 }
 
-allprojects {
-    repositories {
-        jcenter()
-    }
+repositories {
+    google()
+    jcenter()
 }
 
 apply plugin: 'com.android.application'
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
 
 android {
@@ -39,7 +36,7 @@ android {
 
     compileSdkVersion androidCompileSdkVersion.toInteger()
 
-    buildToolsVersion androidBuildToolsVersion
+    buildToolsVersion '28.0.3'
 
     sourceSets {
         main {
@@ -47,18 +44,25 @@ android {
             java.srcDirs = [qt5AndroidDir + '/src', 'src', 'java']
             aidl.srcDirs = [qt5AndroidDir + '/src', 'src', 'aidl']
             res.srcDirs = [qt5AndroidDir + '/res', 'res']
-            resources.srcDirs = ['src']
+            resources.srcDirs = ['resources']
             renderscript.srcDirs = ['src']
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
        }
     }
 
-    aaptOptions {
-        cruncherEnabled = false
-    }
-
     lintOptions {
         abortOnError false
+    }
+
+    // Do not compress Qt binary resources file
+    aaptOptions {
+        noCompress 'rcc'
+    }
+
+    defaultConfig {
+        resConfig "en"
+        minSdkVersion = qtMinSdkVersion
+        targetSdkVersion = qtTargetSdkVersion
     }
 }
