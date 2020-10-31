@@ -214,8 +214,8 @@ SetupPage {
                 id: batterySetupComponent
 
                 QGCGroupBox {
-                    id:     batteryGroup
-                    title:  qsTr("Battery ") + (showBatteryIndex ? batteryIndex : "")
+                    Layout.fillWidth:   true
+                    title:              qsTr("Battery ") + (showBatteryIndex ? batteryIndex : "")
 
                     property var _controller:   controller
                     property int _batteryIndex: batteryIndex
@@ -229,6 +229,7 @@ SetupPage {
                     property bool battVoltageDividerAvailable:  batParams.battVoltageDividerAvailable
                     property bool battAmpsPerVoltAvailable:     batParams.battAmpsPerVoltAvailable
 
+                    property Fact battSource:           batParams.battSource
                     property Fact battNumCells:         batParams.battNumCells
                     property Fact battHighVolt:         batParams.battHighVolt
                     property Fact battLowVolt:          batParams.battLowVolt
@@ -248,166 +249,165 @@ SetupPage {
                         }
                     }
 
-                    GridLayout {
-                        id:             batteryGrid
-                        columns:        5
-                        columnSpacing:  ScreenTools.defaultFontPixelWidth
+                    ColumnLayout {
 
-                        QGCLabel {
-                            text:  qsTr("Number of Cells (in Series)")
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth
+                            visible: battSource.rawValue == -1
+
+                            QGCLabel { text:  qsTr("Source") }
+                            FactComboBox {
+                                width:          _textEditWidth
+                                fact:           battSource
+                                indexModel:     false
+                                sizeToContents: true
+                            }
                         }
 
-                        FactTextField {
-                            width:      _textEditWidth
-                            fact:       battNumCells
-                            showUnits:  true
-                        }
+                        GridLayout {
+                            id:             batteryGrid
+                            columns:        5
+                            columnSpacing:  ScreenTools.defaultFontPixelWidth
+                            visible:        battSource.rawValue != -1
 
-                        QGCColoredImage {
-                            Layout.rowSpan:         3
-                            width:                  height * 0.75
-                            height:                 100
-                            sourceSize.height:      height
-                            fillMode:               Image.PreserveAspectFit
-                            smooth:                 true
-                            color:                  qgcPal.text
-                            cache:                  false
-                            source:                 getBatteryImage(batteryIndex)
-                        }
+                            QGCLabel { text:  qsTr("Source") }
+                            FactComboBox {
+                                width:          _textEditWidth
+                                fact:           battSource
+                                indexModel:     false
+                                sizeToContents: true
+                            }
 
-                        Item { width: 1; height: 1; Layout.columnSpan: 2 }
+                            QGCColoredImage {
+                                Layout.rowSpan:         4
+                                width:                  height * 0.75
+                                height:                 100
+                                sourceSize.height:      height
+                                fillMode:               Image.PreserveAspectFit
+                                smooth:                 true
+                                color:                  qgcPal.text
+                                cache:                  false
+                                source:                 getBatteryImage(batteryIndex)
+                            }
 
-                        QGCLabel {
-                            text: qsTr("Full Voltage (per cell)")
-                        }
+                            Item { width: 1; height: 1; Layout.columnSpan: 2 }
 
-                        FactTextField {
-                            width:      _textEditWidth
-                            fact:       battHighVolt
-                            showUnits:  true
-                        }
+                            QGCLabel { text:  qsTr("Number of Cells (in Series)") }
+                            FactTextField {
+                                width:      _textEditWidth
+                                fact:       battNumCells
+                                showUnits:  true
+                            }
+                            QGCLabel { text: qsTr("Battery Max:") }
+                            QGCLabel { text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V' }
 
-                        QGCLabel {
-                            text: qsTr("Battery Max:")
-                        }
+                            QGCLabel { text: qsTr("Empty Voltage (per cell)") }
+                            FactTextField {
+                                width:      _textEditWidth
+                                fact:       battLowVolt
+                                showUnits:  true
+                            }
+                            QGCLabel { text: qsTr("Battery Min:") }
+                            QGCLabel { text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V' }
 
-                        QGCLabel {
-                            text: (battNumCells.value * battHighVolt.value).toFixed(1) + ' V'
-                        }
 
-                        QGCLabel {
-                            text: qsTr("Empty Voltage (per cell)")
-                        }
+                            QGCLabel { text: qsTr("Full Voltage (per cell)") }
+                            FactTextField {
+                                width:      _textEditWidth
+                                fact:       battHighVolt
+                                showUnits:  true
+                            }
+                            Item { width: 1; height: 1; Layout.columnSpan: 2 }
 
-                        FactTextField {
-                            width:      _textEditWidth
-                            fact:       battLowVolt
-                            showUnits:  true
-                        }
+                            QGCLabel {
+                                text:       qsTr("Voltage divider")
+                                visible:    battVoltageDividerAvailable
+                            }
+                            FactTextField {
+                                fact:       battVoltageDivider
+                                visible:    battVoltageDividerAvailable
+                            }
+                            QGCButton {
+                                text:       qsTr("Calculate")
+                                visible:    battVoltageDividerAvailable
+                                onClicked:  mainWindow.showPopupDialogFromComponent(calcVoltageDividerDlgComponent, { batteryIndex: _batteryIndex })
+                            }
+                            Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battVoltageDividerAvailable }
 
-                        QGCLabel {
-                            text: qsTr("Battery Min:")
-                        }
+                            QGCLabel {
+                                Layout.columnSpan:  batteryGrid.columns
+                                Layout.fillWidth:   true
+                                font.pointSize:     ScreenTools.smallFontPointSize
+                                wrapMode:           Text.WordWrap
+                                text:               qsTr("If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. ") +
+                                                    qsTr("Click the Calculate button for help with calculating a new value.")
+                                visible:            battVoltageDividerAvailable
+                            }
+                            QGCLabel {
+                                text:       qsTr("Amps per volt")
+                                visible:    battAmpsPerVoltAvailable
+                            }
+                            FactTextField {
+                                fact:       battAmpsPerVolt
+                                visible:    battAmpsPerVoltAvailable
+                            }
+                            QGCButton {
+                                text:       qsTr("Calculate")
+                                visible:    battAmpsPerVoltAvailable
+                                onClicked:  mainWindow.showPopupDialogFromComponent(calcAmpsPerVoltDlgComponent, { batteryIndex: _batteryIndex })
+                            }
+                            Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battAmpsPerVoltAvailable }
 
-                        QGCLabel {
-                            text: (battNumCells.value * battLowVolt.value).toFixed(1) + ' V'
-                        }
+                            QGCLabel {
+                                Layout.columnSpan:  batteryGrid.columns
+                                Layout.fillWidth:   true
+                                font.pointSize:     ScreenTools.smallFontPointSize
+                                wrapMode:           Text.WordWrap
+                                text:               qsTr("If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. ") +
+                                                    qsTr("Click the Calculate button for help with calculating a new value.")
+                                visible:            battAmpsPerVoltAvailable
+                            }
 
-                        QGCLabel {
-                            text:       qsTr("Voltage divider")
-                            visible:    battVoltageDividerAvailable
-                        }
+                            QGCCheckBox {
+                                id:                 showAdvanced
+                                Layout.columnSpan:  batteryGrid.columns
+                                text:               qsTr("Show Advanced Settings")
+                            }
 
-                        FactTextField {
-                            fact:       battVoltageDivider
-                            visible:    battVoltageDividerAvailable
-                        }
+                            QGCLabel {
+                                text:       qsTr("Voltage Drop on Full Load (per cell)")
+                                visible:    showAdvanced.checked
+                            }
+                            FactTextField {
+                                id:         battDropField
+                                fact:       battVoltLoadDrop
+                                showUnits:  true
+                                visible:    showAdvanced.checked
+                            }
+                            Item { width: 1; height: 1; Layout.columnSpan: 3; visible: showAdvanced.checked }
 
-                        QGCButton {
-                            text:       qsTr("Calculate")
-                            visible:    battVoltageDividerAvailable
-                            onClicked:  mainWindow.showPopupDialogFromComponent(calcVoltageDividerDlgComponent, { batteryIndex: _batteryIndex })
-                        }
+                            QGCLabel {
+                                Layout.columnSpan:  batteryGrid.columns
+                                Layout.fillWidth:   true
+                                wrapMode:           Text.WordWrap
+                                font.pointSize:     ScreenTools.smallFontPointSize
+                                text:               qsTr("Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full ") +
+                                                    qsTr("throttle, divided by the number of battery cells. Leave at the default if unsure. ") +
+                                                    _highlightPrefix + qsTr("If this value is set too high, the battery might be deep discharged and damaged.") + _highlightSuffix
+                                visible:            showAdvanced.checked
+                            }
 
-                        Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battVoltageDividerAvailable }
-
-                        QGCLabel {
-                            Layout.columnSpan:  batteryGrid.columns
-                            Layout.fillWidth:   true
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                            wrapMode:           Text.WordWrap
-                            text:               qsTr("If the battery voltage reported by the vehicle is largely different than the voltage read externally using a voltmeter you can adjust the voltage multiplier value to correct this. ") +
-                                                qsTr("Click the Calculate button for help with calculating a new value.")
-                            visible:            battVoltageDividerAvailable
-                        }
-
-                        QGCLabel {
-                            text:       qsTr("Amps per volt")
-                            visible:    battAmpsPerVoltAvailable
-                        }
-
-                        FactTextField {
-                            fact:       battAmpsPerVolt
-                            visible:    battAmpsPerVoltAvailable
-                        }
-
-                        QGCButton {
-                            text:       qsTr("Calculate")
-                            visible:    battAmpsPerVoltAvailable
-                            onClicked:  mainWindow.showPopupDialogFromComponent(calcAmpsPerVoltDlgComponent, { batteryIndex: _batteryIndex })
-                        }
-
-                        Item { width: 1; height: 1; Layout.columnSpan: 2; visible: battAmpsPerVoltAvailable }
-
-                        QGCLabel {
-                            Layout.columnSpan:  batteryGrid.columns
-                            Layout.fillWidth:   true
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                            wrapMode:           Text.WordWrap
-                            text:               qsTr("If the current draw reported by the vehicle is largely different than the current read externally using a current meter you can adjust the amps per volt value to correct this. ") +
-                                                qsTr("Click the Calculate button for help with calculating a new value.")
-                            visible:            battAmpsPerVoltAvailable
-                        }
-
-                        QGCCheckBox {
-                            id:                 showAdvanced
-                            Layout.columnSpan:  batteryGrid.columns
-                            text:               qsTr("Show Advanced Settings")
-                        }
-
-                        QGCLabel {
-                            text:       qsTr("Voltage Drop on Full Load (per cell)")
-                            visible:    showAdvanced.checked
-                        }
-                        FactTextField {
-                            id:         battDropField
-                            fact:       battVoltLoadDrop
-                            showUnits:  true
-                            visible:    showAdvanced.checked
-                        }
-                        Item { width: 1; height: 1; Layout.columnSpan: 3; visible: showAdvanced.checked }
-
-                        QGCLabel {
-                            Layout.columnSpan:  batteryGrid.columns
-                            Layout.fillWidth:   true
-                            wrapMode:           Text.WordWrap
-                            font.pointSize:     ScreenTools.smallFontPointSize
-                            text:               qsTr("Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full ") +
-                                                qsTr("throttle, divided by the number of battery cells. Leave at the default if unsure. ") +
-                                                _highlightPrefix + qsTr("If this value is set too high, the battery might be deep discharged and damaged.") + _highlightSuffix
-                            visible:            showAdvanced.checked
-                        }
-
-                        QGCLabel {
-                            text:       qsTr("Compensated Minimum Voltage:")
-                            visible:    showAdvanced.checked
-                        }
-                        QGCLabel {
-                            text:       ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + qsTr(" V")
-                            visible:    showAdvanced.checked
-                        }
-                        Item { width: 1; height: 1; Layout.columnSpan: 3; visible: showAdvanced.checked }
-                    } // Grid
+                            QGCLabel {
+                                text:       qsTr("Compensated Minimum Voltage:")
+                                visible:    showAdvanced.checked
+                            }
+                            QGCLabel {
+                                text:       ((battNumCells.value * battLowVolt.value) - (battNumCells.value * battVoltLoadDrop.value)).toFixed(1) + qsTr(" V")
+                                visible:    showAdvanced.checked
+                            }
+                            Item { width: 1; height: 1; Layout.columnSpan: 3; visible: showAdvanced.checked }
+                        } // Grid
+                    }
                 } // QGCGroupBox - Battery settings
             } // Component - batterySetupComponent
 
