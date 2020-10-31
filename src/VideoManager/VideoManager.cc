@@ -525,13 +525,14 @@ VideoManager::isGStreamer()
 {
 #if defined(QGC_GST_STREAMING)
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return
-        videoSource == VideoSettings::videoSourceUDPH264 ||
-        videoSource == VideoSettings::videoSourceUDPH265 ||
-        videoSource == VideoSettings::videoSourceRTSP ||
-        videoSource == VideoSettings::videoSourceTCP ||
-        videoSource == VideoSettings::videoSourceMPEGTS ||
-        autoStreamConfigured();
+    return videoSource == VideoSettings::videoSourceUDPH264 ||
+            videoSource == VideoSettings::videoSourceUDPH265 ||
+            videoSource == VideoSettings::videoSourceRTSP ||
+            videoSource == VideoSettings::videoSourceTCP ||
+            videoSource == VideoSettings::videoSourceMPEGTS ||
+            videoSource == VideoSettings::videoSource3DRSolo ||
+            videoSource == VideoSettings::videoSourceParrotDiscovery ||
+            autoStreamConfigured();
 #else
     return false;
 #endif
@@ -685,6 +686,10 @@ VideoManager::_updateSettings(unsigned id)
         settingsChanged |= _updateVideoUri(0, _videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
         settingsChanged |= _updateVideoUri(0, QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+    else if (source == VideoSettings::videoSource3DRSolo)
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("udp://0.0.0.0:5600"));
+    else if (source == VideoSettings::videoSourceParrotDiscovery)
+        settingsChanged |= _updateVideoUri(0, QStringLiteral("udp://0.0.0.0:8888"));
 
     return settingsChanged;
 }

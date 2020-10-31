@@ -42,7 +42,7 @@ public:
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
-    Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource      CONSTANT)
+    Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource    CONSTANT)
 
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
@@ -59,6 +59,8 @@ public:
     static const char* videoSourceRTSP;
     static const char* videoSourceTCP;
     static const char* videoSourceMPEGTS;
+    static const char* videoSource3DRSolo;
+    static const char* videoSourceParrotDiscovery;
 
 signals:
     void streamConfiguredChanged    (bool configured);
