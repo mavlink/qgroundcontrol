@@ -14,25 +14,25 @@ ULogParser::~ULogParser()
 
 int ULogParser::sizeOfType(QString& typeName)
 {
-    if (typeName == QLatin1Literal("int8_t") || typeName == QLatin1Literal("uint8_t")) {
+    if (typeName == QLatin1String("int8_t") || typeName == QLatin1String("uint8_t")) {
         return 1;
 
-    } else if (typeName == QLatin1Literal("int16_t") || typeName == QLatin1Literal("uint16_t")) {
+    } else if (typeName == QLatin1String("int16_t") || typeName == QLatin1String("uint16_t")) {
         return 2;
 
-    } else if (typeName == QLatin1Literal("int32_t") || typeName == QLatin1Literal("uint32_t")) {
+    } else if (typeName == QLatin1String("int32_t") || typeName == QLatin1String("uint32_t")) {
         return 4;
 
-    } else if (typeName == QLatin1Literal("int64_t") || typeName == QLatin1Literal("uint64_t")) {
+    } else if (typeName == QLatin1String("int64_t") || typeName == QLatin1String("uint64_t")) {
         return 8;
 
-    } else if (typeName == QLatin1Literal("float")) {
+    } else if (typeName == QLatin1String("float")) {
         return 4;
 
-    } else if (typeName == QLatin1Literal("double")) {
+    } else if (typeName == QLatin1String("double")) {
         return 8;
 
-    } else if (typeName == QLatin1Literal("char") || typeName == QLatin1Literal("bool")) {
+    } else if (typeName == QLatin1String("char") || typeName == QLatin1String("bool")) {
         return 1;
     }
 
@@ -74,7 +74,7 @@ bool ULogParser::parseFieldFormat(QString& fields)
             QString typeNameFull = fields.mid(prevFieldEnd, spacePos - prevFieldEnd);
             QString fieldName = fields.mid(spacePos + 1, fieldEnd - spacePos - 1);
 
-            if (!fieldName.contains(QLatin1Literal("_padding"))) {
+            if (!fieldName.contains(QLatin1String("_padding"))) {
                 _cameraCaptureOffsets.insert(fieldName, offset);
                 offset += sizeOfFullType(typeNameFull);
             }
@@ -117,7 +117,7 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
                 QString messageName = fmt.left(posSeparator);
                 QString messageFields = fmt.mid(posSeparator + 1, header.msgSize - posSeparator - 1);
 
-                if(messageName == QLatin1Literal("camera_capture")) {
+                if(messageName == QLatin1String("camera_capture")) {
                     parseFieldFormat(messageFields);
                 }
                 break;
@@ -131,7 +131,7 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
                 QString messageName(addLoggedMsg.msgName);
 
-                if(messageName.contains(QLatin1Literal("camera_capture"))) {
+                if(messageName.contains(QLatin1String("camera_capture"))) {
                     _cameraCaptureMsgID = addLoggedMsg.msgID;
                     geotagFound = true;
                 }

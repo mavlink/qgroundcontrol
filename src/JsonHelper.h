@@ -155,9 +155,6 @@ public:
     static void savePolygon(QmlObjectListModel& list,           ///< List which contains vertices
                             QJsonArray&         polygonArray);  ///< Array to save into
 
-    static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
-    static bool parseEnum(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
-
     /// Returns NaN if the value is null, or if not, the double value
     static double possibleNaNJsonValue(const QJsonValue& value);
 
@@ -177,14 +174,11 @@ private:
                                    bool                     writeAltitude,
                                    QJsonValue&              jsonValue,
                                    bool                     geoJsonFormat);
-    static bool _parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName);
     static QStringList _addDefaultLocKeys(QJsonObject& jsonObject);
     static QJsonObject _translateRoot(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys);
     static QJsonObject _translateObject(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys);
     static QJsonArray _translateArray(QJsonArray& jsonArray, const QString& translateContext, const QStringList& translateKeys);
 
-    static const char*  _enumStringsJsonKey;
-    static const char*  _enumValuesJsonKey;
     static const char*  _translateKeysKey;
     static const char*  _arrayIDKeysKey;
 };

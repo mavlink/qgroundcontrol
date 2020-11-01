@@ -766,6 +766,21 @@
       <type>Underwater Robot</type>
     </airframe>
   </airframe_group>
+  <airframe_group name="Vectored 6 DOF UUV" image="AirframeUnknown">
+    <airframe name="BlueROV2 (Heavy Configuration)" id="60002" maintainer="Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;">
+      <class>Underwater Robot</class>
+      <maintainer>Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;</maintainer>
+      <type>Vectored 6 DOF UUV</type>
+      <output name="MAIN1">motor 1 CCW, bow starboard horizontal, , propeller CCW</output>
+      <output name="MAIN2">motor 2 CCW, bow port horizontal, propeller CCW</output>
+      <output name="MAIN3">motor 3 CCW, stern starboard horizontal, propeller CW</output>
+      <output name="MAIN4">motor 4 CCW, stern port horizontal, propeller CW</output>
+      <output name="MAIN5">motor 5 CCW, bow starboard vertical, propeller CCW</output>
+      <output name="MAIN6">motor 6 CCW, bow port vertical, propeller CW</output>
+      <output name="MAIN7">motor 7 CCW, stern starboard vertical, propeller CW</output>
+      <output name="MAIN8">motor 8 CCW, stern port vertical, propeller CCW</output>
+    </airframe>
+  </airframe_group>
   <airframe_group name="Standard VTOL" image="VTOLPlane">
     <airframe name="HIL Standard VTOL QuadPlane" id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;">
       <class>VTOL</class>
