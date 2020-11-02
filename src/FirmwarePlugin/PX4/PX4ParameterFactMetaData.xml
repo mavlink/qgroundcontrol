@@ -11526,6 +11526,58 @@ How often the sensor is readout</short_desc>
       <short_desc>UAVCAN ESC will spin at idle throttle when armed, even if the mixer outputs zero setpoints</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="UAVCAN_LGT_ANTCL" default="2" type="INT32">
+      <short_desc>UAVCAN ANTI_COLLISION light operating mode</short_desc>
+      <long_desc>This parameter defines the minimum condition under which the system will command the ANTI_COLLISION lights on 0 - Always off 1 - When autopilot is armed 2 - When autopilot is prearmed 3 - Always on</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Always off</value>
+        <value code="1">When autopilot is armed</value>
+        <value code="2">When autopilot is prearmed</value>
+        <value code="3">Always on</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_LGT_LAND" default="0" type="INT32">
+      <short_desc>UAVCAN LIGHT_ID_LANDING light operating mode</short_desc>
+      <long_desc>This parameter defines the minimum condition under which the system will command the LIGHT_ID_LANDING lights on 0 - Always off 1 - When autopilot is armed 2 - When autopilot is prearmed 3 - Always on</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Always off</value>
+        <value code="1">When autopilot is armed</value>
+        <value code="2">When autopilot is prearmed</value>
+        <value code="3">Always on</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_LGT_NAV" default="3" type="INT32">
+      <short_desc>UAVCAN RIGHT_OF_WAY light operating mode</short_desc>
+      <long_desc>This parameter defines the minimum condition under which the system will command the RIGHT_OF_WAY lights on 0 - Always off 1 - When autopilot is armed 2 - When autopilot is prearmed 3 - Always on</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Always off</value>
+        <value code="1">When autopilot is armed</value>
+        <value code="2">When autopilot is prearmed</value>
+        <value code="3">Always on</value>
+      </values>
+    </parameter>
+    <parameter name="UAVCAN_LGT_STROB" default="1" type="INT32">
+      <short_desc>UAVCAN STROBE light operating mode</short_desc>
+      <long_desc>This parameter defines the minimum condition under which the system will command the STROBE lights on 0 - Always off 1 - When autopilot is armed 2 - When autopilot is prearmed 3 - Always on</long_desc>
+      <min>0</min>
+      <max>3</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Always off</value>
+        <value code="1">When autopilot is armed</value>
+        <value code="2">When autopilot is prearmed</value>
+        <value code="3">Always on</value>
+      </values>
+    </parameter>
     <parameter name="UAVCAN_NODE_ID" default="1" type="INT32">
       <short_desc>UAVCAN Node ID</short_desc>
       <long_desc>Read the specs at http://uavcan.org to learn more about Node ID.</long_desc>
