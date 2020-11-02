@@ -77,7 +77,7 @@ private:
     LinkInterface*  _bestActivePrimaryLink  (void);
     void            _commRegainedOnLink     (LinkInterface*  link);
 
-    typedef struct {
+    typedef struct LinkInfo {
         SharedLinkInterfacePtr  link;
         bool                    commLost = false;
         QElapsedTimer           heartbeatElapsedTimer;

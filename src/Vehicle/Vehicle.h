@@ -1133,7 +1133,7 @@ private:
     void _waitForMavlinkMessageMessageReceived(const mavlink_message_t& message);
 
     // requestMessage handling
-    typedef struct {
+    typedef struct RequestMessageInfo {
         bool                        commandAckReceived; // We keep track of the ack/message being received since the order in which this will come in is random
         bool                        messageReceived;    // We only delete the allocated RequestMessageInfo_t when both happen (or the message wait times out)
         int                         msgId;
@@ -1145,7 +1145,7 @@ private:
     static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, MAV_RESULT result, MavCmdResultFailureCode_t failureCode);
     static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
-    typedef struct {
+    typedef struct MavCommandListEntry {
         int                 targetCompId        = MAV_COMP_ID_AUTOPILOT1;
         bool                useCommandInt       = false;
         MAV_CMD             command;
