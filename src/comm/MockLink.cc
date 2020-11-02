@@ -1129,11 +1129,14 @@ void MockLink::_respondWithAutopilotVersion(void)
 #if !defined(NO_ARDUPILOT_DIALECT)
     }
 #endif
+    uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT |
+            (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0);
+
     mavlink_msg_autopilot_version_pack_chan(_vehicleSystemId,
                                             _vehicleComponentId,
                                             _mavlinkChannel,
                                             &msg,
-                                            MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0),
+                                            capabilities,
                                             flightVersion,                   // flight_sw_version,
                                             0,                               // middleware_sw_version,
                                             0,                               // os_sw_version,
