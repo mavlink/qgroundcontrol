@@ -26,15 +26,17 @@ QtObject {
     property var controller     ///< FactPanelController
     property int batteryIndex   ///< 1-based battery index
 
-    property bool battVoltageDividerAvailable:  controller.parameterExists(-1, "BAT#_V_DIV".replace("#",    _indexedBatteryParamsAvailable ? batteryIndex : ""))
-    property bool battAmpsPerVoltAvailable:     controller.parameterExists(-1, "BAT#_A_PER_V".replace("#",  _indexedBatteryParamsAvailable ? batteryIndex : ""))
 
-    property Fact battNumCells:                 controller.getParameterFact(-1, "BAT#_N_CELLS".replace("#",     _indexedBatteryParamsAvailable ? batteryIndex : ""))
-    property Fact battHighVolt:                 controller.getParameterFact(-1, "BAT#_V_CHARGED".replace("#",   _indexedBatteryParamsAvailable ? batteryIndex : ""))
-    property Fact battLowVolt:                  controller.getParameterFact(-1, "BAT#_V_EMPTY".replace("#",     _indexedBatteryParamsAvailable ? batteryIndex : ""))
-    property Fact battVoltLoadDrop:             controller.getParameterFact(-1, "BAT#_V_LOAD_DROP".replace("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
-    property Fact battVoltageDivider:           controller.getParameterFact(-1, "BAT#_V_DIV".replace("#",       _indexedBatteryParamsAvailable ? batteryIndex : ""), false)
-    property Fact battAmpsPerVolt:              controller.getParameterFact(-1, "BAT#_A_PER_V".replace("#",     _indexedBatteryParamsAvailable ? batteryIndex : ""), false)
+    property Fact battSource:                   controller.getParameterFact(-1, "BAT#_SOURCE".replace       ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property Fact battNumCells:                 controller.getParameterFact(-1, "BAT#_N_CELLS".replace      ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property Fact battHighVolt:                 controller.getParameterFact(-1, "BAT#_V_CHARGED".replace    ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property Fact battLowVolt:                  controller.getParameterFact(-1, "BAT#_V_EMPTY".replace      ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property Fact battVoltLoadDrop:             controller.getParameterFact(-1, "BAT#_V_LOAD_DROP".replace  ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property Fact battVoltageDivider:           controller.getParameterFact(-1, "BAT#_V_DIV".replace        ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""), false)
+    property Fact battAmpsPerVolt:              controller.getParameterFact(-1, "BAT#_A_PER_V".replace      ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""), false)
+
+    property bool battVoltageDividerAvailable:  controller.parameterExists(-1, "BAT#_V_DIV".replace     ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
+    property bool battAmpsPerVoltAvailable:     controller.parameterExists(-1, "BAT#_A_PER_V".replace   ("#", _indexedBatteryParamsAvailable ? batteryIndex : ""))
 
     property string _batNCellsIndexedParamName:     "BAT#_N_CELLS"
     property bool   _indexedBatteryParamsAvailable: controller.parameterExists(-1, _batNCellsIndexedParamName.replace("#", 1))
