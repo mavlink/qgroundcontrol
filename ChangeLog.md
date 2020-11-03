@@ -4,13 +4,13 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0
 
-## 4.0.11 - Not yet release
+## 4.0.11 - Stable
 * Fix battery id handling for multiple batteries
 
-## 4.0.10 - Stable
+## 4.0.10
 * Fix crashes in UDPLink
 
-## 4.0.9 - Stable
+## 4.0.9
 
 * Don't auto-connect to second Cube Orange/Yellow composite port
 * Plan: Fix bugs associated with mission commands which specify and altitude but no lat/lon
