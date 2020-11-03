@@ -395,7 +395,7 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
         param3 =        missionItem.param3;
         param4 =        missionItem.param4;
         param5 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.x : (double)missionItem.x * 1e-7;
-        param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.x * 1e-7;
+        param6 =        missionItem.frame == MAV_FRAME_MISSION ? (double)missionItem.y : (double)missionItem.y * 1e-7;
         param7 =        (double)missionItem.z;
         autoContinue =  missionItem.autocontinue;
         isCurrentItem = missionItem.current;
