@@ -3281,6 +3281,20 @@ but also ignore less noise</short_desc>
         <value code="300">Radio Controller</value>
       </values>
     </parameter>
+    <parameter name="GPS_1_PROTOCOL" default="1" type="INT32">
+      <short_desc>Protocol for Main GPS</short_desc>
+      <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
+      <min>0</min>
+      <max>4</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto detect</value>
+        <value code="1">u-blox</value>
+        <value code="2">MTK</value>
+        <value code="3">Ashtech / Trimble</value>
+        <value code="4">Emlid Reach</value>
+      </values>
+    </parameter>
     <parameter name="GPS_2_CONFIG" default="0" type="INT32">
       <short_desc>Serial Configuration for Secondary GPS</short_desc>
       <long_desc>Configure on which serial port to run Secondary GPS.</long_desc>
@@ -3296,6 +3310,20 @@ but also ignore less noise</short_desc>
         <value code="202">GPS 2</value>
         <value code="203">GPS 3</value>
         <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
+    <parameter name="GPS_2_PROTOCOL" default="1" type="INT32">
+      <short_desc>Protocol for Secondary GPS</short_desc>
+      <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
+      <min>0</min>
+      <max>4</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto detect</value>
+        <value code="1">u-blox</value>
+        <value code="2">MTK</value>
+        <value code="3">Ashtech / Trimble</value>
+        <value code="4">Emlid Reach</value>
       </values>
     </parameter>
     <parameter name="GPS_DUMP_COMM" default="0" type="INT32">
@@ -3320,6 +3348,17 @@ but also ignore less noise</short_desc>
         <value code="6">airborne with &lt;1g acceleration</value>
         <value code="7">airborne with &lt;2g acceleration</value>
         <value code="8">airborne with &lt;4g acceleration</value>
+      </values>
+    </parameter>
+    <parameter name="GPS_UBX_MODE" default="0" type="INT32">
+      <short_desc>u-blox GPS Mode</short_desc>
+      <long_desc>Select the u-blox configuration setup. Most setups will use the default, including RTK and dual GPS without heading. The Heading mode requires 2 F9P devices to be attached. The main GPS will act as rover and output heading information, whereas the secondary will act as moving base, sending RTCM on UART2 to the rover GPS. RTK is still possible with this setup.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Default</value>
+        <value code="1">Heading</value>
       </values>
     </parameter>
     <parameter name="GPS_YAW_OFFSET" default="0." type="FLOAT">
