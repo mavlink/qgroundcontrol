@@ -69,6 +69,9 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
     }
     QString filterRules;
 
+    // Disable the ridiculous "QML Connections: Implicitly defined onFoo properties in Connections are deprecated..." spew
+    filterRules += "qt.qml.connections=false\n";
+
     filterRules += "*Log.debug=false\n";
 
     // Set up filters defined in settings
