@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.0.11 - Stable
 * Fix battery id handling for multiple batteries
+* Fix Google Play store upload which was preventing new Stables being updated correctly
 
 ## 4.0.10
 * Fix crashes in UDPLink
