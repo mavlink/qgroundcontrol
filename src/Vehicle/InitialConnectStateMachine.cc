@@ -56,19 +56,26 @@ void InitialConnectStateMachine::_stateRequestCapabilities(StateMachine* stateMa
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
+    WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    LinkInterface* link = vehicle->vehicleLinkManager()->primaryLink();
-    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(InitialConnectStateMachineLog) << "Skipping capability request due to link type";
+    if (weakLink.expired()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestCapabilities Skipping capability request due to no primary link";
         connectMachine->advance();
     } else {
-        qCDebug(InitialConnectStateMachineLog) << "Requesting capabilities";
-        vehicle->_waitForMavlinkMessage(_waitForAutopilotVersionResultHandler, connectMachine, MAVLINK_MSG_ID_AUTOPILOT_VERSION, 1000);
-        vehicle->sendMavCommandWithHandler(_capabilitiesCmdResultHandler,
-                                           connectMachine,
-                                           MAV_COMP_ID_AUTOPILOT1,
-                                           MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
-                                           1);                                      // Request firmware version
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(InitialConnectStateMachineLog) << "Skipping capability request due to link type";
+            connectMachine->advance();
+        } else {
+            qCDebug(InitialConnectStateMachineLog) << "Requesting capabilities";
+            vehicle->_waitForMavlinkMessage(_waitForAutopilotVersionResultHandler, connectMachine, MAVLINK_MSG_ID_AUTOPILOT_VERSION, 1000);
+            vehicle->sendMavCommandWithHandler(_capabilitiesCmdResultHandler,
+                                               connectMachine,
+                                               MAV_COMP_ID_AUTOPILOT1,
+                                               MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
+                                               1);                                      // Request firmware version
+        }
     }
 }
 
@@ -161,19 +168,26 @@ void InitialConnectStateMachine::_stateRequestProtocolVersion(StateMachine* stat
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
-    LinkInterface*              link            = vehicle->vehicleLinkManager()->primaryLink();
+    WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(InitialConnectStateMachineLog) << "Skipping protocol version request due to link type";
+    if (weakLink.expired()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestProtocolVersion Skipping protocol version request due to no primary link";
         connectMachine->advance();
     } else {
-        qCDebug(InitialConnectStateMachineLog) << "Requesting protocol version";
-        vehicle->_waitForMavlinkMessage(_waitForProtocolVersionResultHandler, connectMachine, MAVLINK_MSG_ID_PROTOCOL_VERSION, 1000);
-        vehicle->sendMavCommandWithHandler(_protocolVersionCmdResultHandler,
-                                           connectMachine,
-                                           MAV_COMP_ID_AUTOPILOT1,
-                                           MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                                           1);                                      // Request protocol version
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestProtocolVersion Skipping protocol version request due to link type";
+            connectMachine->advance();
+        } else {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestProtocolVersion Requesting protocol version";
+            vehicle->_waitForMavlinkMessage(_waitForProtocolVersionResultHandler, connectMachine, MAVLINK_MSG_ID_PROTOCOL_VERSION, 1000);
+            vehicle->sendMavCommandWithHandler(_protocolVersionCmdResultHandler,
+                                               connectMachine,
+                                               MAV_COMP_ID_AUTOPILOT1,
+                                               MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                                               1);                                      // Request protocol version
+        }
     }
 }
 
@@ -257,14 +271,21 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
-    LinkInterface*              link            = vehicle->vehicleLinkManager()->primaryLink();
+    WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to link type";
-        vehicle->_firstMissionLoadComplete();
+    if (weakLink.expired()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to no primary link";
+        connectMachine->advance();
     } else {
-        qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
-        vehicle->_missionManager->loadFromVehicle();
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to link type";
+            vehicle->_firstMissionLoadComplete();
+        } else {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission";
+            vehicle->_missionManager->loadFromVehicle();
+        }
     }
 }
 

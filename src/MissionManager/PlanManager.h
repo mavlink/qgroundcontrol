@@ -137,7 +137,6 @@ protected:
     Vehicle*            _vehicle =              nullptr;
     MissionCommandTree* _missionCommandTree =   nullptr;
     MAV_MISSION_TYPE    _planType;
-    LinkInterface*      _dedicatedLink =        nullptr;
 
     QTimer*             _ackTimeoutTimer =      nullptr;
     AckType_t           _expectedAck;

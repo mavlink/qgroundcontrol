@@ -57,7 +57,7 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface* link)
     _rgLinkInfo[linkIndex].commLost = false;
 
     // Notify the user of communication regained
-    bool isPrimaryLink = link == _primaryLink;
+    bool isPrimaryLink = link == _primaryLink.lock().get();
     if (_rgLinkInfo.count() > 1) {
         commRegainedMessage = tr("%1Communication regained on %2 link").arg(_vehicle->_vehicleIdSpeech()).arg(isPrimaryLink ? tr("primary") : tr("secondary"));
     } else {
@@ -113,7 +113,7 @@ void VehicleLinkManager::_commLostCheck(void)
             linkStatusChange = true;
 
             // Notify the user of individual link communication loss
-            bool isPrimaryLink = linkInfo.link.get() == _primaryLink;
+            bool isPrimaryLink = linkInfo.link.get() == _primaryLink.lock().get();
             if (_rgLinkInfo.count() > 1) {
                 QString msg = tr("%1Communication lost on %2 link.").arg(_vehicle->_vehicleIdSpeech()).arg(isPrimaryLink ? tr("primary") : tr("secondary"));
                 _vehicle->_say(msg);
@@ -204,8 +204,8 @@ void VehicleLinkManager::_removeLink(LinkInterface* link)
     } else {
         qCDebug(VehicleLinkManagerLog) << "_removeLink:" << QString("%1").arg((qulonglong)link, 0, 16);
 
-        if (link == _primaryLink) {
-            _primaryLink = nullptr;
+        if (link == _primaryLink.lock().get()) {
+            _primaryLink.reset();
             emit primaryLinkChanged();
         }
 
@@ -235,7 +235,7 @@ void VehicleLinkManager::_linkDisconnected(void)
     }
 }
 
-LinkInterface* VehicleLinkManager::_bestActivePrimaryLink(void)
+WeakLinkInterfacePtr VehicleLinkManager::_bestActivePrimaryLink(void)
 {
 #ifndef NO_SERIAL_LINK
     // Best choice is a USB connection
@@ -248,7 +248,7 @@ LinkInterface* VehicleLinkManager::_bestActivePrimaryLink(void)
                 if (config) {
                     SerialConfiguration* serialConfig = qobject_cast<SerialConfiguration*>(config.get());
                     if (serialConfig && serialConfig->usbDirect()) {
-                        return link.get();
+                        return link;
                     }
                 }
             }
@@ -262,13 +262,13 @@ LinkInterface* VehicleLinkManager::_bestActivePrimaryLink(void)
             SharedLinkInterfacePtr      link    = linkInfo.link;
             SharedLinkConfigurationPtr  config  = link->linkConfiguration();
             if (config && !config->isHighLatency()) {
-                return link.get();
+                return link;
             }
         }
     }
 
     // Last possible choice is a high latency link
-    if (_primaryLink && _primaryLink->linkConfiguration()->isHighLatency()) {
+    if (!_primaryLink.expired() && _primaryLink.lock().get()->linkConfiguration()->isHighLatency()) {
         // Best choice continues to be the current high latency link
         return _primaryLink;
     } else {
@@ -278,31 +278,31 @@ LinkInterface* VehicleLinkManager::_bestActivePrimaryLink(void)
                 SharedLinkInterfacePtr      link    = linkInfo.link;
                 SharedLinkConfigurationPtr  config  = link->linkConfiguration();
                 if (config && config->isHighLatency()) {
-                    return link.get();
+                    return link;
                 }
             }
         }
     }
 
-    return nullptr;
+    return WeakLinkInterfacePtr();
 }
 
 bool VehicleLinkManager::_updatePrimaryLink(void)
 {
-    int linkIndex = _containsLinkIndex(_primaryLink);
+    int linkIndex = _containsLinkIndex(_primaryLink.lock().get());
     if (linkIndex != -1 && !_rgLinkInfo[linkIndex].commLost && !_rgLinkInfo[linkIndex].link->linkConfiguration()->isHighLatency()) {
         // Current priority link is still valid
         return false;
     }
 
-    LinkInterface* bestActivePrimaryLink = _bestActivePrimaryLink();
+    WeakLinkInterfacePtr bestActivePrimaryLink = _bestActivePrimaryLink();
 
-    if (linkIndex != -1 && !bestActivePrimaryLink) {
+    if (linkIndex != -1 && bestActivePrimaryLink.expired()) {
         // Nothing better available, leave things set to current primary link
         return false;
     } else {
-        if (bestActivePrimaryLink != _primaryLink) {
-            if (_primaryLink && _primaryLink->linkConfiguration()->isHighLatency()) {
+        if (bestActivePrimaryLink.lock().get() != _primaryLink.lock().get()) {
+            if (!_primaryLink.expired() && _primaryLink.lock()->linkConfiguration()->isHighLatency()) {
                 _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
                                MAV_CMD_CONTROL_HIGH_LATENCY,
                                true,
@@ -312,7 +312,7 @@ bool VehicleLinkManager::_updatePrimaryLink(void)
             _primaryLink = bestActivePrimaryLink;
             emit primaryLinkChanged();
 
-            if (bestActivePrimaryLink && bestActivePrimaryLink->linkConfiguration()->isHighLatency()) {
+            if (!bestActivePrimaryLink.expired() && bestActivePrimaryLink.lock()->linkConfiguration()->isHighLatency()) {
                 _vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1,
                                MAV_CMD_CONTROL_HIGH_LATENCY,
                                true,
@@ -354,8 +354,8 @@ bool VehicleLinkManager::containsLink(LinkInterface* link)
 
 QString VehicleLinkManager::primaryLinkName() const
 {
-    if (_primaryLink) {
-        return _primaryLink->linkConfiguration()->name();
+    if (!_primaryLink.expired()) {
+        return _primaryLink.lock()->linkConfiguration()->name();
     }
 
     return QString();
@@ -364,7 +364,7 @@ void VehicleLinkManager::setPrimaryLinkByName(const QString& name)
 {
     for (const LinkInfo_t& linkInfo: _rgLinkInfo) {
         if (linkInfo.link->linkConfiguration()->name() == name) {
-            _primaryLink = linkInfo.link.get();
+            _primaryLink = linkInfo.link;
             emit primaryLinkChanged();
         }
     }
@@ -390,4 +390,15 @@ QStringList VehicleLinkManager::linkStatuses(void) const
     }
 
     return rgStatuses;
+}
+
+bool VehicleLinkManager::primaryLinkIsPX4Flow(void) const
+{
+    WeakLinkInterfacePtr nullWeak;
+
+    if (_primaryLink.expired()) {
+        return false;
+    } else {
+        return _primaryLink.lock()->isPX4Flow();
+    }
 }

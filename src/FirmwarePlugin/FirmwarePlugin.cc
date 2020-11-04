@@ -1034,25 +1034,28 @@ QString FirmwarePlugin::gotoFlightMode(void) const
 
 void FirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
 {
-    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        MAVLinkProtocol*        mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_follow_target_t follow_target   = {};
+        SharedLinkInterfacePtr  sharedLink      = weakLink.lock();
 
-    mavlink_follow_target_t follow_target = {};
+        follow_target.timestamp =           qgcApp()->msecsSinceBoot();
+        follow_target.est_capabilities =    estimationCapabilities;
+        follow_target.position_cov[0] =     static_cast<float>(motionReport.pos_std_dev[0]);
+        follow_target.position_cov[2] =     static_cast<float>(motionReport.pos_std_dev[2]);
+        follow_target.alt =                 static_cast<float>(motionReport.altMetersAMSL);
+        follow_target.lat =                 motionReport.lat_int;
+        follow_target.lon =                 motionReport.lon_int;
+        follow_target.vel[0] =              static_cast<float>(motionReport.vxMetersPerSec);
+        follow_target.vel[1] =              static_cast<float>(motionReport.vyMetersPerSec);
 
-    follow_target.timestamp =           qgcApp()->msecsSinceBoot();
-    follow_target.est_capabilities =    estimationCapabilities;
-    follow_target.position_cov[0] =     static_cast<float>(motionReport.pos_std_dev[0]);
-    follow_target.position_cov[2] =     static_cast<float>(motionReport.pos_std_dev[2]);
-    follow_target.alt =                 static_cast<float>(motionReport.altMetersAMSL);
-    follow_target.lat =                 motionReport.lat_int;
-    follow_target.lon =                 motionReport.lon_int;
-    follow_target.vel[0] =              static_cast<float>(motionReport.vxMetersPerSec);
-    follow_target.vel[1] =              static_cast<float>(motionReport.vyMetersPerSec);
-
-    mavlink_message_t message;
-    mavlink_msg_follow_target_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                          static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                          vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                          &message,
-                                          &follow_target);
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), message);
+        mavlink_message_t message;
+        mavlink_msg_follow_target_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+                                              static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+                                              sharedLink->mavlinkChannel(),
+                                              &message,
+                                              &follow_target);
+        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
 }
