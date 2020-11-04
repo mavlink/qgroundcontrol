@@ -181,6 +181,8 @@ void UDPLink::readBytes()
         datagram.resize(_socket->pendingDatagramSize());
         QHostAddress sender;
         quint16 senderPort;
+        // If the other end is reset then it will still report data available,
+        // but will fail on the readDatagram call
         qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         if (slen == -1) {
             break;
