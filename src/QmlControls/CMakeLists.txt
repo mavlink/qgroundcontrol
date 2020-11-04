@@ -112,6 +112,7 @@ add_custom_target(QmlControlsQml
 		QGCTabBar.qml
 		QGCTabButton.qml
 		QGCTextField.qml
+		QGCSpinBox.qml
 		QGCToolBarButton.qml
 		QGCToolInsets.qml
 		QGCViewDialogContainer.qml

@@ -586,6 +586,23 @@ Rectangle {
                             enabled: false
                         }
 
+                        // QGCSpinBox
+                        Loader {
+                            sourceComponent: ctlRowHeader
+                            property string text: "QGCSpinBox"
+                        }
+                        QGCSpinBox {
+                            width: ctlPrevColumn._colWidth
+                            height: ctlPrevColumn._height
+                            value: 123
+                        }
+                        QGCSpinBox {
+                            width: ctlPrevColumn._colWidth
+                            height: ctlPrevColumn._height
+                            text: 123
+                            enabled: false
+                        }
+
                         // QGCComboBox
                         Loader {
                             sourceComponent: ctlRowHeader

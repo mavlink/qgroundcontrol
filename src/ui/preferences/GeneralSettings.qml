@@ -1064,7 +1064,7 @@ Rectangle {
                                 text:           qsTr("Indoor Image Margin")
                                 visible:        userBrandImageIndoorMargin.visible
                             }
-                            SpinBox {
+                            QGCSpinBox {
                                 id:                     userBrandImageIndoorMargin
                                 decimals:               0
                                 value:                  _userBrandImageIndoorMargin.value > 0 ? _userBrandImageIndoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
@@ -1105,7 +1105,7 @@ Rectangle {
                                 text:           qsTr("Outdoor Image Margin")
                                 visible:        userBrandImageOutdoorMargin.visible
                             }
-                            SpinBox {
+                            QGCSpinBox {
                                 id:                     userBrandImageOutdoorMargin
                                 decimals:               0
                                 value:                  _userBrandImageOutdoorMargin.value > 0 ? _userBrandImageOutdoorMargin.value : ScreenTools.defaultFontPixelHeight * 0.66
