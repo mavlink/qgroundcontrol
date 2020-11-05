@@ -158,7 +158,7 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
     QVERIFY(vehicle);
     QVERIFY(vehicleLinkManager);
 
-    QCOMPARE(mockLink1.get(), vehicleLinkManager->primaryLink());
+    QCOMPARE(mockLink1.get(), vehicleLinkManager->primaryLink().lock().get());
 
     QStringList rgNames = vehicleLinkManager->linkNames();
     QStringList rgStatus = vehicleLinkManager->linkStatuses();
@@ -202,7 +202,7 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
     QCOMPARE(multiSpy.waitForSignal (_primaryLinkChangedSignalName, VehicleLinkManager::_heartbeatMaxElpasedMSecs * 2), true);
     quint32 signalMask = multiSpy.signalNameToMask(_primaryLinkChangedSignalName) | multiSpy.signalNameToMask(_linkStatusesChangedSignalName);
     QVERIFY(multiSpy.checkOnlySignalByMask(signalMask));
-    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink());
+    QCOMPARE(pMockLink2,vehicleLinkManager->primaryLink().lock().get());
 
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
@@ -216,7 +216,7 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
     pMockLink1->setCommLost(false);
     QCOMPARE(multiSpy.waitForSignal (_linkStatusesChangedSignalName, VehicleLinkManager::_heartbeatMaxElpasedMSecs * 2),    true);
     QVERIFY(multiSpy.checkOnlySignalByMask(multiSpy.signalNameToMask(_linkStatusesChangedSignalName)));
-    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink());
+    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink().lock().get());
 
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
@@ -282,7 +282,7 @@ void VehicleLinkManagerTest::_highLatencyLinkTest(void)
     MockLink* pMockLink2 = qobject_cast<MockLink*>(mockLink2.get());
 
     QCOMPARE(multiSpyVLM.waitForSignal(_primaryLinkChangedSignalName, 100), true);
-    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink());
+    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink().lock().get());
     QCOMPARE(spyTransmissionEnabledChanged.count(), 1);
     QCOMPARE(spyTransmissionEnabledChanged.takeFirst()[0].toBool(), false);
     multiSpyVLM.clearAllSignals();
@@ -294,7 +294,7 @@ void VehicleLinkManagerTest::_highLatencyLinkTest(void)
 
     pMockLink2->setCommLost(true);
     QCOMPARE(multiSpyVLM.waitForSignal(_primaryLinkChangedSignalName, VehicleLinkManager::_heartbeatMaxElpasedMSecs * 2), true);
-    QCOMPARE(pMockLink1, vehicleLinkManager->primaryLink());
+    QCOMPARE(pMockLink1, vehicleLinkManager->primaryLink().lock().get());
     QCOMPARE(spyTransmissionEnabledChanged.count(), 1);
     QCOMPARE(spyTransmissionEnabledChanged.takeFirst()[0].toBool(), true);
     spyTransmissionEnabledChanged.clear();

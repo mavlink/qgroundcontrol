@@ -713,28 +713,33 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     setGuidedMode(vehicle, true);
 
-    mavlink_message_t msg;
-    mavlink_set_position_target_local_ned_t cmd;
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t                       msg;
+        mavlink_set_position_target_local_ned_t cmd;
+        SharedLinkInterfacePtr                  sharedLink = weakLink.lock();
 
-    memset(&cmd, 0, sizeof(cmd));
 
-    cmd.target_system    = static_cast<uint8_t>(vehicle->id());
-    cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
-    cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
-    cmd.type_mask = 0xFFF8; // Only x/y/z valid
-    cmd.x = 0.0f;
-    cmd.y = 0.0f;
-    cmd.z = static_cast<float>(-(altitudeChange));
+        memset(&cmd, 0, sizeof(cmd));
 
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_set_position_target_local_ned_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                &msg,
-                &cmd);
+        cmd.target_system    = static_cast<uint8_t>(vehicle->id());
+        cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
+        cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+        cmd.type_mask = 0xFFF8; // Only x/y/z valid
+        cmd.x = 0.0f;
+        cmd.y = 0.0f;
+        cmd.z = static_cast<float>(-(altitudeChange));
 
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), msg);
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_set_position_target_local_ned_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    &msg,
+                    &cmd);
+
+        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    }
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -853,36 +858,46 @@ QString APMFirmwarePlugin::_versionRegex() {
 
 void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
 {
-    mavlink_rc_channels_t channels;
-    mavlink_msg_rc_channels_decode(message, &channels);
-    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
-    if(channels.rssi) {
-        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_rc_channels_t   channels;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+        mavlink_msg_rc_channels_decode(message, &channels);
+        //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+        if(channels.rssi) {
+            channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+        }
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_rc_channels_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    message,
+                    &channels);
     }
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_rc_channels_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                message,
-                &channels);
 }
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
 {
-    mavlink_rc_channels_raw_t channels;
-    mavlink_msg_rc_channels_raw_decode(message, &channels);
-    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
-    if(channels.rssi) {
-        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_rc_channels_raw_t   channels;
+        SharedLinkInterfacePtr      sharedLink = weakLink.lock();
+
+        mavlink_msg_rc_channels_raw_decode(message, &channels);
+        //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+        if(channels.rssi) {
+            channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+        }
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_rc_channels_raw_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    message,
+                    &channels);
     }
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_rc_channels_raw_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                message,
-                &channels);
 }
 
 void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
@@ -906,27 +921,31 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
         return;
     }
 
-    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        MAVLinkProtocol*                mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_global_position_int_t   globalPositionInt;
+        SharedLinkInterfacePtr          sharedLink = weakLink.lock();
 
-    mavlink_global_position_int_t globalPositionInt;
-    memset(&globalPositionInt, 0, sizeof(globalPositionInt));
+        memset(&globalPositionInt, 0, sizeof(globalPositionInt));
 
-    // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
-    globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
-    globalPositionInt.lat =             motionReport.lat_int;
-    globalPositionInt.lon =             motionReport.lon_int;
-    globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
-    globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
-    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
-    globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
+        // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
+        globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
+        globalPositionInt.lat =             motionReport.lat_int;
+        globalPositionInt.lon =             motionReport.lon_int;
+        globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
+        globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
+        globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
+        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
+        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
+        globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
 
-    mavlink_message_t message;
-    mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                          static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                          vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                          &message,
-                                          &globalPositionInt);
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), message);
+        mavlink_message_t message;
+        mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+                                                    static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+                                                    sharedLink->mavlinkChannel(),
+                                                    &message,
+                                                    &globalPositionInt);
+        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
 }

@@ -110,6 +110,12 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
         return;
     }
 
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        return;
+    }
+    SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
     // Send maximum sized chunks until the complete buffer is transmitted
     while(data.size()) {
         QByteArray chunk{data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN)};
@@ -121,7 +127,7 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
         mavlink_msg_serial_control_pack_chan(
                     protocol->getSystemId(),
                     protocol->getComponentId(),
-                    link->mavlinkChannel(),
+                    sharedLink->mavlinkChannel(),
                     &msg,
                     SERIAL_CONTROL_DEV_SHELL,
                     flags,
@@ -129,7 +135,7 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
                     0,
                     chunk.size(),
                     reinterpret_cast<uint8_t*>(chunk.data()));
-        _vehicle->sendMessageOnLinkThreadSafe(link, msg);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         data.remove(0, chunk.size());
     }
 }

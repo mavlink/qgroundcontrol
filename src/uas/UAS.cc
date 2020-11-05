@@ -473,19 +473,22 @@ void UAS::requestImage()
         return;
     }
 
-   qDebug() << "trying to get an image from the uas...";
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+
+    qDebug() << "trying to get an image from the uas...";
 
     // check if there is already an image transmission going on
-    if (imagePacketsArrived == 0)
-    {
-        mavlink_message_t msg;
+    if (!weakLink.expired() && imagePacketsArrived == 0) {
+        mavlink_message_t       msg;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
         mavlink_msg_data_transmission_handshake_pack_chan(mavlink->getSystemId(),
                                                           mavlink->getComponentId(),
-                                                          _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
+                                                          sharedLink->mavlinkChannel(),
                                                           &msg,
                                                           MAVLINK_DATA_STREAM_IMG_JPEG,
                                                           0, 0, 0, 0, 0, 50);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
 }
 

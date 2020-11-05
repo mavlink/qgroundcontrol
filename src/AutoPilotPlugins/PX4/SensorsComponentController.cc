@@ -65,7 +65,13 @@ SensorsComponentController::SensorsComponentController(void)
 
 bool SensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (weakLink.expired()) {
+        return false;
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        return sharedLink->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    }
 }
 
 /// Appends the specified text to the status log area in the ui

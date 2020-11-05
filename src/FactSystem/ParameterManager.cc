@@ -81,7 +81,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _waitingForDefaultComponent       (false)
     , _saveRequired                     (false)
     , _metaDataAddedToFacts             (false)
-    , _logReplay                        (vehicle->vehicleLinkManager()->primaryLink() && vehicle->vehicleLinkManager()->primaryLink()->isLogReplay())
+    , _logReplay                        (!vehicle->vehicleLinkManager()->primaryLink().expired() && vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
     , _prevWaitingReadParamIndexCount   (0)
     , _prevWaitingReadParamNameCount    (0)
     , _prevWaitingWriteParamNameCount   (0)
@@ -445,11 +445,13 @@ void ParameterManager::_factRawValueUpdated(const QVariant& rawValue)
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
-    if (!_vehicle->vehicleLinkManager()->primaryLink()) {
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+
+    if (weakLink.expired()) {
         return;
     }
 
-    if (_vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency() || _logReplay) {
+    if (weakLink.lock()->linkConfiguration()->isHighLatency() || _logReplay) {
         // These links don't load params
         _parametersReady = true;
         _missingParameters = true;
@@ -474,16 +476,17 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
         }
     }
 
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    MAVLinkProtocol*        mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_message_t       msg;
+    SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    mavlink_message_t msg;
     mavlink_msg_param_request_list_pack_chan(mavlink->getSystemId(),
                                              mavlink->getComponentId(),
-                                             _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
+                                             sharedLink->mavlinkChannel(),
                                              &msg,
                                              _vehicle->id(),
                                              componentId);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+    _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 
     QString what = (componentId == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Request to refresh all parameters for component ID:" << what;
@@ -711,77 +714,87 @@ Out:
 
 void ParameterManager::_readParameterRaw(int componentId, const QString& paramName, int paramIndex)
 {
-    mavlink_message_t msg;
-    char fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t       msg;
+        char                    fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
-    mavlink_msg_param_request_read_pack_chan(_mavlink->getSystemId(),   // QGC system id
-                                             _mavlink->getComponentId(),     // QGC component id
-                                             _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                             &msg,                           // Pack into this mavlink_message_t
-                                             _vehicle->id(),                 // Target system id
-                                             componentId,                    // Target component id
-                                             fixedParamName,                 // Named parameter being requested
-                                             paramIndex);                    // Parameter index being requested, -1 for named
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+
+        strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
+        mavlink_msg_param_request_read_pack_chan(_mavlink->getSystemId(),   // QGC system id
+                                                 _mavlink->getComponentId(),     // QGC component id
+                                                 sharedLink->mavlinkChannel(),
+                                                 &msg,                           // Pack into this mavlink_message_t
+                                                 _vehicle->id(),                 // Target system id
+                                                 componentId,                    // Target component id
+                                                 fixedParamName,                 // Named parameter being requested
+                                                 paramIndex);                    // Parameter index being requested, -1 for named
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    }
 }
 
 void ParameterManager::_sendParamSetToVehicle(int componentId, const QString& paramName, FactMetaData::ValueType_t valueType, const QVariant& value)
 {
-    mavlink_param_set_t     p;
-    mavlink_param_union_t   union_value;
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
 
-    memset(&p, 0, sizeof(p));
+    if (!weakLink.expired()) {
+        mavlink_param_set_t     p;
+        mavlink_param_union_t   union_value;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    p.param_type = factTypeToMavType(valueType);
+        memset(&p, 0, sizeof(p));
 
-    switch (valueType) {
-    case FactMetaData::valueTypeUint8:
-        union_value.param_uint8 = (uint8_t)value.toUInt();
-        break;
+        p.param_type = factTypeToMavType(valueType);
 
-    case FactMetaData::valueTypeInt8:
-        union_value.param_int8 = (int8_t)value.toInt();
-        break;
+        switch (valueType) {
+        case FactMetaData::valueTypeUint8:
+            union_value.param_uint8 = (uint8_t)value.toUInt();
+            break;
 
-    case FactMetaData::valueTypeUint16:
-        union_value.param_uint16 = (uint16_t)value.toUInt();
-        break;
+        case FactMetaData::valueTypeInt8:
+            union_value.param_int8 = (int8_t)value.toInt();
+            break;
 
-    case FactMetaData::valueTypeInt16:
-        union_value.param_int16 = (int16_t)value.toInt();
-        break;
+        case FactMetaData::valueTypeUint16:
+            union_value.param_uint16 = (uint16_t)value.toUInt();
+            break;
 
-    case FactMetaData::valueTypeUint32:
-        union_value.param_uint32 = (uint32_t)value.toUInt();
-        break;
+        case FactMetaData::valueTypeInt16:
+            union_value.param_int16 = (int16_t)value.toInt();
+            break;
 
-    case FactMetaData::valueTypeFloat:
-        union_value.param_float = value.toFloat();
-        break;
+        case FactMetaData::valueTypeUint32:
+            union_value.param_uint32 = (uint32_t)value.toUInt();
+            break;
 
-    default:
-        qCritical() << "Unsupported fact falue type" << valueType;
-        // fall through
+        case FactMetaData::valueTypeFloat:
+            union_value.param_float = value.toFloat();
+            break;
 
-    case FactMetaData::valueTypeInt32:
-        union_value.param_int32 = (int32_t)value.toInt();
-        break;
+        default:
+            qCritical() << "Unsupported fact falue type" << valueType;
+            // fall through
+
+        case FactMetaData::valueTypeInt32:
+            union_value.param_int32 = (int32_t)value.toInt();
+            break;
+        }
+
+        p.param_value = union_value.param_float;
+        p.target_system = (uint8_t)_vehicle->id();
+        p.target_component = (uint8_t)componentId;
+
+        strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
+
+        mavlink_message_t msg;
+        mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
+                                          _mavlink->getComponentId(),
+                                          sharedLink->mavlinkChannel(),
+                                          &msg,
+                                          &p);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
-
-    p.param_value = union_value.param_float;
-    p.target_system = (uint8_t)_vehicle->id();
-    p.target_component = (uint8_t)componentId;
-
-    strncpy(p.param_id, paramName.toStdString().c_str(), sizeof(p.param_id));
-
-    mavlink_message_t msg;
-    mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
-                                      _mavlink->getComponentId(),
-                                      _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                      &msg,
-                                      &p);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
 }
 
 void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
@@ -859,23 +872,29 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
             _handleParamValue(componentId, name, count, index++, mavParamType, paramTypeVal.second);
         }
 
-        // Return the hash value to notify we don't want any more updates
-        mavlink_param_set_t     p;
-        mavlink_param_union_t   union_value;
-        memset(&p, 0, sizeof(p));
-        p.param_type = MAV_PARAM_TYPE_UINT32;
-        strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
-        union_value.param_uint32 = crc32_value;
-        p.param_value = union_value.param_float;
-        p.target_system = (uint8_t)_vehicle->id();
-        p.target_component = (uint8_t)componentId;
-        mavlink_message_t msg;
-        mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
-                                          _mavlink->getComponentId(),
-                                          _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                          &msg,
-                                          &p);
-        _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+        WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+
+        if (!weakLink.expired()) {
+            mavlink_param_set_t     p;
+            mavlink_param_union_t   union_value;
+            SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+            // Return the hash value to notify we don't want any more updates
+            memset(&p, 0, sizeof(p));
+            p.param_type = MAV_PARAM_TYPE_UINT32;
+            strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
+            union_value.param_uint32 = crc32_value;
+            p.param_value = union_value.param_float;
+            p.target_system = (uint8_t)_vehicle->id();
+            p.target_component = (uint8_t)componentId;
+            mavlink_message_t msg;
+            mavlink_msg_param_set_encode_chan(_mavlink->getSystemId(),
+                                              _mavlink->getComponentId(),
+                                              sharedLink->mavlinkChannel(),
+                                              &msg,
+                                              &p);
+            _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+        }
 
         // Give the user some feedback things loaded properly
         QVariantAnimation *ani = new QVariantAnimation(this);
