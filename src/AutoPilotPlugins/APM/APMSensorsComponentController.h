@@ -146,6 +146,7 @@ private:
     void _handleCommandAck                  (mavlink_message_t& message);
     void _handleMagCalProgress              (mavlink_message_t& message);
     void _handleMagCalReport                (mavlink_message_t& message);
+    void _handleCommandLong                 (mavlink_message_t& message);
     void _restorePreviousCompassCalFitness  (void);
 
     enum StopCalibrationCode {

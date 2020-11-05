@@ -77,7 +77,6 @@ APMSensorsComponentController::APMSensorsComponentController(void)
         qWarning() << "Sensors component is missing";
     }
 
-    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 APMSensorsComponentController::~APMSensorsComponentController()
@@ -109,6 +108,8 @@ void APMSensorsComponentController::_startLogCalibration(void)
         _nextButton->setEnabled(true);
     }
     _cancelButton->setEnabled(_calTypeInProgress == CalTypeOnboardCompass);
+
+    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 void APMSensorsComponentController::_startVisualCalibration(void)
@@ -120,6 +121,8 @@ void APMSensorsComponentController::_startVisualCalibration(void)
     _resetInternalState();
     
     _progressBar->setProperty("value", 0);
+
+    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 void APMSensorsComponentController::_resetInternalState(void)
@@ -150,6 +153,7 @@ void APMSensorsComponentController::_resetInternalState(void)
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
+    disconnect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(true);
 
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
@@ -293,7 +297,45 @@ void APMSensorsComponentController::calibrateAccel(void)
 {
     _calTypeInProgress = CalTypeAccel;
     _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
-    _startLogCalibration();
+    _startVisualCalibration();
+    _cancelButton->setEnabled(false);
+    _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
+
+    // Reset all progress indication
+    _orientationCalDownSideDone = false;
+    _orientationCalUpsideDownSideDone = false;
+    _orientationCalLeftSideDone = false;
+    _orientationCalRightSideDone = false;
+    _orientationCalTailDownSideDone = false;
+    _orientationCalNoseDownSideDone = false;
+    _orientationCalDownSideInProgress = false;
+    _orientationCalUpsideDownSideInProgress = false;
+    _orientationCalLeftSideInProgress = false;
+    _orientationCalRightSideInProgress = false;
+    _orientationCalNoseDownSideInProgress = false;
+    _orientationCalTailDownSideInProgress = false;
+
+    // Reset all visibility
+    _orientationCalDownSideVisible = false;
+    _orientationCalUpsideDownSideVisible = false;
+    _orientationCalLeftSideVisible = false;
+    _orientationCalRightSideVisible = false;
+    _orientationCalTailDownSideVisible = false;
+    _orientationCalNoseDownSideVisible = false;
+
+    _calTypeInProgress = CalTypeAccel;
+    _orientationCalDownSideVisible = true;
+    _orientationCalUpsideDownSideVisible = true;
+    _orientationCalLeftSideVisible = true;
+    _orientationCalRightSideVisible = true;
+    _orientationCalTailDownSideVisible = true;
+    _orientationCalNoseDownSideVisible = true;
+
+    emit orientationCalSidesDoneChanged();
+    emit orientationCalSidesVisibleChanged();
+    emit orientationCalSidesInProgressChanged();
+    _updateAndEmitShowOrientationCalArea(true);
+
     _vehicle->startCalibration(Vehicle::CalibrationAccel);
 }
 
@@ -354,105 +396,8 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         }
     }
 
-    if (_calTypeInProgress == CalTypeAccel) {
-        if (text == QStringLiteral("place vehicle level and press any key.")) {
-            _startVisualCalibration();
-            _cancelButton->setEnabled(false);
-
-            // Reset all progress indication
-            _orientationCalDownSideDone = false;
-            _orientationCalUpsideDownSideDone = false;
-            _orientationCalLeftSideDone = false;
-            _orientationCalRightSideDone = false;
-            _orientationCalTailDownSideDone = false;
-            _orientationCalNoseDownSideDone = false;
-            _orientationCalDownSideInProgress = false;
-            _orientationCalUpsideDownSideInProgress = false;
-            _orientationCalLeftSideInProgress = false;
-            _orientationCalRightSideInProgress = false;
-            _orientationCalNoseDownSideInProgress = false;
-            _orientationCalTailDownSideInProgress = false;
-
-            // Reset all visibility
-            _orientationCalDownSideVisible = false;
-            _orientationCalUpsideDownSideVisible = false;
-            _orientationCalLeftSideVisible = false;
-            _orientationCalRightSideVisible = false;
-            _orientationCalTailDownSideVisible = false;
-            _orientationCalNoseDownSideVisible = false;
-
-            _calTypeInProgress = CalTypeAccel;
-            _orientationCalDownSideVisible = true;
-            _orientationCalUpsideDownSideVisible = true;
-            _orientationCalLeftSideVisible = true;
-            _orientationCalRightSideVisible = true;
-            _orientationCalTailDownSideVisible = true;
-            _orientationCalNoseDownSideVisible = true;
-
-            emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesVisibleChanged();
-            emit orientationCalSidesInProgressChanged();
-            _updateAndEmitShowOrientationCalArea(true);
-        }
-
-        QString placeVehicle("place vehicle ");
-        if (_calTypeInProgress == CalTypeAccel && text.startsWith(placeVehicle)) {
-            text = text.right(text.length() - placeVehicle.length());
-            if (text.startsWith("level")) {
-                _orientationCalDownSideInProgress = true;
-                _nextButton->setEnabled(true);
-            } else if (text.startsWith("on its left")) {
-                _orientationCalDownSideDone =       true;
-                _orientationCalDownSideInProgress = false;
-                _orientationCalLeftSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(17 / 100.0));
-            } else if (text.startsWith("on its right")) {
-                _orientationCalLeftSideDone =       true;
-                _orientationCalLeftSideInProgress = false;
-                _orientationCalRightSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(34 / 100.0));
-            } else if (text.startsWith("nose down")) {
-                _orientationCalRightSideDone =       true;
-                _orientationCalRightSideInProgress = false;
-                _orientationCalNoseDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(51 / 100.0));
-            } else if (text.startsWith("nose up")) {
-                _orientationCalNoseDownSideDone =       true;
-                _orientationCalNoseDownSideInProgress = false;
-                _orientationCalTailDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(68 / 100.0));
-            } else if (text.startsWith("on its back")) {
-                _orientationCalTailDownSideDone =       true;
-                _orientationCalTailDownSideInProgress = false;
-                _orientationCalUpsideDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(85 / 100.0));
-            }
-
-            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
-
-            emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesInProgressChanged();
-            emit orientationCalSidesRotateChanged();
-        }
-    }
-
     _appendStatusLog(originalMessageText);
     qCDebug(APMSensorsComponentControllerLog) << originalMessageText << severity;
-
-    if (text.contains(QLatin1String("calibration successful"))) {
-        _stopCalibration(StopCalibrationSuccess);
-        return;
-    }
-
-    if (text.startsWith(QStringLiteral("calibration cancelled"))) {
-        _stopCalibration(_waitingForCancel ? StopCalibrationCancelled : StopCalibrationFailed);
-        return;
-    }
-
-    if (text.startsWith(QStringLiteral("calibration failed"))) {
-        _stopCalibration(StopCalibrationFailed);
-        return;
-    }
 }
 
 void APMSensorsComponentController::_refreshParams(void)
@@ -635,6 +580,86 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
     }
 }
 
+void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& message)
+{
+    bool                    updateImages = false;
+    mavlink_command_long_t  commandLong;
+
+    mavlink_msg_command_long_decode(&message, &commandLong);
+
+    if (commandLong.command == MAV_CMD_ACCELCAL_VEHICLE_POS) {
+        switch (static_cast<ACCELCAL_VEHICLE_POS>(static_cast<int>(commandLong.param1))) {
+        case ACCELCAL_VEHICLE_POS_LEVEL:
+            if (!_orientationCalDownSideInProgress) {
+                updateImages = true;
+                _orientationCalDownSideInProgress = true;
+                _nextButton->setEnabled(true);
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_LEFT:
+            if (!_orientationCalLeftSideInProgress) {
+                updateImages = true;
+                _orientationCalDownSideDone =       true;
+                _orientationCalDownSideInProgress = false;
+                _orientationCalLeftSideInProgress = true;
+                _progressBar->setProperty("value", (qreal)(17 / 100.0));
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_RIGHT:
+            if (!_orientationCalRightSideInProgress) {
+                updateImages = true;
+                _orientationCalLeftSideDone =       true;
+                _orientationCalLeftSideInProgress = false;
+                _orientationCalRightSideInProgress = true;
+                _progressBar->setProperty("value", (qreal)(34 / 100.0));
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_NOSEDOWN:
+            if (!_orientationCalNoseDownSideInProgress) {
+                updateImages = true;
+                _orientationCalRightSideDone =       true;
+                _orientationCalRightSideInProgress = false;
+                _orientationCalNoseDownSideInProgress = true;
+                _progressBar->setProperty("value", (qreal)(51 / 100.0));
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_NOSEUP:
+            if (!_orientationCalTailDownSideInProgress) {
+                updateImages = true;
+                _orientationCalNoseDownSideDone =       true;
+                _orientationCalNoseDownSideInProgress = false;
+                _orientationCalTailDownSideInProgress = true;
+                _progressBar->setProperty("value", (qreal)(68 / 100.0));
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_BACK:
+            if (!_orientationCalUpsideDownSideInProgress) {
+                updateImages = true;
+                _orientationCalTailDownSideDone =       true;
+                _orientationCalTailDownSideInProgress = false;
+                _orientationCalUpsideDownSideInProgress = true;
+                _progressBar->setProperty("value", (qreal)(85 / 100.0));
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_SUCCESS:
+            _stopCalibration(StopCalibrationSuccess);
+            break;
+        case ACCELCAL_VEHICLE_POS_FAILED:
+            _stopCalibration(StopCalibrationFailed);
+            break;
+        case ACCELCAL_VEHICLE_POS_ENUM_END:
+            // Make compiler happy
+            break;
+        }
+
+        if (updateImages) {
+            emit orientationCalSidesDoneChanged();
+            emit orientationCalSidesInProgressChanged();
+            emit orientationCalSidesRotateChanged();
+        }
+    }
+}
+
 void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
@@ -652,6 +677,9 @@ void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link,
         break;
     case MAVLINK_MSG_ID_MAG_CAL_REPORT:
         _handleMagCalReport(message);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(message);
         break;
     }
 }

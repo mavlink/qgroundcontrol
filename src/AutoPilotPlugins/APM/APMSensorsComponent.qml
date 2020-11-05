@@ -176,14 +176,6 @@ SetupPage {
                 }
             }
 
-            Component.onCompleted: {
-                var usingUDP = controller.usingUDPLink()
-                var isSub = globals.activeVehicle.sub;
-                if (usingUDP && !isSub) {
-                    mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."))
-                }
-            }
-
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             Component {
