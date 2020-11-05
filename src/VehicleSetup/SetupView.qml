@@ -249,7 +249,7 @@ Rectangle {
             SubMenuButton {
                 id:                 px4FlowButton
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.primaryLink.isPX4Flow : false
+                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.primaryLinkIsPX4Flow : false
                 setupIndicator:     false
                 text:               qsTr("PX4Flow")
                 Layout.fillWidth:   true

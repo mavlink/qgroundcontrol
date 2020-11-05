@@ -135,18 +135,23 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate& swCorner, ui
                 terrainData[altIndex++] = static_cast<int16_t>(altitude);
             }
 
-            mavlink_message_t msg;
-            mavlink_msg_terrain_data_pack_chan(
-                        qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                        _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                        &msg,
-                        _currentTerrainRequest.lat,
-                        _currentTerrainRequest.lon,
-                        _currentTerrainRequest.grid_spacing,
-                        gridBit,
-                        terrainData);
-            _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+            WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+            if (!weakLink.expired()) {
+                mavlink_message_t       msg;
+                SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+                mavlink_msg_terrain_data_pack_chan(
+                            qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                            sharedLink->mavlinkChannel(),
+                            &msg,
+                            _currentTerrainRequest.lat,
+                            _currentTerrainRequest.lon,
+                            _currentTerrainRequest.grid_spacing,
+                            gridBit,
+                            terrainData);
+                _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+            }
         }
     }
 }

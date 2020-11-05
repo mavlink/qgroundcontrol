@@ -21,7 +21,6 @@ PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
     : _vehicle                  (vehicle)
     , _missionCommandTree       (qgcApp()->toolbox()->missionCommandTree())
     , _planType                 (planType)
-    , _dedicatedLink            (nullptr)
     , _ackTimeoutTimer          (nullptr)
     , _expectedAck              (AckNone)
     , _transactionInProgress    (TransactionNone)
@@ -103,19 +102,22 @@ void PlanManager::_writeMissionCount(void)
 {
     qCDebug(PlanManagerLog) << QStringLiteral("_writeMissionCount %1 count:_retryCount").arg(_planTypeString()) << _writeMissionItems.count() << _retryCount;
 
-    mavlink_message_t message;
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t       message;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
-    mavlink_msg_mission_count_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                        qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                        _dedicatedLink->mavlinkChannel(),
-                                        &message,
-                                        _vehicle->id(),
-                                        MAV_COMP_ID_AUTOPILOT1,
-                                        _writeMissionItems.count(),
-                                        _planType);
+        mavlink_msg_mission_count_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                            sharedLink->mavlinkChannel(),
+                                            &message,
+                                            _vehicle->id(),
+                                            MAV_COMP_ID_AUTOPILOT1,
+                                            _writeMissionItems.count(),
+                                            _planType);
 
-    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
     _startAckTimeout(AckMissionRequest);
 }
 
@@ -143,21 +145,24 @@ void PlanManager::_requestList(void)
 {
     qCDebug(PlanManagerLog) << QStringLiteral("_requestList %1 _planType:_retryCount").arg(_planTypeString()) << _planType << _retryCount;
 
-    mavlink_message_t message;
-
     _itemIndicesToRead.clear();
     _clearMissionItems();
 
-    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
-    mavlink_msg_mission_request_list_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                               qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                               _dedicatedLink->mavlinkChannel(),
-                                               &message,
-                                               _vehicle->id(),
-                                               MAV_COMP_ID_AUTOPILOT1,
-                                               _planType);
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t       message;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
+        mavlink_msg_mission_request_list_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                   sharedLink->mavlinkChannel(),
+                                                   &message,
+                                                   _vehicle->id(),
+                                                   MAV_COMP_ID_AUTOPILOT1,
+                                                   _planType);
+
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
     _startAckTimeout(AckMissionCount);
 }
 
@@ -286,18 +291,22 @@ void PlanManager::_readTransactionComplete(void)
 {
     qCDebug(PlanManagerLog) << "_readTransactionComplete read sequence complete";
     
-    mavlink_message_t message;
-    
-    mavlink_msg_mission_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                      _dedicatedLink->mavlinkChannel(),
-                                      &message,
-                                      _vehicle->id(),
-                                      MAV_COMP_ID_AUTOPILOT1,
-                                      MAV_MISSION_ACCEPTED,
-                                      _planType);
-    
-    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+        mavlink_message_t       message;
+
+        mavlink_msg_mission_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                          sharedLink->mavlinkChannel(),
+                                          &message,
+                                          _vehicle->id(),
+                                          MAV_COMP_ID_AUTOPILOT1,
+                                          MAV_MISSION_ACCEPTED,
+                                          _planType);
+
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
 
     _finishTransaction(true);
 }
@@ -344,28 +353,33 @@ void PlanManager::_requestNextMissionItem(void)
 
     qCDebug(PlanManagerLog) << QStringLiteral("_requestNextMissionItem %1 sequenceNumber:retry").arg(_planTypeString()) << _itemIndicesToRead[0] << _retryCount;
 
-    mavlink_message_t message;
-    if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
-        mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+        mavlink_message_t       message;
+
+        if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) {
+            mavlink_msg_mission_request_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                      sharedLink->mavlinkChannel(),
+                                                      &message,
+                                                      _vehicle->id(),
+                                                      MAV_COMP_ID_AUTOPILOT1,
+                                                      _itemIndicesToRead[0],
+                    _planType);
+        } else {
+            mavlink_msg_mission_request_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                                  _dedicatedLink->mavlinkChannel(),
+                                                  sharedLink->mavlinkChannel(),
                                                   &message,
                                                   _vehicle->id(),
                                                   MAV_COMP_ID_AUTOPILOT1,
                                                   _itemIndicesToRead[0],
-                _planType);
-    } else {
-        mavlink_msg_mission_request_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                              qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                              _dedicatedLink->mavlinkChannel(),
-                                              &message,
-                                              _vehicle->id(),
-                                              MAV_COMP_ID_AUTOPILOT1,
-                                              _itemIndicesToRead[0],
-                _planType);
+                    _planType);
+        }
+
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
-    
-    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, message);
     _startAckTimeout(AckMissionItem);
 }
 
@@ -537,13 +551,37 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
     MissionItem* item = _writeMissionItems[missionRequestSeq];
     qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
 
-    // ArduPilot always expects to get MISSION_ITEM_INT if possible
-    bool                forceMissionItemInt = (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) && _vehicle->apmFirmware();
-    mavlink_message_t   messageOut;
-    if (missionItemInt || forceMissionItemInt) {
-        mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        bool                    forceMissionItemInt = (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_INT) && _vehicle->apmFirmware(); // ArduPilot always expects to get MISSION_ITEM_INT if possible
+        mavlink_message_t       messageOut;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+
+        if (missionItemInt || forceMissionItemInt) {
+            mavlink_msg_mission_item_int_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                   qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                   sharedLink->mavlinkChannel(),
+                                                   &messageOut,
+                                                   _vehicle->id(),
+                                                   MAV_COMP_ID_AUTOPILOT1,
+                                                   missionRequestSeq,
+                                                   item->frame(),
+                                                   item->command(),
+                                                   missionRequestSeq == 0,
+                                                   item->autoContinue(),
+                                                   item->param1(),
+                                                   item->param2(),
+                                                   item->param3(),
+                                                   item->param4(),
+                                                   item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
+                                                   item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
+                                                   item->param7(),
+                                                   _planType);
+        } else {
+            mavlink_msg_mission_item_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                               _dedicatedLink->mavlinkChannel(),
+                                               sharedLink->mavlinkChannel(),
                                                &messageOut,
                                                _vehicle->id(),
                                                MAV_COMP_ID_AUTOPILOT1,
@@ -556,33 +594,14 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                                item->param2(),
                                                item->param3(),
                                                item->param4(),
-                                               item->frame() == MAV_FRAME_MISSION ? item->param5() : item->param5() * 1e7,
-                                               item->frame() == MAV_FRAME_MISSION ? item->param6() : item->param6() * 1e7,
+                                               item->param5(),
+                                               item->param6(),
                                                item->param7(),
                                                _planType);
-    } else {
-        mavlink_msg_mission_item_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                           qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                           _dedicatedLink->mavlinkChannel(),
-                                           &messageOut,
-                                           _vehicle->id(),
-                                           MAV_COMP_ID_AUTOPILOT1,
-                                           missionRequestSeq,
-                                           item->frame(),
-                                           item->command(),
-                                           missionRequestSeq == 0,
-                                           item->autoContinue(),
-                                           item->param1(),
-                                           item->param2(),
-                                           item->param3(),
-                                           item->param4(),
-                                           item->param5(),
-                                           item->param6(),
-                                           item->param7(),
-                                           _planType);
+        }
+
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
     }
-    
-    _vehicle->sendMessageOnLinkThreadSafe(_dedicatedLink, messageOut);
     _startAckTimeout(AckMissionRequest);
 }
 
@@ -909,22 +928,26 @@ bool PlanManager::inProgress(void) const
 
 void PlanManager::_removeAllWorker(void)
 {
-    mavlink_message_t message;
-
     qCDebug(PlanManagerLog) << "_removeAllWorker";
 
     emit progressPct(0);
 
     _connectToMavlink();
-    _dedicatedLink = _vehicle->vehicleLinkManager()->primaryLink();
-    mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                            qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                            _dedicatedLink->mavlinkChannel(),
-                                            &message,
-                                            _vehicle->id(),
-                                            MAV_COMP_ID_AUTOPILOT1,
-                                            _planType);
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), message);
+
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t       message;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+        mavlink_msg_mission_clear_all_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                                qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                                sharedLink->mavlinkChannel(),
+                                                &message,
+                                                _vehicle->id(),
+                                                MAV_COMP_ID_AUTOPILOT1,
+                                                _planType);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
     _startAckTimeout(AckMissionClearAll);
 }
 

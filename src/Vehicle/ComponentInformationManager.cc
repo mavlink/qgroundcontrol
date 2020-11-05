@@ -178,19 +178,25 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
-    LinkInterface*                      link            = vehicle->vehicleLinkManager()->primaryLink();
+    WeakLinkInterfacePtr                weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    if (link->linkConfiguration()->isHighLatency() || link->isPX4Flow() || link->isLogReplay()) {
-        qCDebug(ComponentInformationManagerLog) << QStringLiteral("Skipping component information % 1 request due to link type").arg(requestMachine->typeToString());
+    if (weakLink.expired()) {
+        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information % 1 request due to no primary link").arg(requestMachine->typeToString());
         stateMachine->advance();
     } else {
-        qCDebug(ComponentInformationManagerLog) << "Requesting component information" << requestMachine->typeToString();
-        vehicle->requestMessage(
-                    _requestMessageResultHandler,
-                    stateMachine,
-                    MAV_COMP_ID_AUTOPILOT1,
-                    MAVLINK_MSG_ID_COMPONENT_INFORMATION,
-                    requestMachine->_compInfo->type);
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information % 1 request due to link type").arg(requestMachine->typeToString());
+            stateMachine->advance();
+        } else {
+            qCDebug(ComponentInformationManagerLog) << "Requesting component information" << requestMachine->typeToString();
+            vehicle->requestMessage(
+                        _requestMessageResultHandler,
+                        stateMachine,
+                        MAV_COMP_ID_AUTOPILOT1,
+                        MAVLINK_MSG_ID_COMPONENT_INFORMATION,
+                        requestMachine->_compInfo->type);
+        }
     }
 }
 

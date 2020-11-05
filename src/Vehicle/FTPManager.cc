@@ -527,11 +527,15 @@ void FTPManager::_emitErrorMessage(const QString& msg)
 
 void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
 {
-    LinkInterface* primaryLink = _vehicle->vehicleLinkManager()->primaryLink();
-
     _ackOrNakTimeoutTimer.start();
     
-    if (primaryLink) {
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+
+    if (weakLink.expired()) {
+        qCDebug(FTPManagerLog) << "_sendRequestExpectAck No primary link. Allowing timeout to fail sequence.";
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
         request->hdr.seqNumber = _expectedIncomingSeqNumber + 1;    // Outgoing is 1 past last incoming
         _expectedIncomingSeqNumber += 2;
 
@@ -540,14 +544,12 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
         mavlink_message_t message;
         mavlink_msg_file_transfer_protocol_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                                     primaryLink->mavlinkChannel(),
+                                                     sharedLink->mavlinkChannel(),
                                                      &message,
                                                      0,                                                     // Target network, 0=broadcast?
                                                      _vehicle->id(),
                                                      MAV_COMP_ID_AUTOPILOT1,
                                                      (uint8_t*)request);                                    // Payload
-        _vehicle->sendMessageOnLinkThreadSafe(primaryLink, message);
-    } else {
-        qCDebug(FTPManagerLog) << "_sendRequestExpectAck No primary link. Allowing timeout to fail sequence.";
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
 }

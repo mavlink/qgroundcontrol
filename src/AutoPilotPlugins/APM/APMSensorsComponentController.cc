@@ -449,22 +449,27 @@ void APMSensorsComponentController::cancelCalibration(void)
 
 void APMSensorsComponentController::nextClicked(void)
 {
-    mavlink_message_t       msg;
-    mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                      _vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                      &msg,
-                                      0,    // command
-                                      1,    // result
-                                      0,    // progress
-                                      0,    // result_param2
-                                      0,    // target_system
-                                      0);   // target_component
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t       msg;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
-    _vehicle->sendMessageOnLinkThreadSafe(_vehicle->vehicleLinkManager()->primaryLink(), msg);
+        mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                          sharedLink->mavlinkChannel(),
+                                          &msg,
+                                          0,    // command
+                                          1,    // result
+                                          0,    // progress
+                                          0,    // result_param2
+                                          0,    // target_system
+                                          0);   // target_component
 
-    if (_calTypeInProgress == CalTypeCompassMot) {
-        _stopCalibration(StopCalibrationSuccess);
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+
+        if (_calTypeInProgress == CalTypeCompassMot) {
+            _stopCalibration(StopCalibrationSuccess);
+        }
     }
 }
 
@@ -480,7 +485,13 @@ bool APMSensorsComponentController::accelSetupNeeded(void) const
 
 bool APMSensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (weakLink.expired()) {
+        return false;
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        return sharedLink->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    }
 }
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
