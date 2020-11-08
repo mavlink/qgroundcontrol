@@ -9693,6 +9693,10 @@ How often the sensor is readout</short_desc>
         <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_SR05" default="0" type="INT32">
+      <short_desc>HY-SRF05 / HC-SR05</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EN_THERMAL" default="-1" type="INT32" category="System">
       <short_desc>Thermal control of sensor temperature</short_desc>
       <values>
