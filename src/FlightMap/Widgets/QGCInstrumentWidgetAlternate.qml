@@ -21,7 +21,6 @@ Rectangle {
     id:             root
     width:          getPreferredInstrumentWidth()
     height:         _outerRadius * 4 + _valuesWidget.height
-    radiu
     //radius:         _outerRadius
     color:          qgcPal.window
     border.width:   1
