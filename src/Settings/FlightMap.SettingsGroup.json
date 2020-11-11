@@ -3,7 +3,7 @@
     "name":             "mapProvider",
     "shortDescription": "Currently selected map provider for flight maps",
     "type":             "string",
-    "defaultValue":     "Bing"
+    "defaultValue":     "Google"
 },
 {
     "name":             "mapType",

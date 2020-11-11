@@ -1379,3 +1379,5 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
 } else {
     include(QGCInstaller.pri)
 }
+
+ANDROID_ABIS = armeabi-v7a

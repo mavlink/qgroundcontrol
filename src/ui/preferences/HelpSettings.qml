@@ -15,9 +15,23 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
+
+
 Rectangle {
     color:          qgcPal.window
     anchors.fill:   parent
+
+    Rectangle {
+    color:          qgcPal.window
+    width: 100
+    height: 100
+    anchors { horizontalCenter: parent.horizontalCenter; right: parent.right; rightMargin: 200; top: parent.top; topMargin: 300 }
+            Image {
+                width: 1316; height: 300
+                source: "/qmlimages/intelpro_logo.png";
+
+            }
+    }
 
     readonly property real _margins: ScreenTools.defaultFontPixelHeight
 
@@ -34,24 +48,10 @@ Rectangle {
             id:         grid
             columns:    2
 
-            QGCLabel { text: qsTr("QGroundControl User Guide") }
+            QGCLabel { text: qsTr("GCS created by IntelPRO LLC") }
             QGCLabel {
                 linkColor:          qgcPal.text
-                text:               "<a href=\"https://docs.qgroundcontrol.com\">https://docs.qgroundcontrol.com</a>"
-                onLinkActivated:    Qt.openUrlExternally(link)
-            }
-
-            QGCLabel { text: qsTr("PX4 Users Discussion Forum") }
-            QGCLabel {
-                linkColor:          qgcPal.text
-                text:               "<a href=\"http://discuss.px4.io/c/qgroundcontrol\">http://discuss.px4.io/c/qgroundcontrol</a>"
-                onLinkActivated:    Qt.openUrlExternally(link)
-            }
-
-            QGCLabel { text: qsTr("ArduPilot Users Discussion Forum") }
-            QGCLabel {
-                linkColor:          qgcPal.text
-                text:               "<a href=\"https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol\">https://discuss.ardupilot.org/c/ground-control-software/qgroundcontrol</a>"
+                text:               "<a href=\"http://intelpro.az\">https://intelpro.az</a>"
                 onLinkActivated:    Qt.openUrlExternally(link)
             }
         }

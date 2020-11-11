@@ -21,7 +21,8 @@ Rectangle {
     id:             root
     width:          getPreferredInstrumentWidth()
     height:         _outerRadius * 4 + _valuesWidget.height
-    radius:         _outerRadius
+    radiu
+    //radius:         _outerRadius
     color:          qgcPal.window
     border.width:   1
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark

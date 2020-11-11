@@ -79,51 +79,6 @@ Item {
                         }
                     }
                 }
-
-                QGCToolBarButton {
-                    id:                 settingsButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/res/QGCLogoWhite"
-                    logo:               true
-                    visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                    onClicked: {
-                        if (mainWindow.preventViewSwitch()) {
-                            return
-                        }
-                        buttonRow.clearAllChecks()
-                        checked = true
-                        mainWindow.showSettingsView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 setupButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Gears.svg"
-                    onClicked: {
-                        if (mainWindow.preventViewSwitch()) {
-                            return
-                        }
-                        buttonRow.clearAllChecks()
-                        checked = true
-                        mainWindow.showSetupView()
-                    }
-                }
-
-                QGCToolBarButton {
-                    id:                 planButton
-                    Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Plan.svg"
-                    onClicked: {
-                        if (mainWindow.preventViewSwitch()) {
-                            return
-                        }
-                        buttonRow.clearAllChecks()
-                        checked = true
-                        mainWindow.showPlanView()
-                    }
-                }
-
                 QGCToolBarButton {
                     id:                 flyButton
                     Layout.fillHeight:  true
@@ -172,19 +127,81 @@ Item {
                 }
 
                 QGCToolBarButton {
-                    id:                 analyzeButton
+                    id:                 planButton
                     Layout.fillHeight:  true
-                    icon.source:        "/qmlimages/Analyze.svg"
-                    visible:            QGroundControl.corePlugin.showAdvancedUI
+                    icon.source:        "/qmlimages/Plan.svg"
                     onClicked: {
                         if (mainWindow.preventViewSwitch()) {
                             return
                         }
                         buttonRow.clearAllChecks()
                         checked = true
-                        mainWindow.showAnalyzeView()
+                        mainWindow.showPlanView()
                     }
                 }
+
+
+                QGCToolBarButton {
+                    id:                 setupButton
+                    Layout.fillHeight:  true
+                    icon.source:        "/qmlimages/Gears.svg"
+                    onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
+                        checked = true
+                        mainWindow.showSetupView()
+                    }
+                }
+
+                Button {
+
+                    id: as
+                    Layout.fillHeight:  true
+                    text: AYAZ
+                    width: 60
+                    onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
+                        checked = true
+                        mainWindow.showSetupView()
+                    }
+                }
+
+                QGCToolBarButton {
+                    id:                 settingsButton
+                    Layout.fillHeight:  true
+                    icon.source:        "/qmlimages/Gears.svg"
+                    visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+                    onClicked: {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        buttonRow.clearAllChecks()
+                        checked = true
+                        mainWindow.showSettingsView()
+                    }
+                }
+
+
+
+//                QGCToolBarButton {
+//                    id:                 analyzeButton
+//                    Layout.fillHeight:  true
+//                    icon.source:        "/qmlimages/Analyze.svg"
+//                    visible:            QGroundControl.corePlugin.showAdvancedUI
+//                    onClicked: {
+//                        if (mainWindow.preventViewSwitch()) {
+//                            return
+//                        }
+//                        buttonRow.clearAllChecks()
+//                        checked = true
+//                        mainWindow.showAnalyzeView()
+//                    }
+//                }
 
                 Item {
                     Layout.fillHeight:  true
@@ -257,7 +274,7 @@ Item {
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
         width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
-        color:          qgcPal.colorGreen
+        color:          qgcPal.colorBlue
         visible:        !largeProgressBar.visible
     }
 
@@ -268,7 +285,7 @@ Item {
         anchors.left:   parent.left
         anchors.right:  parent.right
         height:         parent.height
-        color:          qgcPal.window
+        color:          qgcPal.colorBlue
         visible:        _showLargeProgress
 
         property bool _initialDownloadComplete: activeVehicle ? activeVehicle.parameterManager.parametersReady : true
@@ -284,7 +301,7 @@ Item {
             anchors.top:    parent.top
             anchors.bottom: parent.bottom
             width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
-            color:          qgcPal.colorGreen
+            color:          qgcPal.colorBlue
         }
 
         QGCLabel {

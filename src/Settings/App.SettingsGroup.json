@@ -94,7 +94,7 @@
     "shortDescription": "Mute audio output",
     "longDescription":  "If this option is enabled all audio output will be muted.",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 },
 {
     "name":             "checkInternet",
@@ -169,7 +169,7 @@
     "shortDescription": "Show large compass",
     "longDescription":  "Show large compass on instrument panel",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 },
 {
     "name":             "savePath",

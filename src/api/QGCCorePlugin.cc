@@ -241,13 +241,13 @@ QVariantList &QGCCorePlugin::settingsPages()
             QUrl::fromUserInput(""));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pAirmap)));
 #endif
-        _p->pMAVLink = new QmlComponentInfo(tr("MAVLink"),
+        _p->pMAVLink = new QmlComponentInfo(tr("Protocol"),
             QUrl::fromUserInput("qrc:/qml/MavlinkSettings.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pMAVLink)));
-        _p->pConsole = new QmlComponentInfo(tr("Console"),
-            QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"));
-        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pConsole)));
+        //_p->pConsole = new QmlComponentInfo(tr("Console"),
+        //    QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"));
+        //_p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pConsole)));
         _p->pHelp = new QmlComponentInfo(tr("Help"),
             QUrl::fromUserInput("qrc:/qml/HelpSettings.qml"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pHelp)));

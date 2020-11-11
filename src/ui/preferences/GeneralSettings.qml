@@ -285,7 +285,7 @@ Rectangle {
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
-                                    visible:    _audioMuted.visible
+                                    visible:    _audioMuted && _audioMuted.visible
                                     property Fact _audioMuted: QGroundControl.settingsManager.appSettings.audioMuted
                                 }
 
@@ -534,7 +534,7 @@ Rectangle {
 
                             FactCheckBox {
                                 text:       qsTr("Use Vertical Instrument Panel")
-                                visible:    _alternateInstrumentPanel.visible
+                                visible:    _alternateInstrumentPanel && _alternateInstrumentPanel.visible
                                 fact:       _alternateInstrumentPanel
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel

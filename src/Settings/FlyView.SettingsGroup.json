@@ -23,7 +23,7 @@
     "name":             "alternateInstrumentPanel",
     "shortDescription": "Use Vertical Instrument Panel instead of the default one",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 },
 {
     "name":             "showAdditionalIndicatorsCompass",
