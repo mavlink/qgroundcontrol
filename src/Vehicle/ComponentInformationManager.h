@@ -69,8 +69,8 @@ private:
 
     QTime                           _downloadStartTime;
 
-    static StateFn  _rgStates[];
-    static int      _cStates;
+    static const StateFn  _rgStates[];
+    static const int      _cStates;
 };
 
 class ComponentInformationManager : public StateMachine
@@ -110,6 +110,7 @@ private:
     static void _stateRequestCompInfoGeneral        (StateMachine* stateMachine);
     static void _stateRequestCompInfoGeneralComplete(StateMachine* stateMachine);
     static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
+    static void _stateRequestCompInfoEvents         (StateMachine* stateMachine);
     static void _stateRequestAllCompInfoComplete    (StateMachine* stateMachine);
 
     Vehicle*                        _vehicle                    = nullptr;
@@ -120,8 +121,8 @@ private:
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
-    static StateFn                  _rgStates[];
-    static int                      _cStates;
+    static const StateFn                  _rgStates[];
+    static const int                      _cStates;
 
     friend class RequestMetaDataTypeStateMachine;
 };

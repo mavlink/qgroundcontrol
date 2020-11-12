@@ -682,12 +682,15 @@ HEADERS += \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
     src/Vehicle/CompInfo.h \
+    src/Vehicle/CompInfoEvents.h \
     src/Vehicle/CompInfoParam.h \
     src/Vehicle/CompInfoGeneral.h \
     src/Vehicle/ComponentInformationCache.h \
     src/Vehicle/ComponentInformationManager.h \
+    src/Vehicle/EventHandler.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
+    src/Vehicle/HealthAndArmingChecks.h \
     src/Vehicle/InitialConnectStateMachine.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/Vehicle/MAVLinkStreamConfig.h \
@@ -917,12 +920,15 @@ SOURCES += \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
     src/Vehicle/CompInfo.cc \
+    src/Vehicle/CompInfoEvents.cc \
     src/Vehicle/CompInfoParam.cc \
     src/Vehicle/CompInfoGeneral.cc \
     src/Vehicle/ComponentInformationCache.cc \
     src/Vehicle/ComponentInformationManager.cc \
+    src/Vehicle/EventHandler.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
+    src/Vehicle/HealthAndArmingChecks.cc \
     src/Vehicle/InitialConnectStateMachine.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/Vehicle/MAVLinkStreamConfig.cc \

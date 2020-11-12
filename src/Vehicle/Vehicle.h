@@ -15,6 +15,7 @@
 #include <QGeoCoordinate>
 #include <QTime>
 #include <QQueue>
+#include <QSharedPointer>
 
 #include "FactGroup.h"
 #include "QGCMAVLink.h"
@@ -44,6 +45,7 @@
 #include "RallyPointManager.h"
 #include "FTPManager.h"
 
+class EventHandler;
 class UAS;
 class UASInterface;
 class FirmwarePlugin;
@@ -70,6 +72,12 @@ class InitialConnectStateMachine;
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
 #endif
+
+namespace events {
+namespace parser {
+class ParsedEvent;
+}
+}
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -788,6 +796,8 @@ public:
 
     double loadProgress                 () const { return _loadProgress; }
 
+    void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName);
+
 public slots:
     void setVtolInFwdFlight                 (bool vtolInFwdFlight);
     void _offlineFirmwareTypeSettingChanged (QVariant varFirmwareType); // Should only be used by MissionControler to set firmware from Plan file
@@ -819,6 +829,7 @@ signals:
     void toolIndicatorsChanged          ();
     void modeIndicatorsChanged          ();
     void textMessageReceived            (int uasid, int componentid, int severity, QString text);
+    void calibrationEventReceived       (int uasid, int componentid, int severity, QSharedPointer<events::parser::ParsedEvent> event);
     void checkListStateChanged          ();
     void messagesReceivedChanged        ();
     void messagesSentChanged            ();
@@ -955,6 +966,7 @@ private:
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
+    void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback          (const mavlink_message_t& message);
@@ -982,6 +994,7 @@ private:
     void _chunkedStatusTextCompleted    (uint8_t compId);
     void _setMessageInterval            (int messageId, int rate);
     bool _initialConnectComplete        () const;
+    EventHandler& _eventHandler         (uint8_t compid);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
@@ -1142,6 +1155,8 @@ private:
     QGCMapCircle    _orbitMapCircle;
     QTimer          _orbitTelemetryTimer;
     static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
+
+    QMap<uint8_t, QSharedPointer<EventHandler>> _events; ///< One protocol handler for each component ID
 
     MAVLinkStreamConfig _mavlinkStreamConfig;
 

@@ -49,6 +49,7 @@
 #include "ComponentInformationManager.h"
 #include "InitialConnectStateMachine.h"
 #include "VehicleBatteryFactGroup.h"
+#include "EventHandler.h"
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -740,6 +741,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleObstacleDistance(message);
         break;
 
+    case MAVLINK_MSG_ID_EVENT:
+    case MAVLINK_MSG_ID_CURRENT_EVENT_SEQUENCE:
+    case MAVLINK_MSG_ID_RESPONSE_EVENT_ERROR:
+        _eventHandler(message.compid).handleEvents(message);
+        break;
+
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
         mavlink_serial_control_t ser;
@@ -853,6 +860,12 @@ void Vehicle::_chunkedStatusTextCompleted(uint8_t compId)
     }
 
     _chunkedStatusTextInfoMap.remove(compId);
+
+    // PX4 backwards compatibility: messages sent out ending with a tab are also sent as event
+    if (messageText.endsWith('\t') && px4Firmware()) {
+        qCDebug(VehicleLog) << "Dropping message (expected as event):" << messageText;
+        return;
+    }
 
     bool skipSpoken = false;
     bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));
@@ -1499,6 +1512,83 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
                                 message.compid);
         sendMessageOnLinkThreadSafe(link, msg);
     }
+}
+
+void Vehicle::_handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event)
+{
+    int severity = -1;
+    switch (events::externalLogLevel(event->eventData().log_levels)) {
+        case events::Log::Emergency: severity = MAV_SEVERITY_EMERGENCY; break;
+        case events::Log::Alert: severity = MAV_SEVERITY_ALERT; break;
+        case events::Log::Critical: severity = MAV_SEVERITY_CRITICAL; break;
+        case events::Log::Error: severity = MAV_SEVERITY_ERROR; break;
+        case events::Log::Warning: severity = MAV_SEVERITY_WARNING; break;
+        case events::Log::Notice: severity = MAV_SEVERITY_NOTICE; break;
+        case events::Log::Info: severity = MAV_SEVERITY_INFO; break;
+        default: break;
+    }
+
+    // handle special groups & protocols
+    if (event->group() == "health" || event->group() == "arming_check") {
+        _events[comp_id]->healthAndArmingChecks().handleEvent(*event.get());
+        // these are displayed separately
+        return;
+    }
+    if (event->group() == "calibration") {
+        emit calibrationEventReceived(id(), comp_id, severity,
+                QSharedPointer<events::parser::ParsedEvent>{new events::parser::ParsedEvent{*event}});
+        // these are displayed separately
+        return;
+    }
+
+    // show message according to the log level, don't show unknown event groups (might be part of a new protocol)
+    if (event->group() == "default" && severity != -1) {
+        std::string message = event->message();
+        std::string description = event->description();
+        if (message.size() > 0) {
+            // TODO: handle this properly in the UI (e.g. with an expand button to display the description, clickable URL's + params)...
+            QString msg = QString::fromStdString(message);
+            if (description.size() > 0) {
+                msg += "<br/><small><small>" + QString::fromStdString(description).replace("\n", "<br/>") + "</small></small>";
+            }
+            emit textMessageReceived(id(), comp_id, severity, msg);
+        }
+    }
+}
+
+EventHandler& Vehicle::_eventHandler(uint8_t compid)
+{
+    auto eventData = _events.find(compid);
+    if (eventData == _events.end()) {
+        // add new component
+
+        auto sendRequestEventMessageCB = [this](const mavlink_request_event_t& msg) {
+            SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+            if (sharedLink) {
+                mavlink_message_t message;
+                mavlink_msg_request_event_encode_chan(_mavlink->getSystemId(),
+                        _mavlink->getComponentId(),
+                        sharedLink->mavlinkChannel(),
+                        &message,
+                        &msg);
+                sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+            }
+        };
+
+        QString profile = "dev"; // TODO: should be configurable
+
+        QSharedPointer<EventHandler> eventHandler{new EventHandler(this, profile,
+                std::bind(&Vehicle::_handleEvent, this, compid, std::placeholders::_1),
+                sendRequestEventMessageCB,
+                _mavlink->getSystemId(), _mavlink->getComponentId(), _id, compid)};
+        eventData = _events.insert(compid, eventHandler);
+    }
+    return *eventData->data();
+}
+
+void Vehicle::setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QString& translationJsonFileName)
+{
+    _eventHandler(compid).setMetadata(metadataJsonFileName, translationJsonFileName);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
