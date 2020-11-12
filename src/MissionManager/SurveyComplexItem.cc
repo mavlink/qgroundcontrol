@@ -1349,7 +1349,7 @@ void SurveyComplexItem::_recalcCameraShots(void)
                             } else {
                                 distanceStartCoord = QGeoCoordinate(missionItem->param5(), missionItem->param6());
                             }
-                        } else if (missionItem->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+                        } else if (missionItem->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST || missionItem->command() == MAV_CMD_OBLIQUE_SURVEY) {
                             if (missionItem->param1() > 0) {
                                 // Trigger start
                                 waitingForTriggerStop = true;

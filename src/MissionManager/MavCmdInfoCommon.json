@@ -913,23 +913,6 @@
                 "enumValues":       "0,1",
                 "default":          0,
                 "decimalPlaces":    0
-            },
-            "param4": {
-                "label":            "Positions",
-                "default":          3,
-                "decimalPlaces":    0
-            },
-            "param5": {
-                "label":            "Roll Angle",
-                "default":          30,
-                "units":            "deg",
-                "decimalPlaces":    0
-            },
-            "param6": {
-                "label":            "Pitch Angle",
-                "default":          -90,
-                "units":            "deg",
-                "decimalPlaces":    0
             }
         },
         {
@@ -1053,6 +1036,48 @@
         { "id": 245, "rawName": "MAV_CMD_PREFLIGHT_STORAGE", "friendlyName": "Store parameters" },
         { "id": 246, "rawName": "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", "friendlyName": "Reboot/Shutdown vehicle" },
         { "id": 252, "rawName": "MAV_CMD_OVERRIDE_GOTO", "friendlyName": "Override goto" },
+        {
+            "id":                   260,
+            "rawName":              "MAV_CMD_OBLIQUE_SURVEY",
+            "friendlyName":         "Oblique Survey",
+            "description":          "Set a trigger distance oblique survey.",
+            "category":             "Camera",
+            "param1": {
+                "label":            "Distance",
+                "default":          25,
+                "units":            "m",
+                "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Shutter",
+                "default":          0,
+                "units":            "msecs",
+                "decimalPlaces":    0
+            },
+            "param3": {
+                "label":            "Min Interval",
+                "default":          200,
+                "units":            "msecs",
+                "decimalPlaces":    0
+            },
+            "param4": {
+                "label":            "Positions",
+                "default":          3,
+                "decimalPlaces":    0
+            },
+            "param5": {
+                "label":            "Roll Angle",
+                "default":          30,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param6": {
+                "label":            "Pitch Angle",
+                "default":          -90,
+                "units":            "deg",
+                "decimalPlaces":    0
+            }
+        },
         { "id": 300, "rawName": "MAV_CMD_MISSION_START", "friendlyName": "Mission start" },
         { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "Arm/Disarm" },
         { "id": 410, "rawName": "MAV_CMD_GET_HOME_POSITION", "friendlyName": "Get launch position" },

@@ -124,6 +124,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
                            << MAV_CMD_DO_MOUNT_CONFIGURE
                            << MAV_CMD_DO_MOUNT_CONTROL
                            << MAV_CMD_DO_SET_CAM_TRIGG_DIST
+                           << MAV_CMD_OBLIQUE_SURVEY
                            << MAV_CMD_DO_FENCE_ENABLE
                            << MAV_CMD_IMAGE_START_CAPTURE
                            << MAV_CMD_IMAGE_STOP_CAPTURE
@@ -172,6 +173,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
             foundROI = true;
             break;
         case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
+        case MAV_CMD_OBLIQUE_SURVEY:
         case MAV_CMD_IMAGE_STOP_CAPTURE:
         case MAV_CMD_VIDEO_START_CAPTURE:
         case MAV_CMD_VIDEO_STOP_CAPTURE:

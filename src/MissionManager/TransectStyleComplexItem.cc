@@ -1021,7 +1021,7 @@ void TransectStyleComplexItem::_appendCameraTriggerDistance(QList<MissionItem*>&
     MissionItem* item ;
     if (_cameraCalc.campos()->rawValue().toBool()) {
         item = new MissionItem(seqNum++,
-                                        MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+                                        MAV_CMD_OBLIQUE_SURVEY,
                                         MAV_FRAME_MISSION,
                                         triggerDistance,
                                         0,                                                      // shutter integration (ignore)
