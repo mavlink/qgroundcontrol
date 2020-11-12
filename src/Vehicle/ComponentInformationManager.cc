@@ -14,6 +14,7 @@
 #include "JsonHelper.h"
 #include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
+#include "CompInfoEvents.h"
 #include "QGCFileDownload.h"
 #include "QGCApplication.h"
 
@@ -23,16 +24,17 @@
 
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 
-ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
+const ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
     ComponentInformationManager::_stateRequestCompInfoGeneral,
     ComponentInformationManager::_stateRequestCompInfoGeneralComplete,
     ComponentInformationManager::_stateRequestCompInfoParam,
+    ComponentInformationManager::_stateRequestCompInfoEvents,
     ComponentInformationManager::_stateRequestAllCompInfoComplete
 };
 
-int ComponentInformationManager::_cStates = sizeof(ComponentInformationManager::_rgStates) / sizeof(ComponentInformationManager::_rgStates[0]);
+const int ComponentInformationManager::_cStates = sizeof(ComponentInformationManager::_rgStates) / sizeof(ComponentInformationManager::_rgStates[0]);
 
-RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgStates[]= {
+const RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgStates[]= {
     RequestMetaDataTypeStateMachine::_stateRequestCompInfo,
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson,
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback,
@@ -40,7 +42,7 @@ RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgSta
     RequestMetaDataTypeStateMachine::_stateRequestComplete,
 };
 
-int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataTypeStateMachine::_rgStates) / sizeof(RequestMetaDataTypeStateMachine::_rgStates[0]);
+const int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataTypeStateMachine::_rgStates) / sizeof(RequestMetaDataTypeStateMachine::_rgStates[0]);
 
 ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
@@ -49,6 +51,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
 {
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]     = new CompInfoEvents    (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
 }
 
 int ComponentInformationManager::stateCount(void) const
@@ -121,6 +124,18 @@ void ComponentInformationManager::_stateRequestCompInfoParam(StateMachine* state
     }
 }
 
+void ComponentInformationManager::_stateRequestCompInfoEvents(StateMachine* stateMachine)
+{
+    ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
+
+    if (compMgr->_isCompTypeSupported(COMP_METADATA_TYPE_EVENTS)) {
+        compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_EVENTS]);
+    } else {
+        qCDebug(ComponentInformationManagerLog) << "_stateRequestCompInfoEvents skipping, not supported";
+        compMgr->advance();
+    }
+}
+
 void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine* stateMachine)
 {
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
@@ -187,7 +202,15 @@ void RequestMetaDataTypeStateMachine::statesCompleted(void) const
 
 QString RequestMetaDataTypeStateMachine::typeToString(void)
 {
-    return _compInfo->type == COMP_METADATA_TYPE_GENERAL ? "COMP_METADATA_TYPE_GENERAL" : "COMP_METADATA_TYPE_PARAM";
+    switch (_compInfo->type) {
+        case COMP_METADATA_TYPE_GENERAL: return "COMP_METADATA_TYPE_GENERAL";
+        case COMP_METADATA_TYPE_PARAMETER: return "COMP_METADATA_TYPE_PARAMETER";
+        case COMP_METADATA_TYPE_COMMANDS: return "COMP_METADATA_TYPE_COMMANDS";
+        case COMP_METADATA_TYPE_PERIPHERALS: return "COMP_METADATA_TYPE_PERIPHERALS";
+        case COMP_METADATA_TYPE_EVENTS: return "COMP_METADATA_TYPE_EVENTS";
+        default: break;
+    }
+    return "Unknown";
 }
 
 static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message)
