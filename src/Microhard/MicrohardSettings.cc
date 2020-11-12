@@ -27,14 +27,15 @@ MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
     _loggedIn = false;
-    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::getStatus()
 {
-    if (_loggedIn) {
+    if (_loggedIn && _tcpSocket) {
         _tcpSocket->write("AT+MWSTATUS\n");
     }
 }
@@ -43,18 +44,27 @@ MicrohardSettings::getStatus()
 void
 MicrohardSettings::setEncryptionKey(QString key)
 {
+    if (!_tcpSocket) {
+        return;
+    }
     QString cmd = "AT+MWVENCRYPT=1," + key + "\n";
     _tcpSocket->write(cmd.toStdString().c_str());
-    qCDebug(MicrohardLog) << "setEncryptionKey: " << cmd;
+    cmd = "AT&W\n";
+    _tcpSocket->write(cmd.toStdString().c_str());
+
+    qCDebug(MicrohardLog) << "Set encryption key: " << key;
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardSettings::_readBytes()
 {
+    if (!_tcpSocket) {
+        return;
+    }
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
-//    qCDebug(MicrohardVerbose) << "Read bytes: " << bytesIn;
+    //qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
 
     if (_loggedIn) {
         int i1 = bytesIn.indexOf("RSSI (dBm)");
@@ -69,16 +79,20 @@ MicrohardSettings::_readBytes()
                 }
             }
         }
-    } else if (bytesIn.contains("UserDevice login:")) {
-        _tcpSocket->write("admin\n");
+    } else if (bytesIn.contains("login:")) {
+        std::string userName = qgcApp()->toolbox()->microhardManager()->configUserName().toStdString() + "\n";
+        _tcpSocket->write(userName.c_str());
     } else if (bytesIn.contains("Password:")) {
         std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
         _tcpSocket->write(pwd.c_str());
-    }  else if (bytesIn.contains("UserDevice>")) {
+    } else if (bytesIn.contains("Login incorrect")) {
+        emit connected(-1);
+    } else if (bytesIn.contains("Entering")) {
         if (!loggedIn() && _setEncryptionKey) {
-            setEncryptionKey(qgcApp()->toolbox()->microhardManager()->encryptionKey());
+            qgcApp()->toolbox()->microhardManager()->setEncryptionKey();
         }
         _loggedIn = true;
+        emit connected(1);
     }
 
     emit rssiUpdated(_rssiVal);

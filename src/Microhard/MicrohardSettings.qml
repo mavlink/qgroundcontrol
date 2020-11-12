@@ -37,7 +37,7 @@ Rectangle {
     property real _valueWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property Fact _microhardEnabledFact:        QGroundControl.settingsManager.appSettings.enableMicrohard
-    property bool _microhardEnabled:            _microhardEnabledFact.rawValue
+    property bool _microhardEnabled:            _microhardEnabledFact ? _microhardEnabledFact.rawValue : false
 
     readonly property real _internalWidthRatio:          0.8
 
@@ -80,7 +80,7 @@ Rectangle {
                                 text:       qsTr("Enable Microhard")
                                 fact:       _microhardEnabledFact
                                 enabled:    true
-                                visible:    _microhardEnabledFact.visible
+                                visible:    _microhardEnabledFact ? _microhardEnabledFact.visible : false
                             }
                         }
                     }
@@ -121,16 +121,32 @@ Rectangle {
                                 Layout.minimumWidth: _labelWidth
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.connected ? qsTr("Connected") : qsTr("Not Connected")
-                                color:          QGroundControl.microhardManager.connected ? qgcPal.colorGreen : qgcPal.colorRed
+                                function getStatus(status) {
+                                    if (status === 1)
+                                        return qsTr("Connected");
+                                    else if (status === -1)
+                                        return qsTr("Login Error")
+                                    else
+                                        return qsTr("Not Connected")
+                                }
+                                text:           getStatus(QGroundControl.microhardManager.connected)
+                                color:          QGroundControl.microhardManager.connected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
                                 text:           qsTr("Air Unit:")
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected ? qsTr("Connected") : qsTr("Not Connected")
-                                color:          QGroundControl.microhardManager.linkConnected ? qgcPal.colorGreen : qgcPal.colorRed
+                                function getStatus(status) {
+                                    if (status === 1)
+                                        return qsTr("Connected");
+                                    else if (status === -1)
+                                        return qsTr("Login Error")
+                                    else
+                                        return qsTr("Not Connected")
+                                }
+                                text:           getStatus(QGroundControl.microhardManager.linkConnected)
+                                color:          QGroundControl.microhardManager.linkConnected === 1 ? qgcPal.colorGreen : qgcPal.colorRed
                             }
                             QGCLabel {
                                 text:           qsTr("Uplink RSSI:")
@@ -210,7 +226,16 @@ Rectangle {
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
-                                text:           qsTr("Configuration password:")
+                                text:           qsTr("Configuration User Name:")
+                            }
+                            QGCTextField {
+                                id:             configUserName
+                                text:           QGroundControl.microhardManager.configUserName
+                                enabled:        true
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Configuration Password:")
                             }
                             QGCTextField {
                                 id:             configPassword
@@ -244,6 +269,7 @@ Rectangle {
                                 if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
                                     remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
                                     netMask.text         === QGroundControl.microhardManager.netMask &&
+                                    configUserName.text  === QGroundControl.microhardManager.configUserName &&
                                     configPassword.text  === QGroundControl.microhardManager.configPassword &&
                                     encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
                                     return false
@@ -256,7 +282,7 @@ Rectangle {
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
                             onClicked: {
-                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text, configPassword.text, encryptionKey.text)
+                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text, configUserName.text, configPassword.text, encryptionKey.text)
                             }
 
                         }

@@ -1,44 +1,49 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "roll",
-    "shortDescription": "Roll Setpoint",
+    "shortDesc": "Roll Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg"
 },
 {
     "name":             "pitch",
-    "shortDescription": "Pitch Setpoint",
+    "shortDesc": "Pitch Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg"
 },
 {
     "name":             "yaw",
-    "shortDescription": "Yaw Setpoint",
+    "shortDesc": "Yaw Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg"
 },
 {
     "name":             "rollRate",
-    "shortDescription": "Roll Rate Setpoint",
+    "shortDesc": "Roll Rate Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg/s"
 },
 {
     "name":             "pitchRate",
-    "shortDescription": "Pitch Rate Setpoint",
+    "shortDesc": "Pitch Rate Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg/s"
 },
 {
     "name":             "yawRate",
-    "shortDescription": "Yaw Rate Setpoint",
+    "shortDesc": "Yaw Rate Setpoint",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg/s"
 }
 ]
+}

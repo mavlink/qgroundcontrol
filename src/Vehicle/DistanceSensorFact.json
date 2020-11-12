@@ -1,72 +1,103 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "rotationNone",
-    "shortDescription": "Forward",
+    "shortDesc":        "Forward",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw45",
-    "shortDescription": "Forward/Right",
+    "shortDesc":        "Forward/Right",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw90",
-    "shortDescription": "Right",
+    "shortDesc":        "Right",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw135",
-    "shortDescription": "Rear/Right",
+    "shortDesc":        "Rear/Right",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw180",
-    "shortDescription": "Rear",
+    "shortDesc":        "Rear",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw225",
-    "shortDescription": "Rear/Left",
+    "shortDesc":        "Rear/Left",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw270",
-    "shortDescription": "Left",
+    "shortDesc":        "Left",
+    "default":          null,
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationYaw315",
-    "shortDescription": "Forward/Left",
+    "shortDesc":        "Forward/Left",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch90",
-    "shortDescription": "Up",
+    "shortDesc":        "Up",
     "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 },
 {
     "name":             "rotationPitch270",
-    "shortDescription": "Down",
+    "shortDesc":        "Down",
     "type":             "double",
+    "default":          null,
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "minDistance",
+    "shortDesc":        "Minimum distance sensor can detect",
+    "type":             "double",
+    "default":          null,
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "maxDistance",
+    "shortDesc":        "Maximum distance sensor can detect",
+    "type":             "double",
+    "default":          null,
     "decimalPlaces":    2,
     "units":            "m"
 }
 ]
+}

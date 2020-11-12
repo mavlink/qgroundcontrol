@@ -1,0 +1,35 @@
+add_custom_target(APMAutoPilotPluginQml
+SOURCES
+    APMAirframeComponent.qml
+    APMAirframeComponentSummary.qml
+    APMCameraComponent.qml
+    APMCameraComponentSummary.qml
+    APMCameraSubComponent.qml
+    APMFlightModesComponent.qml
+    APMFlightModesComponentSummary.qml
+    APMHeliComponent.qml
+    APMLightsComponent.qml
+    APMLightsComponentSummary.qml
+    APMNotSupported.qml
+    APMPowerComponent.qml
+    APMPowerComponentSummary.qml
+    APMRadioComponentSummary.qml
+    APMSafetyComponent.qml
+    APMSafetyComponentCopter.qml
+    APMSafetyComponentPlane.qml
+    APMSafetyComponentRover.qml
+    APMSafetyComponentSub.qml
+    APMSafetyComponentSummary.qml
+    APMSafetyComponentSummaryCopter.qml
+    APMSafetyComponentSummaryPlane.qml
+    APMSafetyComponentSummaryRover.qml
+    APMSafetyComponentSummarySub.qml
+    APMSensorsComponent.qml
+    APMSensorsComponentSummary.qml
+    APMSubFrameComponent.qml
+    APMSubFrameComponentSummary.qml
+    APMSubMotorComponent.qml
+    APMTuningComponentCopter.qml
+    APMTuningComponentSub.qml
+
+)

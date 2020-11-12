@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,7 +22,43 @@ import QGroundControl.ScreenTools 1.0
 
 SetupPage {
     id:             airframePage
-    pageComponent:  pageComponent
+    pageComponent:  (controller && controller.showCustomConfigPanel) ? customFrame : pageComponent
+
+    AirframeComponentController {
+        id:         controller
+    }
+
+    Component {
+        id: customFrame
+        Column {
+            width:          availableWidth
+            spacing:        ScreenTools.defaultFontPixelHeight * 4
+            Item {
+                width:      1
+                height:     1
+            }
+            QGCLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width:      parent.width * 0.5
+                height:     ScreenTools.defaultFontPixelHeight * 4
+                wrapMode:   Text.WordWrap
+                text:       qsTr("Your vehicle is using a custom airframe configuration. ") +
+                            qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
+                            qsTr("If you want to reset your airframe configuration and select a standard configuration, click 'Reset' below.")
+            }
+            QGCButton {
+                text:       qsTr("Reset")
+                enabled:    sys_autostart
+                anchors.horizontalCenter: parent.horizontalCenter
+                property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
+                onClicked: {
+                    if(sys_autostart) {
+                        sys_autostart.value = 0
+                    }
+                }
+            }
+        }
+    }
 
     Component {
         id: pageComponent
@@ -61,33 +97,6 @@ SetupPage {
                 }
             }
 
-            AirframeComponentController {
-                id:         controller
-                Component.onCompleted: {
-                    if (controller.showCustomConfigPanel) {
-                        mainWindow.showComponentDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), mainWindow.showDialogDefaultWidth, StandardButton.Reset)
-                    }
-                }
-            }
-
-            Component {
-                id: customConfigDialogComponent
-
-                QGCViewMessage {
-                    id:       customConfigDialog
-                    message:  qsTr("Your vehicle is using a custom airframe configuration. ") +
-                              qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
-                              qsTr("If you want to reset your airframe configuration and select a standard configuration, click 'Reset' above.")
-
-                    property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
-
-                    function accept() {
-                        sys_autostart.value = 0
-                        customConfigDialog.hideDialog()
-                    }
-                }
-            }
-
             Component {
                 id: applyRestartDialogComponent
 
@@ -102,7 +111,7 @@ SetupPage {
                     QGCLabel {
                         anchors.fill:   parent
                         wrapMode:       Text.WordWrap
-                        text:           qsTr("Clicking “Apply” will save the changes you have made to your airframe configuration.<br><br>\
+                        text:           qsTr("Clicking 'Apply' will save the changes you have made to your airframe configuration.<br><br>\
 All vehicle parameters other than Radio Calibration will be reset.<br><br>\
 Your vehicle will also be restarted in order to complete the process.")
                     }
@@ -121,7 +130,7 @@ Your vehicle will also be restarted in order to complete the process.")
                     text:           (controller.currentVehicleName != "" ?
                                          qsTr("You've connected a %1.").arg(controller.currentVehicleName) :
                                          qsTr("Airframe is not set.")) +
-                                    qsTr("To change this configuration, select the desired airframe below then click “Apply and Restart”.")
+                                    qsTr("To change this configuration, select the desired airframe below then click 'Apply and Restart'.")
                     font.family:    ScreenTools.demiboldFontFamily
                     wrapMode:       Text.WordWrap
                 }
@@ -220,6 +229,7 @@ Your vehicle will also be restarted in order to complete the process.")
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 model:              modelData.airframes
+                                textRole:           "text"
 
                                 Component.onCompleted: {
                                     if (airframeCheckBox.checked) {

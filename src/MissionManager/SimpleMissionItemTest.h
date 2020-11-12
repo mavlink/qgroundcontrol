@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,6 +13,26 @@
 #include "SimpleMissionItem.h"
 
 /// Unit test for SimpleMissionItem
+
+typedef struct {
+    MAV_CMD        command;
+    MAV_FRAME      frame;
+} ItemInfo_t;
+
+typedef struct {
+    const char*                 name;
+    QGCMAVLink::VehicleClass_t  vehicleClass;
+    bool                        nanValue;
+    int                         paramIndex;
+} FactValue_t;
+
+typedef struct {
+    size_t                          cFactValues;
+    const FactValue_t*              rgFactValues;
+    double                          altValue;
+    QGroundControlQmlGlobal::AltitudeMode altMode;
+} ItemExpected_t;
+
 class SimpleMissionItemTest : public VisualMissionItemTest
 {
     Q_OBJECT
@@ -20,18 +40,18 @@ class SimpleMissionItemTest : public VisualMissionItemTest
 public:
     SimpleMissionItemTest(void);
 
-    void init(void) override;
+    void init   (void) override;
     void cleanup(void) override;
 
 private slots:
-    void _testSignals(void);
-    void _testEditorFacts(void);
-    void _testDefaultValues(void);
-    void _testCameraSectionDirty(void);
-    void _testSpeedSectionDirty(void);
-    void _testCameraSection(void);
-    void _testSpeedSection(void);
-    void _testAltitudePropogation(void);
+    void _testSignals               (void);
+    void _testEditorFacts           (void);
+    void _testDefaultValues         (void);
+    void _testCameraSectionDirty    (void);
+    void _testSpeedSectionDirty     (void);
+    void _testCameraSection         (void);
+    void _testSpeedSection          (void);
+    void _testAltitudePropogation   (void);
 
 private:
     enum {
@@ -42,7 +62,6 @@ private:
         rawEditChangedIndex,
         cameraSectionChangedIndex,
         speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedIndex,
         maxSignalIndex,
     };
 
@@ -54,41 +73,15 @@ private:
         rawEditChangedMask =                        1 << rawEditChangedIndex,
         cameraSectionChangedMask =                  1 << cameraSectionChangedIndex,
         speedSectionChangedMask =                   1 << speedSectionChangedIndex,
-        coordinateHasRelativeAltitudeChangedMask =  1 << coordinateHasRelativeAltitudeChangedIndex,
     };
 
     static const size_t cSimpleItemSignals = maxSignalIndex;
     const char*         rgSimpleItemSignals[cSimpleItemSignals];
 
-    typedef struct {
-        MAV_CMD        command;
-        MAV_FRAME      frame;
-    } ItemInfo_t;
-    
-    typedef struct {
-        const char* name;
-        double      value;
-    } FactValue_t;
-    
-    typedef struct {
-        size_t                          cFactValues;
-        const FactValue_t*              rgFactValues;
-        double                          altValue;
-        QGroundControlQmlGlobal::AltitudeMode altMode;
-    } ItemExpected_t;
+    void _testEditorFactsWorker (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode, const ItemExpected_t* rgExpected);
+    bool _classMatch            (QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
 
     SimpleMissionItem*  _simpleItem;
     MultiSignalSpy*     _spySimpleItem;
     MultiSignalSpy*     _spyVisualItem;
-
-    static const ItemInfo_t     _rgItemInfo[];
-    static const ItemExpected_t _rgItemExpected[];
-    static const FactValue_t    _rgFactValuesWaypoint[];
-    static const FactValue_t    _rgFactValuesLoiterUnlim[];
-    static const FactValue_t    _rgFactValuesLoiterTurns[];
-    static const FactValue_t    _rgFactValuesLoiterTime[];
-    static const FactValue_t    _rgFactValuesLand[];
-    static const FactValue_t    _rgFactValuesTakeoff[];
-    static const FactValue_t    _rgFactValuesConditionDelay[];
-    static const FactValue_t    _rgFactValuesDoJump[];
 };

@@ -1,8 +1,7 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Controls.Styles      1.4
+import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -14,31 +13,35 @@ import QGroundControl.Palette       1.0
 // Editor for Simple mission items
 Rectangle {
     width:  availableWidth
-    height: valuesColumn.height + (_margin * 2)
+    height: editorColumn.height + (_margin * 2)
     color:  qgcPal.windowShadeDark
     radius: _radius
 
     property bool _specifiesAltitude:       missionItem.specifiesAltitude
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property bool _supportsTerrainFrame:    missionItem
+    property var  _controllerVehicle:       missionItem.masterController.controllerVehicle
+    property bool _supportsTerrainFrame:    _controllerVehicle.supportsTerrainFrame
+    property int  _globalAltMode:           missionItem.masterController.missionController.globalAltitudeMode
+    property bool _globalAltModeIsMixed:    _globalAltMode == QGroundControl.AltitudeModeNone
+    property real _radius:                  ScreenTools.defaultFontPixelWidth / 2
 
-    property string _altModeRelativeHelpText:       qsTr("Altitude relative to home altitude")
+    property string _altModeRelativeHelpText:       qsTr("Altitude relative to launch altitude")
     property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
     property string _altModeAboveTerrainHelpText:   qsTr("Altitude above terrain\nActual AMSL altitude: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
     property string _altModeTerrainFrameHelpText:   qsTr("Using terrain reference frame")
 
     function updateAltitudeModeText() {
         if (missionItem.altitudeMode === QGroundControl.AltitudeModeRelative) {
-            altModeLabel.text = qsTr("Altitude")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
             altModeHelp.text = _altModeRelativeHelpText
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute) {
-            altModeLabel.text = qsTr("Above Mean Sea Level")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
             altModeHelp.text = _altModeAbsoluteHelpText
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeAboveTerrain) {
-            altModeLabel.text = qsTr("Above Terrain")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAboveTerrain)
             altModeHelp.text = Qt.binding(function() { return _altModeAboveTerrainHelpText })
         } else if (missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame) {
-            altModeLabel.text = qsTr("Terrain Frame")
+            altModeLabel.text = QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
             altModeHelp.text = _altModeTerrainFrameHelpText
         } else {
             altModeLabel.text = qsTr("Internal Error")
@@ -53,8 +56,10 @@ Rectangle {
         onAltitudeModeChanged:  updateAltitudeModeText()
     }
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
     Column {
-        id:                 valuesColumn
+        id:                 editorColumn
         anchors.margins:    _margin
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -70,195 +75,259 @@ Rectangle {
                                 missionItem.commandDescription
         }
 
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columns:        2
+        ColumnLayout {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            _margin
+            visible:            missionItem.isTakeoffItem && missionItem.wizardMode // Hack special case for takeoff item
 
-            Repeater {
-                model: missionItem.comboboxFacts
+            QGCLabel {
+                text:               qsTr("Move '%1' %2 to the %3 location. %4")
+                                        .arg(_controllerVehicle.vtol ? qsTr("T") : qsTr("T"))
+                                        .arg(_controllerVehicle.vtol ? qsTr("Transition Direction") : qsTr("Takeoff"))
+                                        .arg(_controllerVehicle.vtol ? qsTr("desired") : qsTr("climbout"))
+                                        .arg(_controllerVehicle.vtol ? (qsTr("Ensure distance from launch to transition direction is far enough to complete transition.")) : "")
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                visible:            !initialClickLabel.visible
+            }
 
-                QGCLabel {
-                    text:           object.name
-                    visible:        object.name !== ""
-                    Layout.column:  0
-                    Layout.row:     index
+            QGCLabel {
+                text:               qsTr("Ensure clear of obstacles and into the wind.")
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                visible:            !initialClickLabel.visible
+            }
+
+            QGCButton {
+                text:               qsTr("Done")
+                Layout.fillWidth:   true
+                visible:            !initialClickLabel.visible
+                onClicked: {
+                    missionItem.wizardMode = false
                 }
             }
 
-            Repeater {
-                model: missionItem.comboboxFacts
-
-                FactComboBox {
-                    indexModel:         false
-                    model:              object.enumStrings
-                    fact:               object
-                    Layout.column:      1
-                    Layout.row:         index
-                    Layout.fillWidth:   true
-                }
-            }
-        }
-
-        Rectangle {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            height:         altColumn.y + altColumn.height + _margin
-            color:          qgcPal.windowShade
-            visible:        _specifiesAltitude
-
-            Column {
-                id:                 altColumn
-                anchors.margins:    _margin
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                spacing:            _margin
-
-                Item {
-                    width:  altHamburger.x + altHamburger.width
-                    height: altModeLabel.height
-
-                    QGCLabel { id: altModeLabel }
-
-                    QGCColoredImage {
-                        id:                     altHamburger
-                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 4
-                        anchors.left:           altModeLabel.right
-                        anchors.verticalCenter: altModeLabel.verticalCenter
-                        width:                  ScreenTools.defaultFontPixelHeight / 2
-                        height:                 width
-                        sourceSize.height:      height
-                        source:                 "/res/DropArrow.svg"
-                        color:                  qgcPal.text
-                    }
-
-                    QGCMouseArea {
-                        anchors.fill:   parent
-                        onClicked:      altHamburgerMenu.popup()
-                    }
-
-                    Menu {
-                        id: altHamburgerMenu
-
-                        MenuItem {
-                            text:           qsTr("Altitude Relative To Home")
-                            checkable:      true
-                            checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeRelative
-                            onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeRelative
-                        }
-
-                        MenuItem {
-                            text:           qsTr("Altitude Above Mean Sea Level")
-                            checkable:      true
-                            checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute
-                            visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude
-                            onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeAbsolute
-                        }
-
-                        MenuItem {
-                            text:           qsTr("Altitude Above Terrain")
-                            checkable:      true
-                            checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAboveTerrain
-                            onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeAboveTerrain
-                            visible:        missionItem.specifiesCoordinate
-                        }
-
-                        MenuItem {
-                            text:           qsTr("Terrain Frame")
-                            checkable:      true
-                            checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
-                            visible:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
-                            onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeTerrainFrame
-                        }
-                    }
-                }
-
-                AltitudeFactTextField {
-                    id:                 altField
-                    fact:               missionItem.altitude
-                    altitudeMode:       missionItem.altitudeMode
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                }
-
-                QGCLabel {
-                    id:                 altModeHelp
-                    wrapMode:           Text.WordWrap
-                    font.pointSize:     ScreenTools.smallFontPointSize
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                }
+            QGCLabel {
+                id:                 initialClickLabel
+                text:               missionItem.launchTakeoffAtSameLocation ?
+                                        qsTr("Click in map to set planned Takeoff location.") :
+                                        qsTr("Click in map to set planned Launch location.")
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                visible:            missionItem.isTakeoffItem && !missionItem.launchCoordinate.isValid
             }
         }
 
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            flow:           GridLayout.TopToBottom
-            rows:           missionItem.textFieldFacts.count +
-                            missionItem.nanFacts.count +
-                            (missionItem.speedSection.available ? 1 : 0)
-            columns:        2
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            _margin
+            visible:            !missionItem.wizardMode
 
-            Repeater {
-                model: missionItem.textFieldFacts
+            // This control needs to morph between a simple altitude entry field to a more complex alt mode picker based on the global plan alt mode
+            Rectangle {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                height:         altColumn.y + altColumn.height + _margin
+                color:          _globalAltModeIsMixed ? qgcPal.windowShadeLight : qgcPal.windowShadeDark
+                visible:        _specifiesAltitude
 
-                QGCLabel { text: object.name }
+                ColumnLayout {
+                    id:                 altColumn
+                    anchors.margins:    _globalAltModeIsMixed ? _margin : 0
+                    anchors.top:        parent.top
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    spacing:            _globalAltModeIsMixed ? _margin : 0
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        text:               qsTr("Altitude below specifies the approximate altitude of the ground. Normally 0 for landing back at original launch location.")
+                        visible:            missionItem.isLandCommand
+                    }
+
+                    Item {
+                        width:      altModeDropArrow.x + altModeDropArrow.width
+                        height:     altModeLabel.height
+                        visible:    _globalAltModeIsMixed
+
+                        QGCLabel { id: altModeLabel }
+
+                        QGCColoredImage {
+                            id:                     altModeDropArrow
+                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 4
+                            anchors.left:           altModeLabel.right
+                            anchors.verticalCenter: altModeLabel.verticalCenter
+                            width:                  ScreenTools.defaultFontPixelHeight / 2
+                            height:                 width
+                            sourceSize.height:      height
+                            source:                 "/res/DropArrow.svg"
+                            color:                  qgcPal.text
+                        }
+
+                        QGCMouseArea {
+                            anchors.fill:   parent
+                            onClicked:      altModeMenu.popup()
+                        }
+
+                        QGCMenu {
+                            id: altModeMenu
+
+                            QGCMenuItem {
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeRelative)
+                                checkable:      true
+                                checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeRelative
+                                onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeRelative
+                            }
+
+                            QGCMenuItem {
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAbsolute)
+                                checkable:      true
+                                checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAbsolute
+                                visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude
+                                onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeAbsolute
+                            }
+
+                            QGCMenuItem {
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeAboveTerrain)
+                                checkable:      true
+                                checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeAboveTerrain
+                                onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeAboveTerrain
+                                visible:        missionItem.specifiesCoordinate
+                            }
+
+                            QGCMenuItem {
+                                text:           QGroundControl.altitudeModeShortDescription(QGroundControl.AltitudeModeTerrainFrame)
+                                checkable:      true
+                                checked:        missionItem.altitudeMode === QGroundControl.AltitudeModeTerrainFrame
+                                visible:        _supportsTerrainFrame && (missionItem.specifiesCoordinate || missionItem.specifiesAltitudeOnly)
+                                onTriggered:    missionItem.altitudeMode = QGroundControl.AltitudeModeTerrainFrame
+                            }
+                        }
+                    }
+
+                    QGCLabel {
+                        text:           qsTr("Altitude")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        visible:        !_globalAltModeIsMixed
+                    }
+
+                    AltitudeFactTextField {
+                        id:                 altField
+                        Layout.fillWidth:   true
+                        fact:               missionItem.altitude
+                        altitudeMode:       missionItem.altitudeMode
+                    }
+
+                    QGCLabel {
+                        id:                 altModeHelp
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        visible:            _globalAltModeIsMixed
+                    }
+                }
             }
 
-            Repeater {
-                model: missionItem.nanFacts
+            ColumnLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+
+                Repeater {
+                    model: missionItem.comboboxFacts
+
+                    ColumnLayout {
+                        Layout.fillWidth:   true
+                        spacing:            0
+
+                        QGCLabel {
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            text:           object.name
+                            visible:        object.name !== ""
+                        }
+
+                        FactComboBox {
+                            Layout.fillWidth:   true
+                            indexModel:         false
+                            model:              object.enumStrings
+                            fact:               object
+                        }
+                    }
+                }
+            }
+
+            GridLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                flow:           GridLayout.TopToBottom
+                rows:           missionItem.textFieldFacts.count +
+                                missionItem.nanFacts.count +
+                                (missionItem.speedSection.available ? 1 : 0)
+                columns:        2
+
+                Repeater {
+                    model: missionItem.textFieldFacts
+
+                    QGCLabel { text: object.name }
+                }
+
+                Repeater {
+                    model: missionItem.nanFacts
+
+                    QGCCheckBox {
+                        text:           object.name
+                        checked:        !isNaN(object.rawValue)
+                        onClicked:      object.rawValue = checked ? 0 : NaN
+                    }
+                }
 
                 QGCCheckBox {
-                    text:           object.name
-                    checked:        !isNaN(object.rawValue)
-                    onClicked:      object.rawValue = checked ? 0 : NaN
+                    id:         flightSpeedCheckbox
+                    text:       qsTr("Flight Speed")
+                    checked:    missionItem.speedSection.specifyFlightSpeed
+                    onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
+                    visible:    missionItem.speedSection.available
                 }
-            }
-
-            QGCCheckBox {
-                id:         flightSpeedCheckbox
-                text:       qsTr("Flight Speed")
-                checked:    missionItem.speedSection.specifyFlightSpeed
-                onClicked:  missionItem.speedSection.specifyFlightSpeed = checked
-                visible:    missionItem.speedSection.available
-            }
 
 
-            Repeater {
-                model: missionItem.textFieldFacts
+                Repeater {
+                    model: missionItem.textFieldFacts
+
+                    FactTextField {
+                        showUnits:          true
+                        fact:               object
+                        Layout.fillWidth:   true
+                        enabled:            !object.readOnly
+                    }
+                }
+
+                Repeater {
+                    model: missionItem.nanFacts
+
+                    FactTextField {
+                        showUnits:          true
+                        fact:               object
+                        Layout.fillWidth:   true
+                        enabled:            !isNaN(object.rawValue)
+                    }
+                }
 
                 FactTextField {
-                    showUnits:          true
-                    fact:               object
+                    fact:               missionItem.speedSection.flightSpeed
                     Layout.fillWidth:   true
-                    enabled:            !object.readOnly
+                    enabled:            flightSpeedCheckbox.checked
+                    visible:            missionItem.speedSection.available
                 }
             }
 
-            Repeater {
-                model: missionItem.nanFacts
-
-                FactTextField {
-                    showUnits:          true
-                    fact:               object
-                    Layout.fillWidth:   true
-                    enabled:            !isNaN(object.rawValue)
-                }
-            }
-
-            FactTextField {
-                fact:               missionItem.speedSection.flightSpeed
-                Layout.fillWidth:   true
-                enabled:            flightSpeedCheckbox.checked
-                visible:            missionItem.speedSection.available
+            CameraSection {
+                checked:    missionItem.cameraSection.settingsSpecified
+                visible:    missionItem.cameraSection.available
             }
         }
-
-        CameraSection {
-            checked:    missionItem.cameraSection.settingsSpecified
-            visible:    missionItem.cameraSection.available
-        }
-    } // Column
-} // Rectangle
+    }
+}

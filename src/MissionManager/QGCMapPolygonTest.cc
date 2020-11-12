@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -218,4 +218,39 @@ void QGCMapPolygonTest::_testKMLLoad(void)
     setExpectedMessageBox(QMessageBox::Ok);
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
     checkExpectedMessageBox();
+}
+
+void QGCMapPolygonTest::_testSelectVertex(void)
+{
+    // Create polygon
+    foreach (auto vertex, _polyPoints) {
+        _mapPolygon->appendVertex(vertex);
+    }
+
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    QVERIFY(_mapPolygon->count() == _polyPoints.count());
+
+    // Test deselect
+    _mapPolygon->selectVertex(-1);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Test out of bounds
+    _mapPolygon->selectVertex(_polyPoints.count());
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Simple select test
+    _mapPolygon->selectVertex(_polyPoints.count() - 1);
+    QVERIFY(_mapPolygon->selectedVertex() == _polyPoints.count() - 1);
+    // Keep selected test
+    _mapPolygon->selectVertex(0);
+    _mapPolygon->removeVertex(_polyPoints.count() - 1);
+    QVERIFY(_mapPolygon->selectedVertex() == 0);
+    // Deselect if selected vertex removed
+    _mapPolygon->appendVertex(_polyPoints[_polyPoints.count() - 1]);
+    _mapPolygon->selectVertex(_polyPoints.count() - 1);
+    _mapPolygon->removeVertex(_polyPoints.count() - 1);
+    QVERIFY(_mapPolygon->selectedVertex() == -1);
+    // Shift selected index down if removed index < selected index
+    _mapPolygon->appendVertex(_polyPoints[_polyPoints.count() - 1]);
+    _mapPolygon->selectVertex(_polyPoints.count() - 1);
+    _mapPolygon->removeVertex(0);
+    QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 1);
 }

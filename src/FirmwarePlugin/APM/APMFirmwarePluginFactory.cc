@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,19 +16,19 @@
 APMFirmwarePluginFactory APMFirmwarePluginFactory;
 
 APMFirmwarePluginFactory::APMFirmwarePluginFactory(void)
-    : _arduCopterPluginInstance(NULL)
-    , _arduPlanePluginInstance(NULL)
-    , _arduRoverPluginInstance(NULL)
-    , _arduSubPluginInstance(NULL)
+    : _arduCopterPluginInstance(nullptr)
+    , _arduPlanePluginInstance(nullptr)
+    , _arduRoverPluginInstance(nullptr)
+    , _arduSubPluginInstance(nullptr)
 {
 
 }
 
-QList<MAV_AUTOPILOT> APMFirmwarePluginFactory::supportedFirmwareTypes(void) const
+QList<QGCMAVLink::FirmwareClass_t> APMFirmwarePluginFactory::supportedFirmwareClasses(void) const
 {
-    QList<MAV_AUTOPILOT> list;
+    QList<QGCMAVLink::FirmwareClass_t> list;
 
-    list.append(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    list.append(QGCMAVLink::FirmwareClassArduPilot);
     return list;
 }
 
@@ -74,5 +74,5 @@ FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
         }
     }
 
-    return NULL;
+    return nullptr;
 }

@@ -1,35 +1,58 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-#ifndef ComplexMissionItem_H
-#define ComplexMissionItem_H
+#pragma once
 
 #include "VisualMissionItem.h"
 #include "QGCGeo.h"
+#include "QGCToolbox.h"
+#include "SettingsManager.h"
+#include "KMLPlanDomDocument.h"
+#include "QmlObjectListModel.h"
 
 #include <QSettings>
+
+class PlanMasterController;
+class MissionController;
 
 class ComplexMissionItem : public VisualMissionItem
 {
     Q_OBJECT
 
 public:
-    ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent);
 
     const ComplexMissionItem& operator=(const ComplexMissionItem& other);
 
-    Q_PROPERTY(double       complexDistance     READ complexDistance                            NOTIFY complexDistanceChanged)
-    Q_PROPERTY(bool         presetsSupported    READ presetsSupported                           CONSTANT)
-    Q_PROPERTY(QStringList  presetNames         READ presetNames                                NOTIFY presetNamesChanged)
-    Q_PROPERTY(QString      currentPreset       READ currentPreset                              NOTIFY currentPresetChanged)
-    Q_PROPERTY(bool         cameraInPreset      READ cameraInPreset     WRITE setCameraInPreset NOTIFY cameraInPresetChanged)
-    Q_PROPERTY(bool         builtInPreset       READ builtInPreset      WRITE setBuiltInPreset  NOTIFY builtInPresetChanged)
+    Q_PROPERTY(QString              patternName         READ patternName            CONSTANT)
+    Q_PROPERTY(double               complexDistance     READ complexDistance        NOTIFY complexDistanceChanged)
+    Q_PROPERTY(bool                 presetsSupported    READ presetsSupported       CONSTANT)
+    Q_PROPERTY(QStringList          presetNames         READ presetNames            NOTIFY presetNamesChanged)
+    Q_PROPERTY(bool                 isIncomplete        READ isIncomplete           NOTIFY isIncompleteChanged)
+    Q_PROPERTY(double               minAMSLAltitude     READ minAMSLAltitude        NOTIFY minAMSLAltitudeChanged)  ///< Minimum altitude of all coordinates in item
+    Q_PROPERTY(double               maxAMSLAltitude     READ maxAMSLAltitude        NOTIFY maxAMSLAltitudeChanged)  ///< Maximum altitude of all coordinates in item
+    Q_PROPERTY(bool                 isSingleItem        READ isSingleItem           CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  flightPathSegments  READ flightPathSegments     CONSTANT)
+    Q_PROPERTY(bool                 terrainCollision    READ terrainCollision       NOTIFY terrainCollisionChanged)
+
+    QmlObjectListModel* flightPathSegments  (void) { return &_flightPathSegments; }
+
+    virtual QString patternName(void) const = 0;
+
+    /// @return true: This complex item is colliding with terrain
+    virtual bool terrainCollision(void) const { return _cTerrainCollisionSegments != 0; }
+
+    /// @return Minimum altitude for the items within this complex items.
+    virtual double minAMSLAltitude(void) const = 0;
+
+    /// @return Maximum altitude for the items within this complex items.
+    virtual double maxAMSLAltitude(void) const = 0;
 
     /// @return The distance covered the complex mission item in meters.
     /// Signals complexDistanceChanged
@@ -42,6 +65,9 @@ public:
     /// @return true: load success, false: load failed, errorString set
     virtual bool load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString) = 0;
 
+    /// @return true: Represents a single coordinate (ex: MissionSettingsItem), false: Represents multiple items (ex: Survey)
+    virtual bool isSingleItem(void) const { return false; }
+
     /// Loads the specified preset into the complex item.
     ///     @param name Preset name.
     Q_INVOKABLE virtual void loadPreset(const QString& name);
@@ -50,8 +76,8 @@ public:
     ///     @param name User visible name for preset. Will replace existing preset if already exists.
     Q_INVOKABLE virtual void savePreset(const QString& name);
 
-    Q_INVOKABLE void clearCurrentPreset(void);
-    Q_INVOKABLE void deleteCurrentPreset(void);
+    Q_INVOKABLE void deletePreset(const QString& name);
+
 
     /// Get the point of complex mission item furthest away from a coordinate
     ///     @param other QGeoCoordinate to which distance is calculated
@@ -67,12 +93,10 @@ public:
     ///     Empty string signals no support for presets.
     virtual QString presetsSettingsGroup(void) { return QString(); }
 
-    bool    presetsSupported    (void) { return !presetsSettingsGroup().isEmpty(); }
-    QString currentPreset       (void) const { return _currentPreset; }
-    bool    cameraInPreset      (void) const { return _cameraInPreset; }
-    bool    builtInPreset       (void) const { return _builtInPreset; }
-    void    setCameraInPreset   (bool cameraInPreset);
-    void    setBuiltInPreset    (bool builtInPreset);
+    virtual void addKMLVisuals(KMLPlanDomDocument& domDocument);
+
+    bool presetsSupported   (void) { return !presetsSettingsGroup().isEmpty(); }
+    bool isIncomplete       (void) const { return _isIncomplete; }
 
     /// This mission item attribute specifies the type of the complex item.
     static const char* jsonComplexItemTypeKey;
@@ -82,28 +106,29 @@ signals:
     void boundingCubeChanged        (void);
     void greatestDistanceToChanged  (void);
     void presetNamesChanged         (void);
-    void currentPresetChanged       (QString currentPreset);
-    void cameraInPresetChanged      (bool cameraInPreset);
-    void builtInPresetChanged       (bool builtInPreset);
+    void isIncompleteChanged        (void);
+    void minAMSLAltitudeChanged     (double minAMSLAltitude);
+    void maxAMSLAltitudeChanged     (double maxAMSLAltitude);
+    void terrainCollisionChanged    (bool terrainCollision);
+
+protected slots:
+    virtual void _segmentTerrainCollisionChanged (bool terrainCollision);
 
 protected:
-    void        _saveItem       (QJsonObject& saveObject);
-    void        _loadItem       (const QJsonObject& saveObject);
-    void        _savePresetJson (const QString& name, QJsonObject& presetObject);
-    QJsonObject _loadPresetJson (const QString& name);
+    void        _savePresetJson         (const QString& name, QJsonObject& presetObject);
+    QJsonObject _loadPresetJson         (const QString& name);
+    void        _appendFlightPathSegment(const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt);
 
+    bool                _isIncomplete =                 true;
+    int                 _cTerrainCollisionSegments =    0;
+    QmlObjectListModel  _flightPathSegments;                // Contains FlightPathSegment items
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    QString         _currentPreset;
-    SettingsFact    _saveCameraInPresetFact;
-    bool            _cameraInPreset;
-    bool            _builtInPreset;
-
     static const char* _presetSettingsKey;
-    static const char* _presetNameKey;
-    static const char* _saveCameraInPresetKey;
-    static const char* _builtInPresetKey;
-};
 
-#endif
+    QGCToolbox* _toolbox;
+    SettingsManager* _settingsManager;
+
+private:
+};

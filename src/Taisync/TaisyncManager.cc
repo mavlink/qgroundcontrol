@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -318,7 +318,7 @@ TaisyncManager::_setEnabled()
 void
 TaisyncManager::_restoreVideoSettings(Fact* setting)
 {
-    SettingsFact* pFact = dynamic_cast<SettingsFact*>(setting);
+    auto* pFact = qobject_cast<SettingsFact*>(setting);
     if(pFact) {
         pFact->setVisible(qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(VideoSettings::settingsGroup, *setting->metaData()));
     }
@@ -337,7 +337,7 @@ TaisyncManager::_setVideoEnabled()
         pVSettings->udpPort()->setRawValue(5600);
         //-- TODO: this AR must come from somewhere
         pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
-        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
+        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDPH264));
 #if defined(__ios__) || defined(__android__)
         if(!_taiVideo) {
             //-- iOS and Android receive raw h.264 and need a different pipeline
@@ -498,7 +498,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     //-- Link Status?
     if(jSonData.contains("\"flight\":")) {
         _reqMask &= ~static_cast<uint32_t>(REQ_LINK_STATUS);
-        bool tlinkConnected  = jObj["flight"].toString("") == "online";
+        bool tlinkConnected  = jObj["flight"].toString() == "online";
         if(tlinkConnected != _linkConnected) {
            _linkConnected = tlinkConnected;
            emit linkConnectedChanged();

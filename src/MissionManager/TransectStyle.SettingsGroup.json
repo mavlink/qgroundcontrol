@@ -1,65 +1,70 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "TurnAroundDistance",
-    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "shortDesc": "Amount of additional distance to add outside the survey area for vehicle turn around.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m",
-    "defaultValue":     30
+    "default":     30
 },
 {
     "name":             "TurnAroundDistanceMultiRotor",
-    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "shortDesc": "Amount of additional distance to add outside the survey area for vehicle turn around.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m",
-    "defaultValue":     10
+    "default":     10
 },
 {
     "name":             "CameraTriggerInTurnAround",
-    "shortDescription": "Camera continues taking images in turn arounds.",
+    "shortDesc": "Camera continues taking images in turn arounds.",
     "type":             "bool",
-    "defaultValue":     true
+    "default":     true
 },
 {
     "name":             "HoverAndCapture",
-    "shortDescription": "Stop and Hover at each image point before taking image",
+    "shortDesc": "Stop and Hover at each image point before taking image",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "Refly90Degrees",
-    "shortDescription": "Refly the pattern at a 90 degree angle",
+    "shortDesc": "Refly the pattern at a 90 degree angle",
     "type":             "bool",
-    "defaultValue":     false
+    "default":     false
 },
 {
     "name":             "TerrainAdjustTolerance",
-    "shortDescription": "If adjacent terrain waypoints are within this tolerence they will be removed.",
+    "shortDesc": "Additional waypoints within the transect will be added if the terrain altitude difference grows larger than this tolerance.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m",
-    "defaultValue":     10
+    "default":     10
 },
 {
     "name":             "TerrainAdjustMaxClimbRate",
-    "shortDescription": "The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
+    "shortDesc": "The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m/s",
-    "defaultValue":     0
+    "default":     0
 },
 {
     "name":             "TerrainAdjustMaxDescentRate",
-    "shortDescription": "The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
+    "shortDesc": "The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
     "units":            "m/s",
-    "defaultValue":     0
+    "default":     0
 }
 ]
+}

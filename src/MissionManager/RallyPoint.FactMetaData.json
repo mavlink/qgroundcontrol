@@ -1,21 +1,27 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "Latitude",
-    "shortDescription": "Latitude of rally point position",
+    "shortDesc": "Latitude of rally point position",
     "type":             "double",
     "decimalPlaces":    7
 },
 {
     "name":             "Longitude",
-    "shortDescription": "Longitude of rally point position",
+    "shortDesc": "Longitude of rally point position",
     "type":             "double",
     "decimalPlaces":    7
 },
 {
-    "name":             "Altitude",
-    "shortDescription": "Altitude of rally point position (home relative)",
+    "name":             "RelativeAltitude",
+    "shortDesc": "Altitude of rally point position (home relative)",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "m"
+    "units":            "m",
+    "default":     0.0
 }
 ]
+}

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,61 +8,40 @@
  ****************************************************************************/
 
 #include "QGCOptions.h"
+
 #include <QtQml>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options
-///     @author Gus Grubba <mavlink@grubba.com>
+///     @author Gus Grubba <gus@auterion.com>
 
 QGCOptions::QGCOptions(QObject* parent)
     : QObject(parent)
-    , _defaultInstrumentWidget(nullptr)
 {
-    qmlRegisterUncreatableType<CustomInstrumentWidget>("QGroundControl", 1, 0, "CustomInstrumentWidget", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-CustomInstrumentWidget*
-QGCOptions::instrumentWidget()
+QColor QGCOptions::toolbarBackgroundLight() const
 {
-    if(!_defaultInstrumentWidget) {
-        _defaultInstrumentWidget = new CustomInstrumentWidget(this);
+    return QColor(255,255,255);
+}
+
+QColor QGCOptions::toolbarBackgroundDark() const
+{
+    return QColor(0,0,0);
+}
+
+QGCFlyViewOptions* QGCOptions::flyViewOptions(void)
+{
+    if (!_defaultFlyViewOptions) {
+        _defaultFlyViewOptions = new QGCFlyViewOptions(this);
     }
-    return _defaultInstrumentWidget;
+    return _defaultFlyViewOptions;
 }
 
-QUrl
-QGCOptions::mainToolbarUrl() const
+QGCFlyViewOptions::QGCFlyViewOptions(QGCOptions* options, QObject* parent)
+    : QObject   (parent)
+    , _options  (options)
 {
-    return QUrl(QStringLiteral("qrc:/toolbar/MainToolBar.qml"));
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
-
-QUrl
-QGCOptions::planToolbarUrl() const
-{
-    return QUrl(QStringLiteral("qrc:/qml/PlanToolBar.qml"));
-}
-
-QColor
-QGCOptions::toolbarBackgroundLight() const
-{
-    return QColor(255,255,255,204);
-}
-
-QColor
-QGCOptions::toolbarBackgroundDark() const
-{
-    return QColor(0,0,0,192);
-}
-
-QUrl
-QGCOptions::planToolbarIndicatorsUrl() const
-{
-    return QUrl(QStringLiteral("PlanToolBar.qml"));
-}
-
-
-CustomInstrumentWidget::CustomInstrumentWidget(QObject* parent)
-    : QObject(parent)
-{
-}
-

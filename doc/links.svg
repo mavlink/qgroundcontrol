@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xl="http://www.w3.org/1999/xlink" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="39.94 147.94 656.5 346" width="656.5" height="346">
+  <defs>
+    <filter id="Shadow" filterUnits="userSpaceOnUse" x="39.94" y="147.94">
+      <feGaussianBlur in="SourceAlpha" result="blur" stdDeviation="2.616"/>
+      <feOffset in="blur" result="offset" dx="1.44" dy="1.44"/>
+      <feFlood flood-color="black" flood-opacity=".5" result="flood"/>
+      <feComposite in="flood" in2="offset" operator="in" result="color"/>
+      <feMerge>
+        <feMergeNode in="color"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient x1="0" x2="1" id="Gradient" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eee"/>
+      <stop offset="1" stop-color="#afafaf"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient" xl:href="#Gradient" gradientTransform="translate(342 153) rotate(90) scale(90)"/>
+    <font-face font-family="Courier" font-size="12" units-per-em="1000" underline-position="-178.22266" underline-thickness="57.61719" slope="0" x-height="456.54297" cap-height="586.91406" ascent="753.90625" descent="-246.09375" font-weight="400">
+      <font-face-src>
+        <font-face-name name="Courier"/>
+      </font-face-src>
+    </font-face>
+    <linearGradient id="Obj_Gradient_2" xl:href="#Gradient" gradientTransform="translate(135 274.5) rotate(90) scale(90)"/>
+    <linearGradient id="Obj_Gradient_3" xl:href="#Gradient" gradientTransform="translate(342 274.5) rotate(90) scale(90)"/>
+    <linearGradient id="Obj_Gradient_4" xl:href="#Gradient" gradientTransform="translate(342 396) rotate(90) scale(90)"/>
+    <linearGradient id="Obj_Gradient_5" xl:href="#Gradient" gradientTransform="translate(135 396) rotate(90) scale(90)"/>
+    <font-face font-family="Helvetica Neue" font-size="12" panose-1="2 0 5 3 0 0 0 2 0 4" units-per-em="1000" underline-position="-100" underline-thickness="50" slope="0" x-height="517" cap-height="714" ascent="951.9958" descent="-212.99744" font-weight="400">
+      <font-face-src>
+        <font-face-name name="HelveticaNeue"/>
+      </font-face-src>
+    </font-face>
+    <linearGradient x1="0" x2="1" id="Gradient_2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9691"/>
+      <stop offset=".45238096" stop-color="#eb7e79"/>
+      <stop offset="1" stop-color="#d56560"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient_6" xl:href="#Gradient_2" gradientTransform="translate(471.00007 479.8125) rotate(-90) scale(27)"/>
+    <linearGradient x1="0" x2="1" id="Gradient_3" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#54ba6b"/>
+      <stop offset=".45238096" stop-color="#6dd98a"/>
+      <stop offset="1" stop-color="#84f8a8"/>
+    </linearGradient>
+    <linearGradient id="Obj_Gradient_7" xl:href="#Gradient_3" gradientTransform="translate(471.00007 402.1875) rotate(90) scale(27)"/>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="Diamond_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L -4 3 L 0 0 L -4 -3 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="Arrow_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-9 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M -8 0 L 0 3 L 0 -3 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+    <marker orient="auto" overflow="visible" markerUnits="strokeWidth" id="FilledDiamond_Marker" stroke-linejoin="miter" stroke-miterlimit="10" viewBox="-1 -4 10 8" markerWidth="10" markerHeight="8" color="black">
+      <g>
+        <path d="M 8 0 L 4 -3 L 0 0 L 4 3 Z" fill="currentColor" stroke="currentColor" stroke-width="1"/>
+      </g>
+    </marker>
+  </defs>
+  <metadata> Produced by OmniGraffle 7.12.1 
+    <dc:date>2020-02-02 19:58:23 +0000</dc:date>
+  </metadata>
+  <g id="Canvas_1" fill-opacity="1" fill="none" stroke="none" stroke-opacity="1" stroke-dasharray="none">
+    <title>Canvas 1</title>
+    <g id="Canvas_1: Layer 1">
+      <title>Layer 1</title>
+      <g id="Graphic_2" filter="url(#Shadow)">
+        <path d="M 261 153 L 423 153 C 427.97056 153 432 157.02944 432 162 L 432 234 C 432 238.97056 427.97056 243 423 243 L 261 243 C 256.02944 243 252 238.97056 252 234 L 252 162 C 252 157.02944 256.02944 153 261 153 Z" fill="url(#Obj_Gradient)"/>
+        <path d="M 261 153 L 423 153 C 427.97056 153 432 157.02944 432 162 L 432 234 C 432 238.97056 427.97056 243 423 243 L 261 243 C 256.02944 243 252 238.97056 252 234 L 252 162 C 252 157.02944 256.02944 153 261 153 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(257 191)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="45.393555" y="11">LinkManager</tspan>
+        </text>
+      </g>
+      <g id="Graphic_6" filter="url(#Shadow)">
+        <path d="M 54 274.5 L 216 274.5 C 220.97056 274.5 225 278.52944 225 283.5 L 225 355.5 C 225 360.47056 220.97056 364.5 216 364.5 L 54 364.5 C 49.02944 364.5 45 360.47056 45 355.5 L 45 283.5 C 45 278.52944 49.02944 274.5 54 274.5 Z" fill="url(#Obj_Gradient_2)"/>
+        <path d="M 54 274.5 L 216 274.5 C 220.97056 274.5 225 278.52944 225 283.5 L 225 355.5 C 225 360.47056 220.97056 364.5 216 364.5 L 54 364.5 C 49.02944 364.5 45 360.47056 45 355.5 L 45 283.5 C 45 278.52944 49.02944 274.5 54 274.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(50 312.5)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="23.79004" y="11">LinkConfiguration</tspan>
+        </text>
+      </g>
+      <g id="Graphic_9" filter="url(#Shadow)">
+        <path d="M 261 274.5 L 423 274.5 C 427.97056 274.5 432 278.52944 432 283.5 L 432 355.5 C 432 360.47056 427.97056 364.5 423 364.5 L 261 364.5 C 256.02944 364.5 252 360.47056 252 355.5 L 252 283.5 C 252 278.52944 256.02944 274.5 261 274.5 Z" fill="url(#Obj_Gradient_3)"/>
+        <path d="M 261 274.5 L 423 274.5 C 427.97056 274.5 432 278.52944 432 283.5 L 432 355.5 C 432 360.47056 427.97056 364.5 423 364.5 L 261 364.5 C 256.02944 364.5 252 360.47056 252 355.5 L 252 283.5 C 252 278.52944 256.02944 274.5 261 274.5 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(257 312.5)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="38.192383" y="11">LinkInterface</tspan>
+        </text>
+      </g>
+      <g id="Graphic_11" filter="url(#Shadow)">
+        <path d="M 261 396 L 423 396 C 427.97056 396 432 400.02944 432 405 L 432 477 C 432 481.97056 427.97056 486 423 486 L 261 486 C 256.02944 486 252 481.97056 252 477 L 252 405 C 252 400.02944 256.02944 396 261 396 Z" fill="url(#Obj_Gradient_4)"/>
+        <path d="M 261 396 L 423 396 C 427.97056 396 432 400.02944 432 405 L 432 477 C 432 481.97056 427.97056 486 423 486 L 261 486 C 256.02944 486 252 481.97056 252 477 L 252 405 C 252 400.02944 256.02944 396 261 396 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(257 434)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="59.7959" y="11">UDPLink</tspan>
+        </text>
+      </g>
+      <g id="Graphic_13" filter="url(#Shadow)">
+        <path d="M 54 396 L 216 396 C 220.97056 396 225 400.02944 225 405 L 225 477 C 225 481.97056 220.97056 486 216 486 L 54 486 C 49.02944 486 45 481.97056 45 477 L 45 405 C 45 400.02944 49.02944 396 54 396 Z" fill="url(#Obj_Gradient_5)"/>
+        <path d="M 54 396 L 216 396 C 220.97056 396 225 400.02944 225 405 L 225 477 C 225 481.97056 220.97056 486 216 486 L 54 486 C 49.02944 486 45 481.97056 45 477 L 45 405 C 45 400.02944 49.02944 396 54 396 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <text transform="translate(50 434)" fill="black">
+          <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="27.390625" y="11">UDPConfiguration</tspan>
+        </text>
+      </g>
+      <g id="Group_50">
+        <g id="Graphic_14" filter="url(#Shadow)">
+          <path d="M 517.5 396.5625 L 679.5 396.5625 C 684.4706 396.5625 688.5 400.59194 688.5 405.5625 L 688.5 425.8125 C 688.5 430.78306 684.4706 434.8125 679.5 434.8125 L 517.5 434.8125 C 512.52944 434.8125 508.5 430.78306 508.5 425.8125 L 508.5 405.5625 C 508.5 400.59194 512.52944 396.5625 517.5 396.5625 Z" fill="#c0ffc0"/>
+          <path d="M 517.5 396.5625 L 679.5 396.5625 C 684.4706 396.5625 688.5 400.59194 688.5 405.5625 L 688.5 425.8125 C 688.5 430.78306 684.4706 434.8125 679.5 434.8125 L 517.5 434.8125 C 512.52944 434.8125 508.5 430.78306 508.5 425.8125 L 508.5 405.5625 C 508.5 400.59194 512.52944 396.5625 517.5 396.5625 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(513.5 401.5195)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="68.446" y="11">Signal</tspan>
+            <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="38.192383" y="25.336">bytesReceived</tspan>
+          </text>
+        </g>
+        <g id="Graphic_15" filter="url(#Shadow)">
+          <path d="M 517.5 447.1875 L 679.5 447.1875 C 684.4706 447.1875 688.5 451.21694 688.5 456.1875 L 688.5 476.4375 C 688.5 481.40806 684.4706 485.4375 679.5 485.4375 L 517.5 485.4375 C 512.52944 485.4375 508.5 481.40806 508.5 476.4375 L 508.5 456.1875 C 508.5 451.21694 512.52944 447.1875 517.5 447.1875 Z" fill="#ffc0c0"/>
+          <path d="M 517.5 447.1875 L 679.5 447.1875 C 684.4706 447.1875 688.5 451.21694 688.5 456.1875 L 688.5 476.4375 C 688.5 481.40806 684.4706 485.4375 679.5 485.4375 L 517.5 485.4375 C 512.52944 485.4375 508.5 481.40806 508.5 476.4375 L 508.5 456.1875 C 508.5 451.21694 512.52944 447.1875 517.5 447.1875 Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(513.5 452.1445)" fill="black">
+            <tspan font-family="Helvetica Neue" font-size="12" font-weight="400" fill="black" x="64.324" y="11">Method</tspan>
+            <tspan font-family="Courier" font-size="12" font-weight="400" fill="black" x="34.591797" y="25.336">writeBytesSafe</tspan>
+          </text>
+        </g>
+        <g id="Graphic_16" filter="url(#Shadow)">
+          <path d="M 498.75013 459.5625 L 498.75013 473.0625 L 463.25 473.0625 L 463.25 479.8125 L 443.25 466.3125 L 463.25 452.8125 L 463.25 459.5625 Z" fill="url(#Obj_Gradient_6)"/>
+          <path d="M 498.75013 459.5625 L 498.75013 473.0625 L 463.25 473.0625 L 463.25 479.8125 L 443.25 466.3125 L 463.25 452.8125 L 463.25 459.5625 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+        <g id="Graphic_17" filter="url(#Shadow)">
+          <path d="M 443.25 422.4375 L 443.25 408.9375 L 478.7501 408.9375 L 478.7501 402.1875 L 498.75013 415.6875 L 478.7501 429.1875 L 478.7501 422.4375 Z" fill="url(#Obj_Gradient_7)"/>
+          <path d="M 443.25 422.4375 L 443.25 408.9375 L 478.7501 408.9375 L 478.7501 402.1875 L 498.75013 415.6875 L 478.7501 429.1875 L 478.7501 422.4375 Z" stroke="#c01b00" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        </g>
+      </g>
+      <g id="Line_43">
+        <line x1="342" y1="252.25" x2="342" y2="274.5" marker-start="url(#Diamond_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_45">
+        <line x1="135" y1="374.4" x2="135" y2="396" marker-start="url(#Arrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_46">
+        <line x1="342" y1="374.4" x2="342" y2="396" marker-start="url(#Arrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_47">
+        <line x1="225" y1="441" x2="242.75" y2="441" marker-end="url(#FilledDiamond_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g id="Line_49">
+        <line x1="225" y1="319.5" x2="242.75" y2="319.5" marker-end="url(#FilledDiamond_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,14 +9,15 @@
 
 #pragma once
 
-#include "UnitTest.h"
+#include "TransectStyleComplexItemTestBase.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
 #include "CorridorScanComplexItem.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
-class CorridorScanComplexItemTest : public UnitTest
+class CorridorScanComplexItemTest : public TransectStyleComplexItemTestBase
 {
     Q_OBJECT
     
@@ -24,19 +25,31 @@ public:
     CorridorScanComplexItemTest(void);
 
 protected:
-    void init(void) final;
+    void init   (void) final;
     void cleanup(void) final;
     
+#if 1
 private slots:
-    void _testDirty(void);
-    void _testCameraTrigger(void);
-//    void _testEntryLocation(void);
-    void _testItemCount(void);
-    void _testPathChanges(void);
+    void _testDirty         (void);
+    void _testCameraTrigger (void);
+    void _testPathChanges   (void);
+    void _testItemGeneration(void);
+    void _testItemCount     (void);
+#else
+    // Used to debug a single test
+private slots:
+    void _testItemGeneration(void);
+private:
+    void _testDirty         (void);
+    void _testCameraTrigger (void);
+    void _testPathChanges   (void);
+    void _testItemCount     (void);
+#endif
 
 private:
-    void _setPolyline(void);
-    void _waitForReadyForSave(void);
+    void            _waitForReadyForSave(void);
+    QList<MAV_CMD>  _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
+    void            _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
 
     enum {
         corridorPolygonPathChangedIndex = 0,
@@ -50,8 +63,11 @@ private:
     static const size_t _cCorridorPolygonSignals = maxCorridorPolygonSignalIndex;
     const char*         _rgCorridorPolygonSignals[_cCorridorPolygonSignals];
 
-    Vehicle*                    _offlineVehicle;
-    MultiSignalSpy*             _multiSpyCorridorPolygon;
-    CorridorScanComplexItem*    _corridorItem;
-    QList<QGeoCoordinate>       _linePoints;
+    MultiSignalSpy*             _multiSpyCorridorPolygon =  nullptr;
+    CorridorScanComplexItem*    _corridorItem =             nullptr;
+    QList<QGeoCoordinate>       _polyLineVertices;
+
+    static constexpr int    _expectedTransectCount =        2;
+    static constexpr double _corridorLineSegmentDistance =  200.0;
+    static constexpr double _corridorWidth =                50.0;
 };

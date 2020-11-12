@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,19 +10,24 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QmlObjectListModel.h"
+#include "MissionCommandList.h"
+#include "FactMetaData.h"
+#include "QGCApplication.h"
 
 #include <QJsonArray>
 #include <QJsonParseError>
 #include <QObject>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QFile>
+#include <QTranslator>
 
-const char* JsonHelper::_enumStringsJsonKey =       "enumStrings";
-const char* JsonHelper::_enumValuesJsonKey =        "enumValues";
-const char* JsonHelper::jsonVersionKey =            "version";
-const char* JsonHelper::jsonGroundStationKey =      "groundStation";
-const char* JsonHelper::jsonGroundStationValue =    "QGroundControl";
-const char* JsonHelper::jsonFileTypeKey =           "fileType";
+const char* JsonHelper::jsonVersionKey                      = "version";
+const char* JsonHelper::jsonGroundStationKey                = "groundStation";
+const char* JsonHelper::jsonGroundStationValue              = "QGroundControl";
+const char* JsonHelper::jsonFileTypeKey                     = "fileType";
+const char* JsonHelper::_translateKeysKey                   = "translateKeys";
+const char* JsonHelper::_arrayIDKeysKey                     = "_arrayIDKeys";
 
 bool JsonHelper::validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
@@ -152,55 +157,6 @@ bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringLi
     return true;
 }
 
-bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    if(jsonObject.value(_enumStringsJsonKey).isArray()) {
-        // "enumStrings": ["Auto" , "Manual", "Shutter Priority", "Aperture Priority"],
-        QJsonArray jArray = jsonObject.value(_enumStringsJsonKey).toArray();
-        for(int i = 0; i < jArray.count(); ++i) {
-            enumStrings << jArray.at(i).toString();
-        }
-    } else {
-        // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
-        QString value = jsonObject.value(_enumStringsJsonKey).toString();
-        enumStrings = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
-    }
-
-    if(jsonObject.value(_enumValuesJsonKey).isArray()) {
-        // "enumValues": [0, 1, 2, 3, 4, 5],
-        QJsonArray jArray = jsonObject.value(_enumValuesJsonKey).toArray();
-        // This should probably be a variant list and not a string list.
-        for(int i = 0; i < jArray.count(); ++i) {
-            if(jArray.at(i).isString())
-                enumValues << jArray.at(i).toString();
-            else
-                enumValues << QString::number(jArray.at(i).toDouble());
-        }
-    } else {
-        // "enumValues": "0,1,2,3,4,5",
-        QString value = jsonObject.value(_enumValuesJsonKey).toString();
-        enumValues = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
-    }
-
-    if (enumStrings.count() != enumValues.count()) {
-        errorString = QObject::tr("enum strings/values count mismatch in %3 strings:values %1:%2").arg(enumStrings.count()).arg(enumValues.count()).arg(valueName);
-        return false;
-    }
-
-    return true;
-}
-
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
-}
-
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
-{
-    QMap<QString, QString> defineMap;
-    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
-}
-
 bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
 {
     QJsonParseError parseError;
@@ -210,27 +166,40 @@ bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QSt
     if (parseError.error == QJsonParseError::NoError) {
         return true;
     } else {
+        int startPos = qMax(0, parseError.offset - 100);
+        int length = qMin(bytes.count() - startPos, 200);
+        qDebug() << QStringLiteral("Json read error '%1'").arg(bytes.mid(startPos, length).constData());
         errorString = parseError.errorString();
         return false;
     }
 }
 
-bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
-                                     const QString&     expectedFileType,
-                                     int                minSupportedVersion,
-                                     int                maxSupportedVersion,
-                                     int&               version,
-                                     QString&           errorString)
+bool JsonHelper::isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString)
 {
-    // Check for required keys
-    QStringList requiredKeys = { jsonFileTypeKey, jsonGroundStationKey, jsonVersionKey };
-    if (!validateRequiredKeys(jsonObject, requiredKeys, errorString)) {
+    QFile jsonFile(fileName);
+    if (!jsonFile.open(QFile::ReadOnly)) {
+        errorString = tr("File open failed: file:error %1 %2").arg(jsonFile.fileName()).arg(jsonFile.errorString());
         return false;
     }
+    QByteArray jsonBytes = jsonFile.readAll();
+    jsonFile.close();
 
-    // Validate base key types
-    QList<QJsonValue::Type> typeList = { QJsonValue::String, QJsonValue::String };
-    if (!validateKeyTypes(jsonObject, requiredKeys, typeList, errorString)) {
+    return isJsonFile(jsonBytes, jsonDoc, errorString);
+}
+
+bool JsonHelper::validateInternalQGCJsonFile(const QJsonObject& jsonObject,
+                                             const QString&     expectedFileType,
+                                             int                minSupportedVersion,
+                                             int                maxSupportedVersion,
+                                             int&               version,
+                                             QString&           errorString)
+{
+    // Validate required keys
+    QList<JsonHelper::KeyValidateInfo> requiredKeys = {
+        { jsonFileTypeKey,       QJsonValue::String, true },
+        { jsonVersionKey,        QJsonValue::Double, true },
+    };
+    if (!JsonHelper::validateKeys(jsonObject, requiredKeys, errorString)) {
         return false;
     }
 
@@ -241,18 +210,8 @@ bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
         return false;
     }
 
-    // Check version - support both old style v1 string and new style integer
-
-    QJsonValue versionValue = jsonObject[jsonVersionKey];
-    if (versionValue.type() == QJsonValue::String && versionValue.toString() == QStringLiteral("1.0")) {
-        version = 1;
-    } else {
-        if (versionValue.type() != QJsonValue::Double) {
-            errorString = QObject::tr("Incorrect type for version value, must be integer");
-            return false;
-        }
-        version = versionValue.toInt();
-    }
+    // Version check
+    version = jsonObject[jsonVersionKey].toInt();
     if (version < minSupportedVersion) {
         errorString = QObject::tr("File version %1 is no longer supported").arg(version);
         return false;
@@ -263,6 +222,143 @@ bool JsonHelper::validateQGCJsonFile(const QJsonObject& jsonObject,
     }
 
     return true;
+}
+
+bool JsonHelper::validateExternalQGCJsonFile(const QJsonObject& jsonObject,
+                                             const QString&     expectedFileType,
+                                             int                minSupportedVersion,
+                                             int                maxSupportedVersion,
+                                             int&               version,
+                                             QString&           errorString)
+{
+    // Validate required keys
+    QList<JsonHelper::KeyValidateInfo> requiredKeys = {
+        { jsonGroundStationKey, QJsonValue::String, true },
+    };
+    if (!JsonHelper::validateKeys(jsonObject, requiredKeys, errorString)) {
+        return false;
+    }
+
+    return validateInternalQGCJsonFile(jsonObject, expectedFileType, minSupportedVersion, maxSupportedVersion, version, errorString);
+}
+
+QStringList JsonHelper::_addDefaultLocKeys(QJsonObject& jsonObject)
+{
+    QString translateKeys;
+    QString fileType = jsonObject[jsonFileTypeKey].toString();
+    if (!fileType.isEmpty()) {
+        if (fileType == MissionCommandList::qgcFileType) {
+            if (jsonObject.contains(_translateKeysKey)) {
+                translateKeys = jsonObject[_translateKeysKey].toString();
+            } else {
+                translateKeys = "label,enumStrings,friendlyName,description,category";
+                jsonObject[_translateKeysKey] = translateKeys;
+            }
+            if (!jsonObject.contains(_arrayIDKeysKey)) {
+                jsonObject[_arrayIDKeysKey] = "rawName,comment";
+            }
+        } else if (fileType == FactMetaData::qgcFileType) {
+            if (jsonObject.contains(_translateKeysKey)) {
+                translateKeys = jsonObject[_translateKeysKey].toString();
+            } else {
+                translateKeys = "shortDescription,longDescription,enumStrings";
+                jsonObject[_translateKeysKey] = "shortDescription,longDescription,enumStrings";
+            }
+            if (!jsonObject.contains(_arrayIDKeysKey)) {
+                jsonObject[_arrayIDKeysKey] = "name";
+            }
+        }
+    }
+    return translateKeys.split(",");
+}
+
+QJsonObject JsonHelper::_translateObject(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys)
+{
+    for (const QString& key: jsonObject.keys()) {
+        if (jsonObject[key].isString()) {
+            QString locString = jsonObject[key].toString();
+            if (translateKeys.contains(key)) {
+                QString disambiguation;
+                QString disambiguationPrefix("#loc.disambiguation#");
+
+                if (locString.startsWith(disambiguationPrefix)) {
+                    locString = locString.right(locString.length() - disambiguationPrefix.length());
+                    int commentEndIndex = locString.indexOf("#");
+                    if (commentEndIndex != -1) {
+                        disambiguation = locString.left(commentEndIndex);
+                        locString = locString.right(locString.length() - disambiguation.length() - 1);
+                    }
+                }
+
+                QString xlatString = qgcApp()->qgcJSONTranslator().translate(translateContext.toUtf8().constData(), locString.toUtf8().constData(), disambiguation.toUtf8().constData());
+                if (!xlatString.isNull()) {
+                    jsonObject[key] = xlatString;
+                }
+            }
+        } else if (jsonObject[key].isArray()) {
+            QJsonArray childJsonArray = jsonObject[key].toArray();
+            jsonObject[key] = _translateArray(childJsonArray, translateContext, translateKeys);
+        } else if (jsonObject[key].isObject()) {
+            QJsonObject childJsonObject = jsonObject[key].toObject();
+            jsonObject[key] = _translateObject(childJsonObject, translateContext, translateKeys);
+        }
+    }
+
+    return jsonObject;
+}
+
+QJsonArray JsonHelper::_translateArray(QJsonArray& jsonArray, const QString& translateContext, const QStringList& translateKeys)
+{
+    for (int i=0; i<jsonArray.count(); i++) {
+        QJsonObject childJsonObject = jsonArray[i].toObject();
+        jsonArray[i] = _translateObject(childJsonObject, translateContext, translateKeys);
+    }
+
+    return jsonArray;
+}
+
+QJsonObject JsonHelper::_translateRoot(QJsonObject& jsonObject, const QString& translateContext, const QStringList& translateKeys)
+{
+    return _translateObject(jsonObject, translateContext, translateKeys);
+}
+
+QJsonObject JsonHelper::openInternalQGCJsonFile(const QString&  jsonFilename,
+                                                const QString&  expectedFileType,
+                                                int             minSupportedVersion,
+                                                int             maxSupportedVersion,
+                                                int             &version,
+                                                QString&        errorString)
+{
+    QFile jsonFile(jsonFilename);
+    if (!jsonFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        errorString = tr("Unable to open file: '%1', error: %2").arg(jsonFilename).arg(jsonFile.errorString());
+        return QJsonObject();
+    }
+
+    QByteArray bytes = jsonFile.readAll();
+    jsonFile.close();
+    QJsonParseError jsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
+    if (jsonParseError.error != QJsonParseError::NoError) {
+        errorString = tr("Unable to parse json file: %1 error: %2 offset: %3").arg(jsonFilename).arg(jsonParseError.errorString()).arg(jsonParseError.offset);
+        return QJsonObject();
+    }
+
+    if (!doc.isObject()) {
+        errorString = tr("Root of json file is not object: %1").arg(jsonFilename);
+        return QJsonObject();
+    }
+
+    QJsonObject jsonObject = doc.object();
+    bool success = validateInternalQGCJsonFile(jsonObject, expectedFileType, minSupportedVersion, maxSupportedVersion, version, errorString);
+    if (!success) {
+        errorString = tr("Json file: '%1'. %2").arg(jsonFilename).arg(errorString);
+        return QJsonObject();
+    }
+
+    QStringList translateKeys = _addDefaultLocKeys(jsonObject);
+    QString context = QFileInfo(jsonFile).fileName();
+    return _translateRoot(jsonObject, context, translateKeys);
 }
 
 void JsonHelper::saveQGCJsonFileHeader(QJsonObject&     jsonObject,

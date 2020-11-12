@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -89,7 +89,7 @@ void
 AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
     qCDebug(AirMapManagerLog) << "Error: "<<what<<", msg: "<<airmapdMessage<<", details: "<<airmapdDetails;
-    qgcApp()->showMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
+    qgcApp()->showAppMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
 //-----------------------------------------------------------------------------

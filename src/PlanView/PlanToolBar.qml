@@ -32,7 +32,6 @@ Rectangle {
             id:                 settingsButton
             Layout.fillHeight:  true
             icon.source:        "/qmlimages/PaperPlane.svg"
-            logo:               true
             checked:            false
             onClicked: {
                 checked = false

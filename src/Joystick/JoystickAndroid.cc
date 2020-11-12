@@ -200,11 +200,10 @@ int JoystickAndroid::_getAxis(int i) {
     return axisValue[ i ];
 }
 
-uint8_t JoystickAndroid::_getHat(int hat,int i) {
+bool JoystickAndroid::_getHat(int hat,int i) {
     Q_UNUSED(hat);
     Q_UNUSED(i);
-
-    return 0;
+    return false;
 }
 
 static JoystickManager *_manager = nullptr;

@@ -17,6 +17,18 @@ if(QGC_AIRMAP)
 
 		airmap.qrc
 	)
+	add_custom_target(AirmapQml
+		SOURCES
+		AirmapSettings.qml
+		AirspaceRegulation.qml
+		ComplianceRules.qml
+		FlightDetails.qml
+		RuleSelector.qml
+		AirspaceControl.qml
+		AirspaceWeather.qml
+		FlightBrief.qml
+		FlightFeature.qml
+	)
 else()
 	add_library(Airmap
 		dummy/AirspaceManager.cc

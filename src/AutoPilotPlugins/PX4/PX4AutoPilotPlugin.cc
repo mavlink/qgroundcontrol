@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -30,16 +30,16 @@
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
-    , _airframeComponent(NULL)
-    , _radioComponent(NULL)
-    , _esp8266Component(NULL)
-    , _flightModesComponent(NULL)
-    , _sensorsComponent(NULL)
-    , _safetyComponent(NULL)
-    , _powerComponent(NULL)
-    , _motorComponent(NULL)
-    , _tuningComponent(NULL)
-    , _syslinkComponent(NULL)
+    , _airframeComponent(nullptr)
+    , _radioComponent(nullptr)
+    , _esp8266Component(nullptr)
+    , _flightModesComponent(nullptr)
+    , _sensorsComponent(nullptr)
+    , _safetyComponent(nullptr)
+    , _powerComponent(nullptr)
+    , _motorComponent(nullptr)
+    , _tuningComponent(nullptr)
+    , _syslinkComponent(nullptr)
 {
     if (!vehicle) {
         qWarning() << "Internal error";
@@ -66,11 +66,9 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _airframeComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_airframeComponent));
 
-                if (!_vehicle->hilMode()) {
-                    _sensorsComponent = new SensorsComponent(_vehicle, this);
-                    _sensorsComponent->setupTriggerSignals();
-                    _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
-                }
+                _sensorsComponent = new SensorsComponent(_vehicle, this);
+                _sensorsComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_sensorsComponent));
 
                 _radioComponent = new PX4RadioComponent(_vehicle, this);
                 _radioComponent->setupTriggerSignals();
@@ -84,12 +82,9 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
-#if 0
-                // Coming soon
                 _motorComponent = new MotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
-#endif
 
                 _safetyComponent = new SafetyComponent(_vehicle, this);
                 _safetyComponent->setupTriggerSignals();
@@ -137,7 +132,7 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     QString hitlParam("SYS_HITL");
     if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam) &&
             _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
-        qgcApp()->showMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
+        qgcApp()->showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }
 
@@ -154,7 +149,7 @@ QString PX4AutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
                 return _airframeComponent->name();
             } else if (_radioComponent && !_radioComponent->setupComplete()) {
                 return _radioComponent->name();
-            } else if (_sensorsComponent && !_vehicle->hilMode() && !_sensorsComponent->setupComplete()) {
+            } else if (_sensorsComponent && !_sensorsComponent->setupComplete()) {
                 return _sensorsComponent->name();
             }
         }

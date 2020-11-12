@@ -1,15 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-
-#ifndef QGC_H
-#define QGC_H
+#pragma once
 
 #include <QDateTime>
 #include <QColor>
@@ -37,7 +35,13 @@ float limitAngleToPMPIf(double angle);
 /** @brief Returns the angle limited to -pi - pi */
 double limitAngleToPMPId(double angle);
 
-const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
+/** @brief Records boot time (called from main) */
+void initTimer();
+/** @brief Get the ground time since boot in milliseconds */
+quint64 bootTimeMilliseconds();
+
+/// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
+bool fuzzyCompare(double value1, double value2);
 
 class SLEEP : public QThread
 {
@@ -51,7 +55,3 @@ public:
 quint32 crc32(const quint8 *src, unsigned len, unsigned state);
 
 }
-
-#define QGC_EVENTLOOP_DEBUG 0
-
-#endif // QGC_H

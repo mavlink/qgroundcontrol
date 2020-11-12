@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,14 +17,32 @@
 #include "SettingsManager.h"
 
 AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
-    : QGCTool(app, toolbox)
-    , _tts(new QTextToSpeech(this))
+    : QGCTool   (app, toolbox)
+    , _tts      (nullptr)
 {
+    if (qgcApp()->runningUnitTests()) {
+        // Cloud based unit tests don't have speech capabilty. If you try to crank up
+        // speech engine it will pop a qWarning which prevents usage of QT_FATAL_WARNINGS
+        return;
+    }
+
+    _tts = new QTextToSpeech(this);
+
+    //-- Force TTS engine to English as all incoming messages from the autopilot
+    //   are in English and not localized.
+#ifdef Q_OS_LINUX
+    _tts->setLocale(QLocale("en_US"));
+#endif
     connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
 }
 
-bool AudioOutput::say(const QString& inText)
+void AudioOutput::say(const QString& inText)
 {
+    if (!_tts) {
+        qDebug() << "say" << inText;
+        return;
+    }
+
     bool muted = qgcApp()->toolbox()->settingsManager()->appSettings()->audioMuted()->rawValue().toBool();
     muted |= qgcApp()->runningUnitTests();
     if (!muted && !qgcApp()->runningUnitTests()) {
@@ -41,7 +59,6 @@ bool AudioOutput::say(const QString& inText)
             _tts->say(text);
         }
     }
-    return true;
 }
 
 void AudioOutput::_stateChanged(QTextToSpeech::State state)
@@ -124,6 +141,9 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     }
     if(result.contains("PREARM", Qt::CaseInsensitive)) {
         result.replace("PREARM", "pre arm", Qt::CaseInsensitive);
+    }
+    if(result.contains("PITOT", Qt::CaseInsensitive)) {
+        result.replace("PITOT", "pee toe", Qt::CaseInsensitive);
     }
 
     // Convert negative numbers

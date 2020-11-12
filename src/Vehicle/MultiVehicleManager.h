@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -43,15 +43,14 @@ public:
     Q_PROPERTY(Vehicle*             activeVehicle                   READ activeVehicle                  WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
     Q_PROPERTY(QmlObjectListModel*  vehicles                        READ vehicles                                                       CONSTANT)
     Q_PROPERTY(bool                 gcsHeartBeatEnabled             READ gcsHeartbeatEnabled            WRITE setGcsHeartbeatEnabled    NOTIFY gcsHeartBeatEnabledChanged)
-
-    /// A disconnected vehicle used for offline editing. It will match the vehicle type specified in Settings.
     Q_PROPERTY(Vehicle*             offlineEditingVehicle           READ offlineEditingVehicle                                          CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       lastKnownLocation               READ lastKnownLocation                                              NOTIFY lastKnownLocationChanged) //< Current vehicles last know location
 
     // Methods
 
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
 
-    UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
+    UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : nullptr; }
 
     // Property accessors
 
@@ -69,33 +68,32 @@ public:
 
     Vehicle* offlineEditingVehicle(void) { return _offlineEditingVehicle; }
 
-    /// Determines if the link is in use by a Vehicle
-    ///     @param link Link to test against
-    ///     @param skipVehicle Don't consider this Vehicle as part of the test
-    /// @return true: link is in use by one or more Vehicles
-    bool linkInUse(LinkInterface* link, Vehicle* skipVehicle);
-
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
-signals:
-    void vehicleAdded(Vehicle* vehicle);
-    void vehicleRemoved(Vehicle* vehicle);
-    void activeVehicleAvailableChanged(bool activeVehicleAvailable);
-    void parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
-    void activeVehicleChanged(Vehicle* activeVehicle);
-    void gcsHeartBeatEnabledChanged(bool gcsHeartBeatEnabled);
+    QGeoCoordinate lastKnownLocation    () { return _lastKnownLocation; }
 
-    void _deleteVehiclePhase2Signal(void);
+signals:
+    void vehicleAdded                   (Vehicle* vehicle);
+    void vehicleRemoved                 (Vehicle* vehicle);
+    void activeVehicleAvailableChanged  (bool activeVehicleAvailable);
+    void parameterReadyVehicleAvailableChanged(bool parameterReadyVehicleAvailable);
+    void activeVehicleChanged           (Vehicle* activeVehicle);
+    void gcsHeartBeatEnabledChanged     (bool gcsHeartBeatEnabled);
+    void lastKnownLocationChanged       ();
+#ifndef DOXYGEN_SKIP
+    void _deleteVehiclePhase2Signal     (void);
+#endif
 
 private slots:
-    void _deleteVehiclePhase1(Vehicle* vehicle);
-    void _deleteVehiclePhase2(void);
-    void _setActiveVehiclePhase2(void);
-    void _vehicleParametersReadyChanged(bool parametersReady);
-    void _sendGCSHeartbeat(void);
-    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
-    void _requestProtocolVersion(unsigned version);
+    void _deleteVehiclePhase1           (Vehicle* vehicle);
+    void _deleteVehiclePhase2           (void);
+    void _setActiveVehiclePhase2        (void);
+    void _vehicleParametersReadyChanged (bool parametersReady);
+    void _sendGCSHeartbeat              (void);
+    void _vehicleHeartbeatInfo          (LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
+    void _requestProtocolVersion        (unsigned version);
+    void _coordinateChanged             (QGeoCoordinate coordinate);
 
 private:
     bool _vehicleExists(int vehicleId);
@@ -115,6 +113,7 @@ private:
     FirmwarePluginManager*      _firmwarePluginManager;
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;
+    QGeoCoordinate              _lastKnownLocation;
 
     QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
     bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission

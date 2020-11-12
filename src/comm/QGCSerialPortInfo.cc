@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -80,12 +80,12 @@ void QGCSerialPortInfo::_loadJsonData(void)
 
     int fileVersion;
     QString errorString;
-    if (!JsonHelper::validateQGCJsonFile(json,
-                                         _jsonFileTypeValue,    // expected file type
-                                         1,                     // minimum supported version
-                                         1,                     // maximum supported version
-                                         fileVersion,
-                                         errorString)) {
+    if (!JsonHelper::validateInternalQGCJsonFile(json,
+                                                 _jsonFileTypeValue,    // expected file type
+                                                 1,                     // minimum supported version
+                                                 1,                     // maximum supported version
+                                                 fileVersion,
+                                                 errorString)) {
         qWarning() << errorString;
         return;
     }
@@ -294,10 +294,22 @@ QString QGCSerialPortInfo::_boardTypeToString(BoardType_t boardType)
 
 QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
 {
-    QList<QGCSerialPortInfo>    list;
+    typedef QPair<quint16, quint16> VidPidPair_t;
 
-    for(QSerialPortInfo portInfo: QSerialPortInfo::availablePorts()) {
+    QList<QGCSerialPortInfo>        list;
+    QMap<VidPidPair_t, QStringList> seenSerialNumbers;
+
+    for (QSerialPortInfo portInfo: QSerialPortInfo::availablePorts()) {
         if (!isSystemPort(&portInfo)) {
+            if (portInfo.hasVendorIdentifier() && portInfo.hasProductIdentifier() && !portInfo.serialNumber().isEmpty() && portInfo.serialNumber() != "0") {
+                VidPidPair_t vidPid(portInfo.vendorIdentifier(), portInfo.productIdentifier());
+                if (seenSerialNumbers.contains(vidPid) && seenSerialNumbers[vidPid].contains(portInfo.serialNumber())) {
+                    // Some boards are a composite USB device, with the first port being mavlink and the second something else. We only expose to first mavlink port.
+                    qCDebug(QGCSerialPortInfoLog) << "Skipping secondary port on same device" << portInfo.portName() << portInfo.vendorIdentifier() << portInfo.productIdentifier() << portInfo.serialNumber();
+                    continue;
+                }
+                seenSerialNumbers[vidPid].append(portInfo.serialNumber());
+            }
             list << *((QGCSerialPortInfo*)&portInfo);
         }
     }

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -33,19 +33,16 @@ MapItemView {
             parent._retaskSequence = object.sequenceNumber
             parent.flightWidgets.guidedModeBar.confirmAction(parent.flightWidgets.guidedModeBar.confirmRetask)
         }
-
         // These are the non-coordinate child mission items attached to this item
         Row {
             anchors.top:    parent.top
             anchors.left:   parent.right
-
             Repeater {
-                model: object.childItems
-
+                model:      object.childItems
                 delegate: MissionItemIndexLabel {
-                    label:      object.abbreviation
-                    checked:    object.isCurrentItem
-                    z:          2
+                    label:  object.abbreviation
+                    checked: object.isCurrentItem
+                    z:      2
                 }
             }
         }

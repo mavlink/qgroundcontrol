@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -71,7 +71,7 @@ class Airframe : public QObject
     Q_OBJECT
     
 public:
-    Airframe(const QString& name, int autostartId, QObject* parent = NULL);
+    Airframe(const QString& name, int autostartId, QObject* parent = nullptr);
     ~Airframe();
     
     Q_PROPERTY(QString text MEMBER _name CONSTANT)
@@ -87,7 +87,7 @@ class AirframeType : public QObject
     Q_OBJECT
     
 public:
-    AirframeType(const QString& name, const QString& imageResource, QObject* parent = NULL);
+    AirframeType(const QString& name, const QString& imageResource, QObject* parent = nullptr);
     ~AirframeType();
     
     Q_PROPERTY(QString name MEMBER _name CONSTANT)

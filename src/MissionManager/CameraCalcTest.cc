@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,9 +9,9 @@
 
 #include "CameraCalcTest.h"
 #include "QGCApplication.h"
+#include "PlanMasterController.h"
 
 CameraCalcTest::CameraCalcTest(void)
-    : _offlineVehicle(NULL)
 {
 
 }
@@ -20,9 +20,10 @@ void CameraCalcTest::init(void)
 {
     UnitTest::init();
 
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _cameraCalc = new CameraCalc(_offlineVehicle, "CameraCalcUnitTest" /* settingsGroup */, this);
-    _cameraCalc->cameraName()->setRawValue(_cameraCalc->customCameraName());
+    _masterController = new PlanMasterController(this);
+    _controllerVehicle = _masterController->controllerVehicle();
+    _cameraCalc = new CameraCalc(_masterController, "CameraCalcUnitTest" /* settingsGroup */, this);
+    _cameraCalc->setCameraBrand(CameraCalc::canonicalCustomCameraName());
     _cameraCalc->setDirty(false);
 
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
@@ -37,7 +38,6 @@ void CameraCalcTest::init(void)
 void CameraCalcTest::cleanup(void)
 {
     delete _cameraCalc;
-    delete _offlineVehicle;
     delete _multiSpy;
 }
 
@@ -87,7 +87,7 @@ void CameraCalcTest::_testDirty(void)
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
 
-    _cameraCalc->cameraName()->setRawValue(_cameraCalc->manualCameraName());
+    _cameraCalc->setCameraBrand(CameraCalc::canonicalManualCameraName());
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
 }

@@ -1,10 +1,15 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "Radius",
-    "shortDescription": "Radius for geofence circle.",
+    "shortDesc": "Radius for geofence circle.",
     "type":             "double",
     "decimalPlaces":    1,
     "min":              0.1,
     "units":            "m"
 }
 ]
+}

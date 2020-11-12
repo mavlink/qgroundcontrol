@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,11 +9,26 @@
 
 
 #include "QGC.h"
+
 #include <qmath.h>
 #include <float.h>
 
+#include <QtGlobal>
+
 namespace QGC
 {
+
+static quint64 gBootTime = 0;
+
+void initTimer()
+{
+    gBootTime = groundTimeMilliseconds();
+}
+
+quint64 bootTimeMilliseconds()
+{
+    return groundTimeMilliseconds() - gBootTime;
+}
 
 quint64 groundTimeUsecs()
 {
@@ -123,6 +138,19 @@ quint32 crc32(const quint8 *src, unsigned len, unsigned state)
         state = crctab[(state ^ src[i]) & 0xff] ^ (state >> 8);
     }
     return state;
+}
+
+bool fuzzyCompare(double value1, double value2)
+{
+    if (qIsNaN(value1) && qIsNaN(value2)) {
+        return true;
+    } else if (qIsNaN(value1) || qIsNaN(value2)) {
+        return false;
+    } else if (value1 == value2) {
+        return true;
+    } else {
+        return qFuzzyCompare(value1, value2);
+    }
 }
 
 }

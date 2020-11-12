@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -39,21 +39,21 @@ public:
     Q_PROPERTY(double               paramCircularFence  READ paramCircularFence                             NOTIFY paramCircularFenceChanged)
 
     /// Add a new inclusion polygon to the fence
-    ///     @param topLeft - Top left coordinate or map viewport
-    ///     @param topLeft - Bottom right left coordinate or map viewport
+    ///     @param topLeft: Top left coordinate or map viewport
+    ///     @param bottomRight: Bottom right left coordinate or map viewport
     Q_INVOKABLE void addInclusionPolygon(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Add a new inclusion circle to the fence
-    ///     @param topLeft - Top left coordinate or map viewport
-    ///     @param topLeft - Bottom right left coordinate or map viewport
+    ///     @param topLeft: Top left coordinate or map viewport
+    ///     @param bottomRight: Bottom right left coordinate or map viewport
     Q_INVOKABLE void addInclusionCircle(QGeoCoordinate topLeft, QGeoCoordinate bottomRight);
 
     /// Deletes the specified polygon from the polygon list
-    ///     @param index Index of poygon to delete
+    ///     @param index: Index of poygon to delete
     Q_INVOKABLE void deletePolygon(int index);
 
     /// Deletes the specified circle from the circle list
-    ///     @param index Index of circle to delete
+    ///     @param index: Index of circle to delete
     Q_INVOKABLE void deleteCircle(int index);
 
     /// Clears the interactive bit from all fence items
@@ -75,14 +75,14 @@ public:
     bool dirty                      (void) const final;
     void setDirty                   (bool dirty) final;
     bool containsItems              (void) const final;
-    void managerVehicleChanged      (Vehicle* managerVehicle) final;
     bool showPlanFromManagerVehicle (void) final;
 
     QmlObjectListModel* polygons                (void) { return &_polygons; }
     QmlObjectListModel* circles                 (void) { return &_circles; }
     QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
 
-    void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
+    void setBreachReturnPoint   (const QGeoCoordinate& breachReturnPoint);
+    bool isEmpty                (void) const;
 
 signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
@@ -100,19 +100,21 @@ private slots:
     void _managerSendComplete       (bool error);
     void _managerRemoveAllComplete  (bool error);
     void _parametersReady           (void);
+    void _managerVehicleChanged      (Vehicle* managerVehicle);
 
 private:
     void _init(void);
 
-    GeoFenceManager*    _geoFenceManager;
-    bool                _dirty;
+    Vehicle*            _managerVehicle =               nullptr;
+    GeoFenceManager*    _geoFenceManager =              nullptr;
+    bool                _dirty =                        false;
     QmlObjectListModel  _polygons;
     QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;
     Fact                _breachReturnAltitudeFact;
-    double              _breachReturnDefaultAltitude;
-    bool                _itemsRequested;
-    Fact*               _px4ParamCircularFenceFact;
+    double              _breachReturnDefaultAltitude =  qQNaN();
+    bool                _itemsRequested =               false;
+    Fact*               _px4ParamCircularFenceFact =    nullptr;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 

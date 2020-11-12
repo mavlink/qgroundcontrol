@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -49,32 +49,25 @@ Rectangle {
         flickableDirection: Flickable.VerticalFlick
         clip:               true
 
-        ExclusiveGroup { id: panelActionGroup }
-
         ColumnLayout {
             id:         buttonColumn
             spacing:    _verticalMargin
 
             property real _maxButtonWidth: 0
 
-            QGCLabel {
-                Layout.fillWidth:       true
-                text:                   qsTr("Application Settings")
-                wrapMode:               Text.WordWrap
-                horizontalAlignment:    Text.AlignHCenter
-                visible:                !ScreenTools.isShortScreen
-            }
-
             Repeater {
                 model:  QGroundControl.corePlugin.settingsPages
                 QGCButton {
                     height:             _buttonHeight
                     text:               modelData.title
-                    exclusiveGroup:     panelActionGroup
+                    autoExclusive:      true
                     Layout.fillWidth:   true
 
                     onClicked: {
-                        if(__rightPanel.source !== modelData.url) {
+                        if (mainWindow.preventViewSwitch()) {
+                            return
+                        }
+                        if (__rightPanel.source !== modelData.url) {
                             __rightPanel.source = modelData.url
                         }
                         checked = true

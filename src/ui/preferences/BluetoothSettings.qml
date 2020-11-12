@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -25,7 +25,6 @@ Column {
     function saveSettings() {
         // No need
     }
-    ExclusiveGroup { id: linkGroup }
     Row {
         spacing:    ScreenTools.defaultFontPixelWidth
         QGCLabel {
@@ -79,10 +78,10 @@ Column {
                     model: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth ? subEditConfig.nameList : ""
                     delegate:
                     QGCButton {
-                        text:   modelData
-                        width:  _secondColumn
+                        text:               modelData
+                        width:              _secondColumn
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                        exclusiveGroup: linkGroup
+                        autoExclusive:      true
                         onClicked: {
                             checked = true
                             if(subEditConfig && modelData !== "")

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Cache Worker Thread
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -26,6 +26,7 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QFile>
+#include <QSettings>
 
 #include "time.h"
 
@@ -120,6 +121,7 @@ QGCCacheWorker::run()
         _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
         _valid = _db->open();
     }
+    _deleteBingNoTileTiles();
     while(true) {
         QGCMapTask* task;
         if(_taskQueue.count()) {
@@ -203,6 +205,49 @@ QGCCacheWorker::run()
         QSqlDatabase::removeDatabase(kSession);
     }
 }
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_deleteBingNoTileTiles()
+{
+    QSettings settings;
+    static const char* alreadyDoneKey = "_deleteBingNoTileTilesDone";
+
+    if (settings.value(alreadyDoneKey, false).toBool()) {
+        return;
+    }
+    settings.setValue(alreadyDoneKey, true);
+
+    // Previously we would store these empty tile graphics in the cache. This prevented the ability to zoom beyong the level
+    // of available tiles. So we need to remove only of these still hanging around to make higher zoom levels work.
+    QFile file(":/res/BingNoTileBytes.dat");
+    file.open(QFile::ReadOnly);
+    QByteArray noTileBytes = file.readAll();
+    file.close();
+
+    QSqlQuery query(*_db);
+    QString s;
+    //-- Select tiles in default set only, sorted by oldest.
+    s = QString("SELECT tileID, tile, hash FROM Tiles WHERE LENGTH(tile) = %1").arg(noTileBytes.count());
+    QList<quint64> idsToDelete;
+    if (query.exec(s)) {
+        while(query.next()) {
+            if (query.value(1).toByteArray() == noTileBytes) {
+                idsToDelete.append(query.value(0).toULongLong());
+                qCDebug(QGCTileCacheLog) << "_deleteBingNoTileTiles HASH:" << query.value(2).toString();
+            }
+        }
+        for (const quint64 tileId: idsToDelete) {
+            s = QString("DELETE FROM Tiles WHERE tileID = %1").arg(tileId);
+            if (!query.exec(s)) {
+                qCWarning(QGCTileCacheLog) << "Delete failed";
+            }
+        }
+    } else {
+        qCWarning(QGCTileCacheLog) << "_deleteBingNoTileTiles query failed";
+    }
+}
+
 //-----------------------------------------------------------------------------
 bool
 QGCCacheWorker::_findTileSetID(const QString name, quint64& setID)
@@ -282,7 +327,7 @@ QGCCacheWorker::_getTile(QGCMapTask* mtask)
         if(query.next()) {
             QByteArray ar   = query.value(0).toByteArray();
             QString format  = query.value(1).toString();
-            UrlFactory::MapType type = static_cast<UrlFactory::MapType>(query.value(2).toInt());
+            QString type = getQGCMapEngine()->urlFactory()->getTypeFromId(query.value(2).toInt());
             qCDebug(QGCTileCacheLog) << "_getTile() (Found in DB) HASH:" << task->hash();
             QGCCacheTile* tile = new QGCCacheTile(task->hash(), ar, format, type);
             task->setTileFetched(tile);
@@ -318,7 +363,7 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
             set->setBottomRightLon(query.value("bottomRightLon").toDouble());
             set->setMinZoom(query.value("minZoom").toInt());
             set->setMaxZoom(query.value("maxZoom").toInt());
-            set->setType(static_cast<UrlFactory::MapType>(query.value("type").toInt()));
+            set->setType(getQGCMapEngine()->urlFactory()->getTypeFromId(query.value("type").toInt()));
             set->setTotalTileCount(query.value("numTiles").toUInt());
             set->setDefaultSet(query.value("defaultSet").toInt() != 0);
             set->setCreationDate(QDateTime::fromTime_t(query.value("date").toUInt()));
@@ -353,7 +398,7 @@ QGCCacheWorker::_updateSetTotals(QGCCachedTileSet* set)
             set->setSavedTileSize(subquery.value(1).toULongLong());
             qCDebug(QGCTileCacheLog) << "Set" << set->id() << "Totals:" << set->savedTileCount() << " " << set->savedTileSize() << "Expected: " << set->totalTileCount() << " " << set->totalTilesSize();
             //-- Update (estimated) size
-            quint64 avg = UrlFactory::averageSizeForType(set->type());
+            quint64 avg = getQGCMapEngine()->urlFactory()->averageSizeForType(set->type());
             if(set->totalTileCount() <= set->savedTileCount()) {
                 //-- We're done so the saved size is the total size
                 set->setTotalTileSize(set->savedTileSize());
@@ -448,7 +493,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
         query.addBindValue(task->tileSet()->bottomRightLon());
         query.addBindValue(task->tileSet()->minZoom());
         query.addBindValue(task->tileSet()->maxZoom());
-        query.addBindValue(task->tileSet()->type());
+        query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(task->tileSet()->type()));
         query.addBindValue(task->tileSet()->totalTileCount());
         query.addBindValue(QDateTime::currentDateTime().toTime_t());
         if(!query.exec()) {
@@ -465,7 +510,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
                     task->tileSet()->topleftLon(), task->tileSet()->topleftLat(),
                     task->tileSet()->bottomRightLon(), task->tileSet()->bottomRightLat(), task->tileSet()->type());
                 tileCount += set.tileCount;
-                UrlFactory::MapType type = task->tileSet()->type();
+                QString type = task->tileSet()->type();
                 for(int x = set.tileX0; x <= set.tileX1; x++) {
                     for(int y = set.tileY0; y <= set.tileY1; y++) {
                         //-- See if tile is already downloaded
@@ -476,7 +521,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
                             query.prepare("INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, ?, ?, ?, ? ,? ,?)");
                             query.addBindValue(setID);
                             query.addBindValue(hash);
-                            query.addBindValue(type);
+                            query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(type));
                             query.addBindValue(x);
                             query.addBindValue(y);
                             query.addBindValue(z);
@@ -524,7 +569,7 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
         while(query.next()) {
             QGCTile* tile = new QGCTile;
             tile->setHash(query.value("hash").toString());
-            tile->setType(static_cast<UrlFactory::MapType>(query.value("type").toInt()));
+            tile->setType(getQGCMapEngine()->urlFactory()->getTypeFromId(query.value("type").toInt()));
             tile->setX(query.value("x").toInt());
             tile->setY(query.value("y").toInt());
             tile->setZ(query.value("z").toInt());
@@ -675,7 +720,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
         //-- Close and delete old database
         if(_db) {
             delete _db;
-            _db = NULL;
+            _db = nullptr;
             QSqlDatabase::removeDatabase(kSession);
         }
         QFile file(_databasePath);
@@ -736,8 +781,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
                                 int testCount = 0;
                                 //-- Set with this name already exists. Make name unique.
                                 while (true) {
-                                    QString testName;
-                                    testName.sprintf("%s %02d", name.toLatin1().data(), ++testCount);
+                                    auto testName = QString::asprintf("%s %02d", name.toLatin1().data(), ++testCount);
                                     if(!_findTileSetID(testName, insertSetID) || testCount > 99) {
                                         name = testName;
                                         break;
@@ -897,7 +941,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                 exportQuery.addBindValue(set->bottomRightLon());
                 exportQuery.addBindValue(set->minZoom());
                 exportQuery.addBindValue(set->maxZoom());
-                exportQuery.addBindValue(set->type());
+                exportQuery.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(set->type()));
                 exportQuery.addBindValue(set->totalTileCount());
                 exportQuery.addBindValue(set->defaultSet());
                 exportQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
@@ -989,7 +1033,7 @@ QGCCacheWorker::_init()
             _failed = true;
         }
         delete _db;
-        _db = NULL;
+        _db = nullptr;
         QSqlDatabase::removeDatabase(kSession);
     } else {
         qCritical() << "Could not find suitable cache directory.";
@@ -1093,7 +1137,7 @@ QGCCacheWorker::_testInternet()
         To test if you have Internet connection, the code tests a connection to
         8.8.8.8:53 (google DNS). It appears that some routers are now blocking TCP
         connections to port 53. So instead, we use a TCP connection to "github.com"
-        (80). On exit, if the look up for “github.com” is under way, a call to abort
+        (80). On exit, if the look up for "github.com" is under way, a call to abort
         the lookup is made. This abort call on Android has no effect, and the code
         blocks for a full minute. So to work around the issue, we continue a direct
         TCP connection to 8.8.8.8:53 on Android and do the lookup/connect on the
@@ -1136,7 +1180,7 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
             return;
         }
     }
-    qWarning() << "No Internet Access";
+    qDebug() << "No Internet Access";
     emit internetStatus(false);
 #endif
 }

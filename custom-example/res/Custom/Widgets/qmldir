@@ -1,0 +1,10 @@
+Module Custom.Widgets
+
+CustomArtificialHorizon 1.0     CustomArtificialHorizon.qml
+CustomAttitudeWidget    1.0     CustomAttitudeWidget.qml
+CustomIconButton        1.0     CustomIconButton.qml
+CustomOnOffSwitch       1.0     CustomOnOffSwitch.qml
+CustomQuickButton       1.0     CustomQuickButton.qml
+CustomSignalStrength    1.0     CustomSignalStrength.qml
+CustomToolBarButton     1.0     CustomToolBarButton.qml
+CustomVehicleButton     1.0     CustomVehicleButton.qml

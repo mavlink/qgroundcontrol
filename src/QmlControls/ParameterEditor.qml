@@ -1,16 +1,16 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
+import QtQuick                      2.3
+import QtQuick.Controls             1.2
+import QtQuick.Dialogs              1.2
+import QtQuick.Layouts              1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -26,16 +26,15 @@ Item {
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10 // Dynamic adjusted at runtime
-    property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
+    property bool   _searchFilter:      searchText.text.trim() != "" || controller.showModifiedOnly  ///< true: showing results of search
     property var    _searchResults      ///< List of parameter names from search results
-    property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _showRCToParam:     _activeVehicle.px4Firmware
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
+    property var    _controller:        controller
 
     ParameterEditorController {
-        id:         controller;
-        onShowErrorMessage: {
-            mainWindow.showMessageDialog(qsTr("Parameter Editor"), qsTr("Parameter Load Errors"))
-        }
+        id: controller
     }
 
     ExclusiveGroup { id: sectionGroup }
@@ -83,12 +82,11 @@ Item {
         }
 
         QGCCheckBox {
-            text:       qsTr("Show modified only")
-            checked:    controller.showModifiedOnly
+            text:                   qsTr("Show modified only")
             anchors.verticalCenter: parent.verticalCenter
-            onClicked: {
-                controller.showModifiedOnly = !controller.showModifiedOnly
-            }
+            checked:                controller.showModifiedOnly
+            onClicked:              controller.showModifiedOnly = checked
+            visible:                QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
         }
     } // Row - Header
 
@@ -101,24 +99,23 @@ Item {
         onClicked:      toolsMenu.popup()
     }
 
-    Menu {
+    QGCMenu {
         id:                 toolsMenu
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Refresh")
             onTriggered:	controller.refresh()
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
-            visible:        !activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
-            visible:        !activeVehicle.apmFirmware
+            visible:        !_activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
-        MenuSeparator { }
-        MenuItem {
+        QGCMenuSeparator { }
+        QGCMenuItem {
             text:           qsTr("Load from file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
@@ -126,7 +123,7 @@ Item {
                 fileDialog.openForLoad()
             }
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Save to file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Save Parameters")
@@ -134,14 +131,14 @@ Item {
                 fileDialog.openForSave()
             }
         }
-        MenuSeparator { visible: _showRCToParam }
-        MenuItem {
-            text:           qsTr("Clear RC to Param")
-            onTriggered:	controller.clearRCToParam()
+        QGCMenuSeparator { visible: _showRCToParam }
+        QGCMenuItem {
+            text:           qsTr("Clear all RC to Param")
+            onTriggered:	_activeVehicle.clearAllParamMapRC()
             visible:        _showRCToParam
         }
-        MenuSeparator { }
-        MenuItem {
+        QGCMenuSeparator { }
+        QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
             onTriggered:    mainWindow.showComponentDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         }
@@ -157,7 +154,7 @@ Item {
         pixelAligned:       true
         contentHeight:      groupedViewCategoryColumn.height
         flickableDirection: Flickable.VerticalFlick
-        visible:            !_searchFilter && !controller.showModifiedOnly
+        visible:            !_searchFilter
 
         ColumnLayout {
             id:             groupedViewCategoryColumn
@@ -172,41 +169,36 @@ Item {
                     Layout.fillWidth:   true
                     spacing:            Math.ceil(ScreenTools.defaultFontPixelHeight * 0.25)
 
-                    readonly property string category: modelData
 
                     SectionHeader {
                         id:             categoryHeader
-                        text:           category
-                        checked:        controller.currentCategory === text
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        text:           object.name
+                        checked:        object == controller.currentCategory
                         exclusiveGroup: sectionGroup
 
                         onCheckedChanged: {
                             if (checked) {
-                                controller.currentCategory  = category
-                                controller.currentGroup     = controller.getGroupsForCategory(category)[0]
+                                controller.currentCategory  = object
                             }
                         }
                     }
 
-                    ExclusiveGroup { id: buttonGroup }
-
                     Repeater {
-                        model: categoryHeader.checked ? controller.getGroupsForCategory(category) : 0
+                        model: categoryHeader.checked ? object.groups : 0
 
                         QGCButton {
                             width:          ScreenTools.defaultFontPixelWidth * 25
-                            text:           groupName
+                            text:           object.name
                             height:         _rowHeight
-                            checked:        controller.currentGroup === text
-                            exclusiveGroup: buttonGroup
-
-                            readonly property string groupName: modelData
+                            checked:        object == controller.currentGroup
+                            autoExclusive:  true
 
                             onClicked: {
+                                if (!checked) _rowWidth = 10
                                 checked = true
-                                _rowWidth                   = 10
-                                controller.currentCategory  = category
-                                controller.currentGroup     = groupName
+                                controller.currentGroup = object
                             }
                         }
                     }
@@ -219,7 +211,7 @@ Item {
     QGCListView {
         id:                 editorListView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.left:       (_searchFilter || controller.showModifiedOnly) ? parent.left : groupScroll.right
+        anchors.left:       _searchFilter ? parent.left : groupScroll.right
         anchors.right:      parent.right
         anchors.top:        header.bottom
         anchors.bottom:     parent.bottom
@@ -289,7 +281,6 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.parameterSavePath
-        fileExtension:  _appSettings.parameterFileExtension
         nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*.*)") ]
 
         onAcceptedForSave: {
@@ -298,8 +289,10 @@ Item {
         }
 
         onAcceptedForLoad: {
-            controller.loadFromFile(file)
             close()
+            if (controller.buildDiffFromFile(file)) {
+                mainWindow.showPopupDialogFromComponent(parameterDiffDialog)
+            }
         }
     }
 
@@ -322,7 +315,7 @@ Item {
             QGCLabel {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Select Reset to reset all parameters to their defaults.")
+                text:               qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes.")
             }
         }
     }
@@ -347,8 +340,8 @@ Item {
 
         QGCViewDialog {
             function accept() {
-                activeVehicle.rebootVehicle()
                 hideDialog()
+                _activeVehicle.rebootVehicle()
             }
 
             QGCLabel {
@@ -356,6 +349,14 @@ Item {
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Ok to reboot vehicle.")
             }
+        }
+    }
+
+    Component {
+        id: parameterDiffDialog
+
+        ParameterDiffDialog {
+            paramController: _controller
         }
     }
 }

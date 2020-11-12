@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -27,6 +27,7 @@ class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
 class APMHeliComponent;
+class APMFollowComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -56,6 +57,10 @@ protected:
     APMTuningComponent*         _tuningComponent;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
+#if 0
+    // Follow me not ready for Stable
+    APMFollowComponent*         _followComponent;
+#endif
 
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
 private slots:

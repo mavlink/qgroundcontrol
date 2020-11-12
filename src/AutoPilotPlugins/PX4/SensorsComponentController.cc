@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,15 +19,15 @@
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 
 SensorsComponentController::SensorsComponentController(void)
-    : _statusLog                                (NULL)
-    , _progressBar                              (NULL)
-    , _compassButton                            (NULL)
-    , _gyroButton                               (NULL)
-    , _accelButton                              (NULL)
-    , _airspeedButton                           (NULL)
-    , _levelButton                              (NULL)
-    , _cancelButton                             (NULL)
-    , _setOrientationsButton                    (NULL)
+    : _statusLog                                (nullptr)
+    , _progressBar                              (nullptr)
+    , _compassButton                            (nullptr)
+    , _gyroButton                               (nullptr)
+    , _accelButton                              (nullptr)
+    , _airspeedButton                           (nullptr)
+    , _levelButton                              (nullptr)
+    , _cancelButton                             (nullptr)
+    , _setOrientationsButton                    (nullptr)
     , _showOrientationCalArea                   (false)
     , _gyroCalInProgress                        (false)
     , _magCalInProgress                         (false)
@@ -65,7 +65,13 @@ SensorsComponentController::SensorsComponentController(void)
 
 bool SensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
+    if (weakLink.expired()) {
+        return false;
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        return sharedLink->linkConfiguration()->type() == LinkConfiguration::TypeUdp;
+    }
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -179,7 +185,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showMessage(tr("Calibration failed. Calibration log will be displayed."));
+            qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
             break;
     }
     
@@ -192,31 +198,31 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
 void SensorsComponentController::calibrateGyro(void)
 {
     _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationGyro);
+    _vehicle->startCalibration(Vehicle::CalibrationGyro);
 }
 
 void SensorsComponentController::calibrateCompass(void)
 {
     _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationMag);
+    _vehicle->startCalibration(Vehicle::CalibrationMag);
 }
 
 void SensorsComponentController::calibrateAccel(void)
 {
     _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationAccel);
+    _vehicle->startCalibration(Vehicle::CalibrationAccel);
 }
 
 void SensorsComponentController::calibrateLevel(void)
 {
     _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationLevel);
+    _vehicle->startCalibration(Vehicle::CalibrationLevel);
 }
 
 void SensorsComponentController::calibrateAirspeed(void)
 {
     _startLogCalibration();
-    _uas->startCalibration(UASInterface::StartCalibrationAirspeed);
+    _vehicle->startCalibration(Vehicle::CalibrationPX4Airspeed);
 }
 
 void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text)
@@ -347,7 +353,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     
     if (text.endsWith("orientation detected")) {
         QString side = text.section(" ", 0, 0);
-        qDebug() << "Side started" << side;
+        qCDebug(SensorsComponentControllerLog) << "Side started" << side;
         
         if (side == "down") {
             _orientationCalDownSideInProgress = true;
@@ -394,7 +400,7 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
     
     if (text.endsWith("side done, rotate to a different side")) {
         QString side = text.section(" ", 0, 0);
-        qDebug() << "Side finished" << side;
+        qCDebug(SensorsComponentControllerLog) << "Side finished" << side;
         
         if (side == "down") {
             _orientationCalDownSideInProgress = false;
@@ -485,5 +491,5 @@ void SensorsComponentController::cancelCalibration(void)
     _waitingForCancel = true;
     emit waitingForCancelChanged();
     _cancelButton->setEnabled(false);
-    _uas->stopCalibration();
+    _vehicle->stopCalibration();
 }

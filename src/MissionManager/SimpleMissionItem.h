@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,9 +24,8 @@ class SimpleMissionItem : public VisualMissionItem
     Q_OBJECT
     
 public:
-    SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
-    SimpleMissionItem(Vehicle* vehicle, bool flyView, const MissionItem& missionItem, QObject* parent);
-    SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent);
+    SimpleMissionItem(PlanMasterController* masterController, bool flyView, bool forLoad, QObject* parent);
+    SimpleMissionItem(PlanMasterController* masterController, bool flyView, const MissionItem& missionItem, QObject* parent);
 
     ~SimpleMissionItem();
 
@@ -38,7 +37,6 @@ public:
     Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
-    Q_PROPERTY(bool             supportsTerrainFrame    READ supportsTerrainFrame                               NOTIFY supportsTerrainFrameChanged)
 
     /// Optional sections
     Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
@@ -49,24 +47,29 @@ public:
     Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  nanFacts        READ nanFacts       CONSTANT)
 
+    /// This should be called before changing the command. It is needed if the command changes
+    /// from an item which does not include a coordinate to an item which requires a coordinate.
+    /// It uses this value to set that new coordinate.
+    Q_INVOKABLE void setMapCenterHintForCommandChange(QGeoCoordinate mapCenter) { _mapCenterHint = mapCenter; }
+
     /// Scans the loaded items for additional section settings
     ///     @param visualItems List of all visual items
     ///     @param scanIndex Index to start scanning from
     ///     @param vehicle Vehicle associated with this mission
     /// @return true: section found, scanIndex updated
-    bool scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle);
+    bool scanForSections(QmlObjectListModel* visualItems, int scanIndex, PlanMasterController* masterController);
 
     // Property accesors
     
     QString         category            (void) const;
-    int             command(void) const { return _missionItem._commandFact.cookedValue().toInt(); }
+    int             command             (void) const { return _missionItem._commandFact.cookedValue().toInt(); }
+    MAV_CMD         mavCommand          (void) const { return static_cast<MAV_CMD>(command()); }
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
     bool            specifiesAltitude   (void) const;
     QGroundControlQmlGlobal::AltitudeMode altitudeMode(void) const { return _altitudeMode; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
-    bool            supportsTerrainFrame(void) const { return _vehicle->supportsTerrainFrame(); }
 
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }
@@ -87,41 +90,41 @@ public:
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
 
-    bool load(QTextStream &loadStream);
-    bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
+    virtual bool load(QTextStream &loadStream);
+    virtual bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
 
     MissionItem& missionItem(void) { return _missionItem; }
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-
-    bool            dirty                   (void) const final { return _dirty; }
-    bool            isSimpleItem            (void) const final { return true; }
-    bool            isStandaloneCoordinate  (void) const final;
-    bool            specifiesCoordinate     (void) const final;
-    bool            specifiesAltitudeOnly   (void) const final;
-    QString         commandDescription      (void) const final;
-    QString         commandName             (void) const final;
-    QString         abbreviation            (void) const final;
-    QGeoCoordinate  coordinate              (void) const final { return _missionItem.coordinate(); }
-    QGeoCoordinate  exitCoordinate          (void) const final { return coordinate(); }
-    int             sequenceNumber          (void) const final { return _missionItem.sequenceNumber(); }
-    double          specifiedFlightSpeed    (void) final;
-    double          specifiedGimbalYaw      (void) final;
-    double          specifiedGimbalPitch    (void) final;
-    QString         mapVisualQML            (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
-    void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void            applyNewAltitude        (double newAltitude) final;
-    void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
-    bool            readyForSave            (void) const final;
-    double          additionalTimeDelay     (void) const final;
-
-    bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
-    bool exitCoordinateSameAsEntry          (void) const final { return true; }
+    bool            dirty                       (void) const override { return _dirty; }
+    bool            isSimpleItem                (void) const final { return true; }
+    bool            isStandaloneCoordinate      (void) const final;
+    bool            isLandCommand               (void) const final;
+    bool            specifiesCoordinate         (void) const final;
+    bool            specifiesAltitudeOnly       (void) const final;
+    QString         commandDescription          (void) const final;
+    QString         commandName                 (void) const final;
+    QString         abbreviation                (void) const final;
+    QGeoCoordinate  coordinate                  (void) const final;
+    QGeoCoordinate  exitCoordinate              (void) const final { return coordinate(); }
+    double          amslEntryAlt                (void) const final;
+    double          amslExitAlt                 (void) const final { return amslEntryAlt(); }
+    int             sequenceNumber              (void) const final { return _missionItem.sequenceNumber(); }
+    double          specifiedFlightSpeed        (void) override;
+    double          specifiedGimbalYaw          (void) override;
+    double          specifiedGimbalPitch        (void) override;
+    double          specifiedVehicleYaw         (void) override;
+    QString         mapVisualQML                (void) const override { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    void            appendMissionItems          (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void            applyNewAltitude            (double newAltitude) final;
+    void            setMissionFlightStatus      (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
+    ReadyForSaveState readyForSaveState         (void) const final;
+    double          additionalTimeDelay         (void) const final;
+    bool            exitCoordinateSameAsEntry   (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
-    void setCoordinate      (const QGeoCoordinate& coordinate) final;
+    void setCoordinate      (const QGeoCoordinate& coordinate) override;
     void setSequenceNumber  (int sequenceNumber) final;
     int  lastSequenceNumber (void) const final;
     void save               (QJsonArray&  missionItems) final;
@@ -134,22 +137,23 @@ signals:
     void cameraSectionChanged       (QObject* cameraSection);
     void speedSectionChanged        (QObject* cameraSection);
     void altitudeModeChanged        (void);
-    void supportsTerrainFrameChanged(void);
 
 private slots:
-    void _setDirty                          (void);
-    void _sectionDirtyChanged               (bool dirty);
-    void _sendCommandChanged                (void);
-    void _sendCoordinateChanged             (void);
-    void _sendFriendlyEditAllowedChanged    (void);
-    void _altitudeChanged                   (void);
-    void _altitudeModeChanged               (void);
-    void _terrainAltChanged                 (void);
-    void _updateLastSequenceNumber          (void);
-    void _rebuildFacts                      (void);
-    void _rebuildTextFieldFacts             (void);
-    void _possibleAdditionalTimeDelayChanged(void);
-    void _setDefaultsForCommand              (void);
+    void _setDirty                              (void);
+    void _sectionDirtyChanged                   (bool dirty);
+    void _sendCommandChanged                    (void);
+    void _sendCoordinateChanged                 (void);
+    void _sendFriendlyEditAllowedChanged        (void);
+    void _altitudeChanged                       (void);
+    void _altitudeModeChanged                   (void);
+    void _terrainAltChanged                     (void);
+    void _updateLastSequenceNumber              (void);
+    void _rebuildFacts                          (void);
+    void _rebuildTextFieldFacts                 (void);
+    void _possibleAdditionalTimeDelayChanged    (void);
+    void _setDefaultsForCommand                 (void);
+    void _possibleVehicleYawChanged             (void);
+    void _signalIfVTOLTransitionCommand         (void);
 
 private:
     void _connectSignals        (void);
@@ -159,18 +163,19 @@ private:
     void _rebuildComboBoxFacts  (void);
 
     MissionItem     _missionItem;
-    bool            _rawEdit;
-    bool            _dirty;
-    bool            _ignoreDirtyChangeSignals;
+    bool            _rawEdit =                  false;
+    bool            _dirty =                    false;
+    bool            _ignoreDirtyChangeSignals = false;
+    QGeoCoordinate  _mapCenterHint;
+    SpeedSection*   _speedSection =             nullptr;
+    CameraSection*  _cameraSection =             nullptr;
 
-    SpeedSection*   _speedSection;
-    CameraSection* _cameraSection;
-
-    MissionCommandTree* _commandTree;
+    MissionCommandTree* _commandTree = nullptr;
+    bool _syncingHeadingDegreesAndParam4 = false;   ///< true: already in a sync signal, prevents signal loop
 
     Fact                _supportedCommandFact;
 
-    QGroundControlQmlGlobal::AltitudeMode   _altitudeMode;
+    QGroundControlQmlGlobal::AltitudeMode   _altitudeMode = QGroundControlQmlGlobal::AltitudeModeRelative;
     Fact                                    _altitudeFact;
     Fact                                    _amslAltAboveTerrainFact;
 
@@ -192,8 +197,6 @@ private:
     FactMetaData    _param5MetaData;
     FactMetaData    _param6MetaData;
     FactMetaData    _param7MetaData;
-
-    bool _syncingHeadingDegreesAndParam4;   ///< true: already in a sync signal, prevents signal loop
 
     static const char* _jsonAltitudeModeKey;
     static const char* _jsonAltitudeKey;

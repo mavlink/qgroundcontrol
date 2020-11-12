@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -31,16 +31,17 @@ PX4AdvancedFlightModesController::PX4AdvancedFlightModesController(void) :
     _returnModeSelected(false),
     _offboardModeSelected(false)
 {
-    QStringList usedParams;
-    usedParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2" <<
-        "RC_MAP_MODE_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_OFFB_SW" << "RC_MAP_ACRO_SW";
+    QStringList usedParams = QStringList({
+        "RC_MAP_THROTTLE", "RC_MAP_YAW", "RC_MAP_PITCH", "RC_MAP_ROLL", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2",
+        "RC_MAP_MODE_SW",  "RC_MAP_RETURN_SW", "RC_MAP_LOITER_SW", "RC_MAP_POSCTL_SW", "RC_MAP_OFFB_SW", "RC_MAP_ACRO_SW"});
+
     if (!_allParametersExists(FactSystem::defaultComponentId, usedParams)) {
         return;
     }
 
     _init();
     _validateConfiguration();
-    
+
     connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4AdvancedFlightModesController::_rcChannelsChanged);
 }
 
@@ -96,20 +97,17 @@ void PX4AdvancedFlightModesController::_init(void)
         // Auto mode is visible if Mission/Loiter are on separate channel from main Mode switch
         _autoModeVisible = loiterChannel != modeChannel;
     }
-    
+
     // Setup the channel combobox model
-    
-    QList<int> usedChannels;
-    QStringList attitudeParams;
-    
-    attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
-    foreach(const QString &attitudeParam, attitudeParams) {
+    QVector<int> usedChannels;
+
+    for (const QString &attitudeParam : {"RC_MAP_THROTTLE", "RC_MAP_YAW", "RC_MAP_PITCH", "RC_MAP_ROLL", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2"}) {
         int channel = getParameterFact(-1, attitudeParam)->rawValue().toInt();
         if (channel != 0) {
             usedChannels << channel;
         }
     }
-    
+
     _channelListModel << "Disabled";
     _channelListModelChannel << 0;
     for (int channel=1; channel<=_channelCount; channel++) {
@@ -140,13 +138,11 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
     _validConfiguration = true;
     
     // Make sure switches are valid and within channel range
-    
-    QStringList switchParams;
+
+    const QStringList switchParams = {"RC_MAP_MODE_SW", "RC_MAP_ACRO_SW",  "RC_MAP_POSCTL_SW", "RC_MAP_LOITER_SW", "RC_MAP_RETURN_SW", "RC_MAP_OFFB_SW"};
     QList<int> switchMappings;
-    
-    switchParams << "RC_MAP_MODE_SW"  << "RC_MAP_ACRO_SW"  << "RC_MAP_POSCTL_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_OFFB_SW";
-    
-    for(int i=0; i<switchParams.count(); i++) {
+
+    for(int i=0, end = switchParams.count(); i < end; i++) {
         int map = getParameterFact(FactSystem::defaultComponentId, switchParams[i])->rawValue().toInt();
         switchMappings << map;
         
@@ -157,16 +153,16 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
     }
     
     // Make sure mode switches are not double-mapped
-    
-    QStringList attitudeParams;
-    
-    attitudeParams << "RC_MAP_THROTTLE" << "RC_MAP_YAW" << "RC_MAP_PITCH" << "RC_MAP_ROLL" << "RC_MAP_FLAPS" << "RC_MAP_AUX1" << "RC_MAP_AUX2";
 
-    for (int i=0; i<attitudeParams.count(); i++) {
+    const QStringList attitudeParams = {"RC_MAP_THROTTLE", "RC_MAP_YAW", "RC_MAP_PITCH", "RC_MAP_ROLL", "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2"};
+    for (int i=0, end = attitudeParams.count(); i < end; i++) {
         int map = getParameterFact(FactSystem::defaultComponentId, attitudeParams[i])->rawValue().toInt();
+        if (map == 0) {
+            continue;
+        }
 
         for (int j=0; j<switchParams.count(); j++) {
-            if (map != 0 && map == switchMappings[j]) {
+            if (map == switchMappings[j]) {
                 _validConfiguration = false;
                 _configurationErrors += tr("%1 is set to same channel as %2.\n").arg(switchParams[j], attitudeParams[i]);
             }
@@ -174,12 +170,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
     }
     
     // Validate thresholds within range
-    
-    QStringList thresholdParams;
-    
-    thresholdParams << "RC_ASSIST_TH" << "RC_AUTO_TH" << "RC_ACRO_TH" << "RC_POSCTL_TH" << "RC_LOITER_TH" << "RC_RETURN_TH" << "RC_OFFB_TH";
-    
-    foreach(const QString &thresholdParam, thresholdParams) {
+    for(const QString &thresholdParam : {"RC_ASSIST_TH", "RC_AUTO_TH", "RC_ACRO_TH", "RC_POSCTL_TH", "RC_LOITER_TH", "RC_RETURN_TH", "RC_OFFB_TH"}) {
         float threshold = getParameterFact(-1, thresholdParam)->rawValue().toFloat();
         if (threshold < 0.0f || threshold > 1.0f) {
             _validConfiguration = false;

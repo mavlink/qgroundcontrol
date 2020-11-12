@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -27,12 +27,13 @@ public:
     /// a dirty property and dirtyChanged signal.
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
 
-    Q_INVOKABLE QObject* get(int index)     { return _objectList[index]; }
+    Q_INVOKABLE QObject* get(int index);
 
     // Property accessors
     
     int         count               () const;
     bool        dirty               () const { return _dirty; }
+
     void        setDirty            (bool dirty);
     void        append              (QObject* object);
     void        append              (QList<QObject*> objects);
@@ -45,6 +46,9 @@ public:
     bool        contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
     int         indexOf             (QObject* object) { return _objectList.indexOf(object); }
 
+    /// Moves an item to a new position
+    void move(int from, int to);
+
     QObject*    operator[]          (int i);
     const QObject* operator[]       (int i) const;
     template<class T> T value       (int index) { return qobject_cast<T>(_objectList[index]); }
@@ -56,8 +60,8 @@ public:
     /// Clears the list and calls deleteLater on each entry
     void clearAndDeleteContents     ();
 
-    void beginReset                 () { beginResetModel(); }
-    void endReset                   () { endResetModel();   }
+    void beginReset                 ();
+    void endReset                   ();
 
 signals:
     void countChanged               (int count);
@@ -80,6 +84,7 @@ private:
     
     bool _dirty;
     bool _skipDirtyFirstItem;
+    bool _externalBeginResetModel;
         
     static const int ObjectRole;
     static const int TextRole;

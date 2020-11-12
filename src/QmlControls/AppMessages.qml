@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.12
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -26,39 +27,59 @@ Item {
     property bool loaded: false
 
     Component {
-        id: filtersDialogComponent
-        QGCViewDialog {
-            QGCFlickable {
-                anchors.fill:   parent
-                contentHeight:  categoryColumn.height
-                clip:           true
-                Column {
-                    id:         categoryColumn
-                    spacing:    ScreenTools.defaultFontPixelHeight / 2
+        id: filtersPopupDialog
+
+        QGCPopupDialog {
+            title:      qsTr("Turn on logging categories")
+            buttons:    StandardButton.Close
+
+            ColumnLayout {
+                RowLayout {
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    Layout.fillWidth:   true
+
+                    QGCLabel { text: qsTr("Search:") }
+
+                    QGCTextField {
+                        id: searchText
+                        text: ""
+                        Layout.fillWidth: true
+                        enabled: true
+                    }
 
                     QGCButton {
-                        text: qsTr("Clear All")
-                        onClicked: {
-                            var logCats = QGroundControl.loggingCategories()
-                            for (var i=0; i<logCats.length; i++) {
-                                QGroundControl.setCategoryLoggingOn(logCats[i], false)
-                            }
-                            QGroundControl.updateLoggingFilterRules()
-                            categoryRepeater.model = undefined
-                            categoryRepeater.model = QGroundControl.loggingCategories()
-                        }
+                        text: qsTr("Clear")
+                        onClicked: searchText.text = ""
                     }
-                    Repeater {
-                        id:     categoryRepeater
-                        model:  QGroundControl.loggingCategories()
+                }
 
-                        QGCCheckBox {
-                            text:       modelData
-                            checked:    QGroundControl.categoryLoggingOn(modelData)
-                            onClicked:  {
-                                QGroundControl.setCategoryLoggingOn(modelData, checked)
-                                QGroundControl.updateLoggingFilterRules()
-                            }
+                QGCButton {
+                    text: qsTr("Clear All")
+                    onClicked: categoryRepeater.setAllLogs(false)
+                }
+
+                Repeater {
+                    id:     categoryRepeater
+                    model:  QGroundControl.loggingCategories()
+
+                    function setAllLogs(value) {
+                        var logCategories = QGroundControl.loggingCategories()
+                        for (var category of logCategories) {
+                            QGroundControl.setCategoryLoggingOn(category, value)
+                        }
+                        QGroundControl.updateLoggingFilterRules()
+                        // Update model for repeater
+                        categoryRepeater.model = undefined
+                        categoryRepeater.model = QGroundControl.loggingCategories()
+                    }
+
+                    QGCCheckBox {
+                        text:       modelData
+                        visible:    searchText.text ? text.match(`(${searchText.text})`, "i") : true
+                        checked:    QGroundControl.categoryLoggingOn(modelData)
+                        onClicked:  {
+                            QGroundControl.setCategoryLoggingOn(modelData, checked)
+                            QGroundControl.updateLoggingFilterRules()
                         }
                     }
                 }
@@ -125,7 +146,6 @@ Item {
                 id:             writeDialog
                 folder:         QGroundControl.settingsManager.appSettings.logSavePath
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
-                fileExtension:  qsTr("txt")
                 selectExisting: false
                 title:          qsTr("Select log save file")
                 onAcceptedForSave: {
@@ -189,7 +209,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.right:  parent.right
                 text:           qsTr("Set Logging")
-                onClicked:      mainWindow.showComponentDialog(filtersDialogComponent, qsTr("Turn on logging categories"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                onClicked:      mainWindow.showPopupDialogFromComponent(filtersPopupDialog)
             }
         }
     }

@@ -115,13 +115,13 @@ public class TaiSync
                             if (mBytes[3] == PROTOCOL_VERSION)
                             {
                                 vMaj = mBytes[19];
-                                Log.i("QGC_TaiSync", "Got protocol version message vMaj = " + mBytes[19]);
+                                // Log.i("QGC_TaiSync", "Got protocol version message vMaj = " + mBytes[19]);
                                 sendTaiSyncMessage(PROTOCOL_VERSION, 0, null, 0);
                             }
                             else if (mBytes[3] == PROTOCOL_CHANNEL) {
                                 int dPort = ((mBytes[4] & 0xff)<< 24) | ((mBytes[5]&0xff) << 16) | ((mBytes[6]&0xff) << 8) | (mBytes[7] &0xff);
                                 int dLength = ((mBytes[8] & 0xff)<< 24) | ((mBytes[9]&0xff) << 16) | ((mBytes[10]&0xff) << 8) | (mBytes[11] &0xff);
-                                Log.i("QGC_TaiSync", "Read 2 port = " + dPort + " length = " + dLength);
+                                // Log.i("QGC_TaiSync", "Read 2 port = " + dPort + " length = " + dLength);
                                 sendTaiSyncMessage(PROTOCOL_CHANNEL, dPort, null, 0);
                             }
                             else if (mBytes[3] == PROTOCOL_DATA) {
@@ -220,7 +220,7 @@ public class TaiSync
 
         byte[] lA = new byte[4];
         int len = HEADER_SIZE + dataLen;
-        Log.i("QGC_TaiSync", "Sending to " + dataPort + " length = " + len);
+        // Log.i("QGC_TaiSync", "Sending to " + dataPort + " length = " + len);
         byte[] buffer = new byte[len];
 
         for (int i = 3; i >= 0; i--) {

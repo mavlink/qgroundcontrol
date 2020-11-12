@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,6 +10,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
+import QtQuick.Dialogs  1.3
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
@@ -100,7 +101,7 @@ QGCViewDialog {
 
         Column {
             id:             _column
-            spacing:        defaultTextHeight
+            spacing:        globals.defaultTextHeight
             anchors.left:   parent.left
             anchors.right:  parent.right
 
@@ -125,8 +126,8 @@ QGCViewDialog {
                     Layout.fillWidth:   true
                     focus:              setFocus
                     inputMethodHints:   (fact.typeIsString || ScreenTools.isiOS) ?
-                                          Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
-                                          Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
+                                            Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
+                                            Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
                 }
 
                 QGCButton {
@@ -232,7 +233,7 @@ QGCViewDialog {
 
             QGCLabel {
                 visible:    fact.qgcRebootRequired
-                text:       "Appliction restart required after change"
+                text:       "Application restart required after change"
             }
 
             QGCLabel {
@@ -286,11 +287,19 @@ QGCViewDialog {
             }
 
             QGCButton {
-                text:           qsTr("Set RC to Param...")
-                width:          _editFieldWidth
-                visible:        _advanced.checked && !validate && showRCToParam
-                onClicked:      controller.setRCToParam(fact.name)
+                text:       qsTr("Set RC to Param")
+                width:      _editFieldWidth
+                visible:    _advanced.checked && !validate && showRCToParam
+                onClicked:  mainWindow.showPopupDialogFromComponent(rcToParamDialog)
             }
         } // Column
+    }
+
+    Component {
+        id: rcToParamDialog
+
+        RCToParamDialog {
+            tuningFact: fact
+        }
     }
 } // QGCViewDialog

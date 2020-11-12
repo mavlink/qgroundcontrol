@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -63,7 +63,8 @@ public:
 
     /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
-    void setMissionItemFailureMode(FailureMode_t failureMode);
+    ///     @param failureAckResult Error to send if one the ack error modes
+    void setFailureMode(FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult);
     
     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType);
@@ -83,22 +84,22 @@ private slots:
     void _missionItemResponseTimeout(void);
 
 private:
-    void _handleMissionRequestList(const mavlink_message_t& msg);
-    void _handleMissionRequest(const mavlink_message_t& msg);
-    void _handleMissionItem(const mavlink_message_t& msg);
-    void _handleMissionCount(const mavlink_message_t& msg);
-    void _handleMissionClearAll(const mavlink_message_t& msg);
-    void _requestNextMissionItem(int sequenceNumber);
-    void _sendAck(MAV_MISSION_RESULT ackType);
-    void _startMissionItemResponseTimer(void);
+    void _handleMissionRequestList      (const mavlink_message_t& msg);
+    void _handleMissionRequest          (const mavlink_message_t& msg);
+    void _handleMissionItem             (const mavlink_message_t& msg);
+    void _handleMissionCount            (const mavlink_message_t& msg);
+    void _handleMissionClearAll         (const mavlink_message_t& msg);
+    void _requestNextMissionItem        (int sequenceNumber);
+    void _sendAck                       (MAV_MISSION_RESULT ackType);
+    void _startMissionItemResponseTimer (void);
 
 private:
     MockLink* _mockLink;
     
     int _writeSequenceCount;    ///< Numbers of items about to be written
     int _writeSequenceIndex;    ///< Current index being reqested
-    
-    typedef QMap<uint16_t, mavlink_mission_item_t>   MissionItemList_t;
+
+    typedef QMap<uint16_t, mavlink_mission_item_int_t> MissionItemList_t;
 
     MAV_MISSION_TYPE    _requestType;
     MissionItemList_t   _missionItems;
@@ -107,6 +108,7 @@ private:
 
     QTimer*             _missionItemResponseTimer;
     FailureMode_t       _failureMode;
+    MAV_MISSION_RESULT  _failureAckResult;
     bool                _sendHomePositionOnEmptyList;
     MAVLinkProtocol*    _mavlinkProtocol;
     bool                _failReadRequestListFirstResponse;

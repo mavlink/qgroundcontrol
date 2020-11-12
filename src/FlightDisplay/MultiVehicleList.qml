@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,12 +19,11 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
 Item {
-    property var    guidedActionsController
-
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _widgetHeight:  ScreenTools.defaultFontPixelHeight * 3
-    property color  _textColor:     "black"
-    property real   _rectOpacity:   0.8
+    property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
+    property real   _widgetHeight:      ScreenTools.defaultFontPixelHeight * 3
+    property color  _textColor:         "black"
+    property real   _rectOpacity:       0.8
+    property var    _guidedController:  globals.guidedControllerFlyView
 
     QGCPalette { id: qgcPal }
 
@@ -63,12 +62,12 @@ Item {
 
                 QGCButton {
                     text:       "Pause"
-                    onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionMVPause)
+                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVPause)
                 }
 
                 QGCButton {
-                    text:       "Start Mision"
-                    onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionMVStartMission)
+                    text:       "Start Mission"
+                    onClicked:  _guidedController.confirmAction(_guidedController.actionMVStartMission)
                 }
             }
         }
@@ -135,6 +134,7 @@ Item {
 
                     QGCCompassWidget {
                         size:       _widgetHeight
+                        usedByMultipleVehicleList: true
                         vehicle:    _vehicle
                     }
 

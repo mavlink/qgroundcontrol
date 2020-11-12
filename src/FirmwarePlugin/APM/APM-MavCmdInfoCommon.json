@@ -1,0 +1,95 @@
+{
+    "comment":      "ArduPilot, Any Vehicle",
+    "version":      1,
+    "fileType":  "MavCmdInfo",
+
+    "mavCmdInfo": [
+        {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "2"
+        },
+        {
+            "id":                       22,
+            "comment":                  "MAV_CMD_NAV_TAKEOFF",
+            "description":              "Take off from the ground and ascend to specified altitude.",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true
+        },
+        {
+            "id":                       84,
+            "comment":                  "MAV_CMD_NAV_VTOL_TAKEOFF",
+            "description":              "Takeoff to specified altitude.",
+            "specifiesCoordinate":      false,
+            "specifiesAltitudeOnly":    true,
+            "friendlyEdit":             true,
+            "category":                 "VTOL"
+        },
+        {
+            "id":                   85,
+            "comment":              "MAV_CMD_NAV_VTOL_LAND",
+            "description":          "Land using VTOL mode.",
+            "specifiesCoordinate":  true,
+            "friendlyEdit":         true,
+            "category":             "VTOL"
+        },
+        {
+            "id":           176,
+            "comment":      "MAV_CMD_DO_SET_MODE",
+            "paramRemove":  "2,3"
+        },
+        {
+            "id":           178,
+            "comment":      "MAV_CMD_DO_CHANGE_SPEED",
+            "paramRemove":  "4"
+        },
+        {
+            "id":           181,
+            "comment":      "MAV_CMD_DO_SET_RELAY",
+            "param2": {
+                "label":            "Setting",
+                "enumStrings":      "On,Off",
+                "enumValues":       "1,0",
+                "default":          1
+            }
+        },
+        {
+            "id":           201,
+            "comment":      "MAV_CMD_DO_SET_ROI",
+            "paramRemove":  "1,2,3"
+        },
+        {
+            "id":           205,
+            "comment":      "MAV_CMD_DO_MOUNT_CONTROL",
+            "paramRemove":  "7",
+            "param1": {
+                "label":            "Pitch",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    2
+            },
+            "param2": {
+                "label":            "Roll",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    2
+            },
+            "param3": {
+                "label":            "Yaw",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    2
+            }
+        },
+        {
+            "id":                   207,
+            "comment":              "MAV_CMD_DO_FENCE_ENABLE",
+            "param1": {
+                "label":            "Enable",
+                "enumStrings":      "Enable,Disable",
+                "enumValues":       "1,0",
+                "default":          1
+            }
+        }
+    ]
+}

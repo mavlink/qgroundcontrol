@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -22,8 +22,8 @@ class RallyPoint : public QObject
     Q_OBJECT
     
 public:
-    RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = NULL);
-    RallyPoint(const RallyPoint& other, QObject* parent = NULL);
+    RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = nullptr);
+    RallyPoint(const RallyPoint& other, QObject* parent = nullptr);
 
     ~RallyPoint();
 
@@ -39,6 +39,8 @@ public:
     bool dirty(void) const { return _dirty; }
     void setDirty(bool dirty);
 
+    static double getDefaultFactAltitude();
+
 signals:
     void coordinateChanged      (const QGeoCoordinate& coordinate);
     void dirtyChanged           (bool dirty);
@@ -48,6 +50,7 @@ private slots:
 
 private:
     void _factSetup(void);
+    static void _cacheFactMetadata();
 
     bool _dirty;
     Fact _longitudeFact;

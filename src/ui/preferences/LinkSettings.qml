@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -26,8 +26,6 @@ Rectangle {
     property var _currentSelection: null
     property int _firstColumn:      ScreenTools.defaultFontPixelWidth * 12
     property int _secondColumn:     ScreenTools.defaultFontPixelWidth * 30
-
-    ExclusiveGroup { id: linkGroup }
 
     QGCPalette {
         id:                 qgcPal
@@ -65,9 +63,8 @@ Rectangle {
                     anchors.horizontalCenter:   settingsColumn.horizontalCenter
                     width:                      _linkRoot.width * 0.5
                     text:                       object.name
-                    exclusiveGroup:             linkGroup
+                    autoExclusive:              true
                     visible:                    !object.dynamic
-
                     onClicked: {
                         checked = true
                         _currentSelection = object
@@ -124,16 +121,17 @@ Rectangle {
         QGCButton {
             text:       qsTr("Connect")
             enabled:    _currentSelection && !_currentSelection.link
-            onClicked: {
-                QGroundControl.linkManager.createConnectedLink(_currentSelection)
-            }
+            onClicked:  QGroundControl.linkManager.createConnectedLink(_currentSelection)
         }
         QGCButton {
             text:       qsTr("Disconnect")
             enabled:    _currentSelection && _currentSelection.link
-            onClicked: {
-                QGroundControl.linkManager.disconnectLink(_currentSelection.link, false)
-            }
+            onClicked:  _currentSelection.link.disconnect()
+        }
+        QGCButton {
+            text:       qsTr("MockLink Options")
+            visible:    _currentSelection && _currentSelection.link && _currentSelection.link.isMockLink
+            onClicked:  mainWindow.showPopupDialogFromSource("qrc:/unittest/MockLinkOptionsDlg.qml", { link: _currentSelection.link })
         }
     }
 
@@ -275,7 +273,7 @@ Rectangle {
                                             linkSettingLoader.source = ""
                                             linkSettingLoader.visible = false
                                             // Save current name
-                                            var name = editConfig.name
+                                            var name = nameField.text
                                             // Discard link configuration (old type)
                                             QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
                                             // Create new link configuration
@@ -302,7 +300,6 @@ Rectangle {
                             QGCCheckBox {
                                 text:               qsTr("Automatically Connect on Start")
                                 checked:            false
-                                enabled:            editConfig ? editConfig.autoConnectAllowed : false
                                 onCheckedChanged: {
                                     if(editConfig) {
                                         editConfig.autoConnect = checked
@@ -316,7 +313,6 @@ Rectangle {
                             QGCCheckBox {
                                 text:               qsTr("High Latency")
                                 checked:            false
-                                enabled:            editConfig ? editConfig.highLatencyAllowed : false
                                 onCheckedChanged: {
                                     if(editConfig) {
                                         editConfig.highLatency = checked

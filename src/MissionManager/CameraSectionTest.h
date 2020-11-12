@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@
 
 #include "SectionTest.h"
 #include "CameraSection.h"
+#include "PlanMasterController.h"
 
 /// Unit test for CameraSection
 class CameraSectionTest : public SectionTest
@@ -23,9 +24,12 @@ public:
     void init(void) override;
     void cleanup(void) override;
 
-    static SimpleMissionItem* createValidStopVideoItem   (Vehicle* vehicle, QObject* parent);
-    static SimpleMissionItem* createValidStopDistanceItem(Vehicle* vehicle, QObject* parent);
-    static SimpleMissionItem* createValidStopTimeItem    (Vehicle* vehicle, QObject* parent);
+    static SimpleMissionItem* createValidStopVideoItem      (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createValidStopDistanceItem   (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createValidStopTimeItem       (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createInvalidStopVideoItem    (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createInvalidStopDistanceItem (PlanMasterController* masterController, QObject* parent);
+    static SimpleMissionItem* createInvalidStopTimeItem     (PlanMasterController* masterController, QObject* parent);
 
 private slots:
     void _testDirty                                 (void);

@@ -1,0 +1,8 @@
+{
+    "version":                      1,
+    "vendorName":                   "QGC MockLink Vendor",
+    "modelName":                    "QGC MockLink Model",
+    "firmwareVersion":              "1.0.0",
+    "hardwareVersion":              "1.0.0",
+    "supportedCompMetadataTypes":   [ 0, 1 ]
+} 

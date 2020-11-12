@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2017 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,7 +17,7 @@ class GPSRTKFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    GPSRTKFactGroup(QObject* parent = NULL);
+    GPSRTKFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* connected            READ connected            CONSTANT)
     Q_PROPERTY(Fact* currentDuration      READ currentDuration      CONSTANT)

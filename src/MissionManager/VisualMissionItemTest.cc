@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -10,9 +10,9 @@
 #include "VisualMissionItemTest.h"
 #include "SimpleMissionItem.h"
 #include "QGCApplication.h"
+#include "PlanMasterController.h"
 
 VisualMissionItemTest::VisualMissionItemTest(void)
-    : _offlineVehicle(NULL)
 {
     
 }
@@ -20,10 +20,9 @@ VisualMissionItemTest::VisualMissionItemTest(void)
 void VisualMissionItemTest::init(void)
 {
     UnitTest::init();
-    _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4,
-                                  MAV_TYPE_QUADROTOR,
-                                  qgcApp()->toolbox()->firmwarePluginManager(),
-                                  this);
+
+    _masterController = new PlanMasterController(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, this);
+    _controllerVehicle = _masterController->controllerVehicle();
 
     rgVisualItemSignals[altDifferenceChangedIndex] =                        SIGNAL(altDifferenceChanged(double));
     rgVisualItemSignals[altPercentChangedIndex] =                           SIGNAL(altPercentChanged(double));
@@ -47,21 +46,19 @@ void VisualMissionItemTest::init(void)
     rgVisualItemSignals[lastSequenceNumberChangedIndex] =                   SIGNAL(lastSequenceNumberChanged(int));
     rgVisualItemSignals[missionGimbalYawChangedIndex] =                     SIGNAL(missionGimbalYawChanged(double));
     rgVisualItemSignals[missionVehicleYawChangedIndex] =                    SIGNAL(missionVehicleYawChanged(double));
-    rgVisualItemSignals[coordinateHasRelativeAltitudeChangedIndex] =        SIGNAL(coordinateHasRelativeAltitudeChanged(bool));
-    rgVisualItemSignals[exitCoordinateHasRelativeAltitudeChangedIndex] =    SIGNAL(exitCoordinateHasRelativeAltitudeChanged(bool));
     rgVisualItemSignals[exitCoordinateSameAsEntryChangedIndex] =            SIGNAL(exitCoordinateSameAsEntryChanged(bool));
 }
 
 void VisualMissionItemTest::cleanup(void)
 {
-    delete _offlineVehicle;
     UnitTest::cleanup();
+    _masterController->deleteLater();
 }
 
-void VisualMissionItemTest::_createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy)
+void VisualMissionItemTest::_createSpy(VisualMissionItem* visualItem, MultiSignalSpy** visualSpy)
 {
-    *visualSpy = NULL;
+    *visualSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(simpleItem, rgVisualItemSignals, cVisualItemSignals), true);
+    QCOMPARE(spy->init(visualItem, rgVisualItemSignals, cVisualItemSignals), true);
     *visualSpy = spy;
 }

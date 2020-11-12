@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,12 +19,15 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo   = "No Video Available";
-const char* VideoSettings::videoDisabled        = "Video Stream Disabled";
-const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
-const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
-const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
-const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSourceNoVideo           = "No Video Available";
+const char* VideoSettings::videoDisabled                = "Video Stream Disabled";
+const char* VideoSettings::videoSourceRTSP              = "RTSP Video Stream";
+const char* VideoSettings::videoSourceUDPH264           = "UDP h.264 Video Stream";
+const char* VideoSettings::videoSourceUDPH265           = "UDP h.265 Video Stream";
+const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Stream";
+const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSource3DRSolo           = "3DR Solo";
+const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -35,10 +38,13 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #ifdef QGC_GST_STREAMING
     videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
-    videoSourceList.append(videoSourceUDP);
+    videoSourceList.append(videoSourceUDPH264);
+    videoSourceList.append(videoSourceUDPH265);
 #endif
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSource3DRSolo);
+    videoSourceList.append(videoSourceParrotDiscovery);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -80,6 +86,7 @@ DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, lowLatencyMode)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -141,7 +148,7 @@ bool VideoSettings::streamConfigured(void)
         return false;
     }
     //-- If UDP, check if port is set
-    if(vSource == videoSourceUDP) {
+    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
         qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
@@ -165,5 +172,5 @@ bool VideoSettings::streamConfigured(void)
 
 void VideoSettings::_configChanged(QVariant)
 {
-    emit streamConfiguredChanged();
+    emit streamConfiguredChanged(streamConfigured());
 }

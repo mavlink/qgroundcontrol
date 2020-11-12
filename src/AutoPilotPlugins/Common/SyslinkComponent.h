@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -17,7 +17,7 @@ class SyslinkComponent : public VehicleComponent
 {
     Q_OBJECT
 public:
-    SyslinkComponent            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    SyslinkComponent            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList() const;

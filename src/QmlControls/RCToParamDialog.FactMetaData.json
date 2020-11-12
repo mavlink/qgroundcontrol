@@ -1,0 +1,36 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "Scale",
+    "shortDesc": "Scale the RC range",
+    "type":             "double",
+    "min":              -1,
+    "max":              1,
+    "default":     1,
+    "decimalPlaces":    1
+},
+{
+    "name":             "CenterValue",
+    "shortDesc": "Parameter value when RC output is 0",
+    "type":             "double",
+    "min":              -180.0,
+    "max":              180.0,
+    "decimalPlaces":    7
+},
+{
+    "name":             "MinValue",
+    "shortDesc": "Minimum parameter value",
+    "type":             "double",
+    "decimalPlaces":    7
+},
+{
+    "name":             "MaxValue",
+    "shortDesc": "Maximum parameter value",
+    "type":             "double",
+    "decimalPlaces":    7
+}
+]
+}

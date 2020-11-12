@@ -1,0 +1,75 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "LandingDistance",
+    "shortDesc":        "Distance between landing and approach points.",
+    "type":             "double",
+    "units":            "m",
+    "min":              10,
+    "decimalPlaces":    1,
+    "default":          300.0
+},
+{
+    "name":             "LandingHeading",
+    "shortDesc":        "Heading from approach to land point.",
+    "type":             "double",
+    "units":            "deg",
+    "min":              0.0,
+    "max":              360.0,
+    "decimalPlaces":    0,
+    "default":          270.0
+},
+{
+    "name":             "FinalApproachAltitude",
+    "shortDesc":        "Altitude to begin landing approach from.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "default":          30.0
+},
+{
+    "name":             "LoiterRadius",
+    "shortDesc":        "Loiter radius.",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "min":              1,
+    "units":            "m",
+    "default":          75.0
+},
+{
+    "name":         "LoiterClockwise",
+    "shortDesc":    "Loiter clockwise around the final approach point.",
+    "type":         "bool",
+    "default":      true
+},
+{
+    "name":             "LandingAltitude",
+    "shortDesc":        "Altitude for landing point on ground.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "default":          0.0
+},
+{
+    "name":         "UseLoiterToAlt",
+    "shortDesc":    "Use a loiter to altitude item for final appoach. Otherwise use a regular waypoint.",
+    "type":         "bool",
+    "default":      true
+},
+{
+    "name":         "StopTakingPhotos",
+    "shortDesc":    "Stop taking photos",
+    "type":         "bool",
+    "default":      true
+},
+{
+    "name":         "StopTakingVideo",
+    "shortDesc":    "Stop taking video",
+    "type":         "bool",
+    "default":      true
+}
+]
+}

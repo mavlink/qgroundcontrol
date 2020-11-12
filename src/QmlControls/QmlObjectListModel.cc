@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -20,9 +20,10 @@ const int QmlObjectListModel::ObjectRole = Qt::UserRole;
 const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
-    : QAbstractListModel(parent)
-    , _dirty(false)
-    , _skipDirtyFirstItem(false)
+    : QAbstractListModel        (parent)
+    , _dirty                    (false)
+    , _skipDirtyFirstItem       (false)
+    , _externalBeginResetModel  (false)
 {
 
 }
@@ -30,6 +31,14 @@ QmlObjectListModel::QmlObjectListModel(QObject* parent)
 QmlObjectListModel::~QmlObjectListModel()
 {
     
+}
+
+QObject* QmlObjectListModel::get(int index)
+{
+    if (index < 0 || index >= _objectList.count()) {
+        return nullptr;
+    }
+    return _objectList[index];
 }
 
 int QmlObjectListModel::rowCount(const QModelIndex& parent) const
@@ -116,6 +125,22 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     return true;
 }
 
+void QmlObjectListModel::move(int from, int to)
+{
+    if(0 <= from && from < count() && 0 <= to && to < count() && from != to) {
+        // Workaround to allow move item to the bottom. Done according to
+        // beginMoveRows() documentation and implementation specificity:
+        // https://doc.qt.io/qt-5/qabstractitemmodel.html#beginMoveRows
+        // (see 3rd picture explanation there)
+        if(from == to - 1) {
+            to = from++;
+        }
+        beginMoveRows(QModelIndex(), from, from, QModelIndex(), to);
+        _objectList.move(from, to);
+        endMoveRows();
+    }
+}
+
 QObject* QmlObjectListModel::operator[](int index)
 {
     if (index < 0 || index >= _objectList.count()) {
@@ -134,8 +159,13 @@ const QObject* QmlObjectListModel::operator[](int index) const
 
 void QmlObjectListModel::clear()
 {
-    while (rowCount()) {
-        removeAt(0);
+    if (!_externalBeginResetModel) {
+        beginResetModel();
+    }
+    _objectList.clear();
+    if (!_externalBeginResetModel) {
+        endResetModel();
+        emit countChanged(count());
     }
 }
 
@@ -160,19 +190,17 @@ void QmlObjectListModel::insert(int i, QObject* object)
     if (i < 0 || i > _objectList.count()) {
         qWarning() << "Invalid index index:count" << i << _objectList.count();
     }
-    
-    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
-    
-    // Look for a dirtyChanged signal on the object
-    if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
-        if (!_skipDirtyFirstItem || i != 0) {
-            QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+    if(object) {
+        QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
+        // Look for a dirtyChanged signal on the object
+        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)")) != -1) {
+            if (!_skipDirtyFirstItem || i != 0) {
+                QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
+            }
         }
     }
-
     _objectList.insert(i, object);
     insertRows(i, 1);
-    
     setDirty(true);
 }
 
@@ -215,10 +243,14 @@ void QmlObjectListModel::append(QList<QObject*> objects)
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
-    beginResetModel();
+    if (!_externalBeginResetModel) {
+        beginResetModel();
+    }
     _objectList = newlist;
-    endResetModel();
-    emit countChanged(count());
+    if (!_externalBeginResetModel) {
+        endResetModel();
+        emit countChanged(count());
+    }
     return oldlist;
 }
 
@@ -266,5 +298,23 @@ void QmlObjectListModel::clearAndDeleteContents()
         _objectList[i]->deleteLater();
     }
     clear();
+    endResetModel();
+}
+
+void QmlObjectListModel::beginReset()
+{
+    if (_externalBeginResetModel) {
+        qWarning() << "QmlObjectListModel::beginReset already set";
+    }
+    _externalBeginResetModel = true;
+    beginResetModel();
+}
+
+void QmlObjectListModel::endReset()
+{
+    if (!_externalBeginResetModel) {
+        qWarning() << "QmlObjectListModel::endReset begin not set";
+    }
+    _externalBeginResetModel = false;
     endResetModel();
 }

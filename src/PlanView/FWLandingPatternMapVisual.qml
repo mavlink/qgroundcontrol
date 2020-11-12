@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,6 +11,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.3
+import QtQuick.Layouts  1.11
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -23,45 +24,55 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property bool interactive: true
 
     signal clicked(int sequenceNumber)
 
-    property var _missionItem:  object
-    property var _itemVisuals: [ ]
-    property var _mouseArea
-    property var _dragAreas: [ ]
-    property var _flightPath
+    readonly property real _landingWidthMeters:     15
+    readonly property real _landingLengthMeters:    100
 
-    readonly property int _flightPathIndex:     0
-    readonly property int _loiterPointIndex:    1
-    readonly property int _loiterRadiusIndex:   2
-    readonly property int _landingAreaIndex:    3
-    readonly property int _landPointIndex:      4
+    property var    _missionItem:                   object
+    property var    _mouseArea
+    property var    _dragAreas:                     [ ]
+    property var    _flightPath
+    property var    _loiterPointObject
+    property var    _landingPointObject
+    property real   _transitionAltitudeMeters
+    property real   _midSlopeAltitudeMeters
+    property real   _landingAltitudeMeters:         _missionItem.landingAltitude.rawValue
+    property real   _finalApproachAltitudeMeters:   _missionItem.finalApproachAltitude.rawValue
+    property bool   _useLoiterToAlt:                _missionItem.useLoiterToAlt.rawValue
+    property real   _landingAreaBearing:            _missionItem.landingCoordinate.azimuthTo(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate)
+
+    function _calcGlideSlopeHeights() {
+        var adjacent
+        if (_useLoiterToAlt) {
+            adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterTangentCoordinate)
+        } else {
+            adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.finalApproachCoordinate)
+        }
+        var opposite = _finalApproachAltitudeMeters - _landingAltitudeMeters
+        var angleRadians = Math.atan(opposite / adjacent)
+        var transitionDistance = _landingLengthMeters / 2
+        var glideSlopeDistance = adjacent - transitionDistance
+
+        _transitionAltitudeMeters = Math.tan(angleRadians) * (transitionDistance)
+        _midSlopeAltitudeMeters = Math.tan(angleRadians) * (transitionDistance + (glideSlopeDistance / 2))
+    }
 
     function hideItemVisuals() {
-        for (var i=0; i<_itemVisuals.length; i++) {
-            _itemVisuals[i].destroy()
-        }
-        _itemVisuals = [ ]
+        objMgr.destroyObjects()
     }
 
     function showItemVisuals() {
-        if (_itemVisuals.length === 0) {
-            var itemVisual = flightPathComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals[_flightPathIndex] =itemVisual
-            itemVisual = loiterPointComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals[_loiterPointIndex] = itemVisual
-            itemVisual = loiterRadiusComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals[_loiterRadiusIndex] = itemVisual
-            itemVisual = landingAreaComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals[_landingAreaIndex] = itemVisual
-            itemVisual = landPointComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals[_landPointIndex] = itemVisual
+        if (objMgr.rgDynamicObjects.length === 0) {
+            _loiterPointObject = objMgr.createObject(finalApproachComponent, map, true /* parentObjectIsMap */)
+            _landingPointObject = objMgr.createObject(landingPointComponent, map, true /* parentObjectIsMap */)
+
+            var rgComponents = [ flightPathComponent, loiterRadiusComponent, landingAreaComponent, landingAreaLabelComponent,
+                                glideSlopeComponent, glideSlopeLabelComponent, transitionHeightComponent, midGlideSlopeHeightComponent,
+                                approachHeightComponent ]
+            objMgr.createObjects(rgComponents, map, true /* parentObjectIsMap */)
         }
     }
 
@@ -88,13 +99,21 @@ Item {
 
     function showDragAreas() {
         if (_dragAreas.length === 0) {
-            _dragAreas.push(loiterDragAreaComponent.createObject(map))
+            _dragAreas.push(finalApproachDragAreaComponent.createObject(map))
             _dragAreas.push(landDragAreaComponent.createObject(map))
         }
     }
 
     function _setFlightPath() {
-        _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        if (_useLoiterToAlt) {
+            _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+        } else {
+            _flightPath = [ _missionItem.finalApproachCoordinate, _missionItem.landingCoordinate ]
+        }
+    }
+
+    QGCDynamicObjectManager {
+        id: objMgr
     }
 
     Component.onCompleted: {
@@ -114,6 +133,10 @@ Item {
         hideMouseArea()
         hideItemVisuals()
     }
+
+    on_LandingAltitudeMetersChanged:        _calcGlideSlopeHeights()
+    on_FinalApproachAltitudeMetersChanged:  _calcGlideSlopeHeights()
+    on_UseLoiterToAltChanged:               { _calcGlideSlopeHeights(); _setFlightPath() }
 
     Connections {
         target: _missionItem
@@ -149,8 +172,20 @@ Item {
             }
         }
 
-        onLandingCoordinateChanged:         _setFlightPath()
-        onLoiterTangentCoordinateChanged:   _setFlightPath()
+        onLandingCoordinateChanged: {
+            _calcGlideSlopeHeights()
+            _setFlightPath()
+        }
+
+        onLoiterTangentCoordinateChanged: {
+            _calcGlideSlopeHeights()
+            _setFlightPath()
+        }
+
+        onFinalApproachCoordinateChanged: {
+            _calcGlideSlopeHeights()
+            _setFlightPath()
+        }
     }
 
     // Mouse area to capture landing point coordindate
@@ -160,6 +195,9 @@ Item {
         MouseArea {
             anchors.fill:   map
             z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
+            visible:        _root.interactive
+
+            readonly property int   _decimalPlaces:             8
 
             onClicked: {
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
@@ -167,33 +205,48 @@ Item {
                 coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
                 coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
                 _missionItem.landingCoordinate = coordinate
+                _missionItem.setLandingHeadingToTakeoffHeading()
             }
         }
     }
 
-    // Control which is used to drag the loiter point
+    // Control which is used to drag the final approach point
     Component {
-        id: loiterDragAreaComponent
+        id: finalApproachDragAreaComponent
 
         MissionItemIndicatorDrag {
             mapControl:     _root.map
-            itemIndicator:  _itemVisuals[_loiterPointIndex]
-            itemCoordinate: _missionItem.loiterCoordinate
+            itemIndicator:  _loiterPointObject
+            itemCoordinate: _missionItem.finalApproachCoordinate
+            visible:        _root.interactive
 
-            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+            property bool _preventReentrancy: false
+
+            onItemCoordinateChanged: {
+                if (!_preventReentrancy) {
+                    if (Drag.active) {
+                        _preventReentrancy = true
+                        var angle = _missionItem.landingCoordinate.azimuthTo(itemCoordinate)
+                        var distance = _missionItem.landingCoordinate.distanceTo(_missionItem.finalApproachCoordinate)
+                        _missionItem.finalApproachCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(distance, angle)
+                        _preventReentrancy = false
+                    }
+                }
+            }
         }
     }
 
-    // Control which is used to drag the loiter point
+    // Control which is used to drag the landing point
     Component {
         id: landDragAreaComponent
 
         MissionItemIndicatorDrag {
             mapControl:     _root.map
-            itemIndicator:  _itemVisuals[_landPointIndex]
+            itemIndicator:  _landingPointObject
             itemCoordinate: _missionItem.landingCoordinate
+            visible:        _root.interactive
 
-            onItemCoordinateChanged: _missionItem.landingCoordinate = itemCoordinate
+            onItemCoordinateChanged: _missionItem.moveLandingPosition(itemCoordinate)
         }
     }
 
@@ -209,20 +262,40 @@ Item {
         }
     }
 
-    // Loiter point
+    // Final approach point
     Component {
-        id: loiterPointComponent
+        id: finalApproachComponent
 
         MapQuickItem {
             anchorPoint.x:  sourceItem.anchorPointX
             anchorPoint.y:  sourceItem.anchorPointY
             z:              QGroundControl.zOrderMapItems
-            coordinate:     _missionItem.loiterCoordinate
+            coordinate:     _missionItem.finalApproachCoordinate
 
             sourceItem:
                 MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Loiter"
+                label:      _useLoiterToAlt ? qsTr("Loiter") : qsTr("Approach")
+                checked:    _missionItem.isCurrentItem
+
+                onClicked: _root.clicked(_missionItem.sequenceNumber)
+            }
+        }
+    }
+
+    // Landing point
+    Component {
+        id: landingPointComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.anchorPointX
+            anchorPoint.y:  sourceItem.anchorPointY
+            z:              QGroundControl.zOrderMapItems
+            coordinate:     _missionItem.landingCoordinate
+
+            sourceItem:
+                MissionItemIndexLabel {
+                index:      _missionItem.lastSequenceNumber
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
@@ -235,30 +308,100 @@ Item {
 
         MapCircle {
             z:              QGroundControl.zOrderMapItems
-            center:         _missionItem.loiterCoordinate
+            center:         _missionItem.finalApproachCoordinate
             radius:         _missionItem.loiterRadius.rawValue
             border.width:   2
             border.color:   "green"
             color:          "transparent"
+            visible:        _useLoiterToAlt
         }
     }
 
     Component {
-        id: landPointComponent
+        id: landingAreaLabelComponent
 
         MapQuickItem {
-            anchorPoint.x:  sourceItem.anchorPointX
-            anchorPoint.y:  sourceItem.anchorPointY
+            anchorPoint.x:  sourceItem.contentWidth / 2
+            anchorPoint.y:  sourceItem.contentHeight / 2
             z:              QGroundControl.zOrderMapItems
             coordinate:     _missionItem.landingCoordinate
+            visible:        _missionItem.isCurrentItem
 
-            sourceItem:
-                MissionItemIndexLabel {
-                index:      _missionItem.lastSequenceNumber
-                label:      "Land"
-                checked:    _missionItem.isCurrentItem
+            sourceItem: QGCLabel {
+                id:     landingAreaLabel
+                text:   qsTr("Landing Area")
+                color:  "white"
 
-                onClicked: _root.clicked(_missionItem.sequenceNumber)
+                property real _rawBearing:      _landingAreaBearing
+                property real _adjustedBearing
+
+                on_RawBearingChanged: {
+                    _adjustedBearing = _rawBearing
+                    if (_adjustedBearing > 180) {
+                        _adjustedBearing -= 180
+                    }
+                    _adjustedBearing -= 90
+                    if (_adjustedBearing < 0) {
+                        _adjustedBearing += 360
+                    }
+                }
+
+                transform: Rotation {
+                    origin.x:   landingAreaLabel.width / 2
+                    origin.y:   landingAreaLabel.height / 2
+                    angle:      landingAreaLabel._adjustedBearing
+                }
+            }
+        }
+    }
+
+    Component {
+        id: glideSlopeLabelComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem._rawBearing > 180 ? sourceItem.contentWidth : 0
+            anchorPoint.y:  sourceItem.contentHeight / 2
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+
+
+            sourceItem: QGCLabel {
+                id:     glideSlopeLabel
+                text:   qsTr("Glide Slope")
+                color:  "white"
+
+                property real _rawBearing:      _landingAreaBearing
+                property real _adjustedBearing
+
+                on_RawBearingChanged: {
+                    _adjustedBearing = _rawBearing
+                    if (_adjustedBearing > 180) {
+                        _adjustedBearing -= 180
+                    }
+                    _adjustedBearing -= 90
+                    if (_adjustedBearing < 0) {
+                        _adjustedBearing += 360
+                    }
+                }
+
+                transform: Rotation {
+                    origin.x:   sourceItem._rawBearing > 180 ? sourceItem.contentWidth : 0
+                    origin.y:   glideSlopeLabel.contentHeight / 2
+                    angle:      glideSlopeLabel._adjustedBearing
+                }
+            }
+
+            function recalc() {
+                coordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2 + 2, _landingAreaBearing)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+                onFinalApproachCoordinateChanged:   recalc()
             }
         }
     }
@@ -273,28 +416,150 @@ Item {
             color:          "green"
             opacity:        0.5
 
-            readonly property real landingWidth:    15
-            readonly property real landingLength:   100
-            readonly property real angleRadians:    Math.atan((landingWidth / 2) / (landingLength / 2))
+            readonly property real angleRadians:    Math.atan((_landingWidthMeters / 2) / (_landingLengthMeters / 2))
             readonly property real angleDegrees:    (angleRadians * (180 / Math.PI))
-            readonly property real hypotenuse:      (landingWidth / 2) / Math.sin(angleRadians)
+            readonly property real hypotenuse:      (_landingWidthMeters / 2) / Math.sin(angleRadians)
 
-            property real landingAreaAngle: _missionItem.landingCoordinate.azimuthTo(_missionItem.loiterTangentCoordinate)
-
-            function calcPoly() {
+            function recalc() {
                 path = [ ]
-                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle - angleDegrees))
-                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle + angleDegrees))
-                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle + (180 - angleDegrees)))
-                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle - (180 - angleDegrees)))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing - angleDegrees))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing + angleDegrees))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing + (180 - angleDegrees)))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing - (180 - angleDegrees)))
             }
 
-            Component.onCompleted: calcPoly()
+            Component.onCompleted: recalc()
 
             Connections {
-                target: _missionItem
-                onLandingCoordinateChanged: calcPoly()
-                onLoiterTangentCoordinateChanged:  calcPoly()
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+                onFinalApproachCoordinateChanged:   recalc()
+            }
+        }
+    }
+
+    Component {
+        id: glideSlopeComponent
+
+        MapPolygon {
+            z:              QGroundControl.zOrderMapItems
+            border.width:   1
+            border.color:   "black"
+            color:          _missionItem.terrainCollision ? "red" : "orange"
+            opacity:        0.5
+
+            readonly property real angleRadians:    Math.atan((_landingWidthMeters / 2) / (_landingLengthMeters / 2))
+            readonly property real angleDegrees:    (angleRadians * (180 / Math.PI))
+            readonly property real hypotenuse:      (_landingWidthMeters / 2) / Math.sin(angleRadians)
+
+            function recalc() {
+                path = [ ]
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing - angleDegrees))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, _landingAreaBearing + angleDegrees))
+                addCoordinate(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+                onFinalApproachCoordinateChanged:   recalc()
+            }
+
+            Connections {
+                target:             _missionItem.useLoiterToAlt
+                onRawValueChanged:  recalc()
+            }
+        }
+    }
+
+    Component {
+        id: transitionHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+
+            sourceItem: HeightIndicator {
+                map:        _root.map
+                heightText: Math.floor(QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_transitionAltitudeMeters)) +
+                            QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString + "<sup>*</sup>"
+            }
+
+            function recalc() {
+                var centeredCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2, _landingAreaBearing)
+                var angleIncrement = _landingAreaBearing > 180 ? -90 : 90
+                coordinate = centeredCoordinate.atDistanceAndAzimuth(_landingWidthMeters, _landingAreaBearing + angleIncrement)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+                onFinalApproachCoordinateChanged:   recalc()
+            }
+        }
+    }
+
+    Component {
+        id: midGlideSlopeHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+
+            sourceItem: HeightIndicator {
+                map:        _root.map
+                heightText: Math.floor(QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_midSlopeAltitudeMeters)) +
+                            QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString + "<sup>*</sup>"
+            }
+
+            function recalc() {
+                var transitionCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2, _landingAreaBearing)
+                var halfDistance = transitionCoordinate.distanceTo(_useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate) / 2
+                var centeredCoordinate = transitionCoordinate.atDistanceAndAzimuth(halfDistance, _landingAreaBearing)
+                var angleIncrement = _landingAreaBearing > 180 ? -90 : 90
+                coordinate = centeredCoordinate.atDistanceAndAzimuth(_landingWidthMeters / 2, _landingAreaBearing + angleIncrement)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+                onFinalApproachCoordinateChanged:   recalc()
+            }
+
+            Connections {
+                target:             _missionItem.useLoiterToAlt
+                onRawValueChanged:  recalc()
+            }
+        }
+    }
+
+    Component {
+        id: approachHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+            coordinate:     _useLoiterToAlt ? _missionItem.loiterTangentCoordinate : _missionItem.finalApproachCoordinate
+
+            sourceItem: HeightIndicator {
+                map:        _root.map
+                heightText: _missionItem.finalApproachAltitude.value.toFixed(1) + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
             }
         }
     }

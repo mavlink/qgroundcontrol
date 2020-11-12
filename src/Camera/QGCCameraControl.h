@@ -1,9 +1,13 @@
 /*!
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
+
+/// @file
+/// @brief  MAVLink Camera API
+/// @author Gus Grubba <gus@auterion.com>
 
 #pragma once
 
@@ -18,6 +22,8 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 //-----------------------------------------------------------------------------
+/// Video Stream Info
+/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
 class QGCVideoStreamInfo : public QObject
 {
     Q_OBJECT
@@ -50,6 +56,7 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+/// Camera option exclusions
 class QGCCameraOptionExclusion : public QObject
 {
 public:
@@ -60,6 +67,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// Camera option ranges
 class QGCCameraOptionRange : public QObject
 {
 public:
@@ -74,6 +82,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+/// MAVLink Camera API controller
 class QGCCameraControl : public FactGroup
 {
     Q_OBJECT
@@ -155,6 +164,8 @@ public:
     Q_PROPERTY(quint32      storageFree         READ storageFree        NOTIFY storageFreeChanged)
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
+    Q_PROPERTY(int          batteryRemaining    READ batteryRemaining       NOTIFY batteryRemainingChanged)
+    Q_PROPERTY(QString      batteryRemainingStr READ batteryRemainingStr    NOTIFY batteryRemainingChanged)
     Q_PROPERTY(bool         paramComplete       READ paramComplete      NOTIFY parametersReady)
 
     Q_PROPERTY(qreal        zoomLevel           READ zoomLevel          WRITE  setZoomLevel         NOTIFY zoomLevelChanged)
@@ -167,9 +178,6 @@ public:
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        bitRate             READ bitRate            NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        frameRate           READ frameRate          NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        videoEncoding       READ videoEncoding      NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -235,6 +243,8 @@ public:
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
+    virtual int         batteryRemaining    () { return _batteryRemaining; }
+    virtual QString     batteryRemainingStr ();
     virtual bool        paramComplete       () { return _paramComplete; }
     virtual qreal       zoomLevel           () { return _zoomLevel; }
     virtual qreal       focusLevel          () { return _focusLevel; }
@@ -255,11 +265,8 @@ public:
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
-    virtual Fact*       bitRate             ();
-    virtual Fact*       frameRate           ();
-    virtual Fact*       videoEncoding       ();
 
-    //-- Stream names to show the user (for selection)
+    /// Stream names to show the user (for selection)
     virtual QStringList streamLabels        () { return _streamLabels; }
 
     virtual ThermalViewMode thermalMode     () { return _thermalMode; }
@@ -279,16 +286,16 @@ public:
     virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+    virtual void        handleBatteryStatus (const mavlink_battery_status_t& bs);
     virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
     virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
 
-    //-- Notify controller a parameter has changed
+    /// Notify controller a parameter has changed
     virtual void        factChanged         (Fact* pFact);
-    //-- Allow controller to modify or invalidate incoming parameter
+    /// Allow controller to modify or invalidate incoming parameter
     virtual bool        incomingParameter   (Fact* pFact, QVariant& newValue);
-    //-- Allow controller to modify or invalidate parameter change
+    /// Allow controller to modify or invalidate parameter change
     virtual bool        validateParameter   (Fact* pFact, QVariant& newValue);
-
 
     // Known Parameters
     static const char* kCAM_EV;
@@ -298,9 +305,6 @@ public:
     static const char* kCAM_APERTURE;
     static const char* kCAM_WBMODE;
     static const char* kCAM_MODE;
-    static const char* kCAM_BITRATE;
-    static const char* kCAM_FPS;
-    static const char* kCAM_ENC;
 
 signals:
     void    infoChanged                     ();
@@ -313,6 +317,7 @@ signals:
     void    activeSettingsChanged           ();
     void    storageFreeChanged              ();
     void    storageTotalChanged             ();
+    void    batteryRemainingChanged         ();
     void    dataReady                       (QByteArray data);
     void    parametersReady                 ();
     void    zoomLevelChanged                ();
@@ -383,6 +388,7 @@ protected:
     qreal                               _focusLevel         = 0.0;
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
+    int                                 _batteryRemaining   = -1;
     QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;

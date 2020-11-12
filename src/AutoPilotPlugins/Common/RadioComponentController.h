@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -232,8 +232,6 @@ private:
 
     void _signalAllAttitudeValueChanges(void);
 
-    int _chanMax(void) const;
-
     bool _channelReversedParamValue(int channel);
     void _setChannelReversedParamValue(int channel, bool reversed);
 
@@ -272,14 +270,10 @@ private:
     static const int _attitudeControls = 5;
 
     int _chanCount;                     ///< Number of actual rc channels available
-    static const int _chanMaxPX4 = 18;  ///< Maximum number of supported rc channels, PX4 Firmware
-    static const int _chanMaxAPM = 14;  ///< Maximum number of supported rc channels, APM firmware
-    static const int _chanMaxAny = 18;  ///< Maximum number of support rc channels by this implementation
+    static const int _chanMax = 18;     ///< Maximum number of support rc channels by this implementation
     static const int _chanMinimum = 5;  ///< Minimum numner of channels required to run
 
-    struct ChannelInfo _rgChannelInfo[_chanMaxAny];    ///< Information associated with each rc channel
-
-    QList<int> _apmPossibleMissingRCChannelParams;  ///< List of possible missing RC*_* params for APM stack
+    struct ChannelInfo _rgChannelInfo[_chanMax];    ///< Information associated with each rc channel
 
     enum rcCalStates _rcCalState;       ///< Current calibration state
     int _rcCalStateCurrentChannel;      ///< Current channel being worked on in rcCalStateIdentify and rcCalStateDetectInversion
@@ -302,15 +296,15 @@ private:
     QString             _revParamFormat;
     bool                _revParamIsBool;
 
-    int _rcValueSave[_chanMaxAny];        ///< Saved values prior to detecting channel movement
+    int _rcValueSave[_chanMax];        ///< Saved values prior to detecting channel movement
 
-    int _rcRawValue[_chanMaxAny];         ///< Current set of raw channel values
+    int _rcRawValue[_chanMax];         ///< Current set of raw channel values
 
     int     _stickDetectChannel;
     int     _stickDetectInitialValue;
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
-    QTime   _stickDetectSettleElapsed;
+    QElapsedTimer   _stickDetectSettleElapsed;
     static const int _stickDetectSettleMSecs;
 
     bool        _unitTestMode   = false;

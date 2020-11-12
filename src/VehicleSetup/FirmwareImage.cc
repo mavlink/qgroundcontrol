@@ -1,16 +1,11 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-
-
-/// @file
-///     @brief Support for Intel Hex firmware file
-///     @author Don Gagne <don@thegagnes.com>
 
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
@@ -18,7 +13,7 @@
 #include "QGCMAVLink.h"
 #include "QGCApplication.h"
 #include "FirmwarePlugin.h"
-#include "ParameterManager.h"
+#include "CompInfoParam.h"
 #include "Bootloader.h"
 
 #include <QDebug>
@@ -243,7 +238,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QStringList requiredKeys;
     requiredKeys << _jsonBoardIdKey << _jsonImageKey << _jsonImageSizeKey;
     if (!JsonHelper::validateRequiredKeys(px4Json, requiredKeys, errorString)) {
-        emit statusMessage(tr("Firmware file mission required key: %1").arg(errorString));
+        emit statusMessage(tr("Firmware file missing required key: %1").arg(errorString));
         return false;
     }
 
@@ -292,7 +287,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
         }
 
         // Cache this file with the system
-        ParameterManager::cacheMetaDataFile(parameterFilename, firmwareType);
+        CompInfoParam::_cachePX4MetaDataFile(parameterFilename);
     }
 
     // Decompress the airframe xml and save to file

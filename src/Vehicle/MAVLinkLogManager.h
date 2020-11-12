@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -140,7 +140,7 @@ public:
     bool        enableAutoStart     () { return _enableAutoStart; }
     bool        uploading                ();
     bool        logRunning          () { return _logRunning; }
-    bool        canStartLog         () { return _vehicle != NULL && !_logginDenied; }
+    bool        canStartLog         () { return _vehicle != nullptr && !_logginDenied; }
     bool        deleteAfterUpload   () { return _deleteAfterUpload; }
     bool        publicLog           () { return _publicLog; }
     int         windSpeed           () { return _windSpeed; }

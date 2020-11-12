@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -32,6 +32,7 @@ QGCButton {
     property bool   telemetryFailure:               false   ///< true: telemetry check failing, false: telemetry check passing
     property bool   allowTelemetryFailureOverride:  false   ///< true: user can click past telemetry failure
     property bool   passed:                         _manualState === _statePassed && _telemetryState === _statePassed
+    property bool   failed:                         _manualState === _stateFailed || _telemetryState === _stateFailed
 
     property int _manualState:          manualText === "" ? _statePassed : _statePending
     property int _telemetryState:       _statePassed
@@ -43,9 +44,9 @@ QGCButton {
     readonly property int _stateFailed:     1   ///< Telemetry check is failing, user cannot click to make it pass
     readonly property int _statePassed:     2   ///< Check has passed
 
-    readonly property color _passedColor:   Qt.rgba(0.27,0.67,0.42,1)
-    readonly property color _pendingColor:  Qt.rgba(0.9,0.47,0.2,1)
-    readonly property color _failedColor:   Qt.rgba(0.92,0.22,0.22,1)
+    readonly property color _passedColor:   "#86cc6a"
+    readonly property color _pendingColor:  "#f7a81f"
+    readonly property color _failedColor:   "#c31818"
 
     property string _text: "<b>" + name +"</b>: " +
                            ((_telemetryState !== _statePassed) ?
@@ -136,5 +137,4 @@ QGCButton {
         }
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 }

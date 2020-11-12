@@ -1,15 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-
-#ifndef QGCFileDownload_H
-#define QGCFileDownload_H
+#pragma once
 
 #include <QNetworkReply>
 
@@ -18,18 +16,17 @@ class QGCFileDownload : public QNetworkAccessManager
     Q_OBJECT
     
 public:
-    QGCFileDownload(QObject* parent = NULL);
+    QGCFileDownload(QObject* parent = nullptr);
     
     /// Download the specified remote file.
-    ///     @param remoteFile File to download. Can be http address or file system path.
-    ///     @param redirect true: call is internal due to redirect
+    ///     @param remoteFile   File to download. Can be http address or file system path.
+    ///     @param redirect     true: call is internal due to redirect
     /// @return true: Asynchronous download has started, false: Download initialization failed
     bool download(const QString& remoteFile, bool redirect = false);
 
 signals:
     void downloadProgress(qint64 curr, qint64 total);
-    void downloadFinished(QString remoteFile, QString localFile);
-    void error(QString errorMsg);
+    void downloadComplete(QString remoteFile, QString localFile, QString errorMsg);
 
 private:
     void _downloadFinished(void);
@@ -37,5 +34,3 @@ private:
 
     QString _originalRemoteFile;
 };
-
-#endif

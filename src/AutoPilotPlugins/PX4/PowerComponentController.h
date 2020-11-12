@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,7 +29,7 @@ public:
     PowerComponentController(void);
     
     Q_INVOKABLE void calibrateEsc(void);
-    Q_INVOKABLE void busConfigureActuators(void);
+    Q_INVOKABLE void startBusConfigureActuators(void);
     Q_INVOKABLE void stopBusConfigureActuators(void);
     
 signals:
@@ -43,7 +43,7 @@ signals:
     void calibrationSuccess(const QStringList& warningMessages);
     
 private slots:
-    void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
+    void _handleVehicleTextMessage(int vehicleId, int compId, int severity, QString text);
     
 private:
     void _stopCalibration(void);

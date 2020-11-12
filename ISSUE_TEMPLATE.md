@@ -1,6 +1,8 @@
-This system is for posting bugs or feature requests ONLY. For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
+# This system is for posting bugs or feature requests ONLY. Support questions will be automatically closed with no response.
+# For questions about how to use or build QGC see: http://qgroundcontrol.com/#resources
 
 ----
+# To post a bug report
 When posting bug reports, include the following informaiton:
 - Ground station operating system.
 - QGroundControl version and build (daily, stable, self-built from source, etc.)

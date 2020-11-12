@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -19,13 +19,6 @@
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 #include "FirmwarePluginManager.h"
-
-#ifndef __mobile__
-#include "FileManager.h"
-#include "QGCHilLink.h"
-#include "QGCJSBSimLink.h"
-#include "QGCXPlaneLink.h"
-#endif
 
 Q_DECLARE_LOGGING_CATEGORY(UASLog)
 
@@ -52,15 +45,13 @@ public:
 
     /** @brief Get the unique system id */
     int getUASID() const;
-    /** @brief Get the components */
-    QMap<int, QString> getComponents();
 
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
 
-	/// Vehicle is about to go away
-	void shutdownVehicle(void);
-	
+    /// Vehicle is about to go away
+    void shutdownVehicle(void);
+
     // Setters for HIL noise variance
     void setXaccVar(float var){
         xacc_var = var;
@@ -114,14 +105,9 @@ public:
         temperature_var = var;
     }
 
-#ifndef __mobile__
-    friend class FileManager;
-#endif
-
-protected: //COMMENTS FOR TEST UNIT
+protected:
     /// LINK ID AND STATUS
     int uasId;                    ///< Unique system ID
-    QMap<int, QString> components;///< IDs and names of all detected onboard components
 
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
@@ -141,17 +127,8 @@ protected: //COMMENTS FOR TEST UNIT
     bool controlYawManual;      ///< status flag, true if yaw is controlled manually
     bool controlThrustManual;   ///< status flag, true if thrust is controlled manually
 
-    double manualRollAngle;     ///< Roll angle set by human pilot (radians)
-    double manualPitchAngle;    ///< Pitch angle set by human pilot (radians)
-    double manualYawAngle;      ///< Yaw angle set by human pilot (radians)
-    double manualThrust;        ///< Thrust set by human pilot (radians)
-
     /// POSITION
     bool isGlobalPositionKnown; ///< If the global position has been received for this MAV
-
-#ifndef __mobile__
-    FileManager   fileManager;
-#endif
 
     /// ATTITUDE
     bool attitudeKnown;             ///< True if attitude was received, false else
@@ -172,7 +149,6 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
-    bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
     /// SIMULATION NOISE
     float xacc_var;             ///< variance of x acclerometer noise for HIL sim (mg)
@@ -189,25 +165,9 @@ protected: //COMMENTS FOR TEST UNIT
     float pressure_alt_var;     ///< variance of altitude pressure noise for HIL sim (hPa)
     float temperature_var;      ///< variance of temperature noise for HIL sim (C)
 
-    /// SIMULATION
-#ifndef __mobile__
-    QGCHilLink* simulation;         ///< Hardware in the loop simulation link
-#endif
-
 public:
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
-
-#ifndef __mobile__
-    virtual FileManager* getFileManager() { return &fileManager; }
-#endif
-
-    /** @brief Get the HIL simulation */
-#ifndef __mobile__
-    QGCHilLink* getHILSimulation() const {
-        return simulation;
-    }
-#endif
 
     QImage getImage();
     void requestImage();
@@ -216,80 +176,13 @@ public slots:
     /** @brief Order the robot to pair its receiver **/
     void pairRX(int rxType, int rxSubType);
 
-    /** @brief Enable / disable HIL */
-#ifndef __mobile__
-    void enableHilJSBSim(bool enable, QString options);
-    void enableHilXPlane(bool enable);
-
-    /** @brief Send the full HIL state to the MAV */
-    void sendHilState(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
-                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
-
-    void sendHilGroundTruth(quint64 time_us, float roll, float pitch, float yaw, float rollRotationRate,
-                        float pitchRotationRate, float yawRotationRate, double lat, double lon, double alt,
-                        float vx, float vy, float vz, float ind_airspeed, float true_airspeed, float xacc, float yacc, float zacc);
-
-    /** @brief RAW sensors for sensor HIL */
-    void sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, float rollspeed, float pitchspeed, float yawspeed,
-                        float xmag, float ymag, float zmag, float abs_pressure, float diff_pressure, float pressure_alt, float temperature, quint32 fields_changed);
-
-    /** @brief Send Optical Flow sensor message for HIL, (arguments and units accoding to mavlink documentation*/
-    void sendHilOpticalFlow(quint64 time_us, qint16 flow_x, qint16 flow_y, float flow_comp_m_x,
-                            float flow_comp_m_y, quint8 quality, float ground_distance);
-
-    float addZeroMeanNoise(float truth_meas, float noise_var);
-
-    /**
-     * @param time_us
-     * @param lat
-     * @param lon
-     * @param alt
-     * @param fix_type
-     * @param eph
-     * @param epv
-     * @param vel
-     * @param cog course over ground, in radians, -pi..pi
-     * @param satellites
-     */
-    void sendHilGps(quint64 time_us, double lat, double lon, double alt, int fix_type, float eph, float epv, float vel, float vn, float ve, float vd,  float cog, int satellites);
-
-
-    /** @brief Places the UAV in Hardware-in-the-Loop simulation status **/
-    void startHil();
-
-    /** @brief Stops the UAV's Hardware-in-the-Loop simulation status **/
-    void stopHil();
-#endif
-
-    /** @brief Set the values for the manual control of the vehicle */
-    void setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode);
-
-    /** @brief Set the values for the 6dof manual control of the vehicle */
-#ifndef __mobile__
-    void setManual6DOFControlCommands(double x, double y, double z, double roll, double pitch, double yaw);
-#endif
-
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(mavlink_message_t message);
 
-    void startCalibration(StartCalibrationType calType);
-    void stopCalibration(void);
-
-    void startBusConfig(StartBusConfigType calType);
-    void stopBusConfig(void);
-
-    /** @brief Send command to map a RC channel to a parameter */
-    void sendMapRCToParam(QString param_id, float scale, float value0, quint8 param_rc_channel_index, float valueMin, float valueMax);
-
-    /** @brief Send command to disable all bindings/maps between RC and parameters */
-    void unsetRCToParameterMap();
 signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
-    /** @brief HIL controls have changed */
-    void hilControlsChanged(quint64 time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, quint8 systemMode, quint8 navMode);
 
     void rollChanged(double val,QString name);
     void pitchChanged(double val,QString name);
@@ -303,21 +196,11 @@ protected:
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 
-    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
-
-    QMap<int, int>componentID;
-    QMap<int, bool>componentMulti;
-
     bool connectionLost; ///< Flag indicates a timed out connection
     quint64 connectionLossTime; ///< Time the connection was interrupted
     quint64 lastVoltageWarning; ///< Time at which the last voltage warning occurred
     quint64 lastNonNullTime;    ///< The last timestamp from the MAV that was not null
     unsigned int onboardTimeOffsetInvalidCount;     ///< Count when the offboard time offset estimation seemed wrong
-    bool hilEnabled;
-    bool sensorHil;             ///< True if sensor HIL is enabled
-    quint64 lastSendTimeGPS;     ///< Last HIL GPS message sent
-    quint64 lastSendTimeSensors; ///< Last HIL Sensors message sent
-    quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
 
 private:
     Vehicle*                _vehicle;

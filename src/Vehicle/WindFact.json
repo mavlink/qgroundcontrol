@@ -1,24 +1,28 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "direction",
-    "shortDescription": "Wind Direction",
+    "shortDesc": "Wind Direction",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "deg"
 },
 {
     "name":             "speed",
-    "shortDescription": "Wind Spd",
+    "shortDesc": "Wind Spd",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m/s"
 },
 {
     "name":             "verticalSpeed",
-    "shortDescription": "Wind Spd (vert)",
+    "shortDesc": "Wind Spd (vert)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m/s"
 }
 ]
-
+}

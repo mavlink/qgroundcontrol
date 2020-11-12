@@ -26,32 +26,44 @@ class MicrohardManager : public QGCTool
     Q_OBJECT
 public:
 
-    Q_PROPERTY(bool         connected           READ connected                                  NOTIFY connectedChanged)
-    Q_PROPERTY(bool         linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
+    Q_PROPERTY(int          connected           READ connected                                  NOTIFY connectedChanged)
+    Q_PROPERTY(int          linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
-    Q_PROPERTY(QString      localIPAddr         READ localIPAddr                                NOTIFY localIPAddrChanged)
-    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr                               NOTIFY remoteIPAddrChanged)
+    Q_PROPERTY(QString      localIPAddr         READ localIPAddr      WRITE setLocalIPAddr      NOTIFY localIPAddrChanged)
+    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr     WRITE setRemoteIPAddr     NOTIFY remoteIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
+    Q_PROPERTY(QString      configUserName      READ configUserName                             NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgPassword, QString encyrptionKey);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encyrptionKey);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
 
     void        setToolbox                      (QGCToolbox* toolbox) override;
 
-    bool        connected                       () { return _isConnected && _mhSettingsLoc && _mhSettingsLoc->loggedIn(); }
-    bool        linkConnected                   () { return _linkConnected && _mhSettingsRem && _mhSettingsRem->loggedIn(); }
+    int         connected                       () { return _connectedStatus; }
+    int         linkConnected                   () { return _linkConnectedStatus; }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     QString     localIPAddr                     () { return _localIPAddr; }
     QString     remoteIPAddr                    () { return _remoteIPAddr; }
     QString     netMask                         () { return _netMask; }
+    QString     configUserName                  () { return _configUserName; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
+
+    void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
+    void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
+    void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
+    void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
+    void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
+    void        updateSettings                  ();
+    void        setEncryptionKey                ();
+    void        switchToPairingEncryptionKey    ();
+    void        switchToConnectionEncryptionKey (QString encryptionKey);
 
 signals:
     void    linkChanged                     ();
@@ -60,13 +72,14 @@ signals:
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
     void    netMaskChanged                  ();
+    void    configUserNameChanged           ();
     void    configPasswordChanged           ();
     void    encryptionKeyChanged            ();
 
 private slots:
-    void    _connectedLoc                   ();
+    void    _connectedLoc                   (int status);
     void    _rssiUpdatedLoc                 (int rssi);
-    void    _connectedRem                   ();
+    void    _connectedRem                   (int status);
     void    _rssiUpdatedRem                 (int rssi);
     void    _checkMicrohard                 ();
     void    _setEnabled                     ();
@@ -79,21 +92,24 @@ private:
     FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
-    bool                    _isConnected    = false;
-    AppSettings*            _appSettings    = nullptr;
-    MicrohardSettings*      _mhSettingsLoc  = nullptr;
-    MicrohardSettings*      _mhSettingsRem  = nullptr;
-    bool            _enabled                = true;
-    bool            _linkConnected          = false;
-    QTimer          _workTimer;
-    QTimer          _locTimer;
-    QTimer          _remTimer;
-    int             _downlinkRSSI           = 0;
-    int             _uplinkRSSI             = 0;
-    QString         _localIPAddr;
-    QString         _remoteIPAddr;
-    QString         _netMask;
-    QString         _configPassword;
-    QString         _encryptionKey;
-    QTime           _timeoutTimer;
+    int                _connectedStatus = 0;
+    AppSettings*       _appSettings = nullptr;
+    MicrohardSettings* _mhSettingsLoc = nullptr;
+    MicrohardSettings* _mhSettingsRem = nullptr;
+    bool               _enabled  = true;
+    int                _linkConnectedStatus = 0;
+    QTimer             _workTimer;
+    QTimer             _locTimer;
+    QTimer             _remTimer;
+    int                _downlinkRSSI = 0;
+    int                _uplinkRSSI = 0;
+    QString            _localIPAddr;
+    QString            _remoteIPAddr;
+    QString            _netMask;
+    QString            _configUserName;
+    QString            _configPassword;
+    QString            _encryptionKey;
+    bool               _useCommunicationEncryptionKey = false;
+    QString            _communicationEncryptionKey;
+    QTime              _timeoutTimer;
 };

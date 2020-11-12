@@ -1,7 +1,7 @@
 import QtQuick                  2.11
 import QtQuick.Controls         2.4
 import QtQuick.Controls.Styles  1.4
-import QtQuick.Layouts          1.2
+import QtQuick.Layouts          1.11
 
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
@@ -456,9 +456,9 @@ Rectangle {
                             text: qsTr("Button")
                         }
                         QGCButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
-                            text: qsTr("Button")
+                            text:   qsTr("Button")
                             primary: true
                             enabled: false
                         }
@@ -469,16 +469,16 @@ Rectangle {
                             property string text: "QGCHoverButton"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
-                            text: qsTr("Hover Button")
+                            text:   qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
-                            text: qsTr("Hover Button")
+                            text:   qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                             enabled: false
@@ -491,13 +491,13 @@ Rectangle {
                         }
                         Menu {
                             id: buttonMenu
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 1")
                             }
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 2")
                             }
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 3")
                             }
                         }
@@ -626,10 +626,11 @@ Rectangle {
                         radius: 3
                         color:  palette.alertBackground
                         border.color: palette.alertBorder
+                        border.width: 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Label {
                             text: "Alert Message"
-                            palette.text: palette.alertText
+                            color: palette.alertText
                             anchors.centerIn: parent
                         }
                     }

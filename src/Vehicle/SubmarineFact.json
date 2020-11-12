@@ -1,45 +1,56 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
-    "name":             "camera tilt",
-    "shortDescription": "Camera Tilt",
+    "name":             "cameraTilt",
+    "shortDesc": "Camera Tilt",
     "type":             "int16",
     "units":            "%"
 },
 {
-    "name":             "tether turns",
-    "shortDescription": "Tether Turns",
+    "name":             "tetherTurns",
+    "shortDesc": "Tether Turns",
     "type":             "int16",
     "units":            "clockwise"
 },
 {
-    "name":             "lights 1",
-    "shortDescription": "Lights 1 level",
+    "name":             "lights1",
+    "shortDesc": "Lights 1 level",
     "type":             "int16",
     "units":            "%"
 },
 {
-    "name":             "lights 2",
-    "shortDescription": "Lights 2 level",
+    "name":             "lights2",
+    "shortDesc": "Lights 2 level",
     "type":             "int16",
     "units":            "%"
 },
 {
-    "name":             "pilot gain",
-    "shortDescription": "Pilot Gain",
+    "name":             "pilotGain",
+    "shortDesc": "Pilot Gain",
     "type":             "int16",
     "units":            "%"
 },
 {
-    "name":             "input hold",
-    "shortDescription": "Input Hold",
+    "name":             "inputHold",
+    "shortDesc": "Input Hold",
     "type":             "int16",
     "enumStrings":      "Disabled,Enabled",
     "enumValues":       "0,1"
 },
-{    "name":             "rangefinder distance",
-    "shortDescription": "Rangefinder",
+{    "name":            "rangefinderDistance",
+    "shortDesc": "Rangefinder",
     "type":             "float",
     "decimalPlaces":    2,
     "units":            "meters"
+},
+{   "name":             "rollPitchToggle",
+    "shortDesc": "Roll/Pitch Toggle",
+    "type":             "int16",
+    "enumStrings":      "Disabled,Enabled,Unavailable",
+    "enumValues":       "0,1,2"
 }
 ]
+}

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,15 +9,16 @@
 
 #pragma once
 
-#include "UnitTest.h"
+#include "TransectStyleComplexItemTestBase.h"
 #include "MultiSignalSpy.h"
 #include "CorridorScanComplexItem.h"
+#include "PlanMasterController.h"
 
 #include <QGeoCoordinate>
 
-class TransectStyleItem;
+class TestTransectStyleItem;
 
-class TransectStyleComplexItemTest : public UnitTest
+class TransectStyleComplexItemTest : public TransectStyleComplexItemTestBase
 {
     Q_OBJECT
     
@@ -27,17 +28,15 @@ public:
 protected:
     void init(void) final;
     void cleanup(void) final;
-    
+
 private slots:
     void _testDirty             (void);
     void _testRebuildTransects  (void);
     void _testDistanceSignalling(void);
     void _testAltMode           (void);
+    void _testFollowTerrain     (void);
 
 private:
-    void _setSurveyAreaPolygon  (void);
-    void _adjustSurveAreaPolygon(void);
-
     enum {
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedIndex = 0,
@@ -72,37 +71,37 @@ private:
     static const size_t _cSignals = maxSignalIndex;
     const char*         _rgSignals[_cSignals];
 
-    Vehicle*                _offlineVehicle;
-    MultiSignalSpy*         _multiSpy;
-    QList<QGeoCoordinate>   _polygonVertices;
-    TransectStyleItem*      _transectStyleItem;
+    MultiSignalSpy*         _multiSpy =             nullptr;
+    TestTransectStyleItem*  _transectStyleItem =    nullptr;
 };
 
-class TransectStyleItem : public TransectStyleComplexItem
+class TestTransectStyleItem : public TransectStyleComplexItem
 {
     Q_OBJECT
 
 public:
-    TransectStyleItem(Vehicle* vehicle, QObject* parent = NULL);
+    TestTransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
 
     // Overrides from ComplexMissionItem
+    QString patternName         (void) const final { return QString(); }
     QString mapVisualQML        (void) const final { return QString(); }
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final { Q_UNUSED(complexObject); Q_UNUSED(sequenceNumber); Q_UNUSED(errorString); return false; }
 
     // Overrides from VisualMissionItem
     void    save                (QJsonArray&  missionItems) final { Q_UNUSED(missionItems); }
     bool    specifiesCoordinate (void) const final { return true; }
-    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
-    void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
     double  additionalTimeDelay (void) const final { return 0; }
 
     bool rebuildTransectsPhase1Called;
     bool recalcComplexDistanceCalled;
     bool recalcCameraShotsCalled;
+    void _adjustSurveAreaPolygon(void);
+    QList<QList<CoordInfo_t>> transects() const {
+        return _transects;
+    }
 
 private slots:
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
-    void _recalcComplexDistance     (void) final;
     void _recalcCameraShots         (void) final;
 };

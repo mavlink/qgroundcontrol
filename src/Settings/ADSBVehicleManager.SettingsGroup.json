@@ -1,0 +1,29 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":                 "adsbServerConnectEnabled",
+    "shortDesc":     "Connect to ADSB SBS server",
+    "longDesc":      "Connect to ADSB SBS-1 server using specified address/port",
+    "type":                 "bool",
+    "default":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "adsbServerHostAddress",
+    "shortDesc":     "Host address",
+    "type":                 "string",
+    "default":         "127.0.0.1",
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "adsbServerPort",
+    "shortDesc":     "Server port",
+    "type":                 "string",
+    "default":         30003,
+    "qgcRebootRequired":    true
+}
+]
+}

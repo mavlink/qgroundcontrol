@@ -1,35 +1,34 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-
-/**
- * @file
- *   @brief Main executable
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
- */
-
 #include <QtGlobal>
 #include <QApplication>
 #include <QIcon>
 #include <QSslSocket>
+#include <QMessageBox>
 #include <QProcessEnvironment>
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <QtPlugin>
 #include <QStringListModel>
+
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "AppMessages.h"
+#include "SerialLink.h"
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
     #include "RunGuard.h"
+#ifndef NO_SERIAL_LINK
+    #include <QSerialPort>
+#endif
 #endif
 
 #ifdef UNITTEST_BUILD
@@ -81,10 +80,91 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(__android__)
 #include <jni.h>
 #include "JoystickAndroid.h"
+#if defined(QGC_ENABLE_PAIRING)
+#include "PairingManager.h"
+#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
 
+static jobject _class_loader = nullptr;
+static jobject _context = nullptr;
+
+//-----------------------------------------------------------------------------
+extern "C" {
+    void gst_amc_jni_set_java_vm(JavaVM *java_vm);
+
+    jobject gst_android_get_application_class_loader(void)
+    {
+        return _class_loader;
+    }
+}
+
+//-----------------------------------------------------------------------------
+static void
+gst_android_init(JNIEnv* env, jobject context)
+{
+    jobject class_loader = nullptr;
+
+    jclass context_cls = env->GetObjectClass(context);
+    if (!context_cls) {
+        return;
+    }
+
+    jmethodID get_class_loader_id = env->GetMethodID(context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return;
+    }
+
+    class_loader = env->CallObjectMethod(context, get_class_loader_id);
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+        return;
+    }
+
+    _context = env->NewGlobalRef(context);
+    _class_loader = env->NewGlobalRef (class_loader);
+}
+
+//-----------------------------------------------------------------------------
+static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+
+void setNativeMethods(void)
+{
+    JNINativeMethod javaMethods[] {
+        {"nativeInit", "()V", reinterpret_cast<void *>(gst_android_init)}
+    };
+
+    QAndroidJniEnvironment jniEnv;
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+
+    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    if(!objectClass) {
+        qWarning() << "Couldn't find class:" << kJniClassName;
+        return;
+    }
+
+    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+
+    if (val < 0) {
+        qWarning() << "Error registering methods: " << val;
+    } else {
+        qDebug() << "Main Native Functions Registered";
+    }
+
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+}
+
+//-----------------------------------------------------------------------------
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
@@ -93,15 +173,29 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
+
+    setNativeMethods();
+
+#if defined(QGC_GST_STREAMING)
+    // Tell the androidmedia plugin about the Java VM
+    gst_amc_jni_set_java_vm(vm);
+#endif
+
  #if !defined(NO_SERIAL_LINK)
     QSerialPort::setNativeMethods();
  #endif
+
     JoystickAndroid::setNativeMethods();
+
+#if defined(QGC_ENABLE_PAIRING)
+    PairingManager::setNativeMethods();
+#endif
 
     return JNI_VERSION_1_6;
 }
 #endif
 
+//-----------------------------------------------------------------------------
 #ifdef __android__
 #include <QtAndroid>
 bool checkAndroidWritePermission() {
@@ -117,6 +211,7 @@ bool checkAndroidWritePermission() {
 }
 #endif
 
+//-----------------------------------------------------------------------------
 /**
  * @brief Starts the application
  *
@@ -130,9 +225,17 @@ int main(int argc, char *argv[])
 #ifndef __mobile__
     RunGuard guard("QGroundControlRunGuardKey");
     if (!guard.tryToRun()) {
-        return 0;
+        // QApplication is necessary to use QMessageBox
+        QApplication errorApp(argc, argv);
+        QMessageBox::critical(nullptr, QObject::tr("Error"),
+            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
+        );
+        return -1;
     }
 #endif
+
+    //-- Record boot time
+    QGC::initTimer();
 
 #ifdef Q_OS_UNIX
     //Force writing to the console on UNIX/BSD devices
@@ -186,6 +289,8 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
+    qRegisterMetaType<Vehicle::MavCmdResultFailureCode_t>("Vehicle::MavCmdResultFailureCode_t");
+
     // We statically link our own QtLocation plugin
 
 #ifdef Q_OS_WIN
@@ -236,6 +341,10 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
+    if(app->isErrorState()) {
+        app->exec();
+        return -1;
+    }
 
 #ifdef Q_OS_LINUX
     QApplication::setWindowIcon(QIcon(":/res/resources/icons/qgroundcontrol.ico"));

@@ -1,11 +1,16 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
 [
 {
     "name":             "FlightSpeed",
-    "shortDescription": "Set the current flight speed",
+    "shortDesc": "Set the current flight speed",
     "type":             "double",
     "units":            "m/s",
     "min":              0,
     "decimalPlaces":    1,
-    "defaultValue":     0
+    "default":     0
 }
 ]
+}

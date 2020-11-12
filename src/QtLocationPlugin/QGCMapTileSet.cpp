@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,7 +12,7 @@
  * @file
  *   @brief Map Tile Set
  *
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -47,12 +47,12 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     , _deleting(false)
     , _downloading(false)
     , _id(0)
-    , _type(UrlFactory::Invalid)
-    , _networkManager(NULL)
+    , _type("Invalid")
+    , _networkManager(nullptr)
     , _errorCount(0)
     , _noMoreTiles(false)
     , _batchRequested(false)
-    , _manager(NULL)
+    , _manager(nullptr)
     , _selected(false)
 {
 
@@ -61,9 +61,8 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
 //-----------------------------------------------------------------------------
 QGCCachedTileSet::~QGCCachedTileSet()
 {
-    if(_networkManager) {
-        delete _networkManager;
-    }
+    delete _networkManager;
+    _networkManager = nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -201,7 +200,15 @@ void QGCCachedTileSet::_doneWithDownload()
         _totalTileCount = _savedTileCount;
         _totalTileSize  = _savedTileSize;
         //-- Too expensive to compute the real size now. Estimate it for the time being.
-        quint32 avg = _savedTileSize / _savedTileCount;
+        quint32 avg;
+        if(_savedTileSize != 0){
+            avg = _savedTileSize / _savedTileCount;
+        }
+        else{
+            qWarning() << "QGCMapEngineManager::_doneWithDownload _savedTileSize=0 !";
+            avg = 0;
+        }
+
         _uniqueTileSize = _uniqueTileCount * avg;
     }
     emit totalTileCountChanged();
@@ -243,7 +250,11 @@ void QGCCachedTileSet::_prepareDownload()
             QNetworkReply* reply = _networkManager->get(request);
             reply->setParent(0);
             connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
             connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &QGCCachedTileSet::_networkReplyError);
+#else
+            connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
+#endif
             _replies.insert(tile->hash(), reply);
 #if !defined(__mobile__)
             _networkManager->setProxy(proxy);
@@ -279,8 +290,8 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
-            if (type == UrlFactory::MapType::AirmapElevation) {
+            QString type = getQGCMapEngine()->hashToType(hash);
+            if (type == "Airmap Elevation" ) {
                 image = TerrainTile::serialize(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);

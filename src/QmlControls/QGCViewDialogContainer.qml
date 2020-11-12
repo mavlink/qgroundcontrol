@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,16 +15,20 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
-Item {
-    anchors.fill:   parent
+Drawer {
+    edge:           Qt.RightEdge
+    interactive:    false
+
+    property var    dialogComponent
+    property string dialogTitle
+    property var    dialogButtons:        StandardButton.NoButton
 
     property real   _defaultTextHeight: _textMeasure.contentHeight
     property real   _defaultTextWidth:  _textMeasure.contentWidth
 
-    function setupDialogButtons() {
+    function setupDialogButtons(buttons) {
         _acceptButton.visible = false
         _rejectButton.visible = false
-        var buttons = mainWindowDialog.dialogButtons
         // Accept role buttons
         if (buttons & StandardButton.Ok) {
             _acceptButton.text = qsTr("Ok")
@@ -81,16 +85,32 @@ Item {
             _rejectButton.text = qsTr("Abort")
             _rejectButton.visible = true
         }
+
+        if (buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
+            closePolicy = Popup.NoAutoClose;
+            interactive = false;
+        } else {
+            closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
+            interactive = true;
+        }
     }
 
     Connections {
         target: _dialogComponentLoader.item
         onHideDialog: {
-            mainWindowDialog.close()
+            Qt.inputMethod.hide()
+            close()
         }
     }
 
+    Component.onCompleted: setupDialogButtons(dialogButtons)
+
     QGCLabel { id: _textMeasure; text: "X"; visible: false }
+
+
+    background: Rectangle {
+        color:  qgcPal.windowShadeDark
+    }
 
     // This is the main dialog panel
     Item {
@@ -102,9 +122,8 @@ Item {
             height:         _acceptButton.visible ? _acceptButton.height : _rejectButton.height
             color:          qgcPal.windowShade
             QGCLabel {
-                id:                 titleLabel
                 x:                  _defaultTextWidth
-                text:               mainWindowDialog.dialogTitle
+                text:               dialogTitle
                 height:             parent.height
                 verticalAlignment:	Text.AlignVCenter
             }
@@ -112,20 +131,14 @@ Item {
                 id:                 _rejectButton
                 anchors.right:      _acceptButton.visible ?  _acceptButton.left : parent.right
                 anchors.bottom:     parent.bottom
-                onClicked: {
-                    _dialogComponentLoader.item.reject()
-                    mainWindowDialog.close()
-                }
+                onClicked:          _dialogComponentLoader.item.reject()
             }
             QGCButton {
                 id:                 _acceptButton
                 anchors.right:      parent.right
                 anchors.bottom:     parent.bottom
                 primary:            true
-                onClicked: {
-                    _dialogComponentLoader.item.accept()
-                    mainWindowDialog.close()
-                }
+                onClicked:          _dialogComponentLoader.item.accept()
             }
         }
         Item {
@@ -141,7 +154,7 @@ Item {
             anchors.right:      parent.right
             anchors.top:        _spacer.bottom
             anchors.bottom:     parent.bottom
-            sourceComponent:    mainWindowDialog.dialogComponent
+            sourceComponent:    dialogComponent
             focus:              true
             property bool acceptAllowed: _acceptButton.visible
             property bool rejectAllowed: _rejectButton.visible

@@ -2,22 +2,81 @@
 set(EXTRA_SRC)
 if(BUILD_TESTING)
 	list(APPEND EXTRA_SRC
-		SendMavCommandTest.cc
+		FTPManagerTest.cc
+		FTPManagerTest.h
+		RequestMessageTest.cc
+		RequestMessageTest.h
+		SendMavCommandWithHandlerTest.cc
+		SendMavCommandWithHandlerTest.h
+		SendMavCommandWithSignallingTest.cc
+		SendMavCommandWithSignallingTest.h
+		VehicleLinkManagerTest.cc
+		VehicleLinkManagerTest.h
 	)
 endif()
 
 add_library(Vehicle
-	ADSBVehicle.cc
+	CompInfo.cc
+	CompInfo.h
+	CompInfoParam.cc
+	CompInfoParam.h
+	CompInfoVersion.cc
+	CompInfoVersion.h
+	ComponentInformationManager.cc
+	ComponentInformationManager.h
+	FTPManager.cc
+	FTPManager.h
 	GPSRTKFactGroup.cc
+	GPSRTKFactGroup.h
+	InitialConnectStateMachine.cc
+	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
+	MAVLinkLogManager.h
 	MultiVehicleManager.cc
+	MultiVehicleManager.h
+	StateMachine.cc
+	StateMachine.h
+	SysStatusSensorInfo.cc
+	SysStatusSensorInfo.h
+	TerrainFactGroup.cc
+	TerrainFactGroup.h
+	TerrainProtocolHandler.cc
+	TerrainProtocolHandler.h
+	TrajectoryPoints.cc
+	TrajectoryPoints.h
+	VehicleBatteryFactGroup.cc
+	VehicleBatteryFactGroup.h
 	Vehicle.cc
+	VehicleClockFactGroup.cc
+	VehicleClockFactGroup.h
+	VehicleDistanceSensorFactGroup.cc
+	VehicleDistanceSensorFactGroup.h
+	VehicleEscStatusFactGroup.cc
+	VehicleEscStatusFactGroup.h
+	VehicleEstimatorStatusFactGroup.cc
+	VehicleEstimatorStatusFactGroup.h
+	VehicleGPSFactGroup.cc
+	VehicleGPSFactGroup.h
+	Vehicle.h
+	VehicleLinkManager.cc
+	VehicleLinkManager.h
+	VehicleObjectAvoidance.cc
+	VehicleObjectAvoidance.h
+	VehicleSetpointFactGroup.cc
+	VehicleSetpointFactGroup.h
+	VehicleTemperatureFactGroup.cc
+	VehicleTemperatureFactGroup.h
+	VehicleVibrationFactGroup.cc
+	VehicleVibrationFactGroup.h
+	VehicleWindFactGroup.cc
+	VehicleWindFactGroup.h
+
 	${EXTRA_SRC}
 )
 
 target_link_libraries(Vehicle
-        PRIVATE
-            ui
+	PRIVATE
+		ui
 	PUBLIC
 		qgc
 )

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 /*!
  * @file
  *   @brief Message Handler
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include "QGCApplication.h"
@@ -41,7 +41,7 @@ bool UASMessage::severityIsError()
 
 UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _activeVehicle(NULL)
+    , _activeVehicle(nullptr)
     , _activeComponent(-1)
     , _multiComp(false)
     , _errorCount(0)
@@ -49,7 +49,7 @@ UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
     , _warningCount(0)
     , _normalCount(0)
     , _showErrorsInToolbar(false)
-    , _multiVehicleManager(NULL)
+    , _multiVehicleManager(nullptr)
 {
 
 }
@@ -66,7 +66,7 @@ void UASMessageHandler::setToolbox(QGCToolbox *toolbox)
    _multiVehicleManager = _toolbox->multiVehicleManager();
 
    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
-   emit textMessageReceived(NULL);
+   emit textMessageReceived(nullptr);
    emit textMessageCountChanged(0);
 }
 
@@ -89,9 +89,9 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
     // If we were already attached to an autopilot, disconnect it.
     if (_activeVehicle) {
         disconnect(_activeVehicle, &Vehicle::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
-        _activeVehicle = NULL;
+        _activeVehicle = nullptr;
         clearMessages();
-        emit textMessageReceived(NULL);
+        emit textMessageReceived(nullptr);
     }
 
     // And now if there's an autopilot to follow, set up the UI.
@@ -149,42 +149,41 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     }
 
     // And determine the text for the severitie
-    QString severityText("");
+    QString severityText;
     switch (severity)
     {
     case MAV_SEVERITY_EMERGENCY:
-        severityText = QString(tr(" EMERGENCY:"));
+        severityText = tr(" EMERGENCY:");
         break;
     case MAV_SEVERITY_ALERT:
-        severityText = QString(tr(" ALERT:"));
+        severityText = tr(" ALERT:");
         break;
     case MAV_SEVERITY_CRITICAL:
-        severityText = QString(tr(" Critical:"));
+        severityText = tr(" Critical:");
         break;
     case MAV_SEVERITY_ERROR:
-        severityText = QString(tr(" Error:"));
+        severityText = tr(" Error:");
         break;
     case MAV_SEVERITY_WARNING:
-        severityText = QString(tr(" Warning:"));
+        severityText = tr(" Warning:");
         break;
     case MAV_SEVERITY_NOTICE:
-        severityText = QString(tr(" Notice:"));
+        severityText = tr(" Notice:");
         break;
     case MAV_SEVERITY_INFO:
-        severityText = QString(tr(" Info:"));
+        severityText = tr(" Info:");
         break;
     case MAV_SEVERITY_DEBUG:
-        severityText = QString(tr(" Debug:"));
+        severityText = tr(" Debug:");
         break;
     default:
-        severityText = QString(tr(""));
         break;
     }
 
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
     UASMessage* message = new UASMessage(compId, severity, text);
-    QString compString("");
+    QString compString;
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
@@ -203,7 +202,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     emit textMessageCountChanged(count);
 
     if (_showErrorsInToolbar && message->severityIsError()) {
-        _app->showMessage(message->getText());
+        _app->showCriticalVehicleMessage(message->getText());
     }
 }
 

@@ -3507,7 +3507,7 @@
 <field name="Units">m</field>
 <field name="UnitText">meters</field>
 </param>
-<param humanName="Follow offset type" name="FOLL_OFS_TYPE" documentation="Follow offset type" user="Standard">
+<param humanName="Follow offset type" name="ffolFOLL_OFS_TYPE" documentation="Follow offset type" user="Standard">
 <values>
 <value code="0">North-East-Down</value>
 <value code=" 1">Relative to lead vehicle heading</value>

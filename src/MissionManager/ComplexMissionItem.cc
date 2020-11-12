@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,20 +9,23 @@
 
 #include "ComplexMissionItem.h"
 #include "QGCApplication.h"
+#include "QGCCorePlugin.h"
+#include "QGCOptions.h"
+#include "PlanMasterController.h"
+#include "FlightPathSegment.h"
+#include "MissionController.h"
 
+#include <QCborValue>
 #include <QSettings>
 
 const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
 const char* ComplexMissionItem::_presetSettingsKey =        "_presets";
-const char* ComplexMissionItem::_presetNameKey =            "complexItemPresetName";
-const char* ComplexMissionItem::_saveCameraInPresetKey =    "complexItemCameraSavedInPreset";
-const char* ComplexMissionItem::_builtInPresetKey =         "complexItemBuiltInPreset";
 
-ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
-    : VisualMissionItem (vehicle, flyView, parent)
-    , _cameraInPreset   (true)
-    , _builtInPreset    (false)
+ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, bool flyView, QObject* parent)
+    : VisualMissionItem (masterController, flyView, parent)
+    , _toolbox          (qgcApp()->toolbox())
+    , _settingsManager  (_toolbox->settingsManager())
 {
 
 }
@@ -30,10 +33,6 @@ ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* 
 const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
 {
     VisualMissionItem::operator=(other);
-
-    _currentPreset =    other._currentPreset;
-    _cameraInPreset =   other._cameraInPreset;
-    _builtInPreset =    other._builtInPreset;
 
     return *this;
 }
@@ -52,48 +51,56 @@ QStringList ComplexMissionItem::presetNames(void)
 void ComplexMissionItem::loadPreset(const QString& name)
 {
     Q_UNUSED(name);
-    qgcApp()->showMessage(tr("This Pattern does not support Presets."));
+    qgcApp()->showAppMessage(tr("This Pattern does not support Presets."));
 }
 
 void ComplexMissionItem::savePreset(const QString& name)
 {
     Q_UNUSED(name);
-    qgcApp()->showMessage(tr("This Pattern does not support Presets."));
+    qgcApp()->showAppMessage(tr("This Pattern does not support Presets."));
 }
 
-void ComplexMissionItem::clearCurrentPreset(void)
+void ComplexMissionItem::deletePreset(const QString& name)
 {
-    _currentPreset.clear();
-    emit currentPresetChanged(_currentPreset);
-}
-
-void ComplexMissionItem::deleteCurrentPreset(void)
-{
-    qDebug() << "deleteCurrentPreset" << _currentPreset;
-    if (!_currentPreset.isEmpty()) {
-        QSettings settings;
-
-        settings.beginGroup(presetsSettingsGroup());
-        settings.beginGroup(_presetSettingsKey);
-        settings.remove(_currentPreset);
-        emit presetNamesChanged();
-
-        clearCurrentPreset();
+    if (qgcApp()->toolbox()->corePlugin()->options()->surveyBuiltInPresetNames().contains(name)) {
+        qgcApp()->showAppMessage(tr("'%1' is a built-in preset which cannot be deleted.").arg(name));
+        return;
     }
-}
-
-void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& presetObject)
-{
-    presetObject[_presetNameKey] = name;
 
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    settings.setValue(name, QJsonDocument(presetObject).toBinaryData());
+    settings.remove(name);
     emit presetNamesChanged();
+}
 
-    _currentPreset = name;
-    emit currentPresetChanged(name);
+void ComplexMissionItem::_savePresetJson(const QString& name, QJsonObject& presetObject)
+{
+    QSettings settings;
+    settings.beginGroup(presetsSettingsGroup());
+    settings.beginGroup(_presetSettingsKey);
+    settings.setValue(name, QCborMap::fromJsonObject(presetObject).toCborValue().toByteArray());
+
+    // Use this to save a survey preset as a JSON file to be included in the build
+    // as a built-in survey preset that cannot be deleted.
+    #if 0
+    QString savePath = _settingsManager->appSettings()->missionSavePath();
+    QDir saveDir(savePath);
+
+    QString fileName = saveDir.absoluteFilePath(name);
+    fileName.append(".json");
+    QFile jsonFile(fileName);
+
+    if (!jsonFile.open(QIODevice::WriteOnly)) {
+        qDebug() << "Couldn't open .json file.";
+    }
+
+    qDebug() << "Saving survey preset to JSON";
+    auto jsonDoc = QJsonDocument(jsonObj);
+    jsonFile.write(jsonDoc.toJson());
+    #endif
+
+    emit presetNamesChanged();
 }
 
 QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
@@ -101,44 +108,41 @@ QJsonObject ComplexMissionItem::_loadPresetJson(const QString& name)
     QSettings settings;
     settings.beginGroup(presetsSettingsGroup());
     settings.beginGroup(_presetSettingsKey);
-    return QJsonDocument::fromBinaryData(settings.value(name).toByteArray()).object();
+    return QCborValue(settings.value(name).toByteArray()).toMap().toJsonObject();
 }
 
-void ComplexMissionItem::_saveItem(QJsonObject& saveObject)
+void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
 {
-    qDebug() << "_saveItem" << _cameraInPreset;
-    saveObject[_presetNameKey] =            _currentPreset;
-    saveObject[_saveCameraInPresetKey] =    _cameraInPreset;
-    saveObject[_builtInPresetKey] =         _builtInPreset;
+    // Default implementation has no visuals
 }
 
-void ComplexMissionItem::_loadItem(const QJsonObject& saveObject)
+void ComplexMissionItem::_appendFlightPathSegment(const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)
 {
-    _currentPreset =    saveObject[_presetNameKey].toString();
-    _cameraInPreset =   saveObject[_saveCameraInPresetKey].toBool(false);
-    _builtInPreset =    saveObject[_builtInPresetKey].toBool(false);
+    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, true /* queryTerrainData */, this /* parent */);
 
-    if (!presetNames().contains(_currentPreset)) {
-        _currentPreset.clear();
+    connect(segment, &FlightPathSegment::terrainCollisionChanged,       this,               &ComplexMissionItem::_segmentTerrainCollisionChanged);
+    connect(segment, &FlightPathSegment::terrainCollisionChanged,       _missionController, &MissionController::recalcTerrainProfile, Qt::QueuedConnection);
+    connect(segment, &FlightPathSegment::amslTerrainHeightsChanged,     _missionController, &MissionController::recalcTerrainProfile, Qt::QueuedConnection);
+
+    // Signals may have been emitted in contructor so we need to deal with that now since they were missed
+
+    _flightPathSegments.append(segment);
+    if (segment->terrainCollision()) {
+        emit _segmentTerrainCollisionChanged(true);
     }
 
-    emit cameraInPresetChanged  (_cameraInPreset);
-    emit currentPresetChanged   (_currentPreset);
-    emit builtInPresetChanged   (_builtInPreset);
-}
-
-void ComplexMissionItem::setCameraInPreset(bool cameraInPreset)
-{
-    if (cameraInPreset != _cameraInPreset) {
-        _cameraInPreset = cameraInPreset;
-        emit cameraInPresetChanged(_cameraInPreset);
+    if (segment->amslTerrainHeights().count()) {
+        _missionController->recalcTerrainProfile();
     }
 }
 
-void ComplexMissionItem::setBuiltInPreset(bool builtInPreset)
+void ComplexMissionItem::_segmentTerrainCollisionChanged(bool terrainCollision)
 {
-    if (builtInPreset != _builtInPreset) {
-        _builtInPreset = builtInPreset;
-        emit builtInPresetChanged(_builtInPreset);
+    if (terrainCollision) {
+        _cTerrainCollisionSegments++;
+    } else {
+        _cTerrainCollisionSegments--;
     }
+    emit terrainCollisionChanged(_cTerrainCollisionSegments != 0);
 }
+

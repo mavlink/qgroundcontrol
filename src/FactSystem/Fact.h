@@ -1,18 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef Fact_H
-#define Fact_H
+#pragma once
 
 #include "FactMetaData.h"
 
@@ -30,13 +25,13 @@ class Fact : public QObject
     Q_OBJECT
     
 public:
-    Fact(QObject* parent = NULL);
-    Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
-    Fact(const Fact& other, QObject* parent = NULL);
+    Fact(QObject* parent = nullptr);
+    Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = nullptr);
+    Fact(const Fact& other, QObject* parent = nullptr);
 
     /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
     /// custom builds to override the metadata.
-    Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent = NULL);
+    Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent = nullptr);
 
     const Fact& operator=(const Fact& other);
 
@@ -51,7 +46,7 @@ public:
     Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumsChanged)
     Q_PROPERTY(QString      enumStringValue         READ enumStringValue        WRITE setEnumStringValue    NOTIFY valueChanged)
     Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumsChanged)
-    Q_PROPERTY(QString      category                READ category                                              CONSTANT)
+    Q_PROPERTY(QString      category                READ category                                           CONSTANT)
     Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
     Q_PROPERTY(QVariant     max                     READ cookedMax                                          CONSTANT)
@@ -78,8 +73,9 @@ public:
     Q_PROPERTY(bool         writeOnly               READ writeOnly                                          CONSTANT)
     Q_PROPERTY(bool         volatileValue           READ volatileValue                                      CONSTANT)
 
-    /// Convert and validate value
-    ///     @param convertOnly true: validate type conversion only, false: validate against meta data as well
+    /// @brief Convert and validate value
+    /// @param cookedValue: Value to convert and validate
+    /// @param convertOnly true: validate type conversion only, false: validate against meta data as well
     Q_INVOKABLE QString validate(const QString& cookedValue, bool convertOnly);
     /// Convert and clamp value
     Q_INVOKABLE QVariant clamp(const QString& cookedValue);
@@ -214,5 +210,3 @@ protected:
     FactValueSliderListModel*   _valueSliderModel;
     bool                        _ignoreQGCRebootRequired;
 };
-
-#endif

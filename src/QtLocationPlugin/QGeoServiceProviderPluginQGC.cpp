@@ -40,7 +40,7 @@
 ** 2015.4.4
 ** Adapted for use with QGroundControl
 **
-** Gus Grubba <mavlink@grubba.com>
+** Gus Grubba <gus@auterion.com>
 **
 ****************************************************************************/
 
@@ -82,7 +82,7 @@ QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
     const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
 {
     // Not implemented for QGC
-    return NULL;
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -91,5 +91,5 @@ QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
     const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
 {
     // Not implemented for QGC
-    return NULL;
+    return nullptr;
 }

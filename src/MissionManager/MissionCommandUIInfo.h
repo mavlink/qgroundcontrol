@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -42,9 +42,9 @@ class MissionCmdParamInfo : public QObject {
     Q_OBJECT
 
 public:
-    MissionCmdParamInfo(QObject* parent = NULL);
+    MissionCmdParamInfo(QObject* parent = nullptr);
 
-    MissionCmdParamInfo(const MissionCmdParamInfo& other, QObject* parent = NULL);
+    MissionCmdParamInfo(const MissionCmdParamInfo& other, QObject* parent = nullptr);
     const MissionCmdParamInfo& operator=(const MissionCmdParamInfo& other);
 
     Q_PROPERTY(int          decimalPlaces   READ decimalPlaces  CONSTANT)
@@ -96,6 +96,8 @@ private:
 /// specifiesCoordinate     bool    false       true: Command specifies a lat/lon/alt coordinate
 /// specifiesAltitudeOnly   bool    false       true: Command specifies an altitude only (no coordinate)
 /// standaloneCoordinate    bool    false       true: Vehicle does not fly through coordinate associated with command (exampl: ROI)
+/// isTakeoffCommand        bool    false       true: Command specifies a takeoff command (TAEKOFF, VTOL_TAKEOFF, ...)
+/// isLandCommand           bool    false       true: Command specifies a land command (LAND, VTOL_LAND, ...)
 /// friendlyEdit            bool    false       true: Command supports friendly editing dialog, false: Command supports 'Show all values" style editing only
 /// category                string  Advanced    Category which this command belongs to
 /// paramRemove             string              Used by an override to remove params, example: "1,3" will remove params 1 and 3 on the override
@@ -105,9 +107,9 @@ class MissionCommandUIInfo : public QObject {
     Q_OBJECT
 
 public:
-    MissionCommandUIInfo(QObject* parent = NULL);
+    MissionCommandUIInfo(QObject* parent = nullptr);
 
-    MissionCommandUIInfo(const MissionCommandUIInfo& other, QObject* parent = NULL);
+    MissionCommandUIInfo(const MissionCommandUIInfo& other, QObject* parent = nullptr);
     const MissionCommandUIInfo& operator=(const MissionCommandUIInfo& other);
 
     Q_PROPERTY(QString  category                READ category               CONSTANT)
@@ -118,6 +120,8 @@ public:
     Q_PROPERTY(bool     isStandaloneCoordinate  READ isStandaloneCoordinate CONSTANT)
     Q_PROPERTY(bool     specifiesCoordinate     READ specifiesCoordinate    CONSTANT)
     Q_PROPERTY(bool     specifiesAltitudeOnly   READ specifiesAltitudeOnly  CONSTANT)
+    Q_PROPERTY(bool     isLandCommand           READ isLandCommand          CONSTANT)
+    Q_PROPERTY(bool     isTakeoffCommand        READ isTakeoffCommand       CONSTANT)
     Q_PROPERTY(int      command                 READ intCommand             CONSTANT)
 
     MAV_CMD command(void) const { return _command; }
@@ -131,6 +135,8 @@ public:
     bool    isStandaloneCoordinate  (void) const;
     bool    specifiesCoordinate     (void) const;
     bool    specifiesAltitudeOnly   (void) const;
+    bool    isLandCommand           (void) const;
+    bool    isTakeoffCommand        (void) const;
 
     /// Load the data in the object from the specified json
     ///     @param jsonObject Json object to load from
@@ -190,6 +196,8 @@ private:
     static const char* _standaloneCoordinateJsonKey;
     static const char* _specifiesCoordinateJsonKey;
     static const char* _specifiesAltitudeOnlyJsonKey;
+    static const char* _isLandCommandJsonKey;
+    static const char* _isTakeoffCommandJsonKey;
     static const char* _unitsJsonKey;
     static const char* _commentJsonKey;    
     static const char* _advancedCategory;

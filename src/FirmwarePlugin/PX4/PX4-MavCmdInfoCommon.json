@@ -1,0 +1,23 @@
+{
+    "comment":  "PX4 Pro, Any Vehicle",
+    "version":  1,
+    "fileType": "MavCmdInfo",
+
+    "mavCmdInfo": [
+        {
+            "id":           16,
+            "comment":      "MAV_CMD_NAV_WAYPOINT",
+            "paramRemove":  "2,3"
+        },
+        {
+            "id":           21,
+            "comment":      "MAV_CMD_NAV_LAND",
+            "paramRemove":  "1"
+        },
+        {
+            "id":           2500,
+            "comment":      "MAV_CMD_VIDEO_START_CAPTURE",
+            "paramRemove":  "2"
+        }
+    ]
+}

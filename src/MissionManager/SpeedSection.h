@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,12 +13,14 @@
 #include "FactSystem.h"
 #include "QmlObjectListModel.h"
 
+class PlanMasterController;
+
 class SpeedSection : public Section
 {
     Q_OBJECT
 
 public:
-    SpeedSection(Vehicle* vehicle, QObject* parent = NULL);
+    SpeedSection(PlanMasterController* masterController, QObject* parent = nullptr);
 
     Q_PROPERTY(bool     specifyFlightSpeed  READ specifyFlightSpeed WRITE setSpecifyFlightSpeed NOTIFY specifyFlightSpeedChanged)
     Q_PROPERTY(Fact*    flightSpeed         READ flightSpeed                                    CONSTANT)

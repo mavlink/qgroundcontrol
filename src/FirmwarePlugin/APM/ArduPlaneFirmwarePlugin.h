@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -33,8 +33,8 @@ public:
         AUTO          = 10,
         RTL           = 11,
         LOITER        = 12,
-        RESERVED_13   = 13, // RESERVED FOR FUTURE USE
-        RESERVED_14   = 14, // RESERVED FOR FUTURE USE
+        TAKEOFF       = 13,
+        AVOID_ADSB    = 14,
         GUIDED        = 15,
         INITIALIZING  = 16,
         QSTABILIZE    = 17,
@@ -42,7 +42,9 @@ public:
         QLOITER       = 19,
         QLAND         = 20,
         QRTL          = 21,
-        modeCount
+        QAUTOTUNE     = 22,
+        QACRO         = 23,
+        THERMAL       = 24,
     };
 
     APMPlaneMode(uint32_t mode, bool settable);

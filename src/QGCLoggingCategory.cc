@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -24,8 +24,10 @@ QGC_LOGGING_CATEGORY(ParameterManagerLog,           "ParameterManagerLog")
 QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
 QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
+QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog,         "ADSBVehicleManagerLog")
+QGC_LOGGING_CATEGORY(LocalizationLog,               "LocalizationLog")
 
-QGCLoggingCategoryRegister* _instance = NULL;
+QGCLoggingCategoryRegister* _instance = nullptr;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
 
 QGCLoggingCategoryRegister* QGCLoggingCategoryRegister::instance(void)

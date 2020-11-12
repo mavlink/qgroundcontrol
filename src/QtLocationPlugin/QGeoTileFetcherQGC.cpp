@@ -40,7 +40,7 @@
 ** 2015.4.4
 ** Adapted for use with QGroundControl
 **
-** Gus Grubba <mavlink@grubba.com>
+** Gus Grubba <gus@auterion.com>
 **
 ****************************************************************************/
 
@@ -74,12 +74,12 @@ QGeoTiledMapReply*
 QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
 {
     //-- Build URL
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL((UrlFactory::MapType)spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
+    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
     if ( ! request.url().isEmpty() ) {
         return new QGeoTiledMapReplyQGC(_networkManager, request, spec);
     }
     else {
-        return NULL;
+        return nullptr;
     }
 }
 

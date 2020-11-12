@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -20,7 +20,7 @@
  */
 struct GPSPositionMessage
 {
-    vehicle_gps_position_s position_data;
+    sensor_gps_s position_data;
 };
 
 Q_DECLARE_METATYPE(GPSPositionMessage);

@@ -1,11 +1,11 @@
-# -------------------------------------------------
-# QGroundControl - Micro Air Vehicle Groundstation
-# Please see our website at <http://qgroundcontrol.org>
-# Maintainer:
-# Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2014 QGroundControl Developers
-# License terms set in COPYING.md
-# -------------------------------------------------
+################################################################################
+#
+# (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+#
+# QGroundControl is licensed according to the terms in the file
+# COPYING.md in the root of the source code directory.
+#
+################################################################################
 
 #
 # This file contains configuration settings which are common to both the QGC Application and
@@ -16,6 +16,9 @@
 # to allow us to easily modify suported build types in one place instead of duplicated throughout
 # the project file.
 
+CONFIG -= debug_and_release
+CONFIG += warn_on
+
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
@@ -23,9 +26,16 @@ linux {
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
+        } else {
+            #QMAKE_CXXFLAGS += -H # Handy for debugging why something is getting built when an include file is touched
+            QMAKE_CXXFLAGS_WARN_ON += -Werror \
+                -Wno-deprecated-copy \      # These come from mavlink headers
+                -Wno-unused-parameter \     # gst_plugins-good has these errors
+                -Wno-implicit-fallthrough   # gst_plugins-good has these errors
         }
     } else : linux-rasp-pi2-g++ {
         message("Linux R-Pi2 build")
@@ -33,34 +43,61 @@ linux {
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
-    } else : android-g++ | android-clang {
+    } else : android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_ENABLE_BLUETOOTH
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
-        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
+        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+            -Wno-unused-parameter \             # gst_plugins-good has these errors
+            -Wno-implicit-fallthrough \         # gst_plugins-good has these errors
+            -Wno-unused-command-line-argument \ # from somewhere in Qt generated build files
+            -Wno-parentheses-equality           # android gstreamer header files
+        QMAKE_CFLAGS_WARN_ON += \
+            -Wno-unused-command-line-argument   # from somewhere in Qt generated build files
         target.path = $$DESTDIR
-        equals(ANDROID_TARGET_ARCH, x86)  {
+        equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
+            DEFINES += __androidArm32__
+            DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+            message("Android Arm 32 bit build")
+        } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
+            DEFINES += __androidArm64__
+            DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+            message("Android Arm 64 bit build")
+        } else:equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
-            message("Android x86 build")
-        } else {
             message("Android Arm build")
+        } else {
+            error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
         }
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")
     }
 } else : win32 {
-    win32-msvc2015 {
+    contains(QMAKE_TARGET.arch, x86_64) {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
+        QMAKE_CFLAGS -= -Zc:strictStrings
+        QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
+        QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+        QMAKE_CXXFLAGS -= -Zc:strictStrings
+        QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
+        QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
+        QMAKE_CXXFLAGS += /std:c++17
+        QMAKE_CXXFLAGS_WARN_ON += /WX /W3 \
+            /wd4005 \   # silence warnings about macro redefinition, these come from the shapefile code with is external
+            /wd4290 \   # ignore exception specifications
+            /wd4267 \   # silence conversion from 'size_t' to 'int', possible loss of data, these come from gps drivers shared with px4
+            /wd4100     # unreferenced formal parameter - gst-plugins-good
     } else {
-        error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
+        error("Unsupported Windows toolchain, only Visual Studio 2017 64 bit is supported")
     }
 } else : macx {
     macx-clang | macx-llvm {
@@ -70,16 +107,15 @@ linux {
         CONFIG  -= x86
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        DEFINES += QGC_ENABLE_MAVLINK_INSPECTOR
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         }
-        #-- Not forcing anything. Let qmake find the latest, installed SDK.
-        #QMAKE_MAC_SDK = macosx10.12
         QMAKE_CXXFLAGS += -fvisibility=hidden
-        #-- Disable annoying warnings comming from mavlink.h
-        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
+        QMAKE_CXXFLAGS_WARN_ON += -Werror \
+            -Wno-unused-parameter           # gst-plugins-good
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
@@ -116,8 +152,20 @@ linux|macx|ios {
     }
 }
 
+!MacBuild {
+    # See QGCPostLinkCommon.pri for details on why MacBuild doesn't use DESTDIR
+    DESTDIR = staging
+}
+
 MobileBuild {
     DEFINES += __mobile__
+}
+
+StableBuild {
+    message("Stable Build")
+} else {
+    message("Daily Build")
+    DEFINES += DAILY_BUILD
 }
 
 # set the QGC version from git
@@ -132,14 +180,15 @@ exists ($$PWD/.git) {
     contains(GIT_DESCRIBE, v[0-9]+.[0-9]+.[0-9]+) {
         # release version "vX.Y.Z"
         GIT_VERSION = $${GIT_DESCRIBE}
+        VERSION      = $$replace(GIT_DESCRIBE, "v", "")
+        VERSION      = $$replace(VERSION, "-", ".")
+        VERSION      = $$section(VERSION, ".", 0, 3)
     } else {
         # development version "Development branch:sha date"
         GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+        VERSION         = 0.0.0
     }
 
-    VERSION      = $$replace(GIT_DESCRIBE, "v", "")
-    VERSION      = $$replace(VERSION, "-", ".")
-    VERSION      = $$section(VERSION, ".", 0, 3)
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)
@@ -180,14 +229,7 @@ CONFIG(debug, debug|release) {
 
 # Setup our build directories
 
-BASEDIR      = $$IN_PWD
-
-!iOSBuild {
-    OBJECTS_DIR  = $${OUT_PWD}/obj
-    MOC_DIR      = $${OUT_PWD}/moc
-    UI_DIR       = $${OUT_PWD}/ui
-    RCC_DIR      = $${OUT_PWD}/rcc
-}
+SOURCE_DIR = $$IN_PWD
 
 LANGUAGE = C++
 
@@ -197,47 +239,9 @@ LOCATION_PLUGIN_NAME    = QGeoServiceProviderFactoryQGC
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-#
-# By default warnings as errors are turned off. Even so, in order for a pull request
-# to be accepted you must compile cleanly with warnings as errors turned on the default
-# set of OS builds. See http://www.qgroundcontrol.org/dev/contribute for more details.
-# You can use the WarningsAsErrorsOn CONFIG switch to turn warnings as errors on for your
-# own builds.
-#
-
-MacBuild | LinuxBuild {
-    QMAKE_CXXFLAGS_WARN_ON += -Wall
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += -Werror
-    }
-    MacBuild {
-        # Latest clang version has a buggy check for this which cause Qt headers to throw warnings on qmap.h
-        QMAKE_CXXFLAGS_WARN_ON += -Wno-return-stack-address
-        # Xcode 8.3 has issues on how MAVLink accesses (packed) message structure members.
-        # Note that this will fail when Xcode version reaches 10.x.x
-        XCODE_VERSION = $$system($$PWD/tools/get_xcode_version.sh)
-        greaterThan(XCODE_VERSION, 8.2.0): QMAKE_CXXFLAGS_WARN_ON += -Wno-address-of-packed-member
-    }
-}
-
-WindowsBuild {
-    win32-msvc2015 {
-        QMAKE_CFLAGS -= -Zc:strictStrings
-        QMAKE_CXXFLAGS -= -Zc:strictStrings
-    }
-    QMAKE_CFLAGS_RELEASE -= -Zc:strictStrings
-    QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-
-    QMAKE_CXXFLAGS_RELEASE -= -Zc:strictStrings
-    QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO -= -Zc:strictStrings
-    QMAKE_CXXFLAGS_WARN_ON += /W3 \
-        /wd4996 \   # silence warnings about deprecated strcpy and whatnot
-        /wd4005 \   # silence warnings about macro redefinition
-        /wd4290     # ignore exception specifications
-
-    WarningsAsErrorsOn {
-        QMAKE_CXXFLAGS_WARN_ON += /WX
-    }
+MacBuild {
+    QMAKE_TARGET_BUNDLE_PREFIX =    org.qgroundcontrol
+    QMAKE_BUNDLE =                  qgroundcontrol
 }
 
 #
@@ -254,6 +258,9 @@ ReleaseBuild {
     }
 
     WindowsBuild {
+        # Run compilation using VS compiler using multiple threads
+        QMAKE_CXXFLAGS += -MP
+
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
         QMAKE_CXXFLAGS_RELEASE += /Gy /Zo
