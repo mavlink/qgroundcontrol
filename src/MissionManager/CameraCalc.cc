@@ -13,6 +13,7 @@
 #include "CameraMetaData.h"
 #include "PlanMasterController.h"
 #include <cmath>
+#include <algorithm>
 
 #include <QQmlEngine>
 
@@ -188,8 +189,17 @@ void CameraCalc::_recalcTriggerDistance(void)
 
     if (_valueSetIsDistanceFact.rawValue().toBool()) {
         _imageDensityFact.setRawValue((_distanceToSurfaceFact.rawValue().toDouble() * sensorWidth * 100.0) / (imageWidth * focalLength));
-    } else {
+    } else if (!_camposFact.rawValue().toBool()){
         _distanceToSurfaceFact.setRawValue((imageWidth * _imageDensityFact.rawValue().toDouble() * focalLength) / (sensorWidth * 100.0));
+    } else {
+        //this guarantees that the pixels in the used area of the image (the complement of sidelap) are <= GSD
+        //height will vary as it tries to keep only the used area below the set GSD
+        double halfAOV = std::min(atan(sensorWidth / (2.0 * focalLength)) + _camposRollAngleFact.rawValue().toDouble() * M_PI / 180.0, 75.0 * M_PI / 180.0);
+        double GSD = _imageDensityFact.rawValue().toDouble()/100.0;
+        double sidelap = _sideOverlapFact.rawValue().toDouble()/100.0;
+        double pixelAngle = 2.0 * atan(sensorWidth / (2.0 * focalLength)) / imageWidth;
+        double height = GSD / (tan(atan((1-sidelap)*tan(halfAOV))+pixelAngle)-((1-sidelap)*tan(halfAOV)));
+        _distanceToSurfaceFact.setRawValue(height);
     }
 
     imageDensity = _imageDensityFact.rawValue().toDouble();
@@ -203,14 +213,18 @@ void CameraCalc::_recalcTriggerDistance(void)
     }
 
     if (_camposFact.rawValue().toBool()) {
-        //find half the angle of view
-        double halfAOV = atan(0.5 * _imageFootprintSide / _distanceToSurfaceFact.rawValue().toDouble());
+        //find half the angle of view, accounting for the additional roll angles, upper bounded for a 150° AoV camera, as with greater values the GSD at the extremes decays too rapidly.
+        double halfAOV = std::min(atan(sensorWidth / (2.0 * focalLength)) + _camposRollAngleFact.rawValue().toDouble() * M_PI / 180.0, 75.0 * M_PI / 180.0);
 
         //compute the adjusted horizontal field of view with the addition of the roll angle set
-        double camposHFOV = 2 * tan(halfAOV + _camposRollAngleFact.rawValue().toDouble() * M_PI / 180.0) * _distanceToSurfaceFact.rawValue().toDouble();
+        double camposHFOV = 2 * tan(halfAOV) * _distanceToSurfaceFact.rawValue().toDouble();
 
         _imageFootprintSide = camposHFOV;
-        _imageFootprintFrontal /= _camposPositionsFact.rawValue().toDouble();
+
+        double halfVerticalAOV = atan(sensorHeight / (2.0 * focalLength));
+
+        //compute the frontal footprint from height and angle and divide by the number of positions.
+        _imageFootprintFrontal = 2 * tan(halfVerticalAOV) * _distanceToSurfaceFact.rawValue().toDouble() / _camposPositionsFact.rawValue().toDouble();
     }
 
     _adjustedFootprintSideFact.setRawValue      (_imageFootprintSide * ((100.0 - _sideOverlapFact.rawValue().toDouble()) / 100.0));
