@@ -7,7 +7,7 @@
       <extracomment>.QGC.MetaData.Facts[lights2].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Lights 2 level</source>
-      <translation type="unfinished">Lights 2 level</translation>
+      <translation>亮度2级</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[inputHold].shortDescription, </extracomment>
@@ -25,7 +25,7 @@
       <extracomment>.QGC.MetaData.Facts[lights1].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Lights 1 level</source>
-      <translation type="unfinished">Lights 1 level</translation>
+      <translation>亮度1级</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tetherTurns].shortDescription, </extracomment>
@@ -37,7 +37,7 @@
       <extracomment>.QGC.MetaData.Facts[inputHold].enumStrings, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation type="unfinished">Disabled,Enabled</translation>
+      <translation>禁用，启用</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[cameraTilt].shortDescription, </extracomment>
@@ -49,7 +49,7 @@
       <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SubmarineFact.json"/>
       <source>Rangefinder</source>
-      <translation type="unfinished">Rangefinder</translation>
+      <translation>测距仪</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pilotGain].shortDescription, </extracomment>
@@ -76,31 +76,31 @@
       <extracomment>.QGC.MetaData.Facts[pitch].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Pitch Setpoint</source>
-      <translation type="unfinished">Pitch Setpoint</translation>
+      <translation>俯仰(Pitch)设定点</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yaw].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Yaw Setpoint</source>
-      <translation type="unfinished">Yaw Setpoint</translation>
+      <translation>偏航(Yaw)设定点</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yawRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Yaw Rate Setpoint</source>
-      <translation type="unfinished">Yaw Rate Setpoint</translation>
+      <translation>偏航(Yaw)速率设定点</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[roll].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Roll Setpoint</source>
-      <translation type="unfinished">Roll Setpoint</translation>
+      <translation>横滚(Roll)设定点</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rollRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/SetpointFact.json"/>
       <source>Roll Rate Setpoint</source>
-      <translation type="unfinished">Roll Rate Setpoint</translation>
+      <translation>横滚(Roll)速率设定点</translation>
     </message>
   </context>
   <context>
@@ -109,7 +109,7 @@
       <extracomment>.QGC.MetaData.Facts[accelError].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Accel Error</source>
-      <translation type="unfinished">Accel Error</translation>
+      <translation>加速度误差</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[haglRatio].shortDescription, </extracomment>
@@ -121,43 +121,43 @@
       <extracomment>.QGC.MetaData.Facts[vertPosAccuracy].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Vert Pos Accuracy</source>
-      <translation type="unfinished">Vert Pos Accuracy</translation>
+      <translation>垂直位置精度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosAccuracy].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Horiz Pos Accuracy</source>
-      <translation type="unfinished">Horiz Pos Accuracy</translation>
+      <translation>水平位置精度</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodConstPosModeEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Const Pos Mode Estimate</source>
-      <translation type="unfinished">Good Const Pos Mode Estimate</translation>
+      <translation>位置模式估计持续良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodPredHorizPosAbsEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Pred Horiz Pos Abs Estimate</source>
-      <translation type="unfinished">Good Pred Horiz Pos Abs Estimate</translation>
+      <translation>良好预测水平位置绝对值估计</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodAttitudeEsimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Attitude Esimate</source>
-      <translation type="unfinished">Good Attitude Esimate</translation>
+      <translation>良好姿态估计</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodHorizVelEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Horiz Vel Estimate</source>
-      <translation type="unfinished">Good Horiz Vel Estimate</translation>
+      <translation>水平速度估计良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[goodVertPosAbsEstimate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/EstimatorStatusFactGroup.json"/>
       <source>Good Vert Pos Abs Estimate</source>
-      <translation type="unfinished">Good Vert Pos Abs Estimate</translation>
+      <translation>垂直绝对位置估计良好</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[horizPosRatio].shortDescription, </extracomment>
@@ -256,13 +256,13 @@
       <extracomment>.QGC.MetaData.Facts[airSpeed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Air Speed</source>
-      <translation type="unfinished">Air Speed</translation>
+      <translation>空速</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[altitudeAMSL].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Alt (AMSL)</source>
-      <translation type="unfinished">Alt (AMSL)</translation>
+      <translation>高度（AMSL）</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[hobbs].shortDescription, </extracomment>
@@ -274,31 +274,31 @@
       <extracomment>.QGC.MetaData.Facts[groundSpeed].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Ground Speed</source>
-      <translation type="unfinished">Ground Speed</translation>
+      <translation>地速</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[yawRate].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Yaw Rate</source>
-      <translation type="unfinished">Yaw Rate</translation>
+      <translation>偏航(Yaw)速率</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[distanceToHome].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Distance to Home</source>
-      <translation type="unfinished">Distance to Home</translation>
+      <translation>到出发站的距离</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[heading].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Heading</source>
-      <translation type="unfinished">Heading</translation>
+      <translation>航向</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[headingToHome].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Heading to Home</source>
-      <translation type="unfinished">Heading to Home</translation>
+      <translation>到出发点的航向</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[climbRate].shortDescription, </extracomment>
@@ -322,7 +322,7 @@
       <extracomment>.QGC.MetaData.Facts[flightTime].shortDescription, </extracomment>
       <location filename="../src/Vehicle/VehicleFact.json"/>
       <source>Flight Time</source>
-      <translation type="unfinished">Flight Time</translation>
+      <translation>飞行时间</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[pitchRate].shortDescription, </extracomment>
