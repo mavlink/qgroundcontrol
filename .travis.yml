@@ -81,6 +81,7 @@ addons:
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
     - libudev-dev
+    - libxcb-xinerama0
     - wget
 
 before_install:
