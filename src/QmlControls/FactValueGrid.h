@@ -65,6 +65,12 @@ public:
 
     void setFontSize(FontSize fontSize);
 
+    // This is only exposed for usage of FactValueGrid to be able to just read the settings and display no ui. For this case
+    // create a FactValueGrid object with a null parent. Set the userSettingsGroup/defaultSettingsGroup appropriately and then
+    // call _loadSettings. Then after that you can read the settings from the object. You should not change any of the values.
+    // Destroy the FactValueGrid object when done.
+    void _loadSettings(void);
+
     // Override from QQmlParserStatus
     void componentComplete(void) final;
 
@@ -92,7 +98,6 @@ private slots:
 private:
     InstrumentValueData*    _createNewInstrumentValueWorker (QObject* parent);
     void                    _saveSettings                   (void);
-    void                    _loadSettings                   (void);
     void                    _init                           (void);
     void                    _connectSaveSignals             (InstrumentValueData* value);
     QString                 _pascalCase                     (const QString& text);
