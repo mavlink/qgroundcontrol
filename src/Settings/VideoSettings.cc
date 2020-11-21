@@ -26,7 +26,7 @@ const char* VideoSettings::videoSourceUDPH264           = "UDP h.264 Video Strea
 const char* VideoSettings::videoSourceUDPH265           = "UDP h.265 Video Stream";
 const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Stream";
 const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
-const char* VideoSettings::videoSource3DRSolo           = "3DR Solo";
+const char* VideoSettings::videoSource3DRSolo           = "3DR Solo (requires restart)";
 const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
 
 DECLARE_SETTINGGROUP(Video, "Video")
