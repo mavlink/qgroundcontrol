@@ -81,7 +81,6 @@ addons:
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
     - libudev-dev
-    - libxcb-xinerama0
     - wget
 
 before_install:
@@ -217,13 +216,20 @@ script:
     fi
   #- ccache -s
 
+  # create debug linux appimage for unit testing
+  - cd ${TRAVIS_BUILD_DIR}
+  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+        ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/staging ${SHADOW_BUILD_DIR}/package;
+    fi
+
   # unit tests linux
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
     	mkdir -p ~/.config/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
         export QT_FATAL_WARNINGS=1 &&
-        ldd ./staging/Qt/plugins/platforms/libqxcb.so &&
-        ./staging/qgroundcontrol-start.sh --unittest;
+        cd ${SHADOW_BUILD_DIR}/package &&
+        chmod +x QGroundControl.AppImage
+        ./QGroundControl.AppImage --unittest;
     fi
 
 after_success:
