@@ -219,6 +219,7 @@ script:
   # create debug linux appimage for unit testing
   - cd ${TRAVIS_BUILD_DIR}
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+        mkdir ${SHADOW_BUILD_DIR}/package
         ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/staging ${SHADOW_BUILD_DIR}/package;
     fi
 
