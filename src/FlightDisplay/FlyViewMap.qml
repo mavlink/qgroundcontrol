@@ -49,6 +49,7 @@ FlightMap {
     property var    _rallyPointController:      planMasterController.rallyPointController
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
+    property real   _toolsMargin:               ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property bool   _keepMapCenteredOnVehicle:  _flyViewSettings.keepMapCenteredOnVehicle.rawValue
@@ -570,6 +571,18 @@ FlightMap {
             border.color:   object.lineColor
             border.width:   object.lineWidth
         }
+    }
+
+    MapScale {
+        id:                 mapScale
+        anchors.margins:    _toolsMargin
+        anchors.left:       parent.left
+        anchors.top:        parent.top
+        mapControl:         _root
+        buttonsOnLeft:      false
+        visible:            !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.flyView.showMapScale && mapControl.pipState.state === mapControl.pipState.windowState
+
+        property real centerInset: visible ? parent.height - y : 0
     }
 
 }
