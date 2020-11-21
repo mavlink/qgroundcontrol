@@ -25,7 +25,8 @@ PreFlightCheckButton {
 
     property int    failurePercent:                 40
     property bool   allowFailurePercentOverride:    false
-    property var    _batteryValue:                  globals.activeVehicle ? globals.activeVehicle.battery.percentRemaining.value : 0
+    property var    _batteryGroup:                  globals.activeVehicle && globals.activeVehicle.batteries.count ? globals.activeVehicle.batteries.get(0) : undefined
+    property var    _batteryValue:                  _batteryGroup ? _batteryGroup.percentRemaining.value : 0
     property var    _batPercentRemaining:           isNaN(_batteryValue) ? 0 : _batteryValue
     property bool   _batLow:                        _batPercentRemaining < failurePercent
 }
