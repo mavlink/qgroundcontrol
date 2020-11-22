@@ -136,8 +136,8 @@ SetupPage {
                     }
                 }
 
-                onBootloaderFound:  mainWindow.showComponentDialog(firmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                onError:            statusTextArea.append(flashFailText)
+                onShowFirmwareSelectDlg:    mainWindow.showComponentDialog(firmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                onError:                    statusTextArea.append(flashFailText)
             }
 
             Component {

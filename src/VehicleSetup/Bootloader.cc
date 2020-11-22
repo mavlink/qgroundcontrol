@@ -108,7 +108,6 @@ bool Bootloader::getBoardInfo(uint32_t& bootloaderVersion, uint32_t& boardID, ui
             QString boardIdStr = _getNextLine(2000);
             bool ok = false;
             _boardID = boardIdStr.toInt(&ok);
-            _boardID = 130;
             if (boardIdStr.isEmpty() || !ok) {
                 _errorString = tr("Radio did not return board id");
                 goto Error;
