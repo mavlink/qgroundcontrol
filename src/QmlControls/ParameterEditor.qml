@@ -315,7 +315,7 @@ Item {
             QGCLabel {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes.")
+                text:               qsTr("Select Reset to reset all parameters to their defaults.\n\nNote that this will also completely reset everything, including UAVCAN nodes, all vehicle settings, setup and calibrations.")
             }
         }
     }
