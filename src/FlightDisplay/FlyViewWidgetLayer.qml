@@ -178,7 +178,7 @@ Item {
         maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
 
-        onDisplayPreFlightChecklist: preFlightChecklistPopup.open()
+        onDisplayPreFlightChecklist: mainWindow.showPopupDialogFromComponent(preFlightChecklistPopup)
 
         property real leftInset: x + width
     }
@@ -208,9 +208,9 @@ Item {
         property real centerInset: visible ? parent.height - y : 0
     }
 
-    FlyViewPreFlightChecklistPopup {
+    Component {
         id: preFlightChecklistPopup
-        x:  toolStrip.x + toolStrip.width + (ScreenTools.defaultFontPixelWidth * 2)
-        y:  toolStrip.y
+        FlyViewPreFlightChecklistPopup {
+        }
     }
 }
