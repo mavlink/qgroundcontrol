@@ -135,7 +135,7 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
                                       FirmwareBuildType_t firmwareType,
                                       FirmwareVehicleType_t vehicleType)
 {
-    qCDebug(FirmwareUpgradeLog) << "_flash stackType:firmwareType:vehicleType" << stackType << firmwareType << vehicleType;
+    qCDebug(FirmwareUpgradeLog) << "FirmwareUpgradeController::flash stackType:firmwareType:vehicleType" << stackType << firmwareType << vehicleType;
     FirmwareIdentifier firmwareId = FirmwareIdentifier(stackType, firmwareType, vehicleType);
     if (_bootloaderFound) {
         _getFirmwareFile(firmwareId);
@@ -243,13 +243,12 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
     
     if (_startFlashWhenBootloaderFound) {
         flash(_startFlashWhenBootloaderFoundFirmwareIdentity);
+    } else {
+        if (_rgManifestFirmwareInfo.count()) {
+            _buildAPMFirmwareNames();
+        }
+        emit showFirmwareSelectDlg();
     }
-
-    if (_rgManifestFirmwareInfo.count()) {
-        _buildAPMFirmwareNames();
-    }
-
-    emit bootloaderFound();
 }
 
 
@@ -492,12 +491,6 @@ void FirmwareUpgradeController::_initFirmwareHash()
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
         _rgPX4FLowFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rg3DRRadioFirmwareArray)/sizeof(rg3DRRadioFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rg3DRRadioFirmwareArray[i];
-        _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
     size = sizeof(rg3DRRadioFirmwareArray)/sizeof(rg3DRRadioFirmwareArray[0]);
