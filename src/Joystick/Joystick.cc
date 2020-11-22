@@ -683,7 +683,7 @@ void Joystick::startPolling(Vehicle* vehicle)
     if (vehicle) {
         // If a vehicle is connected, disconnect it
         if (_activeVehicle) {
-            disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
+            disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmedShowError);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
@@ -705,7 +705,7 @@ void Joystick::startPolling(Vehicle* vehicle)
         // Only connect the new vehicle if it wants joystick data
         if (vehicle->joystickEnabled()) {
             _pollingStartedForCalibration = false;
-            connect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
+            connect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmedShowError);
             connect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             connect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             connect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
@@ -725,7 +725,7 @@ void Joystick::stopPolling(void)
 {
     if (isRunning()) {
         if (_activeVehicle && _activeVehicle->joystickEnabled()) {
-            disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmed);
+            disconnect(this, &Joystick::setArmed,           _activeVehicle, &Vehicle::setArmedShowError);
             disconnect(this, &Joystick::setVtolInFwdFlight, _activeVehicle, &Vehicle::setVtolInFwdFlight);
             disconnect(this, &Joystick::setFlightMode,      _activeVehicle, &Vehicle::setFlightMode);
             disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);

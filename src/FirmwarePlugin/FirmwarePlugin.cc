@@ -841,27 +841,22 @@ bool FirmwarePlugin::_armVehicleAndValidate(Vehicle* vehicle)
         return true;
     }
 
-    bool armedChanged = false;
+    bool vehicleArmed = false;
 
-    // We try arming 3 times
-    for (int retries=0; retries<3; retries++) {
-        vehicle->setArmed(true);
+    // Only try arming the vehicle a single time. Doing retries on arming with a delay can lead to safety issues.
+    vehicle->setArmed(true, false /* showError */);
 
-        // Wait for vehicle to return armed state for 3 seconds
-        for (int i=0; i<30; i++) {
-            if (vehicle->armed()) {
-                armedChanged = true;
-                break;
-            }
-            QGC::SLEEP::msleep(100);
-            qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-        }
-        if (armedChanged) {
+    // Wait 1000 msecs for vehicle to arm
+    for (int i=0; i<10; i++) {
+        if (vehicle->armed()) {
+            vehicleArmed = true;
             break;
         }
+        QGC::SLEEP::msleep(100);
+        qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 
-    return armedChanged;
+    return vehicleArmed;
 }
 
 bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode)
