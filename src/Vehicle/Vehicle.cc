@@ -1851,12 +1851,12 @@ QGeoCoordinate Vehicle::homePosition()
     return _homePosition;
 }
 
-void Vehicle::setArmed(bool armed)
+void Vehicle::setArmed(bool armed, bool showError)
 {
     // We specifically use COMMAND_LONG:MAV_CMD_COMPONENT_ARM_DISARM since it is supported by more flight stacks.
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_COMPONENT_ARM_DISARM,
-                   true,    // show error if fails
+                   showError,
                    armed ? 1.0f : 0.0f);
 }
 
