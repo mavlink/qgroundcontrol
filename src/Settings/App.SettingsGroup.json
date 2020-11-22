@@ -119,7 +119,7 @@
     "shortDesc": "Auto-Center Throttle",
     "longDesc":  "If enabled the throttle stick will snap back to center when released.",
     "type":             "bool",
-    "default":     false
+    "default":     true
 },
 {
     "name":             "gstDebugLevel",
