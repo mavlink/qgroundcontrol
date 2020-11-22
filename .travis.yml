@@ -225,7 +225,8 @@ script:
 
   # unit tests linux
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-    	mkdir -p ~/.config/QtProject/ &&
+        sudo apt-get install -qq libegl1-mesa &&
+    	  mkdir -p ~/.config/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
         export QT_FATAL_WARNINGS=1 &&
         cd ${SHADOW_BUILD_DIR}/package &&
