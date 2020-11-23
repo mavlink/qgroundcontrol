@@ -77,7 +77,7 @@ public class QGCActivity extends QtActivity
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
     private Timer                                       probeAccessoriesTimer = null;
-    private static WifiManager.MulticastLock            _cLock;
+    private static WifiManager.MulticastLock            _wifiMulticastLock;
     
     public static Context m_context;
 
@@ -225,15 +225,15 @@ public class QGCActivity extends QtActivity
         _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), 0);
 
 	// Workaround for QTBUG-73138
-	if (_cLock == null)
+	if (_wifiMulticastLock == null)
             {
                 WifiManager wifi = (WifiManager) _instance.getSystemService(Context.WIFI_SERVICE);
-                _cLock = wifi.createMulticastLock("QGroundControl");
-                _cLock.setReferenceCounted(true);
+                _wifiMulticastLock = wifi.createMulticastLock("QGroundControl");
+                _wifiMulticastLock.setReferenceCounted(true);
             }
 
-	_cLock.acquire();
-	Log.d(TAG, "Multicast lock: " + _cLock.toString());
+	_wifiMulticastLock.acquire();
+	Log.d(TAG, "Multicast lock: " + _wifiMulticastLock.toString());
 
 
         try {
@@ -273,8 +273,8 @@ public class QGCActivity extends QtActivity
         }
         unregisterReceiver(mOpenAccessoryReceiver);
         try {
-            if (_cLock != null) {
-                _cLock.release();
+            if (_wifiMulticastLock != null) {
+                _wifiMulticastLock.release();
                 Log.d(TAG, "Multicast lock released.");
             }
             if(_wakeLock != null) {
