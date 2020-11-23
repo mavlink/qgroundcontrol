@@ -147,7 +147,7 @@ void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_mes
     group->type()->setRawValue              (batteryStatus.type);
     group->temperature()->setRawValue       (batteryStatus.temperature == INT16_MAX ?   qQNaN() : static_cast<double>(batteryStatus.temperature) / 100.0);
     group->voltage()->setRawValue           (totalVoltage);
-    group->current()->setRawValue           (batteryStatus.current_battery == -1 ?      qQNaN() : batteryStatus.current_battery);
+    group->current()->setRawValue           (batteryStatus.current_battery == -1 ?      qQNaN() : static_cast<double>(batteryStatus.current_battery) / 100.0);
     group->mahConsumed()->setRawValue       (batteryStatus.current_consumed == -1  ?    qQNaN() : batteryStatus.current_consumed);
     group->percentRemaining()->setRawValue  (batteryStatus.battery_remaining == -1 ?    qQNaN() : batteryStatus.battery_remaining);
     group->timeRemaining()->setRawValue     (batteryStatus.time_remaining == 0 ?        qQNaN() : batteryStatus.time_remaining);
