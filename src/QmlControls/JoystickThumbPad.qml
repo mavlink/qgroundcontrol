@@ -20,6 +20,9 @@ Item {
     property bool   _processTouchPoints:    false
     property color  _fgColor:               QGroundControl.globalPalette.text
     property color  _bgColor:               QGroundControl.globalPalette.window
+    property real   _hatWidth:              ScreenTools.defaultFontPixelHeight
+    property real   _hatWidthHalf:          _hatWidth / 2
+
     property real   stickPositionX:         _centerXY
     property real   stickPositionY:         yAxisReCenter ? _centerXY : height
 
@@ -176,17 +179,14 @@ Item {
     }
 
     Rectangle {
-        width:          hatWidth
-        height:         hatWidth
-        radius:         hatWidthHalf
+        width:          _hatWidth
+        height:         _hatWidth
+        radius:         _hatWidthHalf
         border.color:   _fgColor
         border.width:   1
         color:          Qt.rgba(_fgColor.r, _fgColor.g, _fgColor.b, 0.5)
-        x:              stickPositionX - hatWidthHalf
-        y:              stickPositionY - hatWidthHalf
-
-        readonly property real hatWidth:        ScreenTools.defaultFontPixelHeight
-        readonly property real hatWidthHalf:    ScreenTools.defaultFontPixelHeight / 2
+        x:              stickPositionX - _hatWidthHalf
+        y:              stickPositionY - _hatWidthHalf
     }
 
     Connections {
@@ -205,11 +205,18 @@ Item {
     }
 
     MultiPointTouchArea {
-        anchors.fill:       parent
-        minimumTouchPoints: 1
-        maximumTouchPoints: 1
-        touchPoints:        [ TouchPoint { id: touchPoint } ]
-        onPressed:          _joyRoot.thumbDown(touchPoints)
-        onReleased:         _joyRoot.reCenter()
+        anchors.fill:           parent
+        anchors.bottomMargin:   yAxisReCenter ? 0 : -_hatWidthHalf
+        minimumTouchPoints:     1
+        maximumTouchPoints:     1
+        touchPoints:            [ TouchPoint { id: touchPoint } ]
+        onPressed:              _joyRoot.thumbDown(touchPoints)
+        onReleased:             _joyRoot.reCenter()
+
+        Rectangle {
+            border.color: "red"
+            color: "transparent"
+            anchors.fill: parent
+        }
     }
 }
