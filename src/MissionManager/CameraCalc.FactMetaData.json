@@ -101,7 +101,7 @@
     "min":              -180.0,
     "max":              180.0,
     "decimalPlaces":    1,
-    "default":     -90.0
+    "default":     90.0
 }
 ]
 }

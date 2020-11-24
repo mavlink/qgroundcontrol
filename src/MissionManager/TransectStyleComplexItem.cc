@@ -1028,7 +1028,7 @@ void TransectStyleComplexItem::_appendCameraTriggerDistance(QList<MissionItem*>&
                                         1,                                                      // 1 - trigger one image immediately, both and entry and exit to get full coverage
                                         _cameraCalc.camposPositions()->rawValue().toInt(),      // number of positions to be used in CAMPOS mode
                                         _cameraCalc.camposRollAngle()->rawValue().toDouble(),   // the angle limits to roll the camera to left and right of neutral
-                                        _cameraCalc.camposPitchAngle()->rawValue().toDouble(),  // the fixed pitch angle
+                                        -_cameraCalc.camposPitchAngle()->rawValue().toDouble(), // the fixed pitch angle
                                         0,                                                      // param7 - unused
                                         true,                                                   // autoContinue
                                         false,                                                  // isCurrentItem
