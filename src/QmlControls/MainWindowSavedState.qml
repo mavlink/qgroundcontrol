@@ -32,12 +32,24 @@ Item {
     }
 
     Component.onCompleted: {
-        if (_enabled && s.width && s.height) {
-            window.x = s.x;
-            window.y = s.y;
-            window.width = s.width;
-            window.height = s.height;
-            window.visibility = s.visibility;
+        var isValidScreenGeometry =
+                (
+                    (s.x      >= 0                                         ) &&
+                    (s.y      >= 0                                         ) &&
+                    (s.width  >  0                                         ) &&
+                    (s.height >  0                                         ) &&
+                    (s.x      <=  Screen.desktopAvailableWidth  - s.width  ) &&
+                    (s.y      <=  Screen.desktopAvailableHeight - s.height ) &&
+                    (s.width  <=  Screen.desktopAvailableWidth             ) &&
+                    (s.height <=  Screen.desktopAvailableHeight            )
+                )
+
+        if (_enabled && isValidScreenGeometry) {
+            window.x            = s.x
+            window.y            = s.y
+            window.width        = s.width
+            window.height       = s.height
+            window.visibility   = s.visibility
         }
     }
 
