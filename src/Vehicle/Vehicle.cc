@@ -3826,3 +3826,12 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
         sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
 }
+
+void Vehicle::triggerSimpleCamera()
+{
+    sendMavCommand(_defaultComponentId,
+                   MAV_CMD_DO_DIGICAM_CONTROL,
+                   true,                        // show errors
+                   0.0, 0.0, 0.0, 0.0,          // param 1-4 unused
+                   1.0);                        // trigger camera
+}

@@ -27,10 +27,16 @@ Rectangle {
     height:     mainLayout.height + (_margins * 2)
     color:      "#80000000"
     radius:     _margins
-    visible:    !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue && (_mavlinkCamera || _videoStreamAvailable) && multiVehiclePanelSelector.showSingleVehiclePanel
+    visible:    !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue && (_mavlinkCamera || _videoStreamAvailable || _simpleCameraAvailable) && multiVehiclePanelSelector.showSingleVehiclePanel
 
     property real   _margins:                                   ScreenTools.defaultFontPixelHeight / 2
     property var    _activeVehicle:                             QGroundControl.multiVehicleManager.activeVehicle
+
+    // The following properties relate to a simple camera
+    property var    _flyViewSettings:                           QGroundControl.settingsManager.flyViewSettings
+    property bool   _simpleCameraAvailable:                     !_mavlinkCamera && _activeVehicle && _flyViewSettings.showSimpleCameraControl.rawValue
+    property bool   _onlySimpleCameraAvailable:                 !_anyVideoStreamAvailable && _simpleCameraAvailable
+    property bool   _simpleCameraIsShootingInCurrentMode:       _onlySimpleCameraAvailable && !_simplePhotoCaptureIsIdle
 
     // The following properties relate to a simple video stream
     property bool   _videoStreamAvailable:                      _videoStreamManager.hasVideo
@@ -38,12 +44,11 @@ Rectangle {
     property var    _videoStreamManager:                        QGroundControl.videoManager
     property bool   _videoStreamAllowsPhotoWhileRecording:      true
     property bool   _videoStreamIsStreaming:                    _videoStreamManager.streaming
-    property bool   _videoStreamPhotoCaptureIsIdle:             true
+    property bool   _simplePhotoCaptureIsIdle:             true
     property bool   _videoStreamRecording:                      _videoStreamManager.recording
     property bool   _videoStreamCanShoot:                       _videoStreamIsStreaming
-    property bool   _videoStreamIsShootingInCurrentMode:        _videoStreamInPhotoMode ? !_videoStreamPhotoCaptureIsIdle : _videoStreamRecording
+    property bool   _videoStreamIsShootingInCurrentMode:        _videoStreamInPhotoMode ? !_simplePhotoCaptureIsIdle : _videoStreamRecording
     property bool   _videoStreamInPhotoMode:                    false
-    property bool   _onlyVideoStreamAvailable:                  !_mavlinkCamera && _videoStreamManager.hasVideo
 
     // The following properties relate to a mavlink protocol camera
     property var    _mavlinkCameraManager:                      _activeVehicle ? _activeVehicle.cameraManager : null
@@ -51,6 +56,7 @@ Rectangle {
     property bool   _noMavlinkCameras:                          _mavlinkCameraManager ? _mavlinkCameraManager.cameras.count === 0 : true
     property var    _mavlinkCamera:                             !_noMavlinkCameras ? (_mavlinkCameraManager.cameras.get(_mavlinkCameraManagerCurCameraIndex) && _mavlinkCameraManager.cameras.get(_mavlinkCameraManagerCurCameraIndex).paramComplete ? _mavlinkCameraManager.cameras.get(_mavlinkCameraManagerCurCameraIndex) : null) : null
     property bool   _multipleMavlinkCameras:                    _mavlinkCameraManager ? _mavlinkCameraManager.cameras.count > 1 : false
+    property string _mavlinkCameraName:                         _mavlinkCamera && _multipleMavlinkCameras ? _mavlinkCamera.modelName : ""
     property bool   _noMavlinkCameraStreams:                    _mavlinkCamera ? _mavlinkCamera.streamLabels.length : true
     property bool   _multipleMavlinkCameraStreams:              _mavlinkCamera ? _mavlinkCamera.streamLabels.length > 1 : false
     property int    _mavlinCameraCurStreamIndex:                _mavlinkCamera ? _mavlinkCamera.currentStream : -1
@@ -72,15 +78,18 @@ Rectangle {
     // The following settings and functions unify between a mavlink camera and a simple video stream for simple access
 
     property bool   _anyVideoStreamAvailable:                   _videoStreamManager.hasVideo
-    property string _mavlinkCameraName:                         _mavlinkCamera ? (_multipleMavlinkCameras ? _mavlinkCamera.modelName : "") : qsTr("Video Stream")
-    property bool   _showModeIndicator:                         _mavlinkCamera ? _mavlinkCameraHasModes : _onlyVideoStreamAvailable
-    property bool   _modeIndicatorPhotoMode:                    _mavlinkCamera ? _mavlinkCameraInPhotoMode : _videoStreamInPhotoMode
+    property string _cameraName:                                _mavlinkCamera ? _mavlinkCameraName : ""
+    property bool   _showModeIndicator:                         _mavlinkCamera ? _mavlinkCameraHasModes : _videoStreamManager.hasVideo
+    property bool   _modeIndicatorPhotoMode:                    _mavlinkCamera ? _mavlinkCameraInPhotoMode : _videoStreamInPhotoMode || _onlySimpleCameraAvailable
     property bool   _allowsPhotoWhileRecording:                  _mavlinkCamera ? _mavlinkCameraAllowsPhotoWhileRecording : _videoStreamAllowsPhotoWhileRecording
     property bool   _switchToPhotoModeAllowed:                  !_modeIndicatorPhotoMode && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
     property bool   _switchToVideoModeAllowed:                  _modeIndicatorPhotoMode && (_mavlinkCamera ? !_mavlinkCameraIsShooting : true)
     property bool   _videoIsRecording:                          _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamRecording
-    property bool   _canShootInCurrentMode:                     _mavlinkCamera ? _mavlinkCameraCanShoot : _videoStreamCanShoot
-    property bool   _isShootingInCurrentMode:                   _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamIsShootingInCurrentMode
+    property bool   _canShootInCurrentMode:                     _mavlinkCamera ? _mavlinkCameraCanShoot : _videoStreamCanShoot || _simpleCameraAvailable
+    property bool   _isShootingInCurrentMode:                   _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamIsShootingInCurrentMode || _simpleCameraIsShootingInCurrentMode
+
+    on_OnlySimpleCameraAvailableChanged: console.log("_onlySimpleCameraAvailable", _onlySimpleCameraAvailable, _modeIndicatorPhotoMode, _videoStreamInPhotoMode, _mavlinkCamera)
+    on_ModeIndicatorPhotoModeChanged: console.log("_modeIndicatorPhotoMode", _modeIndicatorPhotoMode)
 
     function setCameraMode(photoMode) {
         _videoStreamInPhotoMode = photoMode
@@ -94,6 +103,7 @@ Rectangle {
     }
 
     function toggleShooting() {
+        console.log("toggleShooting", _anyVideoStreamAvailable)
         if (_mavlinkCamera) {
             if(_mavlinkCameraInVideoMode) {
                 _mavlinkCamera.toggleVideo()
@@ -104,11 +114,15 @@ Rectangle {
                     _mavlinkCamera.takePhoto()
                 }
             }
-        } else {
+        } else if (_onlySimpleCameraAvailable || (_simpleCameraAvailable && _anyVideoStreamAvailable && _videoStreamInPhotoMode && !videoGrabRadio.checked)) {
+            _simplePhotoCaptureIsIdle = false
+            _activeVehicle.triggerSimpleCamera()
+            simplePhotoCaptureTimer.start()
+        } else if (_anyVideoStreamAvailable) {
             if (_videoStreamInPhotoMode) {
-                _videoStreamPhotoCaptureIsIdle = false
+                _simplePhotoCaptureIsIdle = false
                 _videoStreamManager.grabImage()
-                videoStreamPhotoCaptureTimer.start()
+                simplePhotoCaptureTimer.start()
             } else {
                 if (_videoStreamManager.recording) {
                     _videoStreamManager.stopRecording()
@@ -120,9 +134,9 @@ Rectangle {
     }
 
     Timer {
-        id:             videoStreamPhotoCaptureTimer
+        id:             simplePhotoCaptureTimer
         interval:       500
-        onTriggered:    _videoStreamPhotoCaptureIsIdle = true
+        onTriggered:    _simplePhotoCaptureIsIdle = true
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -138,6 +152,7 @@ Rectangle {
         sourceSize.height:  height
         color:              qgcPal.text
         fillMode:           Image.PreserveAspectFit
+        visible:            !_onlySimpleCameraAvailable
 
         QGCMouseArea {
             fillItem:   parent
@@ -216,6 +231,23 @@ Rectangle {
             }
         }
 
+        RowLayout {
+            Layout.alignment:   Qt.AlignHCenter
+            spacing:            0
+            visible:            _showModeIndicator && !_mavlinkCamera && _simpleCameraAvailable && _videoStreamInPhotoMode
+
+            QGCRadioButton {
+                id:             videoGrabRadio
+                font.pointSize: ScreenTools.smallFontPointSize
+                text:           qsTr("Video Grab")
+            }
+            QGCRadioButton {
+                font.pointSize: ScreenTools.smallFontPointSize
+                text:           qsTr("Camera Trigger")
+                checked:        true
+            }
+        }
+
         // Take Photo, Start/Stop Video button
         // IMPORTANT: This control supports both mavlink cameras and simple video streams. Do no reference anything here which is not
         // using the unified properties/functions.
@@ -250,8 +282,8 @@ Rectangle {
 
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
-                text:               _mavlinkCameraName
-                visible:            _mavlinkCameraName !== ""
+                text:               _cameraName
+                visible:            _cameraName !== ""
             }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
@@ -261,9 +293,9 @@ Rectangle {
             }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter
-                text:               _activeVehicle && _mavlinkCameraInPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "0000_mavlinkCameraPhotoMode0"
+                text:               _activeVehicle ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
                 font.pointSize:     ScreenTools.largeFontPointSize
-                visible:            _mavlinkCameraInPhotoMode
+                visible:            _modeIndicatorPhotoMode
             }
             QGCLabel {
                 Layout.alignment:   Qt.AlignHCenter

@@ -391,6 +391,9 @@ public:
     /// Removes the vehicle from the system
     Q_INVOKABLE void closeVehicle(void) { _vehicleLinkManager->closeVehicle(); }
 
+    /// Trigger camera using MAV_CMD_DO_DIGICAM_CONTROL command
+    Q_INVOKABLE void triggerSimpleCamera(void);
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader();
 #endif
