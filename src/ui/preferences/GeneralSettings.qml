@@ -156,6 +156,7 @@ Rectangle {
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Show additional heading indicators on Compass")
                                 visible:    _showAdditionalIndicatorsCompass.visible
@@ -163,12 +164,21 @@ Rectangle {
 
                                 property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Lock Compass Nose-Up")
                                 visible:    _lockNoseUpCompass.visible
                                 fact:       _lockNoseUpCompass
 
                                 property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Show simple camera controls (DIGICAM_CONTROL)")
+                                visible:    _showDumbCameraControl.visible
+                                fact:       _showDumbCameraControl
+
+                                property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
                             }
 
                             GridLayout {

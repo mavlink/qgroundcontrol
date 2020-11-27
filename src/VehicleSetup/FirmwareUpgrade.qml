@@ -329,7 +329,7 @@ SetupPage {
                                 QGCRadioButton {
                                     id:             px4FlightStackRadio
                                     text:           qsTr("PX4 Pro ")
-                                    textBold:       _defaultFirmwareIsPX4
+                                    font.bold:      _defaultFirmwareIsPX4
                                     checked:        _defaultFirmwareIsPX4
                                     visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.apmFirmwareSupported
 
@@ -342,7 +342,7 @@ SetupPage {
                                 QGCRadioButton {
                                     id:             apmFlightStack
                                     text:           qsTr("ArduPilot")
-                                    textBold:       !_defaultFirmwareIsPX4
+                                    font.bold:      !_defaultFirmwareIsPX4
                                     checked:        !_defaultFirmwareIsPX4
                                     visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.apmFirmwareSupported
 
