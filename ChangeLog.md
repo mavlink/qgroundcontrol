@@ -4,6 +4,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1 - Daily build
 
+* Support simple cameras which only support DIGICAM_CONTROL in the Photo/Video control on Fly View.
 * Load Parameters From File: Support loading parameters which don't currently existing on the vehicle.
 * Load Parameters From File: Add dialog which shows diff of file and vehicle params. Selective param upload from file.
 * Video Streaming: New camera control supports capturing individual images from the stream

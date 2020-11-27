@@ -27,4 +27,5 @@ public:
     DEFINE_SETTINGFACT(lockNoseUpCompass)
     DEFINE_SETTINGFACT(maxGoToLocationDistance)
     DEFINE_SETTINGFACT(keepMapCenteredOnVehicle)
+    DEFINE_SETTINGFACT(showSimpleCameraControl)
 };

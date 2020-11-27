@@ -48,6 +48,12 @@
     "default":     false
 },
 {
+    "name":         "showSimpleCameraControl",
+    "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
+    "type":         "bool",
+    "default":      true
+},
+{
     "name":             "maxGoToLocationDistance",
     "shortDesc": "Maximum distance allowed for Go To Location.",
     "type":             "double",
