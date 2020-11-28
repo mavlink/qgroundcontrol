@@ -88,9 +88,6 @@ Rectangle {
     property bool   _canShootInCurrentMode:                     _mavlinkCamera ? _mavlinkCameraCanShoot : _videoStreamCanShoot || _simpleCameraAvailable
     property bool   _isShootingInCurrentMode:                   _mavlinkCamera ? _mavlinkCameraIsShooting : _videoStreamIsShootingInCurrentMode || _simpleCameraIsShootingInCurrentMode
 
-    on_OnlySimpleCameraAvailableChanged: console.log("_onlySimpleCameraAvailable", _onlySimpleCameraAvailable, _modeIndicatorPhotoMode, _videoStreamInPhotoMode, _mavlinkCamera)
-    on_ModeIndicatorPhotoModeChanged: console.log("_modeIndicatorPhotoMode", _modeIndicatorPhotoMode)
-
     function setCameraMode(photoMode) {
         _videoStreamInPhotoMode = photoMode
         if (_mavlinkCamera) {
