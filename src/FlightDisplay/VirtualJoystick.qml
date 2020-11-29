@@ -41,7 +41,7 @@ Item {
         anchors.bottom:         parent.bottom
         width:                  parent.height
         height:                 parent.height
-        yAxisPositiveRangeOnly: _activeVehicle && !_activeVehicle.rover && !_activeVehicle.sub
+        yAxisPositiveRangeOnly: _activeVehicle && !_activeVehicle.rover
         yAxisReCenter:          autoCenterThrottle
     }
 
