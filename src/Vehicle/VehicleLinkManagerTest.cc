@@ -47,7 +47,7 @@ void VehicleLinkManagerTest::cleanup(void)
         QCOMPARE(_linkManager->links().count(),         0);
     }
 
-    _multiVehicleMgr    = nullptr;
+    _multiVehicleMgr = nullptr;
 
     UnitTest::cleanup();
 }
@@ -73,12 +73,14 @@ void VehicleLinkManagerTest::_simpleLinkTest(void)
     Vehicle* vehicle = _multiVehicleMgr->activeVehicle();
     QVERIFY(vehicle);
     QSignalSpy spyVehicleDelete(vehicle, &QObject::destroyed);
+    QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
 
     QCOMPARE(mockConfig.use_count(),    2); // Refs: This method, MockLink
     QCOMPARE(mockLink.use_count(),      3); // Refs: This method, LinkManager, Vehicle
 
-    // We explicitly don't wait for the Vehicle to finish it's startup sequence before we disconnect.
-    // This helps to wring out possible crashing when the link goes down before the startup sequence is complete.
+    // We wait for the full initial connect sequence to complete to catch anby ComponentInformationManager bugs
+    QCOMPARE(spyVehicleInitialConnectComplete.wait(3000), true);
+
     mockLink->disconnect();
 
     // Vehicle should go away due to disconnect
@@ -113,6 +115,8 @@ void VehicleLinkManagerTest::_simpleCommLossTest(void)
     QCOMPARE(_multiVehicleMgr->vehicles()->count(), 1);
     Vehicle* vehicle = _multiVehicleMgr->activeVehicle();
     QVERIFY(vehicle);
+    QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
+    QCOMPARE(spyVehicleInitialConnectComplete.wait(3000), true);
 
     QSignalSpy spyCommLostChanged(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged);
     pMockLink->setCommLost(true);
@@ -157,6 +161,8 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
     VehicleLinkManager* vehicleLinkManager = vehicle->vehicleLinkManager();
     QVERIFY(vehicle);
     QVERIFY(vehicleLinkManager);
+    QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
+    QCOMPARE(spyVehicleInitialConnectComplete.wait(3000), true);
 
     QCOMPARE(mockLink1.get(), vehicleLinkManager->primaryLink().lock().get());
 
@@ -239,6 +245,8 @@ void VehicleLinkManagerTest::_connectionRemovedTest(void)
     QCOMPARE(spyVehicleCreate.wait(1000), true);
     Vehicle* vehicle = _multiVehicleMgr->activeVehicle();
     QVERIFY(vehicle);
+    QSignalSpy spyVehicleInitialConnectComplete(vehicle, &Vehicle::initialConnectComplete);
+    QCOMPARE(spyVehicleInitialConnectComplete.wait(3000), true);
 
     QSignalSpy spyCommLostChanged(vehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged);
 

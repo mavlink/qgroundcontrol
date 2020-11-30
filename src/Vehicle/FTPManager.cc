@@ -19,6 +19,8 @@
 
 QGC_LOGGING_CATEGORY(FTPManagerLog, "FTPManagerLog")
 
+const char* FTPManager::mavlinkFTPScheme = "mftp";
+
 FTPManager::FTPManager(Vehicle* vehicle)
     : QObject   (vehicle)
     , _vehicle  (vehicle)
@@ -32,9 +34,9 @@ FTPManager::FTPManager(Vehicle* vehicle)
     Q_ASSERT(sizeof(MavlinkFTP::RequestHeader) == 12);
 }
 
-bool FTPManager::download(const QString& from, const QString& toDir)
+bool FTPManager::download(const QString& fromURI, const QString& toDir)
 {
-    qCDebug(FTPManagerLog) << "download from:" << from << "to:" << toDir;
+    qCDebug(FTPManagerLog) << "download fromURI:" << fromURI << "to:" << toDir;
 
     if (!_rgStateMachine.isEmpty()) {
         qCDebug(FTPManagerLog) << "Cannot download. Already in another operation";
@@ -55,11 +57,9 @@ bool FTPManager::download(const QString& from, const QString& toDir)
     _downloadState.reset();
     _downloadState.toDir.setPath(toDir);
 
-    QString ftpPrefix("mavlinkftp://");
-    if (from.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
-        _downloadState.fullPathOnVehicle = from.right(from.length() - ftpPrefix.length() + 1);
-    } else {
-        _downloadState.fullPathOnVehicle = from;
+    if (!_parseURI(fromURI, _downloadState.fullPathOnVehicle, _ftpCompId)) {
+        qCWarning(FTPManagerLog) << "_parseURI failed";
+        return false;
     }
 
     // We need to strip off the file name from the fully qualified path. We can't use the usual QDir
@@ -74,7 +74,7 @@ bool FTPManager::download(const QString& from, const QString& toDir)
 
     _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
 
-    qDebug() << _downloadState.fullPathOnVehicle << _downloadState.fileName;
+    qCDebug(FTPManagerLog) << "_downloadState.fullPathOnVehicle:_downloadState.fileName" << _downloadState.fullPathOnVehicle << _downloadState.fileName;
 
     _startStateMachine();
 
@@ -105,7 +105,7 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 
 void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL) {
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL && message.compid != _ftpCompId) {
         return;
     }
 
@@ -548,8 +548,39 @@ void FTPManager::_sendRequestExpectAck(MavlinkFTP::Request* request)
                                                      &message,
                                                      0,                                                     // Target network, 0=broadcast?
                                                      _vehicle->id(),
-                                                     MAV_COMP_ID_AUTOPILOT1,
+                                                     _ftpCompId,
                                                      (uint8_t*)request);                                    // Payload
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     }
+}
+
+bool FTPManager::_parseURI(const QString& uri, QString& parsedURI, uint8_t& compId)
+{
+    parsedURI   = uri;
+    compId      = MAV_COMP_ID_AUTOPILOT1;
+
+    // Pull scheme off the front if there
+    QString ftpPrefix(QStringLiteral("%1://").arg(mavlinkFTPScheme));
+    if (parsedURI.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
+        parsedURI = parsedURI.right(parsedURI.length() - ftpPrefix.length() + 1);
+    }
+    if (parsedURI.contains("://")) {
+        qCWarning(FTPManagerLog) << "Incorrect uri scheme or format" << uri;
+        return false;
+    }
+
+    // Pull component id off the front if there
+    QRegularExpression      regEx("^/??\\[\\;comp\\=(\\d+)\\]");
+    QRegularExpressionMatch match = regEx.match(parsedURI);
+    if (match.hasMatch()) {
+        bool ok;
+        compId = match.captured(1).toUInt(&ok);
+        if (!ok) {
+            qCWarning(FTPManagerLog) << "Incorrect format for component id" << uri;
+            return false;
+        }
+        parsedURI.replace(QRegularExpression("\\[\\;comp\\=\\d+\\]"), "");
+    }
+
+    return true;
 }
