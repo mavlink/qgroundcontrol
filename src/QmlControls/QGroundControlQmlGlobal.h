@@ -274,5 +274,4 @@ private:
 
     static QGeoCoordinate   _coord;
     static double           _zoom;
-    QTimer                  _flightMapPositionSettledTimer;
 };
