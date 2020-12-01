@@ -134,7 +134,13 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     _vehicles.append(vehicle);
 
     // Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
-    _sendGCSHeartbeat();
+    if (_gcsHeartbeatEnabled) {
+        _gcsHeartbeatTimer.stop();
+        _sendGCSHeartbeat();
+        _gcsHeartbeatTimer.start();
+    } else {
+        _sendGCSHeartbeat();
+    }
 
     qgcApp()->toolbox()->settingsManager()->appSettings()->defaultFirmwareType()->setRawValue(vehicleFirmwareType);
 
