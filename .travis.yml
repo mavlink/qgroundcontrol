@@ -115,7 +115,6 @@ install:
         wget --quiet https://s3.amazonaws.com/downloads.bluerobotics.com/QGC/dependencies/gstreamer-1.0-android-universal-1.18.1.tar.xz &&
         mkdir gstreamer-1.0-android-universal-1.18.1 &&
         tar xf gstreamer-1.0-android-universal-1.18.1.tar.xz -C gstreamer-1.0-android-universal-1.18.1 &&
-        mv gstreamer-1.0-android-universal-1.18.1 ${TRAVIS_BUILD_DIR} &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip &&
         unzip android-ndk-r20-linux-x86_64.zip > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&
