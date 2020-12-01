@@ -2811,6 +2811,10 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
             // communication to priority link regained
             _connectionLost = false;
             communicationRegained = true;
+            if (apmFirmware()) {
+                // request telemetry streams upon reconnection, for APM they do not start automatically!
+                _firmwarePlugin->initializeVehicle(this);
+            }
             emit connectionLostChanged(false);
 
             if (_priorityLink->highLatency()) {

@@ -673,7 +673,9 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 
 void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
-    vehicle->setFirmwarePluginInstanceData(new APMFirmwarePluginInstanceData);
+    if (!vehicle->firmwarePluginInstanceData()) {
+        vehicle->setFirmwarePluginInstanceData(new APMFirmwarePluginInstanceData);
+    }
 
     if (vehicle->isOfflineEditingVehicle()) {
         switch (vehicle->vehicleType()) {
