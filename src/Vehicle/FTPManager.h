@@ -32,11 +32,14 @@ public:
     FTPManager(Vehicle* vehicle);
 
 	/// Downloads the specified file.
-    ///     @param from     File to download from vehicle, fully qualified path. May be in the format mavlinkftp://...
+    ///     @param fromURI  File to download from vehicle, fully qualified path. May be in the format "mftp://[;comp=<id>]..." where the component id is specified.
+    ///                     If component id is not specified MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param toDir    Local directory to download file to
     /// @return true: download has started, false: error, no download
     /// Signals downloadComplete, commandError, commandProgress
-    bool download(const QString& from, const QString& toDir);
+    bool download(const QString& fromURI, const QString& toDir);
+
+    static const char* mavlinkFTPScheme;
 
 signals:
     void downloadComplete(const QString& file, const QString& errorMsg);
@@ -120,8 +123,10 @@ private:
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
+    bool    _parseURI                   (const QString& uri, QString& parsedURI, uint8_t& compId);
 
     Vehicle*                _vehicle;
+    uint8_t                 _ftpCompId;
     QList<StateFunctions_t> _rgStateMachine;
     DownloadState_t         _downloadState;
     QTimer                  _ackOrNakTimeoutTimer;

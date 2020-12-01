@@ -49,7 +49,7 @@ private:
     static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
     static void _stateRequestTranslationJson    (StateMachine* stateMachine);
     static void _stateRequestComplete           (StateMachine* stateMachine);
-    static bool _uriIsFTP                       (const QString& uri);
+    static bool _uriIsMAVLinkFTP                (const QString& uri);
 
 
     ComponentInformationManager*    _compMgr                    = nullptr;
