@@ -17,6 +17,9 @@
 #include "SubtitleWriter.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "FactValueGrid.h"
+#include "HorizontalFactValueGrid.h"
+#include "InstrumentValueData.h"
 #include <QDateTime>
 #include <QString>
 #include <QDate>
@@ -33,11 +36,22 @@ SubtitleWriter::SubtitleWriter(QObject* parent)
 
 void SubtitleWriter::startCapturingTelemetry(const QString& videoFile)
 {
-    // Get the facts displayed in the values widget and capture them, removing the "Vehicle." prefix.
-    QSettings settings;
-    settings.beginGroup("ValuesWidget");
-    _values = settings.value("large").toStringList().replaceInStrings(QStringLiteral("Vehicle."), QString());
-    _values += settings.value("small").toStringList().replaceInStrings(QStringLiteral("Vehicle."), QString());
+    // Delete facts of last run
+    _facts.clear();
+
+    // Gather the facts currently displayed into _facts
+    FactValueGrid* grid = new FactValueGrid();
+    grid->setProperty("userSettingsGroup", HorizontalFactValueGrid::telemetryBarUserSettingsGroup);
+    grid->setProperty("defaultSettingsGroup", HorizontalFactValueGrid::telemetryBarDefaultSettingsGroup);
+    grid->_loadSettings();
+    for (int colIndex = 0; colIndex < grid->columns()->count(); colIndex++) {
+        QmlObjectListModel* list = grid->columns()->value<QmlObjectListModel*>(colIndex);
+        for (int rowIndex = 0; rowIndex < list->count(); rowIndex++) {
+            InstrumentValueData* value = list->value<InstrumentValueData*>(rowIndex);
+            _facts += value->fact();
+        }
+    }
+    grid->deleteLater();
 
     // One subtitle always starts where the previous ended
     _lastEndTime = QTime(0, 0);
@@ -102,10 +116,10 @@ void SubtitleWriter::_captureTelemetry()
     QStringList valuesStrings;
 
     // Make a list of "factname:" strings and other with the values, so one can be aligned left and the other right
-    for (const auto& i : _values) {
-        valuesStrings << QStringLiteral("%2 %3").arg(vehicle->getFact(i)->cookedValueString())
-                                                .arg(vehicle->getFact(i)->cookedUnits());
-        namesStrings << QStringLiteral("%1:").arg(vehicle->getFact(i)->shortDescription());
+    for (const Fact* fact : _facts) {
+        valuesStrings << QStringLiteral("%2 %3").arg(fact->cookedValueString())
+                                                .arg(fact->cookedUnits());
+        namesStrings << QStringLiteral("%1:").arg(fact->shortDescription());
     }
 
     // The time to start displaying this subtitle text
@@ -118,7 +132,7 @@ void SubtitleWriter::_captureTelemetry()
     // This splits the screen in N parts and uses the N-1 internal parts to align the subtitles to.
     // Should we try to get the resolution from the pipeline? This seems to work fine with other resolutions too.
     static const int rowWidth = (1920 + offsetFactor)/(nRows+1);
-    int nValuesByRow = ceil(_values.length() / nRows);
+    int nValuesByRow = ceil(_facts.length() / nRows);
 
     QList<QStringList> dataColumns;
     QStringList stringColumns;
