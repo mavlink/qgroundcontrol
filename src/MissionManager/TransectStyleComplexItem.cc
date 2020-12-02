@@ -1025,7 +1025,7 @@ void TransectStyleComplexItem::_appendCameraTriggerDistance(QList<MissionItem*>&
                                         MAV_FRAME_MISSION,
                                         triggerDistance,
                                         0,                                                      // shutter integration (ignore)
-                                        1,                                                      // 1 - trigger one image immediately, both and entry and exit to get full coverage
+                                        _cameraCalc.camposMinInterval()->rawValue().toInt(),    // The minimum interval in which the camera is capable of taking subsequent pictures repeatedly. 0 to ignore.
                                         _cameraCalc.camposPositions()->rawValue().toInt(),      // number of positions to be used in CAMPOS mode
                                         _cameraCalc.camposRollAngle()->rawValue().toDouble(),   // the angle limits to roll the camera to left and right of neutral
                                         -_cameraCalc.camposPitchAngle()->rawValue().toDouble(), // the fixed pitch angle

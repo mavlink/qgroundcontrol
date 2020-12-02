@@ -186,6 +186,12 @@ Rectangle {
                         Layout.fillWidth:       true
                     }
 
+                    QGCLabel { text: qsTr("Min Interval") }
+                    FactTextField {
+                        fact:                   _missionItem.cameraCalc.camposMinInterval
+                        Layout.fillWidth:       true
+                    }
+
                     QGCLabel { text: qsTr("Roll Angle") }
                     FactTextField {
                         fact:                   _missionItem.cameraCalc.camposRollAngle

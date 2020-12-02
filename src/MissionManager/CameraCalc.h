@@ -39,6 +39,7 @@ public:
 
     Q_PROPERTY(Fact*            campos                      READ campos                                                         CONSTANT)
     Q_PROPERTY(Fact*            camposPositions             READ camposPositions                                                CONSTANT)
+    Q_PROPERTY(Fact*            camposMinInterval           READ camposMinInterval                                              CONSTANT)
     Q_PROPERTY(Fact*            camposRollAngle             READ camposRollAngle                                                CONSTANT)
     Q_PROPERTY(Fact*            camposPitchAngle            READ camposPitchAngle                                               CONSTANT)
 
@@ -69,6 +70,7 @@ public:
 
     Fact* campos                    (void) { return &_camposFact; }
     Fact* camposPositions           (void) { return &_camposPositionsFact; }
+    Fact* camposMinInterval         (void) { return &_camposMinIntervalFact; }
     Fact* camposRollAngle           (void) { return &_camposRollAngleFact; }
     Fact* camposPitchAngle          (void) { return &_camposPitchAngleFact; }
 
@@ -109,6 +111,7 @@ public:
 
     static const char* camposName;
     static const char* camposPositionsName;
+    static const char* camposMinIntervalName;
     static const char* camposRollAngleName;
     static const char* camposPitchAngleName;
 
@@ -159,6 +162,7 @@ private:
 
     SettingsFact    _camposFact;
     SettingsFact    _camposPositionsFact;
+    SettingsFact    _camposMinIntervalFact;
     SettingsFact    _camposRollAngleFact;
     SettingsFact    _camposPitchAngleFact;
 
@@ -174,6 +178,7 @@ private:
 
     static const char* _jsonCamposKey;
     static const char* _jsonCamposPositionsKey;
+    static const char* _jsonCamposMinIntervalKey;
     static const char* _jsonCamposRollAngleKey;
     static const char* _jsonCamposPitchAngleKey;
 };

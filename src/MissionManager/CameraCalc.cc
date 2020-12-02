@@ -29,6 +29,7 @@ const char* CameraCalc::adjustedFootprintSideName =         "AdjustedFootprintSi
 
 const char* CameraCalc::camposName =                 "Campos";
 const char* CameraCalc::camposPositionsName =        "CamposPositions";
+const char* CameraCalc::camposMinIntervalName =      "CamposMinInterval";
 const char* CameraCalc::camposRollAngleName =        "CamposRollAngle";
 const char* CameraCalc::camposPitchAngleName =       "CamposPitchAngle";
 
@@ -36,6 +37,7 @@ const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
 
 const char* CameraCalc::_jsonCamposKey =                         "campos";
 const char* CameraCalc::_jsonCamposPositionsKey =                "camposPositions";
+const char* CameraCalc::_jsonCamposMinIntervalKey =              "camposMinInterval";
 const char* CameraCalc::_jsonCamposRollAngleKey =                "camposRollAngle";
 const char* CameraCalc::_jsonCamposPitchAngleKey =               "camposPitchAngle";
 
@@ -54,6 +56,7 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
 
     , _camposFact                   (settingsGroup, _metaDataMap[camposName])
     , _camposPositionsFact          (settingsGroup, _metaDataMap[camposPositionsName])
+    , _camposMinIntervalFact        (settingsGroup, _metaDataMap[camposMinIntervalName])
     , _camposRollAngleFact          (settingsGroup, _metaDataMap[camposRollAngleName])
     , _camposPitchAngleFact         (settingsGroup, _metaDataMap[camposPitchAngleName])
 {
@@ -71,6 +74,7 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
 
     connect(&_camposFact,                   &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_camposPositionsFact,          &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
+    connect(&_camposMinIntervalFact,        &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_camposRollAngleFact,          &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
     connect(&_camposPitchAngleFact,         &Fact::valueChanged,                            this, &CameraCalc::_setDirty);
 
@@ -91,6 +95,7 @@ CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& se
 
     connect(&_camposFact,               &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(&_camposPositionsFact,      &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
+    connect(&_camposMinIntervalFact,    &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(&_camposRollAngleFact,      &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
     connect(&_camposPitchAngleFact,     &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
 
@@ -247,6 +252,7 @@ void CameraCalc::save(QJsonObject& json) const
 
     json[_jsonCamposKey] =                  _camposFact.rawValue().toBool();
     json[_jsonCamposPositionsKey] =         _camposPositionsFact.rawValue().toInt();
+    json[_jsonCamposMinIntervalKey] =       _camposMinIntervalFact.rawValue().toInt();
     json[_jsonCamposRollAngleKey] =         _camposRollAngleFact.rawValue().toDouble();
     json[_jsonCamposPitchAngleKey] =        _camposPitchAngleFact.rawValue().toDouble();
 
@@ -293,6 +299,7 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         
         { _jsonCamposKey,                   QJsonValue::Bool,   false },
         { _jsonCamposPositionsKey,          QJsonValue::Double, false },
+        { _jsonCamposMinIntervalKey,        QJsonValue::Double, false },
         { _jsonCamposRollAngleKey,          QJsonValue::Double, false },
         { _jsonCamposPitchAngleKey,         QJsonValue::Double, false },
     };

@@ -84,6 +84,14 @@
     "default":     3
 },
 {
+    "name":             "CamposMinInterval",
+    "shortDesc": "The minimum interval in which the camera is capable of taking subsequent pictures repeatedly. 0 to ignore.",
+    "type":             "double",
+    "min:":             0,
+    "decimalPlaces":    0,
+    "default":     500
+},
+{
     "name":             "CamposRollAngle",
     "shortDesc": "The angle limits that the camera will be rolled to left and right of the neutral",
     "type":             "double",
