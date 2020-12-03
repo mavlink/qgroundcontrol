@@ -119,6 +119,14 @@ WindowsBuild {
 }
 
 #
+# [REQUIRED] lzma library
+WindowsBuild {
+    INCLUDEPATH +=  $$SOURCE_DIR/libs/lzma/windows/include
+    LIBS += -L$$SOURCE_DIR/libs/lzma/windows/lib
+}
+LIBS += -llzma
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
