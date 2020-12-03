@@ -10,7 +10,7 @@
 #include "ComponentInformationManager.h"
 #include "Vehicle.h"
 #include "FTPManager.h"
-#include "QGCZlib.h"
+#include "QGCLZMA.h"
 #include "JsonHelper.h"
 #include "CompInfoVersion.h"
 #include "CompInfoParam.h"
@@ -205,9 +205,9 @@ QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QStri
 {
     QString outputFileName = fileName;
 
-    if (fileName.endsWith(".gz", Qt::CaseInsensitive)) {
+    if (fileName.endsWith(".lzma", Qt::CaseInsensitive)) {
         outputFileName = (QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(inflatedFileName));
-        if (QGCZlib::inflateGzipFile(fileName, outputFileName)) {
+        if (QGCLZMA::inflateLZMAFile(fileName, outputFileName)) {
             QFile(fileName).remove();
         } else {
             qCWarning(ComponentInformationManagerLog) << "Inflate of compressed json failed" << inflatedFileName;
