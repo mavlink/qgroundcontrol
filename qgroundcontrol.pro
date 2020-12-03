@@ -383,6 +383,7 @@ INCLUDEPATH += \
     src/api \
     src/AnalyzeView \
     src/Camera \
+    src/Compression \
     src/AutoPilotPlugins \
     src/FlightDisplay \
     src/FlightMap \
@@ -568,6 +569,8 @@ HEADERS += \
     src/Camera/QGCCameraIO.h \
     src/Camera/QGCCameraManager.h \
     src/CmdLineOptParser.h \
+    src/Compression/QGCLZMA.h \
+    src/Compression/QGCZlib.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
@@ -639,7 +642,6 @@ HEADERS += \
     src/QGCQGeoCoordinate.h \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
-    src/QGCZlib.h \
     src/QmlControls/AppMessages.h \
     src/QmlControls/EditPositionDialogController.h \
     src/QmlControls/FlightPathSegment.h \
@@ -801,6 +803,8 @@ SOURCES += \
     src/Camera/QGCCameraIO.cc \
     src/Camera/QGCCameraManager.cc \
     src/CmdLineOptParser.cc \
+    src/Compression/QGCLZMA.cc \
+    src/Compression/QGCZlib.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
@@ -868,7 +872,6 @@ SOURCES += \
     src/QGCQGeoCoordinate.cc \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
-    src/QGCZlib.cc \
     src/QmlControls/AppMessages.cc \
     src/QmlControls/EditPositionDialogController.cc \
     src/QmlControls/FlightPathSegment.cc \
