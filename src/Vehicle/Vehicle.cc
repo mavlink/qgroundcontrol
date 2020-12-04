@@ -518,7 +518,9 @@ QString Vehicle::firmwareTypeString() const
 
 QString Vehicle::vehicleTypeString() const
 {
-    if (fixedWing()) {
+    if (airship()) {
+        return tr("Airship");
+    } else if (fixedWing()) {
         return tr("Fixed Wing");
     } else if (multiRotor()) {
         return tr("Multi-Rotor");
@@ -2148,6 +2150,11 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 void Vehicle::_say(const QString& text)
 {
     _toolbox->audioOutput()->say(text.toLower());
+}
+
+bool Vehicle::airship() const
+{
+    return QGCMAVLink::isAirship(vehicleType());
 }
 
 bool Vehicle::fixedWing() const

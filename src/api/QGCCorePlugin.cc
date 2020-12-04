@@ -293,7 +293,7 @@ void QGCCorePlugin::factValueGridCreateDefaultSettings(const QString& defaultSet
 {
     HorizontalFactValueGrid factValueGrid(defaultSettingsGroup);
 
-    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL;
+    bool        includeFWValues = factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassFixedWing || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassVTOL || factValueGrid.vehicleClass() == QGCMAVLink::VehicleClassAirship;
 
     factValueGrid.setFontSize(FactValueGrid::LargeFontSize);
 

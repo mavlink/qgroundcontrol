@@ -16,6 +16,7 @@ constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassPX4;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassArduPilot;
 constexpr QGCMAVLink::FirmwareClass_t QGCMAVLink::FirmwareClassGeneric;
 
+constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassAirship;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassFixedWing;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassRoverBoat;
 constexpr QGCMAVLink::VehicleClass_t QGCMAVLink::VehicleClassSub;
@@ -79,6 +80,11 @@ QString QGCMAVLink::firmwareClassToString(FirmwareClass_t firmwareClass)
     }
 }
 
+bool QGCMAVLink::isAirship(MAV_TYPE mavType)
+{
+    return vehicleClass(mavType) == VehicleClassAirship;
+}
+
 bool QGCMAVLink::isFixedWing(MAV_TYPE mavType)
 {
     return vehicleClass(mavType) == VehicleClassFixedWing;
@@ -129,6 +135,8 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
         return VehicleClassVTOL;
     case MAV_TYPE_FIXED_WING:
         return VehicleClassFixedWing;
+    case MAV_TYPE_AIRSHIP:
+        return VehicleClassAirship;
     default:
         return VehicleClassGeneric;
     }
@@ -137,6 +145,8 @@ QGCMAVLink::VehicleClass_t QGCMAVLink::vehicleClass(MAV_TYPE mavType)
 QString QGCMAVLink::vehicleClassToString(VehicleClass_t vehicleClass)
 {
     switch (vehicleClass) {
+    case VehicleClassAirship:
+        return QT_TRANSLATE_NOOP("Vehicle Class", "Airship");
     case VehicleClassFixedWing:
         return QT_TRANSLATE_NOOP("Vehicle Class", "Fixed Wing");
     case VehicleClassRoverBoat:
