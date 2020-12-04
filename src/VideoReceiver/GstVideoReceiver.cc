@@ -1096,8 +1096,11 @@ GstVideoReceiver::_addVideoSink(GstPad* pad)
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-videosink");
 
-    if (caps != nullptr) {
-        GstStructure* s = gst_caps_get_structure(caps, 0);
+    if (_decoderValve != nullptr) {
+        // Extracing video size from source is more guaranteed
+        GstPad* valveSrcPad = gst_element_get_static_pad(_decoderValve, "src");
+        GstCaps* valveSrcPadCaps = gst_pad_query_caps(valveSrcPad, nullptr);
+        GstStructure* s = gst_caps_get_structure(valveSrcPadCaps, 0);
 
         if (s != nullptr) {
             gint width, height;

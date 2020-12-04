@@ -47,6 +47,7 @@ struct satellite_info_s {
 	uint8_t elevation[20];
 	uint8_t azimuth[20];
 	uint8_t snr[20];
+	uint8_t prn[20];
 #ifdef __cplusplus
 	static const uint8_t SAT_INFO_MAX_SATELLITES = 20;
 

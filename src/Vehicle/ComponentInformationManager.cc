@@ -15,6 +15,7 @@
 #include "CompInfoVersion.h"
 #include "CompInfoParam.h"
 #include "QGCFileDownload.h"
+#include "QGCApplication.h"
 
 #include <QStandardPaths>
 #include <QJsonDocument>
@@ -181,12 +182,12 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
     WeakLinkInterfacePtr                weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
     if (weakLink.expired()) {
-        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information % 1 request due to no primary link").arg(requestMachine->typeToString());
+        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
         stateMachine->advance();
     } else {
         SharedLinkInterfacePtr sharedLink = weakLink.lock();
         if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
-            qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information % 1 request due to link type").arg(requestMachine->typeToString());
+            qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to link type").arg(requestMachine->typeToString());
             stateMachine->advance();
         } else {
             qCDebug(ComponentInformationManagerLog) << "Requesting component information" << requestMachine->typeToString();
@@ -226,6 +227,9 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson(const QSt
     disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
     if (errorMsg.isEmpty()) {
         _jsonMetadataFileName = _downloadCompleteJsonWorker(fileName, "metadata.json");
+    } else if (qgcApp()->runningUnitTests()) {
+        // Unit test should always succeed
+        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson failed filename:errorMsg" << fileName << errorMsg;
     }
 
     advance();
@@ -240,6 +244,9 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson(const 
     disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
     if (errorMsg.isEmpty()) {
         _jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
+    } else if (qgcApp()->runningUnitTests()) {
+        // Unit test should always succeed
+        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson failed filename:errorMsg" << fileName << errorMsg;
     }
 
     advance();
@@ -252,6 +259,9 @@ void RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson(QString 
     disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
     if (errorMsg.isEmpty()) {
         _jsonMetadataFileName = _downloadCompleteJsonWorker(localFile, "metadata.json");
+    } else if (qgcApp()->runningUnitTests()) {
+        // Unit test should always succeed
+        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson failed remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
     }
 
     advance();
@@ -266,6 +276,9 @@ void RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson(QStri
     disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
     if (errorMsg.isEmpty()) {
         _jsonTranslationFileName = _downloadCompleteJsonWorker(localFile, "translation.json");
+    } else if (qgcApp()->runningUnitTests()) {
+        // Unit test should always succeed
+        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson failed remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
     }
 
     advance();
@@ -279,13 +292,21 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
 
     if (compInfo->available) {
         qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData;
-        if (_uriIsFTP(compInfo->uriMetaData)) {
+        if (_uriIsMAVLinkFTP(compInfo->uriMetaData)) {
             connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
-            ftpManager->download(compInfo->uriMetaData, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+            if (!ftpManager->download(compInfo->uriMetaData, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson FTPManager::download returned failure";
+                disconnect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
+                requestMachine->advance();
+            }
         } else {
             QGCFileDownload* download = new QGCFileDownload(requestMachine);
             connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
-            download->download(compInfo->uriMetaData);
+            if (!download->download(compInfo->uriMetaData)) {
+                qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
+                disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
+                requestMachine->advance();
+            }
         }
     } else {
         qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. Component information not available";
@@ -305,13 +326,21 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
             requestMachine->advance();
         } else {
             qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation;
-            if (_uriIsFTP(compInfo->uriTranslation)) {
+            if (_uriIsMAVLinkFTP(compInfo->uriTranslation)) {
                 connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
-                ftpManager->download(compInfo->uriTranslation, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+                if (!ftpManager->download(compInfo->uriTranslation, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                    qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson FTPManager::download returned failure";
+                    connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
+                    requestMachine->advance();
+                }
             } else {
                 QGCFileDownload* download = new QGCFileDownload(requestMachine);
                 connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
-                download->download(compInfo->uriTranslation);
+                if (!download->download(compInfo->uriTranslation)) {
+                    qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
+                    disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
+                    requestMachine->advance();
+                }
             }
         }
     } else {
@@ -337,7 +366,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateM
     requestMachine->advance();
 }
 
-bool RequestMetaDataTypeStateMachine::_uriIsFTP(const QString& uri)
+bool RequestMetaDataTypeStateMachine::_uriIsMAVLinkFTP(const QString& uri)
 {
-    return uri.startsWith("mavlinkftp", Qt::CaseInsensitive);
+    return uri.startsWith(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme), Qt::CaseInsensitive);
 }

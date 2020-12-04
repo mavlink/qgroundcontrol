@@ -67,8 +67,8 @@ The build system is setup to use pkgconfig and it will find the necessary header
 Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. Supported version is 1.14.4. QGC may work with newer version, but it is untested.
 
 You need two packages:
-- [gstreamer-1.0-devel-1.14.4-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.14.4/gstreamer-1.0-devel-1.14.4-x86_64.pkg)
-- [gstreamer-1.0-1.14.4-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.14.4/gstreamer-1.0-1.14.4-x86_64.pkg)
+- [gstreamer-1.0-devel-1.18.1-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-devel-1.18.1-x86_64.pkg)
+- [gstreamer-1.0-1.18.1-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-1.18.1-x86_64.pkg)
 
 The installer places them under /Library/Frameworks/GStreamer.framework, which is where the QGC build system will look for it. That's all that is needed. When you build QGC and it finds the gstreamer framework, it automatically builds video streaming support.
 

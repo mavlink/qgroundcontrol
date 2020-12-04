@@ -6795,7 +6795,7 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter name="RC_FAILS_THR" default="0" type="INT32">
       <short_desc>Failsafe channel PWM threshold</short_desc>
-      <long_desc>Set to a value slightly above the PWM value assumed by throttle in a failsafe event, but ensure it is below the PWM value assumed by throttle during normal operation.</long_desc>
+      <long_desc>Set to a value slightly above the PWM value assumed by throttle in a failsafe event, but ensure it is below the PWM value assumed by throttle during normal operation. Use RC_MAP_FAILSAFE to specify which channel is used to check. Note: The default value of 0 is below the epxed range and hence disables the feature.</long_desc>
       <min>0</min>
       <max>2200</max>
       <unit>us</unit>
@@ -6961,7 +6961,7 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter name="RC_MAP_FAILSAFE" default="0" type="INT32">
       <short_desc>Failsafe channel mapping</short_desc>
-      <long_desc>The RC mapping index indicates which channel is used for failsafe If 0, whichever channel is mapped to throttle is used otherwise the value indicates the specific RC channel to use</long_desc>
+      <long_desc>Configures which channel is used by the receiver to indicate the signal was lost. Futaba receivers do report that way. If 0, whichever channel is mapped to throttle is used otherwise the value indicates the specific RC channel to use Use RC_FAILS_THR to set the threshold indicating lost signal. By default it's below the expected range and hence diabled.</long_desc>
       <min>0</min>
       <max>18</max>
       <values>

@@ -54,6 +54,9 @@
     <!-- Needed to keep working while 'asleep' -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
+    <!-- Need MulticastLock to receive broadcast UDP packets  -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
     <!-- %%INSERT_PERMISSIONS -->

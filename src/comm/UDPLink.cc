@@ -88,7 +88,6 @@ UDPLink::UDPLink(SharedLinkConfigurationPtr& config)
 
 UDPLink::~UDPLink()
 {
-    qDebug() << "~UDPLink";
     disconnect();
     // Tell the thread to exit
     _running = false;

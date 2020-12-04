@@ -302,7 +302,7 @@
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor asymmetric</type>
-      <url>https://docs.px4.io/master/en/framebuild_multicopter/spedix_s250_pixracer.html</url>
+      <url>https://docs.px4.io/master/en/frames_multicopter/spedix_s250_pixracer.html</url>
       <output name="MAIN1">motor1 (front right: CCW)</output>
       <output name="MAIN2">motor2 (back left: CCW)</output>
       <output name="MAIN3">motor3 (front left: CW)</output>
@@ -572,7 +572,7 @@
       <class>Plane</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://docs.px4.io/master/en/framebuild_plane/wing_wing_z84.html</url>
+      <url>https://docs.px4.io/master/en/frames_plane/wing_wing_z84.html</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>

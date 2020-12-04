@@ -1619,7 +1619,7 @@ void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json.gz";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]version.json.gz";
 #else
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
 #endif
@@ -1642,7 +1642,7 @@ void MockLink::_sendParameterMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://parameter.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]parameter.json";
 #else
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/2ZKRIRE";
 #endif
