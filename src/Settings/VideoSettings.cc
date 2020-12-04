@@ -29,6 +29,12 @@ const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video
 const char* VideoSettings::videoSource3DRSolo           = "3DR Solo (requires restart)";
 const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
 
+const char* VideoSettings::forceVideoDecoderDefault = "Default";
+const char* VideoSettings::forceVideoDecoderSoftware = "Force software decoder";
+const char* VideoSettings::forceVideoDecoderNVIDIA = "Force NVIDIA decoder";
+const char* VideoSettings::forceVideoDecoderVAAPI = "Force VA-API decoder";
+const char* VideoSettings::forceVideoDecoderD3D11 = "Force DirectX3D 11 decoder";
+
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -63,6 +69,24 @@ DECLARE_SETTINGGROUP(Video, "Video")
         videoSourceVarList.append(QVariant::fromValue(videoSource));
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
+
+    QStringList forceVideoDecoderList{
+        forceVideoDecoderDefault,
+        forceVideoDecoderSoftware,
+        forceVideoDecoderNVIDIA,
+#ifdef Q_OS_LINUX
+        forceVideoDecoderVAAPI,
+#endif
+#ifdef Q_OS_WIN
+        forceVideoDecoderD3D11,
+#endif
+    };
+    QVariantList forceVideoDecoderVarList;
+    for (const QString& forceVideoDecode: forceVideoDecoderList) {
+        forceVideoDecoderVarList.append(QVariant::fromValue(forceVideoDecode));
+    }
+    _nameToMetaDataMap[forceVideoDecoderName]->setEnumInfo(forceVideoDecoderList, forceVideoDecoderVarList);
+
     // Set default value for videoSource
     _setDefaults();
 }
@@ -74,6 +98,8 @@ void VideoSettings::_setDefaults()
     } else {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
     }
+
+    _nameToMetaDataMap[forceVideoDecoderName]->setRawDefaultValue(forceVideoDecoderDefault);
 }
 
 DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
@@ -103,6 +129,28 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
         connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
+{
+    if (!_forceVideoDecoderFact) {
+        _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
+
+        _forceVideoDecoderFact->setVisible(
+#ifdef Q_OS_LINUX
+            true
+#else
+#ifdef Q_OS_WIN
+            true
+#else
+            false
+#endif
+#endif
+        );
+
+        connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _forceVideoDecoderFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)

@@ -35,6 +35,7 @@ public:
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
+    DEFINE_SETTINGFACT(forceVideoDecoder)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
@@ -44,6 +45,12 @@ public:
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
     Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource    CONSTANT)
 
+    Q_PROPERTY(QString  defaultVideoDecoder     READ defaultVideoDecoder    CONSTANT)
+    Q_PROPERTY(QString  softwareVideoDecoder    READ softwareVideoDecoder   CONSTANT)
+    Q_PROPERTY(QString  nvidiaVideoDecoder      READ nvidiaVideoDecoder     CONSTANT)
+    Q_PROPERTY(QString  vaapiVideoDecoder       READ vaapiVideoDecoder      CONSTANT)
+    Q_PROPERTY(QString  d3d11VideoDecoder       READ d3d11VideoDecoder      CONSTANT)
+
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udp264VideoSource      () { return videoSourceUDPH264; }
@@ -51,6 +58,12 @@ public:
     QString  tcpVideoSource         () { return videoSourceTCP; }
     QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
     QString  disabledVideoSource    () { return videoDisabled; }
+
+    QString defaultVideoDecoder     () { return forceVideoDecoderDefault; }
+    QString softwareVideoDecoder    () { return forceVideoDecoderSoftware; }
+    QString nvidiaVideoDecoder      () { return forceVideoDecoderNVIDIA; }
+    QString vaapiVideoDecoder       () { return forceVideoDecoderVAAPI; }
+    QString d3d11VideoDecoder       () { return forceVideoDecoderD3D11; }
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -61,6 +74,12 @@ public:
     static const char* videoSourceMPEGTS;
     static const char* videoSource3DRSolo;
     static const char* videoSourceParrotDiscovery;
+
+    static const char* forceVideoDecoderDefault;
+    static const char* forceVideoDecoderSoftware;
+    static const char* forceVideoDecoderNVIDIA;
+    static const char* forceVideoDecoderVAAPI;
+    static const char* forceVideoDecoderD3D11;
 
 signals:
     void streamConfiguredChanged    (bool configured);
