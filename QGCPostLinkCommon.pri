@@ -53,6 +53,7 @@ WindowsBuild {
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$SOURCE_DIR\\libs\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+        $$SOURCE_DIR\\libs\\lzma\\windows\\lib\\liblzma.dll \
         $$SOURCE_DIR\\deploy\\libcrypto-1_1-x64.dll \
         $$SOURCE_DIR\\deploy\\libssl-1_1-x64.dll
 

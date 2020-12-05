@@ -121,10 +121,12 @@ WindowsBuild {
 #
 # [REQUIRED] lzma library
 WindowsBuild {
-    INCLUDEPATH +=  $$SOURCE_DIR/libs/lzma/windows/include
+    INCLUDEPATH += $$SOURCE_DIR/libs/lzma/windows/include
     LIBS += -L$$SOURCE_DIR/libs/lzma/windows/lib
+    LIBS += -lliblzma
+} else {
+    LIBS += -llzma
 }
-LIBS += -llzma
 
 #
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
