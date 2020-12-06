@@ -69,7 +69,7 @@ jobs:
 
 android:
   components:
-    - android-28
+    - android-29
     - build-tools-25.0.3
     - platform-tools
 
