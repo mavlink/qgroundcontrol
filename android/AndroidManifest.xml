@@ -49,7 +49,7 @@
             <!-- Background running -->
         </activity>
     </application>
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28"/>
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="29"/>
 
     <!-- Needed to keep working while 'asleep' -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
