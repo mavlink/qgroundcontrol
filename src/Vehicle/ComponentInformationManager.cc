@@ -210,7 +210,7 @@ QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QStri
 {
     QString outputFileName = fileName;
 
-    if (fileName.endsWith(".lzma", Qt::CaseInsensitive)) {
+    if (fileName.endsWith(".lzma", Qt::CaseInsensitive) || fileName.endsWith(".xz", Qt::CaseInsensitive)) {
         outputFileName = (QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(inflatedFileName));
         if (QGCLZMA::inflateLZMAFile(fileName, outputFileName)) {
             QFile(fileName).remove();
