@@ -21,11 +21,11 @@ TerrainProfile::TerrainProfile(QQuickItem* parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
-    connect(this, &QQuickItem::heightChanged,           this, &TerrainProfile::update);
-    connect(this, &TerrainProfile::visibleWidthChanged, this, &TerrainProfile::update);
+    connect(this, &QQuickItem::heightChanged,           this, &QQuickItem::update);
+    connect(this, &TerrainProfile::visibleWidthChanged, this, &QQuickItem::update);
 
     // This collapse multiple _updateSignals in a row to a single update
-    connect(this, &TerrainProfile::_updateSignal, this, &TerrainProfile::update, Qt::QueuedConnection);
+    connect(this, &TerrainProfile::_updateSignal, this, &QQuickItem::update, Qt::QueuedConnection);
     qgcApp()->addCompressedSignal(QMetaMethod::fromSignal(&TerrainProfile::_updateSignal));
 }
 

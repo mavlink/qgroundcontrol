@@ -111,7 +111,7 @@ TerrainTile::TerrainTile(QByteArray byteArray)
 double TerrainTile::_swCornerClampedLatitude(double latitude) const
 {
     double swCornerLat = _southWest.latitude();
-    if (QGC::fuzzyCompare(latitude, swCornerLat)) {
+    if (!QGC::fuzzyCompare(latitude, swCornerLat)) {
         latitude = swCornerLat;
     }
     return latitude;
@@ -120,7 +120,7 @@ double TerrainTile::_swCornerClampedLatitude(double latitude) const
 double TerrainTile::_swCornerClampedLongitude (double longitude) const
 {
     double swCornerLon = _southWest.longitude();
-    if (QGC::fuzzyCompare(longitude, swCornerLon)) {
+    if (!QGC::fuzzyCompare(longitude, swCornerLon)) {
         longitude = swCornerLon;
     }
     return longitude;
