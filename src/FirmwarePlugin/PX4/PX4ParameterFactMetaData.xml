@@ -1220,6 +1220,10 @@ Set -1 to disable the check</short_desc>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="COM_HOME_IN_AIR" default="0" type="INT32">
+      <short_desc>Allows setting the home position after takeoff</short_desc>
+      <long_desc>If set to true, the autopilot is allowed to set its home position after takeoff The true home position is back-computed if a local position is estimate if available. If no local position is available, home is set to the current position.</long_desc>
+    </parameter>
     <parameter name="COM_HOME_V_T" default="10.0" type="FLOAT">
       <short_desc>Home set vertical threshold</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
