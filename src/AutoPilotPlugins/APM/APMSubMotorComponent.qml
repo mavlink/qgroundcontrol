@@ -279,7 +279,7 @@ SetupPage {
                 id: timer
                 interval:       50
                 repeat:         true
-                running:        canRunManualTest
+                running:        canRunManualTest && shouldRunManualTest
 
                 onTriggered: {
                     if (controller.vehicle.armed) {
