@@ -13,16 +13,10 @@
 #include <QDir>
 #include <QtDebug>
 
-#include "lzma.h"
+#include "xz.h"
 
 bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decompressedFilename)
 {
-    bool            success                 = true;
-    const int       cBuffer                 = 1024 * 5;
-    unsigned char   inputBuffer[cBuffer];
-    unsigned char   outputBuffer[cBuffer];
-    lzma_stream     lzmaStrm                = LZMA_STREAM_INIT;
-
     QFile inputFile(lzmaFilename);
     if (!inputFile.open(QIODevice::ReadOnly)) {
         qWarning() << "QGCLZMA::inflateLZMAFile: open input file failed" << lzmaFilename << inputFile.errorString();
@@ -35,63 +29,99 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
         return false;
     }
 
-    // UINT64_MAX - used as much memory as needed to decode
-    int lzmaRetCode = lzma_alone_decoder(&lzmaStrm, UINT64_MAX);
-    if (lzmaRetCode != LZMA_OK) {
-        qWarning() << "QGCLZMA::inflateLZMAFile: lzma_alone_decoder failed:" << lzmaRetCode;
+
+    // TODO: call once during startup
+    xz_crc32_init();
+    xz_crc64_init();
+
+
+    xz_dec *s = xz_dec_init(XZ_DYNALLOC, (uint32_t)-1);
+    if (s == nullptr) {
+        qWarning() << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
         return false;
     }
 
-    // When LZMA_CONCATENATED flag was used when initializing the decoder,
-    // we need to tell lzma_code() when there will be no more input.
-    // This is done by setting action to LZMA_FINISH instead of LZMA_RUN
-    // in the same way as it is done when encoding.
-    //
-    // When LZMA_CONCATENATED isn't used, there is no need to use
-    // LZMA_FINISH to tell when all the input has been read, but it
-    // is still OK to use it if you want. When LZMA_CONCATENATED isn't
-    // used, the decoder will stop after the first .xz stream. In that
-    // case some unused data may be left in lzmaStrm.next_in.
-    lzma_action action = LZMA_RUN;
+    const int buf_size = 4 * 1024;
+    uint8_t in[buf_size];
+    uint8_t out[buf_size];
 
-    lzmaStrm.next_in    = nullptr;
-    lzmaStrm.avail_in   = 0;
-    lzmaStrm.next_out   = nullptr;
-    lzmaStrm.avail_out  = cBuffer;
+    xz_buf b;
+    b.in = in;
+    b.in_pos = 0;
+    b.in_size = 0;
+    b.out = out;
+    b.out_pos = 0;
+    b.out_size = buf_size;
 
-    do {
-        lzmaStrm.avail_in = static_cast<unsigned>(inputFile.read((char*)inputBuffer, cBuffer));
-        if (lzmaStrm.avail_in == 0) {
-            break;
+    while (true) {
+        if (b.in_pos == b.in_size) {
+            b.in_size = static_cast<size_t>(inputFile.read((char*)in, sizeof(in)));
+            b.in_pos = 0;
         }
-        lzmaStrm.next_in = inputBuffer;
 
-        do {
-            lzmaStrm.avail_out  = cBuffer;
-            lzmaStrm.next_out   = outputBuffer;
+        xz_ret ret = xz_dec_run(s, &b);
 
-            lzmaRetCode = lzma_code(&lzmaStrm, action);
-            if (lzmaRetCode != LZMA_OK && lzmaRetCode != LZMA_STREAM_END) {
-                qWarning() << "QGCLZMA::inflateLZMAFile: inflate failed:" << lzmaRetCode;
-                goto Error;
-            }
-
-            unsigned cBytesInflated = cBuffer - lzmaStrm.avail_out;
-            qint64 cBytesWritten = outputFile.write((char*)outputBuffer, static_cast<int>(cBytesInflated));
-            if (cBytesWritten != cBytesInflated) {
+        if (b.out_pos == sizeof(out)) {
+            size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
+            if (cBytesWritten != b.out_pos) {
                 qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
-                goto Error;
-
+                goto error;
             }
-        } while (lzmaStrm.avail_out == 0);
-    } while (lzmaRetCode != LZMA_STREAM_END);
 
-Out:
-    lzma_end(&lzmaStrm);
+            b.out_pos = 0;
+        }
 
-    return success;
+        if (ret == XZ_OK)
+            continue;
 
-Error:
-    success = false;
-    goto Out;
+        if (ret == XZ_UNSUPPORTED_CHECK) {
+            qWarning() << "QGCLZMA::inflateLZMAFile: Unsupported check; not verifying file integrity";
+            continue;
+        }
+
+        size_t cBytesWritten = (size_t)outputFile.write((char*)out, static_cast<int>(b.out_pos));
+        if (cBytesWritten != b.out_pos) {
+            qWarning() << "QGCLZMA::inflateLZMAFile: output file write failed:" << outputFile.fileName() << outputFile.errorString();
+            goto error;
+        }
+
+        switch (ret) {
+        case XZ_STREAM_END:
+            xz_dec_end(s);
+            return true;
+
+        case XZ_MEM_ERROR:
+            qWarning() << "QGCLZMA::inflateLZMAFile: Memory allocation failed";
+            goto error;
+
+        case XZ_MEMLIMIT_ERROR:
+            qWarning() << "QGCLZMA::inflateLZMAFile: Memory usage limit reached";
+            goto error;
+
+        case XZ_FORMAT_ERROR:
+            qWarning() << "QGCLZMA::inflateLZMAFile: Not a .xz file";
+            goto error;
+
+        case XZ_OPTIONS_ERROR:
+            qWarning() << "QGCLZMA::inflateLZMAFile: Unsupported options in the .xz headers";
+            goto error;
+
+        case XZ_DATA_ERROR:
+        case XZ_BUF_ERROR:
+            qWarning() << "QGCLZMA::inflateLZMAFile: File is corrupt";
+            goto error;
+
+        default:
+            qWarning() << "QGCLZMA::inflateLZMAFile: Bug!";
+            goto error;
+        }
+    }
+
+    xz_dec_end(s);
+    return true;
+
+error:
+    xz_dec_end(s);
+    return false;
+
 }
