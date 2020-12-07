@@ -417,6 +417,38 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle*)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
+                    "GoPro Hero 3+ Black 12Mp",
+                    tr("GoPro"),
+                    tr("Hero 3+ Black 12Mp"),
+                    6.2,               // sensorWidth
+                    4.65,               // sendsorHeight
+                    4000,               // imageWidth
+                    3000,               // imageHeight
+                    2.77,               // focalLength
+                    true,               // landscape
+                    false,              // fixedOrientation
+                    0,                  // minTriggerInterval
+                    tr(""), // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+                    "GoPro Hero 3+ Black 7Mp",
+                    tr("GoPro"),
+                    tr("Hero 3+ Black 7Mp"),
+                    4.65,               // sensorWidth
+                    3.4875,             // sendsorHeight
+                    3000,               // imageWidth
+                    2250,               // imageHeight
+                    2.77,               // focalLength
+                    true,               // landscape
+                    false,              // fixedOrientation
+                    0,                  // minTriggerInterval
+                    tr(""), // SHOULD BE BLANK FOR NEWLY ADDED CAMERAS. Deprecated translation from older builds.
+                    this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
                     "Parrot Sequioa RGB",
                     tr("Parrot"),
                     tr("Sequioa RGB"),
