@@ -1072,6 +1072,22 @@ TransectStyleComplexItem::BuildMissionItemsState_t TransectStyleComplexItem::_bu
     return state;
 }
 
+void TransectStyleComplexItem::_appendCameraMountPitchItem(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, int pitch)
+{
+    MissionItem* item = new MissionItem(seqNum++,
+                                        MAV_CMD_DO_MOUNT_CONTROL,
+                                        MAV_FRAME_MISSION,
+                                        0,
+                                        0,
+                                        0,
+                                        0, 0, 0,                                // param 4-6 not used
+                                        MAV_MOUNT_MODE_MAVLINK_TARGETING,
+                                        true,                                   // autoContinue
+                                        false,                                  // isCurrentItem
+                                        missionItemParent);
+    items.append(item);
+}
+
 void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
     int                         seqNum      = _sequenceNumber;
@@ -1079,6 +1095,9 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
     MAV_FRAME                   mavFrame    = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
     qCDebug(TransectStyleComplexItemLog) << "_buildAndAppendMissionItems";
+
+    // Pòint the camera down before the survey
+    _appendCameraMountPitchItem(items, missionItemParent, seqNum, -90);
 
     // Note: The code below is written to be understable as oppose to being compact and/or remove all duplicate code
     for (int coordIndex=0; coordIndex<_rgFlightPathCoordInfo.count(); coordIndex++) {
@@ -1132,6 +1151,9 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
                 }
             } else {
                 _appendWaypoint(items, missionItemParent, seqNum, mavFrame, 0 /* holdTime */, coordInfo.coord);
+            }
+            if (lastSurveyExit) {
+                _appendCameraMountPitchItem(items, missionItemParent, seqNum, 0);
             }
             break;
         }
