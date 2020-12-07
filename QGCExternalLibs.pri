@@ -119,6 +119,24 @@ WindowsBuild {
 }
 
 #
+# [REQUIRED] LZMA decompression library
+HEADERS+= \
+    libs/xz-embedded/linux/include/linux/xz.h \
+    libs/xz-embedded/linux/lib/xz/xz_lzma2.h \
+    libs/xz-embedded/linux/lib/xz/xz_private.h \
+    libs/xz-embedded/linux/lib/xz/xz_stream.h \
+    libs/xz-embedded/userspace/xz_config.h
+SOURCES += \
+    libs/xz-embedded/linux/lib/xz/xz_crc32.c \
+    libs/xz-embedded/linux/lib/xz/xz_crc64.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_lzma2.c \
+    libs/xz-embedded/linux/lib/xz/xz_dec_stream.c
+INCLUDEPATH += \
+    libs/xz-embedded/userspace \
+    libs/xz-embedded/linux/include/linux
+DEFINES += XZ_DEC_ANY_CHECK XZ_USE_CRC64
+
+#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).
