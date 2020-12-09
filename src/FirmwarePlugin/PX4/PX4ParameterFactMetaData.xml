@@ -9733,6 +9733,10 @@ How often the sensor is readout</short_desc>
         <value code="5">TREvo3m</value>
       </values>
     </parameter>
+    <parameter name="SENS_EN_VL53L1X" default="0" type="INT32">
+      <short_desc>VL53L1X Distance Sensor</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="SENS_EXT_I2C_PRB" default="1" type="INT32" category="System">
       <short_desc>External I2C probe</short_desc>
       <long_desc>Probe for optional external I2C devices.</long_desc>
