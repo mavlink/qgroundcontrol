@@ -198,9 +198,6 @@ bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
         result = true;
     }
     switch(boardId) {
-    case Bootloader::boardIDAUAVX2_1: // AUAVX2.1 is compatible with px4-v2/v3
-        if (firmwareId == 9) result = true;
-        break;
     case Bootloader::boardIDPX4FMUV3:
         if (firmwareId == 9) result = true;
         break;
