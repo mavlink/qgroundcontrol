@@ -48,6 +48,40 @@ struct FirmwareToUrlElement_t {
     QString                                             url;
 };
 
+// See PX4 Bootloader board_types.txt - https://raw.githubusercontent.com/PX4/PX4-Bootloader/master/board_types.txt
+static QMap<int, QString> px4_board_name_map {
+    {9, "px4_fmu-v2_default"},
+    {255, "px4_fmu-v3_default"}, // Simulated board id for V3 which is a V2 board which supports larger flash space
+    {11, "px4_fmu-v4_default"},
+    {13, "px4_fmu-v4pro_default"},
+    {20, "uvify_core_default"},
+    {50, "px4_fmu-v5_default"},
+    {51, "px4_fmu-v5x_default"},
+    {52, "px4_fmu-v6_default"},
+    {53, "px4_fmu-v6x_default"},
+    {88, "airmind_mindpx-v2_default"},
+    {12, "bitcraze_crazyflie_default"},
+    {42, "omnibus_f4sd_default"},
+    {33, "mro_x21_default"},
+    {65, "intel_aerofc-v1_default"},
+    {123, "holybro_kakutef7_default"},
+    {41775, "modalai_fc-v1_default"},
+    {78, "holybro_pix32v5_default"},
+    {28, "nxp_fmuk66-v3_default"},
+    {29, "av_x-v1_default"},
+    {30, "nxp_fmuk66-e_default"},
+    {31, "nxp_fmurt1062-v1_default"},
+
+    {120, "cubepilot_cubeyellow_default"},
+    {136, "mro_x21-777_default"},
+    {139, "holybro_durandal-v1_default"},
+    {140, "cubepilot_cubeorange_default"},
+    {141, "mro_ctrl-zero-f7_default"},
+    {1009, "cuav_nora_default"},
+    {1010, "cuav_x7pro_default"},
+    {1017, "mro_pixracerpro_default"},
+};
+
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
     return static_cast<uint>(( firmwareId.autopilotStackType |
@@ -258,98 +292,9 @@ void FirmwareUpgradeController::_initFirmwareHash()
 {
     // indirect check whether this function has been called before or not
     // may have to be modified if _rgPX4FMUV2Firmware disappears
-    if (!_rgPX4FMUV2Firmware.isEmpty()) {
+    if (!_rgPX4FLowFirmware.isEmpty()) {
         return;
     }
-
-    //////////////////////////////////// PX4FMU aerocore firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t  rgAeroCoreFirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4"},
-    };
-
-    //////////////////////////////////// AUAVX2_1 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgAUAVX2_1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/auav-x21_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/auav-x21_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/auav-x21_default.px4"},
-    };
-    //////////////////////////////////// MindPXFMUV2 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgMindPXFMUV2FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/mindpx-v2_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/mindpx-v2_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/mindpx-v2_default.px4"},
-    };
-    //////////////////////////////////// TAPV1 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgTAPV1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/tap-v1_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/tap-v1_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/tap-v1_default.px4"},
-        { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
-    };
-    //////////////////////////////////// ASCV1 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgASCV1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/asc-v1_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/asc-v1_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/asc-v1_default.px4"},
-    };
-
-    //////////////////////////////////// Crazyflie 2.0 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgCrazyflie2FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/crazyflie_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/crazyflie_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/crazyflie_default.px4"},
-    };
-
-    //////////////////////////////////// Omnibus F4 SD firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgOmnibusF4SDFirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/omnibus_f4sd_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/omnibus_f4sd_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/omnibus_f4sd_default.px4"},
-    };
-    
-    //////////////////////////////////// FMUK66V3 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgFMUK66V3FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/nxp_fmuk66-v3_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/nxp_fmuk66-v3_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/nxp_fmuk66-v3_default.px4"},
-    };
-
-    //////////////////////////////////// Kakute F7 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgKakuteF7FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/holybro_kakutef7_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_kakutef7_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_kakutef7_default.px4"},
-    };
-    
-    //////////////////////////////////// Durandal firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgDurandalV1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/holybro_durandal-v1_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_durandal-v1_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_durandal-v1_default.px4"},
-    };
-
-    //////////////////////////////////// ModalAI FC v1 firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgModalFCV1FirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/modalai_fc-v1_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/modalai_fc-v1_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/modalai_fc-v1_default.px4"},
-    };
-
-    //////////////////////////////////// mRo Control Zero firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgmRoCtrlZero[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/mro_ctrl-zero-f7_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/mro_ctrl-zero-f7_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/mro_ctrl-zero-f7_default.px4"},
-    };
-
-    //////////////////////////////////// UVify FC firmwares //////////////////////////////////////////////////
-    FirmwareToUrlElement_t rgUVifyCoreFirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/uvify_core_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/uvify_core_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/uvify_core_default.px4"},
-    };
 
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
@@ -364,138 +309,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { ThreeDRRadio, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/SiK/stable/radio~hm_trp.ihx"}
     };
 
-    /////////////////////////////// cuav nora firmwares ///////////////////////////////////////
-    FirmwareToUrlElement_t rgCUAVNoraFirmwareArray[] = {
-        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/cuav_nora_default.px4"},
-        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/cuav_nora_default.px4"},
-        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/cuav_nora_default.px4"},
-    };
-
     // We build the maps for PX4 firmwares dynamically using the data below
-
-#if 0
-    Example URLs for PX4 and ArduPilot
-    { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/px4fmu-v4_default.px4"},
-    { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v4.px4"},
-    { AutoPilotStackAPM, DeveloperFirmware, CopterChibiosFirmware,  "http://firmware.ardupilot.org/Copter/latest/fmuv4/arducopter.apj"},
-#endif
-
-    QString px4Url          ("http://px4-travis.s3.amazonaws.com/Firmware/%1/px4fmu-%2_default.px4");
-
-    QMap<FirmwareBuildType_t, QString> px4MapFirmwareTypeToDir;
-    px4MapFirmwareTypeToDir[StableFirmware] =       QStringLiteral("stable");
-    px4MapFirmwareTypeToDir[BetaFirmware] =         QStringLiteral("beta");
-    px4MapFirmwareTypeToDir[DeveloperFirmware] =    QStringLiteral("master");
-
-    // PX4 Firmwares
-    for (const FirmwareBuildType_t& firmwareType: px4MapFirmwareTypeToDir.keys()) {
-        QString dir = px4MapFirmwareTypeToDir[firmwareType];
-        _rgFMUV5Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v5"));
-        _rgFMUV4PROFirmware.insert  (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4pro"));
-        _rgFMUV4Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4"));
-        _rgFMUV3Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v3"));
-        _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v2"));
-    }
-
-    QString px4CUAVX7Url          ("http://px4-travis.s3.amazonaws.com/Firmware/%1/cuav_%2_default.px4");
-    for (const FirmwareBuildType_t& firmwareType: px4MapFirmwareTypeToDir.keys()) {
-        QString dir = px4MapFirmwareTypeToDir[firmwareType];
-        _rgPX4CUAVX7Fireware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4CUAVX7Url.arg(dir).arg("x7pro"));
-    }
-
-    int size = sizeof(rgAeroCoreFirmwareArray)/sizeof(rgAeroCoreFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgAeroCoreFirmwareArray[i];
-        _rgAeroCoreFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgCUAVNoraFirmwareArray)/sizeof(rgCUAVNoraFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgCUAVNoraFirmwareArray[i];
-        _rgCUAVNoraFireware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgAUAVX2_1FirmwareArray)/sizeof(rgAUAVX2_1FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgAUAVX2_1FirmwareArray[i];
-        _rgAUAVX2_1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgMindPXFMUV2FirmwareArray)/sizeof(rgMindPXFMUV2FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgMindPXFMUV2FirmwareArray[i];
-        _rgMindPXFMUV2Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgTAPV1FirmwareArray)/sizeof(rgTAPV1FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgTAPV1FirmwareArray[i];
-        _rgTAPV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgASCV1FirmwareArray)/sizeof(rgASCV1FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgASCV1FirmwareArray[i];
-        _rgASCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgCrazyflie2FirmwareArray)/sizeof(rgCrazyflie2FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgCrazyflie2FirmwareArray[i];
-        _rgCrazyflie2Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgOmnibusF4SDFirmwareArray)/sizeof(rgOmnibusF4SDFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgOmnibusF4SDFirmwareArray[i];
-        _rgOmnibusF4SDFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-    
-    size = sizeof(rgKakuteF7FirmwareArray)/sizeof(rgKakuteF7FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgKakuteF7FirmwareArray[i];
-        _rgKakuteF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgDurandalV1FirmwareArray)/sizeof(rgDurandalV1FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgDurandalV1FirmwareArray[i];
-        _rgDurandalV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgFMUK66V3FirmwareArray)/sizeof(rgFMUK66V3FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgFMUK66V3FirmwareArray[i];
-        _rgFMUK66V3Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgModalFCV1FirmwareArray)/sizeof(rgModalFCV1FirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgModalFCV1FirmwareArray[i];
-        _rgModalFCV1Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgmRoCtrlZero)/sizeof(rgmRoCtrlZero[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgmRoCtrlZero[i];
-        _rgmRoCtrlZeroF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgUVifyCoreFirmwareArray)/sizeof(rgUVifyCoreFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgUVifyCoreFirmwareArray[i];
-        _rgUVifyCoreFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
-    }
-
-    size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rgPX4FLowFirmwareArray[i];
+    for (auto& element : rgPX4FLowFirmwareArray) {
         _rgPX4FLowFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 
-    size = sizeof(rg3DRRadioFirmwareArray)/sizeof(rg3DRRadioFirmwareArray[0]);
-    for (int i = 0; i < size; i++) {
-        const FirmwareToUrlElement_t& element = rg3DRRadioFirmwareArray[i];
+    for (auto& element : rg3DRRadioFirmwareArray) {
         _rg3DRRadioFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
 }
@@ -509,78 +328,23 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
 {
-
     _rgFirmwareDynamic.clear();
 
     switch (boardId) {
     case Bootloader::boardIDPX4Flow:
         _rgFirmwareDynamic = _rgPX4FLowFirmware;
         break;
-    case Bootloader::boardIDPX4FMUV2:
-        _rgFirmwareDynamic = _rgPX4FMUV2Firmware;
-        break;
-    case Bootloader::boardIDPX4FMUV3:
-        _rgFirmwareDynamic = _rgFMUV3Firmware;
-        break;
-    case Bootloader::boardIDPX4FMUV4:
-        _rgFirmwareDynamic = _rgFMUV4Firmware;
-        break;
-    case Bootloader::boardIDPX4FMUV4PRO:
-        _rgFirmwareDynamic = _rgFMUV4PROFirmware;
-        break;
-    case Bootloader::boardIDPX4FMUV5:
-        _rgFirmwareDynamic = _rgFMUV5Firmware;
-        break;
-    case Bootloader::boardIDAeroCore:
-        _rgFirmwareDynamic = _rgAeroCoreFirmware;
-        break;
-    case Bootloader::boardIDAUAVX2_1:
-        _rgFirmwareDynamic = _rgAUAVX2_1Firmware;
-        break;
-    case Bootloader::boardIDMINDPXFMUV2:
-        _rgFirmwareDynamic = _rgMindPXFMUV2Firmware;
-        break;
-    case Bootloader::boardIDTAPV1:
-        _rgFirmwareDynamic = _rgTAPV1Firmware;
-        break;
-    case Bootloader::boardIDASCV1:
-        _rgFirmwareDynamic = _rgASCV1Firmware;
-        break;
-    case Bootloader::boardIDCrazyflie2:
-        _rgFirmwareDynamic = _rgCrazyflie2Firmware;
-        break;
-    case Bootloader::boardIDOmnibusF4SD:
-        _rgFirmwareDynamic = _rgOmnibusF4SDFirmware;
-        break;
-    case Bootloader::boardIDKakuteF7:
-        _rgFirmwareDynamic = _rgKakuteF7Firmware;
-        break;
-    case Bootloader::boardIDDurandalV1:
-        _rgFirmwareDynamic = _rgDurandalV1Firmware;
-        break;
-    case Bootloader::boardIDFMUK66V3:
-        _rgFirmwareDynamic = _rgFMUK66V3Firmware;
-        break;
-    case Bootloader::boardIDModalFCV1:
-        _rgFirmwareDynamic = _rgModalFCV1Firmware;
-        break;
-    case Bootloader::boardIDmRoCtrlZeroF7:
-        _rgFirmwareDynamic = _rgmRoCtrlZeroF7Firmware;
-        break;
-    case Bootloader::boardIDUVifyCore:
-        _rgFirmwareDynamic = _rgUVifyCoreFirmware;
-        break;
     case Bootloader::boardID3DRRadio:
         _rgFirmwareDynamic = _rg3DRRadioFirmware;
         break;
-    case Bootloader::boardIDCUAVX7:
-        _rgFirmwareDynamic = _rgPX4CUAVX7Fireware;
-        break;
-    case Bootloader::boardIDCUAVNora:
-        _rgFirmwareDynamic = _rgCUAVNoraFireware;
-        break;
     default:
-        // Unknown board id
+        if (px4_board_name_map.contains(boardId)) {
+            const QString px4Url{"http://px4-travis.s3.amazonaws.com/Firmware/%1/%2.px4"};
+
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware), px4Url.arg("stable").arg(px4_board_name_map.value(boardId)));
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware), px4Url.arg("beta").arg(px4_board_name_map.value(boardId)));
+            _rgFirmwareDynamic.insert(FirmwareIdentifier(AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware), px4Url.arg("master").arg(px4_board_name_map.value(boardId)));
+        }
         break;
     }
 

@@ -203,29 +203,8 @@ private:
     QString _portDescription;
 
     // Firmware hashes
-    QHash<FirmwareIdentifier, QString> _rgFMUV5Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV4PROFirmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV4Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUV3Firmware;
-    QHash<FirmwareIdentifier, QString> _rgPX4FMUV2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgAeroCoreFirmware;
-    QHash<FirmwareIdentifier, QString> _rgAUAVX2_1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgMindPXFMUV2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgTAPV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgASCV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgCrazyflie2Firmware;
-    QHash<FirmwareIdentifier, QString> _rgOmnibusF4SDFirmware;
-    QHash<FirmwareIdentifier, QString> _rgKakuteF7Firmware;
-    QHash<FirmwareIdentifier, QString> _rgDurandalV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgFMUK66V3Firmware;
-    QHash<FirmwareIdentifier, QString> _rgModalFCV1Firmware;
-    QHash<FirmwareIdentifier, QString> _rgmRoCtrlZeroF7Firmware;
-    QHash<FirmwareIdentifier, QString> _rgUVifyCoreFirmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
-    QHash<FirmwareIdentifier, QString> _rgPX4CUAVX7Fireware;
-    QHash<FirmwareIdentifier, QString> _rgCUAVNoraFireware;
-
 
     // Hash map for ArduPilot ChibiOS lookup by board name
     QHash<FirmwareIdentifier, QString> _rgAPMChibiosReplaceNamedBoardFirmware;
