@@ -3547,7 +3547,7 @@ Value 0 turns the functionality off</short_desc>
     </parameter>
   </group>
   <group name="Land Detector">
-    <parameter name="LNDFW_AIRSPD_MAX" default="8.00" type="FLOAT">
+    <parameter name="LNDFW_AIRSPD_MAX" default="6.00" type="FLOAT">
       <short_desc>Airspeed max</short_desc>
       <long_desc>Maximum airspeed allowed in the landed state (m/s)</long_desc>
       <min>4</min>
