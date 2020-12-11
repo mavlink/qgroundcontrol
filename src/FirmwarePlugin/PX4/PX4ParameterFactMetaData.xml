@@ -1357,6 +1357,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <long_desc>The default value of 1000 requires the stick to be held in the arm or disarm position for 1 second.</long_desc>
       <min>100</min>
       <max>1500</max>
+      <unit>ms</unit>
     </parameter>
     <parameter name="COM_RC_IN_MODE" default="0" type="INT32">
       <short_desc>RC control input mode</short_desc>
