@@ -203,9 +203,6 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
         _loadedMissionItemsParent = nullptr;
     }
 
-    _transects.clear();
-    _transectsPathHeightInfo.clear();
-
     double transectSpacing = _calcTransectSpacing();
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
     double halfWidth = fullWidth / 2.0;
