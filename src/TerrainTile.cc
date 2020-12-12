@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDataStream>
+#include <QtMath>
 
 QGC_LOGGING_CATEGORY(TerrainTileLog, "TerrainTileLog");
 
@@ -108,61 +109,38 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     return;
 }
 
-double TerrainTile::_swCornerClampedLatitude(double latitude) const
-{
-    double swCornerLat = _southWest.latitude();
-    if (!QGC::fuzzyCompare(latitude, swCornerLat)) {
-        latitude = swCornerLat;
-    }
-    return latitude;
-}
-
-double TerrainTile::_swCornerClampedLongitude (double longitude) const
-{
-    double swCornerLon = _southWest.longitude();
-    if (!QGC::fuzzyCompare(longitude, swCornerLon)) {
-        longitude = swCornerLon;
-    }
-    return longitude;
-}
-
-bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
-{
-    if (!_isValid) {
-        qCWarning(TerrainTileLog) << "isIn: Internal Error - invalid tile";
-        return false;
-    }
-
-    // We have to be careful of double value imprecision for lat/lon values.
-    // Don't trust _northEast corner values because of this (they are set from airmap query response).
-    // Calculate everything from swCorner values only
-
-    double testLat      = _swCornerClampedLatitude(coordinate.latitude());
-    double testLon      = _swCornerClampedLongitude(coordinate.longitude());
-    double swCornerLat  = _southWest.latitude();
-    double swCornerLon  = _southWest.longitude();
-    double neCornerLat  = swCornerLat + (_gridSizeLat * tileSizeDegrees);
-    double neCornerLon  = swCornerLon + (_gridSizeLon * tileSizeDegrees);
-
-    bool coordinateIsInTile = testLat >= swCornerLat && testLon >= swCornerLon && testLat <= neCornerLat && testLon <= neCornerLon;
-    qCDebug(TerrainTileLog) << "isIn - coordinateIsInTile::coordinate:testLast:testLon:swCornerlat:swCornerLon:neCornerLat:neCornerLon" << coordinateIsInTile << coordinate << testLat << testLon << swCornerLat << swCornerLon << neCornerLat << neCornerLon;
-
-    return coordinateIsInTile;
-}
-
 double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
-    if (_isValid) {
+    if (_isValid && _southWest.isValid() && _northEast.isValid()) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
-        // Get the index at resolution of 1 arc second
-        int indexLat = _latToDataIndex(coordinate.latitude());
-        int indexLon = _lonToDataIndex(coordinate.longitude());
-        if (indexLat == -1 || indexLon == -1) {
-            qCWarning(TerrainTileLog) << "elevation: Internal error - indexLat:indexLon == -1" << indexLat << indexLon;
-            return qQNaN();
-        }
-        qCDebug(TerrainTileLog) << "elevation: indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
-        return static_cast<double>(_data[indexLat][indexLon]);
+
+        // The lat/lon values in _northEast and _southWest coordinates can have rounding errors such that the coordinate
+        // request may be slightly outside the tile box specified by these values. So we clamp the incoming values to the
+        // edges of the tile if needed.
+
+        double clampedLon = qMax(coordinate.longitude(), _southWest.longitude());
+        double clampedLat = qMax(coordinate.latitude(), _southWest.latitude());
+
+        // Calc the index of the southernmost and westernmost index data value
+        int lonIndex = qFloor((clampedLon - _southWest.longitude()) / tileValueSpacingDegrees);
+        int latIndex = qFloor((clampedLat - _southWest.latitude()) / tileValueSpacingDegrees);
+
+        // Calc how far along in between the known values the requested lat/lon is fractionally
+        double lonIndexLongitude    = _southWest.longitude() + (static_cast<double>(lonIndex) * tileValueSpacingDegrees);
+        double lonFraction          = (clampedLon - lonIndexLongitude) / tileValueSpacingDegrees;
+        double latIndexLatitude     = _southWest.latitude() + (static_cast<double>(latIndex) * tileValueSpacingDegrees);
+        double latFraction          = (clampedLat - latIndexLatitude) / tileValueSpacingDegrees;
+
+        // Calc the elevation as the average across the four known points
+        double known00      = _data[latIndex][lonIndex];
+        double known01      = _data[latIndex][lonIndex+1];
+        double known10      = _data[latIndex+1][lonIndex];
+        double known11      = _data[latIndex+1][lonIndex+1];
+        double lonValue1    = known00 + ((known01 - known00) * lonFraction);
+        double lonValue2    = known10 + ((known11 - known10) * lonFraction);
+        double latValue     = lonValue1 + ((lonValue2 - lonValue1) * latFraction);
+
+        return latValue;
     } else {
         qCWarning(TerrainTileLog) << "elevation: Internal error - invalid tile";
         return qQNaN();
@@ -301,43 +279,4 @@ QByteArray TerrainTile::serialize(QByteArray input)
     }
 
     return byteArray;
-}
-
-
-int TerrainTile::_latToDataIndex(double latitude) const
-{
-    int latIndex = -1;
-
-    // We have to be careful of double value imprecision for lat/lon values.
-    // Don't trust _northEast corner values because of this (they are set from airmap query response).
-    // Calculate everything from swCorner values only
-
-    if (isValid() && _southWest.isValid() && _northEast.isValid()) {
-        double clampedLatitude = _swCornerClampedLatitude(latitude);
-        latIndex = qRound((clampedLatitude - _southWest.latitude()) / tileValueSpacingDegrees);
-        qCDebug(TerrainTileLog) << "_latToDataIndex: latIndex:latitude:clampedLatitude:_southWest" << latIndex << latitude << clampedLatitude << _southWest;
-    } else {
-        qCWarning(TerrainTileLog) << "_latToDataIndex: Internal error - isValid:_southWest.isValid:_northEast.isValid" << isValid() << _southWest.isValid() << _northEast.isValid();
-    }
-
-    return latIndex;
-}
-
-int TerrainTile::_lonToDataIndex(double longitude) const
-{
-    int lonIndex = -1;
-
-    // We have to be careful of double value imprecision for lat/lon values.
-    // Don't trust _northEast corner values because of this (they are set from airmap query response).
-    // Calculate everything from swCorner values only
-
-    if (isValid() && _southWest.isValid() && _northEast.isValid()) {
-        double clampledLongitude = _swCornerClampedLongitude(longitude);
-        lonIndex = qRound((clampledLongitude - _southWest.longitude()) / tileValueSpacingDegrees);
-        qCDebug(TerrainTileLog) << "_lonToDataIndex: lonIndex:longitude:clampledLongitude:_southWest" << lonIndex << longitude << clampledLongitude << _southWest;
-    } else {
-        qCWarning(TerrainTileLog) << "_lonToDataIndex: Internal error - isValid:_southWest.isValid:_northEast.isValid" << isValid() << _southWest.isValid() << _northEast.isValid();
-    }
-
-    return lonIndex;
 }

@@ -34,14 +34,6 @@ public:
     TerrainTile(QByteArray byteArray);
 
     /**
-    * Check for whether a coordinate lies within this tile
-    *
-    * @param coordinate
-    * @return true if within
-    */
-    bool isIn(const QGeoCoordinate& coordinate) const;
-
-    /**
     * Check whether valid data is loaded
     *
     * @return true if data is valid
@@ -104,11 +96,6 @@ private:
         int16_t gridSizeLat;
         int16_t gridSizeLon;
     } TileInfo_t;
-
-    double  _swCornerClampedLatitude    (double latitude) const;
-    double  _swCornerClampedLongitude   (double longitude) const;
-    int     _latToDataIndex             (double latitude) const;
-    int     _lonToDataIndex             (double longitude) const;
 
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile

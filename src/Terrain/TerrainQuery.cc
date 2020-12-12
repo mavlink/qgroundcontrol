@@ -426,20 +426,14 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
 
         _tilesMutex.lock();
         if (_tiles.contains(tileHash)) {
-            if (_tiles[tileHash].isIn(coordinate)) {
-                double elevation = _tiles[tileHash].elevation(coordinate);
-                if (qIsNaN(elevation)) {
-                    error = true;
-                    qCWarning(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates Internal Error: missing elevation in tile cache";
-                } else {
-                    qCDebug(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates returning elevation from tile cache" << elevation;
-                }
-                altitudes.push_back(elevation);
-            } else {
-                qCWarning(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates Internal Error: coordinate not in tile region";
-                altitudes.push_back(qQNaN());
+            double elevation = _tiles[tileHash].elevation(coordinate);
+            if (qIsNaN(elevation)) {
                 error = true;
+                qCWarning(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates Internal Error: missing elevation in tile cache";
+            } else {
+                qCDebug(TerrainQueryLog) << "TerrainTileManager::getAltitudesForCoordinates returning elevation from tile cache" << elevation;
             }
+            altitudes.push_back(elevation);
         } else {
             if (_state != State::Downloading) {
                 QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL("Airmap Elevation", getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation",coordinate.longitude(), 1), getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1), 1, &_networkManager);
