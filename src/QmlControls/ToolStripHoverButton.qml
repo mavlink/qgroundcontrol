@@ -1,130 +1,98 @@
-import QtQuick 2.3
-import QtQuick.Controls 2.2
-import QtGraphicalEffects 1.0
+/****************************************************************************
+ *
+ * (c) 2009-2020 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
 
-// TODO: Use QT styles. Use default button style + custom style entries
-import QGroundControl.ScreenTools 1.0
-import QGroundControl.Palette 1.0
+import QtQuick              2.3
+import QtQuick.Controls     2.2
+import QtGraphicalEffects   1.0
 
-// TODO: use QT palette
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
+
 Button {
-    id:     button
-    width:  contentLayoutItem.contentWidth + (contentMargins * 2)
-    height: width
-    flat:   true
+    id:             control
+    width:          contentLayoutItem.contentWidth + (contentMargins * 2)
+    height:         width
+    hoverEnabled:   true
+    enabled:        toolStripAction.enabled
+    visible:        toolStripAction.visible
+    imageSource:    toolStripAction.showAlternateIcon ? modelData.alternateIconSource : modelData.iconSource
+    text:           toolStripAction.text
+    checked:        toolStripAction.checked
+    checkable:      toolStripAction.dropPanelComponent || modelData.checkable
 
-    property color borderColor:     qgcPal.windowShadeDark
+    property var    toolStripAction:    undefined
+    property var    dropPanel:          undefined
+    property alias  radius:             buttonBkRect.radius
+    property alias  fontPointSize:      innerText.font.pointSize
+    property alias  imageSource:        innerImage.source
+    property alias  contentWidth:       innerText.contentWidth
 
-    property alias radius:          buttonBkRect.radius
-    property alias fontPointSize:   innerText.font.pointSize
-    property alias imageSource:     innerImage.source
-    property alias contentWidth:    innerText.contentWidth
+    property real imageScale:       0.6
+    property real contentMargins:   innerText.height * 0.1
 
-    property real  imageScale:      0.6
-    property real  borderWidth:     0
-    property real  contentMargins: innerText.height * 0.1
+    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
 
-    property color _currentColor:           qgcPal.button
-    property color _currentContentColor:    qgcPal.buttonText
+    signal dropped(int index)
 
-    QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
+    onCheckedChanged: toolStripAction.checked = checked
 
-    // Initial state
-    state:                  "Default"
-    // Update state on status changed
-    // Content Icon + Text
+    onClicked: {
+        dropPanel.hide()
+        if (!toolStripAction.dropPanelComponent) {
+            toolStripAction.triggered(this)
+        } else if (checked) {
+            var panelEdgeTopPoint = mapToItem(_root, width, 0)
+            dropPanel.show(panelEdgeTopPoint, toolStripAction.dropPanelComponent, this)
+            checked = true
+            control.dropped(index)
+        }
+    }
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: control.enabled }
+
     contentItem: Item {
         id:                 contentLayoutItem
         anchors.fill:       parent
         anchors.margins:    contentMargins
+
         Column {
             anchors.centerIn:   parent
             spacing:        contentMargins * 2
+
             QGCColoredImage {
-                id:         innerImage
-                height:     contentLayoutItem.height * imageScale
-                width:      contentLayoutItem.width  * imageScale
-                smooth:     true
-                mipmap:     true
-                color:      _currentContentColor
-                fillMode:   Image.PreserveAspectFit
-                antialiasing: true
-                sourceSize.height:  height
-                sourceSize.width:   width
-                anchors.horizontalCenter: parent.horizontalCenter
+                id:                         innerImage
+                height:                     contentLayoutItem.height * imageScale
+                width:                      contentLayoutItem.width  * imageScale
+                smooth:                     true
+                mipmap:                     true
+                color:                      _currentContentColor
+                fillMode:                   Image.PreserveAspectFit
+                antialiasing:               true
+                sourceSize.height:          height
+                sourceSize.width:           width
+                anchors.horizontalCenter:   parent.horizontalCenter
             }
+
             QGCLabel {
-                id:         innerText
-                text:       button.text
-                color:      _currentContentColor
-                anchors.horizontalCenter: parent.horizontalCenter
+                id:                         innerText
+                text:                       control.text
+                color:                      _currentContentColor
+                anchors.horizontalCenter:   parent.horizontalCenter
             }
         }
     }
 
     background: Rectangle {
-        id:                 buttonBkRect
-        color:              _currentColor
-        visible:            !flat
-        border.width:       borderWidth
-        border.color:       borderColor
-        anchors.fill:       parent
-    }
-
-    // Change the colors based on button states
-    states: [
-        State {
-            name: "Hovering"
-            PropertyChanges {
-                target: button;
-                _currentColor:          (checked || pressed) ? qgcPal.buttonHighlight : qgcPal.hoverColor
-                _currentContentColor:   qgcPal.buttonHighlightText
-            }
-            PropertyChanges {
-                target: buttonBkRect
-                visible: true
-            }
-        },
-        State {
-            name: "Default"
-            PropertyChanges {
-                target: button;
-                _currentColor:          enabled ? ((checked || pressed) ? qgcPal.buttonHighlight : qgcPal.button) :         qgcPalDisabled.button
-                _currentContentColor:   enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText) : qgcPalDisabled.buttonText
-            }
-            PropertyChanges {
-                target: buttonBkRect
-                visible: !flat || (checked || pressed)
-            }
-        }
-    ]
-
-    transitions: [
-        Transition {
-            from: ""; to: "Hovering"
-            ColorAnimation { duration: 200 }
-        },
-        Transition {
-            from: "*"; to: "Pressed"
-            ColorAnimation { duration: 10 }
-        }
-    ]
-
-    // Process hover events
-    MouseArea {
-        enabled:            !ScreenTools.isMobile
-        propagateComposedEvents: true
-        hoverEnabled:       true
-        preventStealing:    true
-        anchors.fill:       button
-        onEntered:          button.state = 'Hovering'
-        onExited:           button.state = 'Default'
-        // Propagate events down
-        onClicked:          { mouse.accepted = false; }
-        onDoubleClicked:    { mouse.accepted = false; }
-        onPositionChanged:  { mouse.accepted = false; }
-        onPressAndHold:     { mouse.accepted = false; }
-        onPressed:          { mouse.accepted = false }
-        onReleased:         { mouse.accepted = false }
+        id:             buttonBkRect
+        color:          (control.checked || control.pressed) ?
+                            qgcPal.buttonHighlight :
+                            (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
+        anchors.fill:   parent
     }
 }
