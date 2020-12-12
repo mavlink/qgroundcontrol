@@ -19,7 +19,7 @@
 
 #include <QPolygonF>
 
-QGC_LOGGING_CATEGORY(MissionSettingsComplexItemLog, "MissionSettingsComplexItemLog")
+QGC_LOGGING_CATEGORY(MissionSettingsItemLog, "MissionSettingsItemLog")
 
 const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHomePositionAltitude";
 
@@ -170,7 +170,7 @@ bool MissionSettingsItem::scanForMissionSettings(QmlObjectListModel* visualItems
     bool foundSpeedSection = false;
     bool foundCameraSection = false;
 
-    qCDebug(MissionSettingsComplexItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
+    qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::scanForMissionSettings count:scanIndex" << visualItems->count() << scanIndex;
 
     // Scan through the initial mission items for possible mission settings
     foundCameraSection = _cameraSection.scanForSection(visualItems, scanIndex);
@@ -267,7 +267,7 @@ void MissionSettingsItem::_updateAltitudeInCoordinate(QVariant value)
     double newAltitude = value.toDouble();
 
     if (!QGC::fuzzyCompare(_plannedHomePositionCoordinate.altitude(), newAltitude)) {
-        qDebug() << "MissionSettingsItem::_updateAltitudeInCoordinate" << newAltitude;
+        qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::_updateAltitudeInCoordinate" << newAltitude;
         _plannedHomePositionCoordinate.setAltitude(newAltitude);
         emit coordinateChanged(_plannedHomePositionCoordinate);
         emit exitCoordinateChanged(_plannedHomePositionCoordinate);
@@ -286,6 +286,7 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
 void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 {
     if (!_plannedHomePositionFromVehicle && !qIsNaN(terrainAltitude)) {
+        qDebug() << "MissionSettingsItem::_setHomeAltFromTerrain" << terrainAltitude;
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
     }
 }
