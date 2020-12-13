@@ -1015,7 +1015,6 @@ double SimpleMissionItem::amslEntryAlt(void) const
     case QGroundControlQmlGlobal::AltitudeModeAbsolute:
         return _missionItem.param7();
     case QGroundControlQmlGlobal::AltitudeModeRelative:
-        qDebug() << _missionItem.param7() << _masterController->missionController()->plannedHomePosition().isValid() << _masterController->missionController()->plannedHomePosition().latitude() << _masterController->missionController()->plannedHomePosition().altitude();
         return _missionItem.param7() + _masterController->missionController()->plannedHomePosition().altitude();
     case QGroundControlQmlGlobal::AltitudeModeNone:
         qWarning() << "Internal Error SimpleMissionItem::amslEntryAlt: Invalid altitudeMode:AltitudeModeNone";

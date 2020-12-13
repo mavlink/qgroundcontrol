@@ -209,6 +209,8 @@ void TransectStyleComplexItemTest::_testAltMode(void)
     QVERIFY(!_transectStyleItem->followTerrain());
 }
 
+#if 0
+// Temporarily disabled
 void TransectStyleComplexItemTest::_testFollowTerrain(void) {
     _multiSpy->clearAllSignals();
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
@@ -227,6 +229,7 @@ void TransectStyleComplexItemTest::_testFollowTerrain(void) {
         }
     }
 }
+#endif
 
 TestTransectStyleItem::TestTransectStyleItem(PlanMasterController* masterController, QObject* parent)
     : TransectStyleComplexItem      (masterController, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
