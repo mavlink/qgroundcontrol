@@ -708,12 +708,6 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
         _loadedMissionItemsParent = nullptr;
     }
 
-    // First pass will clear old transect data, refly will append to existing data
-    if (!refly) {
-        _transects.clear();
-        _transectsPathHeightInfo.clear();
-    }
-
     if (_surveyAreaPolygon.count() < 3) {
         return;
     }
@@ -928,12 +922,6 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
         _loadedMissionItems.clear();
         _loadedMissionItemsParent->deleteLater();
         _loadedMissionItemsParent = nullptr;
-    }
-
-    // First pass will clear old transect data, refly will append to existing data
-    if (!refly) {
-        _transects.clear();
-        _transectsPathHeightInfo.clear();
     }
 
     if (_surveyAreaPolygon.count() < 3) {

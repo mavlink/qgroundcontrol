@@ -106,7 +106,7 @@ TransectStyleComplexItemTabBar          1.0 TransectStyleComplexItemTabBar.qml
 TransectStyleComplexItemTerrainFollow   1.0 TransectStyleComplexItemTerrainFollow.qml
 TransectStyleMapVisuals                 1.0 TransectStyleMapVisuals.qml
 ToolStrip                               1.0 ToolStrip.qml
+ToolStripHoverButton                    1.0 ToolStripHoverButton.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
-QGCHoverButton                          1.0 QGCHoverButton.qml
 MAVLinkChart                            1.0 MAVLinkChart.qml

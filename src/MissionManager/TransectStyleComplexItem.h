@@ -164,12 +164,12 @@ protected:
     QGCMapPolygon       _surveyAreaPolygon;
 
     enum CoordType {
-        CoordTypeInterior,              ///< Interior waypoint for flight path only
+        CoordTypeInterior,              ///< Interior waypoint for flight path only (example: interior corridor point)
         CoordTypeInteriorHoverTrigger,  ///< Interior waypoint for hover and capture trigger
         CoordTypeInteriorTerrainAdded,  ///< Interior waypoint added for terrain
         CoordTypeSurveyEntry,           ///< Waypoint at entry edge of survey polygon
         CoordTypeSurveyExit,            ///< Waypoint at exit edge of survey polygon
-        CoordTypeTurnaround,            ///< First turnaround waypoint
+        CoordTypeTurnaround,            ///< Turnaround extension waypoint
     };
 
     typedef struct {
@@ -177,9 +177,10 @@ protected:
         CoordType       coordType;
     } CoordInfo_t;
 
-    QVariantList                                        _visualTransectPoints;
-    QList<QList<CoordInfo_t>>                           _transects;
-    QList<QList<TerrainPathQuery::PathHeightInfo_t>>    _transectsPathHeightInfo;
+    QVariantList                                _visualTransectPoints;  ///< Used to draw the flight path visuals on the screen
+    QList<QList<CoordInfo_t>>                   _transects;
+    QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;      ///< Path height for each segment includes turn segments
+    QList<CoordInfo_t>                          _rgFlightPathCoordInfo; ///< Fully calculated flight path (including terrain if needed)
 
     bool            _ignoreRecalc =     false;
     double          _complexDistance =  qQNaN();
@@ -223,13 +224,21 @@ private slots:
     void _segmentTerrainCollisionChanged            (bool terrainCollision) final;
 
 private:
+    typedef struct {
+        bool imagesInTurnaround;
+        bool hasTurnarounds;
+        bool addTriggerAtFirstAndLastPoint;
+        bool useConditionGate;
+    } BuildMissionItemsState_t;
+
     void    _queryTransectsPathHeightInfo   (void);
     void    _adjustTransectsForTerrain      (void);
-    void    _addInterstitialTerrainPoints   (QList<CoordInfo_t>& transect, const QList<TerrainPathQuery::PathHeightInfo_t>& transectPathHeightInfo);
-    void    _adjustForMaxRates              (QList<CoordInfo_t>& transect);
-    void    _adjustForTolerance             (QList<CoordInfo_t>& transect);
+    bool    _buildRawFlightPath             (void);
+    void    _adjustForMaxRates              (void);
+    void    _adjustForTolerance             (void);
     double  _altitudeBetweenCoords          (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
     int     _maxPathHeight                  (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
+    BuildMissionItemsState_t _buildMissionItemsState(void) const;
 
     TerrainPolyPathQuery*       _currentTerrainFollowQuery =            nullptr;
     QTimer                      _terrainQueryTimer;

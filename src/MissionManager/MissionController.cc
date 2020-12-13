@@ -1253,7 +1253,7 @@ void MissionController::_recalcFlightPathSegments(void)
     _flightPathSegmentHashTable.clear();
     _waypointPath.clear();
 
-    // Note: Although visual support _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
+    // Note: Although visual support for _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
     // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
     // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
 

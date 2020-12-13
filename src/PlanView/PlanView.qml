@@ -46,7 +46,6 @@ Item {
     property var    _rallyPointController:              _planMasterController.rallyPointController
     property var    _visualItems:                       _missionController.visualItems
     property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
-    property bool   _addWaypointOnClick:                false
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
     property int    _editingLayer:                      layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission
@@ -459,7 +458,7 @@ Item {
 
                     switch (_editingLayer) {
                     case _layerMission:
-                        if (_addWaypointOnClick) {
+                        if (addWaypointRallyPointAction.checked) {
                             insertSimpleItemAfterCurrent(coordinate)
                         } else if (_addROIOnClick) {
                             insertROIAfterCurrent(coordinate)
@@ -468,7 +467,7 @@ Item {
 
                         break
                     case _layerRallyPoints:
-                        if (_rallyPointController.supported && _addWaypointOnClick) {
+                        if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
                             _rallyPointController.addPoint(coordinate)
                         }
                         break
@@ -658,14 +657,12 @@ Item {
                         }
                     },
                     ToolStripAction {
+                        id:                 addWaypointRallyPointAction
                         text:               _editingLayer == _layerRallyPoints ? qsTr("Rally Point") : qsTr("Waypoint")
                         iconSource:         "/qmlimages/MapAddMission.svg"
                         enabled:            toolStrip._isRallyLayer ? true : _missionController.flyThroughCommandsAllowed
                         visible:            toolStrip._isRallyLayer || toolStrip._isMissionLayer
                         checkable:          true
-                        onCheckedChanged:   _addWaypointOnClick = checked
-                        property bool myAddWaypointOnClick: _addWaypointOnClick
-                        onMyAddWaypointOnClickChanged: checked = _addWaypointOnClick
                     },
                     ToolStripAction {
                         text:               _missionController.isROIActive ? qsTr("Cancel ROI") : qsTr("ROI")
@@ -720,7 +717,7 @@ Item {
 
             function allAddClickBoolsOff() {
                 _addROIOnClick =        false
-                _addWaypointOnClick =   false
+                addWaypointRallyPointAction.checked = false
             }
 
             onDropped: allAddClickBoolsOff()

@@ -17,7 +17,7 @@
 #include "CameraSection.h"
 #include "SpeedSection.h"
 
-Q_DECLARE_LOGGING_CATEGORY(MissionSettingsComplexItemLog)
+Q_DECLARE_LOGGING_CATEGORY(MissionSettingsItemLog)
 
 class PlanMasterController;
 
