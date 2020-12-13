@@ -796,7 +796,9 @@ bool TransectStyleComplexItem::_buildRawFlightPath(void)
                 toCoordInfo.coord.setAltitude(toCoordInfo.coord.altitude() + prgPathHeightInfo->heights.last());
             }
 
-            _rgFlightPathCoordInfo.append(fromCoordInfo);
+            if (transectCoordIndex == 0) {
+                _rgFlightPathCoordInfo.append(fromCoordInfo);
+            }
 
             // For follow terrain we add interstitial points at max resolution of our terrain data
             if (_followTerrain) {
@@ -881,7 +883,7 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
             case CoordTypeTurnaround:
             {
                 bool firstEntryTurnaround   = coordIndex == 0;
-                bool lastExitTurnaround     = coordIndex == _rgFlightPathCoordInfo.count();
+                bool lastExitTurnaround     = coordIndex == _rgFlightPathCoordInfo.count() - 1;
                 if (buildState.addTriggerAtFirstAndLastPoint && (firstEntryTurnaround || lastExitTurnaround)) {
                     itemCount += 2; // Waypoint + camera trigger
                 } else {
@@ -898,6 +900,7 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
                 } else {
                     itemCount++; // Waypoint only
                 }
+                break;
             case CoordTypeSurveyExit:
                 bool lastSurveyExit = coordIndex == _rgFlightPathCoordInfo.count() - 1;
                 if (triggerCamera()) {
@@ -1066,7 +1069,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
         case CoordTypeTurnaround:
         {
             bool firstEntryTurnaround   = coordIndex == 0;
-            bool lastExitTurnaround     = coordIndex == _rgFlightPathCoordInfo.count();
+            bool lastExitTurnaround     = coordIndex == _rgFlightPathCoordInfo.count() - 1;
             if (buildState.addTriggerAtFirstAndLastPoint && (firstEntryTurnaround || lastExitTurnaround)) {
                 _appendCameraTriggerDistanceUpdatePoint(items, missionItemParent, seqNum, mavFrame, coordInfo.coord, buildState.useConditionGate, firstEntryTurnaround ? triggerDistance() : 0);
             } else {
@@ -1090,6 +1093,7 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             } else {
                 _appendWaypoint(items, missionItemParent, seqNum, mavFrame, 0 /* holdTime */, coordInfo.coord);
             }
+            break;
         case CoordTypeSurveyExit:
             bool lastSurveyExit = coordIndex == _rgFlightPathCoordInfo.count() - 1;
             if (triggerCamera()) {
