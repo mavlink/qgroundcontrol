@@ -69,7 +69,7 @@ SetupPage {
                             updateValueWhileDragging:   false
 
                             onValueChanged: {
-                                controller.vehicle.motorTest(index + 1, value, value == 0 ? 0 : _motorTimeoutSecs)
+                                controller.vehicle.motorTest(index + 1, value, value == 0 ? 0 : _motorTimeoutSecs, true)
                                 if (value != 0) {
                                     motorTimer.restart()
                                 }
