@@ -20,6 +20,10 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
 
+import com.Login 1.0
+import com.customerData 1.0
+
+
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
@@ -40,6 +44,138 @@ ApplicationWindow {
         // Start the sequence of first run prompt(s)
         firstRunPromptManager.nextPrompt()
     }
+
+    Connections{
+
+            target: Cust
+
+            onCorrectDetails: {
+                auth.passWord = "";
+                login.passwrd = "";
+                login.vis = false;
+                otp.vis = true;
+            }
+            onWrongDetails: {
+                auth.userName = "";
+                login.usrname = "";
+                auth.passWord = "";
+                login.passwrd = "";
+                login.vis = true;
+                otp.vis = false;
+                dialogWrongDetails.visible = true;
+            }
+            onCorrectOTP: {
+                auth.otp = "";
+                otp.otpVal = "";
+                npnt.vis = true;
+                otp.vis = false;
+                if(QGroundControl.multiVehicleManager.activeVehicle){
+                    npnt.check1=true
+                }
+                else npnt.check1 = false;
+
+            }
+            onWrongOTP: {
+                auth.otp = "";
+                otp.otpVal = "";
+                otp.vis = true;
+                npnt.vis = false;
+                login.vis = false;
+                dialogWrongOtp.visible =true;
+            }
+
+            onDroneNotRegistered: {
+                npnt.check2 = true;
+            }
+            onDroneRegistered: {
+                dialogDroneNotRegistered.visible=true;
+            }
+
+        }
+    MessageDialog {
+            id : dialogWrongOtp
+            visible: false
+            title: "Wrong OTP"
+            text: "Wrong OTP!"
+            standardButtons: StandardButton.Close
+        }
+    MessageDialog {
+            id : dialogWrongDetails
+            visible: false
+            title: "Invalid credentials"
+            text: "Please enter the correct cerdentials."
+            standardButtons: StandardButton.Close
+        }
+        MessageDialog {
+            id : dialogHardwarenotConnected
+            visible: false
+            title: "Connect hardware"
+            text: "Please connect the Drone to proceed further."
+            standardButtons: StandardButton.Close
+        }
+        MessageDialog {
+            id : dialogDroneNotRegistered
+            visible: false
+            title: "Register drone"
+            text: "Your drone is not registered."
+            standardButtons: StandardButton.Close
+        }
+
+        Auth{
+            id:auth
+
+        }
+
+       HomePage{
+            id: home
+            vis: !QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.communicationLost
+        }
+
+        Loginpage{
+        id:login
+        vis:true
+
+            onGetUsername: {
+                login.usrname = auth.userName;
+            }
+            onGetPassword: {
+                login.passwrd = auth.passWord;
+            }
+            onChangeUsername:{
+                auth.userName = login.usrname;
+            }
+            onChangePassword:{
+                auth.passWord = login.passwrd;
+            }
+            onLoginButton:{
+                auth.okButton = true;
+            }
+        }
+
+        OtpVerify{
+              id: otp
+              onGetOtpVal: {
+                  otp.otpVal = auth.otp;
+              }
+              onSetOtp: {
+                  auth.otp = otp.otpVal;
+              }
+              onVerifyButton: {
+                  auth.otpButton = true;
+              }
+              onBackButtonClicked: {
+                  login.vis = true;
+                  login.usrname=""
+                  login.passwrd=""
+                  vis = false;
+              }
+        }
+
+        NpntProcess{
+            id: npnt
+            onCheck2Changed: npnt.vis=false
+
+}
 
     QtObject {
         id: firstRunPromptManager
