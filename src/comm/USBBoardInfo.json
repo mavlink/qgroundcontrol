@@ -78,6 +78,7 @@
     "boardManufacturerFallback": [
         { "regExp": "^ArduPilot$",      "boardClass": "Pixhawk" },
         { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
-        { "regExp": "^Holybro$",        "boardClass": "Pixhawk" }
+        { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
+        { "regExp": "^mRo$",            "boardClass": "Pixhawk" }
     ]
 }
