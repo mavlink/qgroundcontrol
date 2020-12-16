@@ -27,28 +27,19 @@ RowLayout {
     property real   _chartHeight:       ScreenTools.defaultFontPixelHeight * 20
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property string _currentTuneType:   tuneList[0]
-    property real   _roll:              globals.activeVehicle.roll.value
-    property real   _rollSetpoint:      globals.activeVehicle.setpoint.roll.value
     property real   _rollRate:          globals.activeVehicle.rollRate.value
     property real   _rollRateSetpoint:  globals.activeVehicle.setpoint.rollRate.value
-    property real   _pitch:             globals.activeVehicle.pitch.value
-    property real   _pitchSetpoint:     globals.activeVehicle.setpoint.pitch.value
     property real   _pitchRate:         globals.activeVehicle.pitchRate.value
     property real   _pitchRateSetpoint: globals.activeVehicle.setpoint.pitchRate.value
-    property real   _yaw:               globals.activeVehicle.heading.value
-    property real   _yawSetpoint:       globals.activeVehicle.setpoint.yaw.value
     property real   _yawRate:           globals.activeVehicle.yawRate.value
     property real   _yawRateSetpoint:   globals.activeVehicle.setpoint.yawRate.value
-    property var    _valueXAxis:        valueXAxis
     property var    _valueRateXAxis:    valueRateXAxis
-    property var    _valueYAxis:        valueYAxis
     property var    _valueRateYAxis:    valueRateYAxis
     property int    _msecs:             0
+    property double _last_t:            0
     property var    _savedTuningParamValues:    [ ]
 
     // The following are set when getValues is called
-    property real   _value
-    property real   _valueSetpoint
     property real   _valueRate
     property real   _valueRateSetpoint
 
@@ -57,6 +48,7 @@ RowLayout {
     readonly property int _tuneListRollIndex:   0
     readonly property int _tuneListPitchIndex:  1
     readonly property int _tuneListYawIndex:    2
+    readonly property int _chartDisplaySec:     3 // number of seconds to display
 
     function adjustYAxisMin(yAxis, newValue) {
         var newMin = Math.min(yAxis.min, newValue)
@@ -78,37 +70,26 @@ RowLayout {
 
     function getValues() {
         if (_currentTuneType === tuneList[_tuneListRollIndex]) {
-            _value = _roll
-            _valueSetpoint = _rollSetpoint
             _valueRate = _rollRate
             _valueRateSetpoint = _rollRateSetpoint
         } else if (_currentTuneType === tuneList[_tuneListPitchIndex]) {
-            _value = _pitch
-            _valueSetpoint = _pitchSetpoint
             _valueRate = _pitchRate
             _valueRateSetpoint = _pitchRateSetpoint
         } else if (_currentTuneType === tuneList[_tuneListYawIndex]) {
-            _value = _yaw
-            _valueSetpoint = _yawSetpoint
             _valueRate = _yawRate
             _valueRateSetpoint = _yawRateSetpoint
         }
     }
 
     function resetGraphs() {
-        valueSeries.removePoints(0, valueSeries.count)
-        valueSetpointSeries.removePoints(0, valueSetpointSeries.count)
         valueRateSeries.removePoints(0, valueRateSeries.count)
         valueRateSetpointSeries.removePoints(0, valueRateSetpointSeries.count)
-        _valueXAxis.min = 0
-        _valueXAxis.max = 0
         _valueRateXAxis.min = 0
         _valueRateXAxis.max = 0
-        _valueYAxis.min = 0
-        _valueYAxis.max = 10
         _valueRateYAxis.min = 0
         _valueRateYAxis.max = 10
         _msecs = 0
+        _last_t = 0
     }
 
     function currentTuneTypeIndex() {
@@ -126,9 +107,10 @@ RowLayout {
         var tuneTypeIndex = currentTuneTypeIndex()
 
         _savedTuningParamValues = [ ]
-        var currentTuneParams = params[tuneTypeIndex]
-        for (var i=0; i<currentTuneParams.length; i++) {
-            _savedTuningParamValues.push(currentTuneParams[i].valueString)
+        for (var i=0; i<params[tuneTypeIndex].count; i++) {
+            var currentTuneParam = controller.getParameterFact(-1,
+                params[tuneTypeIndex].get(i).param)
+            _savedTuningParamValues.push(currentTuneParam.valueString)
         }
         savedRepeater.model = _savedTuningParamValues
     }
@@ -136,8 +118,10 @@ RowLayout {
     function resetToSavedTuningParamValues() {
         var tuneTypeIndex = currentTuneTypeIndex()
 
-        for (var i=0; i<_savedTuningParamValues.length; i++) {
-            params[tuneTypeIndex][i].value = _savedTuningParamValues[i]
+        for (var i=0; i<params[tuneTypeIndex].count; i++) {
+            var currentTuneParam = controller.getParameterFact(-1,
+                params[tuneTypeIndex].get(i).param)
+            currentTuneParam.value = _savedTuningParamValues[i]
         }
     }
 
@@ -154,29 +138,12 @@ RowLayout {
     }
 
     ValueAxis {
-        id:             valueXAxis
-        min:            0
-        max:            0
-        labelFormat:    "%d"
-        titleText:      "msec"
-        tickCount:      11
-    }
-
-    ValueAxis {
         id:             valueRateXAxis
         min:            0
         max:            0
-        labelFormat:    "%d"
-        titleText:      "msec"
+        labelFormat:    "%.2f"
+        titleText:      "sec"
         tickCount:      11
-    }
-
-    ValueAxis {
-        id:         valueYAxis
-        min:        0
-        max:        10
-        titleText:  "deg"
-        tickCount:  Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
     }
 
     ValueAxis {
@@ -190,32 +157,31 @@ RowLayout {
     Timer {
         id:         dataTimer
         interval:   10
-        running:    false
+        running:    true
         repeat:     true
 
         onTriggered: {
-            _valueXAxis.max = _msecs
-            _valueRateXAxis.max = _msecs
+            _valueRateXAxis.max = _msecs / 1000
+            _valueRateXAxis.min = _msecs / 1000 - _chartDisplaySec
 
             getValues()
 
-            valueSeries.append(_msecs, _value)
-            adjustYAxisMin(_valueYAxis, _value)
-            adjustYAxisMax(_valueYAxis, _value)
+            if (!isNaN(_valueRate)) {
+                valueRateSeries.append(_msecs/1000, _valueRate)
+                adjustYAxisMin(_valueRateYAxis, _valueRate)
+                adjustYAxisMax(_valueRateYAxis, _valueRate)
+            }
 
-            valueSetpointSeries.append(_msecs, _valueSetpoint)
-            adjustYAxisMin(_valueYAxis, _valueSetpoint)
-            adjustYAxisMax(_valueYAxis, _valueSetpoint)
+            if (!isNaN(_valueRateSetpoint)) {
+                valueRateSetpointSeries.append(_msecs/1000, _valueRateSetpoint)
+                adjustYAxisMin(_valueRateYAxis, _valueRateSetpoint)
+                adjustYAxisMax(_valueRateYAxis, _valueRateSetpoint)
+            }
 
-            valueRateSeries.append(_msecs, _valueRate)
-            adjustYAxisMin(_valueRateYAxis, _valueRate)
-            adjustYAxisMax(_valueRateYAxis, _valueRate)
-
-            valueRateSetpointSeries.append(_msecs, _valueRateSetpoint)
-            adjustYAxisMin(_valueRateYAxis, _valueRateSetpoint)
-            adjustYAxisMax(_valueRateYAxis, _valueRateSetpoint)
-
-            _msecs += interval
+            var t = new Date().getTime() // in ms
+            if (_last_t > 0)
+                _msecs += t-_last_t
+            _last_t = t
         }
 
         property int _maxPointCount:    10000 / interval
@@ -224,6 +190,7 @@ RowLayout {
     Column {
         spacing:            _margins
         Layout.alignment:   Qt.AlignTop
+        width:          parent.width * 0.4
 
         Column {
             QGCLabel { text: qsTr("Tuning Axis:") }
@@ -244,75 +211,24 @@ RowLayout {
 
         QGCLabel { text: qsTr("Tuning Values:") }
 
-        GridLayout {
-            rows:           factList.length
-            flow:           GridLayout.TopToBottom
-            rowSpacing:     _margins
-            columnSpacing:  _margins
 
-            property var factList: params[tuneList.indexOf(_currentTuneType)]
-
-            Repeater {
-                model: parent.factList
-
-                QGCLabel { text: modelData.name }
-            }
-
-            Repeater {
-                model: parent.factList
-
-                QGCButton {
-                    text: "-"
-                    onClicked: {
-                        var value = modelData.value
-                        var newValue = value - (value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value)
-                        if (newValue >= modelData.min) {
-                            modelData.value = newValue
-                        }
-                    }
-                }
-            }
-
-            Repeater {
-                model: parent.factList
-
-                FactTextField {
-                    Layout.fillWidth:   true
-                    fact:               modelData
-                    showUnits:          false
-                }
-            }
-
-            Repeater {
-                model: parent.factList
-
-                QGCButton {
-                    text: "+"
-                    onClicked: {
-                        var value = modelData.value
-                        var newValue = value + (value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value)
-                        if (newValue <= modelData.max) {
-                            modelData.value = newValue
-                        }
-                    }
-                }
-            }
+        // Instantiate all sliders (instead of switching the model), so that
+        // values are not changed unexpectedly if they do not match with a tick
+        // value
+        FactSliderPanel {
+            width:       parent.width
+            visible:     _currentTuneType === tuneList[_tuneListRollIndex]
+            sliderModel: params[_tuneListRollIndex]
         }
-
-        RowLayout {
-            QGCLabel { text: qsTr("Increment/Decrement %") }
-
-            QGCComboBox {
-                id:         adjustPercentCombo
-                textRole:   "text"
-                model:  ListModel {
-                    id: adjustPercentModel
-                    ListElement { text: "5"; value: 0.05 }
-                    ListElement { text: "10"; value: 0.10 }
-                    ListElement { text: "15"; value: 0.15 }
-                    ListElement { text: "20"; value: 0.20 }
-                }
-            }
+        FactSliderPanel {
+            width:       parent.width
+            visible:     _currentTuneType === tuneList[_tuneListPitchIndex]
+            sliderModel: params[_tuneListPitchIndex]
+        }
+        FactSliderPanel {
+            width:       parent.width
+            visible:     _currentTuneType === tuneList[_tuneListYawIndex]
+            sliderModel: params[_tuneListYawIndex]
         }
 
         Column {
@@ -327,7 +243,7 @@ RowLayout {
                 Repeater {
                     model: params[tuneList.indexOf(_currentTuneType)]
 
-                    QGCLabel { text: modelData.name }
+                    QGCLabel { text: param }
                 }
 
                 Repeater {
@@ -368,6 +284,7 @@ RowLayout {
                 text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
                 onClicked: {
                     dataTimer.running = !dataTimer.running
+                    _last_t = 0
                     if (autoModeChange.checked) {
                         globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
                     }
@@ -396,37 +313,16 @@ RowLayout {
 
     Column {
         Layout.fillWidth: true
+        Layout.alignment:   Qt.AlignTop
 
         ChartView {
+            id:                 ratesChart
             anchors.left:       parent.left
             anchors.right:      parent.right
-            height:             availableHeight / 2
-            title:              _currentTuneType
-            antialiasing:       true
-            legend.alignment:   Qt.AlignRight
-
-            LineSeries {
-                id:         valueSeries
-                name:       "Response"
-                axisY:      valueYAxis
-                axisX:      valueXAxis
-            }
-
-            LineSeries {
-                id:         valueSetpointSeries
-                name:       "Command"
-                axisY:      valueYAxis
-                axisX:      valueXAxis
-            }
-        }
-
-        ChartView {
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            height:             availableHeight / 2
+            height:             availableHeight * 0.75
             title:              _currentTuneType + qsTr(" Rate")
             antialiasing:       true
-            legend.alignment:   Qt.AlignRight
+            legend.alignment:   Qt.AlignBottom
 
             LineSeries {
                 id:         valueRateSeries
@@ -437,9 +333,36 @@ RowLayout {
 
             LineSeries {
                 id:         valueRateSetpointSeries
-                name:       "Command"
+                name:       "Setpoint"
                 axisY:      valueRateYAxis
                 axisX:      valueRateXAxis
+            }
+
+            // enable mouse dragging
+            MouseArea {
+                property var _startPoint: undefined
+                property double _scaling: 0
+                anchors.fill: parent
+                onPressed: {
+                    _startPoint = Qt.point(mouse.x, mouse.y)
+                    var start = ratesChart.mapToValue(_startPoint)
+                    var next = ratesChart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
+                    _scaling = next.x - start.x
+                }
+                onPositionChanged: {
+                    if(_startPoint != undefined) {
+                        dataTimer.running = false
+                        var cp = Qt.point(mouse.x, mouse.y)
+                        var dx = (cp.x - _startPoint.x) * _scaling
+                        _startPoint = cp
+                        _valueRateXAxis.max -= dx
+                        _valueRateXAxis.min -= dx
+                    }
+                }
+
+                onReleased: {
+                    _startPoint = undefined
+                }
             }
         }
     }
