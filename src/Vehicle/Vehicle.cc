@@ -2661,11 +2661,10 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
         return;
     }
 
-    WeakLinkInterfacePtr weakLink = vehicleLinkManager()->primaryLink();
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
 
-    if (!weakLink.expired()) {
+    if (sharedLink) {
         MavCommandListEntry_t   entry;
-        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
 
         entry.useCommandInt     = commandInt;
         entry.targetCompId      = targetCompId;
