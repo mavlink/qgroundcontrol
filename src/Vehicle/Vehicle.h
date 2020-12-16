@@ -939,7 +939,7 @@ private:
     void _setCapabilities               (uint64_t capabilityBits);
     void _updateArmed                   (bool armed);
     bool _apmArmingNotRequired          ();
-    void _pidTuningAdjustRates          (bool setRatesForTuning);
+    void _pidTuningAdjustRates          ();
     void _initializeCsv                 ();
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
@@ -1107,8 +1107,9 @@ private:
     // PID Tuning telemetry mode
     bool            _pidTuningTelemetryMode = false;
     bool            _pidTuningWaitingForRates = false;
-    QList<int>      _pidTuningMessages;
+    int             _pidTuningNextAdjustIndex = -1;
     QMap<int, int>  _pidTuningMessageRatesUsecs;
+    static const QList<int> _pidTuningMessages;
 
     // Chunked status text support
     typedef struct {
@@ -1251,6 +1252,7 @@ private:
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
     static const char* _clockFactGroupName;
+    static const char* _setpointFactGroupName;
     static const char* _distanceSensorFactGroupName;
     static const char* _escStatusFactGroupName;
     static const char* _estimatorStatusFactGroupName;
