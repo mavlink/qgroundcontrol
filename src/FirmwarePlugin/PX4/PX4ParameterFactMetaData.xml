@@ -1206,7 +1206,7 @@ Set -1 to disable the check</short_desc>
     </parameter>
     <parameter name="COM_HLDL_REG_T" default="0" type="INT32">
       <short_desc>High Latency Datalink regain time threshold</short_desc>
-      <long_desc>After a data link loss: after this this amount of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
+      <long_desc>After a data link loss: after this number of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
       <min>0</min>
       <max>60</max>
       <unit>s</unit>
@@ -10839,19 +10839,19 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter name="SYS_CAL_ACCEL" default="0" type="INT32">
       <short_desc>Enable auto start of accelerometer thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the temperature calibration starts. default (0, no calibration)</long_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
     <parameter name="SYS_CAL_BARO" default="0" type="INT32">
       <short_desc>Enable auto start of barometer thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the temperature calibration starts. default (0, no calibration)</long_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
     <parameter name="SYS_CAL_GYRO" default="0" type="INT32">
       <short_desc>Enable auto start of rate gyro thermal calibration at the next power up</short_desc>
-      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the the temperature calibration starts. default (0, no calibration)</long_desc>
+      <long_desc>0 : Set to 0 to do nothing 1 : Set to 1 to start a calibration at next boot This parameter is reset to zero when the temperature calibration starts. default (0, no calibration)</long_desc>
       <min>0</min>
       <max>1</max>
     </parameter>
@@ -10881,7 +10881,7 @@ How often the sensor is readout</short_desc>
     </parameter>
     <parameter name="SYS_HAS_BARO" default="1" type="INT32">
       <short_desc>Control if the vehicle has a barometer</short_desc>
-      <long_desc>Disable this if the board has no barometer, such as some of the the Omnibus F4 SD variants. If disabled, the preflight checks will not check for the presence of a barometer.</long_desc>
+      <long_desc>Disable this if the board has no barometer, such as some of the Omnibus F4 SD variants. If disabled, the preflight checks will not check for the presence of a barometer.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="SYS_HAS_MAG" default="1" type="INT32">
