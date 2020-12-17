@@ -38,6 +38,7 @@ RowLayout {
     property int    _msecs:             0
     property double _last_t:            0
     property var    _savedTuningParamValues:    [ ]
+    property bool   _showCharts: !ScreenTools.isMobile // TODO: test and enable on mobile
 
     // The following are set when getValues is called
     property real   _valueRate
@@ -190,7 +191,7 @@ RowLayout {
     Column {
         spacing:            _margins
         Layout.alignment:   Qt.AlignTop
-        width:          parent.width * 0.4
+        width:          parent.width * (_showCharts ? 0.4 : 1)
 
         Column {
             QGCLabel { text: qsTr("Tuning Axis:") }
@@ -267,53 +268,12 @@ RowLayout {
                 onClicked:  resetToSavedTuningParamValues()
             }
         }
-
-        Item { width: 1; height: 1 }
-
-        QGCLabel { text: qsTr("Chart:") }
-
-        RowLayout {
-            spacing: _margins
-
-            QGCButton {
-                text:       qsTr("Clear")
-                onClicked:  resetGraphs()
-            }
-
-            QGCButton {
-                text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
-                onClicked: {
-                    dataTimer.running = !dataTimer.running
-                    _last_t = 0
-                    if (autoModeChange.checked) {
-                        globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
-                    }
-                }
-            }
-        }
-
-        QGCCheckBox {
-            id:     autoModeChange
-            text:   qsTr("Automatic Flight Mode Switching")
-        }
-
-        Column {
-            visible: autoModeChange.checked
-            QGCLabel {
-                text:            qsTr("Switches to 'Stabilized' when you click Start.")
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-
-            QGCLabel {
-                text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
-                font.pointSize:     ScreenTools.smallFontPointSize
-            }
-        }
     }
 
     Column {
         Layout.fillWidth: true
         Layout.alignment:   Qt.AlignTop
+        visible:            _showCharts
 
         ChartView {
             id:                 ratesChart
@@ -363,6 +323,46 @@ RowLayout {
                 onReleased: {
                     _startPoint = undefined
                 }
+            }
+        }
+
+        Item { width: 1; height: 1 }
+
+        RowLayout {
+            spacing: _margins
+
+            QGCButton {
+                text:       qsTr("Clear")
+                onClicked:  resetGraphs()
+            }
+
+            QGCButton {
+                text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
+                onClicked: {
+                    dataTimer.running = !dataTimer.running
+                    _last_t = 0
+                    if (autoModeChange.checked) {
+                        globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
+                    }
+                }
+            }
+        }
+
+        QGCCheckBox {
+            id:     autoModeChange
+            text:   qsTr("Automatic Flight Mode Switching")
+        }
+
+        Column {
+            visible: autoModeChange.checked
+            QGCLabel {
+                text:            qsTr("Switches to 'Stabilized' when you click Start.")
+                font.pointSize:     ScreenTools.smallFontPointSize
+            }
+
+            QGCLabel {
+                text:            qsTr("Switches to '%1' when you click Stop.").arg(globals.activeVehicle.pauseFlightMode)
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
     }
