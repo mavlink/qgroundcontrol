@@ -29,12 +29,6 @@ const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video
 const char* VideoSettings::videoSource3DRSolo           = "3DR Solo (requires restart)";
 const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
 
-const char* VideoSettings::forceVideoDecoderDefault = "Default";
-const char* VideoSettings::forceVideoDecoderSoftware = "Force software decoder";
-const char* VideoSettings::forceVideoDecoderNVIDIA = "Force NVIDIA decoder";
-const char* VideoSettings::forceVideoDecoderVAAPI = "Force VA-API decoder";
-const char* VideoSettings::forceVideoDecoderD3D11 = "Force DirectX3D 11 decoder";
-
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -70,22 +64,18 @@ DECLARE_SETTINGGROUP(Video, "Video")
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
 
-    QStringList forceVideoDecoderList{
-        forceVideoDecoderDefault,
-        forceVideoDecoderSoftware,
-        forceVideoDecoderNVIDIA,
+    const QVariantList removeForceVideoDecodeList{
 #ifdef Q_OS_LINUX
-        forceVideoDecoderVAAPI,
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
 #endif
 #ifdef Q_OS_WIN
-        forceVideoDecoderD3D11,
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
 #endif
     };
-    QVariantList forceVideoDecoderVarList;
-    for (const QString& forceVideoDecode: forceVideoDecoderList) {
-        forceVideoDecoderVarList.append(QVariant::fromValue(forceVideoDecode));
+
+    for(const auto& value : removeForceVideoDecodeList) {
+        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
     }
-    _nameToMetaDataMap[forceVideoDecoderName]->setEnumInfo(forceVideoDecoderList, forceVideoDecoderVarList);
 
     // Set default value for videoSource
     _setDefaults();
@@ -98,8 +88,6 @@ void VideoSettings::_setDefaults()
     } else {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
     }
-
-    _nameToMetaDataMap[forceVideoDecoderName]->setRawDefaultValue(forceVideoDecoderDefault);
 }
 
 DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
