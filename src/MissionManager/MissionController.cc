@@ -1505,7 +1505,7 @@ void MissionController::_recalcMissionFlightStatus()
     lastFlyThroughVI->setDistance(0);
     lastFlyThroughVI->setDistanceFromStart(0);
 
-    _minAMSLAltitude = _maxAMSLAltitude = _settingsItem->coordinate().altitude();
+    _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
 
     _resetMissionFlightStatus();
 
@@ -1582,14 +1582,14 @@ void MissionController::_recalcMissionFlightStatus()
                 // Keep track of the min/max AMSL altitude for entire mission so we can calculate altitude percentages in terrain status display
                 if (simpleItem) {
                     double amslAltitude = item->amslEntryAlt();
-                    _minAMSLAltitude = std::min(_minAMSLAltitude, amslAltitude);
-                    _maxAMSLAltitude = std::max(_maxAMSLAltitude, amslAltitude);
+                    _minAMSLAltitude = std::fmin(_minAMSLAltitude, amslAltitude);
+                    _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, amslAltitude);
                 } else {
                     // Complex item
                     double complexMinAMSLAltitude = complexItem->minAMSLAltitude();
                     double complexMaxAMSLAltitude = complexItem->maxAMSLAltitude();
-                    _minAMSLAltitude = std::min(_minAMSLAltitude, complexMinAMSLAltitude);
-                    _maxAMSLAltitude = std::max(_maxAMSLAltitude, complexMaxAMSLAltitude);
+                    _minAMSLAltitude = std::fmin(_minAMSLAltitude, complexMinAMSLAltitude);
+                    _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, complexMaxAMSLAltitude);
                 }
 
                 if (!item->isStandaloneCoordinate()) {

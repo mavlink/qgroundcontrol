@@ -16,6 +16,8 @@
 
 #include <QSGSimpleRectNode>
 
+QGC_LOGGING_CATEGORY(TerrainProfileLog, "TerrainProfileLog")
+
 TerrainProfile::TerrainProfile(QQuickItem* parent)
     : QQuickItem(parent)
 {
@@ -209,10 +211,9 @@ QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
 
     double amslAltRange = qMax(_missionController->maxAMSLAltitude(), maxTerrainHeight) - _missionController->minAMSLAltitude();
 
-#if 0
     static int counter = 0;
-    qDebug() << "updatePaintNode" << counter++ << cFlightProfileSegments << cTerrainProfilePoints << cMissingTerrainSegments << cTerrainCollisionSegments;
-#endif
+    qCDebug(TerrainProfileLog) << QStringLiteral("updatePaintNode counter:%1 cFlightProfileSegments:%2 cTerrainProfilePoints:%3 cMissingTerrainSegments:%4 cTerrainCollisionSegments:%5 minAMSLAlt:%6 maxTerrainHeight:%7")
+                               .arg(counter++).arg(cFlightProfileSegments).arg(cTerrainProfilePoints).arg(cMissingTerrainSegments).arg(cTerrainCollisionSegments).arg(minAMSLAlt()).arg(maxTerrainHeight);
 
     _pixelsPerMeter = (_visibleWidth - (_horizontalMargin * 2)) / _missionController->missionDistance();
 
