@@ -110,11 +110,10 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
         return;
     }
 
-    WeakLinkInterfacePtr weakLink = _vehicle->vehicleLinkManager()->primaryLink();
-    if (!weakLink.expired()) {
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
         return;
     }
-    SharedLinkInterfacePtr sharedLink = weakLink.lock();
 
     // Send maximum sized chunks until the complete buffer is transmitted
     while(data.size()) {
