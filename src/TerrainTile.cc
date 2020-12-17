@@ -152,7 +152,7 @@ QGeoCoordinate TerrainTile::centerCoordinate(void) const
     return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
 }
 
-QByteArray TerrainTile::serialize(QByteArray input)
+QByteArray TerrainTile::serializeFromAirMapJson(QByteArray input)
 {
     QJsonParseError parseError;
     QJsonDocument document = QJsonDocument::fromJson(input, &parseError);

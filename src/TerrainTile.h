@@ -20,13 +20,6 @@ public:
     ~TerrainTile();
 
     /**
-    * Constructor from json doc with elevation data (either from file or web)
-    *
-    * @param document
-    */
-    TerrainTile(QJsonDocument document);
-
-    /**
     * Constructor from serialized elevation data (either from file or web)
     *
     * @param document
@@ -76,12 +69,7 @@ public:
     */
     QGeoCoordinate centerCoordinate(void) const;
 
-    /**
-    * Serialize data
-    *
-    * @return serialized data
-    */
-    static QByteArray serialize(QByteArray input);
+    static QByteArray serializeFromAirMapJson(QByteArray input);
 
     static constexpr double tileSizeDegrees         = 0.01;         ///< Each terrain tile represents a square area .01 degrees in lat/lon
     static constexpr double tileValueSpacingDegrees = 1.0 / 3600;   ///< 1 Arc-Second spacing of elevation values

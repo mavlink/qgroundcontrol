@@ -133,7 +133,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
     QString format = urlFactory->getImageFormat(tileSpec().mapId(), a);
     //-- Test for a specialized, elevation data (not map tile)
     if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
-        a = TerrainTile::serialize(a);
+        a = TerrainTile::serializeFromAirMapJson(a);
         //-- Cache it if valid
         if(!a.isEmpty()) {
             getQGCMapEngine()->cacheTile(
