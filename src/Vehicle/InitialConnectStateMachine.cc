@@ -293,13 +293,26 @@ void InitialConnectStateMachine::_stateRequestGeoFence(StateMachine* stateMachin
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
+    WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
-    if (vehicle->_geoFenceManager->supported()) {
-        vehicle->_geoFenceManager->loadFromVehicle();
+    if (weakLink.expired()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: Skipping first geofence load request due to no primary link";
+        connectMachine->advance();
     } else {
-        qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: skipped due to no support";
-        vehicle->_firstGeoFenceLoadComplete();
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: Skipping first geofence load request due to link type";
+            vehicle->_firstGeoFenceLoadComplete();
+        } else {
+            if (vehicle->_geoFenceManager->supported()) {
+                qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence";
+                vehicle->_geoFenceManager->loadFromVehicle();
+            } else {
+                qCDebug(InitialConnectStateMachineLog) << "_stateRequestGeoFence: skipped due to no support";
+                vehicle->_firstGeoFenceLoadComplete();
+            }
+        }
     }
 }
 
@@ -307,13 +320,25 @@ void InitialConnectStateMachine::_stateRequestRallyPoints(StateMachine* stateMac
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
+    WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
-    qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints";
-    if (vehicle->_rallyPointManager->supported()) {
-        vehicle->_rallyPointManager->loadFromVehicle();
+    if (weakLink.expired()) {
+        qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: Skipping first rally point load request due to no primary link";
+        connectMachine->advance();
     } else {
-        qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: skipping due to no support";
-        vehicle->_firstRallyPointLoadComplete();
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+
+        if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
+            qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: Skipping first rally point load request due to link type";
+            vehicle->_firstRallyPointLoadComplete();
+        } else {
+            if (vehicle->_rallyPointManager->supported()) {
+                vehicle->_rallyPointManager->loadFromVehicle();
+            } else {
+                qCDebug(InitialConnectStateMachineLog) << "_stateRequestRallyPoints: skipping due to no support";
+                vehicle->_firstRallyPointLoadComplete();
+            }
+        }
     }
 }
 
