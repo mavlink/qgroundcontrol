@@ -148,6 +148,9 @@ public:
     /// Used to add new values to the enum lists after the meta data has been loaded
     void addEnumInfo(const QString& name, const QVariant& value);
 
+    /// Used to remove values from the enum lists after the meta data has been loaded
+    void removeEnumInfo(const QVariant& value);
+
     void setDecimalPlaces           (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
     void setRawDefaultValue         (const QVariant& rawDefaultValue);
     void setBitmaskInfo             (const QStringList& strings, const QVariantList& values);
