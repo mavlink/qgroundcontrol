@@ -18,6 +18,8 @@
 #include "QGCApplication.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
+#include "MissionCommandTree.h"
+#include "MissionCommandUIInfo.h"
 
 #include <QPolygonF>
 
@@ -292,12 +294,14 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
 
         if (!forPresets) {
             // We have to grovel through mission items to determine min/max alt
-            _minAMSLAltitude = 0;
-            _maxAMSLAltitude = 0;
+            _minAMSLAltitude = qQNaN();
+            _maxAMSLAltitude = qQNaN();
+            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
             for (const MissionItem* missionItem: _loadedMissionItems) {
-                if (missionItem->command() == MAV_CMD_NAV_WAYPOINT || missionItem->command() == MAV_CMD_CONDITION_GATE) {
-                    _minAMSLAltitude = qMin(_minAMSLAltitude, missionItem->param7());
-                    _maxAMSLAltitude = qMax(_maxAMSLAltitude, missionItem->param7());
+                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, missionItem->command());
+                if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+                    _minAMSLAltitude = std::fmin(_minAMSLAltitude, missionItem->param7());
+                    _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, missionItem->param7());
                 }
             }
         }
@@ -1152,40 +1156,58 @@ void TransectStyleComplexItem::_recalcComplexDistance(void)
 
 double TransectStyleComplexItem::amslEntryAlt(void) const
 {
+    double alt = qQNaN();
+
     if (_followTerrain) {
         if (_loadedMissionItems.count()) {
-            return _loadedMissionItems.first()->param7();
+            // The first item might not be a waypoint we have to find it.
+            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
+            for (int i=0; i<_loadedMissionItems.count(); i++) {
+                MissionItem* item = _loadedMissionItems[i];
+                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+                if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+                    alt = item->param7();
+                    break;
+                }
+            }
         } else {
-            if (_transectCount() == 0) {
-                return qQNaN();
-            } else {
-                bool addHomeAlt = !followTerrain() && _cameraCalc.distanceToSurfaceRelative();
-
-                return _transects.first().first().coord.altitude() + (addHomeAlt ?  _missionController->plannedHomePosition().altitude() : 0);
+            if (_rgFlightPathCoordInfo.count() != 0) {
+                alt = _rgFlightPathCoordInfo.first().coord.altitude();
             }
         }
     } else {
-        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
+        alt = _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
     }
+
+    return alt;
 }
 
 double TransectStyleComplexItem::amslExitAlt(void) const
 {
+    double alt = qQNaN();
+
     if (_followTerrain) {
         if (_loadedMissionItems.count()) {
-            return _loadedMissionItems.last()->param7();
+            // The last item might not be a waypoint we have to find it.
+            MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
+            for (int i=_loadedMissionItems.count()-1; i>0; i--) {
+                MissionItem* item = _loadedMissionItems[i];
+                const MissionCommandUIInfo* uiInfo = commandTree->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, item->command());
+                if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+                    alt = item->param7();
+                    break;
+                }
+            }
         } else {
-            if (_transectCount() == 0) {
-                return qQNaN();
-            } else {
-                bool addHomeAlt = !followTerrain() && _cameraCalc.distanceToSurfaceRelative();
-
-                return _transects.last().last().coord.altitude() + (addHomeAlt ?  _missionController->plannedHomePosition().altitude() : 0);
+            if (_rgFlightPathCoordInfo.count() != 0) {
+                alt = _rgFlightPathCoordInfo.last().coord.altitude();
             }
         }
     } else {
-        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
+        alt = _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0) ;
     }
+
+    return alt;
 }
 
 void TransectStyleComplexItem::applyNewAltitude(double newAltitude)

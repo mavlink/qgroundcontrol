@@ -286,7 +286,7 @@ double MissionSettingsItem::specifiedFlightSpeed(void)
 void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
 {
     if (!_plannedHomePositionFromVehicle && !qIsNaN(terrainAltitude)) {
-        qDebug() << "MissionSettingsItem::_setHomeAltFromTerrain" << terrainAltitude;
+        qCDebug(MissionSettingsItemLog) << "MissionSettingsItem::_setHomeAltFromTerrain" << terrainAltitude;
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
     }
 }

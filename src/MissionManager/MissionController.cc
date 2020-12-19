@@ -1156,10 +1156,10 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
 {
     QGeoCoordinate      coord1 =            pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate();
     QGeoCoordinate      coord2 =            pair.second->coordinate();
-    double              coord1Alt =         pair.first->isSimpleItem() ? pair.first->amslEntryAlt() : pair.first->amslExitAlt();
-    double              coord2Alt =         pair.second->amslEntryAlt();
+    double              coord1AMSLAlt =     pair.first->isSimpleItem() ? pair.first->amslEntryAlt() : pair.first->amslExitAlt();
+    double              coord2AMSLAlt =     pair.second->amslEntryAlt();
 
-    FlightPathSegment*  segment =           new FlightPathSegment(coord1, coord1Alt, coord2, coord2Alt, !_flyView /* queryTerrainData */,  this);
+    FlightPathSegment*  segment =           new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
 
     auto                coord1Notifier =    pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
     auto                coord2Notifier =    &VisualMissionItem::coordinateChanged;
@@ -1706,6 +1706,12 @@ void MissionController::_recalcMissionFlightStatus()
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
+    }
+
+    if (linkStartToHome) {
+        // Home position is taken into account for min/max values
+        _minAMSLAltitude = std::fmin(_minAMSLAltitude, _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble());
+        _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble());
     }
 
     emit missionMaxTelemetryChanged     (_missionFlightStatus.maxTelemetryDistance);
