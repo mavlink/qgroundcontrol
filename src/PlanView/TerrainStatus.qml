@@ -26,21 +26,14 @@ Rectangle {
 
     signal setCurrentSeqNum(int seqNum)
 
-    readonly property real _heightBuffer: 10
-
     property real _margins:             ScreenTools.defaultFontPixelWidth / 2
     property var  _visualItems:         missionController.visualItems
     property real _altRange:            _maxAMSLAltitude - _minAMSLAltitude
     property real _indicatorSpacing:    5
-    property real _minAMSLAltitude:     isNaN(missionController.minAMSLAltitude) ? 0 : missionController.minAMSLAltitude - _heightBuffer
-    property real _maxAMSLAltitude:     isNaN(missionController.maxAMSLAltitude) ? 100 : missionController.maxAMSLAltitude + _heightBuffer
+    property real _minAMSLAltitude:     isNaN(terrainProfile.minAMSLAlt) ? 0 : terrainProfile.minAMSLAlt
+    property real _maxAMSLAltitude:     isNaN(terrainProfile.maxAMSLAlt) ? 100 : terrainProfile.maxAMSLAlt
     property real _missionDistance:     isNaN(missionController.missionDistance) ? 100 : missionController.missionDistance
     property var  _unitsConversion:     QGroundControl.unitsConversion
-
-    function yPosFromAlt(alt) {
-        var fullHeight = terrainProfileFlickable.height
-        return ((alt - _minAMSLAltitude) / _fullHeight) * _fullHeight
-    }
 
     QGCPalette { id: qgcPal }
 
