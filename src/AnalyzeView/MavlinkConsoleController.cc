@@ -11,6 +11,8 @@
 #include "QGCApplication.h"
 #include "UAS.h"
 
+#include <QClipboard>
+
 MavlinkConsoleController::MavlinkConsoleController()
     : QStringListModel(),
       _cursor_home_pos{-1},
@@ -33,7 +35,13 @@ MavlinkConsoleController::~MavlinkConsoleController()
 void
 MavlinkConsoleController::sendCommand(QString command)
 {
-    _history.append(command);
+    // there might be multiple commands, add them separately to the history
+    QStringList lines = command.split('\n');
+    for (int i = 0; i < lines.size(); ++i) {
+        if (lines[i].size() > 0) {
+            _history.append(lines[i]);
+        }
+    }
     command.append("\n");
     _sendSerialData(qPrintable(command));
     _cursor_home_pos = -1;
@@ -50,6 +58,19 @@ QString
 MavlinkConsoleController::historyDown(const QString& current)
 {
     return _history.down(current);
+}
+
+QString
+MavlinkConsoleController::handleClipboard(const QString& command_pre)
+{
+    QString clipboardData = command_pre + QApplication::clipboard()->text();
+    int lastLinePos = clipboardData.lastIndexOf('\n');
+    if (lastLinePos != -1) {
+        QString commands = clipboardData.mid(0, lastLinePos);
+        sendCommand(commands);
+        clipboardData = clipboardData.mid(lastLinePos+1);
+    }
+    return clipboardData;
 }
 
 void
@@ -199,6 +220,34 @@ MavlinkConsoleController::_processANSItext(QByteArray &line)
         }
     }
     return true;
+}
+
+QString
+MavlinkConsoleController::transformLineForRichText(const QString& line) const
+{
+    QString ret = line.toHtmlEscaped().replace(" ","&nbsp;").replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+    if (ret.startsWith("WARN", Qt::CaseSensitive)) {
+        ret.replace(0, 4, "<font color=\"" + _palette.colorOrange().name() + "\">WARN</font>");
+    } else if (ret.startsWith("ERROR", Qt::CaseSensitive)) {
+        ret.replace(0, 5, "<font color=\"" + _palette.colorRed().name() + "\">ERROR</font>");
+    }
+
+    return ret;
+}
+
+QString
+MavlinkConsoleController::getText() const
+{
+    QString ret;
+    if (rowCount() > 0) {
+        ret = transformLineForRichText(data(index(0), Qt::DisplayRole).toString());
+    }
+    for (int i = 1; i < rowCount(); ++i) {
+        ret += "<br>" + transformLineForRichText(data(index(i), Qt::DisplayRole).toString());
+    }
+
+    return ret;
 }
 
 void
