@@ -45,9 +45,7 @@ void TerrainProfile::setMissionController(MissionController* missionController)
         emit missionControllerChanged();
 
         connect(_missionController, &MissionController::visualItemsChanged,         this, &TerrainProfile::_newVisualItems);
-        connect(_missionController, &MissionController::minAMSLAltitudeChanged,     this, &TerrainProfile::minAMSLAltChanged);
 
-        connect(this,               &TerrainProfile::horizontalMarginChanged,       this, &TerrainProfile::_updateSignal, Qt::QueuedConnection);
         connect(this,               &TerrainProfile::visibleWidthChanged,           this, &TerrainProfile::_updateSignal, Qt::QueuedConnection);
         connect(_missionController, &MissionController::recalcTerrainProfile,       this, &TerrainProfile::_updateSignal, Qt::QueuedConnection);
     }
@@ -76,7 +74,7 @@ void TerrainProfile::_createGeometry(QSGGeometryNode*& geometryNode, QSGGeometry
     geometryNode->setGeometry(geometry);
 }
 
-void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainProfilePoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& maxTerrainHeight)
+void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlightProfileSegments, int& cTerrainProfilePoints, int& cMissingTerrainSegments, int& cTerrainCollisionSegments, double& minTerrainHeight, double& maxTerrainHeight)
 {
     if (_shouldAddFlightProfileSegment(segment)) {
         cFlightProfileSegments++;
@@ -87,7 +85,8 @@ void TerrainProfile::_updateSegmentCounts(FlightPathSegment* segment, int& cFlig
     } else {
         cTerrainProfilePoints += segment->amslTerrainHeights().count();
         for (int i=0; i<segment->amslTerrainHeights().count(); i++) {
-            maxTerrainHeight = qMax(maxTerrainHeight, segment->amslTerrainHeights()[i].value<double>());
+            minTerrainHeight = std::fmin(minTerrainHeight, segment->amslTerrainHeights()[i].value<double>());
+            maxTerrainHeight = std::fmax(maxTerrainHeight, segment->amslTerrainHeights()[i].value<double>());
         }
     }
     if (segment->terrainCollision()) {
@@ -111,12 +110,12 @@ void TerrainProfile::_addTerrainProfileSegment(FlightPathSegment* segment, doubl
         }
 
         // Move along the y axis which is a view or terrain height as a percentage between the min/max AMSL altitude for all segments
-        double amslTerrainHeight = segment->amslTerrainHeights()[heightIndex].value<double>();
-        double terrainHeightPercent = qMax(((amslTerrainHeight - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
+        double amslTerrainHeight    = segment->amslTerrainHeights()[heightIndex].value<double>();
+        double terrainHeightPercent = (amslTerrainHeight - _minAMSLAlt) / amslAltRange;
 
         float x = (currentDistance + terrainDistance) * _pixelsPerMeter;
-        float y = _availableHeight() - (terrainHeightPercent * _availableHeight());
-        _setVertex(terrainVertices[terrainProfileVertexIndex++], x, y);
+        float y = height() - (terrainHeightPercent * height());
+        terrainVertices[terrainProfileVertexIndex++].set(x, y);
     }
 }
 
@@ -124,9 +123,9 @@ void TerrainProfile::_addMissingTerrainSegment(FlightPathSegment* segment, doubl
 {
     if (_shouldAddMissingTerrainSegment(segment)) {
         float x = currentDistance * _pixelsPerMeter;
-        float y = _availableHeight();
-        _setVertex(missingTerrainVertices[missingterrainProfileVertexIndex++], x, y);
-        _setVertex(missingTerrainVertices[missingterrainProfileVertexIndex++], x + (segment->totalDistance() * _pixelsPerMeter), y);
+        float y = height();
+        missingTerrainVertices[missingterrainProfileVertexIndex++].set(x, y);
+        missingTerrainVertices[missingterrainProfileVertexIndex++].set(x + (segment->totalDistance() * _pixelsPerMeter), y);
     }
 }
 
@@ -135,18 +134,18 @@ void TerrainProfile::_addTerrainCollisionSegment(FlightPathSegment* segment, dou
     if (segment->terrainCollision()) {
         double amslCoord1Height =       segment->coord1AMSLAlt();
         double amslCoord2Height =       segment->coord2AMSLAlt();
-        double coord1HeightPercent =    qMax(((amslCoord1Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
-        double coord2HeightPercent =    qMax(((amslCoord2Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
+        double coord1HeightPercent =    (amslCoord1Height - _minAMSLAlt) / amslAltRange;
+        double coord2HeightPercent =    (amslCoord2Height - _minAMSLAlt) / amslAltRange;
 
         float x = currentDistance * _pixelsPerMeter;
-        float y = _availableHeight() - (coord1HeightPercent * _availableHeight());
+        float y = height() - (coord1HeightPercent * height());
 
-        _setVertex(terrainCollisionVertices[terrainCollisionVertexIndex++], x, y);
+        terrainCollisionVertices[terrainCollisionVertexIndex++].set(x, y);
 
         x += segment->totalDistance() * _pixelsPerMeter;
-        y = _availableHeight() - (coord2HeightPercent * _availableHeight());
+        y = height() - (coord2HeightPercent * height());
 
-        _setVertex(terrainCollisionVertices[terrainCollisionVertexIndex++], x, y);
+        terrainCollisionVertices[terrainCollisionVertexIndex++].set(x, y);
     }
 }
 
@@ -158,18 +157,18 @@ void TerrainProfile::_addFlightProfileSegment(FlightPathSegment* segment, double
 
     double amslCoord1Height =       segment->coord1AMSLAlt();
     double amslCoord2Height =       segment->coord2AMSLAlt();
-    double coord1HeightPercent =    qMax(((amslCoord1Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
-    double coord2HeightPercent =    qMax(((amslCoord2Height - _missionController->minAMSLAltitude()) / amslAltRange), 0.0);
+    double coord1HeightPercent =    (amslCoord1Height - _minAMSLAlt) / amslAltRange;
+    double coord2HeightPercent =    (amslCoord2Height - _minAMSLAlt) / amslAltRange;
 
     float x = currentDistance * _pixelsPerMeter;
-    float y = _availableHeight() - (coord1HeightPercent * _availableHeight());
+    float y = height() - (coord1HeightPercent * height());
 
-    _setVertex(flightProfileVertices[flightProfileVertexIndex++], x, y);
+    flightProfileVertices[flightProfileVertexIndex++].set(x, y);
 
     x += segment->totalDistance() * _pixelsPerMeter;
-    y = _availableHeight() - (coord2HeightPercent * _availableHeight());
+    y = height() - (coord2HeightPercent * height());
 
-    _setVertex(flightProfileVertices[flightProfileVertexIndex++], x, y);
+    flightProfileVertices[flightProfileVertexIndex++].set(x, y);
 }
 
 QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* /*updatePaintNodeData*/)
@@ -183,7 +182,8 @@ QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     int             cMissingTerrainSegments =   0;
     int             cFlightProfileSegments =    0;
     int             cTerrainCollisionSegments = 0;
-    double          maxTerrainHeight =          0;
+    double          minTerrainHeight =          qQNaN();
+    double          maxTerrainHeight =          qQNaN();
 
     // First we need to determine:
     //  - how many terrain profile vertices we need
@@ -198,24 +198,37 @@ QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
 
         if (visualItem->simpleFlightPathSegment()) {
             FlightPathSegment* segment = visualItem->simpleFlightPathSegment();
-            _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, maxTerrainHeight);
+            _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, minTerrainHeight, maxTerrainHeight);
         }
 
         if (complexItem) {
             for (int segmentIndex=0; segmentIndex<complexItem->flightPathSegments()->count(); segmentIndex++) {
                 FlightPathSegment* segment = complexItem->flightPathSegments()->value<FlightPathSegment*>(segmentIndex);
-                _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, maxTerrainHeight);
+                _updateSegmentCounts(segment, cFlightProfileSegments, cTerrainProfilePoints, cMissingTerrainSegments, cTerrainCollisionSegments, minTerrainHeight, maxTerrainHeight);
             }
         }
     }
 
-    double amslAltRange = qMax(_missionController->maxAMSLAltitude(), maxTerrainHeight) - _missionController->minAMSLAltitude();
+    // The profile view min/max is setup to include a full terrain profile as well as the flight path segments.
+    _minAMSLAlt = std::fmin(_missionController->minAMSLAltitude(), minTerrainHeight);
+    _maxAMSLAlt = std::fmax(_missionController->maxAMSLAltitude(), maxTerrainHeight);
+
+    // We add a buffer to the min/max alts such that the visuals don't draw lines right at the edges of the display
+    double amslAltRange = _maxAMSLAlt - _minAMSLAlt;
+    double amslAltRangeBuffer = amslAltRange * 0.1;
+    _maxAMSLAlt += amslAltRangeBuffer;
+    if (_minAMSLAlt > 0.0) {
+        _minAMSLAlt -= amslAltRangeBuffer;
+        _minAMSLAlt = std::fmax(_minAMSLAlt, 0.0);
+    }
+    amslAltRange = _maxAMSLAlt - _minAMSLAlt;
 
     static int counter = 0;
-    qCDebug(TerrainProfileLog) << QStringLiteral("updatePaintNode counter:%1 cFlightProfileSegments:%2 cTerrainProfilePoints:%3 cMissingTerrainSegments:%4 cTerrainCollisionSegments:%5 minAMSLAlt:%6 maxTerrainHeight:%7")
-                               .arg(counter++).arg(cFlightProfileSegments).arg(cTerrainProfilePoints).arg(cMissingTerrainSegments).arg(cTerrainCollisionSegments).arg(minAMSLAlt()).arg(maxTerrainHeight);
+    qCDebug(TerrainProfileLog) << "missionController min/max" << _missionController->minAMSLAltitude() << _missionController->maxAMSLAltitude();
+    qCDebug(TerrainProfileLog) << QStringLiteral("updatePaintNode counter:%1 cFlightProfileSegments:%2 cTerrainProfilePoints:%3 cMissingTerrainSegments:%4 cTerrainCollisionSegments:%5 _minAMSLAlt:%6 _maxAMSLAlt:%7 maxTerrainHeight:%8")
+                               .arg(counter++).arg(cFlightProfileSegments).arg(cTerrainProfilePoints).arg(cMissingTerrainSegments).arg(cTerrainCollisionSegments).arg(_minAMSLAlt).arg(_maxAMSLAlt).arg(maxTerrainHeight);
 
-    _pixelsPerMeter = (_visibleWidth - (_horizontalMargin * 2)) / _missionController->missionDistance();
+    _pixelsPerMeter = _visibleWidth / _missionController->missionDistance();
 
     // Instantiate nodes
     if (!rootNode) {
@@ -309,29 +322,10 @@ QSGNode* TerrainProfile::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     emit implicitWidthChanged();
     emit widthChanged();
     emit pixelsPerMeterChanged();
-
-    double newMaxAMSLAlt = qMax(_missionController->maxAMSLAltitude(), maxTerrainHeight);
-    if (!QGC::fuzzyCompare(newMaxAMSLAlt, _maxAMSLAlt)) {
-        _maxAMSLAlt = newMaxAMSLAlt;
-        emit maxAMSLAltChanged();
-    }
+    emit minAMSLAltChanged();
+    emit maxAMSLAltChanged();
 
     return rootNode;
-}
-
-double TerrainProfile::minAMSLAlt(void)
-{
-    return _missionController->minAMSLAltitude();
-}
-
-double TerrainProfile::_availableHeight(void) const
-{
-    return height() - (_verticalMargin * 2);
-}
-
-void TerrainProfile::_setVertex(QSGGeometry::Point2D& vertex, double x, double y)
-{
-    vertex.set(x + _horizontalMargin, y + _verticalMargin);
 }
 
 bool TerrainProfile::_shouldAddFlightProfileSegment  (FlightPathSegment* segment)
