@@ -196,15 +196,17 @@ void SurveyComplexItemTest::_testItemCount(void)
     }
 }
 
-QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround, bool useConditionGate)
+QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround, bool useConditionGate, bool isObliqueSurvey)
 {
     static const QList<MAV_CMD> singleFullTransect = {
+        MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
         MAV_CMD_CONDITION_GATE,         // Survey area entry edge
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_CONDITION_GATE,         // Survey area exit edge
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_NAV_WAYPOINT,
+        MAV_CMD_DO_DIGICAM_CONTROL,
     };
 
     QList<MAV_CMD> singleTransect = singleFullTransect;
@@ -219,6 +221,12 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
     if (!hasTurnaround) {
         singleTransect.takeFirst();
         singleTransect.takeLast();
+    }
+
+    if (isObliqueSurvey) {
+        for (MAV_CMD& cmd : singleTransect) {
+            cmd = cmd == MAV_CMD_DO_SET_CAM_TRIGG_DIST ? MAV_CMD_OBLIQUE_SURVEY : cmd;
+        }
     }
     
     for (int i=0; i<_expectedTransectCount; i++) {
@@ -278,6 +286,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
 
     QList<MAV_CMD> imagesInTurnaroundWithTurnaroundDistanceCommands = {
         // Transect 1
+        MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_CONDITION_GATE,         // First turaround
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_CONDITION_GATE,         // Survey entry
@@ -291,6 +300,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
         MAV_CMD_NAV_WAYPOINT,           // Survey exit
         MAV_CMD_CONDITION_GATE,         // Final turnaround
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+        MAV_CMD_DO_DIGICAM_CONTROL,
     };
 
     _testItemGenerationWorker(true /* imagesInTurnaround */, true /* hasTurnaround */, true /* useConditionGate */, imagesInTurnaroundWithTurnaroundDistanceCommands);
@@ -303,6 +313,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
 
     QList<MAV_CMD> imagesInTurnaroundWithoutTurnaroundDistanceCommands = {
         // Transect 1
+        MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_CONDITION_GATE,         // Survey entry
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Camera trigger start for entire survey
         MAV_CMD_NAV_WAYPOINT,           // Survey exit
@@ -311,6 +322,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Survey entry also has trigger start
         MAV_CMD_CONDITION_GATE,         // Survey exit
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Camera trigger stop for entire survey
+        MAV_CMD_DO_DIGICAM_CONTROL,
     };
 
     _testItemGenerationWorker(true /* imagesInTurnaround */, false /* hasTurnaround */, true /* useConditionGate */, imagesInTurnaroundWithoutTurnaroundDistanceCommands);
@@ -325,6 +337,7 @@ void SurveyComplexItemTest::_testItemGeneration(void)
 void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
 {
     static const QList<MAV_CMD> singleFullTransect = {
+        MAV_CMD_DO_DIGICAM_CONTROL,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
         MAV_CMD_NAV_WAYPOINT,           // Survey area entry edge
         MAV_CMD_IMAGE_START_CAPTURE,
@@ -335,6 +348,7 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
         MAV_CMD_NAV_WAYPOINT,           // Survey area exit edge
         MAV_CMD_IMAGE_START_CAPTURE,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
+        MAV_CMD_DO_DIGICAM_CONTROL,
     };
 
     QList<MAV_CMD> expectedCommands;

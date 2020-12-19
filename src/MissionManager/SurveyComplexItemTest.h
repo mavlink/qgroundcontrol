@@ -51,7 +51,7 @@ private:
 
 private:
     double          _clampGridAngle180(double gridAngle);
-    QList<MAV_CMD>  _createExpectedCommands(bool hasTurnaround, bool useConditionGate);
+    QList<MAV_CMD>  _createExpectedCommands(bool hasTurnaround, bool useConditionGate, bool isObliqueSurvey=false);
     void            _testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround, bool useConditionGate, const QList<MAV_CMD>& expectedCommands);
 
     // SurveyComplexItem signals
