@@ -567,6 +567,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig->setBaud      (boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
                         pSerialConfig->setDynamic   (true);
                         pSerialConfig->setPortName  (portInfo.systemLocation());
+                        pSerialConfig->setAutoConnect(true);
 
                         SharedLinkConfigurationPtr  sharedConfig(pSerialConfig);
                         createConnectedLink(sharedConfig, boardType == QGCSerialPortInfo::BoardTypePX4Flow);
