@@ -256,6 +256,15 @@ MavlinkConsoleController::writeLine(int line, const QByteArray &text)
     auto rc = rowCount();
     if (line >= rc) {
         insertRows(rc, 1 + line - rc);
+        if (rowCount() > _max_num_lines) {
+            int count = rowCount() - _max_num_lines;
+            removeRows(0, count);
+            line -= count;
+            _cursor -= count;
+            _cursor_home_pos -= count;
+            if (_cursor_home_pos < 0)
+                _cursor_home_pos = -1;
+        }
     }
     auto idx = index(line);
     setData(idx, data(idx, Qt::DisplayRole).toString() + text);

@@ -69,6 +69,8 @@ private:
         int _index = 0;
     };
 
+    static constexpr int _max_num_lines = 500; ///< history size (affects CPU load)
+
     int           _cursor_home_pos;
     int           _cursor;
     QByteArray    _incoming_buffer;
