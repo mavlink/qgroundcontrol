@@ -212,7 +212,7 @@ void LinkManager::_linkDisconnected(void)
     }
 }
 
-SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterface* link)
+SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterface* link, bool ignoreNull)
 {
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
@@ -220,7 +220,8 @@ SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterf
         }
     }
 
-    qWarning() << "LinkManager::sharedLinkInterfaceForLink returning nullptr";
+    if (!ignoreNull)
+        qWarning() << "LinkManager::sharedLinkInterfaceForLink returning nullptr";
     return SharedLinkInterfacePtr(nullptr);
 }
 
