@@ -14,10 +14,7 @@
 #include <QClipboard>
 
 MavlinkConsoleController::MavlinkConsoleController()
-    : QStringListModel(),
-      _cursor_home_pos{-1},
-      _cursor{0},
-      _vehicle{nullptr}
+    : QStringListModel()
 {
     auto *manager = qgcApp()->toolbox()->multiVehicleManager();
     connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &MavlinkConsoleController::_setActiveVehicle);
@@ -86,7 +83,8 @@ MavlinkConsoleController::_setActiveVehicle(Vehicle* vehicle)
         _incoming_buffer.clear();
         // Reset the model
         setStringList(QStringList());
-        _cursor = 0;
+        _cursorY = 0;
+        _cursorX = 0;
         _cursor_home_pos = -1;
         _uas_connections << connect(_vehicle, &Vehicle::mavlinkSerialControl, this, &MavlinkConsoleController::_receiveData);
     }
@@ -112,9 +110,11 @@ MavlinkConsoleController::_receiveData(uint8_t device, uint8_t, uint16_t, uint32
 
         QByteArray fragment = _incoming_buffer.mid(0, idx);
         if (_processANSItext(fragment)) {
-            writeLine(_cursor, fragment);
-            if (newline)
-                _cursor++;
+            writeLine(_cursorY, fragment);
+            if (newline) {
+                _cursorY++;
+                _cursorX = 0;
+            }
             _incoming_buffer.remove(0, idx + (newline ? 1 : 0));
         } else {
             // ANSI processing failed, need more data
@@ -176,16 +176,22 @@ MavlinkConsoleController::_processANSItext(QByteArray &line)
                     case 'H':
                         if (_cursor_home_pos == -1) {
                             // Assign new home position if home is unset
-                            _cursor_home_pos = _cursor;
+                            _cursor_home_pos = _cursorY;
                         } else {
                             // Rewind write cursor position to home
-                            _cursor = _cursor_home_pos;
+                            _cursorY = _cursor_home_pos;
+                            _cursorX = 0;
                         }
                         break;
                     case 'K':
                         // Erase the current line to the end
-                        if (_cursor < rowCount()) {
-                            setData(index(_cursor), "");
+                        if (_cursorY < rowCount()) {
+                            auto idx = index(_cursorY);
+                            QString updated = data(idx, Qt::DisplayRole).toString();
+                            int eraseIdx = _cursorX + i;
+                            if (eraseIdx < updated.length()) {
+                                setData(idx, updated.remove(eraseIdx, updated.length()));
+                            }
                         }
                         break;
                     case '2':
@@ -199,11 +205,8 @@ MavlinkConsoleController::_processANSItext(QByteArray &line)
                             for (int j = _cursor_home_pos; j < rowCount(); j++)
                                 setData(index(j), "");
                             blockSignals(blocked);
-                            QVector<int> roles;
-                            roles.reserve(2);
-                            roles.append(Qt::DisplayRole);
-                            roles.append(Qt::EditRole);
-                            emit dataChanged(index(_cursor), index(rowCount()), roles);
+                            QVector<int> roles({Qt::DisplayRole, Qt::EditRole});
+                            emit dataChanged(index(_cursorY), index(rowCount()), roles);
                         }
                         // Even if we didn't understand this ANSI code, remove the 4th char
                         line.remove(i+3,1);
@@ -260,14 +263,17 @@ MavlinkConsoleController::writeLine(int line, const QByteArray &text)
             int count = rowCount() - _max_num_lines;
             removeRows(0, count);
             line -= count;
-            _cursor -= count;
+            _cursorY -= count;
             _cursor_home_pos -= count;
             if (_cursor_home_pos < 0)
                 _cursor_home_pos = -1;
         }
     }
     auto idx = index(line);
-    setData(idx, data(idx, Qt::DisplayRole).toString() + text);
+    QString updated = data(idx, Qt::DisplayRole).toString();
+    updated.replace(_cursorX, text.size(), text);
+    setData(idx, updated);
+    _cursorX += text.size();
 }
 
 void MavlinkConsoleController::CommandHistory::append(const QString& command)

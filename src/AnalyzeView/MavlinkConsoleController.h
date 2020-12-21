@@ -71,10 +71,11 @@ private:
 
     static constexpr int _max_num_lines = 500; ///< history size (affects CPU load)
 
-    int           _cursor_home_pos;
-    int           _cursor;
+    int           _cursor_home_pos{-1};
+    int           _cursorY{0};
+    int           _cursorX{0};
     QByteArray    _incoming_buffer;
-    Vehicle*      _vehicle;
+    Vehicle*      _vehicle{nullptr};
     QList<QMetaObject::Connection> _uas_connections;
     CommandHistory _history;
     QGCPalette     _palette;
