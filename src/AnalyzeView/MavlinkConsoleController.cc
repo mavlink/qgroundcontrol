@@ -42,7 +42,6 @@ MavlinkConsoleController::sendCommand(QString command)
     command.append("\n");
     _sendSerialData(qPrintable(command));
     _cursor_home_pos = -1;
-    _cursor = rowCount();
 }
 
 QString
@@ -114,6 +113,11 @@ MavlinkConsoleController::_receiveData(uint8_t device, uint8_t, uint16_t, uint32
             if (newline) {
                 _cursorY++;
                 _cursorX = 0;
+                // ensure line exists
+                int rc = rowCount();
+                if (_cursorY >= rc) {
+                    insertRows(rc, 1 + _cursorY - rc);
+                }
             }
             _incoming_buffer.remove(0, idx + (newline ? 1 : 0));
         } else {
@@ -259,15 +263,15 @@ MavlinkConsoleController::writeLine(int line, const QByteArray &text)
     auto rc = rowCount();
     if (line >= rc) {
         insertRows(rc, 1 + line - rc);
-        if (rowCount() > _max_num_lines) {
-            int count = rowCount() - _max_num_lines;
-            removeRows(0, count);
-            line -= count;
-            _cursorY -= count;
-            _cursor_home_pos -= count;
-            if (_cursor_home_pos < 0)
-                _cursor_home_pos = -1;
-        }
+    }
+    if (rowCount() > _max_num_lines) {
+        int count = rowCount() - _max_num_lines;
+        removeRows(0, count);
+        line -= count;
+        _cursorY -= count;
+        _cursor_home_pos -= count;
+        if (_cursor_home_pos < 0)
+            _cursor_home_pos = -1;
     }
     auto idx = index(line);
     QString updated = data(idx, Qt::DisplayRole).toString();
