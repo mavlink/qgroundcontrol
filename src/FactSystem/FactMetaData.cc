@@ -709,6 +709,18 @@ void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
     _enumValues << value;
 }
 
+void FactMetaData::removeEnumInfo(const QVariant& value)
+{
+    const int index = _enumValues.indexOf(value);
+    if (index < 0) {
+        qWarning() << "Value does not exist in fact:" << value;
+        return;
+    }
+
+    _enumValues.removeAt(index);
+    _enumStrings.removeAt(index);
+}
+
 void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
 {
     _rawTranslator = rawTranslator;

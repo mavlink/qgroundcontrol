@@ -81,6 +81,7 @@ Item {
     property bool isWindows:                        ScreenToolsController.isWindows
     property bool isDebug:                          ScreenToolsController.isDebug
     property bool isMac:                            ScreenToolsController.isMacOS
+    property bool isLinux:                          ScreenToolsController.isLinux
     property bool isTinyScreen:                     (Screen.width / realPixelDensity) < 120 // 120mm
     property bool isShortScreen:                    ((Screen.height / realPixelDensity) < 120) || (ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6))
     property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
