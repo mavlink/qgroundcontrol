@@ -759,8 +759,6 @@ GstVideoReceiver::_makeSource(const QString& uri)
             break;
         }
 
-        g_signal_connect(parser, "autoplug-query", G_CALLBACK(_filterParserCaps), nullptr);
-
         gst_bin_add_many(GST_BIN(bin), source, parser, nullptr);
 
         // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
@@ -848,17 +846,15 @@ GstVideoReceiver::_makeSource(const QString& uri)
 GstElement*
 GstVideoReceiver::_makeDecoder(GstCaps* caps, GstElement* videoSink)
 {
-    Q_UNUSED(caps);
-
+    Q_UNUSED(caps)
+    Q_UNUSED(videoSink)
     GstElement* decoder = nullptr;
 
     do {
-        if ((decoder = gst_element_factory_make("decodebin", nullptr)) == nullptr) {
-            qCCritical(VideoReceiverLog) << "gst_element_factory_make('decodebin') failed";
+        if ((decoder = gst_element_factory_make("decodebin3", nullptr)) == nullptr) {
+            qCCritical(VideoReceiverLog) << "gst_element_factory_make('decodebin3') failed";
             break;
         }
-
-        g_signal_connect(decoder, "autoplug-query", G_CALLBACK(_autoplugQuery), videoSink);
     } while(0);
 
     return decoder;
@@ -1020,7 +1016,7 @@ GstVideoReceiver::_addDecoder(GstElement* src)
     gst_object_unref(srcpad);
     srcpad = nullptr;
 
-    if ((_decoder = _makeDecoder(caps, _videoSink)) == nullptr) {
+    if ((_decoder = _makeDecoder()) == nullptr) {
         qCCritical(VideoReceiverLog) << "_makeDecoder() failed";
         gst_caps_unref(caps);
         caps = nullptr;
@@ -1447,137 +1443,6 @@ GstVideoReceiver::_padProbe(GstElement* element, GstPad* pad, gpointer user_data
     }
 
     return TRUE;
-}
-
-gboolean
-GstVideoReceiver::_filterParserCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
-{
-    Q_UNUSED(bin)
-    Q_UNUSED(pad)
-    Q_UNUSED(element)
-    Q_UNUSED(data)
-
-    if (GST_QUERY_TYPE(query) != GST_QUERY_CAPS) {
-        return FALSE;
-    }
-
-    GstCaps* srcCaps;
-
-    gst_query_parse_caps(query, &srcCaps);
-
-    if (srcCaps == nullptr || gst_caps_is_any(srcCaps)) {
-        return FALSE;
-    }
-
-    GstCaps* sinkCaps = nullptr;
-
-    GstCaps* filter;
-
-    if (sinkCaps == nullptr && (filter = gst_caps_from_string("video/x-h264")) != nullptr) {
-        if (gst_caps_can_intersect(srcCaps, filter)) {
-            sinkCaps = gst_caps_from_string("video/x-h264,stream-format=avc");
-        }
-
-        gst_caps_unref(filter);
-        filter = nullptr;
-    } else if (sinkCaps == nullptr && (filter = gst_caps_from_string("video/x-h265")) != nullptr) {
-        if (gst_caps_can_intersect(srcCaps, filter)) {
-            sinkCaps = gst_caps_from_string("video/x-h265,stream-format=hvc1");
-        }
-
-        gst_caps_unref(filter);
-        filter = nullptr;
-    }
-
-    if (sinkCaps == nullptr) {
-        return FALSE;
-    }
-
-    gst_query_set_caps_result(query, sinkCaps);
-
-    gst_caps_unref(sinkCaps);
-    sinkCaps = nullptr;
-
-    return TRUE;
-}
-
-gboolean
-GstVideoReceiver::_autoplugQueryCaps(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
-{
-    Q_UNUSED(bin)
-    Q_UNUSED(pad)
-    Q_UNUSED(element)
-
-    GstElement* glupload = (GstElement* )data;
-
-    GstPad* sinkpad;
-
-    if ((sinkpad = gst_element_get_static_pad(glupload, "sink")) == nullptr) {
-        qCCritical(VideoReceiverLog) << "No sink pad found";
-        return FALSE;
-    }
-
-    GstCaps* filter;
-
-    gst_query_parse_caps(query, &filter);
-
-    GstCaps* sinkcaps = gst_pad_query_caps(sinkpad, filter);
-
-    gst_query_set_caps_result(query, sinkcaps);
-
-    const gboolean ret = !gst_caps_is_empty(sinkcaps);
-
-    gst_caps_unref(sinkcaps);
-    sinkcaps = nullptr;
-
-    gst_object_unref(sinkpad);
-    sinkpad = nullptr;
-
-    return ret;
-}
-
-gboolean
-GstVideoReceiver::_autoplugQueryContext(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
-{
-    Q_UNUSED(bin)
-    Q_UNUSED(pad)
-    Q_UNUSED(element)
-
-    GstElement* glsink = (GstElement* )data;
-
-    GstPad* sinkpad;
-
-    if ((sinkpad = gst_element_get_static_pad(glsink, "sink")) == nullptr){
-        qCCritical(VideoReceiverLog) << "No sink pad found";
-        return FALSE;
-    }
-
-    const gboolean ret = gst_pad_query(sinkpad, query);
-
-    gst_object_unref(sinkpad);
-    sinkpad = nullptr;
-
-    return ret;
-}
-
-gboolean
-GstVideoReceiver::_autoplugQuery(GstElement* bin, GstPad* pad, GstElement* element, GstQuery* query, gpointer data)
-{
-    gboolean ret;
-
-    switch (GST_QUERY_TYPE(query)) {
-    case GST_QUERY_CAPS:
-        ret = _autoplugQueryCaps(bin, pad, element, query, data);
-        break;
-    case GST_QUERY_CONTEXT:
-        ret = _autoplugQueryContext(bin, pad, element, query, data);
-        break;
-    default:
-        ret = FALSE;
-        break;
-    }
-
-    return ret;
 }
 
 GstPadProbeReturn

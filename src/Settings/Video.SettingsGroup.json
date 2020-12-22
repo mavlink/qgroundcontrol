@@ -128,6 +128,16 @@
     "longDesc":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
     "type":             "bool",
     "default":     false
+},
+{
+    "name":             "forceVideoDecoder",
+    "shortDesc":        "Force specific category of video decode",
+    "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
+    "type":             "uint32",
+    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder",
+    "enumValues":       "0,1,2,3,4",
+    "default":           0,
+    "qgcRebootRequired": true
 }
 ]
 }

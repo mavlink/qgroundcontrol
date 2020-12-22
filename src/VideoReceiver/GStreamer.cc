@@ -105,20 +105,56 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 }
 #endif
 
-static void
-blacklist()
+void
+GStreamer::blacklist(bool forceSoftware, bool forceVAAPI, bool forceNVIDIA, bool forceD3D11)
 {
-    GstRegistry* reg;
+    GstRegistry* registry = gst_registry_get();
 
-    if ((reg = gst_registry_get()) == nullptr) {
+    if (registry == nullptr) {
+        qCCritical(GStreamerLog) << "Failed to get gstreamer registry.";
         return;
     }
 
-    GstPluginFeature* plugin;
+    auto changeRank = [registry](const char* featureName, uint16_t rank) {
+        GstPluginFeature* feature = gst_registry_lookup_feature(registry, featureName);
+        if (feature == nullptr) {
+            qCDebug(GStreamerLog) << "Failed to change ranking of feature:" << featureName;
+            return;
+        }
 
-    if ((plugin = gst_registry_lookup_feature(reg, "bcmdec")) != nullptr) {
-        qCCritical(GStreamerLog) << "Disable bcmdec";
-        gst_plugin_feature_set_rank(plugin, GST_RANK_NONE);
+        qCInfo(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
+        gst_plugin_feature_set_rank(feature, rank);
+        gst_registry_add_feature(registry, feature);
+        gst_object_unref(feature);
+    };
+
+    // Set rank for specific features
+    changeRank("bcmdec", GST_RANK_NONE);
+
+    // Force software decode
+    if (forceSoftware) {
+        changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
+    }
+
+    // Enable VAAPI drivers
+    if (forceVAAPI) {
+        for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
+    }
+
+    // Enable NVIDIA's proprietary APIs for hardware video acceleration
+    if (forceNVIDIA) {
+        for(auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
+    }
+
+    // Enable DirectX3D 11 decoders
+    if (forceD3D11) {
+        for(auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
+            changeRank(name, GST_RANK_PRIMARY + 1);
+        }
     }
 }
 
@@ -189,8 +225,6 @@ GStreamer::initialize(int argc, char* argv[], int debuglevel)
 #if defined(__ios__)
     gst_ios_post_init();
 #endif
-
-    blacklist();
 
     /* the plugin must be loaded before loading the qml file to register the
      * GstGLVideoItem qml item

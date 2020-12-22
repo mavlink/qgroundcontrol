@@ -313,6 +313,19 @@ Rectangle {
                                     visible:                _showSaveVideoSettings && _videoSettings.enableStorageLimit.value && maxSavedVideoStorageLabel.visible
                                 }
 
+                                QGCLabel {
+                                    id:         videoDecodeLabel
+                                    text:       qsTr("Video decode priority")
+                                    visible:    forceVideoDecoderComboBox.visible
+                                }
+                                FactComboBox {
+                                    id:                     forceVideoDecoderComboBox
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    fact:                   _videoSettings.forceVideoDecoder
+                                    visible:                fact.visible
+                                    indexModel:             false
+                                }
+
                                 Item { width: 1; height: 1}
                                 FactCheckBox {
                                     text:       qsTr("Disable When Disarmed")
