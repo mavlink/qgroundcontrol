@@ -105,7 +105,7 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 
 void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL && message.compid != _ftpCompId) {
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL || message.compid != _ftpCompId) {
         return;
     }
 

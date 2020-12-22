@@ -126,7 +126,7 @@ private:
     bool    _parseURI                   (const QString& uri, QString& parsedURI, uint8_t& compId);
 
     Vehicle*                _vehicle;
-    uint8_t                 _ftpCompId;
+    uint8_t                 _ftpCompId = MAV_COMP_ID_AUTOPILOT1;
     QList<StateFunctions_t> _rgStateMachine;
     DownloadState_t         _downloadState;
     QTimer                  _ackOrNakTimeoutTimer;
