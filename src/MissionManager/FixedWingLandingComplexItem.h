@@ -55,7 +55,8 @@ public:
     static const char* valueSetIsDistanceName;
 
 private slots:
-    void _glideSlopeChanged(void);
+    void _updateFlightPathSegmentsDontCallDirectly  (void) override;
+    void _glideSlopeChanged                         (void);
 
 private:
     static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new FixedWingLandingComplexItem(masterController, flyView, parent); }
