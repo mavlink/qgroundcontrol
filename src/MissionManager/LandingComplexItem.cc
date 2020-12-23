@@ -138,28 +138,6 @@ double LandingComplexItem::complexDistance(void) const
     return finalApproachCoordinate().distanceTo(loiterTangentCoordinate()) + loiterTangentCoordinate().distanceTo(landingCoordinate());
 }
 
-// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
-void LandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
-{
-    if (_cTerrainCollisionSegments != 0) {
-        _cTerrainCollisionSegments = 0;
-        emit terrainCollisionChanged(false);
-    }
-
-    _flightPathSegments.beginReset();
-    _flightPathSegments.clearAndDeleteContents();
-    _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt());
-    _appendFlightPathSegment(loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslEntryAlt());
-    _appendFlightPathSegment(landingCoordinate(),       amslEntryAlt(), landingCoordinate(),        amslExitAlt());
-    _flightPathSegments.endReset();
-
-    if (_cTerrainCollisionSegments != 0) {
-        emit terrainCollisionChanged(true);
-    }
-
-    _masterController->missionController()->recalcTerrainProfile();
-}
-
 void LandingComplexItem::setLandingCoordinate(const QGeoCoordinate& coordinate)
 {
     if (coordinate != _landingCoordinate) {
@@ -412,7 +390,7 @@ bool LandingComplexItem::_scanForItem(QmlObjectListModel* visualItems, bool flyV
     //  Stop taking photos sequence - optional
     //  Stop taking video sequence - optional
     //  MAV_CMD_NAV_LOITER_TO_ALT or MAV_CMD_NAV_WAYPOINT
-    //  MAV_CMD_NAV_LAND or MAV_CMS_NAV_VTOL_LAND
+    //  MAV_CMD_NAV_LAND or MAV_CMD_NAV_VTOL_LAND
 
     // Start looking for the commands in reverse order from the end of the list
 

@@ -128,7 +128,8 @@ signals:
     void _updateFlightPathSegmentsSignal(void);
 
 protected slots:
-    void _updateFlightPathSegmentsDontCallDirectly  (void);
+    virtual void _updateFlightPathSegmentsDontCallDirectly(void) = 0;
+
     void _recalcFromHeadingAndDistanceChange        (void);
     void _recalcFromCoordinateChange                (void);
     void _setDirty                                  (void);

@@ -120,3 +120,29 @@ bool VTOLLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool f
 {
     return _scanForItem(visualItems, flyView, masterController, _isValidLandItem, _createItem);
 }
+
+// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
+void VTOLLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
+{
+    if (_cTerrainCollisionSegments != 0) {
+        _cTerrainCollisionSegments = 0;
+        emit terrainCollisionChanged(false);
+    }
+
+    _flightPathSegments.beginReset();
+    _flightPathSegments.clearAndDeleteContents();
+    if (useLoiterToAlt()->rawValue().toBool()) {
+        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslEntryAlt());
+    } else {
+        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslEntryAlt());
+    }
+    _appendFlightPathSegment(landingCoordinate(), amslEntryAlt(), landingCoordinate(), amslExitAlt());
+    _flightPathSegments.endReset();
+
+    if (_cTerrainCollisionSegments != 0) {
+        emit terrainCollisionChanged(true);
+    }
+
+    _masterController->missionController()->recalcTerrainProfile();
+}
