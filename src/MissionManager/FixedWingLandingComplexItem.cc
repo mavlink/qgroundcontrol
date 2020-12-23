@@ -158,3 +158,28 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
 {
     return _scanForItem(visualItems, flyView, masterController, _isValidLandItem, _createItem);
 }
+
+// Never call this method directly. If you want to update the flight segments you emit _updateFlightPathSegmentsSignal()
+void FixedWingLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
+{
+    if (_cTerrainCollisionSegments != 0) {
+        _cTerrainCollisionSegments = 0;
+        emit terrainCollisionChanged(false);
+    }
+
+    _flightPathSegments.beginReset();
+    _flightPathSegments.clearAndDeleteContents();
+    if (useLoiterToAlt()->rawValue().toBool()) {
+        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+    } else {
+        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+    }
+    _flightPathSegments.endReset();
+
+    if (_cTerrainCollisionSegments != 0) {
+        emit terrainCollisionChanged(true);
+    }
+
+    _masterController->missionController()->recalcTerrainProfile();
+}

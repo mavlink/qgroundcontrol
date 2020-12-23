@@ -43,6 +43,9 @@ public:
 
     static const char* settingsGroup;
 
+private slots:
+    void _updateFlightPathSegmentsDontCallDirectly(void) override;
+
 private:
     static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new VTOLLandingComplexItem(masterController, flyView, parent); }
     static bool                 _isValidLandItem(const MissionItem& missionItem);

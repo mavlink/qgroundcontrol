@@ -133,6 +133,7 @@ public:
 
     FlightPathSegment* simpleFlightPathSegment(void) { return _simpleFlightPathSegment; }
     void setSimpleFlighPathSegment  (FlightPathSegment* segment) { _simpleFlightPathSegment = segment; }
+    void clearSimpleFlighPathSegment(void) { _simpleFlightPathSegment = nullptr; }
 
     PlanMasterController* masterController(void) { return _masterController; }
 

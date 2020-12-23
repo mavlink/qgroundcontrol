@@ -1154,22 +1154,25 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
 
 FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemPair& pair)
 {
-    QGeoCoordinate      coord1 =            pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate();
-    QGeoCoordinate      coord2 =            pair.second->coordinate();
-    double              coord1AMSLAlt =     pair.first->isSimpleItem() ? pair.first->amslEntryAlt() : pair.first->amslExitAlt();
-    double              coord2AMSLAlt =     pair.second->amslEntryAlt();
+    // The takeoff goes straight up from ground to alt and then over to specified position at same alt. Which means
+    // that coord 1 altitude is the same as coord altitude.
+    bool                takeoffStraightUp   = pair.second->isTakeoffItem() && !_controllerVehicle->fixedWing();
 
-    FlightPathSegment*  segment =           new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
+    QGeoCoordinate      coord1              = pair.first->exitCoordinate();
+    QGeoCoordinate      coord2              = pair.second->coordinate();
+    double              coord2AMSLAlt       = pair.second->amslEntryAlt();
+    double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
-    auto                coord1Notifier =    pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
-    auto                coord2Notifier =    &VisualMissionItem::coordinateChanged;
-    auto                coord1AltNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::amslEntryAltChanged : &VisualMissionItem::amslExitAltChanged;
-    auto                coord2AltNotifier = &VisualMissionItem::amslEntryAltChanged;
+    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
 
-    connect(pair.first,  coord1Notifier,                                segment,    &FlightPathSegment::setCoordinate1);
-    connect(pair.second, coord2Notifier,                                segment,    &FlightPathSegment::setCoordinate2);
-    connect(pair.first,  coord1AltNotifier,                             segment,    &FlightPathSegment::setCoord1AMSLAlt);
-    connect(pair.second, coord2AltNotifier,                             segment,    &FlightPathSegment::setCoord2AMSLAlt);
+    if (takeoffStraightUp) {
+        connect(pair.second, &VisualMissionItem::amslEntryAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
+    } else {
+        connect(pair.first, &VisualMissionItem::amslExitAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
+    }
+    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged, segment,    &FlightPathSegment::setCoordinate1);
+    connect(pair.second, &VisualMissionItem::coordinateChanged,     segment,    &FlightPathSegment::setCoordinate2);
+    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,   segment,    &FlightPathSegment::setCoord2AMSLAlt);
 
     connect(pair.second, &VisualMissionItem::coordinateChanged,         this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
@@ -1266,7 +1269,7 @@ void MissionController::_recalcFlightPathSegments(void)
     _incompleteComplexItemLines.clearAndDeleteContents();
 
     // Mission Settings item needs to start with no segment
-    lastFlyThroughVI->setSimpleFlighPathSegment(nullptr);
+    lastFlyThroughVI->clearSimpleFlighPathSegment();
 
     // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
 
@@ -1275,7 +1278,7 @@ void MissionController::_recalcFlightPathSegments(void)
         SimpleMissionItem*  simpleItem =    qobject_cast<SimpleMissionItem*>(visualItem);
         ComplexMissionItem* complexItem =   qobject_cast<ComplexMissionItem*>(visualItem);
 
-        visualItem->setSimpleFlighPathSegment(nullptr);
+        visualItem->clearSimpleFlighPathSegment();
 
         if (simpleItem) {
             if (roiActive) {
