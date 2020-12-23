@@ -4,10 +4,11 @@
 #include <QQuickItem>
 
 #include "VideoReceiver.h"
+#include "VideoSettings.h"
 
 class GStreamer {
 public:
-    static void blacklist(bool forceSoftware = false, bool forceVAAPI = false, bool forceNVIDIA = false, bool forceD3D11 = false);
+    static void blacklist(VideoSettings::VideoDecoderOptions option);
     static void initialize(int argc, char* argv[], int debuglevel);
     static void* createVideoSink(QObject* parent, QQuickItem* widget);
     static void releaseVideoSink(void* sink);
