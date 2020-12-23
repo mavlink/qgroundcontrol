@@ -43,6 +43,7 @@ public:
         ForceVideoDecoderNVIDIA,
         ForceVideoDecoderVAAPI,
         ForceVideoDecoderDirectX3D,
+        ForceVideoDecoderVideoToolbox,
     };
     Q_ENUM(VideoDecoderOptions)
 
