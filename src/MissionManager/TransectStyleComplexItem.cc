@@ -1077,7 +1077,7 @@ void TransectStyleComplexItem::_appendCameraMountPitchItem(QList<MissionItem*>& 
     MissionItem* item = new MissionItem(seqNum++,
                                         MAV_CMD_DO_MOUNT_CONTROL,
                                         MAV_FRAME_MISSION,
-                                        0,
+                                        pitch,
                                         0,
                                         0,
                                         0, 0, 0,                                // param 4-6 not used
