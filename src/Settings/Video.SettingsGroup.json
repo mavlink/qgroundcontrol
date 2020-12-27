@@ -134,8 +134,8 @@
     "shortDesc":        "Force specific category of video decode",
     "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
     "type":             "uint32",
-    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder",
-    "enumValues":       "0,1,2,3,4",
+    "enumStrings":      "Default,Force software decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder",
+    "enumValues":       "0,1,2,3,4,5",
     "default":           0,
     "qgcRebootRequired": true
 }
