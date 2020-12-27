@@ -1008,7 +1008,7 @@ private:
     unsigned        _mavlinkProtocolRequestMaxProtoVersion  = 0;
     unsigned        _maxProtoVersion                        = 0;
     bool            _capabilityBitsKnown                    = false;
-    uint64_t        _capabilityBits;
+    uint64_t        _capabilityBits                         = 0;
     bool            _receivingAttitudeQuaternion = false;
     CheckList       _checkListState                         = CheckListNotSetup;
     bool            _readyToFlyAvailable                    = false;

@@ -103,40 +103,38 @@ void LinkManager::createConnectedLink(LinkConfiguration* config)
 
 bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool isPX4Flow)
 {
-    LinkInterface* link = nullptr;
+    SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
 #ifndef NO_SERIAL_LINK
     case LinkConfiguration::TypeSerial:
-        link = new SerialLink(config, isPX4Flow);
+        link = std::make_shared<SerialLink>(config, isPX4Flow);
         break;
 #else
     Q_UNUSED(isPX4Flow)
 #endif
     case LinkConfiguration::TypeUdp:
-        link = new UDPLink(config);
+        link = std::make_shared<UDPLink>(config);
         break;
     case LinkConfiguration::TypeTcp:
-        link = new TCPLink(config);
+        link = std::make_shared<TCPLink>(config);
         break;
 #ifdef QGC_ENABLE_BLUETOOTH
     case LinkConfiguration::TypeBluetooth:
-        link = new BluetoothLink(config);
+        link = std::make_shared<BluetoothLink>(config);
         break;
 #endif
     case LinkConfiguration::TypeLogReplay:
-        link = new LogReplayLink(config);
+        link = std::make_shared<LogReplayLink>(config);
         break;
 #ifdef QT_DEBUG
     case LinkConfiguration::TypeMock:
-        link = new MockLink(config);
+        link = std::make_shared<MockLink>(config);
         break;
 #endif
     case LinkConfiguration::TypeLast:
         break;
     }
-
-    QScopedPointer<LinkInterface> scopedLink(link);
 
     if (link) {
 
@@ -148,24 +146,25 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr& config, bool i
             return false;
         }
 
-        SharedLinkInterfacePtr sharedLink(link);
-        _rgLinks.append(sharedLink);
-        config->setLink(sharedLink);
+        _rgLinks.append(link);
+        config->setLink(link);
 
-        connect(link, &LinkInterface::communicationError,  _app,                &QGCApplication::criticalMessageBoxOnMainThread);
-        connect(link, &LinkInterface::bytesReceived,       _mavlinkProtocol,    &MAVLinkProtocol::receiveBytes);
-        connect(link, &LinkInterface::bytesSent,           _mavlinkProtocol,    &MAVLinkProtocol::logSentBytes);
-        connect(link, &LinkInterface::disconnected,        this,                &LinkManager::_linkDisconnected);
+        connect(link.get(), &LinkInterface::communicationError,  _app,                &QGCApplication::criticalMessageBoxOnMainThread);
+        connect(link.get(), &LinkInterface::bytesReceived,       _mavlinkProtocol,    &MAVLinkProtocol::receiveBytes);
+        connect(link.get(), &LinkInterface::bytesSent,           _mavlinkProtocol,    &MAVLinkProtocol::logSentBytes);
+        connect(link.get(), &LinkInterface::disconnected,        this,                &LinkManager::_linkDisconnected);
 
-        _mavlinkProtocol->resetMetadataForLink(link);
+        _mavlinkProtocol->resetMetadataForLink(link.get());
         _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
 
         if (!link->_connect()) {
             return false;
         }
+
+        return true;
     }
 
-    return scopedLink.take() ? true : false;
+    return false;
 }
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()
@@ -213,7 +212,7 @@ void LinkManager::_linkDisconnected(void)
     }
 }
 
-SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterface* link)
+SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterface* link, bool ignoreNull)
 {
     for (int i=0; i<_rgLinks.count(); i++) {
         if (_rgLinks[i].get() == link) {
@@ -221,7 +220,8 @@ SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(LinkInterf
         }
     }
 
-    qWarning() << "LinkManager::sharedLinkInterfaceForLink returning nullptr";
+    if (!ignoreNull)
+        qWarning() << "LinkManager::sharedLinkInterfaceForLink returning nullptr";
     return SharedLinkInterfacePtr(nullptr);
 }
 
@@ -568,6 +568,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                         pSerialConfig->setBaud      (boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
                         pSerialConfig->setDynamic   (true);
                         pSerialConfig->setPortName  (portInfo.systemLocation());
+                        pSerialConfig->setAutoConnect(true);
 
                         SharedLinkConfigurationPtr  sharedConfig(pSerialConfig);
                         createConnectedLink(sharedConfig, boardType == QGCSerialPortInfo::BoardTypePX4Flow);

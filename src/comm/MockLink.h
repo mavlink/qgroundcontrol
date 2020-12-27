@@ -95,7 +95,7 @@ class MockLink : public LinkInterface
 
 public:
     MockLink(SharedLinkConfigurationPtr& config);
-    ~MockLink(void);
+    virtual ~MockLink();
 
     int             vehicleId           (void)                                          { return _vehicleSystemId; }
     MAV_AUTOPILOT   getFirmwareType     (void)                                          { return _firmwareType; }

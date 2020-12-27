@@ -109,10 +109,10 @@ class SerialLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class SerialConfiguration;
-    friend class LinkManager;
-
 public:
+    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
+    virtual ~SerialLink();
+
     // LinkInterface overrides
     bool isConnected(void) const override;
     void disconnect (void) override;
@@ -130,9 +130,6 @@ private slots:
     void _readBytes     (void);
 
 private:
-    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
-    ~SerialLink();
 
     // LinkInterface overrides
     bool _connect(void) override;

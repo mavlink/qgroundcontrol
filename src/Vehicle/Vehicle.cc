@@ -611,9 +611,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
-    QStringList groupNames = factGroupNames();
-    for (int i=0; i<groupNames.count(); i++) {
-        FactGroup* factGroup = getFactGroup(groupNames[i]);
+    for (FactGroup* factGroup : factGroups()) {
         factGroup->handleMessage(this, message);
     }
 

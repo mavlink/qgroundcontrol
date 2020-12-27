@@ -47,9 +47,9 @@ TerrainTile::~TerrainTile()
 {
     if (_data) {
         for (int i = 0; i < _gridSizeLat; i++) {
-            delete _data[i];
+            delete[] _data[i];
         }
-        delete _data;
+        delete[] _data;
         _data = nullptr;
     }
 }

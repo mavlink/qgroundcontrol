@@ -105,7 +105,7 @@ void FTPManager::_downloadComplete(const QString& errorMsg)
 
 void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 {
-    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL && message.compid != _ftpCompId) {
+    if (message.msgid != MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL || message.compid != _ftpCompId) {
         return;
     }
 
@@ -182,7 +182,7 @@ QString FTPManager::_errorMsgFromNak(const MavlinkFTP::Request* nak)
 
 void FTPManager::_openFileROBegin(void)
 {
-    MavlinkFTP::Request request;
+    MavlinkFTP::Request request{};
     request.hdr.session = 0;
     request.hdr.opcode  = MavlinkFTP::kCmdOpenFileRO;
     request.hdr.offset  = 0;
@@ -241,7 +241,7 @@ void FTPManager::_burstReadFileWorker(bool firstRequest)
 {
     qCDebug(FTPManagerLog) << "_burstReadFileWorker: starting burst at offset:firstRequest:retryCount" << _downloadState.expectedOffset << firstRequest << _downloadState.retryCount;
 
-    MavlinkFTP::Request request;
+    MavlinkFTP::Request request{};
     request.hdr.session = _downloadState.sessionId;
     request.hdr.opcode  = MavlinkFTP::kCmdBurstReadFile;
     request.hdr.offset  = _downloadState.expectedOffset;
@@ -357,7 +357,7 @@ void FTPManager::_burstReadFileTimeout(void)
 void FTPManager::_fillMissingBlocksWorker(bool firstRequest)
 {
     if (_downloadState.rgMissingData.count()) {
-        MavlinkFTP::Request request;
+        MavlinkFTP::Request request{};
         MissingData_t&      missingData = _downloadState.rgMissingData.first();
 
         uint32_t cBytesToRead = qMin((uint32_t)sizeof(request.data), missingData.cBytesMissing);
@@ -483,7 +483,7 @@ void FTPManager::_fillMissingBlocksTimeout(void)
 
 void FTPManager::_resetSessionsBegin(void)
 {
-    MavlinkFTP::Request request;
+    MavlinkFTP::Request request{};
     request.hdr.opcode  = MavlinkFTP::kCmdResetSessions;
     request.hdr.size    = 0;
     _sendRequestExpectAck(&request);
