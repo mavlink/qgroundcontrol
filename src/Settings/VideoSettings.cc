@@ -67,8 +67,14 @@ DECLARE_SETTINGGROUP(Video, "Video")
     const QVariantList removeForceVideoDecodeList{
 #ifdef Q_OS_LINUX
         VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
 #endif
 #ifdef Q_OS_WIN
+        VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+#endif
+#ifdef Q_OS_MAC
+        VideoDecoderOptions::ForceVideoDecoderDirectX3D,
         VideoDecoderOptions::ForceVideoDecoderVAAPI,
 #endif
     };
@@ -125,13 +131,13 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
         _forceVideoDecoderFact->setVisible(
-#ifdef Q_OS_LINUX
-            true
-#else
-#ifdef Q_OS_WIN
-            true
-#else
+#ifdef Q_OS_IOS
             false
+#else
+#ifdef Q_OS_ANDROID
+            false
+#else
+            true
 #endif
 #endif
         );

@@ -106,7 +106,7 @@ static void qgcputenv(const QString& key, const QString& root, const QString& pa
 #endif
 
 void
-GStreamer::blacklist(bool forceSoftware, bool forceVAAPI, bool forceNVIDIA, bool forceD3D11)
+GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
 {
     GstRegistry* registry = gst_registry_get();
 
@@ -131,30 +131,32 @@ GStreamer::blacklist(bool forceSoftware, bool forceVAAPI, bool forceNVIDIA, bool
     // Set rank for specific features
     changeRank("bcmdec", GST_RANK_NONE);
 
-    // Force software decode
-    if (forceSoftware) {
-        changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
-    }
-
-    // Enable VAAPI drivers
-    if (forceVAAPI) {
-        for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-    }
-
-    // Enable NVIDIA's proprietary APIs for hardware video acceleration
-    if (forceNVIDIA) {
-        for(auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
-    }
-
-    // Enable DirectX3D 11 decoders
-    if (forceD3D11) {
-        for(auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
-            changeRank(name, GST_RANK_PRIMARY + 1);
-        }
+    switch (option) {
+        case VideoSettings::ForceVideoDecoderDefault:
+            break;
+        case VideoSettings::ForceVideoDecoderSoftware:
+            changeRank("avdec_h264", GST_RANK_PRIMARY + 1);
+            break;
+        case VideoSettings::ForceVideoDecoderVAAPI:
+            for(auto name : {"vaapimpeg2dec", "vaapimpeg4dec", "vaapih263dec", "vaapih264dec", "vaapivc1dec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case VideoSettings::ForceVideoDecoderNVIDIA:
+            for(auto name : {"nvh265dec", "nvh265sldec", "nvh264dec", "nvh264sldec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case VideoSettings::ForceVideoDecoderDirectX3D:
+            for(auto name : {"d3d11vp9dec", "d3d11h265dec", "d3d11h264dec"}) {
+                changeRank(name, GST_RANK_PRIMARY + 1);
+            }
+            break;
+        case VideoSettings::ForceVideoDecoderVideoToolbox:
+            changeRank("vtdec", GST_RANK_PRIMARY + 1);
+            break;
+        default:
+            qCWarning(GStreamerLog) << "Can't handle decode option:" << option;
     }
 }
 

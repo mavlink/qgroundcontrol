@@ -105,11 +105,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
 #if defined(QGC_GST_STREAMING)
-    bool forceSoftware = _videoSettings->forceVideoDecoder()->rawValue() == VideoSettings::VideoDecoderOptions::ForceVideoDecoderSoftware;
-    bool forceNVIDIA = _videoSettings->forceVideoDecoder()->rawValue() == VideoSettings::VideoDecoderOptions::ForceVideoDecoderNVIDIA;
-    bool forceVAAPI = _videoSettings->forceVideoDecoder()->rawValue() == VideoSettings::VideoDecoderOptions::ForceVideoDecoderVAAPI;
-    bool forceD3D11 = _videoSettings->forceVideoDecoder()->rawValue() == VideoSettings::VideoDecoderOptions::ForceVideoDecoderDirectX3D;
-    GStreamer::blacklist(forceSoftware, forceVAAPI, forceNVIDIA, forceD3D11);
+    GStreamer::blacklist(static_cast<VideoSettings::VideoDecoderOptions>(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
 #ifndef QGC_DISABLE_UVC
    // If we are using a UVC camera setup the device name
    _updateUVC();
