@@ -118,6 +118,13 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslEntryAltChanged);
     connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslExitAltChanged);
 
+    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
+    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
+    connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
+    connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,          this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,          this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
+
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::isValidChanged, this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
     setDirty(false);
@@ -305,13 +312,11 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
                 }
             }
         }
-    } else if (!forPresets) {
-        _minAMSLAltitude = _maxAMSLAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
     }
 
     if (!forPresets) {
-        emit minAMSLAltitudeChanged(_minAMSLAltitude);
-        emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
+        emit minAMSLAltitudeChanged();
+        emit maxAMSLAltitudeChanged();
         _amslEntryAltChanged();
         _amslExitAltChanged();
         emit _updateFlightPathSegmentsSignal();
@@ -395,16 +400,14 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 
     _rebuildTransectsPhase1();
 
+    _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
+
     if (_followTerrain) {
         // Query the terrain data. Once available terrain heights will be calculated
         _queryTransectsPathHeightInfo();
-        // We won't know min/max till were done
-        _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
     } else {
         // Not following terrain so we can build the flight path now
         _buildRawFlightPath();
-        double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
-        _minAMSLAltitude = _maxAMSLAltitude = requestedAltitude + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
     }
 
     // Calc bounding cube
@@ -452,8 +455,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     emit timeBetweenShotsChanged();
     emit additionalTimeDelayChanged();
 
-    emit minAMSLAltitudeChanged(_minAMSLAltitude);
-    emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
+    emit minAMSLAltitudeChanged();
+    emit maxAMSLAltitudeChanged();
 
     emit _updateFlightPathSegmentsSignal();
     _amslEntryAltChanged();
@@ -635,8 +638,8 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
             _minAMSLAltitude = std::fmin(_minAMSLAltitude, coordInfo.coord.altitude());
             _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, coordInfo.coord.altitude());
         }
-        emit minAMSLAltitudeChanged(_minAMSLAltitude);
-        emit maxAMSLAltitudeChanged(_maxAMSLAltitude);
+        emit minAMSLAltitudeChanged();
+        emit maxAMSLAltitudeChanged();
     }
 }
 
@@ -1215,4 +1218,22 @@ void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
     _cameraCalc.valueSetIsDistance()->setRawValue(true);
     _cameraCalc.distanceToSurface()->setRawValue(newAltitude);
     _cameraCalc.setDistanceToSurfaceRelative(true);
+}
+
+double TransectStyleComplexItem::minAMSLAltitude(void) const
+{
+    if (_followTerrain) {
+        return _minAMSLAltitude;
+    } else {
+        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
+    }
+}
+
+double TransectStyleComplexItem::maxAMSLAltitude(void) const
+{
+    if (_followTerrain) {
+        return _maxAMSLAltitude;
+    } else {
+        return _cameraCalc.distanceToSurface()->rawValue().toDouble() + (_cameraCalc.distanceToSurfaceRelative() ? _missionController->plannedHomePosition().altitude() : 0);
+    }
 }
