@@ -8209,7 +8209,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of accelerometer 0 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8254,7 +8254,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_ACC0_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8294,7 +8293,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of accelerometer 1 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8339,7 +8338,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_ACC1_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8379,7 +8377,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of accelerometer 2 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8424,7 +8422,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_ACC2_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8464,7 +8461,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of accelerometer 3 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8509,7 +8506,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_ACC3_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8549,7 +8545,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of gyro 0 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8594,7 +8590,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_GYRO0_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8625,7 +8620,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of gyro 1 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8670,7 +8665,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_GYRO1_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8701,7 +8695,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of gyro 2 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8746,7 +8740,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_GYRO2_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8777,7 +8770,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of gyro 3 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8822,7 +8815,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_GYRO3_XOFF" default="0.0" type="FLOAT" category="System">
@@ -8853,7 +8845,7 @@ Particularly useful for testing different low-battery behaviour</short_desc>
       <short_desc>Rotation of magnetometer 0 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -8898,7 +8890,6 @@ Particularly useful for testing different low-battery behaviour</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_MAG0_XCOMP" default="0.0" type="FLOAT" category="System">
@@ -8968,7 +8959,7 @@ for current-based compensation [G/kA]</short_desc>
       <short_desc>Rotation of magnetometer 1 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -9013,7 +9004,6 @@ for current-based compensation [G/kA]</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_MAG1_XCOMP" default="0.0" type="FLOAT" category="System">
@@ -9083,7 +9073,7 @@ for current-based compensation [G/kA]</short_desc>
       <short_desc>Rotation of magnetometer 2 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -9128,7 +9118,6 @@ for current-based compensation [G/kA]</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_MAG2_XCOMP" default="0.0" type="FLOAT" category="System">
@@ -9198,7 +9187,7 @@ for current-based compensation [G/kA]</short_desc>
       <short_desc>Rotation of magnetometer 3 relative to airframe</short_desc>
       <long_desc>An internal sensor will force a value of -1, so a GCS should only attempt to configure the rotation if the value is greater than or equal to zero.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="-1">Internal</value>
@@ -9243,7 +9232,6 @@ for current-based compensation [G/kA]</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="CAL_MAG3_XCOMP" default="0.0" type="FLOAT" category="System">
@@ -9545,7 +9533,7 @@ How often the sensor is readout</short_desc>
       <short_desc>Board rotation</short_desc>
       <long_desc>This parameter defines the rotation of the FMU board relative to the platform.</long_desc>
       <min>-1</min>
-      <max>41</max>
+      <max>40</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">No rotation</value>
@@ -9589,7 +9577,6 @@ How often the sensor is readout</short_desc>
         <value code="38">Roll 90°, Pitch 68°, Yaw 293°</value>
         <value code="39">Pitch 315°</value>
         <value code="40">Roll 90°, Pitch 315°</value>
-        <value code="41">Roll 270°, Yaw 180°</value>
       </values>
     </parameter>
     <parameter name="SENS_BOARD_X_OFF" default="0.0" type="FLOAT">
