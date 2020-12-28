@@ -1061,7 +1061,7 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
     {
         qWarning() << "Map Cache SQL error (create Tiles db):" << query.lastError().text();
     } else {
-        query.exec("CREATE INDEX hash ON Tiles ( hash, size, type ) ");
+        query.exec("CREATE INDEX IF NOT EXISTS hash ON Tiles ( hash, size, type ) ");
              
         if(!query.exec(
             "CREATE TABLE IF NOT EXISTS TileSets ("
