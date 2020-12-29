@@ -262,10 +262,10 @@ void SimpleMissionItemTest::_testSignals(void)
 
     // Check that actually changing coordinate signals correctly
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | exitCoordinateChangedMask | dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | exitCoordinateChangedMask | dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
 
     // Altitude in coordinate is not used in setCoordinate
