@@ -573,11 +573,10 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
     emit readyForSaveStateChanged();
 
     if (success) {
-        _rgPathHeightInfo = rgPathHeightInfo;
-        emit readyForSaveStateChanged();
-
         // Now that we have terrain data we can adjust
+        _rgPathHeightInfo = rgPathHeightInfo;
         _adjustTransectsForTerrain();
+        emit readyForSaveStateChanged();
     }
 
 
@@ -600,11 +599,10 @@ TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSa
             terrainReady = _rgPathHeightInfo.count();
         }
     } else {
-        // Now following terrain so always ready on terrain
+        // Not following terrain so always ready on terrain
         terrainReady = true;
     }
     bool polygonNotReady = !_surveyAreaPolygon.isValid();
-    //qDebug() << polygonNotReady << _wizardMode << terrainReady;
     return (polygonNotReady || _wizardMode) ?
                 NotReadyForSaveData :
                 (terrainReady ? ReadyForSave : NotReadyForSaveTerrain);
@@ -613,7 +611,7 @@ TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSa
 void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
 {
     if (_followTerrain) {
-        if (readyForSaveState() != ReadyForSave) {
+        if (_rgPathHeightInfo.count() == 0) {
             qCWarning(TransectStyleComplexItemLog) << "_adjustTransectPointsForTerrain called when terrain data not ready";
             qgcApp()->showAppMessage(tr("INTERNAL ERROR: TransectStyleComplexItem::_adjustTransectPointsForTerrain called when terrain data not ready. Plan will be incorrect."));
             return;
