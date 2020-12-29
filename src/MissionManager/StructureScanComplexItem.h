@@ -134,8 +134,6 @@ private slots:
     void _recalcScanDistance                        (void);
     void _updateWizardMode                          (void);
     void _updateFlightPathSegmentsDontCallDirectly  (void);
-    void _minAMSLAltChanged                         (void);
-    void _maxAMSLAltChanged                         (void);
 
 private:
     void    _setCameraShots                 (int cameraShots);

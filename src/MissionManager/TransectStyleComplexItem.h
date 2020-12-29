@@ -111,8 +111,8 @@ public:
     void                setSequenceNumber           (int sequenceNumber) final;
     double              amslEntryAlt                (void) const final;
     double              amslExitAlt                 (void) const final;
-    double              minAMSLAltitude             (void) const final { return _minAMSLAltitude; }
-    double              maxAMSLAltitude             (void) const final { return _maxAMSLAltitude; }
+    double              minAMSLAltitude             (void) const final;
+    double              maxAMSLAltitude             (void) const final;
 
     static const char* turnAroundDistanceName;
     static const char* turnAroundDistanceMultiRotorName;

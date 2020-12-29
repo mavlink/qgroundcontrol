@@ -107,8 +107,8 @@ signals:
     void greatestDistanceToChanged  (void);
     void presetNamesChanged         (void);
     void isIncompleteChanged        (void);
-    void minAMSLAltitudeChanged     (double minAMSLAltitude);
-    void maxAMSLAltitudeChanged     (double maxAMSLAltitude);
+    void minAMSLAltitudeChanged     (void);
+    void maxAMSLAltitudeChanged     (void);
     void terrainCollisionChanged    (bool terrainCollision);
 
 protected slots:

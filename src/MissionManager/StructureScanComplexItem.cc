@@ -99,14 +99,14 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
     connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(this,               &StructureScanComplexItem::amslEntryAltChanged,     this, &StructureScanComplexItem::amslExitAltChanged);
 
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::_minAMSLAltChanged);
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::_maxAMSLAltChanged);
-    connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::_minAMSLAltChanged);
-    connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::_maxAMSLAltChanged);
-    connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::_minAMSLAltChanged);
-    connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::_maxAMSLAltChanged);
-    connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_minAMSLAltChanged);
-    connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_maxAMSLAltChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
+    connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
+    connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
+    connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::minAMSLAltitudeChanged);
+    connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
+    connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::minAMSLAltitudeChanged);
+    connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
 
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,                    this, &StructureScanComplexItem::_updateFlightPathSegmentsSignal);
     connect(&_startFromTopFact,                     &Fact::valueChanged,                            this, &StructureScanComplexItem::_updateFlightPathSegmentsSignal);
@@ -269,7 +269,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
 
 void StructureScanComplexItem::_flightPathChanged(void)
 {
-    // Calc bounding cube
+    // Calc bounding cubetopFlightAlt
     double north = 0.0;
     double south = 180.0;
     double east  = 0.0;
@@ -762,16 +762,6 @@ double StructureScanComplexItem::maxAMSLAltitude(void) const
 {
     double maxAlt = qMax(topFlightAlt(), _entranceAltFact.rawValue().toDouble());
     return maxAlt + _missionController->plannedHomePosition().altitude();
-}
-
-void StructureScanComplexItem::_minAMSLAltChanged(void)
-{
-    emit minAMSLAltitudeChanged(minAMSLAltitude());
-}
-
-void StructureScanComplexItem::_maxAMSLAltChanged(void)
-{
-    emit maxAMSLAltitudeChanged(maxAMSLAltitude());
 }
 
 void StructureScanComplexItem::_segmentTerrainCollisionChanged(bool terrainCollision)
