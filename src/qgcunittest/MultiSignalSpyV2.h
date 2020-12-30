@@ -27,31 +27,31 @@ public:
 
     bool init(QObject* signalEmitter);
 
-    quint32 signalNameToMask(const char* signalName);
+    quint64 signalNameToMask(const char* signalName);
 
     /// @param mask bit mask specifying which signals to check. The lowest order bit represents
     ///     index 0 into the rgSignals array and so on up the bit mask.
     /// @return true if signal count = 1 for the specified signals
-    bool checkSignalByMask(quint32 mask);
+    bool checkSignalByMask(quint64 mask);
 
     /// @return true if signal count = 1 for specified signals and signal count of 0
     ///     for all other signals
-    bool checkOnlySignalByMask(quint32 mask);
+    bool checkOnlySignalByMask(quint64 mask);
 
     /// @param mask bit mask specifying which signals to check. The lowest order bit represents
     ///     index 0 into the rgSignals array and so on up the bit mask.
     /// @return true if signal count >= 1 for the specified signals
-    bool checkSignalsByMask(quint32 mask);
+    bool checkSignalsByMask(quint64 mask);
 
     /// @return true if signal count >= 1 for specified signals and signal count of 0
     ///     for all other signals
-    bool checkOnlySignalsByMask(quint32 mask);
+    bool checkOnlySignalsByMask(quint64 mask);
 
-    bool checkNoSignalByMask(quint32 mask);
+    bool checkNoSignalByMask(quint64 mask);
     bool checkNoSignals(void);
 
     void clearSignal(const char* signalName);
-    void clearSignalsByMask(quint32 mask);
+    void clearSignalsByMask(quint64 mask);
     void clearAllSignals(void);
 
     bool waitForSignal(const char* signalName, int msec);
@@ -67,9 +67,9 @@ private:
     // QObject overrides
     void timerEvent(QTimerEvent * event);
     
-    void _printSignalState              (quint32 mask);
-    bool _checkSignalByMaskWorker       (quint32 mask, bool multipleSignalsAllowed);
-    bool _checkOnlySignalByMaskWorker   (quint32 mask, bool multipleSignalsAllowed);
+    void _printSignalState              (quint64 mask);
+    bool _checkSignalByMaskWorker       (quint64 mask, bool multipleSignalsAllowed);
+    bool _checkOnlySignalByMaskWorker   (quint64 mask, bool multipleSignalsAllowed);
 
     QObject*            _signalEmitter = nullptr;
     QStringList         _rgSignalNames;
