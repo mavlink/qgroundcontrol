@@ -207,44 +207,6 @@ Item {
                             throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
                         }
                     }
-
-                    QGCLabel {
-                        id:                 gimbalPitchLabel
-                        width:              _attitudeLabelWidth
-                        text:               qsTr("Gimbal Pitch")
-                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                    }
-                    AxisMonitor {
-                        id:                 gimbalPitchAxis
-                        height:             ScreenTools.defaultFontPixelHeight
-                        width:              axisMonitorWidth
-                        mapped:             controller.gimbalPitchAxisMapped
-                        reversed:           controller.gimbalPitchAxisReversed
-                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
-                    }
-
-                    QGCLabel {
-                        id:                 gimbalYawLabel
-                        width:              _attitudeLabelWidth
-                        text:               qsTr("Gimbal Yaw")
-                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                    }
-                    AxisMonitor {
-                        id:                 gimbalYawAxis
-                        height:             ScreenTools.defaultFontPixelHeight
-                        width:              axisMonitorWidth
-                        mapped:             controller.gimbalYawAxisMapped
-                        reversed:           controller.gimbalYawAxisReversed
-                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
-                    }
-
-                    Connections {
-                        target:             _activeJoystick
-                        onManualControlGimbal:  {
-                            gimbalPitchAxis.axisValue = gimbalPitch * 32768.0
-                            gimbalYawAxis.axisValue   = gimbalYaw   * 32768.0
-                        }
-                    }
                 }
             }
             Rectangle {
