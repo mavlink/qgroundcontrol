@@ -99,7 +99,6 @@ public:
     Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     NOTIFY      assignableActionsChanged)
     Q_PROPERTY(QString  disabledActionName              READ disabledActionName         CONSTANT)
 
-    Q_PROPERTY(bool     gimbalEnabled           READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
     Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
     Q_PROPERTY(float    axisFrequencyHz         READ axisFrequencyHz        WRITE setAxisFrequency      NOTIFY axisFrequencyHzChanged)
     Q_PROPERTY(float    minAxisFrequencyHz      MEMBER _minAxisFrequencyHz                              CONSTANT)
@@ -122,14 +121,11 @@ public:
     QString     name                () { return _name; }
     int         totalButtonCount    () { return _totalButtonCount; }
     int         axisCount           () { return _axisCount; }
-    bool        gimbalEnabled       () { return _gimbalEnabled; }
     QStringList buttonActions       ();
 
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
     QStringList assignableActionTitles      () { return _availableActionTitles; }
     QString     disabledActionName          () { return _buttonActionNone; }
-
-    void setGimbalEnabled           (bool set);
 
     /// Start the polling thread which will in turn emit joystick signals
     void startPolling(Vehicle* vehicle);
@@ -198,11 +194,9 @@ signals:
     void enabledChanged             (bool enabled);
     void circleCorrectionChanged    (bool circleCorrection);
     void axisValues                 (float roll, float pitch, float yaw, float throttle);
-    void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
-    void gimbalEnabledChanged       ();
-    void axisFrequencyHzChanged       ();
-    void buttonFrequencyHzChanged     ();
+    void axisFrequencyHzChanged     ();
+    void buttonFrequencyHzChanged   ();
     void startContinuousZoom        (int direction);
     void stopContinuousZoom         ();
     void stepZoom                   (int direction);
@@ -282,7 +276,6 @@ protected:
     float   _axisFrequencyHz        = _defaultAxisFrequencyHz;
     float   _buttonFrequencyHz      = _defaultButtonFrequencyHz;
     Vehicle* _activeVehicle         = nullptr;
-    bool    _gimbalEnabled          = false;
 
     bool    _pollingStartedForCalibration = false;
 
@@ -328,7 +321,6 @@ private:
     static const char* _roverTXModeSettingsKey;
     static const char* _vtolTXModeSettingsKey;
     static const char* _submarineTXModeSettingsKey;
-    static const char* _gimbalSettingsKey;
 
     static const char* _buttonActionNone;
     static const char* _buttonActionArm;
