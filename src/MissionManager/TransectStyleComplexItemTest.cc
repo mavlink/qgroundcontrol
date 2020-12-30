@@ -20,23 +20,13 @@ void TransectStyleComplexItemTest::init(void)
 
     _transectStyleItem = new TestTransectStyleItem(_masterController, this);
     _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
-    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalCustomCameraName());
+    _transectStyleItem->cameraCalc()->setCameraBrand(CameraCalc::canonicalManualCameraName());
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(100);
     _transectStyleItem->setDirty(false);
 
-    _rgSignals[cameraShotsChangedIndex] =               SIGNAL(cameraShotsChanged());
-    _rgSignals[timeBetweenShotsChangedIndex] =          SIGNAL(timeBetweenShotsChanged());
-    _rgSignals[visualTransectPointsChangedIndex] =      SIGNAL(visualTransectPointsChanged());
-    _rgSignals[coveredAreaChangedIndex] =               SIGNAL(coveredAreaChanged());
-    _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
-    _rgSignals[complexDistanceChangedIndex] =           SIGNAL(complexDistanceChanged());
-    _rgSignals[greatestDistanceToChangedIndex] =        SIGNAL(greatestDistanceToChanged());
-    _rgSignals[additionalTimeDelayChangedIndex] =       SIGNAL(additionalTimeDelayChanged());
-    _rgSignals[lastSequenceNumberChangedIndex] =        SIGNAL(lastSequenceNumberChanged(int));
-
-    _multiSpy = new MultiSignalSpy();
-    QCOMPARE(_multiSpy->init(_transectStyleItem, _rgSignals, _cSignals), true);
+    _multiSpy = new MultiSignalSpyV2;
+    QVERIFY(_multiSpy->init(_transectStyleItem));
 }
 
 void TransectStyleComplexItemTest::cleanup(void)
@@ -48,6 +38,8 @@ void TransectStyleComplexItemTest::cleanup(void)
 
 void TransectStyleComplexItemTest::_testDirty(void)
 {
+    auto dirtyChangedMask = _multiSpy->signalNameToMask("dirtyChanged");
+
     QVERIFY(!_transectStyleItem->dirty());
     _transectStyleItem->setDirty(false);
     QVERIFY(!_transectStyleItem->dirty());
@@ -56,7 +48,7 @@ void TransectStyleComplexItemTest::_testDirty(void)
     _transectStyleItem->setDirty(true);
     QVERIFY(_transectStyleItem->dirty());
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_multiSpy->pullBoolFromSignal("dirtyChanged"));
     _multiSpy->clearAllSignals();
 
     _transectStyleItem->setDirty(false);
@@ -95,6 +87,9 @@ void TransectStyleComplexItemTest::_testDirty(void)
 
 void TransectStyleComplexItemTest::_testRebuildTransects(void)
 {
+    auto coveredAreaChangedMask         = _multiSpy->signalNameToMask(SIGNAL(coveredAreaChanged));
+    auto lastSequenceNumberChangedMask  = _multiSpy->signalNameToMask(SIGNAL(lastSequenceNumberChanged));
+
     // Changing the survey polygon should trigger:
     //  _rebuildTransects calls
     //  coveredAreaChanged signal
@@ -164,6 +159,9 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
 
 void TransectStyleComplexItemTest::_testDistanceSignalling(void)
 {
+    auto complexDistanceChangedMask     = _multiSpy->signalNameToMask(SIGNAL(complexDistanceChanged));
+    auto greatestDistanceToChangedMask  = _multiSpy->signalNameToMask(SIGNAL(greatestDistanceToChanged));
+
     _transectStyleItem->adjustSurveAreaPolygon();
     QVERIFY(_multiSpy->checkSignalsByMask(complexDistanceChangedMask | greatestDistanceToChangedMask));
     _transectStyleItem->setDirty(false);
@@ -209,7 +207,26 @@ void TransectStyleComplexItemTest::_testAltMode(void)
     QVERIFY(!_transectStyleItem->followTerrain());
 }
 
-void TransectStyleComplexItemTest::_testFollowTerrain(void) {
+void TransectStyleComplexItemTest::_testAltitudes(void)
+{
+    _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
+    _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(10);
+    _transectStyleItem->cameraCalc()->adjustedFootprintSide()->setRawValue(10);
+
+    qDebug() << _transectStyleItem->_transectCount();
+
+    QList<MissionItem*> rgItems;
+    _transectStyleItem->appendMissionItems(rgItems, this);
+
+    for (const MissionItem* missionItem : rgItems) {
+        if (missionItem->command() == MAV_CMD_NAV_WAYPOINT) {
+            qDebug() << missionItem->param7();
+        }
+    }
+}
+
+void TransectStyleComplexItemTest::_testFollowTerrain(void)
+{
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
     _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(0);
     _transectStyleItem->setFollowTerrain(true);
