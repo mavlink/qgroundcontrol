@@ -1005,11 +1005,11 @@ void TransectStyleComplexItem::_appendConditionGate(QList<MissionItem*>& items, 
                                         MAV_CMD_CONDITION_GATE,
                                         mavFrame,
                                         0,                                           // Gate is orthogonal to path
-                                        0,                                           // Ignore altitude
+                                        1,                                           // Use altitude
                                         0, 0,                                        // Param 3-4 ignored
                                         coordinate.latitude(),
                                         coordinate.longitude(),
-                                        0,                                           // No altitude
+                                        coordinate.altitude(),
                                         true,                                        // autoContinue
                                         false,                                       // isCurrentItem
                                         missionItemParent);
