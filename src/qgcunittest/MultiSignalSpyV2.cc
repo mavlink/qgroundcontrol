@@ -70,10 +70,10 @@ bool MultiSignalSpyV2::init(QObject* signalEmitter)
     return true;
 }
 
-bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed)
+bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint64 mask, bool multipleSignalsAllowed)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
-        if ((1 << i) & mask) {
+        if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
             
@@ -88,13 +88,13 @@ bool MultiSignalSpyV2::_checkSignalByMaskWorker(quint32 mask, bool multipleSigna
     return true;
 }
 
-bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint32 mask, bool multipleSignalsAllowed)
+bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint64 mask, bool multipleSignalsAllowed)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != nullptr);
 
-        if ((1 << i) & mask) {
+        if ((1ll << i) & mask) {
             if ((multipleSignalsAllowed && spy->count() ==  0) || (!multipleSignalsAllowed && spy->count() != 1)) {
                 _printSignalState(mask);
                 return false;
@@ -110,31 +110,31 @@ bool MultiSignalSpyV2::_checkOnlySignalByMaskWorker(quint32 mask, bool multipleS
     return true;
 }
 
-bool MultiSignalSpyV2::checkSignalByMask(quint32 mask)
+bool MultiSignalSpyV2::checkSignalByMask(quint64 mask)
 {
     return _checkSignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
 }
 
-bool MultiSignalSpyV2::checkOnlySignalByMask(quint32 mask)
+bool MultiSignalSpyV2::checkOnlySignalByMask(quint64 mask)
 {
     return _checkOnlySignalByMaskWorker(mask, false /* multipleSignalsAllowed */);
 }
 
-bool MultiSignalSpyV2::checkSignalsByMask(quint32 mask)
+bool MultiSignalSpyV2::checkSignalsByMask(quint64 mask)
 {
     return _checkSignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
 }
 
-bool MultiSignalSpyV2::checkOnlySignalsByMask(quint32 mask)
+bool MultiSignalSpyV2::checkOnlySignalsByMask(quint64 mask)
 {
     return _checkOnlySignalByMaskWorker(mask, true /* multipleSignalsAllowed */);
 }
 
 /// @return true if signal count = 0 for specified signals
-bool MultiSignalSpyV2::checkNoSignalByMask(quint32 mask)
+bool MultiSignalSpyV2::checkNoSignalByMask(quint64 mask)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
-        if ((1 << i) & mask) {
+        if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
 
@@ -174,10 +174,10 @@ void MultiSignalSpyV2::clearSignal(const char* signalName)
 }
 
 /// Sets the signal count to 0 for all specified signals
-void MultiSignalSpyV2::clearSignalsByMask(quint32 mask)
+void MultiSignalSpyV2::clearSignalsByMask(quint64 mask)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
-        if ((1 << i) & mask) {
+        if ((1ll << i) & mask) {
             QSignalSpy* spy = _rgSpys[i];
             Q_ASSERT(spy != nullptr);
 
@@ -234,10 +234,10 @@ bool MultiSignalSpyV2::waitForSignal(const char* signalName, int msecs)
     return spy->count() != 0;
 }
 
-void MultiSignalSpyV2::_printSignalState(quint32 mask)
+void MultiSignalSpyV2::_printSignalState(quint64 mask)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
-        bool expected = (1 << i) & mask;
+        bool expected = (1ll << i) & mask;
 
         QSignalSpy* spy = _rgSpys[i];
         Q_ASSERT(spy != nullptr);
@@ -263,15 +263,16 @@ QGeoCoordinate MultiSignalSpyV2::pullQGeoCoordinateFromSignal(const char* signal
     return spy->value(0).value(0).value<QGeoCoordinate>();
 }
 
-quint32 MultiSignalSpyV2::signalNameToMask(const char* signalName)
+quint64 MultiSignalSpyV2::signalNameToMask(const char* signalName)
 {
     for (int i=0; i<_rgSignalNames.count(); i++) {
+        qDebug() << "signalNameToMask" << signalName << _rgSignalNames[i];
         if (_rgSignalNames[i] == signalName) {
             return 1 << i;
         }
     }
 
-    qDebug() << "MultiSignalSpyV2::signalNameToMask signal not found" << signalName;
+    qWarning() << "MultiSignalSpyV2::signalNameToMask signal not found" << signalName;
 
     return 0;
 }
