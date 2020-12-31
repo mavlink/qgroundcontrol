@@ -88,7 +88,6 @@ UDPLink::UDPLink(SharedLinkConfigurationPtr& config)
 
 UDPLink::~UDPLink()
 {
-    qDebug() << "~UDPLink";
     disconnect();
     // Tell the thread to exit
     _running = false;
@@ -110,11 +109,6 @@ void UDPLink::run()
         _deregisterZeroconf();
         _socket->close();
     }
-}
-
-QString UDPLink::getName() const
-{
-    return _udpConfig->name();
 }
 
 bool UDPLink::_isIpLocal(const QHostAddress& add)
@@ -186,8 +180,12 @@ void UDPLink::readBytes()
         datagram.resize(_socket->pendingDatagramSize());
         QHostAddress sender;
         quint16 senderPort;
-        //-- Note: This call is broken in Qt 5.9.3 on Windows. It always returns a blank sender and 0 for the port.
-        _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+        // If the other end is reset then it will still report data available,
+        // but will fail on the readDatagram call
+        qint64 slen = _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+        if (slen == -1) {
+            break;
+        }
         databuffer.append(datagram);
         //-- Wait a bit before sending it over
         if (databuffer.size() > 10 * 1024) {
@@ -222,6 +220,8 @@ void UDPLink::disconnect(void)
     quit();
     wait();
     if (_socket) {
+        // This prevents stale signal from calling the link after it has been deleted
+        QObject::disconnect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
         // Make sure delete happen on correct thread
         _socket->deleteLater();
         _socket = nullptr;

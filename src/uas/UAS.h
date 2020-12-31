@@ -149,7 +149,6 @@ protected:
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
     bool blockHomePositionChanges;   ///< Block changes to the home position
-    bool receivedMode;          ///< True if mode was retrieved from current conenction to UAS
 
     /// SIMULATION NOISE
     float xacc_var;             ///< variance of x acclerometer noise for HIL sim (mg)
@@ -196,11 +195,6 @@ protected:
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
-
-    virtual void processParamValueMsg(mavlink_message_t& msg, const QString& paramName,const mavlink_param_value_t& rawValue, mavlink_param_union_t& paramValue);
-
-    QMap<int, int>componentID;
-    QMap<int, bool>componentMulti;
 
     bool connectionLost; ///< Flag indicates a timed out connection
     quint64 connectionLossTime; ///< Time the connection was interrupted

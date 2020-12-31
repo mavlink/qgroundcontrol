@@ -52,7 +52,6 @@ public:
 
     SharedLinkConfigurationPtr linkConfiguration(void) { return _config; }
 
-    Q_INVOKABLE virtual QString getName     (void) const = 0;
     Q_INVOKABLE virtual void    disconnect  (void) = 0;
 
     virtual bool isConnected    (void) const = 0;
@@ -70,7 +69,6 @@ signals:
     void bytesSent          (LinkInterface* link, QByteArray data);
     void connected          (void);
     void disconnected       (void);
-    void nameChanged        (QString name);
     void communicationError (const QString& title, const QString& error);
 
 protected:

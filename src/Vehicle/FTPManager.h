@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <QObject>
@@ -26,42 +25,24 @@ class Vehicle;
 class FTPManager : public QObject
 {
     Q_OBJECT
+
+    friend class Vehicle;
     
 public:
     FTPManager(Vehicle* vehicle);
 
 	/// Downloads the specified file.
-    ///     @param from     File to download from vehicle, fully qualified path. May be in the format mavlinkftp://...
+    ///     @param fromURI  File to download from vehicle, fully qualified path. May be in the format "mftp://[;comp=<id>]..." where the component id is specified.
+    ///                     If component id is not specified MAV_COMP_ID_AUTOPILOT1 is used.
     ///     @param toDir    Local directory to download file to
     /// @return true: download has started, false: error, no download
     /// Signals downloadComplete, commandError, commandProgress
-    bool download(const QString& from, const QString& toDir);
-	
-	/// Stream downloads the specified file.
-    ///     @param from     File to download from UAS, fully qualified path. May be in the format mavlinkftp://...
-    ///     @param toDir    Local directory to download file to
-    /// @return true: download has started, false: error, no download
-    /// Signals downloadComplete, commandError, commandProgress
-    bool burstDownload(const QString& from, const QString& toDir);
-	
-	/// Lists the specified directory. Emits listEntry signal for each entry, followed by listComplete signal.
-	///		@param dirPath Fully qualified path to list
-	void listDirectory(const QString& dirPath);
-	
-    /// Upload the specified file to the specified location
-    void upload(const QString& toPath, const QFileInfo& uploadFile);
-    
-    /// Create a remote directory
-    void createDirectory(const QString& directory);
+    bool download(const QString& fromURI, const QString& toDir);
 
-    void mavlinkMessageReceived(mavlink_message_t message);
+    static const char* mavlinkFTPScheme;
 
 signals:
-    void downloadComplete   (const QString& file, const QString& errorMsg);
-    void uploadComplete     (const QString& errorMsg);
-
-    /// Signalled to indicate a new directory entry was received.
-    void listEntry(const QString& entry);
+    void downloadComplete(const QString& file, const QString& errorMsg);
     
     // Signals associated with all commands
     
@@ -75,58 +56,30 @@ signals:
     void commandProgress(int value);
 	
 private slots:
-	void _ackTimeout(void);
+    void _ackOrNakTimeout(void);
 
 private:
-    bool    _sendOpcodeOnlyCmd      (MavlinkFTP::OpCode_t opcode, MavlinkFTP::OpCode_t newWaitState);
-    void    _emitErrorMessage       (const QString& msg);
-    void    _emitListEntry          (const QString& entry);
-    void    _sendRequestExpectAck   (MavlinkFTP::Request* request);
-    void    _sendRequestNoAck       (MavlinkFTP::Request* request);
-    void    _sendMessageOnLink      (LinkInterface* link, mavlink_message_t message);
-    void    _fillRequestWithString  (MavlinkFTP::Request* request, const QString& str);
-    void    _handlOpenFileROAck     (MavlinkFTP::Request* ack);
-    void    _handleReadFileAck      (MavlinkFTP::Request* ack);
-    void    _handleBurstReadFileAck (MavlinkFTP::Request* ack);
-    void    _listAckResponse        (MavlinkFTP::Request* listAck);
-    void    _createAckResponse      (MavlinkFTP::Request* createAck);
-    void    _writeAckResponse       (MavlinkFTP::Request* writeAck);
-    void    _writeFileDatablock     (void);
-    void    _sendListCommand        (void);
-    void    _sendResetCommand       (void);
-    void    _downloadComplete       (const QString& errorMsg);
-    void    _uploadComplete         (const QString& errorMsg);
-    bool    _downloadWorker         (const QString& from, const QString& toDir);
-    void    _requestMissingBurstData(void);
-    void    _handleAck              (MavlinkFTP::Request* ack);
-    void    _handleNak              (MavlinkFTP::Request* nak);
+    typedef void (FTPManager::*StateBeginFn)            (void);
+    typedef void (FTPManager::*StateAckNakFn)    (const MavlinkFTP::Request* ackOrNak);
+    typedef void (FTPManager::*StateTimeoutFn)          (void);
 
-    MavlinkFTP::OpCode_t    _waitState              = MavlinkFTP::kCmdNone;     ///< Current operation of state machine
-    QTimer                  _ackTimer;                                          ///< Used to signal a timeout waiting for an ack
-    int                     _ackNumTries;                                       ///< current number of tries
-    Vehicle*                _vehicle;
-    LinkInterface*          _dedicatedLink          = nullptr;                  ///< Link to use for communication
-    MavlinkFTP::Request     _lastOutgoingRequest;                               ///< contains the last outgoing packet
-    unsigned                _listOffset;                                        ///< offset for the current List operation
-    QString                 _listPath;                                          ///< path for the current List operation
-    uint8_t                 _activeSession          = 0;                        ///< currently active session, 0 for none
-    uint32_t                _readOffset;                                        ///< current read offset
-    
-    uint32_t    _writeOffset;               ///< current write offset
-    uint32_t    _writeSize;                 ///< current write data size
-    uint32_t    _writeFileSize;             ///< Size of file being uploaded
-    QByteArray  _writeFileAccumulator;      ///< Holds file being uploaded
-    
+    typedef struct {
+        StateBeginFn    beginFn;
+        StateAckNakFn   ackNakFn;
+        StateTimeoutFn  timeoutFn;
+    } StateFunctions_t;
+
     typedef struct  {
         uint32_t offset;
-        uint32_t cBytes;
+        uint32_t cBytesMissing;
     } MissingData_t;
 
-    struct {
-        uint32_t                expectedBurstOffset;    ///< offset which should be coming next in a burst sequence
-        uint32_t                expectedReadOffset;     ///< offset which should be coming from a hole filling read request
+    typedef struct {
+        uint8_t                 sessionId;
+        uint32_t                expectedOffset;         ///< offset which should be coming next
         uint32_t                bytesWritten;
-        QList<MissingData_t>    missingData;
+        QList<MissingData_t>    rgMissingData;
+        QString                 fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
         QDir                    toDir;                  ///< Directory to download file to
         QString                 fileName;               ///< Filename (no path) for download file
         uint32_t                fileSize;               ///< Size of file being downloaded
@@ -134,17 +87,53 @@ private:
         int                     retryCount;
 
         void reset() {
-            expectedBurstOffset = 0;
-            expectedReadOffset  = 0;
-            bytesWritten        = 0;
-            retryCount          = 0;
-            missingData.clear();
+            sessionId       = 0;
+            expectedOffset  = 0;
+            bytesWritten    = 0;
+            retryCount      = 0;
+            fileSize        = 0;
+            fullPathOnVehicle.clear();
+            fileName.clear();
+            rgMissingData.clear();
             file.close();
         }
-    } _downloadState;
+    } DownloadState_t;
 
-    static const int _ackTimerTimeoutMsecs  = 1000;
-    static const int _ackTimerMaxRetries    = 6;
-    static const int _maxRetry              = 5;
+
+    void    _mavlinkMessageReceived     (const mavlink_message_t& message);
+    void    _startStateMachine          (void);
+    void    _advanceStateMachine        (void);
+    void    _openFileROBegin            (void);
+    void    _openFileROAckOrNak         (const MavlinkFTP::Request* ackOrNak);
+    void    _openFileROTimeout          (void);
+    void    _burstReadFileBegin         (void);
+    void    _burstReadFileAckOrNak      (const MavlinkFTP::Request* ackOrNak);
+    void    _burstReadFileTimeout       (void);
+    void    _fillMissingBlocksBegin     (void);
+    void    _fillMissingBlocksAckOrNak  (const MavlinkFTP::Request* ackOrNak);
+    void    _fillMissingBlocksTimeout   (void);
+    void    _resetSessionsBegin         (void);
+    void    _resetSessionsAckOrNak      (const MavlinkFTP::Request* ackOrNak);
+    void    _resetSessionsTimeout       (void);
+    QString _errorMsgFromNak            (const MavlinkFTP::Request* nak);
+    void    _sendRequestExpectAck       (MavlinkFTP::Request* request);
+    void    _downloadCompleteNoError    (void) { _downloadComplete(QString()); }
+    void    _downloadComplete           (const QString& errorMsg);
+    void    _emitErrorMessage           (const QString& msg);
+    void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
+    void    _fillMissingBlocksWorker    (bool firstRequest);
+    void    _burstReadFileWorker        (bool firstRequest);
+    bool    _parseURI                   (const QString& uri, QString& parsedURI, uint8_t& compId);
+
+    Vehicle*                _vehicle;
+    uint8_t                 _ftpCompId = MAV_COMP_ID_AUTOPILOT1;
+    QList<StateFunctions_t> _rgStateMachine;
+    DownloadState_t         _downloadState;
+    QTimer                  _ackOrNakTimeoutTimer;
+    int                     _currentStateMachineIndex   = -1;
+    uint16_t                _expectedIncomingSeqNumber  = 0;
+    
+    static const int _ackOrNakTimeoutMsecs  = 1000;
+    static const int _maxRetry              = 3;
 };
 

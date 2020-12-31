@@ -119,19 +119,16 @@ class BluetoothLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class BluetoothConfiguration;
-    friend class LinkManager;
-
 public:
-    ~BluetoothLink();
+    BluetoothLink(SharedLinkConfigurationPtr& config);
+    virtual ~BluetoothLink();
 
     // Overrides from QThread
     void run(void) override;
 
     // LinkConfiguration overrides
-    bool    isConnected (void) const override;
-    QString getName     (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
 public slots:
     void    readBytes           (void);
@@ -148,7 +145,6 @@ private slots:
     void _writeBytes(const QByteArray bytes) override;
 
 private:
-    BluetoothLink(SharedLinkConfigurationPtr& config);
 
     // LinkInterface overrides
     bool _connect(void) override;

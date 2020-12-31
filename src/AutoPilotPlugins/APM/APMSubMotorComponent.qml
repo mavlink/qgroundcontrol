@@ -279,7 +279,7 @@ SetupPage {
                 id: timer
                 interval:       50
                 repeat:         true
-                running:        canRunManualTest
+                running:        canRunManualTest && shouldRunManualTest
 
                 onTriggered: {
                     if (controller.vehicle.armed) {
@@ -288,9 +288,9 @@ SetupPage {
                             var reversed = controller.getParameterFact(-1, "MOT_" + (_lastIndex + 1) + "_DIRECTION").value == -1
 
                             if (reversed) {
-                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value, 0)
+                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value, 0, false)
                             } else {
-                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value, 0)
+                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value, 0, false)
                             }
                     }
                 }

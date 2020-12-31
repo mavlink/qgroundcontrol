@@ -153,16 +153,14 @@ void FlightPathSegment::_updateTerrainCollision(void)
             newTerrainCollision = true;
             break;
         }
-        if (i > 0) {
-            if (i == _amslTerrainHeights.count() - 1) {
-                x += _finalDistanceBetween;
-            } else {
-                x += _distanceBetween;
-            }
+        if (i == _amslTerrainHeights.count() - 2) {
+            x += _finalDistanceBetween;
+        } else {
+            x += _distanceBetween;
         }
     }
 
-    qCDebug(FlightPathSegmentLog) << this << "_updateTerrainCollision" << newTerrainCollision;
+    qCDebug(FlightPathSegmentLog) << this << "_updateTerrainCollision new:old" << newTerrainCollision << _terrainCollision;
 
     if (newTerrainCollision != _terrainCollision) {
         _terrainCollision = newTerrainCollision;

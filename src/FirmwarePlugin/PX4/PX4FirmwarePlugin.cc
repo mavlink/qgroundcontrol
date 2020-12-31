@@ -389,7 +389,7 @@ void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int comm
         // They are trying to disarm.
         disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
         if (!vehicle->armed()) {
-            vehicle->setArmed(true);
+            vehicle->setArmedShowError(true);
         }
     }
 }

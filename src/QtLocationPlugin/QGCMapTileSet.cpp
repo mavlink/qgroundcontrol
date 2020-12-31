@@ -292,7 +292,7 @@ QGCCachedTileSet::_networkReplyFinished()
             QByteArray image = reply->readAll();
             QString type = getQGCMapEngine()->hashToType(hash);
             if (type == "Airmap Elevation" ) {
-                image = TerrainTile::serialize(image);
+                image = TerrainTile::serializeFromAirMapJson(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
             if(!format.isEmpty()) {

@@ -30,11 +30,9 @@ public:
     Q_PROPERTY(LinkType         linkType            READ type                                   CONSTANT)
     Q_PROPERTY(bool             dynamic             READ isDynamic      WRITE setDynamic        NOTIFY dynamicChanged)
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
-    Q_PROPERTY(bool             autoConnectAllowed  READ isAutoConnectAllowed                   CONSTANT)
     Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
     Q_PROPERTY(QString          settingsTitle       READ settingsTitle                          CONSTANT)
     Q_PROPERTY(bool             highLatency         READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
-    Q_PROPERTY(bool             highLatencyAllowed  READ isHighLatencyAllowed                   CONSTANT)
 
     // Property accessors
 
@@ -89,20 +87,6 @@ public:
     void setHighLatency(bool hl = false) { _highLatency = hl; emit highLatencyChanged(); }
 
     /// Virtual Methods
-
-    /*!
-     *
-     * Is Auto Connect allowed for this type?
-     * @return True if this type can be set as an Auto Connect configuration
-     */
-    virtual bool isAutoConnectAllowed() { return false; }
-
-    /*!
-     *
-     * Is High Latency allowed for this type?
-     * @return True if this type can be set as an High Latency configuration
-     */
-    virtual bool isHighLatencyAllowed() { return false; }
 
     /*!
      * @brief Connection type

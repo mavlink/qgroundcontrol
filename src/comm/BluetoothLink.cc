@@ -47,11 +47,6 @@ void BluetoothLink::run()
 
 }
 
-QString BluetoothLink::getName() const
-{
-    return _config->name();
-}
-
 void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
     if (_targetSocket) {
@@ -86,6 +81,8 @@ void BluetoothLink::disconnect(void)
     }
 #endif
     if(_targetSocket) {
+        // This prevents stale signals from calling the link after it has been deleted
+        QObject::disconnect(_targetSocket, &QBluetoothSocket::readyRead, this, &BluetoothLink::readBytes);
         _targetSocket->deleteLater();
         _targetSocket = nullptr;
         emit disconnected();

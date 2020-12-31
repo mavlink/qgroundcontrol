@@ -213,9 +213,16 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void PlanMasterController::loadFromVehicle(void)
 {
-    if (_managerVehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency()) {
-        qgcApp()->showAppMessage(tr("Download not supported on high latency links."));
+    WeakLinkInterfacePtr weakLink = _managerVehicle->vehicleLinkManager()->primaryLink();
+    if (weakLink.expired()) {
+        // Vehicle is shutting down
         return;
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        if (sharedLink->linkConfiguration()->isHighLatency()) {
+            qgcApp()->showAppMessage(tr("Download not supported on high latency links."));
+            return;
+        }
     }
 
     if (offline()) {
@@ -320,9 +327,16 @@ void PlanMasterController::_startFlightPlanning(void) {
 
 void PlanMasterController::sendToVehicle(void)
 {
-    if (_managerVehicle->vehicleLinkManager()->primaryLink()->linkConfiguration()->isHighLatency()) {
-        qgcApp()->showAppMessage(tr("Upload not supported on high latency links."));
+    WeakLinkInterfacePtr weakLink = _managerVehicle->vehicleLinkManager()->primaryLink();
+    if (weakLink.expired()) {
+        // Vehicle is shutting down
         return;
+    } else {
+        SharedLinkInterfacePtr sharedLink = weakLink.lock();
+        if (sharedLink->linkConfiguration()->isHighLatency()) {
+            qgcApp()->showAppMessage(tr("Upload not supported on high latency links."));
+            return;
+        }
     }
 
     if (offline()) {
@@ -356,7 +370,19 @@ void PlanMasterController::loadFromFile(const QString& filename)
     }
 
     bool success = false;
-    if(fileInfo.suffix() == AppSettings::planFileExtension) {
+    if (fileInfo.suffix() == AppSettings::missionFileExtension) {
+        if (!_missionController.loadJsonFile(file, errorString)) {
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
+        }
+    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
+        if (!_missionController.loadTextFile(file, errorString)) {
+            qgcApp()->showAppMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
+        }
+    } else {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
 
@@ -394,20 +420,6 @@ void PlanMasterController::loadFromFile(const QString& filename)
             qgcApp()->toolbox()->corePlugin()->postLoadFromJson(this, json);
             success = true;
         }
-    } else if (fileInfo.suffix() == AppSettings::missionFileExtension) {
-        if (!_missionController.loadJsonFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
-        if (!_missionController.loadTextFile(file, errorString)) {
-            qgcApp()->showAppMessage(errorMessage.arg(errorString));
-        } else {
-            success = true;
-        }
-    } else {
-        //-- TODO: What then?
     }
 
     if(success){
@@ -570,7 +582,7 @@ QStringList PlanMasterController::loadNameFilters(void) const
     QStringList filters;
 
     filters << tr("Supported types (*.%1 *.%2 *.%3 *.%4)").arg(AppSettings::planFileExtension).arg(AppSettings::missionFileExtension).arg(AppSettings::waypointsFileExtension).arg("txt") <<
-               tr("All Files (*.*)");
+               tr("All Files (*)");
     return filters;
 }
 
@@ -579,7 +591,7 @@ QStringList PlanMasterController::saveNameFilters(void) const
 {
     QStringList filters;
 
-    filters << tr("Plan Files (*.%1)").arg(fileExtension()) << tr("All Files (*.*)");
+    filters << tr("Plan Files (*.%1)").arg(fileExtension()) << tr("All Files (*)");
     return filters;
 }
 

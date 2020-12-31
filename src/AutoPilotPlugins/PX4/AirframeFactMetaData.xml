@@ -302,7 +302,7 @@
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor asymmetric</type>
-      <url>https://docs.px4.io/master/en/framebuild_multicopter/spedix_s250_pixracer.html</url>
+      <url>https://docs.px4.io/master/en/frames_multicopter/spedix_s250_pixracer.html</url>
       <output name="MAIN1">motor1 (front right: CCW)</output>
       <output name="MAIN2">motor2 (back left: CCW)</output>
       <output name="MAIN3">motor3 (front left: CW)</output>
@@ -359,6 +359,15 @@
     </airframe>
     <airframe name="PX4 Vision DevKit Platform" id="4016" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Copter</class>
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
+    <airframe name="NXP HoverGames" id="4017" maintainer="Iain Galloway &lt;iain.galloway@nxp.com&gt;">
+      <class>Copter</class>
+      <maintainer>Iain Galloway &lt;iain.galloway@nxp.com&gt;</maintainer>
       <type>Quadrotor x</type>
       <output name="MAIN1">motor 1</output>
       <output name="MAIN2">motor 2</output>
@@ -563,7 +572,7 @@
       <class>Plane</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://docs.px4.io/master/en/framebuild_plane/wing_wing_z84.html</url>
+      <url>https://docs.px4.io/master/en/frames_plane/wing_wing_z84.html</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -764,6 +773,21 @@
       <class>Underwater Robot</class>
       <maintainer>Daniel Duecker &lt;daniel.duecker@tuhh.de&gt;</maintainer>
       <type>Underwater Robot</type>
+    </airframe>
+  </airframe_group>
+  <airframe_group name="Vectored 6 DOF UUV" image="AirframeUnknown">
+    <airframe name="BlueROV2 (Heavy Configuration)" id="60002" maintainer="Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;">
+      <class>Underwater Robot</class>
+      <maintainer>Thies Lennart Alff &lt;thies.lennart.alff@tuhh.de&gt;</maintainer>
+      <type>Vectored 6 DOF UUV</type>
+      <output name="MAIN1">motor 1 CCW, bow starboard horizontal, , propeller CCW</output>
+      <output name="MAIN2">motor 2 CCW, bow port horizontal, propeller CCW</output>
+      <output name="MAIN3">motor 3 CCW, stern starboard horizontal, propeller CW</output>
+      <output name="MAIN4">motor 4 CCW, stern port horizontal, propeller CW</output>
+      <output name="MAIN5">motor 5 CCW, bow starboard vertical, propeller CCW</output>
+      <output name="MAIN6">motor 6 CCW, bow port vertical, propeller CW</output>
+      <output name="MAIN7">motor 7 CCW, stern starboard vertical, propeller CW</output>
+      <output name="MAIN8">motor 8 CCW, stern port vertical, propeller CCW</output>
     </airframe>
   </airframe_group>
   <airframe_group name="Standard VTOL" image="VTOLPlane">

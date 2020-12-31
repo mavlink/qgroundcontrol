@@ -117,7 +117,7 @@ public:
 
     /// If you are going to hold a reference to a LinkInterface* in your object you must reference count it
     /// by using this method to get access to the shared pointer.
-    SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(LinkInterface* link);
+    SharedLinkInterfacePtr sharedLinkInterfacePointerForLink(LinkInterface* link, bool ignoreNull=false);
 
     bool containsLink(LinkInterface* link);
 

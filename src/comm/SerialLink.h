@@ -76,7 +76,6 @@ public:
     /// From LinkConfiguration
     LinkType    type            () { return LinkConfiguration::TypeSerial; }
     void        copyFrom        (LinkConfiguration* source);
-    bool        isHighLatencyAllowed () { return true; }
     void        loadSettings    (QSettings& settings, const QString& root);
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  ();
@@ -110,14 +109,13 @@ class SerialLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class SerialConfiguration;
-    friend class LinkManager;
-
 public:
+    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
+    virtual ~SerialLink();
+
     // LinkInterface overrides
-    QString getName     (void) const override;
-    bool    isConnected (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
     /// Don't even think of calling this method!
     QSerialPort* _hackAccessToPort(void) { return _port; }
@@ -132,9 +130,6 @@ private slots:
     void _readBytes     (void);
 
 private:
-    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    SerialLink(SharedLinkConfigurationPtr& config, bool isPX4Flow = false);
-    ~SerialLink();
 
     // LinkInterface overrides
     bool _connect(void) override;

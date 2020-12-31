@@ -52,7 +52,6 @@ public:
     //LinkConfiguration overrides
     LinkType    type                (void) override                                         { return LinkConfiguration::TypeTcp; }
     void        copyFrom            (LinkConfiguration* source) override;
-    bool        isHighLatencyAllowed(void) override                                         { return true; }
     void        loadSettings        (QSettings& settings, const QString& root) override;
     void        saveSettings        (QSettings& settings, const QString& root) override;
     QString     settingsURL         (void) override                                         { return "TcpSettings.qml"; }
@@ -71,20 +70,16 @@ class TCPLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class TCPLinkTest;
-    friend class TCPConfiguration;
-    friend class LinkManager;
-
 public:
-    ~TCPLink();
+    TCPLink(SharedLinkConfigurationPtr& config);
+    virtual ~TCPLink();
 
     QTcpSocket* getSocket           (void) { return _socket; }
     void        signalBytesWritten  (void);
 
     // LinkInterface overrides
-    QString getName     (void) const override;
-    bool    isConnected (void) const override;
-    void    disconnect  (void) override;
+    bool isConnected(void) const override;
+    void disconnect (void) override;
 
 public slots:
     void waitForBytesWritten(int msecs);
@@ -103,7 +98,6 @@ private slots:
     void _writeBytes(const QByteArray data) override;
 
 private:
-    TCPLink(SharedLinkConfigurationPtr& config);
 
     // LinkInterface overrides
     bool _connect(void) override;

@@ -48,6 +48,13 @@ const char* MockConfiguration::_sendStatusTextKey       = "SendStatusText";
 const char* MockConfiguration::_incrementVehicleIdKey   = "IncrementVehicleId";
 const char* MockConfiguration::_failureModeKey          = "FailureMode";
 
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE;
+constexpr MAV_CMD MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY;
+
 MockLink::MockLink(SharedLinkConfigurationPtr& config)
     : LinkInterface                         (config)
     , _missionItemHandler                   (this, qgcApp()->toolbox()->mavlinkProtocol())
@@ -429,7 +436,9 @@ void MockLink::_sendBatteryStatus(void)
                 _battery1PctRemaining,
                 _battery1TimeRemaining,
                 _battery1ChargeState,
-                rgVoltagesExtNone);
+                rgVoltagesExtNone,
+                0, // MAV_BATTERY_MODE
+                0); // MAV_BATTERY_FAULT
     respondWithMavlinkMessage(msg);
 
     mavlink_msg_battery_status_pack_chan(
@@ -448,7 +457,10 @@ void MockLink::_sendBatteryStatus(void)
                 _battery2PctRemaining,
                 _battery2TimeRemaining,
                 _battery2ChargeState,
-                rgVoltagesExtNone);
+                rgVoltagesExtNone,
+                0, // MAV_BATTERY_MODE
+                0); // MAV_BATTERY_FAULT
+
     respondWithMavlinkMessage(msg);
 }
 
@@ -985,6 +997,8 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
 
     mavlink_msg_command_long_decode(&msg, &request);
 
+    _sendMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+
     switch (request.command) {
     case MAV_CMD_COMPONENT_ARM_DISARM:
         if (request.param1 == 0.0f) {
@@ -1051,9 +1065,9 @@ void MockLink::_handleCommandLong(const mavlink_message_t& msg)
         }
         break;
     case MAV_CMD_MOCKLINK_NO_RESPONSE:
+    case MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY:
         // No response
         return;
-        break;
     }
 
     mavlink_message_t commandAck;
@@ -1115,11 +1129,14 @@ void MockLink::_respondWithAutopilotVersion(void)
 #if !defined(NO_ARDUPILOT_DIALECT)
     }
 #endif
+    uint64_t capabilities = MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | MAV_PROTOCOL_CAPABILITY_MISSION_INT |
+            (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0);
+
     mavlink_msg_autopilot_version_pack_chan(_vehicleSystemId,
                                             _vehicleComponentId,
                                             _mavlinkChannel,
                                             &msg,
-                                            MAV_PROTOCOL_CAPABILITY_MAVLINK2 | MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY | (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? MAV_PROTOCOL_CAPABILITY_TERRAIN : 0),
+                                            capabilities,
                                             flightVersion,                   // flight_sw_version,
                                             0,                               // middleware_sw_version,
                                             0,                               // os_sw_version,
@@ -1558,13 +1575,15 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
 
     switch ((int)request.param1) {
     case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
-        switch (static_cast<int>(request.param2)) {
-        case COMP_METADATA_TYPE_VERSION:
-            _sendVersionMetaData();
-            return true;
-        case COMP_METADATA_TYPE_PARAMETER:
-            _sendParameterMetaData();
-            return true;
+        if (_firmwareType == MAV_AUTOPILOT_PX4) {
+            switch (static_cast<int>(request.param2)) {
+            case COMP_METADATA_TYPE_VERSION:
+                _sendVersionMetaData();
+                return true;
+            case COMP_METADATA_TYPE_PARAMETER:
+                _sendParameterMetaData();
+                return true;
+            }
         }
         break;
     case MAVLINK_MSG_ID_DEBUG:
@@ -1600,7 +1619,7 @@ void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://version.json.gz";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]version.json.gz";
 #else
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
 #endif
@@ -1623,7 +1642,7 @@ void MockLink::_sendParameterMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mavlinkftp://parameter.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]parameter.json";
 #else
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/2ZKRIRE";
 #endif

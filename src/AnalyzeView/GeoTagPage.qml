@@ -75,7 +75,7 @@ AnalyzePage {
                     id:             openLogFile
                     title:          qsTr("Select log file")
                     folder:         shortcuts.home
-                    nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*.*)")]
+                    nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*)")]
                     defaultSuffix:  "ulg"
                     selectExisting: true
                     onAccepted: {

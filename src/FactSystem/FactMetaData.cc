@@ -28,21 +28,30 @@ const qreal FactMetaData::UnitConsts_s::secondsPerHour = 3600.0;
 const qreal FactMetaData::UnitConsts_s::knotsToKPH = 1.852; // exact, hence weird base for knotsToMetersPerSecond
 
 // Length
-const qreal FactMetaData::UnitConsts_s::milesToMeters =         1609.344;
-const qreal FactMetaData::UnitConsts_s::feetToMeters =          0.3048;
-const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
+const qreal FactMetaData::UnitConsts_s::milesToMeters       = 1609.344;
+const qreal FactMetaData::UnitConsts_s::feetToMeters        = 0.3048;
+const qreal FactMetaData::UnitConsts_s::inchesToCentimeters = 2.54;
 
 //Weight
-const qreal FactMetaData::UnitConsts_s::ouncesToGrams =         28.3495;
-const qreal FactMetaData::UnitConsts_s::poundsToGrams =         453.592;
+const qreal FactMetaData::UnitConsts_s::ouncesToGrams = 28.3495;
+const qreal FactMetaData::UnitConsts_s::poundsToGrams = 453.592;
 
+const char* FactMetaData::kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
+const char* FactMetaData::kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
 
-static const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
-static const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
+const char* FactMetaData::qgcFileType                           = "FactMetaData";
+const char* FactMetaData::_jsonMetaDataDefinesName              = "QGC.MetaData.Defines";
+const char* FactMetaData::_jsonMetaDataFactsName                = "QGC.MetaData.Facts";
+const char* FactMetaData::_enumStringsJsonKey                   = "enumStrings";
+const char* FactMetaData::_enumValuesJsonKey                    = "enumValues";
 
-const char* FactMetaData::qgcFileType =                 "FactMetaData";
-const char* FactMetaData::_jsonMetaDataDefinesName =    "QGC.MetaData.Defines";
-const char* FactMetaData::_jsonMetaDataFactsName =      "QGC.MetaData.Facts";
+// This is the newer json format for enums and bitmasks. They are used by the new COMPONENT_INFORMATION parameter metadata for example.
+const char* FactMetaData::_enumValuesArrayJsonKey               = "values";
+const char* FactMetaData::_enumBitmaskArrayJsonKey              = "bitmask";
+const char* FactMetaData::_enumValuesArrayValueJsonKey          = "value";
+const char* FactMetaData::_enumValuesArrayDescriptionJsonKey    = "description";
+const char* FactMetaData::_enumBitmaskArrayIndexJsonKey         = "index";
+const char* FactMetaData::_enumBitmaskArrayDescriptionJsonKey   = "description";
 
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
@@ -62,17 +71,17 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "cm/px",  "cm/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsMeters, FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m/s",    "m/s",      FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsMetersPerSecond,     FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "C",      "C",        FactMetaData::UnitTemperature,           UnitsSettings::TemperatureUnitsCelsius,       FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
-    { "m^2",    "m\u00B2",  FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
+    { "m^2",    "m^2",      FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMeters,         FactMetaData::_defaultTranslator,                   FactMetaData::_defaultTranslator },
     { "m",      "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meter",  "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "meters", "ft",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "vertical m",  "ft",  FactMetaData::UnitVerticalDistance,      UnitsSettings::VerticalDistanceUnitsFeet,     FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "cm/px",  "in/px",    FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsFeet,   FactMetaData::_centimetersToInches,                 FactMetaData::_inchesToCentimeters },
-    { "m^2",    "km\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
+    { "m^2",    "km^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareKilometers,     FactMetaData::_squareMetersToSquareKilometers,      FactMetaData::_squareKilometersToSquareMeters },
     { "m^2",    "ha",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsHectares,             FactMetaData::_squareMetersToHectares,              FactMetaData::_hectaresToSquareMeters },
-    { "m^2",    "ft\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareFeet,           FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
+    { "m^2",    "ft^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareFeet,           FactMetaData::_squareMetersToSquareFeet,            FactMetaData::_squareFeetToSquareMeters },
     { "m^2",    "ac",       FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsAcres,                FactMetaData::_squareMetersToAcres,                 FactMetaData::_acresToSquareMeters },
-    { "m^2",    "mi\u00B2", FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMiles,          FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
+    { "m^2",    "mi^2",     FactMetaData::UnitArea,                  UnitsSettings::AreaUnitsSquareMiles,          FactMetaData::_squareMetersToSquareMiles,           FactMetaData::_squareMilesToSquareMeters },
     { "m/s",    "ft/s",     FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsFeetPerSecond,       FactMetaData::_metersToFeet,                        FactMetaData::_feetToMeters },
     { "m/s",    "mph",      FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsMilesPerHour,        FactMetaData::_metersPerSecondToMilesPerHour,       FactMetaData::_milesPerHourToMetersPerSecond },
     { "m/s",    "km/h",     FactMetaData::UnitSpeed,                 UnitsSettings::SpeedUnitsKilometersPerHour,   FactMetaData::_metersPerSecondToKilometersPerHour,  FactMetaData::_kilometersPerHourToMetersPerSecond },
@@ -700,6 +709,18 @@ void FactMetaData::addEnumInfo(const QString& name, const QVariant& value)
     _enumValues << value;
 }
 
+void FactMetaData::removeEnumInfo(const QVariant& value)
+{
+    const int index = _enumValues.indexOf(value);
+    if (index < 0) {
+        qWarning() << "Value does not exist in fact:" << value;
+        return;
+    }
+
+    _enumValues.removeAt(index);
+    _enumStrings.removeAt(index);
+}
+
 void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTranslator)
 {
     _rawTranslator = rawTranslator;
@@ -708,7 +729,7 @@ void FactMetaData::setTranslators(Translator rawTranslator, Translator cookedTra
 
 void FactMetaData::setBuiltInTranslator(void)
 {
-    if (_enumStrings.count()) {
+    if (_enumStrings.count() || _bitmaskStrings.count()) {
         // No translation if enum
         setTranslators(_defaultTranslator, _defaultTranslator);
         _cookedUnits = _rawUnits;
@@ -1010,7 +1031,7 @@ void FactMetaData::_setAppSettingsTranslators(void)
             }
 
             if (settingsUnits == pAppSettingsTranslation->unitOption) {
-                 _cookedUnits = pAppSettingsTranslation->cookedUnits;
+                _cookedUnits = pAppSettingsTranslation->cookedUnits;
                 setTranslators(pAppSettingsTranslation->rawTranslator, pAppSettingsTranslation->cookedTranslator);
                 return;
             }
@@ -1250,6 +1271,10 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         { _categoryJsonKey,             QJsonValue::String, false },
         { _groupJsonKey,                QJsonValue::String, false },
         { _volatileJsonKey,             QJsonValue::Bool,   false },
+        { _enumBitmaskArrayJsonKey,     QJsonValue::Array,  false },
+        { _enumValuesArrayJsonKey,      QJsonValue::Array,  false },
+        { _enumValuesJsonKey,           QJsonValue::String, false },
+        { _enumStringsJsonKey,          QJsonValue::String, false },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         qWarning() << errorString;
@@ -1263,27 +1288,49 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<Q
         return new FactMetaData(valueTypeUint32, metaDataParent);
     }
 
-    FactMetaData*   metaData = new FactMetaData(type, metaDataParent);
+    FactMetaData* metaData = new FactMetaData(type, metaDataParent);
 
     metaData->_name = json[_nameJsonKey].toString();
 
-    QStringList enumValues, enumStrings;
-    if (JsonHelper::parseEnum(json, defineMap, enumStrings, enumValues, errorString, metaData->name())) {
-        for (int i=0; i<enumValues.count(); i++) {
-            QVariant    enumVariant;
+    QStringList     rgDescriptions;
+    QList<double>   rgDoubleValues;
+    QStringList     rgStringValues;
+
+    bool foundBitmask = false;
+    if (!_parseValuesArray(json, rgDescriptions, rgDoubleValues, errorString)) {
+        qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseValueDescriptionArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
+    }
+    if (rgDescriptions.isEmpty()) {
+        if (!_parseBitmaskArray(json, rgDescriptions, rgDoubleValues, errorString)) {
+            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseBitmaskArray for %1 failed. %2").arg(metaData->_name).arg(errorString);
+        }
+        foundBitmask = rgDescriptions.count() != 0;
+    }
+    if (rgDescriptions.isEmpty()) {
+        if (!_parseEnum(json, defineMap, rgDescriptions, rgStringValues, errorString)) {
+            qWarning() << QStringLiteral("FactMetaData::createFromJsonObject _parseEnum for %1 failed. %2").arg(metaData->_name).arg(errorString);
+        }
+    }
+
+    if (errorString.isEmpty() && rgDescriptions.count()) {
+        for (int i=0; i<rgDescriptions.count(); i++) {
+            QVariant    rawValueVariant         = rgDoubleValues.count() ? QVariant(rgDoubleValues[i]) : QVariant(rgStringValues[i]);
+            QVariant    convertedValueVariant;
             QString     errorString;
 
-            if (metaData->convertAndValidateRaw(enumValues[i], false /* validate */, enumVariant, errorString)) {
-                metaData->addEnumInfo(enumStrings[i], enumVariant);
+            if (foundBitmask) {
+                metaData->addBitmaskInfo(rgDescriptions[i], rawValueVariant);
             } else {
-                qWarning() << "Invalid enum value, name:" << metaData->name()
-                           << " type:" << metaData->type()
-                           << " value:" << enumValues[i]
-                           << " error:" << errorString;
+                if (metaData->convertAndValidateRaw(rawValueVariant, false /* validate */, convertedValueVariant, errorString)) {
+                    metaData->addEnumInfo(rgDescriptions[i], convertedValueVariant);
+                } else {
+                    qWarning() << QStringLiteral("FactMetaData::createFromJsonObject convertAndValidateRaw on enum value for %1 failed.").arg(metaData->_name)
+                               << " type:" << metaData->type()
+                               << " value:" << rawValueVariant
+                               << " error:" << errorString;
+                }
             }
         }
-    } else {
-        qWarning() << errorString;
     }
 
     metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(0));
@@ -1470,4 +1517,106 @@ void FactMetaData::setVolatileValue(bool bValue)
     if (_volatile) {
         _readOnly = true;
     }
+}
+
+bool FactMetaData::_parseEnum(const QJsonObject& jsonObject, DefineMap_t defineMap, QStringList& rgDescriptions, QStringList& rgValues, QString& errorString)
+{
+    rgDescriptions.clear();
+    rgValues.clear();
+    errorString.clear();
+
+    if (!jsonObject.contains(_enumStringsJsonKey)) {
+        return true;
+    }
+
+    QString strings = jsonObject.value(_enumStringsJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    rgDescriptions = defineMap.value(strings, strings).split(",", QString::SkipEmptyParts);
+#else
+    rgDescriptions = defineMap.value(strings, strings).split(",", Qt::SkipEmptyParts);
+#endif
+
+    QString values = jsonObject.value(_enumValuesJsonKey).toString();
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    rgValues = defineMap.value(values, values).split(",", QString::SkipEmptyParts);
+#else
+    rgValues = defineMap.value(values, values).split(",", Qt::SkipEmptyParts);
+#endif
+
+    if (rgDescriptions.count() != rgValues.count()) {
+        errorString = QStringLiteral("Enum strings/values count mismatch - strings:values %1:%2").arg(rgDescriptions.count()).arg(rgValues.count());
+        return false;
+    }
+
+    return true;
+}
+
+bool FactMetaData::_parseValuesArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString)
+{
+    rgDescriptions.clear();
+    rgValues.clear();
+    errorString.clear();
+
+    if (!jsonObject.contains(_enumValuesArrayJsonKey)) {
+        return true;
+    }
+
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { _enumValuesArrayDescriptionJsonKey,   QJsonValue::String, true },
+        { _enumValuesArrayValueJsonKey,         QJsonValue::Double, true },
+    };
+
+    const QJsonArray& rgValueDescription = jsonObject[_enumValuesArrayJsonKey].toArray();
+    for (int i=0; i<rgValueDescription.count(); i++) {
+        if (rgValueDescription[i].type() != QJsonValue::Object) {
+            errorString = QStringLiteral("Value at index %1 in \"values\" array is not an object.").arg(i);
+            return false;
+        }
+
+        const QJsonObject& valueDescriptionObject = rgValueDescription[i].toObject();
+        if (!JsonHelper::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
+            errorString = QStringLiteral("Object at index %1 in \"values\" array failed validation '%2'.").arg(i).arg(errorString);
+            return false;
+        }
+
+        rgDescriptions.append(valueDescriptionObject[_enumValuesArrayDescriptionJsonKey].toString());
+        rgValues.append(valueDescriptionObject[_enumValuesArrayValueJsonKey].toDouble());
+    }
+
+    return true;
+}
+
+bool FactMetaData::_parseBitmaskArray(const QJsonObject& jsonObject, QStringList& rgDescriptions, QList<double>& rgValues, QString& errorString)
+{
+    rgDescriptions.clear();
+    rgValues.clear();
+    errorString.clear();
+
+    if (!jsonObject.contains(_enumBitmaskArrayJsonKey)) {
+        return true;
+    }
+
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { _enumBitmaskArrayDescriptionJsonKey,   QJsonValue::String, true },
+        { _enumBitmaskArrayIndexJsonKey,         QJsonValue::Double, true },
+    };
+
+    const QJsonArray& rgValueDescription = jsonObject[_enumBitmaskArrayJsonKey].toArray();
+    for (int i=0; i<rgValueDescription.count(); i++) {
+        if (rgValueDescription[i].type() != QJsonValue::Object) {
+            errorString = QStringLiteral("Value at index %1 in \"values\" array is not an object.").arg(i);
+            return false;
+        }
+
+        const QJsonObject& valueDescriptionObject = rgValueDescription[i].toObject();
+        if (!JsonHelper::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
+            errorString = QStringLiteral("Object at index %1 in \"values\" array failed validation '%2'.").arg(i).arg(errorString);
+            return false;
+        }
+
+        rgDescriptions.append(valueDescriptionObject[_enumBitmaskArrayDescriptionJsonKey].toString());
+        rgValues.append(valueDescriptionObject[_enumBitmaskArrayIndexJsonKey].toDouble());
+    }
+
+    return true;
 }

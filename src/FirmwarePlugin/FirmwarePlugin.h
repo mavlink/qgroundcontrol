@@ -209,9 +209,6 @@ public:
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle(void);
 
-    /// Returns the parameter which is used to identify the version number of parameter set
-    virtual QString getVersionParam(void) { return QString(); }
-
     /// Returns the parameter set version info pulled from inside the meta data file. -1 if not found.
     /// Note: The implementation for this must not vary by vehicle type.
     /// Important: Only CompInfoParam code should use this method
@@ -231,11 +228,6 @@ public:
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     /// Important: Only CompInfoParam code should use this method
     virtual FactMetaData* _getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) { return nullptr; }
-
-    /// Returns the FactMetaData associated with the parameter name
-    ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    /// Important: Only CompInfoParam code should use this method
-    virtual bool _isParameterVolatile(QObject* /*parameterMetaData*/, const QString& /*name*/, MAV_TYPE /*vehicleType*/) { return false; }
 
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass);

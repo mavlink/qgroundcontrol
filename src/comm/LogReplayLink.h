@@ -52,10 +52,9 @@ class LogReplayLink : public LinkInterface
 {
     Q_OBJECT
 
-    friend class LinkManager;
-
 public:
-    ~LogReplayLink();
+    LogReplayLink(SharedLinkConfigurationPtr& config);
+    virtual ~LogReplayLink();
 
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
@@ -65,10 +64,9 @@ public:
     void movePlayhead   (qreal percentComplete);
 
     // overrides from LinkInterface
-    QString getName             (void) const override { return _config->name(); }
-    bool    isConnected         (void) const override { return _connected; }
-    bool    isLogReplay         (void) override { return true; }
-    void    disconnect          (void) override;
+    bool isConnected(void) const override { return _connected; }
+    bool isLogReplay(void) override { return true; }
+    void disconnect (void) override;
 
 public slots:
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
@@ -97,8 +95,6 @@ private slots:
     void _setPlaybackSpeed  (qreal playbackSpeed);
 
 private:
-    // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    LogReplayLink(SharedLinkConfigurationPtr& config);
 
     // LinkInterface overrides
     bool _connect(void) override;

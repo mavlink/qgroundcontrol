@@ -41,15 +41,9 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
-
     _gcsHeartbeatEnabled = settings.value(_gcsHeartbeatEnabledKey, true).toBool();
-
     _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
     _gcsHeartbeatTimer.setSingleShot(false);
-    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
-    if (_gcsHeartbeatEnabled) {
-        _gcsHeartbeatTimer.start();
-    }
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
@@ -64,6 +58,11 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
     connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
+
+    if (_gcsHeartbeatEnabled) {
+        _gcsHeartbeatTimer.start();
+    }
 
     _offlineEditingVehicle = new Vehicle(Vehicle::MAV_AUTOPILOT_TRACK, Vehicle::MAV_TYPE_TRACK, _firmwarePluginManager, this);
 }
@@ -83,7 +82,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         if (vehicleId != 81 || componentId != 50) {
             // Don't create vehicles for components other than the autopilot
             qCDebug(MultiVehicleManagerLog()) << "Ignoring heartbeat from unknown component port:vehicleId:componentId:fwType:vehicleType"
-                                              << link->getName()
+                                              << link->linkConfiguration()->name()
                                               << vehicleId
                                               << componentId
                                               << vehicleFirmwareType
@@ -112,7 +111,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     qCDebug(MultiVehicleManagerLog()) << "Adding new vehicle link:vehicleId:componentId:vehicleFirmwareType:vehicleType "
-                                      << link->getName()
+                                      << link->linkConfiguration()->name()
                                       << vehicleId
                                       << componentId
                                       << vehicleFirmwareType
@@ -371,7 +370,8 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
     // Send a heartbeat out on each link
     for (int i=0; i<sharedLinks.count(); i++) {
         LinkInterface* link = sharedLinks[i].get();
-        if (link->isConnected() && !link->linkConfiguration()->isHighLatency()) {
+        auto linkConfiguration = link->linkConfiguration();
+        if (link->isConnected() && linkConfiguration && !linkConfiguration->isHighLatency()) {
             mavlink_message_t message;
             mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
                                             _mavlinkProtocol->getComponentId(),

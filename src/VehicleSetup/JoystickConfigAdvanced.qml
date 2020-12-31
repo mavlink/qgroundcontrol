@@ -103,30 +103,6 @@ Item {
                 }
             }
         }
-        //---------------------------------------------------------------------
-        //-- Enable Gimbal
-        QGCLabel {
-            text:               qsTr("Enable gimbal control (Experimental)")
-            visible:            advancedSettings.checked
-            Layout.alignment:   Qt.AlignVCenter
-        }
-        QGCCheckBox {
-            id:                 enabledGimbal
-            visible:            advancedSettings.checked
-            enabled:            _activeJoystick
-            onClicked:          _activeJoystick.gimbalEnabled = checked
-            Component.onCompleted: {
-                checked = _activeJoystick.gimbalEnabled
-            }
-            Connections {
-                target: joystickManager
-                onActiveJoystickChanged: {
-                    if(_activeJoystick) {
-                        enabledGimbal.checked = Qt.binding(function() { return _activeJoystick.gimbalEnabled })
-                    }
-                }
-            }
-        }
         //-----------------------------------------------------------------
         //-- Axis Message Frequency
         QGCLabel {

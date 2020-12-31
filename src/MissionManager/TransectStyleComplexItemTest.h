@@ -82,6 +82,8 @@ class TestTransectStyleItem : public TransectStyleComplexItem
 public:
     TestTransectStyleItem(PlanMasterController* masterController, QObject* parent = nullptr);
 
+    void adjustSurveAreaPolygon(void);
+
     // Overrides from ComplexMissionItem
     QString patternName         (void) const final { return QString(); }
     QString mapVisualQML        (void) const final { return QString(); }
@@ -95,10 +97,6 @@ public:
     bool rebuildTransectsPhase1Called;
     bool recalcComplexDistanceCalled;
     bool recalcCameraShotsCalled;
-    void _adjustSurveAreaPolygon(void);
-    QList<QList<CoordInfo_t>> transects() const {
-        return _transects;
-    }
 
 private slots:
     // Overrides from TransectStyleComplexItem

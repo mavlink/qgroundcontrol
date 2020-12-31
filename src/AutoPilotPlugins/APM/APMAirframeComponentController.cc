@@ -246,7 +246,7 @@ void APMAirframeComponentController::_githubJsonDownloadComplete(QString /*remot
 
         QGCFileDownload* downloader = new QGCFileDownload(this);
         connect(downloader, &QGCFileDownload::downloadComplete, this, &APMAirframeComponentController::_paramFileDownloadComplete);
-        downloader->download(json[QLatin1Literal("download_url")].toString());
+        downloader->download(json[QLatin1String("download_url")].toString());
     } else {
         qgcApp()->showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
         qgcApp()->restoreOverrideCursor();

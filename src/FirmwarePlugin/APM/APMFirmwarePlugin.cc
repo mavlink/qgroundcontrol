@@ -31,98 +31,10 @@
 
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
-static const QRegExp APM_COPTER_REXP("^(ArduCopter|APM:Copter)");
-static const QRegExp APM_SOLO_REXP("^(APM:Copter solo-)");
-static const QRegExp APM_PLANE_REXP("^(ArduPlane|APM:Plane)");
-static const QRegExp APM_ROVER_REXP("^(ArduRover|APM:Rover)");
-static const QRegExp APM_SUB_REXP("^(ArduSub|APM:Sub)");
-static const QRegExp APM_PX4NUTTX_REXP("^PX4: .*NuttX: .*");
 static const QRegExp APM_FRAME_REXP("^Frame: ");
-static const QRegExp APM_SYSID_REXP("^PX4v2 ");
-
-// Regex to parse version text coming from APM, gives out firmware type, major, minor and patch level numbers
-static const QRegExp VERSION_REXP("^(APM:Copter|APM:Plane|APM:Rover|APM:Sub|ArduCopter|ArduPlane|ArduRover|ArduSub) +[vV](\\d*)\\.*(\\d*)*\\.*(\\d*)*");
-
-// minimum firmware versions that don't suffer from mavlink severity inversion bug.
-// https://github.com/diydrones/apm_planner/issues/788
-static const QString MIN_SOLO_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter solo-1.2.0");
-static const QString MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Copter V3.4.0");
-static const QString MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Plane V3.4.0");
-static const QString MIN_SUB_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Sub V3.4.0");
-static const QString MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS("APM:Rover V2.6.0");
 
 const char* APMFirmwarePlugin::_artooIP =                   "10.1.1.1"; ///< IP address of ARTOO controller
 const int   APMFirmwarePlugin::_artooVideoHandshakePort =   5502;       ///< Port for video handshake on ARTOO controller
-
-/*
- * @brief APMFirmwareVersion is a small class to represent the firmware version
- * It encabsules vehicleType, major version, minor version and patch level version
- * and provides accessors for the same.
- * isValid() can be used, to know whether version infromation is available or not
- * supports < operator
- */
-APMFirmwareVersion::APMFirmwareVersion(const QString &versionText)
-{
-    _major         = 0;
-    _minor         = 0;
-    _patch         = 0;
-
-    _parseVersion(versionText);
-}
-
-bool APMFirmwareVersion::isValid() const
-{
-    return !_versionString.isEmpty();
-}
-
-bool APMFirmwareVersion::isBeta() const
-{
-    return _versionString.contains(QStringLiteral(".rc"));
-}
-
-bool APMFirmwareVersion::isDev() const
-{
-    return _versionString.contains(QStringLiteral(".dev"));
-}
-
-bool APMFirmwareVersion::operator <(const APMFirmwareVersion& other) const
-{
-    int myVersion = _major << 16 | _minor << 8 | _patch ;
-    int otherVersion = other.majorNumber() << 16 | other.minorNumber() << 8 | other.patchNumber();
-    return myVersion < otherVersion;
-}
-
-void APMFirmwareVersion::_parseVersion(const QString &versionText)
-{
-    if (versionText.isEmpty()) {
-        return;
-    }
-
-
-    if (VERSION_REXP.indexIn(versionText) == -1) {
-        qCWarning(APMFirmwarePluginLog) << "firmware version regex didn't match anything"
-                                        << "version text to be parsed" << versionText;
-        return;
-    }
-
-    QStringList capturedTexts = VERSION_REXP.capturedTexts();
-
-    if (capturedTexts.count() < 5) {
-        qCWarning(APMFirmwarePluginLog) << "something wrong with parsing the version text, not hitting anything"
-                                        << VERSION_REXP.captureCount() << VERSION_REXP.capturedTexts();
-        return;
-    }
-
-    // successful extraction of version numbers
-    // even though we could have collected the version string atleast
-    // but if the parsing has faild, not much point
-    _versionString = versionText;
-    _vehicleType   = capturedTexts[1];
-    _major         = capturedTexts[2].toInt();
-    _minor         = capturedTexts[3].toInt();
-    _patch         = capturedTexts[4].toInt();
-}
-
 
 /*
  * @brief APMCustomMode encapsulates the custom modes for APM
@@ -145,13 +57,6 @@ QString APMCustomMode::modeString() const
         mode = "mode" + QString::number(modeAsInt());
     }
     return mode;
-}
-
-APMFirmwarePluginInstanceData::APMFirmwarePluginInstanceData(QObject* parent)
-    : QObject(parent)
-    , textSeverityAdjustmentNeeded(false)
-{
-
 }
 
 APMFirmwarePlugin::APMFirmwarePlugin(void)
@@ -339,106 +244,18 @@ void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, 
     _adjustOutgoingMavlinkMutex.unlock();
 }
 
-bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message)
+bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* /*vehicle*/, mavlink_message_t* message)
 {
-    QString messageText;
-    APMFirmwarePluginInstanceData* instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+    // APM user facing calibration messages come through as high severity, we need to parse them out
+    // and lower the severity on them so that they don't pop in the users face.
 
-    int severity = mavlink_msg_statustext_get_severity(message);
-
-    if (vehicle->firmwareMajorVersion() == Vehicle::versionNotSetValue || severity < MAV_SEVERITY_NOTICE) {
-        messageText = _getMessageText(message);
-        qCDebug(APMFirmwarePluginLog) << messageText;
-
-        if (!messageText.contains(APM_SOLO_REXP)) {
-            // if don't know firmwareVersion yet, try and see if this message contains it
-            if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) || messageText.contains(APM_SUB_REXP)) {
-                // found version string
-                APMFirmwareVersion firmwareVersion(messageText);
-                instanceData->textSeverityAdjustmentNeeded = _isTextSeverityAdjustmentNeeded(firmwareVersion);
-
-                vehicle->setFirmwareVersion(firmwareVersion.majorNumber(), firmwareVersion.minorNumber(), firmwareVersion.patchNumber());
-
-                int supportedMajorNumber = -1;
-                int supportedMinorNumber = -1;
-
-                switch (vehicle->vehicleType()) {
-                case MAV_TYPE_VTOL_DUOROTOR:
-                case MAV_TYPE_VTOL_QUADROTOR:
-                case MAV_TYPE_VTOL_TILTROTOR:
-                case MAV_TYPE_VTOL_RESERVED2:
-                case MAV_TYPE_VTOL_RESERVED3:
-                case MAV_TYPE_VTOL_RESERVED4:
-                case MAV_TYPE_VTOL_RESERVED5:
-                case MAV_TYPE_FIXED_WING:
-                    supportedMajorNumber = 3;
-                    supportedMinorNumber = 8;
-                    break;
-                case MAV_TYPE_QUADROTOR:
-                    // Start TCP video handshake with ARTOO in case it's a Solo running ArduPilot firmware
-                    _soloVideoHandshake(vehicle, false /* originalSoloFirmware */);
-                    [[fallthrough]];
-                case MAV_TYPE_COAXIAL:
-                case MAV_TYPE_HELICOPTER:
-                case MAV_TYPE_SUBMARINE:
-                case MAV_TYPE_HEXAROTOR:
-                case MAV_TYPE_OCTOROTOR:
-                case MAV_TYPE_TRICOPTER:
-                    supportedMajorNumber = 3;
-                    supportedMinorNumber = 5;
-                    break;
-                case MAV_TYPE_GROUND_ROVER:
-                case MAV_TYPE_SURFACE_BOAT:
-                    supportedMajorNumber = 3;
-                    supportedMinorNumber = 4;
-                default:
-                    break;
-                }
-
-                if (supportedMajorNumber != -1) {
-                    if (firmwareVersion.majorNumber() < supportedMajorNumber ||
-                            (firmwareVersion.majorNumber() == supportedMajorNumber && firmwareVersion.minorNumber() < supportedMinorNumber)) {
-                        qgcApp()->showAppMessage(tr("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
-                    }
-                }
-            }
-        }
-
-        // APM user facing calibration messages come through as high severity, we need to parse them out
-        // and lower the severity on them so that they don't pop in the users face.
-
-        if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
-            _adjustCalibrationMessageSeverity(message);
-            return true;
-        }
+    QString messageText = _getMessageText(message);
+    if (messageText.contains("Place vehicle") || messageText.contains("Calibration successful")) {
+        _adjustCalibrationMessageSeverity(message);
+        return true;
     }
 
-    // adjust mesasge if needed
-    if (instanceData->textSeverityAdjustmentNeeded) {
-        _adjustSeverity(message);
-    }
-
-    if (messageText.isEmpty()) {
-        messageText = _getMessageText(message);
-    }
-
-    // The following messages are incorrectly labeled as warning message.
-    // Fixed in newer firmware (unreleased at this point), but still in older firmware.
-    if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) || messageText.contains(APM_SUB_REXP) ||
-            messageText.contains(APM_PX4NUTTX_REXP) || messageText.contains(APM_FRAME_REXP) || messageText.contains(APM_SYSID_REXP)) {
-        _setInfoSeverity(message);
-    }
-
-    if (messageText.contains(APM_SOLO_REXP)) {
-        qDebug() << "Found Solo";
-        vehicle->setSoloFirmware(true);
-
-        // Fix up severity
-        _setInfoSeverity(message);
-
-        // Start TCP video handshake with ARTOO
-        _soloVideoHandshake(vehicle, true /* originalSoloFirmware */);
-    } else if (messageText.contains(APM_FRAME_REXP)) {
+    if (messageText.contains(APM_FRAME_REXP)) {
         // We need to parse the Frame: message in order to determine whether the motors are coaxial or not
         QRegExp frameTypeRegex("^Frame: (\\S*)");
         if (frameTypeRegex.indexIn(messageText) != -1) {
@@ -529,61 +346,6 @@ QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
     return QString(b);
 }
 
-bool APMFirmwarePlugin::_isTextSeverityAdjustmentNeeded(const APMFirmwareVersion& firmwareVersion)
-{
-    if (!firmwareVersion.isValid()) {
-        return false;
-    }
-
-    bool adjustmentNeeded = false;
-    if (firmwareVersion.vehicleType().contains(APM_COPTER_REXP)) {
-        if (firmwareVersion < APMFirmwareVersion(MIN_COPTER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    } else if (firmwareVersion.vehicleType().contains(APM_PLANE_REXP)) {
-        if (firmwareVersion < APMFirmwareVersion(MIN_PLANE_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    } else if (firmwareVersion.vehicleType().contains(APM_ROVER_REXP)) {
-        if (firmwareVersion < APMFirmwareVersion(MIN_ROVER_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    } else if (firmwareVersion.vehicleType().contains(APM_SUB_REXP)) {
-        if (firmwareVersion < APMFirmwareVersion(MIN_SUB_VERSION_WITH_CORRECT_SEVERITY_MSGS)) {
-            adjustmentNeeded = true;
-        }
-    }
-
-    return adjustmentNeeded;
-}
-
-void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
-{
-    // lets make QGC happy with right severity values
-    mavlink_statustext_t statusText;
-    mavlink_msg_statustext_decode(message, &statusText);
-    switch(statusText.severity) {
-    case MAV_SEVERITY_ALERT:    /* SEVERITY_LOW according to old codes */
-        statusText.severity = MAV_SEVERITY_WARNING;
-        break;
-    case MAV_SEVERITY_CRITICAL: /*SEVERITY_MEDIUM according to old codes  */
-        statusText.severity = MAV_SEVERITY_ALERT;
-        break;
-    case MAV_SEVERITY_ERROR:    /*SEVERITY_HIGH according to old codes */
-        statusText.severity = MAV_SEVERITY_CRITICAL;
-        break;
-    }
-
-    // Re-Encoding is always done using mavlink 1.0
-    mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
-    mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
-    mavlink_msg_statustext_encode_chan(message->sysid,
-                                       message->compid,
-                                       0,                  // Re-encoding uses reserved channel 0
-                                       message,
-                                       &statusText);
-}
-
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
 {
     // Re-Encoding is always done using mavlink 1.0
@@ -650,8 +412,6 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 
 void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
 {
-    vehicle->setFirmwarePluginInstanceData(new APMFirmwarePluginInstanceData);
-
     if (vehicle->isOfflineEditingVehicle()) {
         switch (vehicle->vehicleType()) {
         case MAV_TYPE_QUADROTOR:
@@ -688,6 +448,10 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
             // Streams are not started automatically on APM stack (sort of)
             initializeStreamRates(vehicle);
         }
+    }
+
+    if (qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->rawValue() == VideoSettings::videoSource3DRSolo) {
+        _soloVideoHandshake();
     }
 }
 
@@ -814,20 +578,16 @@ bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
     return vehicle->flightMode() == "Guided";
 }
 
-void APMFirmwarePlugin::_soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware)
+void APMFirmwarePlugin::_soloVideoHandshake(void)
 {
-    Q_UNUSED(vehicle);
+    QTcpSocket* socket = new QTcpSocket(this);
 
-    QTcpSocket* socket = new QTcpSocket();
-
-    socket->connectToHost(_artooIP, _artooVideoHandshakePort);
-    if (originalSoloFirmware) {
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
+    QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
 #else
-        QObject::connect(socket, &QAbstractSocket::errorOccurred, this, &APMFirmwarePlugin::_artooSocketError);
+    QObject::connect(socket, &QAbstractSocket::errorOccurred, this, &APMFirmwarePlugin::_artooSocketError);
 #endif
-    }
+    socket->connectToHost(_artooIP, _artooVideoHandshakePort);
 }
 
 void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketError)
@@ -953,28 +713,33 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     setGuidedMode(vehicle, true);
 
-    mavlink_message_t msg;
-    mavlink_set_position_target_local_ned_t cmd;
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_message_t                       msg;
+        mavlink_set_position_target_local_ned_t cmd;
+        SharedLinkInterfacePtr                  sharedLink = weakLink.lock();
 
-    memset(&cmd, 0, sizeof(cmd));
 
-    cmd.target_system    = static_cast<uint8_t>(vehicle->id());
-    cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
-    cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
-    cmd.type_mask = 0xFFF8; // Only x/y/z valid
-    cmd.x = 0.0f;
-    cmd.y = 0.0f;
-    cmd.z = static_cast<float>(-(altitudeChange));
+        memset(&cmd, 0, sizeof(cmd));
 
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_set_position_target_local_ned_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                &msg,
-                &cmd);
+        cmd.target_system    = static_cast<uint8_t>(vehicle->id());
+        cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
+        cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
+        cmd.type_mask = 0xFFF8; // Only x/y/z valid
+        cmd.x = 0.0f;
+        cmd.y = 0.0f;
+        cmd.z = static_cast<float>(-(altitudeChange));
 
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), msg);
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_set_position_target_local_ned_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    &msg,
+                    &cmd);
+
+        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    }
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -1093,36 +858,46 @@ QString APMFirmwarePlugin::_versionRegex() {
 
 void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
 {
-    mavlink_rc_channels_t channels;
-    mavlink_msg_rc_channels_decode(message, &channels);
-    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
-    if(channels.rssi) {
-        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_rc_channels_t   channels;
+        SharedLinkInterfacePtr  sharedLink = weakLink.lock();
+
+        mavlink_msg_rc_channels_decode(message, &channels);
+        //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+        if(channels.rssi) {
+            channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+        }
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_rc_channels_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    message,
+                    &channels);
     }
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_rc_channels_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                message,
-                &channels);
 }
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
 {
-    mavlink_rc_channels_raw_t channels;
-    mavlink_msg_rc_channels_raw_decode(message, &channels);
-    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
-    if(channels.rssi) {
-        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        mavlink_rc_channels_raw_t   channels;
+        SharedLinkInterfacePtr      sharedLink = weakLink.lock();
+
+        mavlink_msg_rc_channels_raw_decode(message, &channels);
+        //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+        if(channels.rssi) {
+            channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+        }
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_msg_rc_channels_raw_encode_chan(
+                    static_cast<uint8_t>(mavlink->getSystemId()),
+                    static_cast<uint8_t>(mavlink->getComponentId()),
+                    sharedLink->mavlinkChannel(),
+                    message,
+                    &channels);
     }
-    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_rc_channels_raw_encode_chan(
-                static_cast<uint8_t>(mavlink->getSystemId()),
-                static_cast<uint8_t>(mavlink->getComponentId()),
-                vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                message,
-                &channels);
 }
 
 void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
@@ -1146,27 +921,31 @@ void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMoti
         return;
     }
 
-    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+    WeakLinkInterfacePtr weakLink = vehicle->vehicleLinkManager()->primaryLink();
+    if (!weakLink.expired()) {
+        MAVLinkProtocol*                mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+        mavlink_global_position_int_t   globalPositionInt;
+        SharedLinkInterfacePtr          sharedLink = weakLink.lock();
 
-    mavlink_global_position_int_t globalPositionInt;
-    memset(&globalPositionInt, 0, sizeof(globalPositionInt));
+        memset(&globalPositionInt, 0, sizeof(globalPositionInt));
 
-    // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
-    globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
-    globalPositionInt.lat =             motionReport.lat_int;
-    globalPositionInt.lon =             motionReport.lon_int;
-    globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
-    globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
-    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
-    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
-    globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
+        // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
+        globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
+        globalPositionInt.lat =             motionReport.lat_int;
+        globalPositionInt.lon =             motionReport.lon_int;
+        globalPositionInt.alt =             static_cast<int32_t>(vehicle->homePosition().altitude() * 1000);    // mm
+        globalPositionInt.relative_alt =    static_cast<int32_t>(0);                                            // mm
+        globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);            // cm/sec
+        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);            // cm/sec
+        globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);            // cm/sec
+        globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);         // centi-degrees
 
-    mavlink_message_t message;
-    mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
-                                          static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
-                                          vehicle->vehicleLinkManager()->primaryLink()->mavlinkChannel(),
-                                          &message,
-                                          &globalPositionInt);
-    vehicle->sendMessageOnLinkThreadSafe(vehicle->vehicleLinkManager()->primaryLink(), message);
+        mavlink_message_t message;
+        mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+                                                    static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+                                                    sharedLink->mavlinkChannel(),
+                                                    &message,
+                                                    &globalPositionInt);
+        vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    }
 }

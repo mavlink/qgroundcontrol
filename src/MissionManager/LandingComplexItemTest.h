@@ -82,13 +82,16 @@ public:
     QString mapVisualQML(void) const final { return QStringLiteral("FWLandingPatternMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-    void                save                        (QJsonArray&  /*missionItems*/) { };
+    void    save        (QJsonArray&  /*missionItems*/) override { };
 
     static const QString name;
 
     static const char* jsonComplexItemTypeValue;
 
     static const char* settingsGroup;
+
+private slots:
+    void _updateFlightPathSegmentsDontCallDirectly(void) override;
 
 private:
     static LandingComplexItem*  _createItem     (PlanMasterController* masterController, bool flyView, QObject* parent) { return new SimpleLandingComplexItem(masterController, flyView, parent); }

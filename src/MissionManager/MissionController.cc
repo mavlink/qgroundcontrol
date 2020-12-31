@@ -1154,22 +1154,25 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
 
 FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemPair& pair)
 {
-    QGeoCoordinate      coord1 =            pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate();
-    QGeoCoordinate      coord2 =            pair.second->coordinate();
-    double              coord1Alt =         pair.first->isSimpleItem() ? pair.first->amslEntryAlt() : pair.first->amslExitAlt();
-    double              coord2Alt =         pair.second->amslEntryAlt();
+    // The takeoff goes straight up from ground to alt and then over to specified position at same alt. Which means
+    // that coord 1 altitude is the same as coord altitude.
+    bool                takeoffStraightUp   = pair.second->isTakeoffItem() && !_controllerVehicle->fixedWing();
 
-    FlightPathSegment*  segment =           new FlightPathSegment(coord1, coord1Alt, coord2, coord2Alt, !_flyView /* queryTerrainData */,  this);
+    QGeoCoordinate      coord1              = pair.first->exitCoordinate();
+    QGeoCoordinate      coord2              = pair.second->coordinate();
+    double              coord2AMSLAlt       = pair.second->amslEntryAlt();
+    double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
-    auto                coord1Notifier =    pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
-    auto                coord2Notifier =    &VisualMissionItem::coordinateChanged;
-    auto                coord1AltNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::amslEntryAltChanged : &VisualMissionItem::amslExitAltChanged;
-    auto                coord2AltNotifier = &VisualMissionItem::amslEntryAltChanged;
+    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
 
-    connect(pair.first,  coord1Notifier,                                segment,    &FlightPathSegment::setCoordinate1);
-    connect(pair.second, coord2Notifier,                                segment,    &FlightPathSegment::setCoordinate2);
-    connect(pair.first,  coord1AltNotifier,                             segment,    &FlightPathSegment::setCoord1AMSLAlt);
-    connect(pair.second, coord2AltNotifier,                             segment,    &FlightPathSegment::setCoord2AMSLAlt);
+    if (takeoffStraightUp) {
+        connect(pair.second, &VisualMissionItem::amslEntryAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
+    } else {
+        connect(pair.first, &VisualMissionItem::amslExitAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
+    }
+    connect(pair.first,  &VisualMissionItem::exitCoordinateChanged, segment,    &FlightPathSegment::setCoordinate1);
+    connect(pair.second, &VisualMissionItem::coordinateChanged,     segment,    &FlightPathSegment::setCoordinate2);
+    connect(pair.second, &VisualMissionItem::amslEntryAltChanged,   segment,    &FlightPathSegment::setCoord2AMSLAlt);
 
     connect(pair.second, &VisualMissionItem::coordinateChanged,         this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
@@ -1253,7 +1256,7 @@ void MissionController::_recalcFlightPathSegments(void)
     _flightPathSegmentHashTable.clear();
     _waypointPath.clear();
 
-    // Note: Although visual support _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
+    // Note: Although visual support for _incompleteComplexItemLines is still in the codebase. The support for populating the list is not.
     // This is due to the initial implementation being buggy and incomplete with respect to correctly generating the line set.
     // So for now we leave the code for displaying them in, but none are ever added until we have time to implement the correct support.
 
@@ -1266,7 +1269,7 @@ void MissionController::_recalcFlightPathSegments(void)
     _incompleteComplexItemLines.clearAndDeleteContents();
 
     // Mission Settings item needs to start with no segment
-    lastFlyThroughVI->setSimpleFlighPathSegment(nullptr);
+    lastFlyThroughVI->clearSimpleFlighPathSegment();
 
     // Grovel through the list of items keeping track of things needed to correctly draw waypoints lines
 
@@ -1275,7 +1278,7 @@ void MissionController::_recalcFlightPathSegments(void)
         SimpleMissionItem*  simpleItem =    qobject_cast<SimpleMissionItem*>(visualItem);
         ComplexMissionItem* complexItem =   qobject_cast<ComplexMissionItem*>(visualItem);
 
-        visualItem->setSimpleFlighPathSegment(nullptr);
+        visualItem->clearSimpleFlighPathSegment();
 
         if (simpleItem) {
             if (roiActive) {
@@ -1505,7 +1508,7 @@ void MissionController::_recalcMissionFlightStatus()
     lastFlyThroughVI->setDistance(0);
     lastFlyThroughVI->setDistanceFromStart(0);
 
-    _minAMSLAltitude = _maxAMSLAltitude = _settingsItem->coordinate().altitude();
+    _minAMSLAltitude = _maxAMSLAltitude = qQNaN();
 
     _resetMissionFlightStatus();
 
@@ -1582,14 +1585,14 @@ void MissionController::_recalcMissionFlightStatus()
                 // Keep track of the min/max AMSL altitude for entire mission so we can calculate altitude percentages in terrain status display
                 if (simpleItem) {
                     double amslAltitude = item->amslEntryAlt();
-                    _minAMSLAltitude = std::min(_minAMSLAltitude, amslAltitude);
-                    _maxAMSLAltitude = std::max(_maxAMSLAltitude, amslAltitude);
+                    _minAMSLAltitude = std::fmin(_minAMSLAltitude, amslAltitude);
+                    _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, amslAltitude);
                 } else {
                     // Complex item
                     double complexMinAMSLAltitude = complexItem->minAMSLAltitude();
                     double complexMaxAMSLAltitude = complexItem->maxAMSLAltitude();
-                    _minAMSLAltitude = std::min(_minAMSLAltitude, complexMinAMSLAltitude);
-                    _maxAMSLAltitude = std::max(_maxAMSLAltitude, complexMaxAMSLAltitude);
+                    _minAMSLAltitude = std::fmin(_minAMSLAltitude, complexMinAMSLAltitude);
+                    _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, complexMaxAMSLAltitude);
                 }
 
                 if (!item->isStandaloneCoordinate()) {
@@ -1706,6 +1709,12 @@ void MissionController::_recalcMissionFlightStatus()
 
     if (_missionFlightStatus.mAhBattery != 0 && _missionFlightStatus.batteryChangePoint == -1) {
         _missionFlightStatus.batteryChangePoint = 0;
+    }
+
+    if (linkStartToHome) {
+        // Home position is taken into account for min/max values
+        _minAMSLAltitude = std::fmin(_minAMSLAltitude, _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble());
+        _maxAMSLAltitude = std::fmax(_maxAMSLAltitude, _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble());
     }
 
     emit missionMaxTelemetryChanged     (_missionFlightStatus.maxTelemetryDistance);

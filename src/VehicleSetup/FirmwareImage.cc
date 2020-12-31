@@ -198,9 +198,6 @@ bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
         result = true;
     }
     switch(boardId) {
-    case Bootloader::boardIDAUAVX2_1: // AUAVX2.1 is compatible with px4-v2/v3
-        if (firmwareId == 9) result = true;
-        break;
     case Bootloader::boardIDPX4FMUV3:
         if (firmwareId == 9) result = true;
         break;
@@ -238,7 +235,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     QStringList requiredKeys;
     requiredKeys << _jsonBoardIdKey << _jsonImageKey << _jsonImageSizeKey;
     if (!JsonHelper::validateRequiredKeys(px4Json, requiredKeys, errorString)) {
-        emit statusMessage(tr("Firmware file mission required key: %1").arg(errorString));
+        emit statusMessage(tr("Firmware file missing required key: %1").arg(errorString));
         return false;
     }
 

@@ -206,7 +206,7 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
     int         burstMax    = 10;
     int         burstCount  = 1;
     uint32_t    burstOffset = request->hdr.offset;
-    
+
     while (burstOffset < _currentFile.size() && burstCount++ < burstMax) {
         _currentFile.seek(burstOffset);
 
@@ -231,7 +231,10 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
         burstOffset += cBytes;
     }
 
-    _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
+    if (burstOffset >= _currentFile.size()) {
+        // Burst is fully complete
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
+    }
 }
 
 void MockLinkFTP::_terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request* request, uint16_t seqNumber)
@@ -352,7 +355,7 @@ void MockLinkFTP::_sendAck(uint8_t targetSystemId, uint8_t targetComponentId, ui
     
     ackResponse.hdr.opcode      = MavlinkFTP::kRspAck;
     ackResponse.hdr.req_opcode  = reqOpcode;
-    ackResponse.hdr.session     = 0;
+    ackResponse.hdr.session     = _sessionId;
     ackResponse.hdr.size        = 0;
     
     _sendResponse(targetSystemId, targetComponentId, &ackResponse, seqNumber);
@@ -364,7 +367,7 @@ void MockLinkFTP::_sendNak(uint8_t targetSystemId, uint8_t targetComponentId, Ma
 
     nakResponse.hdr.opcode      = MavlinkFTP::kRspNak;
     nakResponse.hdr.req_opcode  = reqOpcode;
-    nakResponse.hdr.session     = 0;
+    nakResponse.hdr.session     = _sessionId;
     nakResponse.hdr.size        = 1;
     nakResponse.data[0]         = error;
     
@@ -377,7 +380,7 @@ void MockLinkFTP::_sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentI
 
     nakResponse.hdr.opcode      = MavlinkFTP::kRspNak;
     nakResponse.hdr.req_opcode  = reqOpcode;
-    nakResponse.hdr.session     = 0;
+    nakResponse.hdr.session     = _sessionId;
     nakResponse.hdr.size        = 2;
     nakResponse.data[0]         = MavlinkFTP::kErrFailErrno;
     nakResponse.data[1]         = nakErrno;

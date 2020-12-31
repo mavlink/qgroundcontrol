@@ -156,6 +156,7 @@ Rectangle {
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Show additional heading indicators on Compass")
                                 visible:    _showAdditionalIndicatorsCompass.visible
@@ -163,12 +164,21 @@ Rectangle {
 
                                 property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
                             }
+
                             FactCheckBox {
                                 text:       qsTr("Lock Compass Nose-Up")
                                 visible:    _lockNoseUpCompass.visible
                                 fact:       _lockNoseUpCompass
 
                                 property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Show simple camera controls (DIGICAM_CONTROL)")
+                                visible:    _showDumbCameraControl.visible
+                                fact:       _showDumbCameraControl
+
+                                property Fact _showDumbCameraControl: QGroundControl.settingsManager.flyViewSettings.showSimpleCameraControl
                             }
 
                             GridLayout {
@@ -303,6 +313,19 @@ Rectangle {
                                     visible:                _showSaveVideoSettings && _videoSettings.enableStorageLimit.value && maxSavedVideoStorageLabel.visible
                                 }
 
+                                QGCLabel {
+                                    id:         videoDecodeLabel
+                                    text:       qsTr("Video decode priority")
+                                    visible:    forceVideoDecoderComboBox.visible
+                                }
+                                FactComboBox {
+                                    id:                     forceVideoDecoderComboBox
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    fact:                   _videoSettings.forceVideoDecoder
+                                    visible:                fact.visible
+                                    indexModel:             false
+                                }
+
                                 Item { width: 1; height: 1}
                                 FactCheckBox {
                                     text:       qsTr("Disable When Disarmed")
@@ -398,14 +421,14 @@ Rectangle {
                             Layout.fillWidth:           false
                             anchors.horizontalCenter:   parent.horizontalCenter
                             flow:                       GridLayout.TopToBottom
-                            rows:                       4
+                            rows:                       5
 
                             Repeater {
-                                model: [ qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
+                                model: [ qsTr("Horizontal Distance"), qsTr("Vertical Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
                                 QGCLabel { text: modelData }
                             }
                             Repeater {
-                                model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
+                                model:  [ QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits, QGroundControl.settingsManager.unitsSettings.verticalDistanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   modelData
