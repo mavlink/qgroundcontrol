@@ -185,12 +185,12 @@ Item {
             }
 
             QGCLabel {
-                id:                 gstLabel
-                anchors.left:       writeButton.right
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.baseline:   gstCombo.baseline
-                text:               qsTr("GStreamer Debug")
-                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                id:                     gstLabel
+                anchors.left:           writeButton.right
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+                anchors.verticalCenter: gstCombo.verticalCenter
+                text:                   qsTr("GStreamer Debug Level")
+                visible:                QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
             }
 
             FactComboBox {
@@ -198,10 +198,9 @@ Item {
                 anchors.left:       gstLabel.right
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottom:     parent.bottom
-                width:              ScreenTools.defaultFontPixelWidth * 10
-                model:              ["Disabled", "1", "2", "3", "4", "5", "6", "7", "8"]
                 fact:               QGroundControl.settingsManager.appSettings.gstDebugLevel
                 visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                sizeToContents:     true
             }
 
             QGCButton {
