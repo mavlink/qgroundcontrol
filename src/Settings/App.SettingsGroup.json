@@ -310,6 +310,12 @@
     "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
     "type":             "string",
     "default":     "localhost:14445"
+},
+{
+    "name":         "useComponentInformationQuery",
+    "shortDesc":    "Use COMPONENT_INFORMATION query (beta)",
+    "type":         "bool",
+    "default":      false
 }
 ]
 }
