@@ -98,13 +98,17 @@ public:
 
     QTranslator& qgcJSONTranslator(void) { return _qgcTranslatorJSON; }
 
-    static QString cachedParameterMetaDataFile(void);
-    static QString cachedAirframeMetaDataFile(void);
-
     void            setLanguage();
     QQuickItem*     mainRootWindow();
-
     uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
+
+    /// Registers the signal such that only the last duplicate signal added is left in the queue.
+    void addCompressedSignal(const QMetaMethod & method);
+
+    void removeCompressedSignal(const QMetaMethod & method);
+
+    static QString cachedParameterMetaDataFile(void);
+    static QString cachedAirframeMetaDataFile(void);
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -178,6 +182,8 @@ private:
     void        _checkForNewVersion     ();
     void        _exitWithError          (QString errorMessage);
 
+    // Overrides from QApplication
+    bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) override;
 
     bool                        _runningUnitTests;                                  ///< true: running unit tests, false: normal app
     static const int            _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
@@ -204,102 +210,29 @@ private:
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
+    class CompressedSignalList {
+        Q_DISABLE_COPY(CompressedSignalList)
+
+    public:
+        CompressedSignalList() {}
+
+        void add        (const QMetaMethod & method);
+        void remove     (const QMetaMethod & method);
+        bool contains   (const QMetaObject * metaObject, int signalIndex);
+
+    private:
+        static int _signalIndex(const QMetaMethod & method);
+
+        QMap<const QMetaObject*, QSet<int> > _signalMap;
+    };
+
+    CompressedSignalList _compressedSignals;
+
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
-
-private:
-    /*! Keeps a list of singal indices for one or more meatobject classes.
-     * The indices are signal indices as given by QMetaCallEvent.signalId.
-     * On Qt 5, those do *not* match QMetaObject::methodIndex since they
-     * exclude non-signal methods. */
-    class SignalList {
-        Q_DISABLE_COPY(SignalList)
-        typedef QMap<const QMetaObject *, QSet<int> > T;
-        T m_data;
-        /*! Returns a signal index that is can be compared to QMetaCallEvent.signalId. */
-        static int signalIndex(const QMetaMethod & method) {
-            Q_ASSERT(method.methodType() == QMetaMethod::Signal);
-
-            int index = -1;
-            const QMetaObject * mobj = method.enclosingMetaObject();
-            for (int i = 0; i <= method.methodIndex(); ++i) {
-                if (mobj->method(i).methodType() != QMetaMethod::Signal) continue;
-                ++ index;
-            }
-            return index;
-        }
-    public:
-        SignalList() {}
-        void add(const QMetaMethod & method) {
-            m_data[method.enclosingMetaObject()].insert(signalIndex(method));
-        }
-        void remove(const QMetaMethod & method) {
-            T::iterator it = m_data.find(method.enclosingMetaObject());
-            if (it != m_data.end()) {
-                it->remove(signalIndex(method));
-                if (it->empty()) m_data.erase(it);
-            }
-        }
-        bool contains(const QMetaObject * metaObject, int signalId) {
-            T::const_iterator it = m_data.find(metaObject);
-            return it != m_data.end() && it.value().contains(signalId);
-        }
-    };
-
-    SignalList m_compressedSignals;
-
-public:
-    void addCompressedSignal(const QMetaMethod & method) { m_compressedSignals.add(method); }
-    void removeCompressedSignal(const QMetaMethod & method) { m_compressedSignals.remove(method); }
-
-private:
-    struct EventHelper : private QEvent {
-        static void clearPostedFlag(QEvent * ev) {
-            (&static_cast<EventHelper*>(ev)->t)[1] &= ~0x8001; // Hack to clear QEvent::posted
-        }
-    };
-
-    bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) {
-        if (event->type() != QEvent::MetaCall)
-            return QApplication::compressEvent(event, receiver, postedEvents);
-
-        QMetaCallEvent *mce = static_cast<QMetaCallEvent*>(event);
-
-        if (mce->sender() && !m_compressedSignals.contains(mce->sender()->metaObject(), mce->signalId())) {
-            return false;
-        }
-
-        for (QPostEventList::iterator it = postedEvents->begin(); it != postedEvents->end(); ++it) {
-            QPostEvent &cur = *it;
-            if (cur.receiver != receiver || cur.event == 0 || cur.event->type() != event->type())
-                continue;
-            QMetaCallEvent *cur_mce = static_cast<QMetaCallEvent*>(cur.event);
-            if (cur_mce->sender() != mce->sender() || cur_mce->signalId() != mce->signalId() ||
-                    cur_mce->id() != mce->id())
-                continue;
-            if (true) {
-              /* Keep The Newest Call */
-              // We can't merely qSwap the existing posted event with the new one, since QEvent
-              // keeps track of whether it has been posted. Deletion of a formerly posted event
-              // takes the posted event list mutex and does a useless search of the posted event
-              // list upon deletion. We thus clear the QEvent::posted flag before deletion.
-              EventHelper::clearPostedFlag(cur.event);
-              delete cur.event;
-              cur.event = event;
-            } else {
-              /* Keep the Oldest Call */
-              delete event;
-            }
-            return true;
-        }
-        return false;
-    }
-
-
-
 };
 
 /// @brief Returns the QGCApplication object singleton.
