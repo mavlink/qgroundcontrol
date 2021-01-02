@@ -645,6 +645,14 @@ Rectangle {
                                         }
                                     }
                                 }
+
+                                FactCheckBox {
+                                    text:       _fact.shortDescription
+                                    fact:       _fact
+                                    visible:    _fact.visible
+
+                                    property Fact _fact: QGroundControl.settingsManager.appSettings.useComponentInformationQuery
+                                }
                             }
                         }
 
