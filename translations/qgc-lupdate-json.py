@@ -58,7 +58,7 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
             jsonDict[arrayIDKeysKey] = arrayIDKeysKeyValue
 
 def parseJson(jsonPath, locStringDict):
-    jsonFile = open(jsonPath)
+    jsonFile = open(jsonPath, "rb")
     jsonDict = json.load(jsonFile)
     if (type(jsonDict) != type({})):
         return
@@ -80,7 +80,7 @@ def walkDirectoryTreeForJsonFiles(dir, multiFileLocArray):
                 # Check for duplicate file names
                 for entry in multiFileLocArray:
                     if entry[0] == filename:
-                        print "Error: Duplicate filenames: %s paths: %s %s" % (filename, path, entry[1])
+                        print("Error: Duplicate filenames: %s paths: %s %s" % (filename, path, entry[1]))
                         sys.exit(1)
                 multiFileLocArray.append([filename, path, singleFileLocStringDict])
         if (os.path.isdir(path)):
@@ -101,7 +101,7 @@ def writeJsonTSFile(multiFileLocArray):
                 workStr = locStr[len(disambiguationPrefix):]
                 terminatorIndex = workStr.find("#")
                 if terminatorIndex == -1:
-                    print "Bad disambiguation %1 '%2'" % (entry[0], locStr)
+                    print("Bad disambiguation %1 '%2'" % (entry[0], locStr))
                     sys.exit(1)
                 disambiguation = workStr[:terminatorIndex]
                 locStr = workStr[terminatorIndex+1:]
@@ -113,7 +113,7 @@ def writeJsonTSFile(multiFileLocArray):
                 extraCommentStr += "%s, " % jsonHierachy
             jsonTSFile.write("        <extracomment>%s</extracomment>\n" % extraCommentStr)
             jsonTSFile.write("        <location filename=\"%s\"/>\n" % entry[1])
-            jsonTSFile.write(unicode("        <source>%s</source>\n") % locStr)
+            jsonTSFile.write("        <source>%s</source>\n" % locStr)
             jsonTSFile.write("        <translation type=\"unfinished\"></translation>\n")
             jsonTSFile.write("    </message>\n")
         jsonTSFile.write("</context>\n")
