@@ -969,3 +969,99 @@ QString QGCApplication::cachedAirframeMetaDataFile(void)
     QDir airframeDir = QFileInfo(settings.fileName()).dir();
     return airframeDir.filePath(QStringLiteral("PX4AirframeFactMetaData.xml"));
 }
+
+/// Returns a signal index that is can be compared to QMetaCallEvent.signalId
+int QGCApplication::CompressedSignalList::_signalIndex(const QMetaMethod & method)
+{
+    if (method.methodType() != QMetaMethod::Signal) {
+        qWarning() << "Internal error: QGCApplication::CompressedSignalList::_signalIndex not a signal" << method.methodType();
+        return -1;
+    }
+
+    int index = -1;
+    const QMetaObject* metaObject = method.enclosingMetaObject();
+    for (int i=0; i<=method.methodIndex(); i++) {
+        if (metaObject->method(i).methodType() != QMetaMethod::Signal) {
+            continue;
+        }
+        index++;
+    }
+    return index;
+}
+
+void QGCApplication::CompressedSignalList::add(const QMetaMethod & method)
+{
+    const QMetaObject*  metaObject  = method.enclosingMetaObject();
+    int                 signalIndex = _signalIndex(method);
+
+    if (signalIndex != -1 && !contains(metaObject, signalIndex)) {
+        _signalMap[method.enclosingMetaObject()].insert(signalIndex);
+    }
+}
+
+void QGCApplication::CompressedSignalList::remove(const QMetaMethod & method)
+{
+    int                 signalIndex = _signalIndex(method);
+    const QMetaObject*  metaObject  = method.enclosingMetaObject();
+
+    if (signalIndex != -1 && _signalMap.contains(metaObject) && _signalMap[metaObject].contains(signalIndex)) {
+        _signalMap[metaObject].remove(signalIndex);
+        if (_signalMap[metaObject].count() == 0) {
+            _signalMap.remove(metaObject);
+        }
+    }
+}
+
+bool QGCApplication::CompressedSignalList::contains(const QMetaObject* metaObject, int signalIndex)
+{
+    return _signalMap.contains(metaObject) && _signalMap[metaObject].contains(signalIndex);
+}
+
+void QGCApplication::addCompressedSignal(const QMetaMethod & method)
+{
+    _compressedSignals.add(method);
+}
+
+void QGCApplication::removeCompressedSignal(const QMetaMethod & method)
+{
+    _compressedSignals.remove(method);
+}
+
+bool QGCApplication::compressEvent(QEvent*event, QObject* receiver, QPostEventList* postedEvents)
+{
+    if (event->type() != QEvent::MetaCall) {
+        return QApplication::compressEvent(event, receiver, postedEvents);
+    }
+
+    QMetaCallEvent* mce = static_cast<QMetaCallEvent*>(event);
+    if (!mce->sender() || !_compressedSignals.contains(mce->sender()->metaObject(), mce->signalId())) {
+        return QApplication::compressEvent(event, receiver, postedEvents);
+    }
+
+    for (QPostEventList::iterator it = postedEvents->begin(); it != postedEvents->end(); ++it) {
+        QPostEvent &cur = *it;
+        if (cur.receiver != receiver || cur.event == 0 || cur.event->type() != event->type()) {
+            continue;
+        }
+        QMetaCallEvent *cur_mce = static_cast<QMetaCallEvent*>(cur.event);
+        if (cur_mce->sender() != mce->sender() || cur_mce->signalId() != mce->signalId() || cur_mce->id() != mce->id()) {
+            continue;
+        }
+        /* Keep The Newest Call */
+        // We can't merely qSwap the existing posted event with the new one, since QEvent
+        // keeps track of whether it has been posted. Deletion of a formerly posted event
+        // takes the posted event list mutex and does a useless search of the posted event
+        // list upon deletion. We thus clear the QEvent::posted flag before deletion.
+        struct EventHelper : private QEvent {
+            static void clearPostedFlag(QEvent * ev) {
+                (&static_cast<EventHelper*>(ev)->t)[1] &= ~0x8001; // Hack to clear QEvent::posted
+            }
+        };
+        EventHelper::clearPostedFlag(cur.event);
+        delete cur.event;
+        cur.event = event;
+        return true;
+    }
+
+    return false;
+}
