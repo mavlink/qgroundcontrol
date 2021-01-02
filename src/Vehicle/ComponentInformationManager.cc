@@ -16,6 +16,8 @@
 #include "CompInfoParam.h"
 #include "QGCFileDownload.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QStandardPaths>
 #include <QJsonDocument>
@@ -183,6 +185,9 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
 
     if (weakLink.expired()) {
         qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
+        stateMachine->advance();
+    } else if (!qgcApp()->toolbox()->settingsManager()->appSettings()->useComponentInformationQuery()->rawValue().toBool()) {
+        qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to application setting").arg(requestMachine->typeToString());
         stateMachine->advance();
     } else {
         SharedLinkInterfacePtr sharedLink = weakLink.lock();
