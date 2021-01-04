@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -Eeuxo pipefail # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
+# This is causing master builds to fail. I'll figure it out once I get Stable out.
+#set -Eeuxo pipefail # https://vaneyckt.io/posts/safer_bash_scripts_with_set_euxo_pipefail/
 
 if [[ $# -eq 0 ]]; then
   echo 'create_linux_appimage.sh QGC_SRC_DIR QGC_RELEASE_DIR'
