@@ -7724,7 +7724,7 @@ default 1.5 turns per second</short_desc>
     </parameter>
   </group>
   <group name="Return Mode">
-    <parameter name="RTL_CONE_ANG" default="0" type="INT32">
+    <parameter name="RTL_CONE_ANG" default="45" type="INT32">
       <short_desc>Half-angle of the return mode altitude cone</short_desc>
       <long_desc>Defines the half-angle of a cone centered around the destination position that affects the altitude at which the vehicle returns.</long_desc>
       <min>0</min>
@@ -7757,9 +7757,9 @@ default 1.5 turns per second</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="RTL_MIN_DIST" default="5.0" type="FLOAT">
-      <short_desc>Maximum horizontal distance from return destination, below which RTL_DESCEND_ALT is used as return altitude</short_desc>
-      <long_desc>If the vehicle is less than this horizontal distance from the return destination when return mode is activated it will ascend to RTL_DESCEND_ALT for the return journey (rather than the altitude set by RTL_RETURN_ALT and RTL_CONE_ANG).</long_desc>
+    <parameter name="RTL_MIN_DIST" default="10.0" type="FLOAT">
+      <short_desc>Horizontal radius from return point within which special rules for return mode apply</short_desc>
+      <long_desc>The return altitude will be calculated based on RTL_CONE_ANG parameter. The yaw setpoint will switch to the one defined by corresponding waypoint.</long_desc>
       <min>0.5</min>
       <max>100</max>
       <unit>m</unit>
