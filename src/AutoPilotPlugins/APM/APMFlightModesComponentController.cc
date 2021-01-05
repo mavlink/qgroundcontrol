@@ -107,7 +107,7 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
 
     for (int i=0; i<_cChannelOptions; i++) {
         _rgChannelOptionEnabled[i] = QVariant(false);
-        channelValue = pwmValues[i+6];
+        channelValue = pwmValues[i+5];
         if (channelValue > 1800) {
             _rgChannelOptionEnabled[i] = QVariant(true);
         }
