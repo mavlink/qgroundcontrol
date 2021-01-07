@@ -1887,51 +1887,6 @@ If no airspeed measurements are avalable, the EKF-GSF AHRS calculation will assu
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="EKF2_MAGBIAS_ID" default="0" type="INT32" category="System">
-      <short_desc>ID of Magnetometer the learned bias is for</short_desc>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="EKF2_MAGBIAS_X" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Learned value of magnetometer X axis bias.
-This is the amount of X-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
-      <min>-0.5</min>
-      <max>0.5</max>
-      <unit>gauss</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="EKF2_MAGBIAS_Y" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Learned value of magnetometer Y axis bias.
-This is the amount of Y-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
-      <min>-0.5</min>
-      <max>0.5</max>
-      <unit>gauss</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="EKF2_MAGBIAS_Z" default="0.0" type="FLOAT" volatile="true" category="System">
-      <short_desc>Learned value of magnetometer Z axis bias.
-This is the amount of Z-axis magnetometer bias learned by the EKF and saved from the last flight. It must be set to zero if the ground based magnetometer calibration is repeated</short_desc>
-      <min>-0.5</min>
-      <max>0.5</max>
-      <unit>gauss</unit>
-      <decimal>3</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter name="EKF2_MAGB_K" default="0.2" type="FLOAT">
-      <short_desc>Maximum fraction of learned mag bias saved at each disarm.
-Smaller values make the saved mag bias learn slower from flight to flight. Larger values make it learn faster. Must be &gt; 0.0 and &lt;= 1.0</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-    </parameter>
-    <parameter name="EKF2_MAGB_VREF" default="2.5E-7" type="FLOAT">
-      <short_desc>State variance assumed for magnetometer bias storage.
-This is a reference variance used to calculate the fraction of learned magnetometer bias that will be used to update the stored value. Smaller values will make the stored bias data adjust more slowly from flight to flight. Larger values will make it adjust faster</short_desc>
-      <unit>gauss^2</unit>
-      <decimal>8</decimal>
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter name="EKF2_MAG_ACCLIM" default="0.5" type="FLOAT">
       <short_desc>Horizontal acceleration threshold used by automatic selection of magnetometer fusion method.
 This parameter is used when the magnetometer fusion method is set automatically (EKF2_MAG_TYPE = 0). If the filtered horizontal acceleration is greater than this parameter value, then the EKF will use 3-axis magnetomer fusion</short_desc>
