@@ -44,7 +44,7 @@ Item {
     property real   _heading:                   _currentMissionItemValid ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
     property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
-    property real   _missionTime:               _missionValid ? missionTime : NaN
+    property real   _missionTime:               _missionValid ? missionTime : 0
     property int    _batteryChangePoint:        _controllerValid ? _planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? _planMasterController.missionController.batteriesRequired : -1
     property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
@@ -69,7 +69,7 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     function getMissionTime() {
-        if(isNaN(_missionTime)) {
+        if(_missionTime == 0) {
             return "00:00:00"
         }
         var t = new Date(0, 0, 0, 0, 0, Number(_missionTime))
