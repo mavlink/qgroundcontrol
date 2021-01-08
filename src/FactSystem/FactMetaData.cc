@@ -57,6 +57,7 @@ const char* FactMetaData::_enumBitmaskArrayDescriptionJsonKey   = "description";
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
     { "radians",        "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
+    { "rad",            "deg",  FactMetaData::_radiansToDegrees,                        FactMetaData::_degreesToRadians },
     { "gimbal-degrees", "deg",  FactMetaData::_mavlinkGimbalDegreesToUserGimbalDegrees, FactMetaData::_userGimbalDegreesToMavlinkGimbalDegrees },
     { "norm",           "%",    FactMetaData::_normToPercent,                           FactMetaData::_percentToNorm },
 };
