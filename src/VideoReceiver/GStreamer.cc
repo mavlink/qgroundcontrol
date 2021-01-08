@@ -20,6 +20,7 @@
 #include "GstVideoReceiver.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "GStreamerLog")
+QGC_LOGGING_CATEGORY(GStreamerAPILog, "GStreamerAPILog")
 
 static void qt_gst_log(GstDebugCategory * category,
                        GstDebugLevel      level,
@@ -43,20 +44,20 @@ static void qt_gst_log(GstDebugCategory * category,
     switch (level) {
     default:
     case GST_LEVEL_ERROR:
-        log.critical(GStreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        log.critical(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
         break;
     case GST_LEVEL_WARNING:
-        log.warning(GStreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        log.warning(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
         break;
     case GST_LEVEL_FIXME:
     case GST_LEVEL_INFO:
-        log.info(GStreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        log.info(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
         break;
     case GST_LEVEL_DEBUG:
     case GST_LEVEL_LOG:
     case GST_LEVEL_TRACE:
     case GST_LEVEL_MEMDUMP:
-        log.debug(GStreamerLog, "%s %s", object_info, gst_debug_message_get(message));
+        log.debug(GStreamerAPILog, "%s %s", object_info, gst_debug_message_get(message));
         break;
     }
 
@@ -118,11 +119,11 @@ GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
     auto changeRank = [registry](const char* featureName, uint16_t rank) {
         GstPluginFeature* feature = gst_registry_lookup_feature(registry, featureName);
         if (feature == nullptr) {
-            qCDebug(GStreamerLog) << "Failed to change ranking of feature:" << featureName;
+            qCWarning(GStreamerLog) << "Failed to change ranking of feature:" << featureName;
             return;
         }
 
-        qCInfo(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
+        qCDebug(GStreamerLog) << "Changing feature (" << featureName << ") to use rank:" << rank;
         gst_plugin_feature_set_rank(feature, rank);
         gst_registry_add_feature(registry, feature);
         gst_object_unref(feature);
@@ -259,7 +260,7 @@ GStreamer::createVideoSink(QObject* parent, QQuickItem* widget)
     if ((sink = gst_element_factory_make("qgcvideosinkbin", nullptr)) != nullptr) {
         g_object_set(sink, "widget", widget, NULL);
     } else {
-        qCritical() << "gst_element_factory_make('qgcvideosinkbin') failed";
+        qCCritical(GStreamerLog) << "gst_element_factory_make('qgcvideosinkbin') failed";
     }
 
     return sink;
