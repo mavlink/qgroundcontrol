@@ -11959,5 +11959,12 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
     <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
+    <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
+      <short_desc>Skip the controller</short_desc>
+      <values>
+        <value code="0">use the module's controller</value>
+        <value code="1">skip the controller and feedthrough the setpoints</value>
+      </values>
+    </parameter>
   </group>
 </parameters>
