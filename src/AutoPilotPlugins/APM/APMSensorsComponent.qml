@@ -446,6 +446,37 @@ SetupPage {
                                 model:      _orientationsDialogShowCompass ? 3 : 0
                                 delegate:   singleCompassSettingsComponent
                             }
+
+                            QGCLabel {
+                                id:         magneticDeclinationLabel
+                                width:      parent.width
+                                visible:    globals.activeVehicle.sub && _orientationsDialogShowCompass
+                                text:       qsTr("Magnetic Declination")
+                            }
+
+                            Column {
+                                visible:            magneticDeclinationLabel.visible
+                                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                anchors.left:       parent.left
+                                anchors.right:      parent.right
+                                spacing:            ScreenTools.defaultFontPixelHeight
+
+                                QGCCheckBox {
+                                    id:                           manualMagneticDeclinationCheckBox
+                                    text:                         qsTr("Manual Magnetic Declination")
+                                    property Fact autoDecFact:    controller.getParameterFact(-1, "COMPASS_AUTODEC")
+                                    property int manual:          0
+                                    property int automatic:       1
+
+                                    checked:    autoDecFact.rawValue === manual
+                                    onClicked:  autoDecFact.value = (checked ? manual : automatic)
+                                }
+
+                                FactTextField {
+                                    fact:       sensorParams.declinationFact
+                                    enabled:    manualMagneticDeclinationCheckBox.checked
+                                }
+                            }
                         } // Column
                     } // QGCFlickable
                 } // QGCViewDialog
