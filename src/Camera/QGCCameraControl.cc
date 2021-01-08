@@ -779,7 +779,7 @@ QGCCameraControl::_setVideoStatus(VideoStatus status)
 void
 QGCCameraControl::_recTimerHandler()
 {
-    _recordTime = static_cast<uint32_t>(_recTime.msec());
+    _recordTime = static_cast<uint32_t>(_recTime.msecsTo(QTime::currentTime()));
     emit recordTimeChanged();
 }
 
@@ -1537,8 +1537,9 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
     }
     //-- Do we have recording time?
     if(cap.recording_time_ms) {
+        // Resync our _recTime timer to the time info received from the camera component
         _recordTime = cap.recording_time_ms;
-        _recTime = _recTime.addMSecs(_recTime.msec() - static_cast<int>(cap.recording_time_ms));
+        _recTime = _recTime.addMSecs(_recTime.msecsTo(QTime::currentTime()) - static_cast<int>(cap.recording_time_ms));
         emit recordTimeChanged();
     }
     //-- Video/Image Capture Status
