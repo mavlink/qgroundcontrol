@@ -25,7 +25,7 @@ def process(src, exclusion, dst):
                 newLine = newLine.replace(">", ">../", 1)
             file3.write(newLine + '\n')
         else:
-            print 'Excluded:', line
+            print('Excluded:', line)
     file3.close()
 
 def main():
