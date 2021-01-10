@@ -74,7 +74,7 @@ private:
         uint32_t cBytesMissing;
     } MissingData_t;
 
-    typedef struct {
+    typedef struct DownloadState {
         uint8_t                 sessionId;
         uint32_t                expectedOffset;         ///< offset which should be coming next
         uint32_t                bytesWritten;
