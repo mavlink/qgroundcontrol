@@ -119,7 +119,7 @@ GStreamer::blacklist(VideoSettings::VideoDecoderOptions option)
     auto changeRank = [registry](const char* featureName, uint16_t rank) {
         GstPluginFeature* feature = gst_registry_lookup_feature(registry, featureName);
         if (feature == nullptr) {
-            qCWarning(GStreamerLog) << "Failed to change ranking of feature:" << featureName;
+            qCDebug(GStreamerLog) << "Failed to change ranking of feature. Featuer does not exist:" << featureName;
             return;
         }
 
