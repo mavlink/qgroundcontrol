@@ -56,8 +56,7 @@ Item {
     QGCToolInsets {
         id:                     _totalToolInsets
         topEdgeCenterInset:     compassArrowIndicator.y + compassArrowIndicator.height
-        bottomEdgeRightInset:   parent.height - vehicleIndicator.y
-        bottomEdgeCenterInset:  bottomEdgeRightInset
+        rightEdgeBottomInset:   parent.width - compassBackground.x
     }
 
     //-------------------------------------------------------------------------
@@ -129,233 +128,96 @@ Item {
         anchors.topMargin:          -height / 2
         anchors.horizontalCenter:   parent.horizontalCenter
     }
-    //-------------------------------------------------------------------------
-    //-- Vehicle Indicator
+
     Rectangle {
-        id:                     vehicleIndicator
-        color:                  qgcPal.window
-        width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
-        height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
-        radius:                 2
-        //anchors.bottomMargin:   parentToolInsets.bottomEdgeRightInset
-        anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   _toolsMargin
+        id:                     compassBackground
+        anchors.bottom:         attitudeIndicator.bottom
         anchors.right:          attitudeIndicator.left
-        anchors.rightMargin:    -ScreenTools.defaultFontPixelWidth
+        anchors.rightMargin:    -attitudeIndicator.width / 2
+        width:                  -anchors.rightMargin + compassBezel.width + (_toolsMargin * 2)
+        height:                 attitudeIndicator.height * 0.75
+        radius:                 2
+        color:                  qgcPal.window
 
-        GridLayout {
-            id:                     vehicleStatusGrid
-            columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
-            rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.5
-            columns:                7
-            anchors.centerIn:       parent
+        Rectangle {
+            id:                     compassBezel
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin:     _toolsMargin
+            anchors.left:           parent.left
+            width:                  height
+            height:                 parent.height - (northLabelBackground.height / 2) - (headingLabelBackground.height / 2)
+            radius:                 height / 2
+            border.color:           qgcPal.text
+            border.width:           1
+            color:                  Qt.rgba(0,0,0,0)
+        }
 
-            //-- Compass
-            Item {
-                Layout.rowSpan:         3
-                Layout.column:          6
-                Layout.minimumWidth:    parent.height * 1.25
-                Layout.fillHeight:      true
-                Layout.fillWidth:       true
-                //-- Large circle
-                Rectangle {
-                    height:             parent.height
-                    width:              height
-                    radius:             height * 0.5
-                    border.color:       qgcPal.text
-                    border.width:       1
-                    color:              Qt.rgba(0,0,0,0)
-                    anchors.centerIn:   parent
-                }
-                //-- North Label
-                Rectangle {
-                    height:             ScreenTools.defaultFontPixelHeight * 0.75
-                    width:              ScreenTools.defaultFontPixelWidth  * 2
-                    radius:             ScreenTools.defaultFontPixelWidth  * 0.25
-                    color:              qgcPal.windowShade
-                    anchors.top:        parent.top
-                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.25
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        text:               "N"
-                        color:              qgcPal.text
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        anchors.centerIn:   parent
-                    }
-                }
-                //-- Needle
-                Image {
-                    id:                 compassNeedle
-                    anchors.centerIn:   parent
-                    height:             parent.height * 0.75
-                    width:              height
-                    source:             "/custom/img/compass_needle.svg"
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    transform: [
-                        Rotation {
-                            origin.x:   compassNeedle.width  / 2
-                            origin.y:   compassNeedle.height / 2
-                            angle:      _heading
-                        }]
-                }
-                //-- Heading
-                Rectangle {
-                    height:             ScreenTools.defaultFontPixelHeight * 0.75
-                    width:              ScreenTools.defaultFontPixelWidth  * 3.5
-                    radius:             ScreenTools.defaultFontPixelWidth  * 0.25
-                    color:              qgcPal.windowShade
-                    anchors.bottom:         parent.bottom
-                    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * -0.25
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel {
-                        text:               _heading
-                        color:              qgcPal.text
-                        font.pointSize:     ScreenTools.smallFontPointSize
-                        anchors.centerIn:   parent
-                    }
-                }
-            }
-            //-- Second Row
-            //-- Chronometer
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/chronometer.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
-            }
-            QGCLabel {
-                id:                     firstLabel
-                text: {
-                    if(_activeVehicle)
-                        return secondsToHHMMSS(_activeVehicle.getFact("flightTime").value)
-                    return "00:00:00"
-                }
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignLeft
-            }
-            //-- Ground Speed
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/horizontal_speed.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? _activeVehicle.groundSpeed.value.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0"
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
-            }
-            //-- Vertical Speed
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/vertical_speed.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
+        Rectangle {
+            id:                         northLabelBackground
+            anchors.top:                compassBezel.top
+            anchors.topMargin:          -height / 2
+            anchors.horizontalCenter:   compassBezel.horizontalCenter
+            width:                      northLabel.contentWidth * 1.5
+            height:                     northLabel.contentHeight * 1.5
+            radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
+            color:                      qgcPal.windowShade
 
-            }
             QGCLabel {
-                text:                   _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0"
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                id:                 northLabel
+                anchors.centerIn:   parent
+                text:               "N"
+                color:              qgcPal.text
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
-            //-- Third Row
-            //-- Odometer
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/odometer.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
+        }
 
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000"
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
-            }
-            //-- Altitude
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/altitude.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
+        Image {
+            id:                 headingNeedle
+            anchors.centerIn:   compassBezel
+            height:             compassBezel.height * 0.75
+            width:              height
+            source:             "/custom/img/compass_needle.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
+            transform: [
+                Rotation {
+                    origin.x:   headingNeedle.width  / 2
+                    origin.y:   headingNeedle.height / 2
+                    angle:      _heading
+                }]
+        }
 
-            }
-            QGCLabel {
-                text:                   _altitude
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
-            }
-            //-- Distance
-            QGCColoredImage {
-                height:                 _indicatorsHeight
-                width:                  height
-                source:                 "/custom/img/distance.svg"
-                fillMode:               Image.PreserveAspectFit
-                sourceSize.height:      height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
+        Rectangle {
+            id:                         headingLabelBackground
+            anchors.top:                compassBezel.bottom
+            anchors.topMargin:          -height / 2
+            anchors.horizontalCenter:   compassBezel.horizontalCenter
+            width:                      headingLabel.contentWidth * 1.5
+            height:                     headingLabel.contentHeight * 1.5
+            radius:                     ScreenTools.defaultFontPixelWidth  * 0.25
+            color:                      qgcPal.windowShade
 
-            }
             QGCLabel {
-                text:                   _distance ? _distanceStr : noGPS
-                color:                  _distance ? _indicatorsColor : qgcPal.colorOrange
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
+                id:                 headingLabel
+                anchors.centerIn:   parent
+                text:               _heading
+                color:              qgcPal.text
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
     }
-    //-------------------------------------------------------------------------
-    //-- Attitude Indicator
-    Rectangle {
-        color:                  qgcPal.window
-        width:                  attitudeIndicator.width * 0.5
-        height:                 vehicleIndicator.height
-        anchors.top:            vehicleIndicator.top
-        anchors.left:           vehicleIndicator.right
-    }
+
     Rectangle {
         id:                     attitudeIndicator
-        anchors.bottom:         vehicleIndicator.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * -0.5
-        anchors.right:          parent.right
+        anchors.bottomMargin:   _toolsMargin
         anchors.rightMargin:    _toolsMargin
+        anchors.bottom:         parent.bottom
+        anchors.right:          parent.right
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
         color:                  qgcPal.windowShade
+
         CustomAttitudeWidget {
             size:               parent.height * 0.95
             vehicle:            _activeVehicle
