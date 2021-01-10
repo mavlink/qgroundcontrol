@@ -3395,12 +3395,12 @@ but also ignore less noise</short_desc>
     </parameter>
     <parameter name="GF_ALTMODE" default="0" type="INT32">
       <short_desc>Geofence altitude mode</short_desc>
-      <long_desc>Select which altitude reference should be used 0 = WGS84, 1 = AMSL</long_desc>
+      <long_desc>Select which altitude (AMSL) source should be used for geofence calculations.</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
-        <value code="0">WGS84</value>
-        <value code="1">AMSL</value>
+        <value code="0">Autopilot estimator global position altitude (GPS)</value>
+        <value code="1">Raw barometer altitude (assuming standard atmospheric pressure)</value>
       </values>
     </parameter>
     <parameter name="GF_COUNT" default="-1" type="INT32">
