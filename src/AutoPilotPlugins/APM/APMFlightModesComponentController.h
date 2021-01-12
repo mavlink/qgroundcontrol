@@ -81,7 +81,7 @@ private:
     QVariantList    _superSimpleModeEnabled;
 
     static const uint8_t    _allSimpleBits =    0x3F;
-    static const int        _cChannelOptions =  10;
+    static const int        _cChannelOptions =  11;
     static const int        _cSimpleModeBits =  8;
     static const int        _cFltModes =        6;
 
