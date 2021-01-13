@@ -8,7 +8,7 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-QGC_SRC=$1
+QGC_SRC=$(readlink -f $1)
 
 QGC_CUSTOM_APP_NAME="${QGC_CUSTOM_APP_NAME:-QGroundControl}"
 QGC_CUSTOM_GENERIC_NAME="${QGC_CUSTOM_GENERIC_NAME:-Ground Control Station}"
@@ -29,6 +29,7 @@ if [ ! -f ${QGC_RELEASE_DIR}/${QGC_CUSTOM_BINARY_NAME} ]; then
 fi
 
 OUTPUT_DIR=${3-`pwd`}
+OUTPUT_DIR=$(readlink -f $OUTPUT_DIR)
 echo "Output directory:" ${OUTPUT_DIR}
 
 # Generate AppImage using the binaries currently provided by the project.
