@@ -2819,8 +2819,8 @@ Set to 0 to disable heading hold</short_desc>
       <increment>0.5</increment>
     </parameter>
     <parameter name="FW_LND_THRTC_SC" default="1.0" type="FLOAT">
-      <short_desc>Throttle time constant factor for landing</short_desc>
-      <long_desc>Set this parameter to less than 1.0 to make the TECS throttle loop react faster during landing than during normal flight (i.e. giving efficiency and low motor wear at high altitudes but control accuracy during landing). During landing, the TECS throttle time constant (FW_T_THRO_CONST) is multiplied by this value.</long_desc>
+      <short_desc>Altitude time constant factor for landing</short_desc>
+      <long_desc>Set this parameter to less than 1.0 to make TECS react faster to altitude errors during landing than during normal flight (i.e. giving efficiency and low motor wear at high altitudes but control accuracy during landing). During landing, the TECS altitude time constant (FW_T_ALT_TC) is multiplied by this value.</long_desc>
       <min>0.2</min>
       <max>1.0</max>
       <unit />
@@ -3013,6 +3013,12 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="FW_T_ALT_TC" default="5.0" type="FLOAT">
+      <short_desc>Altitude error time constant</short_desc>
+      <min>2.0</min>
+      <decimal>2</decimal>
+      <increment>0.5</increment>
+    </parameter>
     <parameter name="FW_T_CLMB_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum climb rate</short_desc>
       <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
@@ -3022,34 +3028,35 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_T_HRATE_FF" default="0.8" type="FLOAT">
+    <parameter name="FW_T_HRATE_FF" default="0.3" type="FLOAT">
       <short_desc>Height rate feed forward</short_desc>
       <min>0.0</min>
       <max>1.0</max>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_T_HRATE_P" default="0.05" type="FLOAT">
-      <short_desc>Height rate proportional factor</short_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter name="FW_T_INTEG_GAIN" default="0.1" type="FLOAT">
-      <short_desc>Integrator gain</short_desc>
-      <long_desc>This is the integrator gain on the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
+    <parameter name="FW_T_I_GAIN_PIT" default="0.1" type="FLOAT">
+      <short_desc>Integrator gain pitch</short_desc>
+      <long_desc>This is the integrator gain on the pitch part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="FW_T_PTCH_DAMP" default="0.0" type="FLOAT">
+    <parameter name="FW_T_I_GAIN_THR" default="0.3" type="FLOAT">
+      <short_desc>Integrator gain throttle</short_desc>
+      <long_desc>This is the integrator gain on the throttle part of the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter name="FW_T_PTCH_DAMP" default="0.1" type="FLOAT">
       <short_desc>Pitch damping factor</short_desc>
       <long_desc>This is the damping gain for the pitch demand loop. Increase to add damping to correct for oscillations in height. The default value of 0.0 will work well provided the pitch to servo controller has been tuned properly.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
     <parameter name="FW_T_RLL2THR" default="15.0" type="FLOAT">
@@ -3095,38 +3102,35 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_T_SRATE_P" default="0.02" type="FLOAT">
-      <short_desc>Speed rate P factor</short_desc>
+    <parameter name="FW_T_STE_R_TC" default="0.4" type="FLOAT">
+      <short_desc>Specific total energy rate first order filter time constant</short_desc>
+      <long_desc>This filter is applied to the specific total energy rate used for throttle damping.</long_desc>
       <min>0.0</min>
-      <max>2.0</max>
+      <max>2</max>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter name="FW_T_THRO_CONST" default="8.0" type="FLOAT">
-      <short_desc>TECS Throttle time constant</short_desc>
-      <long_desc>This is the time constant of the TECS throttle control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
-      <min>1.0</min>
-      <max>10.0</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
+    <parameter name="FW_T_TAS_R_TC" default="0.2" type="FLOAT">
+      <short_desc>True airspeed rate first order filter time constant</short_desc>
+      <long_desc>This filter is applied to the true airspeed rate.</long_desc>
+      <min>0.0</min>
+      <max>2</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="FW_T_TAS_TC" default="5.0" type="FLOAT">
+      <short_desc>True airspeed error time constant</short_desc>
+      <min>2.0</min>
+      <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_T_THR_DAMP" default="0.5" type="FLOAT">
+    <parameter name="FW_T_THR_DAMP" default="0.1" type="FLOAT">
       <short_desc>Throttle damping factor</short_desc>
       <long_desc>This is the damping gain for the throttle demand loop. Increase to add damping to correct for oscillations in speed and height.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
-      <decimal>1</decimal>
+      <decimal>2</decimal>
       <increment>0.1</increment>
-    </parameter>
-    <parameter name="FW_T_TIME_CONST" default="5.0" type="FLOAT">
-      <short_desc>TECS time constant</short_desc>
-      <long_desc>This is the time constant of the TECS control algorithm (in seconds). Smaller values make it faster to respond, larger values make it slower to respond.</long_desc>
-      <min>1.0</min>
-      <max>10.0</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
     </parameter>
     <parameter name="FW_T_VERT_ACC" default="7.0" type="FLOAT">
       <short_desc>Maximum vertical acceleration</short_desc>
