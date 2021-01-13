@@ -3235,6 +3235,20 @@ but also ignore less noise</short_desc>
         <value code="301">Wifi Port</value>
       </values>
     </parameter>
+    <parameter name="GPS_1_GNSS" default="0" type="INT32">
+      <short_desc>GNSS Systems for Primary GPS (integer bitmask)</short_desc>
+      <long_desc>This integer bitmask controls the set of GNSS systems used by the receiver. Check your receiver's documentation on how many systems are supported to be used in parallel. Currently this functionality is just implemented for u-blox receivers. When no bits are set, the receiver's default configuration should be used. Set bits true to enable: 0 : Use GPS (with QZSS) 1 : Use SBAS (multiple GPS augmentation systems) 2 : Use Galileo 3 : Use BeiDou 4 : Use GLONASS</long_desc>
+      <min>0</min>
+      <max>31</max>
+      <reboot_required>true</reboot_required>
+      <bitmask>
+        <bit index="0">GPS (with QZSS)</bit>
+        <bit index="1">SBAS</bit>
+        <bit index="2">Galileo</bit>
+        <bit index="3">BeiDou</bit>
+        <bit index="4">GLONASS</bit>
+      </bitmask>
+    </parameter>
     <parameter name="GPS_1_PROTOCOL" default="1" type="INT32">
       <short_desc>Protocol for Main GPS</short_desc>
       <long_desc>Select the GPS protocol over serial. Auto-detection will probe all protocols, and thus is a bit slower.</long_desc>
@@ -3266,6 +3280,20 @@ but also ignore less noise</short_desc>
         <value code="300">Radio Controller</value>
         <value code="301">Wifi Port</value>
       </values>
+    </parameter>
+    <parameter name="GPS_2_GNSS" default="0" type="INT32">
+      <short_desc>GNSS Systems for Secondary GPS (integer bitmask)</short_desc>
+      <long_desc>This integer bitmask controls the set of GNSS systems used by the receiver. Check your receiver's documentation on how many systems are supported to be used in parallel. Currently this functionality is just implemented for u-blox receivers. When no bits are set, the receiver's default configuration should be used. Set bits true to enable: 0 : Use GPS (with QZSS) 1 : Use SBAS (multiple GPS augmentation systems) 2 : Use Galileo 3 : Use BeiDou 4 : Use GLONASS</long_desc>
+      <min>0</min>
+      <max>31</max>
+      <reboot_required>true</reboot_required>
+      <bitmask>
+        <bit index="0">GPS (with QZSS)</bit>
+        <bit index="1">SBAS</bit>
+        <bit index="2">Galileo</bit>
+        <bit index="3">BeiDou</bit>
+        <bit index="4">GLONASS</bit>
+      </bitmask>
     </parameter>
     <parameter name="GPS_2_PROTOCOL" default="1" type="INT32">
       <short_desc>Protocol for Secondary GPS</short_desc>
