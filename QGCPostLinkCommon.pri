@@ -101,16 +101,10 @@ LinuxBuild {
         libQt5X11Extras.so.5 \
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
+        libQt5TextToSpeech.so.5 \
+        libicudata.so* \
         libicui18n.so* \
-        libQt5TextToSpeech.so.5
-
-    !contains(DEFINES, __rasp_pi2__) {
-        # Some Qt distributions link with *.so.56
-        QT_LIB_LIST += \
-            libicudata.so.56 \
-            libicui18n.so.56 \
-            libicuuc.so.56
-    }
+        libicuuc.so*
 
     for(QT_LIB, QT_LIB_LIST) {
         QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
