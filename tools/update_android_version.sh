@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
+# Android versionCode from git tag is in the form vX.Y.Z-1234-gSHA
 VERSIONNAME=`git describe --always --tags | sed -e 's/^v//'`
 
-# Android versionCode from git tag vX.Y.Z-123-gSHA
 IFS=. read major minor patch dev sha <<<"${VERSIONNAME//-/.}"
+echo "major:{$major} minor:{$minor} patch:{$patch} dev:{$dev} sha:{$sha}"
 VERSIONCODE=$(($major*100000))
 VERSIONCODE=$(($(($minor*10000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
