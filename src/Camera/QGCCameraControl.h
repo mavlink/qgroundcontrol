@@ -14,6 +14,11 @@
 #include "QGCApplication.h"
 #include <QLoggingCategory>
 
+#include "QGCVideoStreamInfo.h"
+#include "QGCCameraOption.h"
+#include "QGCCameraHttpDownloader.h"
+#include "QGCCameraDefinitionFileHandler.h"
+
 class QDomNode;
 class QDomNodeList;
 class QGCCameraParamIO;
@@ -22,64 +27,6 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 //-----------------------------------------------------------------------------
-/// Video Stream Info
-/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
-class QGCVideoStreamInfo : public QObject
-{
-    Q_OBJECT
-public:
-    QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
-
-    Q_PROPERTY(QString      uri                 READ uri                NOTIFY infoChanged)
-    Q_PROPERTY(QString      name                READ name               NOTIFY infoChanged)
-    Q_PROPERTY(int          streamID            READ streamID           NOTIFY infoChanged)
-    Q_PROPERTY(int          type                READ type               NOTIFY infoChanged)
-    Q_PROPERTY(qreal        aspectRatio         READ aspectRatio        NOTIFY infoChanged)
-    Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
-    Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
-
-    QString uri             () { return QString(_streamInfo.uri);  }
-    QString name            () { return QString(_streamInfo.name); }
-    qreal   aspectRatio     ();
-    qreal   hfov            () { return _streamInfo.hfov; }
-    int     type            () { return _streamInfo.type; }
-    int     streamID        () { return _streamInfo.stream_id; }
-    bool    isThermal       () { return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
-
-    bool    update          (const mavlink_video_stream_status_t* vs);
-
-signals:
-    void    infoChanged     ();
-
-private:
-    mavlink_video_stream_information_t _streamInfo;
-};
-
-//-----------------------------------------------------------------------------
-/// Camera option exclusions
-class QGCCameraOptionExclusion : public QObject
-{
-public:
-    QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_);
-    QString param;
-    QString value;
-    QStringList exclusions;
-};
-
-//-----------------------------------------------------------------------------
-/// Camera option ranges
-class QGCCameraOptionRange : public QObject
-{
-public:
-    QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_);
-    QString param;
-    QString value;
-    QString targetParam;
-    QString condition;
-    QStringList  optNames;
-    QStringList  optValues;
-    QVariantList optVariants;
-};
 
 //-----------------------------------------------------------------------------
 /// MAVLink Camera API controller
@@ -348,7 +295,6 @@ protected slots:
     virtual void    _requestParamUpdates    ();
     virtual void    _requestCaptureStatus   ();
     virtual void    _requestStorageInfo     ();
-    virtual void    _downloadFinished       ();
     virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     virtual void    _dataReady              (QByteArray data);
     virtual void    _paramDone              ();
@@ -356,25 +302,17 @@ protected slots:
     virtual void    _streamStatusTimeout    ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
+    virtual void    _processConstants       ();
+    virtual void    _processFacts           ();
 
 private:
-    bool    _handleLocalization             (QByteArray& bytes);
-    bool    _replaceLocaleStrings           (const QDomNode node, QByteArray& bytes);
-    bool    _loadCameraDefinitionFile       (QByteArray& bytes);
-    bool    _loadConstants                  (const QDomNodeList nodeList);
-    bool    _loadSettings                   (const QDomNodeList nodeList);
     void    _processRanges                  ();
     bool    _processCondition               (const QString condition);
     bool    _processConditionTest           (const QString conditionTest);
-    bool    _loadNameValue                  (QDomNode option, const QString factName, FactMetaData* metaData, QString& optName, QString& optValue, QVariant& optVariant);
-    bool    _loadRanges                     (QDomNode option, const QString factName, QString paramValue);
     void    _updateActiveList               ();
     void    _updateRanges                   (Fact* pFact);
-    void    _httpRequest                    (const QString& url);
     void    _handleDefinitionFile           (const QString& url);
 
-    QStringList     _loadExclusions         (QDomNode option);
-    QStringList     _loadUpdates            (QDomNode option);
     QString         _getParamName           (const char* param_id);
 
 protected:
@@ -389,7 +327,6 @@ protected:
     uint32_t                            _storageFree        = 0;
     uint32_t                            _storageTotal       = 0;
     int                                 _batteryRemaining   = -1;
-    QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
@@ -427,4 +364,8 @@ protected:
     QStringList                         _streamLabels;
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
+    QGCCameraHttpDownloader*            _downloader;
+    QGCCameraDefinitionFileHandler*     _definitionFileHandler;
+
+
 };

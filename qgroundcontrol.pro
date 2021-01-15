@@ -108,6 +108,10 @@ WindowsBuild {
     QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
 }
 
+MacBuild {
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.12
+}
+
 #-------------------------------------------------------------------------------------
 # iOS
 
@@ -424,6 +428,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 #
 
 HEADERS += \
+    src/Camera/QGCCameraDefinitionFileHandler.h \
+    src/Camera/QGCCameraHttpDownloader.h \
+    src/Camera/QGCCameraOption.h \
+    src/Camera/QGCVideoStreamInfo.h \
     src/QmlControls/QmlUnitsConversion.h \
     src/Vehicle/VehicleEscStatusFactGroup.h \
     src/api/QGCCorePlugin.h \
@@ -438,6 +446,10 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 }
 
 SOURCES += \
+    src/Camera/QGCCameraDefinitionFileHandler.cc \
+    src/Camera/QGCCameraHttpDownloader.cc \
+    src/Camera/QGCCameraOption.cc \
+    src/Camera/QGCVideoStreamInfo.cc \
     src/Vehicle/VehicleEscStatusFactGroup.cc \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
