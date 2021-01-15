@@ -85,9 +85,9 @@ addons:
 
 before_install:
   # fetch entire git repo to properly determine the version
-  - if [ "${CONFIG}" = "installer" ]; then
-        cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow && git fetch --all --tags;
-    fi
+  - cd ${TRAVIS_BUILD_DIR}
+  - git fetch --unshallow
+  - git fetch --all --tags
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
