@@ -28,6 +28,16 @@
       <output name="AUX1">feed-through of RC AUX1 channel for prerotator (optional)</output>
       <output name="AUX2">feed-through of RC AUX2 channel for release device (optional)</output>
     </airframe>
+    <airframe name="ThunderFly TF-G2" id="17003" maintainer="ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;">
+      <class>Autogyro</class>
+      <maintainer>ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;</maintainer>
+      <type>Autogyro</type>
+      <url>https://github.com/ThunderFly-aerospace/TF-G2/</url>
+      <output name="MAIN2">rotor_head_L</output>
+      <output name="MAIN3">rotor_head_R</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">throttle</output>
+    </airframe>
   </airframe_group>
   <airframe_group name="Coaxial Helicopter" image="HelicopterCoaxial">
     <airframe name="Esky (Big) Lama v4" id="15001" maintainer="Emmanuel Roussel">
