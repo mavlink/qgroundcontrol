@@ -87,7 +87,7 @@ before_install:
   # fetch entire git repo to properly determine the version
     - cd ${TRAVIS_BUILD_DIR}
     - git fetch --unshallow
-    -- git fetch --all --tags
+    - git fetch --all --tags
 
   # compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
