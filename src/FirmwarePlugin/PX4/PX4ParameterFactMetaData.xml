@@ -7735,7 +7735,7 @@ default 1.5 turns per second</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="RTL_LAND_DELAY" default="-1.0" type="FLOAT">
+    <parameter name="RTL_LAND_DELAY" default="0.0" type="FLOAT">
       <short_desc>Return mode delay</short_desc>
       <long_desc>Delay before landing (after initial descent) in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
       <min>-1</min>
