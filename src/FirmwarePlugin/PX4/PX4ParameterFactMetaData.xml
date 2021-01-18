@@ -1398,6 +1398,11 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m/s</unit>
     </parameter>
+    <parameter name="RTL_FLT_TIME" default="15" type="FLOAT">
+      <short_desc>Maximum allowed RTL flight in minutes</short_desc>
+      <long_desc>This is used to determine when the vehicle should be switched to RTL due to low battery. Note, particularly for multirotors this should reflect flight time at cruise speed, not while stationary</long_desc>
+      <unit>min</unit>
+    </parameter>
   </group>
   <group name="DShot">
     <parameter name="DSHOT_CONFIG" default="0" type="INT32">
