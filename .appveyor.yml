@@ -15,6 +15,9 @@ environment:
 
 install:
   - git submodule update --init --recursive
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git fetch --unshallow
+  - git fetch --all --tags
   - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
   - mkdir %LOCALAPPDATA%\QtProject && copy test\qtlogging.ini %LOCALAPPDATA%\QtProject\
   - ps: |
