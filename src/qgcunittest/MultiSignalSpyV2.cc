@@ -268,7 +268,7 @@ quint64 MultiSignalSpyV2::signalNameToMask(const char* signalName)
     for (int i=0; i<_rgSignalNames.count(); i++) {
         qDebug() << "signalNameToMask" << signalName << _rgSignalNames[i];
         if (_rgSignalNames[i] == signalName) {
-            return 1 << i;
+            return 1ll << i;
         }
     }
 
