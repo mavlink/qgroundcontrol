@@ -5642,6 +5642,382 @@ default 1.5 turns per second</short_desc>
       <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="PWM_EXTRA_DIS1" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS2" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS3" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS4" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS5" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS6" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS7" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS8" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DISARM" default="1500" type="INT32">
+      <short_desc>Set the disarmed PWM for extra outputs</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
+      <min>0</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL1" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL2" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL3" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL4" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL5" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL6" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL7" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL8" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX" default="2000" type="INT32">
+      <short_desc>Set the maximum PWM for the extra outputs</short_desc>
+      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
+      <min>1600</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX1" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 1 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX2" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 2 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX3" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 3 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX4" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 4 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX5" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 5 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX6" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 6 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX7" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 7 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX8" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 8 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN" default="1000" type="INT32">
+      <short_desc>Set the minimum PWM for the extra outputs</short_desc>
+      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
+      <min>800</min>
+      <max>1400</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN1" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 1 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN2" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 2 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN3" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 3 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN4" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 4 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN5" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 5 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN6" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 6 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN7" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 7 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN8" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 8 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_RATE" default="50" type="INT32">
+      <short_desc>Set the PWM output frequency for the extra outputs</short_desc>
+      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
+      <min>-1</min>
+      <max>2000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV1" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 1</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV2" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 2</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV3" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 3</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV4" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 4</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV5" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 5</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV6" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 6</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV7" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 7</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV8" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 8</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM1" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 1</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM2" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 2</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM3" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 3</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM4" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 4</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM5" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 5</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM6" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 6</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM7" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 7</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM8" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 8</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
     <parameter name="PWM_MAIN_DIS1" default="-1" type="INT32">
       <short_desc>Set the disarmed PWM for the main 1 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
