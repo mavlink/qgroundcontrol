@@ -2509,14 +2509,18 @@ void MissionController::_updateTimeout()
                 case MAV_CMD_NAV_WAYPOINT:
                 case MAV_CMD_NAV_LAND:
                     if(pSimpleItem->coordinate().isValid()) {
+                        double alt = 0.0;
+                        if (!pSimpleItem->altitude()->rawValue().isNull()) {
+                            alt = pSimpleItem->altitude()->rawValue().toDouble();   // for some reason, the item's coordinate().altitude() is out of sync with the altitude()
+                        }
                         if((MAV_CMD)pSimpleItem->command() == MAV_CMD_NAV_TAKEOFF) {
                             takeoffCoordinate = pSimpleItem->coordinate();
+                            minAlt = maxAlt = alt;
                         } else if(!firstCoordinate.isValid()) {
                             firstCoordinate = pSimpleItem->coordinate();
                         }
                         double lat = pSimpleItem->coordinate().latitude()  + 90.0;
                         double lon = pSimpleItem->coordinate().longitude() + 180.0;
-                        double alt = pSimpleItem->coordinate().altitude();
                         north  = fmax(north, lat);
                         south  = fmin(south, lat);
                         east   = fmax(east,  lon);
