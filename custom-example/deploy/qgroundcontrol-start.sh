@@ -6,6 +6,6 @@ export QT_PLUGIN_PATH="${HERE}/Qt/plugins"
 export QT_IM_MODULE=qtvirtualkeyboard
 
 # hack until icon issue with AppImage is resolved
-mkdir -p ~/.icons && \cp -f ${HERE}/qgroundcontrol.png ~/.icons
+mkdir -p ~/.icons && \cp -f ${HERE}/vyorius_logo.png ~/.icons
 
 "${HERE}/CustomQGroundControl" "$@"

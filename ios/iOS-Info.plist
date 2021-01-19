@@ -49,12 +49,12 @@
 		<dict>
 			<key>CFBundleIconFiles</key>
 			<array>
-				<string>AppIcon29x29.png</string>
-				<string>AppIcon29x29@2x.png</string>
-				<string>AppIcon40x40@2x.png</string>
+                                <string>vyoriuslogo_AppIcon29x29.png</string>
+                                <string>vyoriuslogo_AppIcon29x29@2x.png</string>
+                                <string>vyoriuslogo_AppIcon40x40@2x.png</string>
 				<string>AppIcon57x57.png</string>
 				<string>AppIcon57x57@2x.png</string>
-				<string>AppIcon60x60@2x.png</string>
+                                <string>vyoriuslogo_AppIcon60x60@2x.png</string>
 			</array>
 		</dict>
 	</dict>
@@ -64,22 +64,22 @@
 		<dict>
 			<key>CFBundleIconFiles</key>
 			<array>
-				<string>AppIcon29x29.png</string>
-				<string>AppIcon29x29@2x.png</string>
-				<string>AppIcon40x40@2x.png</string>
+                                <string>vyoriuslogo_AppIcon29x29.png</string>
+                                <string>vyoriuslogo_AppIcon29x29@2x.png</string>
+                                <string>vyoriuslogo_AppIcon40x40@2x.png</string>
 				<string>AppIcon57x57.png</string>
 				<string>AppIcon57x57@2x.png</string>
-				<string>AppIcon60x60@2x.png</string>
+                                <string>vyoriuslogo_AppIcon60x60@2x.png</string>
 				<string>AppIcon29x29~ipad.png</string>
 				<string>AppIcon29x29@2x~ipad.png</string>
-				<string>AppIcon40x40~ipad.png</string>
+                                <string>vyoriuslogo_AppIcon40x40~ipad.png</string>
 				<string>AppIcon40x40@2x~ipad.png</string>
 				<string>AppIcon50x50~ipad.png</string>
 				<string>AppIcon50x50@2x~ipad.png</string>
 				<string>AppIcon72x72~ipad.png</string>
 				<string>AppIcon72x72@2x~ipad.png</string>
-				<string>AppIcon76x76~ipad.png</string>
-				<string>AppIcon76x76@2x~ipad.png</string>
+                                <string>vyoriuslogo_AppIcon76x76~ipad.png</string>
+                                <string>vyoriuslogo_AppIcon76x76@2x~ipad.png</string>
 				<string>AppIcon83.5x83.5@2x~ipad.png</string>
 			</array>
 		</dict>

@@ -148,7 +148,7 @@ LinuxBuild {
     contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) | !exists($$PWD/custom/custom.pri) {
         QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol-start.sh $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/deploy/qgroundcontrol.desktop $$DESTDIR
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/resources/icons/qgroundcontrol.png $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$SOURCE_DIR/resources/icons/vyorius_logo.png $$DESTDIR
     } else {
         include($$PWD/custom/custom_deploy.pri)
     }
