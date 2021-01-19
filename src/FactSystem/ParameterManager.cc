@@ -369,7 +369,7 @@ void ParameterManager::_handleParamValue(int componentId, QString parameterName,
             qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(-1) << "Not restarting _waitingParamTimeoutTimer (all requests satisfied)";
         }
     }
-\
+
     _updateProgressBar();
 
     Fact* fact = nullptr;
