@@ -43,7 +43,7 @@ install:
       Write-Host "Installed" -ForegroundColor Green
 
 build_script:
-  - if %APPVEYOR_REPO_TAG% EQU "true" ( set STABLE_OR_DAILY=StableBuild ) else ( set STABLE_OR_DAILY=DailyBuild )
+  - ps: $env:STABLE_OR_DAILY = if ($env:APPVEYOR_REPO_TAG -eq $True) { "StableBuild" } else { "DailyBuild" }
   - mkdir %SHADOW_BUILD_DIR% && cd %SHADOW_BUILD_DIR% && %QT_QMAKE_DIR%\qmake -r CONFIG+=%CONFIG% CONFIG+=%STABLE_OR_DAILY% %APPVEYOR_BUILD_FOLDER%\qgroundcontrol.pro
   - cd %SHADOW_BUILD_DIR% && %QT_JOM_DIR%\jom
   - if "%CONFIG%" EQU "installer" ( copy %SHADOW_BUILD_DIR%\staging\QGroundControl-installer.exe %APPVEYOR_BUILD_FOLDER%\QGroundControl-installer.exe )
