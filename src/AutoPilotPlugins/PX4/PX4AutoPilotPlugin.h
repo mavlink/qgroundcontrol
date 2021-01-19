@@ -20,6 +20,7 @@
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
 #include "CameraComponent.h"
+#include "OutputComponent.h"
 #include "PowerComponent.h"
 #include "MotorComponent.h"
 #include "PX4TuningComponent.h"
@@ -46,19 +47,20 @@ public:
     QString prerequisiteSetup(VehicleComponent* component) const override;
 
 protected:
-    bool                    _incorrectParameterVersion; ///< true: parameter version incorrect, setup not allowed
-    PX4AirframeLoader*      _airframeFacts;
-    AirframeComponent*      _airframeComponent;
-    PX4RadioComponent*      _radioComponent;
-    ESP8266Component*       _esp8266Component;
-    FlightModesComponent*   _flightModesComponent;
-    SensorsComponent*       _sensorsComponent;
-    SafetyComponent*        _safetyComponent;
-    CameraComponent*        _cameraComponent;
-    PowerComponent*         _powerComponent;
-    MotorComponent*         _motorComponent;
-    PX4TuningComponent*     _tuningComponent;
-    SyslinkComponent*       _syslinkComponent;
+    bool                    _incorrectParameterVersion  = false;    ///< true: parameter version incorrect, setup not allowed
+    PX4AirframeLoader*      _airframeFacts              = nullptr;
+    AirframeComponent*      _airframeComponent          = nullptr;
+    PX4RadioComponent*      _radioComponent             = nullptr;
+    ESP8266Component*       _esp8266Component           = nullptr;
+    FlightModesComponent*   _flightModesComponent       = nullptr;
+    SensorsComponent*       _sensorsComponent           = nullptr;
+    SafetyComponent*        _safetyComponent            = nullptr;
+    CameraComponent*        _cameraComponent            = nullptr;
+    OutputComponent*        _outputComponent            = nullptr;
+    PowerComponent*         _powerComponent             = nullptr;
+    MotorComponent*         _motorComponent             = nullptr;
+    PX4TuningComponent*     _tuningComponent            = nullptr;
+    SyslinkComponent*       _syslinkComponent           = nullptr;
 
 private:
     QVariantList            _components;

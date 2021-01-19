@@ -29,20 +29,9 @@
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
-    , _incorrectParameterVersion(false)
-    , _airframeComponent(nullptr)
-    , _radioComponent(nullptr)
-    , _esp8266Component(nullptr)
-    , _flightModesComponent(nullptr)
-    , _sensorsComponent(nullptr)
-    , _safetyComponent(nullptr)
-    , _powerComponent(nullptr)
-    , _motorComponent(nullptr)
-    , _tuningComponent(nullptr)
-    , _syslinkComponent(nullptr)
 {
     if (!vehicle) {
-        qWarning() << "Internal error";
+        qWarning() << "PX4AutoPilotPlugin::PX4AutoPilotPlugin() - Internal error";
         return;
     }
 
@@ -81,6 +70,10 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _powerComponent = new PowerComponent(_vehicle, this);
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
+
+                _outputComponent = new OutputComponent(_vehicle, this);
+                _outputComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_outputComponent));
 
                 _motorComponent = new MotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();

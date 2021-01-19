@@ -5,6 +5,11 @@
         <file alias="CameraComponent.qml">../../AutoPilotPlugins/PX4/CameraComponent.qml</file>
         <file alias="CameraComponentSummary.qml">../../AutoPilotPlugins/PX4/CameraComponentSummary.qml</file>
         <file alias="FlightModesComponentSummary.qml">../../AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
+        <file alias="OutputComponent.qml">../../AutoPilotPlugins/PX4/OutputComponent.qml</file>
+        <file alias="OutputComponentSummary.qml">../../AutoPilotPlugins/PX4/OutputComponentSummary.qml</file>
+        <file alias="OutputGraphical.qml">../../AutoPilotPlugins/PX4/OutputGraphical.qml</file>
+        <file alias="OutputTable.qml">../../AutoPilotPlugins/PX4/OutputTable.qml</file>
+        <file alias="OutputTest.qml">../../AutoPilotPlugins/PX4/OutputTest.qml</file>
         <file alias="PowerComponent.qml">../../AutoPilotPlugins/PX4/PowerComponent.qml</file>
         <file alias="PowerComponentSummary.qml">../../AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
         <file alias="PX4AdvancedFlightModes.qml">../../AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml</file>
@@ -37,5 +42,8 @@
     <qresource prefix="/FirmwarePlugin/PX4">
         <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>
         <file alias="PX4.OfflineEditing.params">V1.4.OfflineEditing.params</file>
+    </qresource>
+    <qresource prefix="/qmlimages">
+        <file alias="OutputComponentIcon.svg">../../AutoPilotPlugins/PX4/Images/OutputComponentIcon.svg</file>
     </qresource>
 </RCC>
