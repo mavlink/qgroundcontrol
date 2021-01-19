@@ -306,6 +306,153 @@
       <unit>m/s^2</unit>
     </parameter>
   </group>
+  <group name="Angular Velocity Control">
+    <parameter name="AVC_X_D" default="0.36" type="FLOAT">
+      <short_desc>Body X axis angular velocity D gain</short_desc>
+      <long_desc>Body X axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>4</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_X_FF" default="0.0" type="FLOAT">
+      <short_desc>Body X axis angular velocity feedforward gain</short_desc>
+      <long_desc>Improves tracking performance.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/(rad/s)</unit>
+      <decimal>4</decimal>
+    </parameter>
+    <parameter name="AVC_X_I" default="0.2" type="FLOAT">
+      <short_desc>Body X axis angular velocity I gain</short_desc>
+      <long_desc>Body X axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_X_I_LIM" default="0.3" type="FLOAT">
+      <short_desc>Body X axis angular velocity integrator limit</short_desc>
+      <long_desc>Body X axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large roll moment trim changes.</long_desc>
+      <min>0.0</min>
+      <unit>Nm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_X_K" default="1.0" type="FLOAT">
+      <short_desc>Body X axis angular velocity controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_X_K * (AVC_X_P * error + AVC_X_I * error_integral + AVC_X_D * error_derivative) Set AVC_X_P=1 to implement a PID in the ideal form. Set AVC_X_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
+    </parameter>
+    <parameter name="AVC_X_P" default="18." type="FLOAT">
+      <short_desc>Body X axis angular velocity P gain</short_desc>
+      <long_desc>Body X axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <unit>1/s</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Y_D" default="0.36" type="FLOAT">
+      <short_desc>Body Y axis angular velocity D gain</short_desc>
+      <long_desc>Body Y axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>4</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Y_FF" default="0.0" type="FLOAT">
+      <short_desc>Body Y axis angular velocity feedforward</short_desc>
+      <long_desc>Improves tracking performance.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/(rad/s)</unit>
+      <decimal>4</decimal>
+    </parameter>
+    <parameter name="AVC_Y_I" default="0.2" type="FLOAT">
+      <short_desc>Body Y axis angular velocity I gain</short_desc>
+      <long_desc>Body Y axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/rad</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Y_I_LIM" default="0.3" type="FLOAT">
+      <short_desc>Body Y axis angular velocity integrator limit</short_desc>
+      <long_desc>Body Y axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large pitch moment trim changes.</long_desc>
+      <min>0.0</min>
+      <unit>Nm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Y_K" default="1.0" type="FLOAT">
+      <short_desc>Body Y axis angular velocity controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_Y_K * (AVC_Y_P * error + AVC_Y_I * error_integral + AVC_Y_D * error_derivative) Set AVC_Y_P=1 to implement a PID in the ideal form. Set AVC_Y_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
+    </parameter>
+    <parameter name="AVC_Y_P" default="18." type="FLOAT">
+      <short_desc>Body Y axis angular velocity P gain</short_desc>
+      <long_desc>Body Y axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <unit>1/s</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Z_D" default="0.0" type="FLOAT">
+      <short_desc>Body Z axis angular velocity D gain</short_desc>
+      <long_desc>Body Z axis angular velocity differential gain. Small values help reduce fast oscillations. If value is too big oscillations will appear again.</long_desc>
+      <min>0.0</min>
+      <max>2.0</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Z_FF" default="0.0" type="FLOAT">
+      <short_desc>Body Z axis angular velocity feedforward</short_desc>
+      <long_desc>Improves tracking performance.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/(rad/s)</unit>
+      <decimal>4</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Z_I" default="0.1" type="FLOAT">
+      <short_desc>Body Z axis angular velocity I gain</short_desc>
+      <long_desc>Body Z axis angular velocity integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
+      <min>0.0</min>
+      <unit>Nm/rad</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Z_I_LIM" default="0.30" type="FLOAT">
+      <short_desc>Body Z axis angular velocity integrator limit</short_desc>
+      <long_desc>Body Z axis angular velocity integrator limit. Can be set to increase the amount of integrator available to counteract disturbances or reduced to improve settling time after large yaw moment trim changes.</long_desc>
+      <min>0.0</min>
+      <unit>Nm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="AVC_Z_K" default="1.0" type="FLOAT">
+      <short_desc>Body Z axis angular velocity controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = AVC_Z_K * (AVC_Z_P * error + AVC_Z_I * error_integral + AVC_Z_D * error_derivative) Set AVC_Z_P=1 to implement a PID in the ideal form. Set AVC_Z_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
+    </parameter>
+    <parameter name="AVC_Z_P" default="7." type="FLOAT">
+      <short_desc>Body Z axis angular velocity P gain</short_desc>
+      <long_desc>Body Z axis angular velocity proportional gain, i.e. control output for angular speed error 1 rad/s.</long_desc>
+      <min>0.0</min>
+      <max>20.0</max>
+      <unit>1/s</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+  </group>
   <group name="Attitude Q estimator">
     <parameter name="ATT_ACC_COMP" default="1" type="INT32">
       <short_desc>Acceleration compensation based on GPS
@@ -1397,6 +1544,345 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m/s</unit>
+    </parameter>
+    <parameter name="RTL_FLT_TIME" default="15" type="FLOAT">
+      <short_desc>Maximum allowed RTL flight in minutes</short_desc>
+      <long_desc>This is used to determine when the vehicle should be switched to RTL due to low battery. Note, particularly for multirotors this should reflect flight time at cruise speed, not while stationary</long_desc>
+      <unit>min</unit>
+    </parameter>
+  </group>
+  <group name="Control Allocation">
+    <parameter name="CA_ACT0_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 0</short_desc>
+    </parameter>
+    <parameter name="CA_ACT0_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 0</short_desc>
+    </parameter>
+    <parameter name="CA_ACT10_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 10</short_desc>
+    </parameter>
+    <parameter name="CA_ACT10_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 10</short_desc>
+    </parameter>
+    <parameter name="CA_ACT11_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 11</short_desc>
+    </parameter>
+    <parameter name="CA_ACT11_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 11</short_desc>
+    </parameter>
+    <parameter name="CA_ACT12_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 12</short_desc>
+    </parameter>
+    <parameter name="CA_ACT12_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 12</short_desc>
+    </parameter>
+    <parameter name="CA_ACT13_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 13</short_desc>
+    </parameter>
+    <parameter name="CA_ACT13_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 13</short_desc>
+    </parameter>
+    <parameter name="CA_ACT14_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 14</short_desc>
+    </parameter>
+    <parameter name="CA_ACT14_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 14</short_desc>
+    </parameter>
+    <parameter name="CA_ACT15_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 15</short_desc>
+    </parameter>
+    <parameter name="CA_ACT15_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 15</short_desc>
+    </parameter>
+    <parameter name="CA_ACT1_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 1</short_desc>
+    </parameter>
+    <parameter name="CA_ACT1_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 1</short_desc>
+    </parameter>
+    <parameter name="CA_ACT2_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 2</short_desc>
+    </parameter>
+    <parameter name="CA_ACT2_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 2</short_desc>
+    </parameter>
+    <parameter name="CA_ACT3_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 3</short_desc>
+    </parameter>
+    <parameter name="CA_ACT3_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 3</short_desc>
+    </parameter>
+    <parameter name="CA_ACT4_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 4</short_desc>
+    </parameter>
+    <parameter name="CA_ACT4_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 4</short_desc>
+    </parameter>
+    <parameter name="CA_ACT5_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 5</short_desc>
+    </parameter>
+    <parameter name="CA_ACT5_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 5</short_desc>
+    </parameter>
+    <parameter name="CA_ACT6_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 6</short_desc>
+    </parameter>
+    <parameter name="CA_ACT6_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 6</short_desc>
+    </parameter>
+    <parameter name="CA_ACT7_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 7</short_desc>
+    </parameter>
+    <parameter name="CA_ACT7_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 7</short_desc>
+    </parameter>
+    <parameter name="CA_ACT8_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 8</short_desc>
+    </parameter>
+    <parameter name="CA_ACT8_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 8</short_desc>
+    </parameter>
+    <parameter name="CA_ACT9_MAX" default="0.0" type="FLOAT">
+      <short_desc>Maximum value for actuator 9</short_desc>
+    </parameter>
+    <parameter name="CA_ACT9_MIN" default="0.0" type="FLOAT">
+      <short_desc>Minimum value for actuator 9</short_desc>
+    </parameter>
+    <parameter name="CA_AIRFRAME" default="0" type="INT32">
+      <short_desc>Airframe ID</short_desc>
+      <long_desc>This is used to retrieve pre-computed control effectiveness matrix</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <values>
+        <value code="0">Multirotor</value>
+        <value code="1">Standard VTOL (WIP)</value>
+        <value code="2">Tiltrotor VTOL (WIP)</value>
+      </values>
+    </parameter>
+    <parameter name="CA_AIR_SCALE_EN" default="0" type="INT32">
+      <short_desc>Airspeed scaler</short_desc>
+      <long_desc>This compensates for the variation of flap effectiveness with airspeed.</long_desc>
+    </parameter>
+    <parameter name="CA_BAT_SCALE_EN" default="0" type="INT32">
+      <short_desc>Battery power level scaler</short_desc>
+      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The copter should constantly behave as if it was fully charged with reduced max acceleration at lower battery percentages. i.e. if hover is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 0 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 0 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 0 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 0</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT0_MIN and CA_ACT0_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 0</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 0 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 0 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R0_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 0 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 1 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 1 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 1 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 1</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT1_MIN and CA_ACT1_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 1</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust, Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 1 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 1 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R1_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 1 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 2 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 2 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 2 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 2</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT2_MIN and CA_ACT2_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 2</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 2 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 2 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R2_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 2 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 3 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 3 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 3 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 3</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT3_MIN and CA_ACT3_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 3</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 3 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 3 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R3_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 3 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 4 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 4 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 4 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 4</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT4_MIN and CA_ACT4_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 4</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 4 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 4 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R4_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 4 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 5 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 5 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 5 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 5</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT5_MIN and CA_ACT5_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 5</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 5 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 5 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R5_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 5 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 6 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 6 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 6 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 6</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT6_MIN and CA_ACT6_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 6</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 6 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 6 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R6_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 6 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_AX" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 7 thrust vector, X body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_AY" default="0.0" type="FLOAT">
+      <short_desc>Axis of rotor 7 thrust vector, Y body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_AZ" default="-1.0" type="FLOAT">
+      <short_desc>Axis of rotor 7 thrust vector, Z body axis component</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_CT" default="0.0" type="FLOAT">
+      <short_desc>Thrust coefficient of rotor 7</short_desc>
+      <long_desc>The thrust coefficient if defined as Thrust = CT * u^2, where u (with value between CA_ACT7_MIN and CA_ACT7_MAX) is the output signal sent to the motor controller.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_KM" default="0.05" type="FLOAT">
+      <short_desc>Moment coefficient of rotor 7</short_desc>
+      <long_desc>The moment coefficient if defined as Torque = KM * Thrust Use a positive value for a rotor with CCW rotation. Use a negative value for a rotor with CW rotation.</long_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_PX" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 7 along X body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_PY" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 7 along Y body axis</short_desc>
+    </parameter>
+    <parameter name="CA_MC_R7_PZ" default="0.0" type="FLOAT">
+      <short_desc>Position of rotor 7 along Z body axis</short_desc>
+    </parameter>
+    <parameter name="CA_METHOD" default="0" type="INT32">
+      <short_desc>Control allocation method</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="0">Pseudo-inverse with output clipping (default)</value>
+        <value code="1">Pseudo-inverse with sequential desaturation technique</value>
+      </values>
     </parameter>
   </group>
   <group name="DShot">
@@ -5641,6 +6127,382 @@ default 1.5 turns per second</short_desc>
       <max>2200</max>
       <unit>us</unit>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS1" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS2" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS3" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS4" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS5" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS6" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS7" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DIS8" default="-1" type="INT32">
+      <short_desc>Set the disarmed PWM for the extra 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_EXTRA_DISARM will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_DISARM" default="1500" type="INT32">
+      <short_desc>Set the disarmed PWM for extra outputs</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
+      <min>0</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL1" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL2" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL3" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL4" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL5" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL6" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL7" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_FAIL8" default="-1" type="INT32">
+      <short_desc>Set the failsafe PWM for the extra 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX" default="2000" type="INT32">
+      <short_desc>Set the maximum PWM for the extra outputs</short_desc>
+      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
+      <min>1600</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX1" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 1 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX2" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 2 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX3" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 3 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX4" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 4 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX5" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 5 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX6" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 6 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX7" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 7 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MAX8" default="-1" type="INT32">
+      <short_desc>Set the max PWM value for the extra 8 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN" default="1000" type="INT32">
+      <short_desc>Set the minimum PWM for the extra outputs</short_desc>
+      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
+      <min>800</min>
+      <max>1400</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN1" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 1 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN2" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 2 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN3" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 3 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN4" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 4 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN5" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 5 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN6" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 6 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN7" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 7 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_MIN8" default="-1" type="INT32">
+      <short_desc>Set the min PWM value for the extra 8 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_EXTRA_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_RATE" default="50" type="INT32">
+      <short_desc>Set the PWM output frequency for the extra outputs</short_desc>
+      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
+      <min>-1</min>
+      <max>2000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV1" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 1</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV2" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 2</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV3" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 3</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV4" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 4</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV5" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 5</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV6" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 6</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV7" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 7</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_REV8" default="0" type="INT32">
+      <short_desc>Invert direction of extra output channel 8</short_desc>
+      <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM1" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 1</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM2" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 2</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM3" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 3</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM4" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 4</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM5" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 5</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM6" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 6</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM7" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 7</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter name="PWM_EXTRA_TRIM8" default="0" type="FLOAT">
+      <short_desc>Trim value for extra output channel 8</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
     </parameter>
     <parameter name="PWM_MAIN_DIS1" default="-1" type="INT32">
       <short_desc>Set the disarmed PWM for the main 1 output</short_desc>
@@ -12019,6 +12881,50 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <unit>Hz</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
+    </parameter>
+  </group>
+  <group name="Vehicle Model">
+    <parameter name="VM_INERTIA_XX" default="0.01" type="FLOAT">
+      <short_desc>Inertia matrix, XX component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_INERTIA_XY" default="0." type="FLOAT">
+      <short_desc>Inertia matrix, XY component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_INERTIA_XZ" default="0." type="FLOAT">
+      <short_desc>Inertia matrix, XZ component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_INERTIA_YY" default="0.01" type="FLOAT">
+      <short_desc>Inertia matrix, YY component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_INERTIA_YZ" default="0." type="FLOAT">
+      <short_desc>Inertia matrix, YZ component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_INERTIA_ZZ" default="0.01" type="FLOAT">
+      <short_desc>Inertia matrix, ZZ component</short_desc>
+      <unit>kg m^2</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
+    </parameter>
+    <parameter name="VM_MASS" default="1." type="FLOAT">
+      <short_desc>Mass</short_desc>
+      <unit>kg</unit>
+      <decimal>5</decimal>
+      <increment>0.00001</increment>
     </parameter>
   </group>
   <group name="Miscellaneous">
