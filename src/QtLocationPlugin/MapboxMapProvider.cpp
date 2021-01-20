@@ -3,7 +3,7 @@
 #include "QGCMapEngine.h"
 #include "SettingsManager.h"
 
-static const QString MapBoxUrl = QStringLiteral("https://api.mapbox.com/v4/%1/%2/%3/%4.jpg80?access_token=%5");
+static const QString MapBoxUrl = QStringLiteral("https://api.mapbox.com/styles/v1/mapbox/%1/tiles/%2/%3/%4?access_token=%5");
 static const QString MapBoxUrlCustom = QStringLiteral("https://api.mapbox.com/styles/v1/%1/%2/tiles/256/%3/%4/%5?access_token=%6");
 
 MapboxMapProvider::MapboxMapProvider(const QString &mapName, const quint32 averageSize, const QGeoMapType::MapStyle mapType, QObject* parent)
