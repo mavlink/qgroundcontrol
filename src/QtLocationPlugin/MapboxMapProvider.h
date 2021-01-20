@@ -31,7 +31,7 @@ class MapboxStreetMapProvider : public MapboxMapProvider {
 
 public:
     MapboxStreetMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.streets"), AVERAGE_MAPBOX_STREET_MAP,
+        : MapboxMapProvider(QStringLiteral("streets-v10"), AVERAGE_MAPBOX_STREET_MAP,
                             QGeoMapType::StreetMap, parent) {}
 };
 
@@ -40,7 +40,7 @@ class MapboxLightMapProvider : public MapboxMapProvider {
 
 public:
     MapboxLightMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.light"), AVERAGE_TILE_SIZE,
+        : MapboxMapProvider(QStringLiteral("light-v9"), AVERAGE_TILE_SIZE,
                             QGeoMapType::CustomMap, parent) {}
 };
 
@@ -49,7 +49,7 @@ class MapboxDarkMapProvider : public MapboxMapProvider {
 
 public:
     MapboxDarkMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.dark"), AVERAGE_TILE_SIZE,
+        : MapboxMapProvider(QStringLiteral("dark-v9"), AVERAGE_TILE_SIZE,
                             QGeoMapType::CustomMap, parent) {}
 };
 
@@ -58,7 +58,7 @@ class MapboxSatelliteMapProvider : public MapboxMapProvider {
 
 public:
     MapboxSatelliteMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.satellite"), AVERAGE_MAPBOX_SAT_MAP,
+        : MapboxMapProvider(QStringLiteral("satellite-v9"), AVERAGE_MAPBOX_SAT_MAP,
                             QGeoMapType::SatelliteMapDay, parent) {}
 };
 
@@ -67,16 +67,16 @@ class MapboxHybridMapProvider : public MapboxMapProvider {
 
 public:
     MapboxHybridMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.streets-satellite"), AVERAGE_MAPBOX_SAT_MAP,
+        : MapboxMapProvider(QStringLiteral("satellite-streets-v10"), AVERAGE_MAPBOX_SAT_MAP,
                             QGeoMapType::HybridMap, parent) {}
 };
 
-class MapboxWheatPasteMapProvider : public MapboxMapProvider {
+class MapboxBrightMapProvider : public MapboxMapProvider {
     Q_OBJECT
 
 public:
-    MapboxWheatPasteMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.wheatpaste"), AVERAGE_TILE_SIZE,
+    MapboxBrightMapProvider(QObject* parent = nullptr)
+        : MapboxMapProvider(QStringLiteral("bright-v9"), AVERAGE_TILE_SIZE,
                             QGeoMapType::CustomMap, parent) {}
 };
 
@@ -85,17 +85,8 @@ class MapboxStreetsBasicMapProvider : public MapboxMapProvider {
 
 public:
     MapboxStreetsBasicMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.streets-basic"), AVERAGE_TILE_SIZE,
+        : MapboxMapProvider(QStringLiteral("basic-v9"), AVERAGE_TILE_SIZE,
                             QGeoMapType::StreetMap, parent) {}
-};
-
-class MapboxComicMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxComicMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.comic"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
 };
 
 class MapboxOutdoorsMapProvider : public MapboxMapProvider {
@@ -103,52 +94,7 @@ class MapboxOutdoorsMapProvider : public MapboxMapProvider {
 
 public:
     MapboxOutdoorsMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.outdoors"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
-};
-
-class MapboxRunBikeHikeMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxRunBikeHikeMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.run-bike-hike"), AVERAGE_MAPBOX_STREET_MAP,
-                            QGeoMapType::CycleMap, parent) {}
-};
-
-class MapboxPencilMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxPencilMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.pencil"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
-};
-
-class MapboxPiratesMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxPiratesMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.pirates"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
-};
-
-class MapboxEmeraldMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxEmeraldMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.emerald"), AVERAGE_TILE_SIZE,
-                            QGeoMapType::CustomMap, parent) {}
-};
-
-class MapboxHighContrastMapProvider : public MapboxMapProvider {
-    Q_OBJECT
-
-public:
-    MapboxHighContrastMapProvider(QObject* parent = nullptr)
-        : MapboxMapProvider(QStringLiteral("mapbox.high-contrast"), AVERAGE_TILE_SIZE,
+        : MapboxMapProvider(QStringLiteral("outdoors-v10"), AVERAGE_TILE_SIZE,
                             QGeoMapType::CustomMap, parent) {}
 };
 
