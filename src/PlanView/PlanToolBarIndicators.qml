@@ -18,7 +18,7 @@ Item {
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
-    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : NaN
+    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : 0
     property real   missionMaxTelemetry:        _controllerValid ? _planMasterController.missionController.missionMaxTelemetry : NaN
     property bool   missionDirty:               _controllerValid ? _planMasterController.missionController.dirty : false
 
@@ -69,11 +69,20 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     function getMissionTime() {
-        if(_missionTime == 0) {
+        if (!_missionTime) {
             return "00:00:00"
         }
-        var t = new Date(0, 0, 0, 0, 0, Number(_missionTime))
-        return Qt.formatTime(t, 'hh:mm:ss')
+        var t = new Date(2021, 0, 0, 0, 0, Number(_missionTime))
+        var days = Qt.formatDateTime(t, 'dd')
+        var complete
+
+        if (days == 31) {
+            days = '0'
+            complete = Qt.formatTime(t, 'hh:mm:ss')
+        } else {
+            complete = days + " days " + Qt.formatTime(t, 'hh:mm:ss')
+        }
+        return complete
     }
 
     // Progress bar
