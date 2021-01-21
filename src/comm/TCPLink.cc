@@ -18,11 +18,6 @@
 #include <QHostInfo>
 #include <QSignalSpy>
 
-/// @file
-///     @brief TCP link type for SITL support
-///
-///     @author Don Gagne <don@thegagnes.com>
-
 TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     : LinkInterface(config)
     , _tcpConfig(qobject_cast<TCPConfiguration*>(config.get()))
@@ -30,22 +25,11 @@ TCPLink::TCPLink(SharedLinkConfigurationPtr& config)
     , _socketIsConnected(false)
 {
     Q_ASSERT(_tcpConfig);
-    moveToThread(this);
 }
 
 TCPLink::~TCPLink()
 {
     disconnect();
-    // Tell the thread to exit
-    quit();
-    // Wait for it to exit
-    wait();
-}
-
-void TCPLink::run()
-{
-    _hardwareConnect();
-    exec();
 }
 
 #ifdef TCPLINK_READWRITE_DEBUG
@@ -84,7 +68,7 @@ void TCPLink::_writeBytes(const QByteArray data)
     }
 }
 
-void TCPLink::readBytes()
+void TCPLink::_readBytes()
 {
     if (_socket) {
         qint64 byteCount = _socket->bytesAvailable();
@@ -103,14 +87,11 @@ void TCPLink::readBytes()
 
 void TCPLink::disconnect(void)
 {
-    quit();
-    wait();
     if (_socket) {
         // This prevents stale signal from calling the link after it has been deleted
-        QObject::disconnect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
+        QObject::disconnect(_socket, &QIODevice::readyRead, this, &TCPLink::_readBytes);
         _socketIsConnected = false;
         _socket->disconnectFromHost(); // Disconnect tcp
-        _socket->waitForDisconnected();        
         _socket->deleteLater(); // Make sure delete happens on correct thread
         _socket = nullptr;
         emit disconnected();
@@ -119,35 +100,33 @@ void TCPLink::disconnect(void)
 
 bool TCPLink::_connect(void)
 {
-    if (isRunning())
-    {
-        quit();
-        wait();
+    if (_socket) {
+        qWarning() << "connect called while already connected";
+        return true;
     }
-    start(HighPriority);
-    return true;
+
+    return _hardwareConnect();
 }
 
 bool TCPLink::_hardwareConnect()
 {
     Q_ASSERT(_socket == nullptr);
     _socket = new QTcpSocket();
+    QObject::connect(_socket, &QIODevice::readyRead, this, &TCPLink::_readBytes);
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
 #else
     QSignalSpy errorSpy(_socket, &QAbstractSocket::errorOccurred);
 #endif
-
-    _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
-    QObject::connect(_socket, &QTcpSocket::readyRead, this, &TCPLink::readBytes);
-
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QObject::connect(_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),
                      this, &TCPLink::_socketError);
 #else
     QObject::connect(_socket, &QAbstractSocket::errorOccurred, this, &TCPLink::_socketError);
 #endif
+
+    _socket->connectToHost(_tcpConfig->address(), _tcpConfig->port());
 
     // Give the socket a second to connect to the other side otherwise error out
     if (!_socket->waitForConnected(1000))
@@ -180,18 +159,6 @@ void TCPLink::_socketError(QAbstractSocket::SocketError socketError)
 bool TCPLink::isConnected() const
 {
     return _socketIsConnected;
-}
-
-void TCPLink::waitForBytesWritten(int msecs)
-{
-    Q_ASSERT(_socket);
-    _socket->waitForBytesWritten(msecs);
-}
-
-void TCPLink::waitForReadyRead(int msecs)
-{
-    Q_ASSERT(_socket);
-    _socket->waitForReadyRead(msecs);
 }
 
 //--------------------------------------------------------------------------
