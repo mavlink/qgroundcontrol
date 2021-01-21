@@ -81,24 +81,14 @@ public:
     bool isConnected(void) const override;
     void disconnect (void) override;
 
-public slots:
-    void waitForBytesWritten(int msecs);
-    void waitForReadyRead   (int msecs);
-
-protected slots:
-    void _socketError   (QAbstractSocket::SocketError socketError);
-    void readBytes      (void);
-
-protected:
-    // QThread overrides
-    void run(void) override;
-
 private slots:
+    void _socketError   (QAbstractSocket::SocketError socketError);
+    void _readBytes     (void);
+
     // LinkInterface overrides
     void _writeBytes(const QByteArray data) override;
 
 private:
-
     // LinkInterface overrides
     bool _connect(void) override;
 
