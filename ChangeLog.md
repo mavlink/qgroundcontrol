@@ -2,6 +2,9 @@
 
 Note: This file only contains high level features or important fixes.
 
+## 4.1.1 Not yet released
+* Fix TCPLink comms
+
 ## 4.1 - Daily build
 
 * Support simple cameras which only support DIGICAM_CONTROL in the Photo/Video control on Fly View.
