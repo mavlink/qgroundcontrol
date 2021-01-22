@@ -1438,15 +1438,20 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
         mavlink_message_t   msg;
 
         mavlink_msg_ping_decode(&message, &ping);
-        mavlink_msg_ping_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
-                                   static_cast<uint8_t>(_mavlink->getComponentId()),
-                                   sharedLink->mavlinkChannel(),
-                                   &msg,
-                                   ping.time_usec,
-                                   ping.seq,
-                                   message.sysid,
-                                   message.compid);
-        sendMessageOnLinkThreadSafe(link, msg);
+
+        if ((ping.target_system == 0) && (ping.target_component == 0)) {
+            // Mavlink defines a ping request as a MSG_ID_PING which contains target_system = 0 and target_component = 0
+            // So only send a ping response when you receive a valid ping request
+            mavlink_msg_ping_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
+                                    static_cast<uint8_t>(_mavlink->getComponentId()),
+                                    sharedLink->mavlinkChannel(),
+                                    &msg,
+                                    ping.time_usec,
+                                    ping.seq,
+                                    message.sysid,
+                                    message.compid);
+            sendMessageOnLinkThreadSafe(link, msg);
+        }
     }
 }
 
