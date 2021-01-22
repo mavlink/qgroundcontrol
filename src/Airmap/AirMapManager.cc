@@ -168,8 +168,8 @@ AirMapManager::_settingsTimeout()
         auto credentials    = Credentials{};
         credentials.api_key = _shared.settings().apiKey.toStdString();
         auto configuration  = Client::default_production_configuration(credentials);
-        configuration.telemetry.host = "udp.telemetry.k8s.airmap.io";
-        configuration.telemetry.port = 7070;
+        configuration.telemetry.host = "telemetry.airmap.com";
+        configuration.telemetry.port = 16060;
         qt::Client::create(configuration, _dispatchingLogger, this, [this](const qt::Client::CreateResult& result) {
             if (result) {
                 qCDebug(AirMapManagerLog) << "Successfully created airmap::qt::Client instance";
