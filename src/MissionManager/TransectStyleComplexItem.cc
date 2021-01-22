@@ -729,8 +729,8 @@ void TransectStyleComplexItem::_adjustForMaxRates(void)
             //qDebug() << "descent rate pass";
             descentRateAdjusted = false;
             for (int i=0; i<_rgFlightPathCoordInfo.count() - 1; i++) {
-                QGeoCoordinate& fromCoord   = _rgFlightPathCoordInfo[i-1].coord;
-                QGeoCoordinate& toCoord     = _rgFlightPathCoordInfo[i].coord;
+                QGeoCoordinate& fromCoord   = _rgFlightPathCoordInfo[i].coord;
+                QGeoCoordinate& toCoord     = _rgFlightPathCoordInfo[i+1].coord;
 
                 double altDifference    = toCoord.altitude() - fromCoord.altitude();
                 double distance         = fromCoord.distanceTo(toCoord);
