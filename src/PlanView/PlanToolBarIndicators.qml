@@ -18,7 +18,7 @@ Item {
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
-    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : NaN
+    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : 0
     property real   missionMaxTelemetry:        _controllerValid ? _planMasterController.missionController.missionMaxTelemetry : NaN
     property bool   missionDirty:               _controllerValid ? _planMasterController.missionController.dirty : false
 
@@ -69,10 +69,12 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     function getMissionTime() {
-        if(_missionTime == 0) {
+        if (_missionTime == 0) {
             return "00:00:00"
         }
-        var t = new Date(0, 0, 0, 0, 0, Number(_missionTime))
+        // On some versions of jscript, passing in year=0 returns bad time formatting, on some it doesnt. Setting year to a specific
+        // year makes it always work correctly.
+        var t = new Date(2021, 0, 0, 0, 0, Number(_missionTime))
         return Qt.formatTime(t, 'hh:mm:ss')
     }
 
