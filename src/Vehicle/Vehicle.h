@@ -20,6 +20,7 @@
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "MAVLinkProtocol.h"
+#include "MAVLinkStreamConfig.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
 #include "QGCMapCircle.h"
@@ -924,7 +925,6 @@ private:
     void _handleAttitudeQuaternion      (mavlink_message_t& message);
     void _handleStatusText              (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
-    void _handleMessageInterval         (const mavlink_message_t& message);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
     // ArduPilot dialect messages
@@ -946,13 +946,13 @@ private:
     void _setCapabilities               (uint64_t capabilityBits);
     void _updateArmed                   (bool armed);
     bool _apmArmingNotRequired          ();
-    void _pidTuningAdjustRates          ();
     void _initializeCsv                 ();
     void _writeCsvLine                  ();
     void _flightTimerStart              ();
     void _flightTimerStop               ();
     void _chunkedStatusTextTimeout      (void);
     void _chunkedStatusTextCompleted    (uint8_t compId);
+    void _setMessageInterval            (int messageId, int rate);
 
     static void _rebootCommandResultHandler(void* resultHandlerData, int compId, MAV_RESULT commandResult, MavCmdResultFailureCode_t failureCode);
 
@@ -1112,12 +1112,7 @@ private:
     QTimer          _orbitTelemetryTimer;
     static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
 
-    // PID Tuning telemetry mode
-    bool            _pidTuningTelemetryMode = false;
-    bool            _pidTuningWaitingForRates = false;
-    int             _pidTuningNextAdjustIndex = -1;
-    QMap<int, int>  _pidTuningMessageRatesUsecs;
-    static const QList<int> _pidTuningMessages;
+    MAVLinkStreamConfig _mavlinkStreamConfig;
 
     // Chunked status text support
     typedef struct {
