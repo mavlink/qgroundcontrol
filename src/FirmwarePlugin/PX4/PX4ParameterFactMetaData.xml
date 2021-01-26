@@ -8064,13 +8064,13 @@ default 1.5 turns per second</short_desc>
         <value code="18">Channel 18</value>
       </values>
     </parameter>
-    <parameter name="RC_RSSI_PWM_MAX" default="1000" type="INT32">
+    <parameter name="RC_RSSI_PWM_MAX" default="2000" type="INT32">
       <short_desc>Max input value for RSSI reading</short_desc>
       <long_desc>Only used if RC_RSSI_PWM_CHAN &gt; 0</long_desc>
       <min>0</min>
       <max>2000</max>
     </parameter>
-    <parameter name="RC_RSSI_PWM_MIN" default="2000" type="INT32">
+    <parameter name="RC_RSSI_PWM_MIN" default="1000" type="INT32">
       <short_desc>Min input value for RSSI reading</short_desc>
       <long_desc>Only used if RC_RSSI_PWM_CHAN &gt; 0</long_desc>
       <min>0</min>
