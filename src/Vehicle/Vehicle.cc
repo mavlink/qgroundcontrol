@@ -101,8 +101,6 @@ const char* Vehicle::_escStatusFactGroupName =          "escStatus";
 const char* Vehicle::_estimatorStatusFactGroupName =    "estimatorStatus";
 const char* Vehicle::_terrainFactGroupName =            "terrain";
 
-const QList<int> Vehicle::_pidTuningMessages = {MAVLINK_MSG_ID_ATTITUDE_QUATERNION, MAVLINK_MSG_ID_ATTITUDE_TARGET};
-
 // Standard connected vehicle
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -123,6 +121,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _firmwarePluginManager        (firmwarePluginManager)
     , _joystickManager              (joystickManager)
     , _trajectoryPoints             (new TrajectoryPoints(this, this))
+    , _mavlinkStreamConfig          (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _rollFact                     (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact                    (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact                  (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -270,6 +269,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _capabilityBits                   (MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _firmwarePluginManager            (firmwarePluginManager)
     , _trajectoryPoints                 (new TrajectoryPoints(this, this))
+    , _mavlinkStreamConfig              (std::bind(&Vehicle::_setMessageInterval, this, std::placeholders::_1, std::placeholders::_2))
     , _rollFact                         (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact                        (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact                      (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -702,9 +702,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
         _handleOrbitExecutionStatus(message);
-        break;
-    case MAVLINK_MSG_ID_MESSAGE_INTERVAL:
-        _handleMessageInterval(message);
         break;
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
@@ -2892,16 +2889,8 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     }
 
     // advance PID tuning setup/teardown
-    if (ack.command == MAV_CMD_SET_MESSAGE_INTERVAL && _pidTuningNextAdjustIndex >= 0) {
-        _pidTuningAdjustRates();
-    }
-    if (ack.command == MAV_CMD_GET_MESSAGE_INTERVAL && _pidTuningWaitingForRates) {
-        if (_pidTuningMessageRatesUsecs.count() < _pidTuningMessages.count()) {
-            sendMavCommand(defaultComponentId(),
-                    MAV_CMD_GET_MESSAGE_INTERVAL,
-                    true,                        // show error
-                    _pidTuningMessages[_pidTuningMessageRatesUsecs.count()]);
-        }
+    if (ack.command == MAV_CMD_SET_MESSAGE_INTERVAL) {
+        _mavlinkStreamConfig.gotSetMessageIntervalAck();
     }
 }
 
@@ -3558,78 +3547,24 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
 
-void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
-{
-    if (_pidTuningWaitingForRates) {
-        mavlink_message_interval_t messageInterval;
-
-        mavlink_msg_message_interval_decode(&message, &messageInterval);
-
-        int msgId = messageInterval.message_id;
-        if (_pidTuningMessages.contains(msgId)) {
-            _pidTuningMessageRatesUsecs[msgId] = messageInterval.interval_us;
-        }
-
-        if (_pidTuningMessageRatesUsecs.count() == _pidTuningMessages.count()) {
-            // We have back all the rates we requested
-            _pidTuningWaitingForRates = false;
-            _pidTuningNextAdjustIndex = 0;
-            _pidTuningAdjustRates();
-        }
-    }
-}
-
 void Vehicle::setPIDTuningTelemetryMode(bool pidTuning)
 {
+    setLiveUpdates(pidTuning);
+    _setpointFactGroup.setLiveUpdates(pidTuning);
     if (pidTuning) {
-        if (!_pidTuningTelemetryMode) {
-            // First step is to get the current message rates before we adjust them
-            _pidTuningTelemetryMode = true;
-            _pidTuningWaitingForRates = true;
-            _pidTuningMessageRatesUsecs.clear();
-            sendMavCommand(defaultComponentId(),
-                    MAV_CMD_GET_MESSAGE_INTERVAL,
-                    true,                        // show error
-                    _pidTuningMessages[0]);
-        }
+        _mavlinkStreamConfig.setHighRateRateAndAttitude();
     } else {
-        if (_pidTuningTelemetryMode) {
-            _pidTuningTelemetryMode = false;
-            if (_pidTuningWaitingForRates) {
-                // We never finished waiting for previous rates
-                _pidTuningWaitingForRates = false;
-            } else {
-                _pidTuningNextAdjustIndex = 0;
-                _pidTuningAdjustRates();
-            }
-        }
+        _mavlinkStreamConfig.restoreDefaults();
     }
 }
 
-void Vehicle::_pidTuningAdjustRates()
+void Vehicle::_setMessageInterval(int messageId, int rate)
 {
-    int requestedRate = (int)(1000000.0 / 100.0); // 100 Hz in usecs (better set this a bit higher than actually needed,
-    // to give it more priority in case of exceeing link bandwidth)
-
-    if (_pidTuningNextAdjustIndex >= _pidTuningMessages.size()) {
-        _pidTuningNextAdjustIndex = -1;
-        return;
-    }
-    int telemetry = _pidTuningMessages[_pidTuningNextAdjustIndex];
-
-    if (requestedRate < _pidTuningMessageRatesUsecs[telemetry] || _pidTuningMessageRatesUsecs[telemetry] == 0) {
-        sendMavCommand(defaultComponentId(),
-                MAV_CMD_SET_MESSAGE_INTERVAL,
-                true,                        // show error
-                telemetry,
-                _pidTuningTelemetryMode ? requestedRate : _pidTuningMessageRatesUsecs[telemetry]);
-    }
-
-    if (_pidTuningNextAdjustIndex == 0) {
-        setLiveUpdates(_pidTuningTelemetryMode);
-        _setpointFactGroup.setLiveUpdates(_pidTuningTelemetryMode);
-    }
-    ++_pidTuningNextAdjustIndex;
+    sendMavCommand(defaultComponentId(),
+            MAV_CMD_SET_MESSAGE_INTERVAL,
+            true,                        // show error
+            messageId,
+            rate);
 }
 
 void Vehicle::_initializeCsv()
