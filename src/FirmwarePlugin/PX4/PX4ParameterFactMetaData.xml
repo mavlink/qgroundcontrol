@@ -211,11 +211,11 @@
       <max>1</max>
       <unit>rad</unit>
     </parameter>
-    <parameter name="ASPD_DO_CHECKS" default="1" type="INT32">
+    <parameter name="ASPD_DO_CHECKS" default="1" type="INT32" boolean="true">
       <short_desc>Enable checks on airspeed sensors</short_desc>
       <long_desc>If set to true then the data comming from the airspeed sensors is checked for validity. Only applied if ASPD_PRIMARY &gt; 0.</long_desc>
     </parameter>
-    <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32">
+    <parameter name="ASPD_FALLBACK_GW" default="0" type="INT32" boolean="true">
       <short_desc>Enable fallback to sensor-less airspeed estimation</short_desc>
       <long_desc>If set to true and airspeed checks are enabled, it will use a sensor-less airspeed estimation based on groundspeed minus windspeed if no other airspeed sensor available to fall back to.</long_desc>
       <values>
@@ -266,7 +266,7 @@
       <min>0.5</min>
       <max>1.5</max>
     </parameter>
-    <parameter name="ASPD_SCALE_EST" default="0" type="INT32">
+    <parameter name="ASPD_SCALE_EST" default="0" type="INT32" boolean="true">
       <short_desc>Automatic airspeed scale estimation on</short_desc>
       <long_desc>Turns the automatic airspeed scale (scale from IAS to CAS) on or off. It is recommended to fly level altitude while performing the estimation. Set to 1 to start estimation (best when already flying). Set to 0 to end scale estimation. The estimated scale is then saved using the ASPD_SCALE parameter.</long_desc>
     </parameter>
@@ -452,7 +452,7 @@
     </parameter>
   </group>
   <group name="Attitude Q estimator">
-    <parameter name="ATT_ACC_COMP" default="1" type="INT32">
+    <parameter name="ATT_ACC_COMP" default="1" type="INT32" boolean="true">
       <short_desc>Acceleration compensation based on GPS
 velocity</short_desc>
     </parameter>
@@ -481,7 +481,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <unit>deg</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="ATT_MAG_DECL_A" default="1" type="INT32">
+    <parameter name="ATT_MAG_DECL_A" default="1" type="INT32" boolean="true">
       <short_desc>Automatic GPS based declination compensation</short_desc>
     </parameter>
     <parameter name="ATT_W_ACC" default="0.2" type="FLOAT">
@@ -856,7 +856,7 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">Rising edge</value>
       </values>
     </parameter>
-    <parameter name="CAM_CAP_FBACK" default="0" type="INT32">
+    <parameter name="CAM_CAP_FBACK" default="0" type="INT32" boolean="true">
       <short_desc>Camera capture feedback</short_desc>
       <long_desc>Enables camera capture feedback</long_desc>
       <reboot_required>true</reboot_required>
@@ -1060,7 +1060,7 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">two step arm</value>
       </values>
     </parameter>
-    <parameter name="COM_ARM_AUTH_REQ" default="0" type="INT32">
+    <parameter name="COM_ARM_AUTH_REQ" default="0" type="INT32" boolean="true">
       <short_desc>Require arm authorization to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a arm authorization.</long_desc>
     </parameter>
@@ -1071,7 +1071,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="COM_ARM_CHK_ESCS" default="1" type="INT32">
+    <parameter name="COM_ARM_CHK_ESCS" default="1" type="INT32" boolean="true">
       <short_desc>Require all the ESCs to be detected to arm</short_desc>
       <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
     </parameter>
@@ -1126,19 +1126,19 @@ Set -1 to disable the check</short_desc>
       <max>180</max>
       <unit>deg</unit>
     </parameter>
-    <parameter name="COM_ARM_MAG_STR" default="1" type="INT32">
+    <parameter name="COM_ARM_MAG_STR" default="1" type="INT32" boolean="true">
       <short_desc>Enable mag strength preflight check</short_desc>
       <long_desc>Deny arming if the estimator detects a strong magnetic disturbance (check enabled by EKF2_MAG_CHECK)</long_desc>
     </parameter>
-    <parameter name="COM_ARM_MIS_REQ" default="0" type="INT32">
+    <parameter name="COM_ARM_MIS_REQ" default="0" type="INT32" boolean="true">
       <short_desc>Require valid mission to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a valid mission.</long_desc>
     </parameter>
-    <parameter name="COM_ARM_SWISBTN" default="0" type="INT32">
+    <parameter name="COM_ARM_SWISBTN" default="0" type="INT32" boolean="true">
       <short_desc>Arm switch is only a button</short_desc>
       <long_desc>The default uses the arm switch as real switch. If parameter set button gets handled like stick arming.</long_desc>
     </parameter>
-    <parameter name="COM_ARM_WO_GPS" default="1" type="INT32">
+    <parameter name="COM_ARM_WO_GPS" default="1" type="INT32" boolean="true">
       <short_desc>Allow arming without GPS</short_desc>
       <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
     </parameter>
@@ -1356,7 +1356,7 @@ Set -1 to disable the check</short_desc>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="COM_HOME_IN_AIR" default="0" type="INT32">
+    <parameter name="COM_HOME_IN_AIR" default="0" type="INT32" boolean="true">
       <short_desc>Allows setting the home position after takeoff</short_desc>
       <long_desc>If set to true, the autopilot is allowed to set its home position after takeoff The true home position is back-computed if a local position is estimate if available. If no local position is available, home is set to the current position.</long_desc>
     </parameter>
@@ -1395,7 +1395,7 @@ Set -1 to disable the check</short_desc>
         <value code="3">Return at critical level, land at emergency level</value>
       </values>
     </parameter>
-    <parameter name="COM_MOT_TEST_EN" default="1" type="INT32">
+    <parameter name="COM_MOT_TEST_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable Motor Testing</short_desc>
       <long_desc>If set, enables the motor test interface via MAVLink (DO_MOTOR_TEST), that allows spinning the motors for testing purposes.</long_desc>
     </parameter>
@@ -1534,7 +1534,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <decimal>0</decimal>
       <increment>0.05</increment>
     </parameter>
-    <parameter name="COM_REARM_GRACE" default="1" type="INT32">
+    <parameter name="COM_REARM_GRACE" default="1" type="INT32" boolean="true">
       <short_desc>Rearming grace period</short_desc>
       <long_desc>Re-arming grace allows to rearm the drone with manual command without running prearmcheck during 5 s after disarming.</long_desc>
     </parameter>
@@ -1657,11 +1657,11 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <value code="2">Tiltrotor VTOL (WIP)</value>
       </values>
     </parameter>
-    <parameter name="CA_AIR_SCALE_EN" default="0" type="INT32">
+    <parameter name="CA_AIR_SCALE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Airspeed scaler</short_desc>
       <long_desc>This compensates for the variation of flap effectiveness with airspeed.</long_desc>
     </parameter>
-    <parameter name="CA_BAT_SCALE_EN" default="0" type="INT32">
+    <parameter name="CA_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Battery power level scaler</short_desc>
       <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The copter should constantly behave as if it was fully charged with reduced max acceleration at lower battery percentages. i.e. if hover is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
     </parameter>
@@ -2186,7 +2186,7 @@ Sets the number of standard deviations used by the innovation consistency test</
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EKF2_EV_NOISE_MD" default="0" type="INT32">
+    <parameter name="EKF2_EV_NOISE_MD" default="0" type="INT32" boolean="true">
       <short_desc>Whether to set the external vision observation noise from the parameter or from vision message</short_desc>
       <long_desc>If set to true the observation noise is set from the parameters directly, if set to false the measurement noise is taken from the vision message and the parameter are used as a lower bound.</long_desc>
     </parameter>
@@ -2205,7 +2205,7 @@ Sets the number of standard deviations used by the innovation consistency test</
       <unit>m</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter name="EKF2_FUSE_BETA" default="0" type="INT32">
+    <parameter name="EKF2_FUSE_BETA" default="0" type="INT32" boolean="true">
       <short_desc>Boolean determining if synthetic sideslip measurements should fused</short_desc>
       <long_desc>A value of 1 indicates that fusion is active Both  sideslip fusion and airspeed fusion must be active for the EKF to continue navigating after loss of GPS. Use EKF2_ARSP_THR to activate airspeed fusion.</long_desc>
     </parameter>
@@ -2378,7 +2378,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <unit>gauss/s</unit>
       <decimal>6</decimal>
     </parameter>
-    <parameter name="EKF2_MAG_CHECK" default="0" type="INT32">
+    <parameter name="EKF2_MAG_CHECK" default="0" type="INT32" boolean="true">
       <short_desc>Magnetic field strength test selection</short_desc>
       <long_desc>When set, the EKF checks the strength of the magnetic field to decide whether the magnetometer data is valid. If GPS data is received, the magnetic field is compared to a World Magnetic Model (WMM), otherwise an average value is used. This check is useful to reject occasional hard iron disturbance.</long_desc>
     </parameter>
@@ -2737,7 +2737,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <long_desc>EKF2 selector maximum accumulated velocity threshold for comparing accelerometers. Accumulated velocity error larger than this will result in the sensor being declared faulty.</long_desc>
       <unit>m/s</unit>
     </parameter>
-    <parameter name="EKF2_SYNT_MAG_Z" default="0" type="INT32">
+    <parameter name="EKF2_SYNT_MAG_Z" default="0" type="INT32" boolean="true">
       <short_desc>Enable synthetic magnetometer Z component measurement</short_desc>
       <long_desc>Use for vehicles where the measured body Z magnetic field is subject to strong magnetic interference. For magnetic heading fusion the magnetometer Z measurement will be replaced by a synthetic value calculated using the knowledge of the 3D magnetic field vector at the location of the drone. Therefore, this parameter will only have an effect if the global position of the drone is known. For 3D mag fusion the magnetometer Z measurement will simply be ingored instead of fusing the synthetic value.</long_desc>
     </parameter>
@@ -2792,12 +2792,12 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
     </parameter>
   </group>
   <group name="Events">
-    <parameter name="EV_TSK_RC_LOSS" default="0" type="INT32">
+    <parameter name="EV_TSK_RC_LOSS" default="0" type="INT32" boolean="true">
       <short_desc>RC Loss Alarm</short_desc>
       <long_desc>Enable/disable event task for RC Loss. When enabled, an alarm tune will be played via buzzer or ESCs, if supported. The alarm will sound after a disarm, if the vehicle was previously armed and only if the vehicle had RC signal at some point. Particularly useful for locating crashed drones without a GPS sensor.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="EV_TSK_STAT_DIS" default="0" type="INT32">
+    <parameter name="EV_TSK_STAT_DIS" default="0" type="INT32" boolean="true">
       <short_desc>Status Display</short_desc>
       <long_desc>Enable/disable event task for displaying the vehicle status using arm-mounted LEDs. When enabled and if the vehicle supports it, LEDs will flash indicating various vehicle status changes. Currently PX4 has not implemented any specific status events. -</long_desc>
       <reboot_required>true</reboot_required>
@@ -2833,11 +2833,11 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
         <value code="1">Airspeed disabled</value>
       </values>
     </parameter>
-    <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32">
+    <parameter name="FW_ARSP_SCALE_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable airspeed scaling</short_desc>
       <long_desc>This enables a logic that automatically adjusts the output of the rate controller to take into account the real torque produced by an aerodynamic control surface given the current deviation from the trim airspeed (FW_AIRSPD_TRIM). Enable when using aerodynamic control surfaces (e.g.: plane) Disable when using rotor wings (e.g.: autogyro)</long_desc>
     </parameter>
-    <parameter name="FW_BAT_SCALE_EN" default="0" type="INT32">
+    <parameter name="FW_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Whether to scale throttle by battery power level</short_desc>
       <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The fixed wing should constantly behave as if it was fully charged with reduced max thrust at lower battery percentages. i.e. if cruise speed is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
     </parameter>
@@ -3165,7 +3165,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>3</decimal>
       <increment>0.005</increment>
     </parameter>
-    <parameter name="FW_W_EN" default="0" type="INT32">
+    <parameter name="FW_W_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable wheel steering controller</short_desc>
     </parameter>
     <parameter name="FW_W_RMAX" default="30.0" type="FLOAT">
@@ -3273,7 +3273,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_LND_EARLYCFG" default="0" type="INT32">
+    <parameter name="FW_LND_EARLYCFG" default="0" type="INT32" boolean="true">
       <short_desc>Early landing configuration deployment</short_desc>
       <long_desc>When disabled, the landing configuration (flaps, landing airspeed, etc.) is only activated on the final approach to landing. When enabled, it is already activated when entering the final loiter-down (loiter-to-alt) waypoint before the landing approach. This shifts the (often large) altitude and airspeed errors caused by the configuration change away from the ground such that these are not so critical. It also gives the controller enough time to adapt to the new configuration such that the landing approach starts with a cleaner initial state.</long_desc>
     </parameter>
@@ -3337,7 +3337,7 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="FW_LND_USETER" default="0" type="INT32">
+    <parameter name="FW_LND_USETER" default="0" type="INT32" boolean="true">
       <short_desc>Use terrain estimate during landing</short_desc>
       <long_desc>This is turned off by default and a waypoint or return altitude is normally used (or sea level for an arbitrary land position).</long_desc>
     </parameter>
@@ -3439,7 +3439,7 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
   </group>
   <group name="FW Launch detection">
-    <parameter name="LAUN_ALL_ON" default="0" type="INT32">
+    <parameter name="LAUN_ALL_ON" default="0" type="INT32" boolean="true">
       <short_desc>Launch detection</short_desc>
     </parameter>
     <parameter name="LAUN_CAT_A" default="30.0" type="FLOAT">
@@ -3645,13 +3645,13 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
   </group>
   <group name="Failure Detector">
-    <parameter name="FD_ESCS_EN" default="1" type="INT32">
+    <parameter name="FD_ESCS_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable checks on ESCs that report their arming state.
 If enabled, failure detector will verify that all the ESCs have successfully armed when the vehicle has transitioned to the armed state.
 Timeout for receiving an acknowledgement from the ESCs is 0.3s, if no feedback is received the failure detector will auto disarm the vehicle</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="FD_EXT_ATS_EN" default="0" type="INT32">
+    <parameter name="FD_EXT_ATS_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable PWM input on AUX5 or MAIN5 (depending on board) for engaging failsafe from an external
 automatic trigger system (ATS)</short_desc>
       <long_desc>External ATS is required by ASTM F3322-18.</long_desc>
@@ -4451,7 +4451,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="301">Wifi Port</value>
       </values>
     </parameter>
-    <parameter name="MAV_0_FORWARD" default="1" type="INT32">
+    <parameter name="MAV_0_FORWARD" default="1" type="INT32" boolean="true">
       <short_desc>Enable MAVLink Message forwarding for instance 0</short_desc>
       <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
       <reboot_required>True</reboot_required>
@@ -4471,7 +4471,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
-    <parameter name="MAV_0_RADIO_CTL" default="1" type="INT32">
+    <parameter name="MAV_0_RADIO_CTL" default="1" type="INT32" boolean="true">
       <short_desc>Enable software throttling of mavlink on instance 0</short_desc>
       <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
       <reboot_required>True</reboot_required>
@@ -4501,7 +4501,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="301">Wifi Port</value>
       </values>
     </parameter>
-    <parameter name="MAV_1_FORWARD" default="0" type="INT32">
+    <parameter name="MAV_1_FORWARD" default="0" type="INT32" boolean="true">
       <short_desc>Enable MAVLink Message forwarding for instance 1</short_desc>
       <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
       <reboot_required>True</reboot_required>
@@ -4521,7 +4521,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
-    <parameter name="MAV_1_RADIO_CTL" default="1" type="INT32">
+    <parameter name="MAV_1_RADIO_CTL" default="1" type="INT32" boolean="true">
       <short_desc>Enable software throttling of mavlink on instance 1</short_desc>
       <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
       <reboot_required>True</reboot_required>
@@ -4551,7 +4551,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="301">Wifi Port</value>
       </values>
     </parameter>
-    <parameter name="MAV_2_FORWARD" default="0" type="INT32">
+    <parameter name="MAV_2_FORWARD" default="0" type="INT32" boolean="true">
       <short_desc>Enable MAVLink Message forwarding for instance 2</short_desc>
       <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
       <reboot_required>True</reboot_required>
@@ -4571,7 +4571,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="8">External Vision</value>
       </values>
     </parameter>
-    <parameter name="MAV_2_RADIO_CTL" default="1" type="INT32">
+    <parameter name="MAV_2_RADIO_CTL" default="1" type="INT32" boolean="true">
       <short_desc>Enable software throttling of mavlink on instance 2</short_desc>
       <long_desc>If enabled, MAVLink messages will be throttled according to `txbuf` field reported by radio_status. Requires a radio to send the mavlink message RADIO_STATUS.</long_desc>
       <reboot_required>True</reboot_required>
@@ -4598,19 +4598,19 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <max>250</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="MAV_FWDEXTSP" default="1" type="INT32">
+    <parameter name="MAV_FWDEXTSP" default="1" type="INT32" boolean="true">
       <short_desc>Forward external setpoint messages</short_desc>
       <long_desc>If set to 1 incoming external setpoint messages will be directly forwarded to the controllers if in offboard control mode</long_desc>
     </parameter>
-    <parameter name="MAV_HASH_CHK_EN" default="1" type="INT32">
+    <parameter name="MAV_HASH_CHK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Parameter hash check</short_desc>
       <long_desc>Disabling the parameter hash check functionality will make the mavlink instance stream parameters continuously.</long_desc>
     </parameter>
-    <parameter name="MAV_HB_FORW_EN" default="1" type="INT32">
+    <parameter name="MAV_HB_FORW_EN" default="1" type="INT32" boolean="true">
       <short_desc>Hearbeat message forwarding</short_desc>
       <long_desc>The mavlink hearbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
     </parameter>
-    <parameter name="MAV_ODOM_LP" default="0" type="INT32">
+    <parameter name="MAV_ODOM_LP" default="0" type="INT32" boolean="true">
       <short_desc>Activate ODOMETRY loopback</short_desc>
       <long_desc>If set, it gets the data from 'vehicle_visual_odometry' instead of 'vehicle_odometry' serving as a loopback of the received ODOMETRY messages on the Mavlink receiver.</long_desc>
     </parameter>
@@ -4676,18 +4676,18 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="27">Onboard ADSB peripheral</value>
       </values>
     </parameter>
-    <parameter name="MAV_USEHILGPS" default="0" type="INT32">
+    <parameter name="MAV_USEHILGPS" default="0" type="INT32" boolean="true">
       <short_desc>Use/Accept HIL GPS message even if not in HIL mode</short_desc>
       <long_desc>If set to 1 incoming HIL GPS messages are parsed.</long_desc>
     </parameter>
   </group>
   <group name="MKBLCTRL Testmode">
-    <parameter name="MKBLCTRL_TEST" default="0" type="INT32">
+    <parameter name="MKBLCTRL_TEST" default="0" type="INT32" boolean="true">
       <short_desc>Test mode (Identify) of MKBLCTRL Driver</short_desc>
     </parameter>
   </group>
   <group name="Mission">
-    <parameter name="COM_OBS_AVOID" default="0" type="INT32">
+    <parameter name="COM_OBS_AVOID" default="0" type="INT32" boolean="true">
       <short_desc>Flag to enable obstacle avoidance</short_desc>
     </parameter>
     <parameter name="COM_TAKEOFF_ACT" default="0" type="INT32">
@@ -4744,7 +4744,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter name="MIS_TAKEOFF_REQ" default="0" type="INT32">
+    <parameter name="MIS_TAKEOFF_REQ" default="0" type="INT32" boolean="true">
       <short_desc>Take-off waypoint required</short_desc>
       <long_desc>If set, the mission feasibility checker will check for a takeoff waypoint on the mission.</long_desc>
     </parameter>
@@ -4799,7 +4799,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="6">Lockdown</value>
       </values>
     </parameter>
-    <parameter name="NAV_FORCE_VT" default="1" type="INT32">
+    <parameter name="NAV_FORCE_VT" default="1" type="INT32" boolean="true">
       <short_desc>Force VTOL mode takeoff and land</short_desc>
     </parameter>
     <parameter name="NAV_FW_ALTL_RAD" default="5.0" type="FLOAT">
@@ -4894,7 +4894,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
   </group>
   <group name="Mount">
-    <parameter name="MNT_DO_STAB" default="0" type="INT32">
+    <parameter name="MNT_DO_STAB" default="0" type="INT32" boolean="true">
       <short_desc>Stabilize the mount (set to true for servo gimbal, false for passthrough).
 Does not affect MAVLINK_ROI input</short_desc>
     </parameter>
@@ -5119,7 +5119,7 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <max>15</max>
       <unit>m</unit>
     </parameter>
-    <parameter name="CP_GO_NO_DATA" default="0" type="FLOAT">
+    <parameter name="CP_GO_NO_DATA" default="0" type="FLOAT" boolean="true">
       <short_desc>Boolean to allow moving into directions where there is no sensor data (outside FOV)</short_desc>
       <long_desc>Only used in Position mode.</long_desc>
     </parameter>
@@ -5380,7 +5380,7 @@ Setting this parameter to 0 disables the filter</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="MPC_USE_HTE" default="1" type="INT32">
+    <parameter name="MPC_USE_HTE" default="1" type="INT32" boolean="true">
       <short_desc>Hover thrust source selector</short_desc>
       <long_desc>Set false to use the fixed parameter MPC_THR_HOVER Set true to use the value computed by the hover thrust estimator</long_desc>
     </parameter>
@@ -5515,7 +5515,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>8.0</max>
       <decimal>2</decimal>
     </parameter>
-    <parameter name="WV_EN" default="0" type="INT32">
+    <parameter name="WV_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable weathervane</short_desc>
     </parameter>
     <parameter name="WV_ROLL_MIN" default="1.0" type="FLOAT">
@@ -5587,7 +5587,7 @@ default 1.5 turns per second</short_desc>
       <decimal>1</decimal>
       <increment>5</increment>
     </parameter>
-    <parameter name="MC_BAT_SCALE_EN" default="0" type="INT32">
+    <parameter name="MC_BAT_SCALE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Battery power level scaler</short_desc>
       <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The copter should constantly behave as if it was fully charged with reduced max acceleration at lower battery percentages. i.e. if hover is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
     </parameter>
@@ -6030,35 +6030,35 @@ default 1.5 turns per second</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="PWM_AUX_REV1" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV1" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 1</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV2" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV2" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 2</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV3" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV3" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 3</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV4" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV4" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 4</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV5" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV5" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 5</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV6" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV6" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 6</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV7" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV7" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 7</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_AUX_REV8" default="0" type="INT32">
+    <parameter name="PWM_AUX_REV8" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of auxiliary output channel 8</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
@@ -6414,35 +6414,35 @@ default 1.5 turns per second</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="PWM_EXTRA_REV1" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV1" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 1</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV2" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV2" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 2</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV3" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV3" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 3</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV4" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV4" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 4</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV5" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV5" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 5</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV6" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV6" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 6</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV7" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV7" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 7</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_EXTRA_REV8" default="0" type="INT32">
+    <parameter name="PWM_EXTRA_REV8" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of extra output channel 8</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
@@ -6758,35 +6758,35 @@ default 1.5 turns per second</short_desc>
       <unit>us</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="PWM_MAIN_REV1" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV1" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 1</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV2" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV2" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 2</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV3" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV3" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 3</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV4" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV4" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 4</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV5" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV5" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 5</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV6" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV6" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 6</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV7" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV7" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 7</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
-    <parameter name="PWM_MAIN_REV8" default="0" type="INT32">
+    <parameter name="PWM_MAIN_REV8" default="0" type="INT32" boolean="true">
       <short_desc>Invert direction of main output channel 8</short_desc>
       <long_desc>Enable to invert the channel. Warning: Use this parameter when connected to a servo only. For a brushless motor, invert manually two phases to reverse the direction.</long_desc>
     </parameter>
@@ -6870,7 +6870,7 @@ default 1.5 turns per second</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="PWM_SBUS_MODE" default="0" type="INT32">
+    <parameter name="PWM_SBUS_MODE" default="0" type="INT32" boolean="true">
       <short_desc>S.BUS out</short_desc>
       <long_desc>Set to 1 to enable S.BUS version 1 output instead of RSSI.</long_desc>
     </parameter>
@@ -6882,7 +6882,7 @@ default 1.5 turns per second</short_desc>
     </parameter>
   </group>
   <group name="Peripheral">
-    <parameter name="LIGHT_EN_BLINKM" default="0" type="INT32">
+    <parameter name="LIGHT_EN_BLINKM" default="0" type="INT32" boolean="true">
       <short_desc>BlinkM LED</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -8960,12 +8960,12 @@ to takeoff is reached</short_desc>
       <decimal>2</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter name="RWTO_TKOFF" default="0" type="INT32">
+    <parameter name="RWTO_TKOFF" default="0" type="INT32" boolean="true">
       <short_desc>Runway takeoff with landing gear</short_desc>
     </parameter>
   </group>
   <group name="SD Logging">
-    <parameter name="SDLOG_BOOT_BAT" default="0" type="INT32">
+    <parameter name="SDLOG_BOOT_BAT" default="0" type="INT32" boolean="true">
       <short_desc>Battery-only Logging</short_desc>
       <long_desc>When enabled, logging will not start from boot if battery power is not detected (e.g. powered via USB on a test bench). This prevents extraneous flight logs from being created during bench testing. Note that this only applies to log-from-boot modes. This has no effect on arm-based modes.</long_desc>
     </parameter>
@@ -9024,7 +9024,7 @@ to takeoff is reached</short_desc>
       <max>1000</max>
       <unit>min</unit>
     </parameter>
-    <parameter name="SDLOG_UUID" default="1" type="INT32">
+    <parameter name="SDLOG_UUID" default="1" type="INT32" boolean="true">
       <short_desc>Log UUID</short_desc>
       <long_desc>If set to 1, add an ID to the log, which uniquely identifies the vehicle</long_desc>
     </parameter>
@@ -10224,7 +10224,7 @@ is less than 50% of this value</short_desc>
       <max>2.00</max>
       <unit>m</unit>
     </parameter>
-    <parameter name="CAL_MAG_ROT_AUTO" default="1" type="INT32">
+    <parameter name="CAL_MAG_ROT_AUTO" default="1" type="INT32" boolean="true">
       <short_desc>Automatically set external rotations</short_desc>
       <long_desc>During calibration attempt to automatically determine the rotation of external magnetometers.</long_desc>
     </parameter>
@@ -10263,7 +10263,7 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32">
+    <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32" boolean="true">
       <short_desc>IMU gyro FFT enable</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10483,7 +10483,7 @@ How often the sensor is readout</short_desc>
         <value code="25">ROTATION_DOWNWARD_FACING</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_BATT" default="0" type="INT32">
+    <parameter name="SENS_EN_BATT" default="0" type="INT32" boolean="true">
       <short_desc>SMBUS Smart battery driver BQ40Z50 and BQ40Z80</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10498,7 +10498,7 @@ How often the sensor is readout</short_desc>
         <value code="2">I2C</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_MB12XX" default="0" type="INT32">
+    <parameter name="SENS_EN_MB12XX" default="0" type="INT32" boolean="true">
       <short_desc>Maxbotix Sonar (mb12xx)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10512,19 +10512,19 @@ How often the sensor is readout</short_desc>
         <value code="1">Autodetect</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_PAW3902" default="0" type="INT32">
+    <parameter name="SENS_EN_PAW3902" default="0" type="INT32" boolean="true">
       <short_desc>PAW3902 &amp; PAW3903 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EN_PGA460" default="0" type="INT32">
+    <parameter name="SENS_EN_PGA460" default="0" type="INT32" boolean="true">
       <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EN_PMW3901" default="0" type="INT32">
+    <parameter name="SENS_EN_PMW3901" default="0" type="INT32" boolean="true">
       <short_desc>PMW3901 Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EN_PX4FLOW" default="0" type="INT32">
+    <parameter name="SENS_EN_PX4FLOW" default="0" type="INT32" boolean="true">
       <short_desc>PX4 Flow Optical Flow</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10554,7 +10554,7 @@ How often the sensor is readout</short_desc>
         <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_SR05" default="0" type="INT32">
+    <parameter name="SENS_EN_SR05" default="0" type="INT32" boolean="true">
       <short_desc>HY-SRF05 / HC-SR05</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10580,11 +10580,11 @@ How often the sensor is readout</short_desc>
         <value code="5">TREvo3m</value>
       </values>
     </parameter>
-    <parameter name="SENS_EN_VL53L1X" default="0" type="INT32">
+    <parameter name="SENS_EN_VL53L1X" default="0" type="INT32" boolean="true">
       <short_desc>VL53L1X Distance Sensor</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SENS_EXT_I2C_PRB" default="1" type="INT32" category="System">
+    <parameter name="SENS_EXT_I2C_PRB" default="1" type="INT32" boolean="true" category="System">
       <short_desc>External I2C probe</short_desc>
       <long_desc>Probe for optional external I2C devices.</long_desc>
     </parameter>
@@ -11717,7 +11717,7 @@ How often the sensor is readout</short_desc>
       <max>9999999</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SYS_BL_UPDATE" default="0" type="INT32">
+    <parameter name="SYS_BL_UPDATE" default="0" type="INT32" boolean="true">
       <short_desc>Bootloader update</short_desc>
       <long_desc>If enabled, update the bootloader on the next boot. WARNING: do not cut the power during an update process, otherwise you will have to recover using some alternative method (e.g. JTAG). Instructions: - Insert an SD card - Enable this parameter - Reboot the board (plug the power or send a reboot command) - Wait until the board comes back up (or at least 2 minutes) - If it does not come back, check the file bootlog.txt on the SD card</long_desc>
       <reboot_required>true</reboot_required>
@@ -11756,20 +11756,20 @@ How often the sensor is readout</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>celcius</unit>
     </parameter>
-    <parameter name="SYS_FAC_CAL_MODE" default="0" type="INT32">
+    <parameter name="SYS_FAC_CAL_MODE" default="0" type="INT32" boolean="true">
       <short_desc>Enable factory calibration mode</short_desc>
       <long_desc>If enabled, future sensor calibrations will be stored to /fs/mtd_caldata. Note: this is only supported on boards with a separate calibration storage /fs/mtd_caldata.</long_desc>
     </parameter>
-    <parameter name="SYS_FAILURE_EN" default="0" type="INT32">
+    <parameter name="SYS_FAILURE_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable failure injection</short_desc>
       <long_desc>If enabled allows MAVLink INJECT_FAILURE commands. WARNING: the failures can easily cause crashes and are to be used with caution!</long_desc>
     </parameter>
-    <parameter name="SYS_HAS_BARO" default="1" type="INT32">
+    <parameter name="SYS_HAS_BARO" default="1" type="INT32" boolean="true">
       <short_desc>Control if the vehicle has a barometer</short_desc>
       <long_desc>Disable this if the board has no barometer, such as some of the Omnibus F4 SD variants. If disabled, the preflight checks will not check for the presence of a barometer.</long_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="SYS_HAS_MAG" default="1" type="INT32">
+    <parameter name="SYS_HAS_MAG" default="1" type="INT32" boolean="true">
       <short_desc>Control if the vehicle has a magnetometer</short_desc>
       <long_desc>Disable this if the board has no magnetometer, such as the Omnibus F4 SD. If disabled, the preflight checks will not check for the presence of a magnetometer.</long_desc>
       <reboot_required>true</reboot_required>
@@ -11811,10 +11811,10 @@ How often the sensor is readout</short_desc>
         <value code="2">Data does not survive reset</value>
       </values>
     </parameter>
-    <parameter name="SYS_STCK_EN" default="1" type="INT32">
+    <parameter name="SYS_STCK_EN" default="1" type="INT32" boolean="true">
       <short_desc>Enable stack checking</short_desc>
     </parameter>
-    <parameter name="SYS_USE_IO" default="1" type="INT32">
+    <parameter name="SYS_USE_IO" default="1" type="INT32" boolean="true">
       <short_desc>Set usage of IO board</short_desc>
       <long_desc>Can be used to use a standard startup script but with a FMU only set-up. Set to 0 to force the FMU only set-up.</long_desc>
       <min>0</min>
@@ -11823,7 +11823,7 @@ How often the sensor is readout</short_desc>
     </parameter>
   </group>
   <group name="Telemetry">
-    <parameter name="TEL_BST_EN" default="0" type="INT32">
+    <parameter name="TEL_BST_EN" default="0" type="INT32" boolean="true">
       <short_desc>Blacksheep telemetry Enable</short_desc>
       <long_desc>If true, the FMU will try to connect to Blacksheep telemetry on start up</long_desc>
       <reboot_required>true</reboot_required>
@@ -12114,7 +12114,7 @@ How often the sensor is readout</short_desc>
     <parameter name="TC_A3_X3_2" default="0.0" type="FLOAT" category="System">
       <short_desc>Accelerometer offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter name="TC_A_ENABLE" default="0" type="INT32">
+    <parameter name="TC_A_ENABLE" default="0" type="INT32" boolean="true">
       <short_desc>Thermal compensation for accelerometer sensors</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -12238,7 +12238,7 @@ How often the sensor is readout</short_desc>
     <parameter name="TC_B3_X5" default="0.0" type="FLOAT" category="System">
       <short_desc>Barometer offset temperature ^5 polynomial coefficient</short_desc>
     </parameter>
-    <parameter name="TC_B_ENABLE" default="0" type="INT32">
+    <parameter name="TC_B_ENABLE" default="0" type="INT32" boolean="true">
       <short_desc>Thermal compensation for barometric pressure sensors</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -12434,7 +12434,7 @@ How often the sensor is readout</short_desc>
     <parameter name="TC_G3_X3_2" default="0.0" type="FLOAT" category="System">
       <short_desc>Gyro rate offset temperature ^3 polynomial coefficient - Z axis</short_desc>
     </parameter>
-    <parameter name="TC_G_ENABLE" default="0" type="INT32">
+    <parameter name="TC_G_ENABLE" default="0" type="INT32" boolean="true">
       <short_desc>Thermal compensation for rate gyro sensors</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -12471,7 +12471,7 @@ How often the sensor is readout</short_desc>
         <value code="3">Sensors and Actuators (ESCs) Automatic Config</value>
       </values>
     </parameter>
-    <parameter name="UAVCAN_ESC_IDLT" default="1" type="INT32">
+    <parameter name="UAVCAN_ESC_IDLT" default="1" type="INT32" boolean="true">
       <short_desc>UAVCAN ESC will spin at idle throttle when armed, even if the mixer outputs zero setpoints</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
@@ -12679,7 +12679,7 @@ If demanded down pitch exceeds this limmit, the fixed-wing forward actuators are
       <min>0.0</min>
       <max>45.0</max>
     </parameter>
-    <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32">
+    <parameter name="VT_ELEV_MC_LOCK" default="1" type="INT32" boolean="true">
       <short_desc>Lock elevons in multicopter mode</short_desc>
       <long_desc>If set to 1 the elevons are locked in multicopter mode</long_desc>
     </parameter>
@@ -12738,7 +12738,7 @@ demanded down pitch to fixed-wing actuation</short_desc>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_FW_PERM_STAB" default="0" type="INT32">
+    <parameter name="VT_FW_PERM_STAB" default="0" type="INT32" boolean="true">
       <short_desc>Permanent stabilization in fw mode</short_desc>
       <long_desc>If set to one this parameter will cause permanent attitude stabilization in fw mode. This parameter has been introduced for pure convenience sake.</long_desc>
     </parameter>
@@ -12787,7 +12787,7 @@ tailsitter, tiltrotor: main throttle</short_desc>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter name="VT_MC_ON_FMU" default="0" type="INT32">
+    <parameter name="VT_MC_ON_FMU" default="0" type="INT32" boolean="true">
       <short_desc>Enable the usage of AUX outputs for hover motors</short_desc>
       <long_desc>Set this parameter to true if the vehicle's hover motors are connected to the FMU (AUX) port. Not required for boards that only have a FMU, and no IO. Only applies for standard VTOL and tiltrotor.</long_desc>
     </parameter>
