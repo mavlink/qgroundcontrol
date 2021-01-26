@@ -21,34 +21,21 @@ import QGroundControl.ScreenTools   1.0
 RowLayout {
     layoutDirection: Qt.RightToLeft
 
-    property var tuneList
-    property var params
+    property var    axis
+    property string unit
+    property string title
 
-    property real   _chartHeight:       ScreenTools.defaultFontPixelHeight * 20
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
-    property string _currentTuneType:   tuneList[0]
-    property real   _rollRate:          globals.activeVehicle.rollRate.value
-    property real   _rollRateSetpoint:  globals.activeVehicle.setpoint.rollRate.value
-    property real   _pitchRate:         globals.activeVehicle.pitchRate.value
-    property real   _pitchRateSetpoint: globals.activeVehicle.setpoint.pitchRate.value
-    property real   _yawRate:           globals.activeVehicle.yawRate.value
-    property real   _yawRateSetpoint:   globals.activeVehicle.setpoint.yawRate.value
-    property var    _valueRateXAxis:    valueRateXAxis
-    property var    _valueRateYAxis:    valueRateYAxis
+    property int    _currentAxis:       0
+    property var    _xAxis:             xAxis
+    property var    _yAxis:             yAxis
     property int    _msecs:             0
     property double _last_t:            0
     property var    _savedTuningParamValues:    [ ]
     property bool   _showCharts: !ScreenTools.isMobile // TODO: test and enable on mobile
 
-    // The following are set when getValues is called
-    property real   _valueRate
-    property real   _valueRateSetpoint
-
     readonly property int _tickSeparation:      5
     readonly property int _maxTickSections:     10
-    readonly property int _tuneListRollIndex:   0
-    readonly property int _tuneListPitchIndex:  1
-    readonly property int _tuneListYawIndex:    2
     readonly property int _chartDisplaySec:     3 // number of seconds to display
 
     function adjustYAxisMin(yAxis, newValue) {
@@ -69,77 +56,58 @@ RowLayout {
         yAxis.max = newMax
     }
 
-    function getValues() {
-        if (_currentTuneType === tuneList[_tuneListRollIndex]) {
-            _valueRate = _rollRate
-            _valueRateSetpoint = _rollRateSetpoint
-        } else if (_currentTuneType === tuneList[_tuneListPitchIndex]) {
-            _valueRate = _pitchRate
-            _valueRateSetpoint = _pitchRateSetpoint
-        } else if (_currentTuneType === tuneList[_tuneListYawIndex]) {
-            _valueRate = _yawRate
-            _valueRateSetpoint = _yawRateSetpoint
-        }
-    }
-
     function resetGraphs() {
-        valueRateSeries.removePoints(0, valueRateSeries.count)
-        valueRateSetpointSeries.removePoints(0, valueRateSetpointSeries.count)
-        _valueRateXAxis.min = 0
-        _valueRateXAxis.max = 0
-        _valueRateYAxis.min = 0
-        _valueRateYAxis.max = 10
+        for (var i = 0; i < chart.count; ++i) {
+            chart.series(i).removePoints(0, chart.series(i).count)
+        }
+        _xAxis.min = 0
+        _xAxis.max = 0
+        _yAxis.min = 0
+        _yAxis.max = 0
         _msecs = 0
         _last_t = 0
     }
 
-    function currentTuneTypeIndex() {
-        if (_currentTuneType === tuneList[_tuneListRollIndex]) {
-            return _tuneListRollIndex
-        } else if (_currentTuneType === tuneList[_tuneListPitchIndex]) {
-            return _tuneListPitchIndex
-        } else if (_currentTuneType === tuneList[_tuneListYawIndex]) {
-            return _tuneListYawIndex
-        }
-    }
-
     // Save the current set of tuning values so we can reset to them
     function saveTuningParamValues() {
-        var tuneTypeIndex = currentTuneTypeIndex()
-
         _savedTuningParamValues = [ ]
-        for (var i=0; i<params[tuneTypeIndex].count; i++) {
+        for (var i=0; i<axis[_currentAxis].params.count; i++) {
             var currentTuneParam = controller.getParameterFact(-1,
-                params[tuneTypeIndex].get(i).param)
+                axis[_currentAxis].params.get(i).param)
             _savedTuningParamValues.push(currentTuneParam.valueString)
         }
         savedRepeater.model = _savedTuningParamValues
     }
 
     function resetToSavedTuningParamValues() {
-        var tuneTypeIndex = currentTuneTypeIndex()
-
-        for (var i=0; i<params[tuneTypeIndex].count; i++) {
+        for (var i=0; i<axis[_currentAxis].params.count; i++) {
             var currentTuneParam = controller.getParameterFact(-1,
-                params[tuneTypeIndex].get(i).param)
+                axis[_currentAxis].params.get(i).param)
             currentTuneParam.value = _savedTuningParamValues[i]
         }
     }
 
+    function axisIndexChanged() {
+        chart.removeAllSeries()
+        axis[_currentAxis].plot.forEach(function(e) {
+            chart.createSeries(ChartView.SeriesTypeLine, e.name, xAxis, yAxis);
+        })
+        chart.title = axis[_currentAxis].name + " " + title
+        saveTuningParamValues()
+        resetGraphs()
+    }
+
     Component.onCompleted: {
+        axisIndexChanged()
         globals.activeVehicle.setPIDTuningTelemetryMode(true)
         saveTuningParamValues()
     }
 
     Component.onDestruction: globals.activeVehicle.setPIDTuningTelemetryMode(false)
-
-    on_CurrentTuneTypeChanged: {
-        saveTuningParamValues()
-        resetGraphs()
-    }
+    on_CurrentAxisChanged: axisIndexChanged()
 
     ValueAxis {
-        id:             valueRateXAxis
+        id:             xAxis
         min:            0
         max:            0
         labelFormat:    "%.2f"
@@ -148,10 +116,10 @@ RowLayout {
     }
 
     ValueAxis {
-        id:         valueRateYAxis
+        id:         yAxis
         min:        0
         max:        10
-        titleText:  "deg/s"
+        titleText:  unit
         tickCount:  Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
     }
 
@@ -162,21 +130,17 @@ RowLayout {
         repeat:     true
 
         onTriggered: {
-            _valueRateXAxis.max = _msecs / 1000
-            _valueRateXAxis.min = _msecs / 1000 - _chartDisplaySec
+            _xAxis.max = _msecs / 1000
+            _xAxis.min = _msecs / 1000 - _chartDisplaySec
 
-            getValues()
-
-            if (!isNaN(_valueRate)) {
-                valueRateSeries.append(_msecs/1000, _valueRate)
-                adjustYAxisMin(_valueRateYAxis, _valueRate)
-                adjustYAxisMax(_valueRateYAxis, _valueRate)
-            }
-
-            if (!isNaN(_valueRateSetpoint)) {
-                valueRateSetpointSeries.append(_msecs/1000, _valueRateSetpoint)
-                adjustYAxisMin(_valueRateYAxis, _valueRateSetpoint)
-                adjustYAxisMax(_valueRateYAxis, _valueRateSetpoint)
+            var len = axis[_currentAxis].plot.length
+            for (var i = 0; i < len; ++i) {
+                var value = axis[_currentAxis].plot[i].value
+                if (!isNaN(value)) {
+                    chart.series(i).append(_msecs/1000, value)
+                    adjustYAxisMin(_yAxis, value)
+                    adjustYAxisMax(_yAxis, value)
+                }
             }
 
             var t = new Date().getTime() // in ms
@@ -194,42 +158,33 @@ RowLayout {
         width:          parent.width * (_showCharts ? 0.4 : 1)
 
         Column {
-            QGCLabel { text: qsTr("Tuning Axis:") }
 
             RowLayout {
                 spacing: _margins
 
+                QGCLabel { text: qsTr("Tuning Axis:") }
+
                 Repeater {
-                    model: tuneList
+                    model: axis
                     QGCRadioButton {
-                        text:           modelData
-                        checked:        _currentTuneType === modelData
-                        onClicked: _currentTuneType = modelData
+                        text:           modelData.name
+                        checked:        index == _currentAxis
+                        onClicked: _currentAxis = index
                     }
                 }
             }
         }
 
-        QGCLabel { text: qsTr("Tuning Values:") }
-
-
         // Instantiate all sliders (instead of switching the model), so that
         // values are not changed unexpectedly if they do not match with a tick
         // value
-        FactSliderPanel {
-            width:       parent.width
-            visible:     _currentTuneType === tuneList[_tuneListRollIndex]
-            sliderModel: params[_tuneListRollIndex]
-        }
-        FactSliderPanel {
-            width:       parent.width
-            visible:     _currentTuneType === tuneList[_tuneListPitchIndex]
-            sliderModel: params[_tuneListPitchIndex]
-        }
-        FactSliderPanel {
-            width:       parent.width
-            visible:     _currentTuneType === tuneList[_tuneListYawIndex]
-            sliderModel: params[_tuneListYawIndex]
+        Repeater {
+            model: axis
+            FactSliderPanel {
+                width:       parent.width
+                visible:     _currentAxis === index
+                sliderModel: axis[index].params
+            }
         }
 
         Column {
@@ -242,7 +197,7 @@ RowLayout {
                 columnSpacing:  _margins
 
                 Repeater {
-                    model: params[tuneList.indexOf(_currentTuneType)]
+                    model: axis[_currentAxis].params
 
                     QGCLabel { text: param }
                 }
@@ -276,27 +231,12 @@ RowLayout {
         visible:            _showCharts
 
         ChartView {
-            id:                 ratesChart
+            id:                 chart
             anchors.left:       parent.left
             anchors.right:      parent.right
             height:             availableHeight * 0.75
-            title:              _currentTuneType + qsTr(" Rate")
             antialiasing:       true
             legend.alignment:   Qt.AlignBottom
-
-            LineSeries {
-                id:         valueRateSeries
-                name:       "Response"
-                axisY:      valueRateYAxis
-                axisX:      valueRateXAxis
-            }
-
-            LineSeries {
-                id:         valueRateSetpointSeries
-                name:       "Setpoint"
-                axisY:      valueRateYAxis
-                axisX:      valueRateXAxis
-            }
 
             // enable mouse dragging
             MouseArea {
@@ -305,8 +245,8 @@ RowLayout {
                 anchors.fill: parent
                 onPressed: {
                     _startPoint = Qt.point(mouse.x, mouse.y)
-                    var start = ratesChart.mapToValue(_startPoint)
-                    var next = ratesChart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
+                    var start = chart.mapToValue(_startPoint)
+                    var next = chart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
                     _scaling = next.x - start.x
                 }
                 onPositionChanged: {
@@ -315,8 +255,8 @@ RowLayout {
                         var cp = Qt.point(mouse.x, mouse.y)
                         var dx = (cp.x - _startPoint.x) * _scaling
                         _startPoint = cp
-                        _valueRateXAxis.max -= dx
-                        _valueRateXAxis.min -= dx
+                        _xAxis.max -= dx
+                        _xAxis.min -= dx
                     }
                 }
 
