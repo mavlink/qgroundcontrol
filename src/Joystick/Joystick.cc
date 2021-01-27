@@ -121,10 +121,17 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
 }
 
-Joystick::~Joystick()
+void Joystick::stop()
 {
     _exitThread = true;
     wait();
+}
+
+Joystick::~Joystick()
+{
+    if (!_exitThread) {
+        qWarning() << "Joystick thread still running!";
+    }
     delete[] _rgAxisValues;
     delete[] _rgCalibration;
     delete[] _rgButtonValues;

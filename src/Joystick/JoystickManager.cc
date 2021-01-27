@@ -38,6 +38,7 @@ JoystickManager::~JoystickManager() {
     QMap<QString, Joystick*>::iterator i;
     for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
         qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
+        i.value()->stop();
         delete i.value();
     }
     qDebug() << "Done";
