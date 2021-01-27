@@ -1116,6 +1116,9 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             } else {
                 _appendWaypoint(items, missionItemParent, seqNum, mavFrame, 0 /* holdTime */, coordInfo.coord);
             }
+            if (lastExitTurnaround) {
+                _appendCameraMountPitchItem(items, missionItemParent, seqNum, 0);
+            }
         }
             break;
         case CoordTypeInteriorHoverTrigger:
