@@ -254,6 +254,13 @@ RowLayout {
                     var next = chart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
                     _scaling = next.x - start.x
                 }
+                onWheel: {
+                    if (wheel.angleDelta.y > 0)
+                        chartDisplaySec /= 1.2
+                    else
+                        chartDisplaySec *= 1.2
+                    _xAxis.min = _xAxis.max - chartDisplaySec
+                }
                 onPositionChanged: {
                     if(_startPoint != undefined) {
                         dataTimer.running = false
