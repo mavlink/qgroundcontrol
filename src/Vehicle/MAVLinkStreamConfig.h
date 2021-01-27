@@ -27,6 +27,8 @@ public:
     MAVLinkStreamConfig(const SetMessageIntervalCb& messageIntervalCb);
 
     void setHighRateRateAndAttitude();
+    void setHighRateVelAndPos();
+    void setHighRateAltAirspeed();
 
     void restoreDefaults();
 

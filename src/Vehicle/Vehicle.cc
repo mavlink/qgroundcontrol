@@ -3555,14 +3555,27 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
 
-void Vehicle::setPIDTuningTelemetryMode(bool pidTuning)
+void Vehicle::setPIDTuningTelemetryMode(PIDTuningTelemetryMode mode)
 {
-    setLiveUpdates(pidTuning);
-    _setpointFactGroup.setLiveUpdates(pidTuning);
-    if (pidTuning) {
-        _mavlinkStreamConfig.setHighRateRateAndAttitude();
-    } else {
-        _mavlinkStreamConfig.restoreDefaults();
+    bool liveUpdate = mode != ModeDisabled;
+    setLiveUpdates(liveUpdate);
+    _setpointFactGroup.setLiveUpdates(liveUpdate);
+    _localPositionFactGroup.setLiveUpdates(liveUpdate);
+    _localPositionSetpointFactGroup.setLiveUpdates(liveUpdate);
+
+    switch (mode) {
+        case ModeDisabled:
+            _mavlinkStreamConfig.restoreDefaults();
+            break;
+        case ModeRateAndAttitude:
+            _mavlinkStreamConfig.setHighRateRateAndAttitude();
+            break;
+        case ModeVelocityAndPosition:
+            _mavlinkStreamConfig.setHighRateVelAndPos();
+            break;
+        case ModeAltitudeAndAirspeed:
+            _mavlinkStreamConfig.setHighRateAltAirspeed();
+            break;
     }
 }
 

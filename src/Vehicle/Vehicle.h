@@ -384,7 +384,15 @@ public:
     ///     @param timeoutSec Disabled motor after this amount of time
     Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs, bool showError);
 
-    Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
+    enum PIDTuningTelemetryMode {
+        ModeDisabled,
+        ModeRateAndAttitude,
+        ModeVelocityAndPosition,
+        ModeAltitudeAndAirspeed,
+    };
+    Q_ENUM(PIDTuningTelemetryMode)
+
+    Q_INVOKABLE void setPIDTuningTelemetryMode(PIDTuningTelemetryMode mode);
 
     Q_INVOKABLE void gimbalControlValue (double pitch, double yaw);
     Q_INVOKABLE void gimbalPitchStep    (int direction);

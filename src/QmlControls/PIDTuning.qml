@@ -17,6 +17,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
 
 RowLayout {
     layoutDirection: Qt.RightToLeft
@@ -24,6 +25,8 @@ RowLayout {
     property var    axis
     property string unit
     property string title
+    property var    tuningMode
+    property double chartDisplaySec:     8 // number of seconds to display
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0
@@ -36,7 +39,6 @@ RowLayout {
 
     readonly property int _tickSeparation:      5
     readonly property int _maxTickSections:     10
-    readonly property int _chartDisplaySec:     3 // number of seconds to display
 
     function adjustYAxisMin(yAxis, newValue) {
         var newMin = Math.min(yAxis.min, newValue)
@@ -92,18 +94,21 @@ RowLayout {
         axis[_currentAxis].plot.forEach(function(e) {
             chart.createSeries(ChartView.SeriesTypeLine, e.name, xAxis, yAxis);
         })
-        chart.title = axis[_currentAxis].name + " " + title
+        var chartTitle = axis[_currentAxis].plotTitle
+        if (chartTitle == null)
+            chartTitle = axis[_currentAxis].name
+        chart.title = chartTitle + " " + title
         saveTuningParamValues()
         resetGraphs()
     }
 
     Component.onCompleted: {
         axisIndexChanged()
-        globals.activeVehicle.setPIDTuningTelemetryMode(true)
+        globals.activeVehicle.setPIDTuningTelemetryMode(tuningMode)
         saveTuningParamValues()
     }
 
-    Component.onDestruction: globals.activeVehicle.setPIDTuningTelemetryMode(false)
+    Component.onDestruction: globals.activeVehicle.setPIDTuningTelemetryMode(Vehicle.ModeDisabled)
     on_CurrentAxisChanged: axisIndexChanged()
 
     ValueAxis {
@@ -131,7 +136,7 @@ RowLayout {
 
         onTriggered: {
             _xAxis.max = _msecs / 1000
-            _xAxis.min = _msecs / 1000 - _chartDisplaySec
+            _xAxis.min = _msecs / 1000 - chartDisplaySec
 
             var len = axis[_currentAxis].plot.length
             for (var i = 0; i < len; ++i) {
@@ -162,7 +167,7 @@ RowLayout {
             RowLayout {
                 spacing: _margins
 
-                QGCLabel { text: qsTr("Tuning Axis:") }
+                QGCLabel { text: qsTr("Select Tuning:") }
 
                 Repeater {
                     model: axis
