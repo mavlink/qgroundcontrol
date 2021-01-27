@@ -1,0 +1,49 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "x",
+    "shortDesc": "X",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "y",
+    "shortDesc": "Y",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "z",
+    "shortDesc": "Z",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "vx",
+    "shortDesc": "VX",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "vy",
+    "shortDesc": "Vy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "vz",
+    "shortDesc": "Vz",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+}
+]
+}
