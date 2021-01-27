@@ -199,14 +199,12 @@ void SurveyComplexItemTest::_testItemCount(void)
 QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround, bool useConditionGate, bool isObliqueSurvey)
 {
     static const QList<MAV_CMD> singleFullTransect = {
-        MAV_CMD_DO_MOUNT_CONTROL,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
         MAV_CMD_CONDITION_GATE,         // Survey area entry edge
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_CONDITION_GATE,         // Survey area exit edge
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_NAV_WAYPOINT,
-        MAV_CMD_DO_MOUNT_CONTROL,
     };
 
     QList<MAV_CMD> singleTransect = singleFullTransect;
@@ -229,9 +227,11 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
         }
     }
     
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
     for (int i=0; i<_expectedTransectCount; i++) {
         expectedCommands.append(singleTransect);
     }
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
 
     return expectedCommands;
 }
@@ -337,7 +337,6 @@ void SurveyComplexItemTest::_testItemGeneration(void)
 void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
 {
     static const QList<MAV_CMD> singleFullTransect = {
-        MAV_CMD_DO_MOUNT_CONTROL,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
         MAV_CMD_NAV_WAYPOINT,           // Survey area entry edge
         MAV_CMD_IMAGE_START_CAPTURE,
@@ -348,13 +347,14 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration(void)
         MAV_CMD_NAV_WAYPOINT,           // Survey area exit edge
         MAV_CMD_IMAGE_START_CAPTURE,
         MAV_CMD_NAV_WAYPOINT,           // Turnaround
-        MAV_CMD_DO_MOUNT_CONTROL,
     };
 
     QList<MAV_CMD> expectedCommands;
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
     for (int i=0; i<_expectedTransectCount; i++) {
         expectedCommands.append(singleFullTransect);
     }
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
 
     // Set trigger distance to generates two interior capture points
     double polyHeightDistance = _polyVertices[0].distanceTo(_polyVertices[3]);

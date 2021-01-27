@@ -200,9 +200,11 @@ QList<MAV_CMD> CorridorScanComplexItemTest::_createExpectedCommands(bool hasTurn
         singleTransect.takeLast();
     }
 
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
     for (int i=0; i<_expectedTransectCount; i++) {
         expectedCommands.append(singleTransect);
     }
+    expectedCommands.append(MAV_CMD_DO_MOUNT_CONTROL);
 
     return expectedCommands;
 }
