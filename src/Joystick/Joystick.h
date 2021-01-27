@@ -18,6 +18,7 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
+#include <atomic>
 
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
@@ -53,7 +54,7 @@ class Joystick : public QThread
 public:
     Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager);
 
-    ~Joystick();
+    virtual ~Joystick();
 
     typedef struct Calibration_t {
         int     min;
@@ -137,6 +138,7 @@ public:
     void setFunctionAxis(AxisFunction_t function, int axis);
     int getFunctionAxis(AxisFunction_t function);
 
+    void stop();
 
 /*
     // Joystick index used by sdl library
@@ -263,7 +265,7 @@ protected:
 
     uint8_t*_rgButtonValues         = nullptr;
 
-    bool    _exitThread             = false;    ///< true: signal thread to exit
+    std::atomic<bool> _exitThread{false};    ///< true: signal thread to exit
     bool    _calibrationMode        = false;
     int*    _rgAxisValues           = nullptr;
     Calibration_t* _rgCalibration   = nullptr;
