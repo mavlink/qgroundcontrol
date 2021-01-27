@@ -76,6 +76,12 @@
     "default":     false
 },
 {
+    "name":             "CamposSurvey2D",
+    "shortDesc": "2D surveys are optimized for area coverage, 3D surveys are better for model generation",
+    "type":             "bool",
+    "default":     true
+},
+{
     "name":             "CamposPositions",
     "shortDesc": "Number of positions to move the camera within the roll angle limits",
     "type":             "double",

@@ -38,6 +38,7 @@ public:
     Q_PROPERTY(Fact*            adjustedFootprintFrontal    READ adjustedFootprintFrontal                                       CONSTANT)                               ///< Frontal footprint adjusted down for overlap
 
     Q_PROPERTY(Fact*            campos                      READ campos                                                         CONSTANT)
+    Q_PROPERTY(Fact*            camposSurvey2D              READ camposSurvey2D                                                 CONSTANT)
     Q_PROPERTY(Fact*            camposPositions             READ camposPositions                                                CONSTANT)
     Q_PROPERTY(Fact*            camposMinInterval           READ camposMinInterval                                              CONSTANT)
     Q_PROPERTY(Fact*            camposRollAngle             READ camposRollAngle                                                CONSTANT)
@@ -69,6 +70,7 @@ public:
     Fact* adjustedFootprintFrontal  (void) { return &_adjustedFootprintFrontalFact; }
 
     Fact* campos                    (void) { return &_camposFact; }
+    Fact* camposSurvey2D            (void) { return &_camposSurvey2DFact; }
     Fact* camposPositions           (void) { return &_camposPositionsFact; }
     Fact* camposMinInterval         (void) { return &_camposMinIntervalFact; }
     Fact* camposRollAngle           (void) { return &_camposRollAngleFact; }
@@ -110,6 +112,7 @@ public:
     static const char* adjustedFootprintFrontalName;
 
     static const char* camposName;
+    static const char* camposSurvey2DName;
     static const char* camposPositionsName;
     static const char* camposMinIntervalName;
     static const char* camposRollAngleName;
@@ -161,6 +164,7 @@ private:
     SettingsFact _adjustedFootprintFrontalFact;
 
     SettingsFact    _camposFact;
+    SettingsFact    _camposSurvey2DFact;
     SettingsFact    _camposPositionsFact;
     SettingsFact    _camposMinIntervalFact;
     SettingsFact    _camposRollAngleFact;
@@ -177,6 +181,7 @@ private:
     static const char* _jsonCameraSpecTypeKey;
 
     static const char* _jsonCamposKey;
+    static const char* _jsonCamposSurvey2DKey;
     static const char* _jsonCamposPositionsKey;
     static const char* _jsonCamposMinIntervalKey;
     static const char* _jsonCamposRollAngleKey;

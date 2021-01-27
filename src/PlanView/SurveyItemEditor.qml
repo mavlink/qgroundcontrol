@@ -177,31 +177,53 @@ Rectangle {
                     anchors.right:  parent.right
                     columnSpacing:  _margin
                     rowSpacing:     _margin
-                    columns:        2
+                    columns:        3
                     visible:        camposHeader.checked && _missionItem.cameraCalc.campos.value
+
+                    QGCLabel { text: qsTr("Survey Type")}
+        
+                    QGCRadioButton {
+                        id:                     survey2DRadio
+                        leftPadding:            0
+                        text:                   qsTr("2D")
+                        checked:                !!_missionItem.cameraCalc.camposSurvey2D.value
+                        onClicked:              _missionItem.cameraCalc.camposSurvey2D.value = 1
+                    }
+
+                    QGCRadioButton {
+                        id:                     survey3DRadio
+                        leftPadding:            0
+                        text:                   qsTr("3D")
+                        checked:                !_missionItem.cameraCalc.camposSurvey2D.value
+                        onClicked:              _missionItem.cameraCalc.camposSurvey2D.value = 0
+                    }
 
                     QGCLabel { text: qsTr("Positions") }
                     FactTextField {
                         fact:                   _missionItem.cameraCalc.camposPositions
                         Layout.fillWidth:       true
+                        Layout.columnSpan:      2
                     }
 
                     QGCLabel { text: qsTr("Min Interval") }
                     FactTextField {
                         fact:                   _missionItem.cameraCalc.camposMinInterval
                         Layout.fillWidth:       true
+                        Layout.columnSpan:      2
                     }
 
                     QGCLabel { text: qsTr("Roll Angle") }
                     FactTextField {
                         fact:                   _missionItem.cameraCalc.camposRollAngle
                         Layout.fillWidth:       true
+                        Layout.columnSpan:      2
                     }
 
                     QGCLabel { text: qsTr("Pitch Angle") }
                     FactTextField {
                         fact:                   _missionItem.cameraCalc.camposPitchAngle
                         Layout.fillWidth:       true
+                        Layout.columnSpan:      2
                     }
                 }
 
