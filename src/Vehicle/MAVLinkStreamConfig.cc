@@ -29,6 +29,26 @@ void MAVLinkStreamConfig::setHighRateRateAndAttitude()
     setNextState(State::Configuring);
 }
 
+void MAVLinkStreamConfig::setHighRateVelAndPos()
+{
+    int requestedRate = (int)(1000000.0 / 100.0);
+    _nextDesiredRates = QVector<DesiredStreamRate>{{
+        {MAVLINK_MSG_ID_LOCAL_POSITION_NED, requestedRate},
+        {MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED, requestedRate},
+    }};
+    setNextState(State::Configuring);
+}
+
+void MAVLinkStreamConfig::setHighRateAltAirspeed()
+{
+    int requestedRate = (int)(1000000.0 / 100.0);
+    _nextDesiredRates = QVector<DesiredStreamRate>{{
+        {MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT, requestedRate},
+        {MAVLINK_MSG_ID_VFR_HUD, requestedRate},
+    }};
+    setNextState(State::Configuring);
+}
+
 void MAVLinkStreamConfig::gotSetMessageIntervalAck()
 {
     switch (_state) {
