@@ -27,6 +27,7 @@ RowLayout {
     property string title
     property var    tuningMode
     property double chartDisplaySec:     8 // number of seconds to display
+    property bool   showAutoModeChange:  false
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0
@@ -293,7 +294,7 @@ RowLayout {
                 onClicked: {
                     dataTimer.running = !dataTimer.running
                     _last_t = 0
-                    if (autoModeChange.checked) {
+                    if (showAutoModeChange && autoModeChange.checked) {
                         globals.activeVehicle.flightMode = dataTimer.running ? "Stabilized" : globals.activeVehicle.pauseFlightMode
                     }
                 }
@@ -301,8 +302,13 @@ RowLayout {
         }
 
         QGCCheckBox {
+            visible: showAutoModeChange
             id:     autoModeChange
             text:   qsTr("Automatic Flight Mode Switching")
+            onClicked: {
+                if (checked)
+                    dataTimer.running = false
+            }
         }
 
         Column {
