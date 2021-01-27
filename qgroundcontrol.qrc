@@ -323,6 +323,8 @@
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
         <file alias="Vehicle/GPSRTKFact.json">src/Vehicle/GPSRTKFact.json</file>
         <file alias="Vehicle/SetpointFact.json">src/Vehicle/SetpointFact.json</file>
+        <file alias="Vehicle/LocalPositionFact.json">src/Vehicle/LocalPositionFact.json</file>
+        <file alias="Vehicle/LocalPositionSetpointFact.json">src/Vehicle/LocalPositionFact.json</file>
         <file alias="Vehicle/SubmarineFact.json">src/Vehicle/SubmarineFact.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
         <file alias="Vehicle/TerrainFactGroup.json">src/Vehicle/TerrainFactGroup.json</file>
