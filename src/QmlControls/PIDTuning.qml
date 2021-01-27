@@ -167,6 +167,7 @@ RowLayout {
 
             RowLayout {
                 spacing: _margins
+                visible: axis.length > 1
 
                 QGCLabel { text: qsTr("Select Tuning:") }
 
