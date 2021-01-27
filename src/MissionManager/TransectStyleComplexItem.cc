@@ -874,7 +874,7 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
         // Polygon has not yet been set so we just return back a one item complex item for now
         return _sequenceNumber;
     } else if (_rgFlightPathCoordInfo.count()) {
-        int                         itemCount   = 0;
+        int                         itemCount   = 2; //account for the leading and trailing DO_MOUNT_CONTROL
         BuildMissionItemsState_t    buildState  = _buildMissionItemsState();
 
         // Important Note: This code should match the logic in _buildAndAppendMissionItems
@@ -1116,9 +1116,6 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             } else {
                 _appendWaypoint(items, missionItemParent, seqNum, mavFrame, 0 /* holdTime */, coordInfo.coord);
             }
-            if (lastExitTurnaround) {
-                _appendCameraMountPitchItem(items, missionItemParent, seqNum, 0);
-            }
         }
             break;
         case CoordTypeInteriorHoverTrigger:
@@ -1155,12 +1152,10 @@ void TransectStyleComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& 
             } else {
                 _appendWaypoint(items, missionItemParent, seqNum, mavFrame, 0 /* holdTime */, coordInfo.coord);
             }
-            if (lastSurveyExit) {
-                _appendCameraMountPitchItem(items, missionItemParent, seqNum, 0);
-            }
             break;
         }
     }
+    _appendCameraMountPitchItem(items, missionItemParent, seqNum, 0);
 }
 
 void TransectStyleComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
