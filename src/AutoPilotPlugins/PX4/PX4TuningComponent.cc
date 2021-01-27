@@ -12,8 +12,9 @@
 #include "PX4AutoPilotPlugin.h"
 #include "AirframeComponent.h"
 
-static bool isCopter(MAV_TYPE type) {
+static bool isCopterOrFW(MAV_TYPE type) {
     switch (type) {
+        case MAV_TYPE_FIXED_WING:
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
         case MAV_TYPE_HELICOPTER:
@@ -29,7 +30,7 @@ static bool isCopter(MAV_TYPE type) {
 
 PX4TuningComponent::PX4TuningComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, parent)
-    , _name(isCopter(vehicle->vehicleType()) ? tr("PID Tuning") : tr("Tuning"))
+    , _name(isCopterOrFW(vehicle->vehicleType()) ? tr("PID Tuning") : tr("Tuning"))
 {
 }
 
