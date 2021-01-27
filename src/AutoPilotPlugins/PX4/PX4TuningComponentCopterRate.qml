@@ -150,6 +150,7 @@ Column {
         unit: "deg/s"
         axis: [ roll, pitch, yaw ]
         chartDisplaySec: 3
+        showAutoModeChange: true
     }
 }
 
