@@ -75,10 +75,13 @@ const char* Vehicle::_rollRateFactName =             "rollRate";
 const char* Vehicle::_pitchRateFactName =           "pitchRate";
 const char* Vehicle::_yawRateFactName =             "yawRate";
 const char* Vehicle::_airSpeedFactName =            "airSpeed";
+const char* Vehicle::_airSpeedSetpointFactName =    "airSpeedSetpoint";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
 const char* Vehicle::_altitudeRelativeFactName =    "altitudeRelative";
 const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
+const char* Vehicle::_altitudeTuningFactName =      "altitudeTuning";
+const char* Vehicle::_altitudeTuningSetpointFactName = "altitudeTuningSetpoint";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 const char* Vehicle::_flightTimeFactName =          "flightTime";
 const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
@@ -132,9 +135,12 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _yawRateFact                  (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
     , _groundSpeedFact              (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
     , _airSpeedFact                 (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
+    , _airSpeedSetpointFact         (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
     , _climbRateFact                (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact         (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact             (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _altitudeTuningFact           (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
+    , _altitudeTuningSetpointFact   (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
     , _flightDistanceFact           (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact               (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact           (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -282,9 +288,12 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _yawRateFact                      (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
     , _groundSpeedFact                  (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
     , _airSpeedFact                     (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
+    , _airSpeedSetpointFact             (0, _airSpeedSetpointFactName,  FactMetaData::valueTypeDouble)
     , _climbRateFact                    (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
     , _altitudeRelativeFact             (0, _altitudeRelativeFactName,  FactMetaData::valueTypeDouble)
     , _altitudeAMSLFact                 (0, _altitudeAMSLFactName,      FactMetaData::valueTypeDouble)
+    , _altitudeTuningFact               (0, _altitudeTuningFactName,    FactMetaData::valueTypeDouble)
+    , _altitudeTuningSetpointFact       (0, _altitudeTuningSetpointFactName, FactMetaData::valueTypeDouble)
     , _flightDistanceFact               (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact                   (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact               (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
@@ -391,9 +400,12 @@ void Vehicle::_commonInit()
     _addFact(&_yawRateFact,             _yawRateFactName);
     _addFact(&_groundSpeedFact,         _groundSpeedFactName);
     _addFact(&_airSpeedFact,            _airSpeedFactName);
+    _addFact(&_airSpeedSetpointFact,    _airSpeedSetpointFactName);
     _addFact(&_climbRateFact,           _climbRateFactName);
     _addFact(&_altitudeRelativeFact,    _altitudeRelativeFactName);
     _addFact(&_altitudeAMSLFact,        _altitudeAMSLFactName);
+    _addFact(&_altitudeTuningFact,       _altitudeTuningFactName);
+    _addFact(&_altitudeTuningSetpointFact, _altitudeTuningSetpointFactName);
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
@@ -687,6 +699,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_VFR_HUD:
         _handleVfrHud(message);
         break;
+    case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
+        _handleNavControllerOutput(message);
+        break;
     case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
         _handleCameraImageCaptured(message);
         break;
@@ -934,6 +949,19 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
     _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
+    if (qIsNaN(_altitudeTuningOffset)) {
+        _altitudeTuningOffset = vfrHud.alt;
+    }
+    _altitudeTuningFact.setRawValue(vfrHud.alt - _altitudeTuningOffset);
+}
+
+void Vehicle::_handleNavControllerOutput(mavlink_message_t& message)
+{
+    mavlink_nav_controller_output_t navControllerOutput;
+    mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
+
+    _altitudeTuningSetpointFact.setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.alt_error);
+    _airSpeedSetpointFact.setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
 }
 
 // Ignore warnings from mavlink headers for both GCC/Clang and MSVC
@@ -3575,6 +3603,12 @@ void Vehicle::setPIDTuningTelemetryMode(PIDTuningTelemetryMode mode)
             break;
         case ModeAltitudeAndAirspeed:
             _mavlinkStreamConfig.setHighRateAltAirspeed();
+            // reset the altitude offset to the current value, so the plotted value is around 0
+            if (!qIsNaN(_altitudeTuningOffset)) {
+                _altitudeTuningOffset += _altitudeTuningFact.rawValue().toDouble();
+                _altitudeTuningSetpointFact.setRawValue(0.f);
+                _altitudeTuningFact.setRawValue(0.f);
+            }
             break;
     }
 }
