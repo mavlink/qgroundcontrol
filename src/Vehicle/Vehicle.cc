@@ -455,6 +455,10 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = nullptr;
 
+    if (_joystickManager) {
+        _startJoystick(false);
+    }
+
 #if defined(QGC_AIRMAP_ENABLED)
     if (_airspaceVehicleManager) {
         delete _airspaceVehicleManager;
@@ -1848,6 +1852,7 @@ void Vehicle::_startJoystick(bool start)
             joystick->startPolling(this);
         } else {
             joystick->stopPolling();
+            joystick->wait(500);
         }
     }
 }
