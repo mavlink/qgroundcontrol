@@ -874,8 +874,11 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
         // Polygon has not yet been set so we just return back a one item complex item for now
         return _sequenceNumber;
     } else if (_rgFlightPathCoordInfo.count()) {
-        int                         itemCount   = 2; //account for the leading and trailing DO_MOUNT_CONTROL
+        int                         itemCount   = 0;
         BuildMissionItemsState_t    buildState  = _buildMissionItemsState();
+
+        // +2 to account for the leading and trailing DO_MOUNT_CONTROL
+        itemCount += 2;
 
         // Important Note: This code should match the logic in _buildAndAppendMissionItems
         for (int coordIndex=0; coordIndex<_rgFlightPathCoordInfo.count(); coordIndex++) {
