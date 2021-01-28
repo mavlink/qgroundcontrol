@@ -40,13 +40,21 @@ SetupPage {
                     text:       qsTr("Rate Controller")
                 }
                 QGCTabButton {
+                    text:       qsTr("Attitude Controller")
+                }
+                QGCTabButton {
                     text:       qsTr("Velocity Controller")
+                }
+                QGCTabButton {
+                    text:       qsTr("Position Controller")
                 }
             }
 
             property var pages:  [
                 "PX4TuningComponentCopterRate.qml",
-                "PX4TuningComponentCopterVelocity.qml"
+                "PX4TuningComponentCopterAttitude.qml",
+                "PX4TuningComponentCopterVelocity.qml",
+                "PX4TuningComponentCopterPosition.qml"
             ]
 
             Loader {
