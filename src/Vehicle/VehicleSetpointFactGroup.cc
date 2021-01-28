@@ -59,6 +59,7 @@ void VehicleSetpointFactGroup::handleMessage(Vehicle* /* vehicle */, mavlink_mes
 
     this->roll()->setRawValue   (qRadiansToDegrees(roll));
     this->pitch()->setRawValue  (qRadiansToDegrees(pitch));
+    if (yaw < 0.f) yaw += 2.f * (float)M_PI; // bring to range [0, 2pi] to match the heading angle
     this->yaw()->setRawValue    (qRadiansToDegrees(yaw));
 
     rollRate()->setRawValue (qRadiansToDegrees(attitudeTarget.body_roll_rate));
