@@ -139,13 +139,20 @@ RowLayout {
             _xAxis.max = _msecs / 1000
             _xAxis.min = _msecs / 1000 - chartDisplaySec
 
+            var firstPoint = _msecs == 0
+
             var len = axis[_currentAxis].plot.length
             for (var i = 0; i < len; ++i) {
                 var value = axis[_currentAxis].plot[i].value
                 if (!isNaN(value)) {
                     chart.series(i).append(_msecs/1000, value)
-                    adjustYAxisMin(_yAxis, value)
-                    adjustYAxisMax(_yAxis, value)
+                    if (firstPoint) {
+                        _yAxis.min = value
+                        _yAxis.max = value
+                    } else {
+                        adjustYAxisMin(_yAxis, value)
+                        adjustYAxisMax(_yAxis, value)
+                    }
                 }
             }
 
