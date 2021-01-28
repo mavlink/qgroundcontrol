@@ -9,14 +9,10 @@
 
 import QtQuick          2.3
 import QtQuick.Controls 1.2
-import QtCharts         2.2
 import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.ScreenTools   1.0
 
 SetupPage {
     id:             tuningPage
@@ -25,43 +21,7 @@ SetupPage {
     Component {
         id: pageComponent
 
-        Item {
-            width: availableWidth
-
-            FactPanelController {
-                id:         controller
-            }
-
-            QGCTabBar {
-                id:             bar
-                width:          parent.width
-                anchors.top:    parent.top
-                QGCTabButton {
-                    text:       qsTr("Rate Controller")
-                }
-                QGCTabButton {
-                    text:       qsTr("Attitude Controller")
-                }
-                QGCTabButton {
-                    text:       qsTr("Velocity Controller")
-                }
-                QGCTabButton {
-                    text:       qsTr("Position Controller")
-                }
-            }
-
-            property var pages:  [
-                "PX4TuningComponentCopterRate.qml",
-                "PX4TuningComponentCopterAttitude.qml",
-                "PX4TuningComponentCopterVelocity.qml",
-                "PX4TuningComponentCopterPosition.qml"
-            ]
-
-            Loader {
-                source:         pages[bar.currentIndex]
-                width:          parent.width
-                anchors.top:    bar.bottom
-            }
+        PX4TuningComponentCopterAll {
         }
     } // Component - pageComponent
 } // SetupPage
