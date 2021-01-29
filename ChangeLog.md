@@ -4,6 +4,9 @@ Note: This file only contains high level features or important fixes.
 
 ## 4.1
 
+### 4.1.2 - Not yet released
+* Bug: Radio setup - Fix double send of `MAV_CMD_PREFLIGHT_CALIBRATION` causing "Unable to send command" error.
+
 ### 4.1.1 - Stable
 * Fix TCP link comms
 
