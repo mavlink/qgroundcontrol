@@ -39,6 +39,14 @@
       <output name="MAIN5">throttle</output>
     </airframe>
   </airframe_group>
+  <airframe_group name="Balloon" image="Balloon">
+    <airframe name="ThunderFly balloon TF-B1" id="18001" maintainer="ThunderFly s.r.o.">
+      <class>Balloon</class>
+      <maintainer>ThunderFly s.r.o.</maintainer>
+      <type>Balloon</type>
+      <url>https://github.com/ThunderFly-aerospace/TF-B1/</url>
+    </airframe>
+  </airframe_group>
   <airframe_group name="Coaxial Helicopter" image="HelicopterCoaxial">
     <airframe name="Esky (Big) Lama v4" id="15001" maintainer="Emmanuel Roussel">
       <class>Copter</class>
