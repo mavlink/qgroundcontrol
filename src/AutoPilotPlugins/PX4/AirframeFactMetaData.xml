@@ -759,26 +759,6 @@
       <output name="MAIN2">steering</output>
       <output name="MAIN4">throttle</output>
     </airframe>
-    <airframe name="Axial Racing AX10" id="50001" maintainer="John Doe &lt;john@example.com&gt;">
-      <class>Rover</class>
-      <type>Rover</type>
-      <output name="MAIN1">pass-through of control group 0, channel 0</output>
-      <output name="MAIN2">pass-through of control group 0, channel 1</output>
-      <output name="MAIN3">pass-through of control group 0, channel 2</output>
-      <output name="MAIN4">pass-through of control group 0, channel 3</output>
-      <output name="MAIN5">pass-through of control group 0, channel 4</output>
-      <output name="MAIN6">pass-through of control group 0, channel 5</output>
-      <output name="MAIN7">pass-through of control group 0, channel 6</output>
-      <output name="MAIN8">pass-through of control group 0, channel 7</output>
-    </airframe>
-    <airframe name="Traxxas stampede vxl 2wd" id="50002" maintainer="Marco Zorzi">
-      <class>Rover</class>
-      <maintainer>Marco Zorzi</maintainer>
-      <type>Rover</type>
-      <url>https://traxxas.com/products/models/electric/stampede-vxl-tsm</url>
-      <output name="MAIN2">steering</output>
-      <output name="MAIN4">throttle</output>
-    </airframe>
     <airframe name="Aion Robotics R1 UGV" id="50003" maintainer="Timothy Scott">
       <class>Rover</class>
       <maintainer>Timothy Scott</maintainer>
