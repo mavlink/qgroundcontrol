@@ -737,7 +737,7 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
     return _valueSliderModel;
 }
 
-void Fact::_checkForRebootMessaging(void)
+void Fact::_checkForRebootMessaging(void) const
 {
     if(qgcApp()) {
         if (!qgcApp()->runningUnitTests()) {

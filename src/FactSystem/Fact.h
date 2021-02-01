@@ -191,7 +191,7 @@ signals:
     void _containerRawValueChanged(const QVariant& value);
 
 private slots:
-    void _checkForRebootMessaging(void);
+    void _checkForRebootMessaging(void) const;
 
 private:
     void _init(void);
