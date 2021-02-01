@@ -42,7 +42,7 @@ public:
     TCPConfiguration(const QString& name);
     TCPConfiguration(TCPConfiguration* source);
 
-    quint16             port        (void)                          { return _port; }
+    quint16             port        (void) const                         { return _port; }
     const QHostAddress& address     (void)                          { return _address; }
     const QString       host        (void)                          { return _address.toString(); }
     void                setPort     (quint16 port);
