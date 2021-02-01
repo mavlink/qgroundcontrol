@@ -21,14 +21,14 @@
 class RCChannelMonitorController : public FactPanelController
 {
     Q_OBJECT
-    
+
 public:
     RCChannelMonitorController(void);
-    
+
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
-        
-    int channelCount(void) { return _chanCount; }
-    
+
+    int channelCount(void) const{ return _chanCount; }
+
 signals:
     void channelCountChanged(int channelCount);
     void channelRCValueChanged(int channel, int rcValue);
