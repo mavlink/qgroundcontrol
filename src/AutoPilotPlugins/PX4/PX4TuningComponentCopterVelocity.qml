@@ -18,8 +18,9 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
-Column {
+ColumnLayout {
     width: availableWidth
+    anchors.fill: parent
     property Fact _mcPosMode:       controller.getParameterFact(-1, "MPC_POS_MODE", false)
 
     GridLayout {
@@ -105,8 +106,6 @@ Column {
                 }
             }
         }
-        anchors.left:   parent.left
-        anchors.right:  parent.right
         title: "Velocity"
         tuningMode: Vehicle.ModeVelocityAndPosition
         unit: "m/s"
