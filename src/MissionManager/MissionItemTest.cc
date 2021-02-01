@@ -237,7 +237,7 @@ void MissionItemTest::_testFactSignals(void)
     QCOMPARE(arguments.at(0).toDouble(), 8.0);
 }
 
-void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs)
+void MissionItemTest::_checkExpectedMissionItem(const MissionItem& missionItem, bool allNaNs) const
 {
     QCOMPARE(missionItem.sequenceNumber(), _seq);
     QCOMPARE(missionItem.isCurrentItem(), false);
