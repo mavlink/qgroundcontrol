@@ -121,8 +121,8 @@ public:
     Q_PROPERTY(bool         downloadingLogs READ downloadingLogs    NOTIFY downloadingLogsChanged)
 
     QGCLogModel*    model                   () { return &_logEntriesModel; }
-    bool            requestingList          () { return _requestingLogEntries; }
-    bool            downloadingLogs         () { return _downloadingLogs; }
+    bool            requestingList          () const{ return _requestingLogEntries; }
+    bool            downloadingLogs         () const{ return _downloadingLogs; }
 
     Q_INVOKABLE void refresh                ();
     Q_INVOKABLE void download               (QString path = QString());
