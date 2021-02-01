@@ -151,8 +151,8 @@ public:
     LogReplayLinkController(void);
 
     LogReplayLink*  link            (void) { return _link; }
-    bool            isPlaying       (void) { return _isPlaying; }
-    qreal           percentComplete (void) { return _percentComplete; }
+    bool            isPlaying       (void) const{ return _isPlaying; }
+    qreal           percentComplete (void) const{ return _percentComplete; }
 
     void setLink            (LogReplayLink* link);
     void setIsPlaying       (bool isPlaying);
