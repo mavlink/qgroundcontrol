@@ -2156,7 +2156,7 @@ QGCVideoStreamInfo::QGCVideoStreamInfo(QObject* parent, const mavlink_video_stre
 
 //-----------------------------------------------------------------------------
 qreal
-QGCVideoStreamInfo::aspectRatio()
+QGCVideoStreamInfo::aspectRatio() const
 {
     qreal ar = 1.0;
     if(_streamInfo.resolution_h && _streamInfo.resolution_v) {
