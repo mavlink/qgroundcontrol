@@ -871,7 +871,7 @@ void Joystick::setThrottleMode(int mode)
     emit throttleModeChanged(_throttleMode);
 }
 
-bool Joystick::negativeThrust()
+bool Joystick::negativeThrust() const
 {
     return _negativeThrust;
 }
@@ -886,7 +886,7 @@ void Joystick::setNegativeThrust(bool allowNegative)
     emit negativeThrustChanged(_negativeThrust);
 }
 
-float Joystick::exponential()
+float Joystick::exponential() const
 {
     return _exponential;
 }
@@ -898,7 +898,7 @@ void Joystick::setExponential(float expo)
     emit exponentialChanged(_exponential);
 }
 
-bool Joystick::accumulator()
+bool Joystick::accumulator() const
 {
     return _accumulator;
 }
@@ -910,7 +910,7 @@ void Joystick::setAccumulator(bool accu)
     emit accumulatorChanged(_accumulator);
 }
 
-bool Joystick::deadband()
+bool Joystick::deadband() const
 {
     return _deadband;
 }
@@ -921,7 +921,7 @@ void Joystick::setDeadband(bool deadband)
     _saveSettings();
 }
 
-bool Joystick::circleCorrection()
+bool Joystick::circleCorrection() const
 {
     return _circleCorrection;
 }
@@ -1041,7 +1041,7 @@ void Joystick::_yawStep(int direction)
     emit gimbalControlValue(_localPitch, _localYaw);
 }
 
-bool Joystick::_validAxis(int axis)
+bool Joystick::_validAxis(int axis) const
 {
     if(axis >= 0 && axis < _axisCount) {
         return true;
@@ -1050,7 +1050,7 @@ bool Joystick::_validAxis(int axis)
     return false;
 }
 
-bool Joystick::_validButton(int button)
+bool Joystick::_validButton(int button) const
 {
     if(button >= 0 && button < _totalButtonCount)
         return true;
