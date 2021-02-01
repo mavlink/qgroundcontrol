@@ -256,7 +256,7 @@ void CameraCalc::save(QJsonObject& json) const
     json[cameraNameName] =                  _cameraNameFact.rawValue().toString();
 
     json[_jsonCamposKey] =                  _camposFact.rawValue().toBool();
-    json[_jsonCamposSurvey2DKey] =          _camposSurvey2DFact.rawValue().toDouble();
+    json[_jsonCamposSurvey2DKey] =          _camposSurvey2DFact.rawValue().toBool();
     json[_jsonCamposPositionsKey] =         _camposPositionsFact.rawValue().toInt();
     json[_jsonCamposMinIntervalKey] =       _camposMinIntervalFact.rawValue().toInt();
     json[_jsonCamposRollAngleKey] =         _camposRollAngleFact.rawValue().toDouble();
