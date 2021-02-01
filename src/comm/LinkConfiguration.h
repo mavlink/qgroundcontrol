@@ -61,15 +61,15 @@ public:
     };
     Q_ENUM(LinkType)
 
-    bool isDynamic      () { return _dynamic; }     ///< Not persisted
-    bool isAutoConnect  () { return _autoConnect; }
+    bool isDynamic      () const{ return _dynamic; }     ///< Not persisted
+    bool isAutoConnect  () const{ return _autoConnect; }
 
     /*!
      *
      * Is this a High Latency configuration?
      * @return True if this is an High Latency configuration (link with large delays).
      */
-    bool isHighLatency() { return _highLatency; }
+    bool isHighLatency() const{ return _highLatency; }
 
     /*!
      * Set if this is this a dynamic configuration. (decided at runtime)
