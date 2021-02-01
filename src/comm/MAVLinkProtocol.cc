@@ -383,7 +383,7 @@ QString MAVLinkProtocol::getName()
 }
 
 /** @return System id of this application */
-int MAVLinkProtocol::getSystemId()
+int MAVLinkProtocol::getSystemId() const
 {
     return systemId;
 }
