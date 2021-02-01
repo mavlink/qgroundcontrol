@@ -1869,7 +1869,7 @@ void Vehicle::_saveSettings()
     }
 }
 
-bool Vehicle::joystickEnabled()
+bool Vehicle::joystickEnabled() const
 {
     return _joystickEnabled;
 }
