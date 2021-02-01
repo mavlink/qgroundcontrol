@@ -307,6 +307,15 @@ RowLayout {
                     }
                 }
             }
+            Connections {
+                target: globals.activeVehicle
+                onArmedChanged: {
+                    if (armed && !dataTimer.running) { // start plotting on arming if not already running
+                        dataTimer.running = true
+                        _last_t = 0
+                    }
+                }
+            }
         }
 
         QGCCheckBox {
