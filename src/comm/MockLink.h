@@ -39,14 +39,14 @@ public:
     int     firmware                (void)                      { return (int)_firmwareType; }
     void    setFirmware             (int type)                  { _firmwareType = (MAV_AUTOPILOT)type; emit firmwareChanged(); }
     int     vehicle                 (void)                      { return (int)_vehicleType; }
-    bool    incrementVehicleId      (void)                      { return _incrementVehicleId; }
+    bool    incrementVehicleId      (void) const                     { return _incrementVehicleId; }
     void    setVehicle              (int type)                  { _vehicleType = (MAV_TYPE)type; emit vehicleChanged(); }
     void    setIncrementVehicleId   (bool incrementVehicleId)   { _incrementVehicleId = incrementVehicleId; emit incrementVehicleIdChanged(); }
 
 
     MAV_AUTOPILOT   firmwareType        (void)                          { return _firmwareType; }
     MAV_TYPE        vehicleType         (void)                          { return _vehicleType; }
-    bool            sendStatusText      (void)                          { return _sendStatusText; }
+    bool            sendStatusText      (void) const                         { return _sendStatusText; }
 
     void            setFirmwareType     (MAV_AUTOPILOT firmwareType)    { _firmwareType = firmwareType; emit firmwareChanged(); }
     void            setVehicleType      (MAV_TYPE vehicleType)          { _vehicleType = vehicleType; emit vehicleChanged(); }
@@ -97,7 +97,7 @@ public:
     MockLink(SharedLinkConfigurationPtr& config);
     virtual ~MockLink();
 
-    int             vehicleId           (void)                                          { return _vehicleSystemId; }
+    int             vehicleId           (void) const                                         { return _vehicleSystemId; }
     MAV_AUTOPILOT   getFirmwareType     (void)                                          { return _firmwareType; }
     void            setFirmwareType     (MAV_AUTOPILOT autopilot)                       { _firmwareType = autopilot; }
     void            setSendStatusText   (bool sendStatusText)                           { _sendStatusText = sendStatusText; }
