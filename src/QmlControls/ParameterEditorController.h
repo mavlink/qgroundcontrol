@@ -136,7 +136,7 @@ private slots:
     void _factAdded             (int compId, Fact* fact);
 
 private:
-    bool _shouldShow(Fact *fact);
+    bool _shouldShow(Fact *fact) const;
 
 private:
     ParameterManager*           _parameterMgr           = nullptr;
