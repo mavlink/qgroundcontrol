@@ -41,7 +41,7 @@ public:
     Q_PROPERTY(QString  action      READ action     CONSTANT)
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
     QString action      () { return _action; }
-    bool    canRepeat   () { return _repeat; }
+    bool    canRepeat   () const{ return _repeat; }
 private:
     QString _action;
     bool    _repeat = false;
@@ -120,8 +120,8 @@ public:
     // Property accessors
 
     QString     name                () { return _name; }
-    int         totalButtonCount    () { return _totalButtonCount; }
-    int         axisCount           () { return _axisCount; }
+    int         totalButtonCount    () const{ return _totalButtonCount; }
+    int         axisCount           () const{ return _axisCount; }
     QStringList buttonActions       ();
 
     QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
@@ -151,19 +151,19 @@ public:
     int   throttleMode      ();
     void  setThrottleMode   (int mode);
 
-    bool  negativeThrust    ();
+    bool  negativeThrust    () const;
     void  setNegativeThrust (bool allowNegative);
 
-    float exponential       ();
+    float exponential       () const;
     void  setExponential    (float expo);
 
-    bool  accumulator       ();
+    bool  accumulator       () const;
     void  setAccumulator    (bool accu);
 
-    bool  deadband          ();
+    bool  deadband          () const;
     void  setDeadband       (bool accu);
 
-    bool  circleCorrection  ();
+    bool  circleCorrection  () const;
     void  setCircleCorrection(bool circleCorrection);
 
     void  setTXMode         (int mode);
@@ -173,12 +173,12 @@ public:
     void  setCalibrationMode (bool calibrating);
 
     /// Get joystick message rate (in Hz)
-    float axisFrequencyHz     () { return _axisFrequencyHz; }
+    float axisFrequencyHz     () const{ return _axisFrequencyHz; }
     /// Set joystick message rate (in Hz)
     void  setAxisFrequency  (float val);
 
     /// Get joystick button repeat rate (in Hz)
-    float buttonFrequencyHz   () { return _buttonFrequencyHz; }
+    float buttonFrequencyHz   () const{ return _buttonFrequencyHz; }
     /// Set joystick button repeat rate (in Hz)
     void  setButtonFrequency(float val);
 
@@ -225,8 +225,8 @@ protected:
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
     void    _executeButtonAction    (const QString& action, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
-    bool    _validAxis              (int axis);
-    bool    _validButton            (int button);
+    bool    _validAxis              (int axis) const;
+    bool    _validButton            (int button) const;
     void    _handleAxis             ();
     void    _handleButtons          ();
     void    _buildActionList        (Vehicle* activeVehicle);
