@@ -36,7 +36,7 @@ public:
     };
 
     QGeoCoordinate      gcsPosition         (void) { return _gcsPosition; }
-    qreal               gcsHeading          (void) { return _gcsHeading; }
+    qreal               gcsHeading          (void) const{ return _gcsHeading; }
     QGeoPositionInfo    geoPositionInfo     (void) const { return _geoPositionInfo; }
     void                setPositionSource   (QGCPositionSource source);
     int                 updateInterval      (void) const;
