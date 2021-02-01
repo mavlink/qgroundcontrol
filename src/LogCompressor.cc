@@ -201,12 +201,12 @@ void LogCompressor::startCompression(bool holeFilling)
 	start();
 }
 
-bool LogCompressor::isFinished()
+bool LogCompressor::isFinished() const
 {
 	return !running;
 }
 
-int LogCompressor::getCurrentLine()
+int LogCompressor::getCurrentLine() const
 {
 	return currentDataLine;
 }
