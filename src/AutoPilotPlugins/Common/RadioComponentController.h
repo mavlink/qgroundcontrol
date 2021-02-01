@@ -98,9 +98,9 @@ public:
     bool yawChannelReversed(void);
     bool throttleChannelReversed(void);
 
-    int channelCount(void);
+    int channelCount(void) const;
 
-    int transmitterMode(void) { return _transmitterMode; }
+    int transmitterMode(void) const{ return _transmitterMode; }
     void setTransmitterMode(int mode);
 
 signals:
