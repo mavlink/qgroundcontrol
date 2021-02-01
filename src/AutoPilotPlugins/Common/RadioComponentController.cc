@@ -897,7 +897,7 @@ void RadioComponentController::_setHelpImage(const char* imageFile)
     emit imageHelpChanged(file);
 }
 
-int RadioComponentController::channelCount(void)
+int RadioComponentController::channelCount(void) const
 {
     return _chanCount;
 }
