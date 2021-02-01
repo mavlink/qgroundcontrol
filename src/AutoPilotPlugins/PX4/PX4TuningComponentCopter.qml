@@ -22,6 +22,7 @@ SetupPage {
         id: pageComponent
 
         PX4TuningComponentCopterAll {
+            height: availableHeight
         }
     } // Component - pageComponent
 } // SetupPage

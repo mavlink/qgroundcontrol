@@ -165,92 +165,98 @@ RowLayout {
         property int _maxPointCount:    10000 / interval
     }
 
-    Column {
-        spacing:            _margins
-        Layout.alignment:   Qt.AlignTop
-        width:          parent.width * (_showCharts ? 0.4 : 1)
-
+    QGCFlickable {
+        contentWidth:           parent.width * (_showCharts ? 0.4 : 1)
+        contentHeight:          rightColumn.height
+        Layout.fillHeight:      true
+        Layout.minimumWidth:    contentWidth
+        Layout.maximumWidth:    contentWidth
+        Layout.alignment:       Qt.AlignTop
         Column {
+            spacing:            _margins
+            Layout.alignment:   Qt.AlignTop
+            width:          parent.width
+            id:             rightColumn
 
-            RowLayout {
-                spacing: _margins
-                visible: axis.length > 1
+            Column {
 
-                QGCLabel { text: qsTr("Select Tuning:") }
+                RowLayout {
+                    spacing: _margins
+                    visible: axis.length > 1
 
-                Repeater {
-                    model: axis
-                    QGCRadioButton {
-                        text:           modelData.name
-                        checked:        index == _currentAxis
-                        onClicked: _currentAxis = index
+                    QGCLabel { text: qsTr("Select Tuning:") }
+
+                    Repeater {
+                        model: axis
+                        QGCRadioButton {
+                            text:           modelData.name
+                            checked:        index == _currentAxis
+                            onClicked: _currentAxis = index
+                        }
                     }
                 }
             }
-        }
 
-        // Instantiate all sliders (instead of switching the model), so that
-        // values are not changed unexpectedly if they do not match with a tick
-        // value
-        Repeater {
-            model: axis
-            FactSliderPanel {
-                width:       parent.width
-                visible:     _currentAxis === index
-                sliderModel: axis[index].params
-            }
-        }
-
-        Column {
-            QGCLabel { text: qsTr("Clipboard Values:") }
-
-            GridLayout {
-                rows:           savedRepeater.model.length
-                flow:           GridLayout.TopToBottom
-                rowSpacing:     0
-                columnSpacing:  _margins
-
-                Repeater {
-                    model: axis[_currentAxis].params
-
-                    QGCLabel { text: param }
-                }
-
-                Repeater {
-                    id: savedRepeater
-
-                    QGCLabel { text: modelData }
+            // Instantiate all sliders (instead of switching the model), so that
+            // values are not changed unexpectedly if they do not match with a tick
+            // value
+            Repeater {
+                model: axis
+                FactSliderPanel {
+                    width:       parent.width
+                    visible:     _currentAxis === index
+                    sliderModel: axis[index].params
                 }
             }
-        }
 
-        RowLayout {
-            spacing: _margins
+            Column {
+                QGCLabel { text: qsTr("Clipboard Values:") }
 
-            QGCButton {
-                text:       qsTr("Save To Clipboard")
-                onClicked:  saveTuningParamValues()
+                GridLayout {
+                    rows:           savedRepeater.model.length
+                    flow:           GridLayout.TopToBottom
+                    rowSpacing:     0
+                    columnSpacing:  _margins
+
+                    Repeater {
+                        model: axis[_currentAxis].params
+
+                        QGCLabel { text: param }
+                    }
+
+                    Repeater {
+                        id: savedRepeater
+
+                        QGCLabel { text: modelData }
+                    }
+                }
             }
 
-            QGCButton {
-                text:       qsTr("Restore From Clipboard")
-                onClicked:  resetToSavedTuningParamValues()
+            RowLayout {
+                spacing: _margins
+
+                QGCButton {
+                    text:       qsTr("Save To Clipboard")
+                    onClicked:  saveTuningParamValues()
+                }
+
+                QGCButton {
+                    text:       qsTr("Restore From Clipboard")
+                    onClicked:  resetToSavedTuningParamValues()
+                }
             }
         }
     }
 
-    Column {
-        Layout.fillWidth: true
-        Layout.alignment:   Qt.AlignTop
+    ColumnLayout {
         visible:            _showCharts
 
         ChartView {
             id:                 chart
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-            height:             availableHeight * 0.75
             antialiasing:       true
             legend.alignment:   Qt.AlignBottom
+            Layout.fillHeight:  true
+            Layout.fillWidth:   true
 
             // enable mouse dragging
             MouseArea {
