@@ -76,7 +76,7 @@ public:
     //          @param Expected failure response flags
     void checkExpectedFileDialog(int expectFailFlags = expectFailNoFailure);
 
-    bool standalone(void) { return _standalone; }
+    bool standalone(void) const{ return _standalone; }
     void setStandalone(bool standalone) { _standalone = standalone; }
 
     /// @brief Adds a unit test to the list. Should only be called by UnitTestWrapper.
