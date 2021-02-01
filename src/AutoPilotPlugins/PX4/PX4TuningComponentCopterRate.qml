@@ -18,8 +18,9 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
-Column {
+ColumnLayout {
     width: availableWidth
+    anchors.fill: parent
     property Fact _airmode:           controller.getParameterFact(-1, "MC_AIRMODE", false)
     property Fact _thrustModelFactor: controller.getParameterFact(-1, "THR_MDL_FAC", false)
 
@@ -143,8 +144,6 @@ Column {
                 }
             }
         }
-        anchors.left:   parent.left
-        anchors.right:  parent.right
         title: "Rate"
         tuningMode: Vehicle.ModeRateAndAttitude
         unit: "deg/s"

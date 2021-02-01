@@ -24,6 +24,7 @@ SetupPage {
 
         Item {
             width: availableWidth
+            height: availableHeight
 
             FactPanelController {
                 id:         controller
@@ -52,6 +53,7 @@ SetupPage {
                 width:             parent.width
                 anchors.top:       bar.bottom
                 anchors.topMargin: ScreenTools.defaultFontPixelWidth
+                anchors.bottom:    parent.bottom
             }
         }
     } // Component - pageComponent

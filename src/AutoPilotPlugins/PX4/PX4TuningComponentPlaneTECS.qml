@@ -18,8 +18,9 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
-Column {
+ColumnLayout {
     width: availableWidth
+    anchors.fill: parent
 
     PIDTuning {
         width: availableWidth
@@ -43,8 +44,6 @@ Column {
             }
             // TODO: add other params
         }
-        anchors.left:   parent.left
-        anchors.right:  parent.right
         title: "TECS"
         tuningMode: Vehicle.ModeAltitudeAndAirspeed
         unit: ""
