@@ -67,49 +67,49 @@ QGCCachedTileSet::~QGCCachedTileSet()
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::errorCountStr()
+QGCCachedTileSet::errorCountStr() const
 {
     return QGCMapEngine::numberToString(_errorCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::totalTileCountStr()
+QGCCachedTileSet::totalTileCountStr() const
 {
     return QGCMapEngine::numberToString(_totalTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::totalTilesSizeStr()
+QGCCachedTileSet::totalTilesSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_totalTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::uniqueTileSizeStr()
+QGCCachedTileSet::uniqueTileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_uniqueTileSize);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::uniqueTileCountStr()
+QGCCachedTileSet::uniqueTileCountStr() const
 {
     return QGCMapEngine::numberToString(_uniqueTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedTileCountStr()
+QGCCachedTileSet::savedTileCountStr() const
 {
     return QGCMapEngine::numberToString(_savedTileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCCachedTileSet::savedTileSizeStr()
+QGCCachedTileSet::savedTileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_savedTileSize);
 }
