@@ -3899,7 +3899,7 @@ but also ignore less noise</short_desc>
     </parameter>
   </group>
   <group name="Geofence">
-    <parameter name="GF_ACTION" default="1" type="INT32">
+    <parameter name="GF_ACTION" default="2" type="INT32">
       <short_desc>Geofence violation action</short_desc>
       <long_desc>Note: Setting this value to 4 enables flight termination, which will kill the vehicle on violation of the fence. Due to the inherent danger of this, this function is disabled using a software circuit breaker, which needs to be reset to 0 to really shut down the system.</long_desc>
       <min>0</min>
@@ -5798,7 +5798,7 @@ default 1.5 turns per second</short_desc>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
-    <parameter name="PWM_AUX_DISARMED" default="1500" type="INT32">
+    <parameter name="PWM_AUX_DISARM" default="1500" type="INT32">
       <short_desc>PWM aux disarmed value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
       <min>0</min>
@@ -6088,13 +6088,6 @@ default 1.5 turns per second</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_DISARMED" default="900" type="INT32">
-      <short_desc>PWM main disarmed value</short_desc>
-      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
-      <min>0</min>
-      <max>2200</max>
-      <unit>us</unit>
     </parameter>
     <parameter name="PWM_EXTRA_DIS1" default="-1" type="INT32">
       <short_desc>PWM extra 1 disarmed value</short_desc>
@@ -6541,6 +6534,13 @@ default 1.5 turns per second</short_desc>
       <max>2150</max>
       <unit>us</unit>
     </parameter>
+    <parameter name="PWM_MAIN_DISARM" default="900" type="INT32">
+      <short_desc>PWM main disarmed value</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. The main use of this parameter is to silence ESCs when they are disarmed.</long_desc>
+      <min>0</min>
+      <max>2200</max>
+      <unit>us</unit>
+    </parameter>
     <parameter name="PWM_MAIN_FAIL1" default="0" type="INT32">
       <short_desc>PWM main 1 failsafe value</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
@@ -6849,6 +6849,13 @@ default 1.5 turns per second</short_desc>
       <max>1600</max>
       <unit>us</unit>
     </parameter>
+    <parameter name="PWM_MAIN_RATE" default="400" type="INT32">
+      <short_desc>PWM main output frequency</short_desc>
+      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
+      <min>-1</min>
+      <max>2000</max>
+      <unit>Hz</unit>
+    </parameter>
     <parameter name="PWM_MAIN_RATE1" default="50" type="INT32">
       <short_desc>PWM main 1 rate</short_desc>
       <long_desc>Set the default PWM output frequency for the main outputs</long_desc>
@@ -7009,13 +7016,6 @@ default 1.5 turns per second</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-    </parameter>
-    <parameter name="PWM_RATE" default="400" type="INT32">
-      <short_desc>PWM main output frequency</short_desc>
-      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
-      <min>-1</min>
-      <max>2000</max>
-      <unit>Hz</unit>
     </parameter>
     <parameter name="PWM_SBUS_MODE" default="0" type="INT32" boolean="true">
       <short_desc>S.BUS out</short_desc>
