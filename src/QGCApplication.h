@@ -67,10 +67,10 @@ public:
     void clearDeleteAllSettingsNextBoot(void);
 
     /// @brief Returns true if unit tests are being run
-    bool runningUnitTests(void) { return _runningUnitTests; }
+    bool runningUnitTests(void) const{ return _runningUnitTests; }
 
     /// @brief Returns true if Qt debug output should be logged to a file
-    bool logOutput(void) { return _logOutput; }
+    bool logOutput(void) const{ return _logOutput; }
 
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
@@ -89,7 +89,7 @@ public:
     QGCToolbox* toolbox(void) { return _toolbox; }
 
     /// Do we have Bluetooth Support?
-    bool isBluetoothAvailable() { return _bluetoothAvailable; }
+    bool isBluetoothAvailable() const{ return _bluetoothAvailable; }
 
     /// Is Internet available?
     bool isInternetAvailable();
@@ -157,7 +157,7 @@ public:
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
-    bool    isErrorState()  { return _error; }
+    bool    isErrorState() const { return _error; }
 
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
