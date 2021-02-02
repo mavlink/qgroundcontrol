@@ -17,6 +17,7 @@ QGCAttitudeHUD              1.0 QGCAttitudeHUD.qml
 QGCAttitudeWidget           1.0 QGCAttitudeWidget.qml
 QGCCompassWidget            1.0 QGCCompassWidget.qml
 QGCPitchIndicator           1.0 QGCPitchIndicator.qml
+GimbalControl               1.0 GimbalControl.qml
 
 # Map items
 CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml

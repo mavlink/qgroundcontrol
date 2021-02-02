@@ -120,8 +120,18 @@ Item {
     }
 
     PhotoVideoControl {
+        id:                     photoVideoControl
         anchors.margins:        _toolsMargin
         anchors.verticalCenter: parent.verticalCenter
+        anchors.right:          parent.right
+        width:                  _rightPanelWidth
+    }
+
+    GimbalControl {
+        id:                     gimbalControl
+        anchors.top:            photoVideoControl.visible ? photoVideoControl.bottom : parent.verticalCenter
+        // anchors.verticalCenter: photoVideoControl.visible ? undefined : parent.verticalCenter
+        anchors.margins:        _toolsMargin
         anchors.right:          parent.right
         width:                  _rightPanelWidth
     }
