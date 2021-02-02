@@ -3713,15 +3713,15 @@ void Vehicle::gimbalPitchStep(int direction)
     if(_haveGimbalData) {
         //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
         double p = static_cast<double>(_curGimbalPitch + direction);
-        gimbalControlValue(p, static_cast<double>(_curGinmbalYaw));
+        gimbalControlValue(p, static_cast<double>(_curGimbalYaw));
     }
 }
 
 void Vehicle::gimbalYawStep(int direction)
 {
     if(_haveGimbalData) {
-        //qDebug() << "Yaw:" << _curGinmbalYaw << direction << (_curGinmbalYaw + direction);
-        double y = static_cast<double>(_curGinmbalYaw + direction);
+        //qDebug() << "Yaw:" << _curGimbalYaw << direction << (_curGimbalYaw + direction);
+        double y = static_cast<double>(_curGimbalYaw + direction);
         gimbalControlValue(static_cast<double>(_curGimbalPitch), y);
     }
 }
@@ -3745,8 +3745,8 @@ void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
         _curGimbalPitch = o.pitch;
         emit gimbalPitchChanged();
     }
-    if(fabsf(_curGinmbalYaw - o.yaw) > 0.5f) {
-        _curGinmbalYaw = o.yaw;
+    if(fabsf(_curGimbalYaw - o.yaw) > 0.5f) {
+        _curGimbalYaw = o.yaw;
         emit gimbalYawChanged();
     }
     if(!_haveGimbalData) {
