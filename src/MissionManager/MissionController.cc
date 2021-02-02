@@ -2511,10 +2511,11 @@ void MissionController::_updateTimeout()
                     if(pSimpleItem->coordinate().isValid()) {
                         double alt = 0.0;
                         if (!pSimpleItem->altitude()->rawValue().isNull()) {
-                            alt = pSimpleItem->altitude()->rawValue().toDouble();   // for some reason, the item's coordinate().altitude() is out of sync with the altitude()
+                            alt = pSimpleItem->altitude()->rawValue().toDouble();
                         }
                         if((MAV_CMD)pSimpleItem->command() == MAV_CMD_NAV_TAKEOFF) {
                             takeoffCoordinate = pSimpleItem->coordinate();
+                            takeoffCoordinate.setAltitude(alt);
                             minAlt = maxAlt = alt;
                         } else if(!firstCoordinate.isValid()) {
                             firstCoordinate = pSimpleItem->coordinate();
