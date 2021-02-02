@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_PILOTS_H_
 #define AIRMAP_PILOTS_H_
 
@@ -7,6 +19,7 @@
 #include <airmap/optional.h>
 #include <airmap/outcome.h>
 #include <airmap/pilot.h>
+#include <airmap/visibility.h>
 
 #include <functional>
 #include <iosfwd>
@@ -16,7 +29,7 @@
 namespace airmap {
 
 /// Pilots provides functionality to manage (the authorized) pilot.
-class Pilots : DoNotCopyOrMove {
+class AIRMAP_EXPORT Pilots : DoNotCopyOrMove {
  public:
   /// Exclude enumerates fields that can be excluded when querying pilot and aircraft properties.
   enum class Exclude {
@@ -28,9 +41,9 @@ class Pilots : DoNotCopyOrMove {
 
   /// Authenticated bundles up types to ease interaction
   /// with Pilots::authenticated.
-  struct Authenticated {
+  struct AIRMAP_EXPORT Authenticated {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;        ///< Authorization token obtained by logging in to the AirMap services.
       Optional<Exclude> exclude{};      ///< Exclude these fields from results.
       bool retrieve_statistics{false};  ///< If true, statistics about flights and aircrafts are requested.
@@ -45,9 +58,9 @@ class Pilots : DoNotCopyOrMove {
 
   /// ForId bundles up types to ease interaction
   /// with Pilots::for_id.
-  struct ForId {
+  struct AIRMAP_EXPORT ForId {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;        ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;                   ///< Searches for the specific pilot with this id.
       Optional<Exclude> exclude{};      ///< Exclude these fields from results.
@@ -63,9 +76,9 @@ class Pilots : DoNotCopyOrMove {
 
   /// UpdateForId bundles up types to ease interaction
   /// with Pilots::update_for_id.
-  struct UpdateForId {
+  struct AIRMAP_EXPORT UpdateForId {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Updates the specific pilot with this id.
       std::string first_name;     ///< The first name of the pilot.
@@ -85,14 +98,14 @@ class Pilots : DoNotCopyOrMove {
 
   /// StartVerifyPilotPhoneForId bundles up types to ease interaction
   /// with Pilots::start_verify_pilot_phone_for_id.
-  struct StartVerifyPilotPhoneForId {
+  struct AIRMAP_EXPORT StartVerifyPilotPhoneForId {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Verifies the phone number for the pilot with this id.
     };
 
-    struct Empty {};
+    struct AIRMAP_EXPORT Empty {};
 
     /// Result models the outcome of calling Pilots::start_verify_pilot_phone_for_id.
     using Result = Outcome<Empty, Error>;
@@ -103,15 +116,15 @@ class Pilots : DoNotCopyOrMove {
 
   /// FinishVerifyPilotPhoneForId bundles up types to ease interaction
   /// with Pilots::finish_verify_pilot_phone_for_id.
-  struct FinishVerifyPilotPhoneForId {
+  struct AIRMAP_EXPORT FinishVerifyPilotPhoneForId {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Verifies the phone number for the pilot with this id.
       std::uint32_t token;        ///< The token that was received on the pilot's phone.
     };
 
-    struct Empty {};
+    struct AIRMAP_EXPORT Empty {};
 
     /// Result models the outcome of calling Pilots::finish_verify_pilot_phone_for_id.
     using Result = Outcome<Empty, Error>;
@@ -122,9 +135,9 @@ class Pilots : DoNotCopyOrMove {
 
   /// Aircrafts bundles up types to ease interaction
   /// with Pilots::aircrafts.
-  struct Aircrafts {
+  struct AIRMAP_EXPORT Aircrafts {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Lists all aircrafts owned by the pilot with this id.
     };
@@ -138,9 +151,9 @@ class Pilots : DoNotCopyOrMove {
 
   /// AddAircraft bundles up types to ease interaction
   /// with Pilots::add_aircraft.
-  struct AddAircraft {
+  struct AIRMAP_EXPORT AddAircraft {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Adds an aircraft for the pilot with this id.
       std::string model_id;       ///< The id of the model of the aircraft.
@@ -156,15 +169,15 @@ class Pilots : DoNotCopyOrMove {
 
   /// DeleteAircraft bundles up types to ease interaction
   /// with Pilots::delete_aircraft.
-  struct DeleteAircraft {
+  struct AIRMAP_EXPORT DeleteAircraft {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Deletes an aircraft for the pilot with this id.
       std::string aircraft_id;    ///< Deletes the specific aircraft with this id.
     };
 
-    struct Empty {};
+    struct AIRMAP_EXPORT Empty {};
 
     /// Result models the outcome of calling Pilots::delete_aircraft.
     using Result = Outcome<Empty, Error>;
@@ -175,16 +188,16 @@ class Pilots : DoNotCopyOrMove {
 
   /// UpdateAircraft bundles up types to ease interaction
   /// with Pilots::update_aircraft.
-  struct UpdateAircraft {
+  struct AIRMAP_EXPORT UpdateAircraft {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       std::string authorization;  ///< Authorization token obtained by logging in to the AirMap services.
       std::string id;             ///< Updates an aircraft for the pilot with this id.
       std::string aircraft_id;    ///< Update the specific aircraft with this id.
       std::string nick_name;      ///< The new nick name for the aircraft.
     };
 
-    struct Empty {};
+    struct AIRMAP_EXPORT Empty {};
     /// Result models the outcome of calling Pilots::update_aircraft.
     using Result = Outcome<Empty, Error>;
     /// Callback describes the function signature of the callback that is
@@ -231,9 +244,9 @@ class Pilots : DoNotCopyOrMove {
 };
 
 /// @cond
-Pilots::Exclude operator|(Pilots::Exclude, Pilots::Exclude);
-Pilots::Exclude operator&(Pilots::Exclude, Pilots::Exclude);
-std::ostream& operator<<(std::ostream& out, Pilots::Exclude exclude);
+AIRMAP_EXPORT Pilots::Exclude operator|(Pilots::Exclude, Pilots::Exclude);
+AIRMAP_EXPORT Pilots::Exclude operator&(Pilots::Exclude, Pilots::Exclude);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, Pilots::Exclude exclude);
 /// @endcond
 
 }  // namespace airmap

@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_AIRSPACE_H_
 #define AIRMAP_AIRSPACE_H_
 
@@ -5,6 +17,7 @@
 #include <airmap/optional.h>
 #include <airmap/rule.h>
 #include <airmap/timestamp.h>
+#include <airmap/visibility.h>
 
 #include <cstdint>
 #include <iosfwd>
@@ -16,13 +29,13 @@ namespace airmap {
 
 /// Airspace groups together general information about an airspace and
 /// in-depth information providing more details.
-class Airspace {
+class AIRMAP_EXPORT Airspace {
  public:
   /// Airport bundles up properties further describing an
   /// airspace around an airport.
-  struct Airport {
+  struct AIRMAP_EXPORT Airport {
     /// Runway describes an individual runway of an airport.
-    struct Runway {
+    struct AIRMAP_EXPORT Runway {
       std::string name;  ///< Commn name assigned to the runway in the context of a specific airport.
       float length;      ///< Lenght of the runway in [m].
       float bearing;     ///< Bearing of the runway in [°].
@@ -48,13 +61,13 @@ class Airspace {
 
   /// ControlledAirspace bundles up properties describing
   /// a controlled airspace.
-  struct ControlledAirspace {
+  struct AIRMAP_EXPORT ControlledAirspace {
     std::string airspace_classification;  ///< The classification of the ControlledAirspace.
   };
 
   /// SpecialUseAirspace bundles up properties describing
   /// a special use airspace.
-  struct SpecialUseAirspace {
+  struct AIRMAP_EXPORT SpecialUseAirspace {
     /// Type enumerates all known special-purpose types.
     enum class Type {};
     Type type;  ///< The type of the SpecialUseAirspace.
@@ -62,7 +75,7 @@ class Airspace {
 
   /// TemporaryFlightRestriction describes an airspace that
   /// modelling a temporary restriction of the airspace.
-  struct TemporaryFlightRestriction {
+  struct AIRMAP_EXPORT TemporaryFlightRestriction {
     /// Type enumerates all known types of temporary flight restrictions.
     enum class Type {};
     std::string url;     ///< The URL providing further information about the temporary flight restriction.
@@ -71,25 +84,25 @@ class Airspace {
   };
 
   /// Wildfire describes an airspace around a wildfire.
-  struct Wildfire {
+  struct AIRMAP_EXPORT Wildfire {
     std::string effective_date;
   };
 
   /// Park describes an airspace over a park.
-  struct Park {};
+  struct AIRMAP_EXPORT Park {};
   /// Prison describes an airspace over a prison.
-  struct Prison {};
+  struct AIRMAP_EXPORT Prison {};
   /// School describes an airspace over a school.
-  struct School {};
+  struct AIRMAP_EXPORT School {};
   /// Hospital describes an airspace over a hospital.
-  struct Hospital {};
+  struct AIRMAP_EXPORT Hospital {};
   /// Fire describes an airspace over a fire.
-  struct Fire {};
+  struct AIRMAP_EXPORT Fire {};
   /// Emergency describes an airspace over an emergency situation.
-  struct Emergency {};
+  struct AIRMAP_EXPORT Emergency {};
 
   /// Heliport describes an airspace around a heliport.
-  struct Heliport {
+  struct AIRMAP_EXPORT Heliport {
     /// Usage enumerates all known usages of a heliport.
     enum class Usage {};
     std::string faa_id;  ///< The FAA id of the heliport.
@@ -98,13 +111,13 @@ class Airspace {
   };
 
   /// PowerPlant describes the airspace around a power plant.
-  struct PowerPlant {
+  struct AIRMAP_EXPORT PowerPlant {
     std::string technology;  ///< The technology used by the power plant.
     std::uint64_t code;      ///< Official number of the power plant.
   };
 
   /// RelatedGeometry bundles up a geometry related to an airspace.
-  struct RelatedGeometry {
+  struct AIRMAP_EXPORT RelatedGeometry {
     std::string id;     ///< The unique id of the geometry in the context of AirMap.
     Geometry geometry;  ///< The actual geometry.
   };
@@ -318,9 +331,9 @@ class Airspace {
   void set_details(const Emergency &detail);
 
  private:
-  struct Invalid {};
+  struct AIRMAP_EXPORT Invalid {};
 
-  union Details {
+  union AIRMAP_EXPORT Details {
     Details();
     ~Details();
 
@@ -356,28 +369,29 @@ class Airspace {
 };
 
 /// @cond
-bool operator==(const Airspace::RelatedGeometry &lhs, const Airspace::RelatedGeometry &rhs);
-bool operator==(const Airspace::Airport &lhs, const Airspace::Airport &rhs);
-bool operator==(const Airspace::Airport::Runway &lhs, const Airspace::Airport::Runway &rhs);
-bool operator==(const Airspace::ControlledAirspace &lhs, const Airspace::ControlledAirspace &rhs);
-bool operator==(const Airspace::SpecialUseAirspace &lhs, const Airspace::SpecialUseAirspace &rhs);
-bool operator==(const Airspace::TemporaryFlightRestriction &lhs, const Airspace::TemporaryFlightRestriction &rhs);
-bool operator==(const Airspace::Wildfire &lhs, const Airspace::Wildfire &rhs);
-bool operator==(const Airspace::Park &lhs, const Airspace::Park &rhs);
-bool operator==(const Airspace::Prison &lhs, const Airspace::Prison &rhs);
-bool operator==(const Airspace::School &lhs, const Airspace::School &rhs);
-bool operator==(const Airspace::Hospital &lhs, const Airspace::Hospital &rhs);
-bool operator==(const Airspace::Fire &lhs, const Airspace::Fire &rhs);
-bool operator==(const Airspace::Emergency &lhs, const Airspace::Emergency &rhs);
-bool operator==(const Airspace::Heliport &lhs, const Airspace::Heliport &rhs);
-bool operator==(const Airspace::PowerPlant &lhs, const Airspace::PowerPlant &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::RelatedGeometry &lhs, const Airspace::RelatedGeometry &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Airport &lhs, const Airspace::Airport &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Airport::Runway &lhs, const Airspace::Airport::Runway &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::ControlledAirspace &lhs, const Airspace::ControlledAirspace &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::SpecialUseAirspace &lhs, const Airspace::SpecialUseAirspace &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::TemporaryFlightRestriction &lhs,
+                              const Airspace::TemporaryFlightRestriction &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Wildfire &lhs, const Airspace::Wildfire &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Park &lhs, const Airspace::Park &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Prison &lhs, const Airspace::Prison &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::School &lhs, const Airspace::School &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Hospital &lhs, const Airspace::Hospital &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Fire &lhs, const Airspace::Fire &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Emergency &lhs, const Airspace::Emergency &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::Heliport &lhs, const Airspace::Heliport &rhs);
+AIRMAP_EXPORT bool operator==(const Airspace::PowerPlant &lhs, const Airspace::PowerPlant &rhs);
 
-Airspace::Type operator~(Airspace::Type);
-Airspace::Type operator|(Airspace::Type, Airspace::Type);
-Airspace::Type operator&(Airspace::Type, Airspace::Type);
+AIRMAP_EXPORT Airspace::Type operator~(Airspace::Type);
+AIRMAP_EXPORT Airspace::Type operator|(Airspace::Type, Airspace::Type);
+AIRMAP_EXPORT Airspace::Type operator&(Airspace::Type, Airspace::Type);
 
-std::ostream &operator<<(std::ostream &, const Airspace &);
-std::ostream &operator<<(std::ostream &, Airspace::Type);
+AIRMAP_EXPORT std::ostream &operator<<(std::ostream &, const Airspace &);
+AIRMAP_EXPORT std::ostream &operator<<(std::ostream &, Airspace::Type);
 /// @endcond
 
 }  // namespace airmap

@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_RULESET_H_
 #define AIRMAP_RULESET_H_
 
@@ -6,6 +18,7 @@
 #include <airmap/optional.h>
 #include <airmap/pilot.h>
 #include <airmap/status.h>
+#include <airmap/visibility.h>
 
 #include <cstdint>
 #include <iosfwd>
@@ -17,11 +30,11 @@
 namespace airmap {
 
 /// RuleSet bundles together properties describing a ruleset.
-struct RuleSet {
+struct AIRMAP_EXPORT RuleSet {
   // Feature describes a flight feature modelled by a particular rule.
   struct Feature;
   /// Rule models the individual result of a Rule evaluation.
-  struct Rule {
+  struct AIRMAP_EXPORT Rule {
     /// Status enumerates all known status codes of a rule.
     enum class Status {
       unknown,          ///< The status of the rule is unknown.
@@ -46,7 +59,7 @@ struct RuleSet {
   };
 
   /// Jurisdiction describes a jurisdiction in a geographical scope.
-  struct Jurisdiction {
+  struct AIRMAP_EXPORT Jurisdiction {
     /// Region enumerates all known regional scopes of a jurisdiction.
     enum class Region {
       national,  ///< The jurisdiction applies nation-wide.
@@ -76,12 +89,12 @@ struct RuleSet {
   std::vector<std::string> airspace_types;  ///< The layers that a RuleSet instance applies to.
   std::vector<Rule> rules;                  ///< The individual rules in the set.
 
-  struct Feature {
+  struct AIRMAP_EXPORT Feature {
     enum class Type { unknown, boolean, floating_point, string };
     enum class Measurement { unknown, speed, weight, distance };
     enum class Unit { unknown, kilograms, meters, meters_per_sec };
 
-    class Value {
+    class AIRMAP_EXPORT Value {
      public:
       Value();
       explicit Value(bool value);
@@ -107,7 +120,7 @@ struct RuleSet {
       Value& destruct();
 
       Type type_;
-      union Detail {
+      union AIRMAP_EXPORT Detail {
         Detail();
         ~Detail();
 
@@ -129,26 +142,27 @@ struct RuleSet {
     Type type{Type::unknown};
     Measurement measurement{Measurement::unknown};
     Unit unit{Unit::unknown};
+    bool is_calculated;
   };
 };
 
-std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Type type);
-std::istream& operator>>(std::istream& in, RuleSet::Feature::Type& type);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Type type);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::Feature::Type& type);
 
-std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Measurement measurement);
-std::istream& operator>>(std::istream& in, RuleSet::Feature::Measurement& measurement);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Measurement measurement);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::Feature::Measurement& measurement);
 
-std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Unit unit);
-std::istream& operator>>(std::istream& in, RuleSet::Feature::Unit& unit);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::Feature::Unit unit);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::Feature::Unit& unit);
 
-std::ostream& operator<<(std::ostream& out, RuleSet::Jurisdiction::Region region);
-std::istream& operator>>(std::istream& in, RuleSet::Jurisdiction::Region& region);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::Jurisdiction::Region region);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::Jurisdiction::Region& region);
 
-std::ostream& operator<<(std::ostream& out, RuleSet::SelectionType type);
-std::istream& operator>>(std::istream& in, RuleSet::SelectionType& type);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::SelectionType type);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::SelectionType& type);
 
-std::ostream& operator<<(std::ostream& out, RuleSet::Rule::Status status);
-std::istream& operator>>(std::istream& in, RuleSet::Rule::Status& status);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, RuleSet::Rule::Status status);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, RuleSet::Rule::Status& status);
 
 }  // namespace airmap
 
