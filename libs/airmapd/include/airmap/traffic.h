@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_TRAFFIC_H_
 #define AIRMAP_TRAFFIC_H_
 
@@ -6,6 +18,7 @@
 #include <airmap/error.h>
 #include <airmap/logger.h>
 #include <airmap/outcome.h>
+#include <airmap/visibility.h>
 
 #include <functional>
 #include <iosfwd>
@@ -17,11 +30,11 @@ namespace airmap {
 
 /// Traffic provides access to the AirMap situational awareness
 /// and traffic alerts.
-class Traffic : DoNotCopyOrMove {
+class AIRMAP_EXPORT Traffic : DoNotCopyOrMove {
  public:
   /// Update bundles together information about aerial traffic
   /// relevant to a UAV flight.
-  struct Update {
+  struct AIRMAP_EXPORT Update {
     /// Type enumerates all known types of Traffic::Update.
     enum class Type {
       unknown,                ///< Marks the unknown type.
@@ -43,10 +56,10 @@ class Traffic : DoNotCopyOrMove {
 
   /// Monitor models handling of individual subscribers
   /// to per-flight alerts and awareness notices.
-  class Monitor : DoNotCopyOrMove {
+  class AIRMAP_EXPORT Monitor : DoNotCopyOrMove {
    public:
     /// Parameters bundles up input parameters.
-    struct Params {
+    struct AIRMAP_EXPORT Params {
       std::string flight_id;      ///< The id of the flight for which traffic udpates should be started.
       std::string authorization;  ///< The authorization token.
     };
@@ -58,9 +71,8 @@ class Traffic : DoNotCopyOrMove {
     using Callback = std::function<void(const Result&)>;
 
     /// Subscriber abstracts handling of batches of Update instances.
-    class Subscriber {
+    class AIRMAP_EXPORT Subscriber {
      public:
-     virtual ~Subscriber() = default;
       /// handle_update is invoked when a new batch of Update instances
       /// is available.
       virtual void handle_update(Update::Type type, const std::vector<Update>& update) = 0;
@@ -71,7 +83,7 @@ class Traffic : DoNotCopyOrMove {
 
     /// FunctionalSubscriber is a convenience class that dispatches
     /// to a function 'f' for handling batches of Update instances.
-    class FunctionalSubscriber : public Subscriber {
+    class AIRMAP_EXPORT FunctionalSubscriber : public Subscriber {
      public:
       /// FunctionalSubscriber initializes a new instance with 'f'.
       explicit FunctionalSubscriber(const std::function<void(Update::Type, const std::vector<Update>&)>& f);
@@ -84,7 +96,7 @@ class Traffic : DoNotCopyOrMove {
 
     /// LoggingSubscriber is a convenience class that logs incoming batches
     /// of Update instances.
-    class LoggingSubscriber : public Subscriber {
+    class AIRMAP_EXPORT LoggingSubscriber : public Subscriber {
      public:
       /// LoggingSubscriber initializes an instance with 'component', feeding
       /// log entries to 'logger'. Please note that no change of ownership takes
@@ -122,7 +134,7 @@ class Traffic : DoNotCopyOrMove {
 };
 
 /// operator<< inserts a textual representation of type into out.
-std::ostream& operator<<(std::ostream& out, Traffic::Update::Type type);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, Traffic::Update::Type type);
 
 }  // namespace airmap
 

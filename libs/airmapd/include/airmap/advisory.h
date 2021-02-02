@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_ADVISORY_H_
 #define AIRMAP_ADVISORY_H_
 
@@ -11,6 +23,7 @@
 #include <airmap/outcome.h>
 #include <airmap/ruleset.h>
 #include <airmap/status.h>
+#include <airmap/visibility.h>
 
 #include <cstdint>
 #include <functional>
@@ -22,11 +35,11 @@ namespace airmap {
 
 /// Advisory provides functionality to query airspace and weather information about
 /// a geographic area.
-class Advisory : DoNotCopyOrMove {
+class AIRMAP_EXPORT Advisory : DoNotCopyOrMove {
  public:
   /// Advisory bundles together airspace information and its evaluation in terms
   /// good to fly/needs information or feedback/conflict.
-  struct AirspaceAdvisory {
+  struct AIRMAP_EXPORT AirspaceAdvisory {
     Status::Advisory advisory;  /// Airspace information.
     Status::Color color;        /// The evaluation of the airspace.
     std::uint32_t rule_id;      /// The id of the ruleset.
@@ -34,14 +47,14 @@ class Advisory : DoNotCopyOrMove {
   };
 
   /// Wind bundles up attributes describing a wind conditions.
-  struct Wind {
+  struct AIRMAP_EXPORT Wind {
     std::uint32_t heading = 0;    ///< The heading in [°].
     float speed           = 0.0;  ///< The speed in [°].
     std::uint32_t gusting = 0;
   };
 
   /// Weather bundles up attributes describing a weather condition.
-  struct Weather {
+  struct AIRMAP_EXPORT Weather {
     std::string condition;      ///< The overall weather condition.
     std::string icon;           ///< The icon or class of icon that should be used for display purposes.
     Wind wind;                  ///< The details about the current wind conditions.
@@ -57,7 +70,7 @@ class Advisory : DoNotCopyOrMove {
 
   /// ForId bundles up types to ease interaction
   /// with Advisory::for_id.
-  struct ForId {
+  struct AIRMAP_EXPORT ForId {
     /// Parameters bundles up input parameters.
     struct Parameters {
       Optional<DateTime> start;  ///< Search for advisories before this time.
@@ -73,7 +86,7 @@ class Advisory : DoNotCopyOrMove {
 
   /// Search bundles up types to ease interaction
   /// with Advisory::search.
-  struct Search {
+  struct AIRMAP_EXPORT Search {
     /// Parameters bundles up input parameters.
     struct Parameters {
       Required<Geometry> geometry;     ///< Evaluate rulesets intersecting this geometry.
@@ -90,7 +103,7 @@ class Advisory : DoNotCopyOrMove {
 
   /// ReportWeather bundles up types to ease interaction
   /// with Advisory::report_weather.
-  struct ReportWeather {
+  struct AIRMAP_EXPORT ReportWeather {
     /// Parameters bundles up input parameters.
     struct Parameters {
       float latitude;            ///< The latitude component of the takeoff point in [°].
