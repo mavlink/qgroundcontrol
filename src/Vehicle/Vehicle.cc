@@ -721,6 +721,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_CAMERA_FEEDBACK:
         _handleCameraFeedback(message);
         break;
+
+    case MAVLINK_MSG_ID_MOUNT_STATUS:
+        _handleGimbalStatus(message);
+        break;
 #endif
     }
 
@@ -3737,16 +3741,32 @@ void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
 {
     mavlink_mount_orientation_t o;
     mavlink_msg_mount_orientation_decode(&message, &o);
-    if(fabsf(_curGimbalRoll - o.roll) > 0.5f) {
-        _curGimbalRoll = o.roll;
+
+    _handleGimbalUpdate(o.roll, o.pitch, o.yaw);
+}
+
+#if !defined(NO_ARDUPILOT_DIALECT)
+void Vehicle::_handleGimbalStatus(const mavlink_message_t& message)
+{
+    mavlink_mount_status_t mount_status;
+    mavlink_msg_mount_status_decode(&message, &mount_status);
+
+    _handleGimbalUpdate(mount_status.pointing_a, mount_status.pointing_b, mount_status.pointing_c);
+}
+#endif
+
+void Vehicle::_handleGimbalUpdate(const float roll, const float pitch, const float yaw)
+{
+    if(fabsf(_curGimbalRoll - roll) > 0.5f) {
+        _curGimbalRoll = roll;
         emit gimbalRollChanged();
     }
-    if(fabsf(_curGimbalPitch - o.pitch) > 0.5f) {
-        _curGimbalPitch = o.pitch;
+    if(fabsf(_curGimbalPitch - pitch) > 0.5f) {
+        _curGimbalPitch = pitch;
         emit gimbalPitchChanged();
     }
-    if(fabsf(_curGimbalYaw - o.yaw) > 0.5f) {
-        _curGimbalYaw = o.yaw;
+    if(fabsf(_curGimbalYaw - yaw) > 0.5f) {
+        _curGimbalYaw = yaw;
         emit gimbalYawChanged();
     }
     if(!_haveGimbalData) {
