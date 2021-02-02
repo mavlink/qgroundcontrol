@@ -103,7 +103,7 @@ Rectangle {
                 ColumnLayout {
                     QGCLabel {
                         Layout.alignment:   Qt.AlignLeft
-                        text:               "Pitch"
+                        text:               "Tilt"
                         font.pointSize:     ScreenTools.smallFontPointSize
 
                     }
@@ -117,7 +117,7 @@ Rectangle {
 
                     QGCLabel {
                         Layout.alignment:   Qt.AlignLeft
-                        text:               "Yaw"
+                        text:               "Pan"
                         font.pointSize:     ScreenTools.smallFontPointSize
 
                     }

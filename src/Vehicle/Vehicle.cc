@@ -3742,7 +3742,7 @@ void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
     mavlink_mount_orientation_t o;
     mavlink_msg_mount_orientation_decode(&message, &o);
 
-    _handleGimbalUpdate(o.roll, o.pitch, o.yaw);
+    _handleGimbalUpdate(o.pitch, o.roll, o.yaw);
 }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
@@ -3755,7 +3755,7 @@ void Vehicle::_handleGimbalStatus(const mavlink_message_t& message)
 }
 #endif
 
-void Vehicle::_handleGimbalUpdate(const float roll, const float pitch, const float yaw)
+void Vehicle::_handleGimbalUpdate(const float pitch, const float roll, const float yaw)
 {
     if(fabsf(_curGimbalRoll - roll) > 0.5f) {
         _curGimbalRoll = roll;
