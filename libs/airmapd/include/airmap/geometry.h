@@ -1,14 +1,27 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_GEOMETRY_H_
 #define AIRMAP_GEOMETRY_H_
 
 #include <airmap/optional.h>
+#include <airmap/visibility.h>
 
 #include <vector>
 
 namespace airmap {
 
 /// Geometry bundles up different types of geometries.
-class Geometry {
+class AIRMAP_EXPORT Geometry {
  public:
   /// Type enumerates all known geometry types.
   enum class Type {
@@ -23,7 +36,7 @@ class Geometry {
   };
 
   /// Coordinate marks a point in 3-dimensional space.
-  struct Coordinate {
+  struct AIRMAP_EXPORT Coordinate {
     double latitude;            /// The latitude component of this coordinate in [°].
     double longitude;           /// The longitude component of this coordinate in [°].
     Optional<double> altitude;  /// The altitude component of this coordinate in [m].
@@ -32,7 +45,7 @@ class Geometry {
 
   /// CoordinateVector is a collection of points in 3-dimensional space.
   template <Type tag>
-  struct CoordinateVector {
+  struct AIRMAP_EXPORT CoordinateVector {
     std::vector<Coordinate> coordinates;  ///< The individual coordinates.
   };
 
@@ -47,7 +60,7 @@ class Geometry {
   ///     the exterior ring, and any others MUST be interior rings.  The
   ///     exterior ring bounds the surface, and the interior rings (if
   ///     present) bound holes within the surface.
-  struct Polygon {
+  struct AIRMAP_EXPORT Polygon {
     CoordinateVector<Type::polygon> outer_ring;
     std::vector<CoordinateVector<Type::polygon>> inner_rings;
   };
@@ -100,9 +113,9 @@ class Geometry {
   const GeometryCollection details_for_geometry_collection() const;
 
  private:
-  struct Invalid {};
+  struct AIRMAP_EXPORT Invalid {};
 
-  union Data {
+  union AIRMAP_EXPORT Data {
     Data();
     ~Data();
 
@@ -131,12 +144,13 @@ class Geometry {
 };
 
 /// @cond
-bool operator==(const Geometry::Coordinate& lhs, const Geometry::Coordinate& rhs);
+AIRMAP_EXPORT bool operator==(const Geometry::Coordinate& lhs, const Geometry::Coordinate& rhs);
 
-bool operator==(const Geometry::Polygon& lhs, const Geometry::Polygon& rhs);
+AIRMAP_EXPORT bool operator==(const Geometry::Polygon& lhs, const Geometry::Polygon& rhs);
 
 template <Geometry::Type tag>
-bool operator==(const Geometry::CoordinateVector<tag>& lhs, const Geometry::CoordinateVector<tag>& rhs) {
+AIRMAP_EXPORT inline bool operator==(const Geometry::CoordinateVector<tag>& lhs,
+                                     const Geometry::CoordinateVector<tag>& rhs) {
   return lhs.coordinates == rhs.coordinates;
 }
 /// @endcond

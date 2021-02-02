@@ -10,28 +10,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AIRMAP_RULE_H_
-#define AIRMAP_RULE_H_
+#ifndef AIRMAP_VISIBILITY_H_
+#define AIRMAP_VISIBILITY_H_
 
-#include <airmap/visibility.h>
+#if defined(__GNUC__) || defined(__clang__)
+#define AIRMAP_EXPORT __attribute__((visibility("default")))
+#elif defined(_MSC_VER)
+#define AIRMAP_EXPORT __declspec(dllexport)
+#else
+#pragma message("unknown compiler - default AIRMAP_EXPORT to empty")
+#define AIRMAP_EXPORT
+#endif
 
-#include <string>
-
-namespace airmap {
-
-struct AIRMAP_EXPORT Rule {
-  // TODO(tvoss): Fill in values once schema is known.
-  enum class Type {};
-  Type type;
-  std::string id;
-  std::string name;
-  std::string description;
-  std::string jurisdiction;
-  // TODO(tvoss): Add requirements here.
-};
-
-AIRMAP_EXPORT bool operator==(const Rule& lhs, const Rule& rhs);
-
-}  // namespace airmap
-
-#endif  // AIRMAP_RULE_H_
+#endif  // AIRMAP_VISIBILITY_H_

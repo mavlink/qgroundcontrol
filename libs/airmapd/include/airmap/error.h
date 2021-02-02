@@ -1,8 +1,21 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_ERROR_H_
 #define AIRMAP_ERROR_H_
 
 #include <airmap/do_not_copy_or_move.h>
 #include <airmap/optional.h>
+#include <airmap/visibility.h>
 
 #include <cstdint>
 
@@ -15,10 +28,10 @@
 namespace airmap {
 
 /// Error models an error raised by an AirMap component.
-struct Error {
+struct AIRMAP_EXPORT Error {
   /// Value is a discriminated union type wrapping up multiple atomic types and
   /// their composition into a vector or a dictionary.
-  class Value {
+  class AIRMAP_EXPORT Value {
    public:
     /// Type enumerates all datatypes that can be wrapped in a Value.
     enum class Type {
@@ -86,7 +99,7 @@ struct Error {
     const std::vector<Value>& vector() const;
 
    private:
-    union Details {
+    union AIRMAP_EXPORT Details {
       Details();
       ~Details();
 
@@ -160,13 +173,13 @@ struct Error {
 };
 
 /// operator== returns true if both type and value of lhs and rhs compare equal.
-bool operator==(const Error::Value& lhs, const Error::Value& rhs);
+AIRMAP_EXPORT bool operator==(const Error::Value& lhs, const Error::Value& rhs);
 /// operator< returns true if type and value of lhs compare < than type and value of rhs.
-bool operator<(const Error::Value& lhs, const Error::Value& rhs);
+AIRMAP_EXPORT bool operator<(const Error::Value& lhs, const Error::Value& rhs);
 /// operator<< inserts 'value' into 'out'.
-std::ostream& operator<<(std::ostream& out, const Error::Value& value);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, const Error::Value& value);
 /// operator<< inserts 'error' into 'out'.
-std::ostream& operator<<(std::ostream& out, const Error& error);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, const Error& error);
 
 }  // namespace airmap
 

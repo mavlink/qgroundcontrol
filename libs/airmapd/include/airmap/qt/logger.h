@@ -1,7 +1,20 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_QT_LOGGER_H_
 #define AIRMAP_QT_LOGGER_H_
 
 #include <airmap/logger.h>
+#include <airmap/visibility.h>
 
 #include <QLoggingCategory>
 
@@ -12,7 +25,7 @@ namespace qt {
 
 /// Logger is an airmap::Logger implementation that uses to
 /// Qt's logging facilities.
-class Logger : public airmap::Logger {
+class AIRMAP_EXPORT Logger : public airmap::Logger {
  public:
   /// logging_category returns a QLoggingCategory instance
   /// that enables calling code to fine-tune logging behavior of a Logger instance.
@@ -34,7 +47,7 @@ class Logger : public airmap::Logger {
 
 /// DispatchingLogger is an airmap::Logger implementation that dispatches to Qt's main
 /// event loop for logger invocation
-class DispatchingLogger : public airmap::Logger {
+class AIRMAP_EXPORT DispatchingLogger : public airmap::Logger {
  public:
   /// DispatchingLogger initializes a new instance with 'next'.
   DispatchingLogger(const std::shared_ptr<airmap::Logger>& next);
