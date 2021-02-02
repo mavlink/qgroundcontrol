@@ -363,10 +363,12 @@ AirMapFlightPlanManager::_collectFlightDtata()
         qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
         return false;
     }
-    _flight.maxAltitude   = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
-    _flight.takeoffCoord  = _planController->missionController()->takeoffCoordinate();
-    _flight.coords        = bc.polygon2D();
-    _flight.bc            = bc;
+    float maxMissionAltitude    = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
+    _flight.takeoffCoord        = _planController->missionController()->takeoffCoordinate();
+        // altitude reference for AirMap is ground level, so adjust if altitudes specified in absolute terms
+    _flight.maxAltitude         = (_planController->missionController()->globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) ? maxMissionAltitude : maxMissionAltitude - _flight.takeoffCoord.altitude();
+    _flight.coords              = bc.polygon2D();
+    _flight.bc                  = bc;
     emit missionAreaChanged();
     return true;
 }
