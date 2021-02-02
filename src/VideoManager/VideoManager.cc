@@ -308,7 +308,7 @@ VideoManager::startRecording(const QString& videoFile)
     }
 
     _videoFile = savePath + "/"
-            + (videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss") : videoFile)
+            + (videoFile.isEmpty() ? QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") : videoFile)
             + ".";
     QString videoFile2 = _videoFile + "2." + ext;
     _videoFile += ext;
