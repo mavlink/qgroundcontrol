@@ -1,7 +1,20 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_TOKEN_H_
 #define AIRMAP_TOKEN_H_
 
 #include <airmap/optional.h>
+#include <airmap/visibility.h>
 
 #include <chrono>
 #include <iosfwd>
@@ -10,7 +23,7 @@
 namespace airmap {
 
 /// Token models an authentication token required to access the AirMap services.
-class Token {
+class AIRMAP_EXPORT Token {
  public:
   /// Type enumerates all known token types.
   enum class Type {
@@ -21,12 +34,12 @@ class Token {
   };
 
   /// Anonymous models a token for an anonymous authentication with the AirMap services.
-  struct Anonymous {
+  struct AIRMAP_EXPORT Anonymous {
     std::string id;  ///< The authentication id.
   };
 
   /// OAuth models a token for an authentication with OAuth credentials with the AirMap services.
-  struct OAuth {
+  struct AIRMAP_EXPORT OAuth {
     enum class Type { bearer };
     Type type;            ///< The type of the OAuth token.
     std::string refresh;  ///< The refresh token for subsequent renewal requests.
@@ -35,7 +48,7 @@ class Token {
   };
 
   /// Refreshed models a token for a refreshed authentication with OAuth credentials with the AirMap services.
-  struct Refreshed {
+  struct AIRMAP_EXPORT Refreshed {
     OAuth::Type type;                 ///< The type of the Refreshed token.
     std::chrono::seconds expires_in;  ///< The token expires in 'expires_in' seconds.
     std::string id;                   ///< The id token.
@@ -63,6 +76,8 @@ class Token {
 
   /// type returns the Type of this Token instance.
   Type type() const;
+  /// pilot_id returns the pilot id of this Token instance.
+  const std::string pilot_id() const;
   /// id returns the common id of this Token instance.
   const std::string& id() const;
   /// anonymous returns the details for a Type::anonymous Token instance.
@@ -79,7 +94,7 @@ class Token {
   Refreshed& refreshed();
 
  private:
-  union Data {
+  union AIRMAP_EXPORT Data {
     Data();
     ~Data();
 
@@ -100,15 +115,15 @@ class Token {
 };
 
 /// operator<< inserts type into out.
-std::ostream& operator<<(std::ostream& out, Token::Type type);
+AIRMAP_EXPORT std::ostream& operator<<(std::ostream& out, Token::Type type);
 /// operator>> extracts type from in.
-std::istream& operator>>(std::istream& in, Token::Type& type);
+AIRMAP_EXPORT std::istream& operator>>(std::istream& in, Token::Type& type);
 /// operator== returns true iff lhs equals rhs.
-bool operator==(const Token::OAuth& lhs, const Token::OAuth& rhs);
+AIRMAP_EXPORT bool operator==(const Token::OAuth& lhs, const Token::OAuth& rhs);
 /// operator== returns true iff lhs equals rhs.
-bool operator==(Token::OAuth::Type lhs, Token::OAuth::Type rhs);
+AIRMAP_EXPORT bool operator==(Token::OAuth::Type lhs, Token::OAuth::Type rhs);
 /// operator== returns true iff lhs equals rhs.
-bool operator==(const Token::Refreshed& lhs, const Token::Refreshed& rhs);
+AIRMAP_EXPORT bool operator==(const Token::Refreshed& lhs, const Token::Refreshed& rhs);
 
 }  // namespace airmap
 

@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_FLIGHT_PLAN_H_
 #define AIRMAP_FLIGHT_PLAN_H_
 
@@ -8,6 +20,7 @@
 #include <airmap/pilot.h>
 #include <airmap/ruleset.h>
 #include <airmap/status.h>
+#include <airmap/visibility.h>
 
 #include <cstdint>
 #include <iosfwd>
@@ -18,16 +31,16 @@
 namespace airmap {
 
 /// FlightPlan bundles together properties describing a plan for a flight.
-struct FlightPlan {
+struct AIRMAP_EXPORT FlightPlan {
   /// Id models a unique identifier for a flight plan in the context of AirMap.
   using Id = std::string;
 
   /// Briefing bundles together information and data for a flight plan.
   /// The target audience is a hypothetical pilot or operator conducting
   /// the flight described in the flight plan.
-  struct Briefing {
+  struct AIRMAP_EXPORT Briefing {
     /// AdvisoryStatus summarizes the status of all advisories applying to a specific flight plan.
-    struct AdvisoryStatus {
+    struct AIRMAP_EXPORT AdvisoryStatus {
       Status::Color color;                       ///< The overall color of the status.
       std::vector<Status::Advisory> advisories;  ///< The collection of relevant advisories.
     };

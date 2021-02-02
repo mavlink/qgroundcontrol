@@ -141,7 +141,7 @@ LinuxBuild {
 
     # Airmap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$PWD/libs/airmapd/linux/Qt.5.11.0/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$PWD/libs/airmapd/linux/$$AIRMAP_QT_PATH/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
     }
 
     # QGroundControl start script

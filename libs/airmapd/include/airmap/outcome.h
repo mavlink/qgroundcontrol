@@ -1,5 +1,19 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_OUTCOME_H_
 #define AIRMAP_OUTCOME_H_
+
+#include <airmap/visibility.h>
 
 #include <type_traits>
 
@@ -8,7 +22,7 @@ namespace airmap {
 /// Outcome models a return value from a function XOR an error object
 /// describing the error condition if no value can be returned.
 template <typename Value, typename Error>
-class Outcome {
+class AIRMAP_EXPORT Outcome {
  public:
   /// @cond
   static_assert(not std::is_same<Value, Error>::value, "Value and Error must not be the same type");
@@ -153,7 +167,7 @@ class Outcome {
   enum class Type { value, error };
 
   Type type;
-  union Data {
+  union AIRMAP_EXPORT Data {
     Data() : value{} {
     }
 

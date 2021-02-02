@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_AIRSPACES_H_
 #define AIRMAP_AIRSPACES_H_
 
@@ -6,6 +18,7 @@
 #include <airmap/do_not_copy_or_move.h>
 #include <airmap/error.h>
 #include <airmap/outcome.h>
+#include <airmap/visibility.h>
 
 #include <functional>
 #include <vector>
@@ -13,13 +26,13 @@
 namespace airmap {
 
 /// Airspaces provides functionality to query the airspace database.
-class Airspaces : DoNotCopyOrMove {
+class AIRMAP_EXPORT Airspaces : DoNotCopyOrMove {
  public:
   /// ForIds groups together types to ease interaction with
   /// Airspaces::ForIds.
-  struct ForIds {
+  struct AIRMAP_EXPORT ForIds {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       Airspace::Id id;  ///< Search for the airspace with this id.
     };
 
@@ -32,9 +45,9 @@ class Airspaces : DoNotCopyOrMove {
 
   /// Search groups together types to ease interaction with
   /// Airspaces::Search.
-  struct Search {
+  struct AIRMAP_EXPORT Search {
     /// Parameters bundles up input parameters.
-    struct Parameters {
+    struct AIRMAP_EXPORT Parameters {
       Optional<Airspace::Type> types;          ///< Search for airspaces with either one of these types.
       Optional<Airspace::Type> ignored_types;  ///< Ignore airspaces with either one of these types.
       Optional<bool> full;  ///< If true, the complete description of airspaces in the result set is requested.

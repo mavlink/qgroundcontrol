@@ -1,3 +1,15 @@
+// AirMap Platform SDK
+// Copyright © 2018 AirMap, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the License);
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an AS IS BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 #ifndef AIRMAP_AUTHENTICATOR_H_
 #define AIRMAP_AUTHENTICATOR_H_
 
@@ -6,6 +18,7 @@
 #include <airmap/error.h>
 #include <airmap/outcome.h>
 #include <airmap/token.h>
+#include <airmap/visibility.h>
 
 #include <chrono>
 #include <functional>
@@ -15,7 +28,7 @@
 namespace airmap {
 
 /// Authenticator provides functionality to authenticate with the AirMap services.
-class Authenticator : DoNotCopyOrMove {
+class AIRMAP_EXPORT Authenticator : DoNotCopyOrMove {
  public:
   /// Scope enumerates all known authentication scopes.
   enum class Scope { access_token = 0, open_id = 1, open_id_offline_access = 2 };
@@ -31,9 +44,9 @@ class Authenticator : DoNotCopyOrMove {
 
   /// AuthenticateWithPassword groups together types to ease interaction with
   /// Authenticator::authenticate_with_password.
-  struct AuthenticateWithPassword {
+  struct AIRMAP_EXPORT AuthenticateWithPassword {
     /// Parameters bundles up input parameters.
-    struct Params {
+    struct AIRMAP_EXPORT Params {
       Credentials::OAuth oauth;                    ///< OAuth-specific credentials for this authentication request.
       GrantType grant_type{GrantType::password};   ///< The grant type of this authentication request.
       Scope scope{Scope::open_id_offline_access};  ///< The scope of this authentication request.
@@ -50,7 +63,7 @@ class Authenticator : DoNotCopyOrMove {
 
   /// AuthenticateAnonymously groups together types to ease interaction with
   /// Authenticator::authenticate_anonymously.
-  struct AuthenticateAnonymously {
+  struct AIRMAP_EXPORT AuthenticateAnonymously {
     /// The input parameters.
     using Params = Credentials::Anonymous;
     /// Result models the outcome of calling Authenticator::authenticate_anonymously.
@@ -62,9 +75,9 @@ class Authenticator : DoNotCopyOrMove {
 
   /// RenewAuthentication groups together types to ease interaction with
   /// Authenticator::renew_authentication.
-  struct RenewAuthentication {
+  struct AIRMAP_EXPORT RenewAuthentication {
     /// The input parameters.
-    struct Params {
+    struct AIRMAP_EXPORT Params {
       std::string client_id;                    ///< The app id for which authentication renewal is requested.
       std::string refresh_token;                ///< The refresh token for the authentication renewal request.
       GrantType grant_type{GrantType::bearer};  ///< The grant type of the authentication renewal request.
