@@ -352,7 +352,7 @@ AirMapFlightPlanManager::_endFlight()
 
 //-----------------------------------------------------------------------------
 bool
-AirMapFlightPlanManager::_collectFlightDtata()
+AirMapFlightPlanManager::_collectFlightData()
 {
     if(!_planController || !_planController->missionController()) {
         return false;
@@ -364,17 +364,11 @@ AirMapFlightPlanManager::_collectFlightDtata()
         qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
         return false;
     }
-    if (_planController->missionController()->readyForSaveState() != VisualMissionItem::ReadyForSave) {
-        qCDebug(AirMapManagerLog) << "No takeoff altitude";
-        return false;
-    }
-    float maxMissionAltitude    = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
-    double takeoffAltitude      = _planController->missionController()->plannedHomePositionAltitude();
-    _flight.takeoffCoord        = _planController->missionController()->takeoffCoordinate();
-        // altitude reference for AirMap is takeoff altitude, so adjust if altitudes specified in absolute terms
-    _flight.maxAltitudeAboveTakeoff = (_planController->missionController()->globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) ? maxMissionAltitude : maxMissionAltitude - takeoffAltitude;
-    _flight.coords              = bc.polygon2D();
-    _flight.bc                  = bc;
+    // altitude reference for AirMap is takeoff altitude & all altitudes provided in the bounding cube are relative to takeoff already
+    _flight.takeoffCoord            = _planController->missionController()->takeoffCoordinate();
+    _flight.maxAltitudeAboveTakeoff = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
+    _flight.coords                  = bc.polygon2D();
+    _flight.bc                      = bc;
     emit missionAreaChanged();
     return true;
 }
@@ -386,7 +380,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     _flight.reset();
 
     //-- Get flight data
-    if(!_collectFlightDtata()) {
+    if(!_collectFlightData()) {
         return;
     }
 
@@ -574,7 +568,7 @@ AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
         return;
     }
     //-- Get flight data
-    if(!_collectFlightDtata()) {
+    if(!_collectFlightData()) {
         return;
     }
 
