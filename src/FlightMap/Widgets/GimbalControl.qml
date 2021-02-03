@@ -24,7 +24,7 @@ import QGroundControl.FactSystem        1.0
 import QGroundControl.FactControls      1.0
 
 Rectangle {
-    id: rectangle
+    id:         _root
     height:     baseLayout.height + (_margins * 2)
     color:      "#80000000"
     radius:     _margins
@@ -32,6 +32,7 @@ Rectangle {
 
     property real   _margins:                                   ScreenTools.defaultFontPixelHeight / 2
     property var    _activeVehicle:                             QGroundControl.multiVehicleManager.activeVehicle
+    property var    _defaultFocusAltitude:                      0.0
 
     function hasGimbal() {
         return _activeVehicle ? _activeVehicle.gimbalData : false
@@ -66,36 +67,36 @@ Rectangle {
         anchors.horizontalCenter:   parent.horizontalCenter
 
         ColumnLayout {
-            id:                         titleLayout
+            id:                         mainLayout
             spacing:                    ScreenTools.defaultFontPixelHeight / 2
             height:                     parent.width
             Layout.alignment:           Qt.AlignHCenter
 
 
             RowLayout {
+                id:                     titleLayout
                 Layout.alignment:       Qt.AlignHCenter
 
                 Image {
-                    id:                 navigatorImage
-                    source:             "/qmlimages/gimbalNavigator.svg"
-                    height:             ScreenTools.defaultFontPixelHeight
-                    mipmap:             true
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    width:              height
+                    id:                     navigatorImage
+                    source:                 "/qmlimages/gimbalNavigator.svg"
+                    height:                 ScreenTools.defaultFontPixelHeight
+                    mipmap:                 true
+                    fillMode:               Image.PreserveAspectFit
+                    sourceSize.height:      height
+                    width:                  height
                 }
 
                 QGCLabel {
-                    Layout.alignment:   Qt.AlignLeft
-                    text:               "Gimbal Orientation"
-                    font.pointSize:     ScreenTools.defaultFontPointSize
-
+                    Layout.alignment:       Qt.AlignLeft
+                    text:                   "Gimbal Orientation"
+                    font.pointSize:         ScreenTools.defaultFontPointSize
                 }
 
-            }
+            } // titleLayout
 
             RowLayout {
-                id:                         contentLayout
+                id:                         angleLayout
                 spacing:                    ScreenTools.defaultFontPixelHeight / 2
                 height:                     parent.width
                 Layout.alignment:           Qt.AlignHCenter
@@ -122,6 +123,7 @@ Rectangle {
 
                     }
                 }
+
                 ColumnLayout {
                     QGCLabel {
                         Layout.alignment:   Qt.AlignRight
@@ -144,7 +146,82 @@ Rectangle {
 
                     }
                 }
+
+            } // angleLayout
+
+            RowLayout {
+                id: gimbalTargetLayout
+
+                QGCColoredImage {
+                    id:                     _roiImage
+                    source:                 "/qmlimages/roi.svg"
+                    height:                 ScreenTools.defaultFontPixelHeight * 2
+                    mipmap:                 true
+                    fillMode:               Image.PreserveAspectFit
+                    sourceSize.height:      height
+                    width:                  height
+                    color:                  qgcPal.text
+                }
+
+                QGCLabel {
+                    id:                 _targetLabel
+                    Layout.alignment:   Qt.AlignLeft
+                    text:               "Click here to select a focus\ntarget for the gimbal."
+                    font.pointSize:     ScreenTools.smallFontPointSize
+
+                }
+
+                QGCLabel {
+                    id:                 _clickLabel
+                    Layout.alignment:   Qt.AlignLeft
+                    text:               "Click on the map to select a\ncoordinate or here to cancel."
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    visible:            false
+                }
+
+                QGCMouseArea {
+                    fillItem:   parent
+                    onClicked:  {
+                        if (_clickLabel.visible === true) {
+                            console.debug("GimbalControl: clearing callback")
+                            _targetLabel.visible = true
+                            _clickLabel.visible = false
+                            _roiImage.color = qgcPal.text
+                            _root.parent.mapControl.clearMapClickCallback("Gimbal Focus")
+                            return
+                        }
+
+                        console.debug("GimbalControl: setting callback")
+                        _targetLabel.visible = false
+                        _clickLabel.visible = true
+                        _roiImage.color = qgcPal.buttonHighlight
+
+                        if (!_root.parent.mapControl.setMapClickCallback("Gimbal Focus", coord => {
+                            if (_defaultFocusAltitude !== 0.0) {
+                                coord.altitude = _defaultFocusAltitude
+                            }
+
+                            console.info("GimbalControl: Sending coordinates to gimbal", coord)
+                            try {
+                                _activeVehicle.sendCommand(1, 205 , true, coord.latitude * 1e7, coord.longitude * 1e7, coord.altitude * 100, 0, 0, 0, 4)
+                            } catch (error) {
+                                console.error("GimbalControl: Failed to set gimbal focus to ", coord, error)
+                            }
+
+                            _targetLabel.visible = true
+                            _clickLabel.visible = false
+                            _roiImage.color = qgcPal.text
+                        })) {
+                            console.log("GimbalControl: Failed to register callback")
+                            _targetLabel.visible = true
+                            _clickLabel.visible = false
+                            _roiImage.color = qgcPal.text
+                        }
+                    }
+                }
+
             }
+
         } // mainLayout
 
 
@@ -154,27 +231,61 @@ Rectangle {
         id: gimbalSettingsDialogComponent
 
         QGCPopupDialog {
-            title:      qsTr("Settings")
+            title:      qsTr("Gimbal Settings")
             buttons:    StandardButton.Close
 
-            RowLayout {
+            GridLayout {
+                columns: 2
+
                 QGCLabel {
                     Layout.alignment: Qt.AlignLeft
-                    text: "Change Gimbal mode (WIP):"
+                    text: "Change Gimbal mode:"
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
 
                 QGCComboBox {
+                    id:                 _modeSelector
                     Layout.fillWidth:   true
                     sizeToContents:     true
-                    model:              [ "---", "Retracted", "Neutral", "MAVLink targetting", "Rc Targetting", "GPS Point" ]
+                    model:              [ "---", "Retracted", "Neutral", "MAVLink targetting", "Rc Targetting", "Track GPS Point", "Track System ID", "Track Home" ]
                     currentIndex:       0
                     visible:            true
-                    // TODO This should send a MAVLINK_MSG_ID_MOUNT_CONTROL possibly taking arguments from settings or a ROI on screen
-                    // onActivated:        _activeVehicle.gimbalMode(index)
+                    onActivated:        _changeGimbalMode(index - 1)
+                }
+
+                QGCLabel {
+                    Layout.alignment: Qt.AlignLeft
+                    text: "Override coordinate altitude (m)"
+                    font.pointSize: ScreenTools.smallFontPointSize
+                }
+
+                TextField {
+                    id:               _focusAltitudeField
+                    Layout.alignment: Qt.AlignLeft
+                    validator:        DoubleValidator
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    placeholderText: qsTr("Altitude (m)")
+                    text:            _defaultFocusAltitude
+                    onEditingFinished: {
+                        _defaultFocusAltitude = parseFloat(_focusAltitudeField.text)
+
+                    }
                 }
             }
-
         }
+    }
+
+    function _changeGimbalMode(mode) {
+        if (mode == 4 || mode == 5) {
+            console.warn("GimbalControl: mode " + mode + " requires addition parameters and shouldn't be set without them")
+            return false
+        }
+        if (mode < 0 || mode > 6) {
+            console.warn("GimbalControl: unknown mode " + mode)
+            return false
+        }
+
+        _activeVehicle.sendCommand(1, 205 , true, 0, 0, 0, 0, 0, 0, mode)
+        return true
     }
 }

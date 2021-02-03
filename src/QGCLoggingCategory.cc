@@ -38,6 +38,10 @@ QGCLoggingCategoryRegister* QGCLoggingCategoryRegister::instance(void)
     if (!_instance) {
         _instance = new QGCLoggingCategoryRegister();
         Q_CHECK_PTR(_instance);
+
+        // Built in categories that have the output of console.log in qml
+        _instance->registerCategory("qml");
+        _instance->registerCategory("js");
     }
     
     return _instance;

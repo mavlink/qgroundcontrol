@@ -58,6 +58,75 @@ FlightMap {
     property bool   _keepVehicleCentered:       pipMode ? true : false
     property bool   _saveZoomLevelSetting:      true
 
+    property var _clickCallback: undefined
+    property var _clickCallbackType: "Undefined"
+
+    /** setMapClickCallback
+     * used by components or widgets to receive a "click" event from
+     * the FlyMapView.
+     * A single callback can be active at any time identified by type.
+     *
+     * parameters:
+     *   type: unique string identifying this particular callback
+     *         used internally and to set the label on the mapitem
+     *   callback: function called with coordinates as argument
+     * output:
+     *   returns true if the callback is registered. false on error
+     */
+    function setMapClickCallback(type, callback) {
+        if (_clickCallback != undefined) {
+            return false
+        }
+
+        _clickCallback = callback
+        _clickCallbackType = type
+        return true
+    }
+
+    /** clearMapClickCallback
+     *  Used by components or widgets to clear a previously set
+     *  callback.
+     *
+     * parameters:
+     *   type: unique string identifying a specific callback
+     * output:
+     *    true if a callback was cancelled, false on error
+     */
+    function clearMapClickCallback(type) {
+        if (_clickCallback === undefined || _clickCallbackType !== type) {
+            return false;
+        }
+
+        _clickCallback = undefined
+        _clickCallbackType = "Undefined"
+        return true;
+    }
+
+    /** onMapClick
+     *  Used internally in FlyViewMap to trigger any defined callbacks
+     *  by other components or widgets.
+     *
+     * parameters:
+     *   coords: Coordinates with the location the use clicked on
+     * output:
+     *   true if there was a callback defined to handle the click
+     */
+    function _onMapClick(coords) {
+        if (_clickCallback === undefined) {
+            return false; // Not handled by us
+        }
+
+        try {
+            _clickCallback(coords)
+            mapClickLocationItem.show(_clickCallbackType, coords)
+        } catch (error) {
+          console.error("Call to clickCallback failed", error)
+        }
+
+        clearMapClickCallback(_clickCallbackType)
+        return true;
+    }
+
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
             var coordinateNW = _root.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
@@ -504,6 +573,61 @@ FlightMap {
         }
     }
 
+    // Gimbal targetting icon
+    MapQuickItem {
+        id:             mapClickLocationItem
+        visible:        false
+        z:              QGroundControl.zOrderMapItems
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("Gimbal Focus", "Gimbal is pointed at this location")
+            color:      "blue"
+        }
+
+        Timer {
+            id: timer
+            running: false
+            repeat: false
+
+            property var callback
+
+            onTriggered: callback()
+        }
+
+        function setTimeout(callback, delay)
+        {
+            if (timer.running) {
+                console.error("nested calls to setTimeout are not supported!");
+                return;
+            }
+            timer.callback = callback;
+            // note: an interval of 0 is directly triggered, so add a little padding
+            timer.interval = delay + 1;
+            timer.running = true;
+        }
+
+        //-- Visibilty controlled by actual state
+        function show(type, coord) {
+            mapClickLocationItem.sourceItem.label = qsTr(type, "User selected location")
+            mapClickLocationItem.coordinate = coord
+            visible = true
+            setTimeout(hide, 1500)
+        }
+
+        function hide() {
+            visible = false
+        }
+
+        function actionConfirmed() {
+        }
+
+        function actionCancelled() {
+        }
+    }
+
     // Handle guided mode clicks
     MouseArea {
         anchors.fill: parent
@@ -541,7 +665,11 @@ FlightMap {
         }
 
         onClicked: {
-            if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI)) {
+            var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            if (_onMapClick(clickCoord)) {
+                // this click was handled
+                return
+            } else if (!globals.guidedControllerFlyView.guidedUIVisible && (globals.guidedControllerFlyView.showGotoLocation || globals.guidedControllerFlyView.showOrbit || globals.guidedControllerFlyView.showROI)) {
                 orbitMapCircle.hide()
                 gotoLocationItem.hide()
                 var clickCoord = _root.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
