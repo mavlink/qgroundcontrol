@@ -139,11 +139,11 @@ private:
         QGCGeoBoundingCube bc;
         QList<QGeoCoordinate> coords;
         QGeoCoordinate  takeoffCoord;
-        float maxAltitude = 0;
+        float maxAltitudeAboveTakeoff = 0;
         void reset() {
             bc.reset();
             coords.clear();
-            maxAltitude = 0;
+            maxAltitudeAboveTakeoff = 0;
         }
     };
 

@@ -168,7 +168,7 @@ AirMapManager::_settingsTimeout()
         auto credentials    = Credentials{};
         credentials.api_key = _shared.settings().apiKey.toStdString();
         auto configuration  = Client::default_production_configuration(credentials);
-        configuration.telemetry.host = "telemetry.airmap.com";
+        configuration.telemetry.host = _telemetryHost;
         configuration.telemetry.port = 16060;
         qt::Client::create(configuration, _dispatchingLogger, this, [this](const qt::Client::CreateResult& result) {
             if (result) {
