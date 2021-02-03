@@ -198,6 +198,8 @@ public:
     QGCGeoBoundingCube* travelBoundingCube  () { return &_travelBoundingCube; }
     QGeoCoordinate      takeoffCoordinate   () { return _takeoffCoordinate; }
 
+    double plannedHomePositionAltitude();
+
     // Overrides from PlanElementController
     bool supported                  (void) const final { return true; }
     void start                      (bool flyView) final;

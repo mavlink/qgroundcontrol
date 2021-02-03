@@ -16,6 +16,7 @@
 
 #include "PlanMasterController.h"
 #include "QGCMAVLink.h"
+#include "VisualMissionItem.h"
 
 #include "airmap/date_time.h"
 #include "airmap/flight_plans.h"
@@ -363,10 +364,15 @@ AirMapFlightPlanManager::_collectFlightDtata()
         qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
         return false;
     }
+    if (_planController->missionController()->readyForSaveState() != VisualMissionItem::ReadyForSave) {
+        qCDebug(AirMapManagerLog) << "No takeoff altitude";
+        return false;
+    }
     float maxMissionAltitude    = static_cast<float>(fmax(bc.pointNW.altitude(), bc.pointSE.altitude()));
+    double takeoffAltitude      = _planController->missionController()->plannedHomePositionAltitude();
     _flight.takeoffCoord        = _planController->missionController()->takeoffCoordinate();
-        // altitude reference for AirMap is ground level, so adjust if altitudes specified in absolute terms
-    _flight.maxAltitude         = (_planController->missionController()->globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) ? maxMissionAltitude : maxMissionAltitude - _flight.takeoffCoord.altitude();
+        // altitude reference for AirMap is takeoff altitude, so adjust if altitudes specified in absolute terms
+    _flight.maxAltitudeAboveTakeoff = (_planController->missionController()->globalAltitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative) ? maxMissionAltitude : maxMissionAltitude - takeoffAltitude;
     _flight.coords              = bc.polygon2D();
     _flight.bc                  = bc;
     emit missionAreaChanged();
@@ -513,7 +519,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         if (!isAlive.lock()) return;
         if (_state != State::FlightUpload) return;
         FlightPlans::Create::Parameters params;
-        params.max_altitude = _flight.maxAltitude;
+        params.max_altitude = _flight.maxAltitudeAboveTakeoff;
         params.min_altitude = 0.0;
         params.buffer       = 10.f;
         params.latitude     = static_cast<float>(_flight.takeoffCoord.latitude());
@@ -573,7 +579,7 @@ AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
     }
 
     //-- Update local instance of the flight plan
-    _flightPlan.altitude_agl.max  = _flight.maxAltitude;
+    _flightPlan.altitude_agl.max  = _flight.maxAltitudeAboveTakeoff;
     _flightPlan.altitude_agl.min  = 0.0f;
     _flightPlan.buffer            = 2.f;
     _flightPlan.takeoff.latitude  = static_cast<float>(_flight.takeoffCoord.latitude());
