@@ -2562,7 +2562,7 @@ void MissionController::_updateTimeout()
         }
     }
     //-- Figure out where this thing is taking off from
-     if(!takeoffCoordinate.isValid()) {
+    if(!takeoffCoordinate.isValid()) {
         if(firstCoordinate.isValid()) {
             takeoffCoordinate = firstCoordinate;
         } else {

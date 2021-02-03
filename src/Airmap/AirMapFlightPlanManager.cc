@@ -16,7 +16,6 @@
 
 #include "PlanMasterController.h"
 #include "QGCMAVLink.h"
-#include "VisualMissionItem.h"
 
 #include "airmap/date_time.h"
 #include "airmap/flight_plans.h"
