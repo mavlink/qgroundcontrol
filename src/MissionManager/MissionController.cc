@@ -2661,7 +2661,3 @@ void MissionController::setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeM
         emit globalAltitudeModeChanged();
     }
 }
-
-double MissionController::plannedHomePositionAltitude() {
-    return _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble();
-}
