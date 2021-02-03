@@ -2519,7 +2519,7 @@ void MissionController::_updateTimeout()
                 case MAV_CMD_NAV_LAND:
                     if(pSimpleItem->coordinate().isValid()) {
                         double alt = 0.0;
-                        if (!pSimpleItem->altitude()->rawValue().isNull()) {
+                        if (!pSimpleItem->altitude()->rawValue().isNull() && !qIsNaN(pSimpleItem->altitude()->rawValue().toDouble())) {
                             alt = pSimpleItem->altitude()->rawValue().toDouble();
                         }
                         if((MAV_CMD)pSimpleItem->command() == MAV_CMD_NAV_TAKEOFF) {
@@ -2562,7 +2562,7 @@ void MissionController::_updateTimeout()
         }
     }
     //-- Figure out where this thing is taking off from
-    if(!takeoffCoordinate.isValid()) {
+     if(!takeoffCoordinate.isValid()) {
         if(firstCoordinate.isValid()) {
             takeoffCoordinate = firstCoordinate;
         } else {
@@ -2660,4 +2660,8 @@ void MissionController::setGlobalAltitudeMode(QGroundControlQmlGlobal::AltitudeM
         _globalAltMode = altMode;
         emit globalAltitudeModeChanged();
     }
+}
+
+double MissionController::plannedHomePositionAltitude() {
+    return _settingsItem->plannedHomePositionAltitude()->rawValue().toDouble();
 }

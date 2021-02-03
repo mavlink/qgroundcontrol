@@ -66,7 +66,6 @@ void TakeoffMissionItem::_init(bool forLoad)
             homePosition = activeVehicle->homePosition();
             if (homePosition.isValid()) {
                 _settingsItem->setCoordinate(homePosition);
-                _settingsItem->coordinate().setAltitude(homePosition.altitude());
             }
         }
     }
