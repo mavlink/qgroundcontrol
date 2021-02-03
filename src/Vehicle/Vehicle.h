@@ -237,6 +237,7 @@ public:
     Q_PROPERTY(bool                 readyToFly                  READ readyToFly                                                     NOTIFY readyToFlyChanged)
     Q_PROPERTY(QObject*             sysStatusSensorInfo         READ sysStatusSensorInfo                                            CONSTANT)
     Q_PROPERTY(bool                 allSensorsHealthy           READ allSensorsHealthy                                              NOTIFY allSensorsHealthyChanged)    //< true: all sensors in SYS_STATUS reported as healthy
+    Q_PROPERTY(bool                 requiresGpsFix              READ requiresGpsFix                                                 NOTIFY requiresGpsFixChanged)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -556,6 +557,7 @@ public:
     bool            readyToFly                  () { return _readyToFly; }
     bool            allSensorsHealthy           () { return _allSensorsHealthy; }
     QObject*        sysStatusSensorInfo         () { return &_sysStatusSensorInfo; }
+    bool            requiresGpsFix              () const { return static_cast<bool>(_onboardControlSensorsPresent & SysStatusSensorGPS); }
 
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
@@ -820,6 +822,7 @@ signals:
     void readyToFlyAvailableChanged     (bool readyToFlyAvailable);
     void readyToFlyChanged              (bool readyToFy);
     void allSensorsHealthyChanged       (bool allSensorsHealthy);
+    void requiresGpsFixChanged          ();
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
