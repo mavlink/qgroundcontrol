@@ -3,8 +3,15 @@ if(DEFINED ENV{QT_VERSION})
 endif()
 
 if(NOT QT_VERSION)
-	# try Qt 5.12.0 if none specified, last LTS.
-	set(QT_VERSION "5.12.5")
+	# if QT version not specified then use any available version (5.12 or 5.15 only)
+	file(GLOB FOUND_QT_VERSIONS
+		LIST_DIRECTORIES true
+		$ENV{HOME}/Qt/5.12.*
+		$ENV{HOME}/Qt/5.15.*
+	)
+	list(SORT FOUND_QT_VERSIONS) # prefer 5.12
+	list(GET FOUND_QT_VERSIONS 0 QT_VERSION_PATH)
+	get_filename_component(QT_VERSION ${QT_VERSION_PATH} NAME)	
 endif()
 
 if(DEFINED ENV{QT_MKSPEC})
