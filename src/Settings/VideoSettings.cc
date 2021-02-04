@@ -28,6 +28,7 @@ const char* VideoSettings::videoSourceTCP               = "TCP-MPEG2 Video Strea
 const char* VideoSettings::videoSourceMPEGTS            = "MPEG-TS (h.264) Video Stream";
 const char* VideoSettings::videoSource3DRSolo           = "3DR Solo (requires restart)";
 const char* VideoSettings::videoSourceParrotDiscovery   = "Parrot Discovery";
+const char* VideoSettings::videoSourceYuneecMantisG     = "Yuneec Mantis G";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -45,6 +46,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceMPEGTS);
     videoSourceList.append(videoSource3DRSolo);
     videoSourceList.append(videoSourceParrotDiscovery);
+    videoSourceList.append(videoSourceYuneecMantisG);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
