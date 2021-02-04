@@ -1488,6 +1488,14 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
         <value code="2">Always</value>
       </values>
     </parameter>
+    <parameter name="COM_RCL_ACT_T" default="15.0" type="FLOAT">
+      <short_desc>Delay between RC loss and configured reaction</short_desc>
+      <long_desc>RC signal not updated -&gt; still use data for COM_RC_LOSS_T seconds Consider RC signal lost -&gt; wait COM_RCL_ACT_T seconds on the spot waiting to regain signal React with failsafe action NAV_RCL_ACT A zero value disables the delay.</long_desc>
+      <min>0.0</min>
+      <max>25.0</max>
+      <unit>s</unit>
+      <decimal>3</decimal>
+    </parameter>
     <parameter name="COM_RC_ARM_HYST" default="1000" type="INT32">
       <short_desc>RC input arm/disarm command duration</short_desc>
       <long_desc>The default value of 1000 requires the stick to be held in the arm or disarm position for 1 second.</long_desc>
@@ -1508,7 +1516,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     </parameter>
     <parameter name="COM_RC_LOSS_T" default="0.5" type="FLOAT">
       <short_desc>RC loss time threshold</short_desc>
-      <long_desc>After this amount of seconds without RC connection the rc lost flag is set to true</long_desc>
+      <long_desc>After this amount of seconds without RC connection it's considered lost and not used anymore</long_desc>
       <min>0</min>
       <max>35</max>
       <unit>s</unit>
