@@ -77,6 +77,7 @@ add_library(Vehicle
 target_link_libraries(Vehicle
 	PRIVATE
 		ui
+		compression
 	PUBLIC
 		qgc
 )
