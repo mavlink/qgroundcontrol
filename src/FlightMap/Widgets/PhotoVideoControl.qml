@@ -466,6 +466,7 @@ Rectangle {
                                 minimumValue:               parent._fact.min
                                 stepSize:                   parent._fact.increment
                                 visible:                    parent._isSlider
+                                value:                      parent._fact.value
                                 updateValueWhileDragging:   false
                                 onValueChanged:             parent._fact.value = value
                                 Component.onCompleted:      value = parent._fact.value
