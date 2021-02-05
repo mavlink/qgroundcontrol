@@ -9,6 +9,9 @@ if(NOT QT_VERSION)
 		$ENV{HOME}/Qt/5.12.*
 		$ENV{HOME}/Qt/5.15.*
 	)
+	if(NOT FOUND_QT_VERSIONS)
+		return()
+	endif()
 	list(SORT FOUND_QT_VERSIONS) # prefer 5.12
 	list(GET FOUND_QT_VERSIONS 0 QT_VERSION_PATH)
 	get_filename_component(QT_VERSION ${QT_VERSION_PATH} NAME)	
