@@ -89,7 +89,7 @@ Column {
                         property Fact _fact: controller.getParameterFact(-1, param)
 
                         onValueChanged: {
-                            if (_loadComplete) {
+                            if (_loadComplete && enabled) {
                                 _fact.value = value
                             }
                         }

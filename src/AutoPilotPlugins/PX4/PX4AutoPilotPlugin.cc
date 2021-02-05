@@ -39,6 +39,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _powerComponent(nullptr)
     , _motorComponent(nullptr)
     , _tuningComponent(nullptr)
+    , _flightBehavior(nullptr)
     , _syslinkComponent(nullptr)
 {
     if (!vehicle) {
@@ -93,6 +94,12 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _tuningComponent = new PX4TuningComponent(_vehicle, this);
                 _tuningComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_tuningComponent));
+
+                if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "SYS_VEHICLE_RESP")) {
+                    _flightBehavior = new PX4FlightBehavior(_vehicle, this);
+                    _flightBehavior->setupTriggerSignals();
+                    _components.append(QVariant::fromValue((VehicleComponent*)_flightBehavior));
+                }
 
                 //-- Is there support for cameras?
                 if(_vehicle->parameterManager()->parameterExists(_vehicle->id(), "TRIG_MODE")) {
