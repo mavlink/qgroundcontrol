@@ -1149,6 +1149,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.h \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.h \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.h \
+        src/AutoPilotPlugins/PX4/PX4FlightBehavior.h \
         src/AutoPilotPlugins/PX4/PX4RadioComponent.h \
         src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.h \
         src/AutoPilotPlugins/PX4/PX4TuningComponent.h \
@@ -1169,6 +1170,7 @@ PX4FirmwarePlugin {
         src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc \
         src/AutoPilotPlugins/PX4/PX4AirframeLoader.cc \
         src/AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc \
+        src/AutoPilotPlugins/PX4/PX4FlightBehavior.cc \
         src/AutoPilotPlugins/PX4/PX4RadioComponent.cc \
         src/AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc \
         src/AutoPilotPlugins/PX4/PX4TuningComponent.cc \
