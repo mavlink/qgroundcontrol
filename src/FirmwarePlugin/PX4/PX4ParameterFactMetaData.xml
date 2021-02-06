@@ -1134,6 +1134,15 @@ Set -1 to disable the check</short_desc>
       <short_desc>Require valid mission to arm</short_desc>
       <long_desc>The default allows to arm the vehicle without a valid mission.</long_desc>
     </parameter>
+    <parameter name="COM_ARM_SDCARD" default="1" type="INT32">
+      <short_desc>Enable FMU SD card detection check</short_desc>
+      <long_desc>This check detects if the FMU SD card is missing. Depending on the value of the parameter, the check can be disabled, warn only or deny arming.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Warning only</value>
+        <value code="2">Enforce SD card presence</value>
+      </values>
+    </parameter>
     <parameter name="COM_ARM_SWISBTN" default="0" type="INT32" boolean="true">
       <short_desc>Arm switch is only a button</short_desc>
       <long_desc>The default uses the arm switch as real switch. If parameter set button gets handled like stick arming.</long_desc>
@@ -5424,6 +5433,13 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
+    </parameter>
+    <parameter name="MPC_XY_ERR_MAX" default="2.0" type="FLOAT">
+      <short_desc>Maximum horizontal error allowed by the trajectory generator</short_desc>
+      <long_desc>The integration speed of the trajectory setpoint is linearly reduced with the horizontal position tracking error. When the error is above this parameter, the integration of the trajectory is stopped to wait for the drone. This value can be adjusted depending on the tracking capabilities of the vehicle.</long_desc>
+      <min>0.1</min>
+      <max>10.0</max>
+      <decimal>1</decimal>
     </parameter>
     <parameter name="MPC_XY_MAN_EXPO" default="0.6" type="FLOAT">
       <short_desc>Manual position control stick exponential curve sensitivity</short_desc>
