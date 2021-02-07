@@ -81,6 +81,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Japan-GSI Anaglyph"] = new JapanAnaglyphMapProvider(this);
     _providersTable["Japan-GSI Slope"] = new JapanSlopeMapProvider(this);
     _providersTable["Japan-GSI Relief"] = new JapanReliefMapProvider(this);
+    
+    _providersTable["CustomURL Custom"] = new CustomURLMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {

@@ -39,6 +39,7 @@ Item {
     property Fact   _mapboxAccountFact: _settingsManager ? _settingsManager.appSettings.mapboxAccount : null
     property Fact   _mapboxStyleFact:   _settingsManager ? _settingsManager.appSettings.mapboxStyle : null
     property Fact   _esriFact:          _settingsManager ? _settingsManager.appSettings.esriToken : null
+    property Fact   _customURLFact:     _settingsManager ? _settingsManager.appSettings.customURL : null
 
     property string mapType:            _fmSettings ? (_fmSettings.mapProvider.value + " " + _fmSettings.mapType.value) : ""
     property bool   isMapInteractive:   false
@@ -366,6 +367,23 @@ Item {
                         wrapMode:       Text.WordWrap
                         text:           qsTr("To enable Esri maps, enter your access token.")
                         visible:        _esriFact ? _esriFact.visible : false
+                        font.pointSize: _adjustableFontPointSize
+                    }
+
+                    Item { width: 1; height: 1; visible: _customURLFact ? _customURLFact.visible : false }
+                    QGCLabel { text: qsTr("Custom Map URL"); visible: _customURLFact ? _customURLFact.visible : false }
+                    FactTextField {
+                        fact:               _customURLFact
+                        visible:            _customURLFact ? _customURLFact.visible : false
+                        maximumLength:      256
+                        width:              ScreenTools.defaultFontPixelWidth * 30
+                    }
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("URL with the mappings /zoom/x/y/ /%1/%2/%3/")
+                        visible:        _customURLFact ? _customURLFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
                 } // GridLayout
