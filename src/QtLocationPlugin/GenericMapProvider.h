@@ -60,6 +60,17 @@ class JapanReliefMapProvider : public MapProvider {
     QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
 };
 
+class CustomURLMapProvider : public MapProvider {
+    Q_OBJECT
+  public:
+    CustomURLMapProvider(QObject* parent = nullptr)
+        : MapProvider(QStringLiteral(""), QStringLiteral(""),
+                      AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent) {}
+
+    QString _getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) override;
+};
+
+
 class StatkartMapProvider : public MapProvider {
     Q_OBJECT
   public:

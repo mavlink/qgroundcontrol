@@ -221,6 +221,13 @@
     "default":     ""
 },
 {
+    "name":             "customURL",
+    "shortDesc": "Custom Map URL",
+    "longDesc":  "URL for X Y Z map with %1 for zoom level %2 for x and %3 for y",
+    "type":             "string",
+    "default":     ""
+},
+{
     "name":             "defaultFirmwareType",
     "shortDesc": "Default firmware type for flashing",
     "type":             "uint32",
