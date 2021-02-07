@@ -7,6 +7,8 @@
  *
  ****************************************************************************/
 #include "GenericMapProvider.h"
+#include "QGCApplication.h"
+#include "SettingsManager.h"
 
 static const QString JapanStdMapUrl = QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std/%1/%2/%3.png");
 
@@ -41,6 +43,12 @@ static const QString JapanReliefMapUrl = QStringLiteral("https://cyberjapandata.
 QString JapanReliefMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager)
     return JapanReliefMapUrl.arg(zoom).arg(x).arg(y);
+}
+
+QString CustomURLMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager)
+    QString url = qgcApp()->toolbox()->settingsManager()->appSettings()->customURL()->rawValue().toString();
+    return url.arg(zoom).arg(x).arg(y);
 }
 
 static const QString StatkartMapUrl = QStringLiteral("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3");
