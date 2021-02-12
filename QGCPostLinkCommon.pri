@@ -105,11 +105,11 @@ LinuxBuild {
         libQt5TextToSpeech.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
-        # Some Qt distributions link with *.so.56
+        # Some Qt distributions link with *.so
         QT_LIB_LIST += \
-            libicudata.so.56 \
-            libicui18n.so.56 \
-            libicuuc.so.56
+            libicudata.so \
+            libicui18n.so \
+            libicuuc.so
     }
 
     for(QT_LIB, QT_LIB_LIST) {
