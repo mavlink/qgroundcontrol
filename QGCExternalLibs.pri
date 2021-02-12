@@ -243,12 +243,12 @@ contains (DEFINES, DISABLE_AIRMAP) {
             !exists("$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") {
                 system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}")
             }
-            !exists("$${AIRMAP_PLATFORM_SDK_PATH}/include") {
-                system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/include")
+            !exists("$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") {
+                system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap")
             }
             system("wget -q -O $${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_URL} && dpkg -x $${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/")
             system("mv $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/* $${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/")
-            system("mv $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/* $${AIRMAP_PLATFORM_SDK_PATH}/include/")
+            system("mv $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/* $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/")
             system("rm -rf $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}")
             system("rm $${AIRMAP_PLATFORM_SDK_FILENAME}")
 
@@ -265,6 +265,6 @@ contains (DEFINES, DISABLE_AIRMAP) {
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
-            $${AIRMAP_PLATFORM_SDK_PATH}/include
+            $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/
     }
 }
