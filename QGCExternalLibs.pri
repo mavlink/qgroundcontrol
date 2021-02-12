@@ -265,6 +265,6 @@ contains (DEFINES, DISABLE_AIRMAP) {
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
-            $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/
+            $${AIRMAP_PLATFORM_SDK_PATH}/include
     }
 }
