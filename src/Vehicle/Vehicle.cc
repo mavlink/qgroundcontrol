@@ -90,6 +90,7 @@ const char* Vehicle::_hobbsFactName =               "hobbs";
 const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
+const char* Vehicle::_gps2FactGroupName =               "gps2";
 const char* Vehicle::_windFactGroupName =               "wind";
 const char* Vehicle::_vibrationFactGroupName =          "vibration";
 const char* Vehicle::_temperatureFactGroupName =        "temperature";
@@ -143,6 +144,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hobbsFact                    (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact              (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup                 (this)
+    , _gps2FactGroup                (this)
     , _windFactGroup                (this)
     , _vibrationFactGroup           (this)
     , _temperatureFactGroup         (this)
@@ -289,6 +291,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _hobbsFact                        (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact                  (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup                     (this)
+    , _gps2FactGroup                    (this)
     , _windFactGroup                    (this)
     , _vibrationFactGroup               (this)
     , _clockFactGroup                   (this)
@@ -398,6 +401,7 @@ void Vehicle::_commonInit()
     _addFact(&_hobbsFact,               _hobbsFactName);
 
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
+    _addFactGroup(&_gps2FactGroup,              _gps2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
@@ -661,6 +665,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_GPS_RAW_INT:
         _handleGpsRawInt(message);
+        break;
+    case MAVLINK_MSG_ID_GPS2_RAW:
+        _handleGps2Raw(message);
         break;
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         _handleGlobalPositionInt(message);
@@ -1020,6 +1027,27 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
             }
             if (!_altitudeMessageAvailable) {
                 _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
+            }
+        }
+    }
+}
+
+void Vehicle::_handleGps2Raw(mavlink_message_t& message)
+{
+    mavlink_gps2_raw_t gpsRaw;
+    mavlink_msg_gps2_raw_decode(&message, &gpsRaw);
+
+    _gps2RawMessageAvailable = true;
+
+    if (gpsRaw.fix_type >= GPS_FIX_TYPE_3D_FIX) {
+        if (!_globalPositionIntMessageAvailable) {
+            QGeoCoordinate newPosition(gpsRaw.lat  / (double)1E7, gpsRaw.lon / (double)1E7, gpsRaw.alt  / 1000.0);
+            if (newPosition != _coordinate) {
+                _coordinate = newPosition;
+                emit coordinateChanged(_coordinate);
+            }
+            if (!_altitudeMessageAvailable) {
+                _altitudeAMSLFact.setRawValue(gpsRaw.alt / 1000.0);
             }
         }
     }

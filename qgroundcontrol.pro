@@ -700,6 +700,7 @@ HEADERS += \
     src/Vehicle/VehicleDistanceSensorFactGroup.h \
     src/Vehicle/VehicleEstimatorStatusFactGroup.h \
     src/Vehicle/VehicleGPSFactGroup.h \
+    src/Vehicle/VehicleGPS2FactGroup.h \
     src/Vehicle/VehicleLinkManager.h \
     src/Vehicle/VehicleSetpointFactGroup.h \
     src/Vehicle/VehicleTemperatureFactGroup.h \
@@ -930,6 +931,7 @@ SOURCES += \
     src/Vehicle/VehicleDistanceSensorFactGroup.cc \
     src/Vehicle/VehicleEstimatorStatusFactGroup.cc \
     src/Vehicle/VehicleGPSFactGroup.cc \
+    src/Vehicle/VehicleGPS2FactGroup.cc \
     src/Vehicle/VehicleLinkManager.cc \
     src/Vehicle/VehicleSetpointFactGroup.cc \
     src/Vehicle/VehicleTemperatureFactGroup.cc \
