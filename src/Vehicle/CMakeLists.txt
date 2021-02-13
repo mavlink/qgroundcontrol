@@ -57,6 +57,8 @@ add_library(Vehicle
 	VehicleEstimatorStatusFactGroup.h
 	VehicleGPSFactGroup.cc
 	VehicleGPSFactGroup.h
+	VehicleGPS2FactGroup.cc
+	VehicleGPS2FactGroup.h
 	Vehicle.h
 	VehicleLinkManager.cc
 	VehicleLinkManager.h
