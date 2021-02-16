@@ -220,7 +220,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAP_PLATFORM_SDK_PATH    = $${PWD}/libs/airmapd
+    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmapd
     AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
     message('Looking for Airmap in folder "$${AIRMAP_PLATFORM_SDK_PATH}", variant: "$$AIRMAP_QT_PATH"')
     MacBuild {
