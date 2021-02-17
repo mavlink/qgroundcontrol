@@ -4492,6 +4492,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="5">Config</value>
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
+        <value code="10">Gimbal</value>
       </values>
     </parameter>
     <parameter name="MAV_0_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -4542,6 +4543,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="5">Config</value>
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
+        <value code="10">Gimbal</value>
       </values>
     </parameter>
     <parameter name="MAV_1_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -4592,6 +4594,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="5">Config</value>
         <value code="7">Minimal</value>
         <value code="8">External Vision</value>
+        <value code="10">Gimbal</value>
       </values>
     </parameter>
     <parameter name="MAV_2_RADIO_CTL" default="1" type="INT32" boolean="true">
@@ -4912,9 +4915,17 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
   </group>
   <group name="Mount">
-    <parameter name="MNT_DO_STAB" default="0" type="INT32" boolean="true">
+    <parameter name="MNT_DO_STAB" default="0" type="INT32">
       <short_desc>Stabilize the mount (set to true for servo gimbal, false for passthrough).
-Does not affect MAVLINK_ROI input</short_desc>
+(This is required for a gimbal which is not capable of stabilizing itself
+and relies on the IMU's attitude estimation.)</short_desc>
+      <min>0</min>
+      <max>2</max>
+      <values>
+        <value code="0">Disable</value>
+        <value code="1">Stabilize all axis</value>
+        <value code="2">Stabilize yaw for absolute/lock mode.</value>
+      </values>
     </parameter>
     <parameter name="MNT_MAN_PITCH" default="0" type="INT32">
       <short_desc>Auxiliary channel to control pitch (in AUX input or manual mode)</short_desc>
@@ -4960,11 +4971,11 @@ Does not affect MAVLINK_ROI input</short_desc>
     </parameter>
     <parameter name="MNT_MAV_COMPID" default="154" type="INT32">
       <short_desc>Mavlink Component ID of the mount</short_desc>
-      <long_desc>If MNT_MODE_OUT is MAVLINK, mount configure/control commands will be sent with this component ID.</long_desc>
+      <long_desc>If MNT_MODE_OUT is MAVLink protocol v2, mount configure/control commands will be sent with this component ID.</long_desc>
     </parameter>
     <parameter name="MNT_MAV_SYSID" default="1" type="INT32">
       <short_desc>Mavlink System ID of the mount</short_desc>
-      <long_desc>If MNT_MODE_OUT is MAVLINK, mount configure/control commands will be sent with this target ID.</long_desc>
+      <long_desc>If MNT_MODE_OUT is MAVLink gimbal protocol v1, mount configure/control commands will be sent with this target ID.</long_desc>
     </parameter>
     <parameter name="MNT_MODE_IN" default="-1" type="INT32">
       <short_desc>Mount input mode</short_desc>
@@ -4976,18 +4987,20 @@ Does not affect MAVLINK_ROI input</short_desc>
         <value code="-1">DISABLED</value>
         <value code="0">AUTO</value>
         <value code="1">RC</value>
-        <value code="2">MAVLINK_ROI</value>
-        <value code="3">MAVLINK_DO_MOUNT</value>
+        <value code="2">MAVLINK_ROI (protocol v1)</value>
+        <value code="3">MAVLINK_DO_MOUNT (protocol v1)</value>
+        <value code="4">MAVlink gimbal protocol v2</value>
       </values>
     </parameter>
     <parameter name="MNT_MODE_OUT" default="0" type="INT32">
       <short_desc>Mount output mode</short_desc>
       <long_desc>AUX uses the mixer output Control Group #2. MAVLINK uses the MAV_CMD_DO_MOUNT_CONFIGURE and MAV_CMD_DO_MOUNT_CONTROL MavLink messages to control a mount (set MNT_MAV_SYSID &amp; MNT_MAV_COMPID)</long_desc>
       <min>0</min>
-      <max>1</max>
+      <max>2</max>
       <values>
         <value code="0">AUX</value>
-        <value code="1">MAVLINK</value>
+        <value code="1">MAVLink gimbal protocol v1</value>
+        <value code="2">MAVLink gimbal protocol v2</value>
       </values>
     </parameter>
     <parameter name="MNT_OB_LOCK_MODE" default="0.0" type="FLOAT">
@@ -5039,6 +5052,18 @@ if required by the gimbal (only in AUX output mode)</short_desc>
       <min>1.0</min>
       <max>720.0</max>
       <decimal>1</decimal>
+    </parameter>
+    <parameter name="MNT_RATE_PITCH" default="30.0" type="FLOAT">
+      <short_desc>Angular pitch rate for manual input in degrees/second.
+Full stick input [-1..1] translats to [-pitch rate..pitch rate]</short_desc>
+      <min>1.0</min>
+      <max>90.0</max>
+    </parameter>
+    <parameter name="MNT_RATE_YAW" default="30.0" type="FLOAT">
+      <short_desc>Angular yaw rate for manual input in degrees/second.
+Full stick input [-1..1] translats to [-yaw rate..yaw rate]</short_desc>
+      <min>1.0</min>
+      <max>90.0</max>
     </parameter>
   </group>
   <group name="Multicopter Attitude Control">
