@@ -316,15 +316,6 @@
     "shortDesc":    "Use COMPONENT_INFORMATION query (beta)",
     "type":         "bool",
     "default":      false
-},
-{
-    "name":          "instrumentWidgetAlpha",
-    "shortDesc":     "Intrument widget opacity",
-    "type":          "float",
-    "units":         "pt",
-    "min":           0,
-    "max":           1,
-    "default":       0.5
 }
 ]
 }

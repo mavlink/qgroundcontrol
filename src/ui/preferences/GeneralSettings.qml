@@ -32,7 +32,6 @@ Rectangle {
 
     property Fact _savePath:                            QGroundControl.settingsManager.appSettings.savePath
     property Fact _appFontPointSize:                    QGroundControl.settingsManager.appSettings.appFontPointSize
-    property Fact _instrumentWidetAlpha:                QGroundControl.settingsManager.appSettings.instrumentWidgetAlpha
     property Fact _userBrandImageIndoor:                QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
     property Fact _userBrandImageOutdoor:               QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property Fact _virtualJoystick:                     QGroundControl.settingsManager.appSettings.virtualJoystick
@@ -579,54 +578,6 @@ Rectangle {
                                             onClicked: {
                                                 if (_appFontPointSize.value < _appFontPointSize.max) {
                                                     _appFontPointSize.value = _appFontPointSize.value + 1
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                QGCLabel {
-                                    text:                           qsTr("Telemetry widget opacity")
-                                    visible:                        _instrumentWidetAlpha.visible
-                                    Layout.alignment:               Qt.AlignVCenter
-                                }
-                                Item {
-                                    width:                          _comboFieldWidth
-                                    height:                         instrumentWidgetEdit.height * 1.5
-                                    visible:                        _instrumentWidetAlpha.visible
-                                    Layout.alignment:               Qt.AlignVCenter
-                                    Row {
-                                        spacing:                    ScreenTools.defaultFontPixelWidth
-                                        anchors.verticalCenter:     parent.verticalCenter
-                                        QGCButton {
-                                            width:                  height
-                                            height:                 instrumentWidgetEdit.height * 1.5
-                                            text:                   "-"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            onClicked: {
-                                                if (_instrumentWidetAlpha.value > _instrumentWidetAlpha.min) {
-                                                    _instrumentWidetAlpha.value = _instrumentWidetAlpha.value - 0.05
-                                                }
-                                            }
-                                        }
-                                        QGCLabel {
-                                            id:                     instrumentWidgetEdit
-                                            width:                  ScreenTools.defaultFontPixelWidth * 6
-                                            text:                   (QGroundControl.settingsManager.appSettings.instrumentWidgetAlpha.value * 100).toFixed(0) + "%"
-                                            horizontalAlignment:    Text.AlignHCenter
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        Text {
-
-                                        }
-
-                                        QGCButton {
-                                            width:                  height
-                                            height:                 instrumentWidgetEdit.height * 1.5
-                                            text:                   "+"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            onClicked: {
-                                                if (_instrumentWidetAlpha.value < _instrumentWidetAlpha.max) {
-                                                    _instrumentWidetAlpha.value = _instrumentWidetAlpha.value + 0.05
                                                 }
                                             }
                                         }
