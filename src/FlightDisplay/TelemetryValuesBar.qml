@@ -7,23 +7,22 @@
  *
  ****************************************************************************/
 
-import QtQuick                        2.12
-import QtQuick.Layouts                1.12
+import QtQuick                      2.12
+import QtQuick.Layouts              1.12
 
-import QGroundControl                 1.0
-import QGroundControl.ScreenTools     1.0
-import QGroundControl.Vehicle         1.0
-import QGroundControl.Controls        1.0
-import QGroundControl.Palette         1.0
+import QGroundControl               1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Vehicle       1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.Palette       1.0
 
 Rectangle {
     id:                 telemetryPanel
     height:             telemetryLayout.height + (_toolsMargin * 2)
     width:              telemetryLayout.width + (_toolsMargin * 2)
-    color:              Qt.hsla(_baseBGColor.hslHue, _baseBGColor.hslSaturation, _baseBGColor.hslLightness, _telemetryPanelAlpha)
+    color:              Qt.hsla(_baseBGColor.hslHue, _baseBGColor.hslSaturation, _baseBGColor.hslLightness, 0.5)
     radius:             ScreenTools.defaultFontPixelWidth / 2
 
-    property real  _telemetryPanelAlpha: QGroundControl.settingsManager.appSettings.instrumentWidgetAlpha.value
     property color _baseBGColor: qgcPal.window
 
     DeadMouseArea { anchors.fill: parent }
