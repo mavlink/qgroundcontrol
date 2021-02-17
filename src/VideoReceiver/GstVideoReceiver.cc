@@ -790,6 +790,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
                 }
+                g_object_set(buffer, "latency", 70, NULL);
 
                 gst_bin_add(GST_BIN(bin), buffer);
 
