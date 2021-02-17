@@ -336,13 +336,6 @@ Rectangle {
 
                                 Item { width: 1; height: 1}
                                 FactCheckBox {
-                                    text:       qsTr("Low Latency Mode")
-                                    fact:       _videoSettings.lowLatencyMode
-                                    visible:    !_videoAutoStreamConfig && _isGst && fact.visible
-                                }
-
-                                Item { width: 1; height: 1}
-                                FactCheckBox {
                                     text:       qsTr("Auto-Delete Saved Recordings")
                                     fact:       _videoSettings.enableStorageLimit
                                     visible:    _showSaveVideoSettings && fact.visible

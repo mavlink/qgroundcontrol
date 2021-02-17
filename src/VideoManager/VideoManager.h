@@ -132,7 +132,6 @@ protected slots:
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
-    void _lowLatencyModeChanged     ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
@@ -164,7 +163,6 @@ protected:
     // 3) Qt rendering thread (during video sink creation process which should happen in this thread)
     // It works for now but...
     bool                    _videoStarted[2]        = { false, false };
-    bool                    _lowLatencyStreaming[2] = { false, false };
     QAtomicInteger<bool>    _streaming              = false;
     QAtomicInteger<bool>    _decoding               = false;
     QAtomicInteger<bool>    _recording              = false;

@@ -100,7 +100,6 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
-   connect(_videoSettings->lowLatencyMode(),&Fact::rawValueChanged, this, &VideoManager::_lowLatencyModeChanged);
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
@@ -504,13 +503,6 @@ VideoManager::_tcpUrlChanged()
 }
 
 //-----------------------------------------------------------------------------
-void
-VideoManager::_lowLatencyModeChanged()
-{
-    _restartAllVideos();
-}
-
-//-----------------------------------------------------------------------------
 bool
 VideoManager::hasVideo()
 {
@@ -614,11 +606,7 @@ VideoManager::_updateSettings(unsigned id)
     if(!_videoSettings)
         return false;
 
-    const bool lowLatencyStreaming  =_videoSettings->lowLatencyMode()->rawValue().toBool();
-
-    bool settingsChanged = _lowLatencyStreaming[id] != lowLatencyStreaming;
-
-    _lowLatencyStreaming[id] = lowLatencyStreaming;
+    bool settingsChanged = false;
 
     //-- Auto discovery
 
@@ -734,14 +722,11 @@ VideoManager::_restartVideo(unsigned id)
     }
 
 #if defined(QGC_GST_STREAMING)
-    bool oldLowLatencyStreaming = _lowLatencyStreaming[id];
     QString oldUri = _videoUri[id];
     _updateSettings(id);
-    bool newLowLatencyStreaming = _lowLatencyStreaming[id];
     QString newUri = _videoUri[id];
-
     // FIXME: AV: use _updateSettings() result to check if settings were changed
-    if (oldUri == newUri && oldLowLatencyStreaming == newLowLatencyStreaming && _videoStarted[id]) {
+    if (oldUri == newUri && _videoStarted[id]) {
         qCDebug(VideoManagerLog) << "No sense to restart video streaming, skipped"  << id;
         return;
     }
@@ -775,7 +760,7 @@ VideoManager::_startReceiver(unsigned id)
         qCDebug(VideoManagerLog) << "Unsupported receiver id" << id;
     } else if (_videoReceiver[id] != nullptr/* && _videoSink[id] != nullptr*/) {
         if (!_videoUri[id].isEmpty()) {
-            _videoReceiver[id]->start(_videoUri[id], timeout, _lowLatencyStreaming[id] ? -1 : 0);
+            _videoReceiver[id]->start(_videoUri[id], timeout);
         }
     }
 #endif
