@@ -93,23 +93,23 @@ RowLayout {
     }
 
     Item {
-        width:  ScreenTools.defaultFontPixelWidth
-        height: 1
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
+        height:                 1
     }
 
     QGCColoredImage {
         id:         flightModeIcon
-        width:      height
+        width:      ScreenTools.defaultFontPixelWidth * 2
         height:     ScreenTools.defaultFontPixelHeight * 0.75
         fillMode:   Image.PreserveAspectFit
         mipmap:     true
         color:      qgcPal.text
         source:     "/qmlimages/FlightModesComponentIcon.png"
-        visible:    _activeVehicle
+        visible:    flightModeMenu.visible
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * (_vehicleInAir ?  ScreenTools.largeFontPointRatio : 1) / 3
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth / 2
         height:                 1
         visible:                flightModeMenu.visible
     }
@@ -124,7 +124,7 @@ RowLayout {
     }
 
     Item {
-        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio
+        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
         height:                 1
         visible:                vtolModeLabel.visible
     }
