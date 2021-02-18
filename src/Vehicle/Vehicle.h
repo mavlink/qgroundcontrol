@@ -328,7 +328,8 @@ public:
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
-    Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange);
+    ///     @param pauseVehicle true: pause vehicle prior to altitude change
+    Q_INVOKABLE void guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle);
 
     /// Command vehicle to orbit given center point
     ///     @param centerCoord Orit around this point
@@ -1176,7 +1177,7 @@ private:
     static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
     void _sendMavCommandWorker  (bool commandInt, bool requestMessage, bool showError, MavCmdResultHandler resultHandler, void* resultHandlerData, int compId, MAV_CMD command, MAV_FRAME frame, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
-    void _sendMavCommandFromList(MavCommandListEntry_t& commandEntry);
+    void _sendMavCommandFromList(int index);
     int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
     bool _sendMavCommandShouldRetry(MAV_CMD command);
 
