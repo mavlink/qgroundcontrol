@@ -20,10 +20,8 @@ Rectangle {
     id:                 telemetryPanel
     height:             telemetryLayout.height + (_toolsMargin * 2)
     width:              telemetryLayout.width + (_toolsMargin * 2)
-    color:              Qt.hsla(_baseBGColor.hslHue, _baseBGColor.hslSaturation, _baseBGColor.hslLightness, 0.5)
+    color:              qgcPal.window
     radius:             ScreenTools.defaultFontPixelWidth / 2
-
-    property color _baseBGColor: qgcPal.window
 
     DeadMouseArea { anchors.fill: parent }
 
