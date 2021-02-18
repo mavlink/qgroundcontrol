@@ -155,7 +155,8 @@ public:
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
-    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
+    ///     @param pauseVehicle true: pause vehicle prior to altitude change
+    virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle);
 
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html

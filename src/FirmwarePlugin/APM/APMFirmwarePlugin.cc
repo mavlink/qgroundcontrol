@@ -699,10 +699,15 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
     _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
-void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
+void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(tr("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    if (pauseVehicle && !_setFlightModeAndValidate(vehicle, pauseFlightMode())) {
+        qgcApp()->showAppMessage(tr("Unable to pause vehicle."));
         return;
     }
 
