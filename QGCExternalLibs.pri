@@ -246,11 +246,19 @@ contains (DEFINES, DISABLE_AIRMAP) {
             !exists("$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") {
                 system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap")
             }
-            system("wget -q -O $${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_URL} && dpkg -x $${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/")
-            system("mv $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/* $${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/")
-            system("mv $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/* $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/")
-            system("rm -rf $${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}")
-            system("rm $${AIRMAP_PLATFORM_SDK_FILENAME}")
+
+            airmap_platform_sdk_install.target = install_airmap_platform_sdk
+            airmap_platform_sdk_install.depends = FORCE
+            airmap_platform_sdk_install.commands = \
+                (wget -q -O "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}"/) && \
+                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}"/) && \
+                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/")
+            airmap_platform_sdk_install.clean_commands = \
+                (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}") && \
+                (rm "$${AIRMAP_PLATFORM_SDK_FILENAME}")
+
+            QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
+            PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 
             exists($${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH) {
                 message("Including support for AirMap for Linux")
