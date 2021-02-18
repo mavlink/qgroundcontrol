@@ -670,9 +670,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_GPS_RAW_INT:
         _handleGpsRawInt(message);
         break;
-    case MAVLINK_MSG_ID_GPS2_RAW:
-        _handleGps2Raw(message);
-        break;
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         _handleGlobalPositionInt(message);
         break;
@@ -1031,27 +1028,6 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
             }
             if (!_altitudeMessageAvailable) {
                 _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
-            }
-        }
-    }
-}
-
-void Vehicle::_handleGps2Raw(mavlink_message_t& message)
-{
-    mavlink_gps2_raw_t gpsRaw;
-    mavlink_msg_gps2_raw_decode(&message, &gpsRaw);
-
-    _gps2RawMessageAvailable = true;
-
-    if (gpsRaw.fix_type >= GPS_FIX_TYPE_3D_FIX) {
-        if (!_globalPositionIntMessageAvailable) {
-            QGeoCoordinate newPosition(gpsRaw.lat  / (double)1E7, gpsRaw.lon / (double)1E7, gpsRaw.alt  / 1000.0);
-            if (newPosition != _coordinate) {
-                _coordinate = newPosition;
-                emit coordinateChanged(_coordinate);
-            }
-            if (!_altitudeMessageAvailable) {
-                _altitudeAMSLFact.setRawValue(gpsRaw.alt / 1000.0);
             }
         }
     }
