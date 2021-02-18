@@ -2386,13 +2386,13 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     _firmwarePlugin->guidedModeGotoLocation(this, gotoCoord);
 }
 
-void Vehicle::guidedModeChangeAltitude(double altitudeChange)
+void Vehicle::guidedModeChangeAltitude(double altitudeChange, bool pauseVehicle)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange);
+    _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange, pauseVehicle);
 }
 
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
@@ -2701,16 +2701,19 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
         entry.elapsedTimer.start();
 
         _mavCommandList.append(entry);
-        _sendMavCommandFromList(_mavCommandList.last());
+        _sendMavCommandFromList(_mavCommandList.count() - 1);
     }
 }
 
-void Vehicle::_sendMavCommandFromList(MavCommandListEntry_t& commandEntry)
+void Vehicle::_sendMavCommandFromList(int index)
 {
+    MavCommandListEntry_t commandEntry = _mavCommandList[index];
+
     QString rawCommandName  = _toolbox->missionCommandTree()->rawName(commandEntry.command);
 
-    if (++commandEntry.tryCount > commandEntry.maxTries) {
+    if (++_mavCommandList[index].tryCount > commandEntry.maxTries) {
         qCDebug(VehicleLog) << "_sendMavCommandFromList giving up after max retries" << rawCommandName;
+        _mavCommandList.removeAt(index);
         if (commandEntry.resultHandler) {
             (*commandEntry.resultHandler)(commandEntry.resultHandlerData, commandEntry.targetCompId, MAV_RESULT_FAILED, MavCmdResultFailureNoResponseToCommand);
         } else {
@@ -2719,7 +2722,6 @@ void Vehicle::_sendMavCommandFromList(MavCommandListEntry_t& commandEntry)
         if (commandEntry.showError) {
             qgcApp()->showAppMessage(tr("Vehicle did not respond to command: %1").arg(rawCommandName));
         }
-        _mavCommandList.removeAt(_findMavCommandListEntryIndex(commandEntry.targetCompId, commandEntry.command));
         return;
     }
 
@@ -2799,7 +2801,7 @@ void Vehicle::_sendMavCommandResponseTimeoutCheck(void)
         MavCommandListEntry_t& commandEntry = _mavCommandList[i];
         if (commandEntry.elapsedTimer.elapsed() > commandEntry.ackTimeoutMSecs) {
             // Try sending command again
-            _sendMavCommandFromList(commandEntry);
+            _sendMavCommandFromList(i);
         }
     }
 }
@@ -2835,7 +2837,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     int entryIndex = _findMavCommandListEntryIndex(message.compid, static_cast<MAV_CMD>(ack.command));
     bool commandInList = false;
     if (entryIndex != -1) {
-        const MavCommandListEntry_t& commandEntry = _mavCommandList[entryIndex];
+        MavCommandListEntry_t commandEntry = _mavCommandList.takeAt(entryIndex);
         if (commandEntry.command == ack.command) {
             if (commandEntry.requestMessage) {
                 RequestMessageInfo_t* pInfo = static_cast<RequestMessageInfo_t*>(commandEntry.resultHandlerData);
@@ -2881,8 +2883,6 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
                     emit mavCommandResult(_id, message.compid, ack.command, ack.result, MavCmdResultCommandResultOnly);
                 }
             }
-
-            _mavCommandList.removeAt(entryIndex);
             commandInList = true;
         }
     }
