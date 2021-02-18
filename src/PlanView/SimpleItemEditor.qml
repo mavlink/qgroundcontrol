@@ -150,9 +150,9 @@ Rectangle {
                     }
 
                     Item {
-                        width:      altModeDropArrow.x + altModeDropArrow.width
-                        height:     altModeLabel.height
-                        visible:    _globalAltModeIsMixed
+                        Layout.preferredWidth:  altModeDropArrow.x + altModeDropArrow.width
+                        Layout.preferredHeight: altModeLabel.height
+                        visible:                _globalAltModeIsMixed
 
                         QGCLabel { id: altModeLabel }
 
