@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef PX4FirmwarePlugin_H
-#define PX4FirmwarePlugin_H
+#pragma once
 
 #include "FirmwarePlugin.h"
 #include "ParameterManager.h"
@@ -25,6 +20,9 @@ class PX4FirmwarePlugin : public FirmwarePlugin
 public:
     PX4FirmwarePlugin   ();
     ~PX4FirmwarePlugin  () override;
+
+    // Called internally only
+    void _changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded);
 
     // Overrides from FirmwarePlugin
 
@@ -49,7 +47,7 @@ public:
     void                guidedModeLand                  (Vehicle* vehicle) override;
     void                guidedModeTakeoff               (Vehicle* vehicle, double takeoffAltRel) override;
     void                guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
-    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel) override;
+    void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeRel, bool pauseVehicle) override;
     double              minimumTakeoffAltitude          (Vehicle* vehicle) override;
     void                startMission                    (Vehicle* vehicle) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
@@ -107,9 +105,10 @@ private slots:
     void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:
-    void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
-    QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
-    QString _versionRegex() override;
+    void    _handleAutopilotVersion         (Vehicle* vehicle, mavlink_message_t* message);
+
+    QString _getLatestVersionFileUrl        (Vehicle* vehicle) override;
+    QString _versionRegex                   () override;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into PX4FirmwarePluginInstanceData
@@ -124,5 +123,3 @@ public:
 
     bool versionNotified;  ///< true: user notified over version issue
 };
-
-#endif
