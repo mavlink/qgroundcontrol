@@ -910,7 +910,6 @@ private:
     void _handleExtendedSysState        (mavlink_message_t& message);
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleGpsRawInt               (mavlink_message_t& message);
-    void _handleGps2Raw                 (mavlink_message_t& message);
     void _handleGlobalPositionInt       (mavlink_message_t& message);
     void _handleAltitude                (mavlink_message_t& message);
     void _handleVfrHud                  (mavlink_message_t& message);
