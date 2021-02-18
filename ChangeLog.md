@@ -5,7 +5,8 @@ Note: This file only contains high level features or important fixes.
 ## 4.1
 
 ### 4.1.2 - Not yet released
-* Bug: Radio setup - Fix double send of `MAV_CMD_PREFLIGHT_CALIBRATION` causing "Unable to send command" error.
+* Bug: Radio setup - Fix double send of `MAV_CMD_PREFLIGHT_CALIBRATION` causing "Unable to send command" error. [GitHub Issue](https://github.com/mavlink/qgroundcontrol/issues/9381)
+* Bug: Fly View - Pause - Fix "Unable to send command" error. [GitHub Issue](https://github.com/mavlink/qgroundcontrol/issues/9397)
 
 ### 4.1.1 - Stable
 * Fix TCP link comms
