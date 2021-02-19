@@ -196,20 +196,7 @@
             "specifiesCoordinate":  true,
             "isTakeoffCommand":     true,
             "friendlyEdit":         true,
-            "category":             "Basic",
-            "param1": {
-                "label":            "Pitch",
-                "units":            "deg",
-                "default":          15,
-                "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Yaw",
-                "units":            "deg",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
-            }
+            "category":             "Basic"
         },
         { "id": 23, "rawName": "MAV_CMD_NAV_LAND_LOCAL", "friendlyName": "Land local" },
         { "id": 24, "rawName": "MAV_CMD_NAV_TAKEOFF_LOCAL", "friendlyName": "Takeoff local" },
