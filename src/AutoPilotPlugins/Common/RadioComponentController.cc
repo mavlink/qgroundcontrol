@@ -700,10 +700,6 @@ void RadioComponentController::_writeCalibration(void)
 {
     if (!_uas) return;
 
-    if (_px4Vehicle()) {
-        _vehicle->stopCalibration();
-    }
-
     if (!_px4Vehicle() && (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER || _vehicle->multiRotor()) &&  _rgChannelInfo[_rgFunctionChannelMapping[rcCalFunctionThrottle]].reversed) {
         // A reversed throttle could lead to dangerous power up issues if the firmware doesn't handle it absolutely correctly in all places.
         // So in this case fail the calibration for anything other than PX4 which is known to be able to handle this correctly.
