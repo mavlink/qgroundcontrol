@@ -673,7 +673,9 @@ void SimpleMissionItem::_altitudeChanged(void)
     if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
         _terrainAltChanged();
-    } else {
+    }
+
+    if (_altitudeMode != QGroundControlQmlGlobal::AltitudeModeAboveTerrain) {
         _missionItem._param7Fact.setRawValue(_altitudeFact.rawValue());
     }
 }
