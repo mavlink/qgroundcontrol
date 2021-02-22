@@ -122,8 +122,6 @@ signals:
     void loiterTangentCoordinateChanged (QGeoCoordinate coordinate);
     void landingCoordinateChanged       (QGeoCoordinate coordinate);
     void landingCoordSetChanged         (bool landingCoordSet);
-    void loiterClockwiseChanged         (bool loiterClockwise);
-    void useLoiterToAltChanged          (bool useLoiterToAlt);
     void altitudesAreRelativeChanged    (bool altitudesAreRelative);
     void _updateFlightPathSegmentsSignal(void);
 
