@@ -40,8 +40,6 @@ void LandingComplexItemTest::init(void)
     rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordSetChangedIndex]          = SIGNAL(landingCoordSetChanged(bool));
-    rgSignals[loiterClockwiseChangedIndex]          = SIGNAL(loiterClockwiseChanged(bool));
-    rgSignals[useLoiterToAltChangedIndex]           = SIGNAL(useLoiterToAltChanged(bool));
     rgSignals[altitudesAreRelativeChangedIndex]     = SIGNAL(altitudesAreRelativeChanged(bool));
     rgSignals[_updateFlightPathSegmentsSignalIndex] = SIGNAL(_updateFlightPathSegmentsSignal());
 
