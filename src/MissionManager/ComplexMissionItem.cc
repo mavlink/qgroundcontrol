@@ -124,9 +124,9 @@ void ComplexMissionItem::addKMLVisuals(KMLPlanDomDocument& /* domDocument */)
     // Default implementation has no visuals
 }
 
-void ComplexMissionItem::_appendFlightPathSegment(const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)
+void ComplexMissionItem::_appendFlightPathSegment(FlightPathSegment::SegmentType segmentType, const QGeoCoordinate& coord1, double coord1AMSLAlt, const QGeoCoordinate& coord2, double coord2AMSLAlt)
 {
-    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, true /* queryTerrainData */, this /* parent */);
+    FlightPathSegment* segment = new FlightPathSegment(segmentType, coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, true /* queryTerrainData */, this /* parent */);
 
     connect(segment, &FlightPathSegment::terrainCollisionChanged,       this,               &ComplexMissionItem::_segmentTerrainCollisionChanged);
     connect(segment, &FlightPathSegment::terrainCollisionChanged,       _missionController, &MissionController::recalcTerrainProfile, Qt::QueuedConnection);

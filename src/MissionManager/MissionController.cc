@@ -1163,7 +1163,14 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     double              coord2AMSLAlt       = pair.second->amslEntryAlt();
     double              coord1AMSLAlt       = takeoffStraightUp ? coord2AMSLAlt : pair.first->amslExitAlt();
 
-    FlightPathSegment* segment = new FlightPathSegment(coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
+    FlightPathSegment::SegmentType segmentType = FlightPathSegment::SegmentTypeGeneric;
+    if (pair.second->isTakeoffItem()) {
+        segmentType = FlightPathSegment::SegmentTypeTakeoff;
+    } else if (pair.second->isLandCommand()) {
+        segmentType = FlightPathSegment::SegmentTypeLand;
+    }
+
+    FlightPathSegment* segment = new FlightPathSegment(segmentType, coord1, coord1AMSLAlt, coord2, coord2AMSLAlt, !_flyView /* queryTerrainData */,  this);
 
     if (takeoffStraightUp) {
         connect(pair.second, &VisualMissionItem::amslEntryAltChanged, segment, &FlightPathSegment::setCoord1AMSLAlt);
@@ -1391,13 +1398,15 @@ void MissionController::_recalcFlightPathSegments(void)
             // Pair already exists in old table, pull from old to new and reuse
             _flightPathSegmentHashTable[lastSegmentVisualItemPair] = coordVector = oldSegmentTable.take(lastSegmentVisualItemPair);
         } else {
-            // Create a new segment. Since this is the fly view there is no need to wire change signals.
-            coordVector = new FlightPathSegment(lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
-                                                lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->amslEntryAlt() : lastSegmentVisualItemPair.first->amslExitAlt(),
-                                                lastSegmentVisualItemPair.second->coordinate(),
-                                                lastSegmentVisualItemPair.second->amslEntryAlt(),
-                                                !_flyView /* queryTerrainData */,
-                                                this);
+            // Create a new segment. Since this is the fly view there is no need to wire change signals or worry about correct SegmentType
+            coordVector = new FlightPathSegment(
+                        FlightPathSegment::SegmentTypeGeneric,
+                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(),
+                        lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->amslEntryAlt() : lastSegmentVisualItemPair.first->amslExitAlt(),
+                        lastSegmentVisualItemPair.second->coordinate(),
+                        lastSegmentVisualItemPair.second->amslEntryAlt(),
+                        !_flyView /* queryTerrainData */,
+                        this);
             _flightPathSegmentHashTable[lastSegmentVisualItemPair] = coordVector;
         }
 
