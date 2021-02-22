@@ -249,7 +249,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
                 (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/") && \
                 (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}") && \
                 (rm "$${AIRMAP_PLATFORM_SDK_FILENAME}")
-            airmap_platform_sdk_install.depends = FORCE#airmap_platform_sdk_mkdirs
+            airmap_platform_sdk_install.depends = FORCE
             QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
             PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 
