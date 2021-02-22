@@ -204,7 +204,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else {
     AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmapd
     AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message('Looking for Airmap in folder "$${AIRMAP_PLATFORM_SDK_PATH}", variant: "$$AIRMAP_QT_PATH"')
+    message("Including support for AirMap")
     MacBuild {
         exists("$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH") {
             message("Including support for AirMap for macOS")
@@ -213,42 +213,30 @@ contains (DEFINES, DISABLE_AIRMAP) {
         }
     } else:LinuxBuild {
         exists("$${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH") {
-            message("Including support for AirMap for Linux")
+            #-- We have a cached copy..don't download and install again
             LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         } else {
             #-- Download and install platform-sdk libs and headers
-            message("Installing AirMap platform-sdk libs and headers")
             AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/v1.1/airmap-platform-sdk-1.1.0-Linux.deb"
             AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
             AIRMAP_PLATFORM_SDK_INSTALL_PREFIX = "airmap-platform-sdk"
-            !exists("$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") {
-                system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}")
-            }
-            !exists("$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") {
-                system("mkdir -p $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap")
-            }
 
             airmap_platform_sdk_install.target = install_airmap_platform_sdk
-            airmap_platform_sdk_install.depends = FORCE
             airmap_platform_sdk_install.commands = \
-                (wget -q -O "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}"/) && \
-                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}"/) && \
-                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/")
-            airmap_platform_sdk_install.clean_commands = \
+                (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") && \
+                (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") && \
+                (wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/") && \
+                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/") && \
+                (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/") && \
                 (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}") && \
                 (rm "$${AIRMAP_PLATFORM_SDK_FILENAME}")
-
+            airmap_platform_sdk_install.depends = FORCE#airmap_platform_sdk_mkdirs
             QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
             PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 
-            exists($${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH) {
-                message("Including support for AirMap for Linux")
-                LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
-                DEFINES += QGC_AIRMAP_ENABLED
-            } else {
-                message("Failed to install AirMap support for Linux")
-            }
+            LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
         }
     } else {
         message("Skipping support for Airmap (unsupported platform)")
