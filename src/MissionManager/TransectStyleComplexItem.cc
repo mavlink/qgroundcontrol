@@ -490,7 +490,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
             for (const MissionItem* missionItem: _loadedMissionItems) {
                 if (missionItem->command() == MAV_CMD_NAV_WAYPOINT || missionItem->command() == MAV_CMD_CONDITION_GATE) {
                     if (prevCoord.isValid()) {
-                        _appendFlightPathSegment(prevCoord, prevAlt, missionItem->coordinate(), missionItem->param7());
+                        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, prevCoord, prevAlt, missionItem->coordinate(), missionItem->param7());
                     }
                     prevCoord = missionItem->coordinate();
                     prevAlt = missionItem->param7();
@@ -505,7 +505,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
                     const QGeoCoordinate& fromCoord = _rgFlightPathCoordInfo[i].coord;
                     const QGeoCoordinate& toCoord   = _rgFlightPathCoordInfo[i+1].coord;
                     //qDebug() << _rgFlightPathCoordInfo.count() << fromCoord << _rgFlightPathCoordInfo[i].coordType << toCoord << _rgFlightPathCoordInfo[i+1].coordType;
-                    _appendFlightPathSegment(fromCoord, fromCoord.altitude(), toCoord, toCoord.altitude());
+                    _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, fromCoord, fromCoord.altitude(), toCoord, toCoord.altitude());
                 }
             }
         }
@@ -518,7 +518,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         for (const QVariant& varCoord: _visualTransectPoints) {
             QGeoCoordinate thisCoord = varCoord.value<QGeoCoordinate>();
             if (prevCoord.isValid()) {
-                _appendFlightPathSegment(prevCoord,  surveyAlt, thisCoord,  surveyAlt);
+                _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, prevCoord,  surveyAlt, thisCoord,  surveyAlt);
             }
             prevCoord = thisCoord;
         }
