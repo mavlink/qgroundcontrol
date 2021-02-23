@@ -153,6 +153,11 @@ RowLayout {
                         adjustYAxisMin(_yAxis, value)
                         adjustYAxisMax(_yAxis, value)
                     }
+                    // limit history
+                    var minSec = _msecs/1000 - 3*60
+                    while (chart.series(i).count > 0 && chart.series(i).at(0).x < minSec) {
+                        chart.series(i).remove(0)
+                    }
                 }
             }
 
