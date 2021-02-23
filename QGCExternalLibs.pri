@@ -224,8 +224,6 @@ contains (DEFINES, DISABLE_AIRMAP) {
 
             airmap_platform_sdk_install.target = install_airmap_platform_sdk
             airmap_platform_sdk_install.commands = \
-                (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") && \
-                (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") && \
                 (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") && \
                 (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") && \
                 (wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/") && \
