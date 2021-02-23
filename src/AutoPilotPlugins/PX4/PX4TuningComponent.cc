@@ -54,7 +54,7 @@ QUrl PX4TuningComponent::setupSource(void) const
 
     switch (_vehicle->vehicleType()) {
         case MAV_TYPE_FIXED_WING:
-            qmlFile = "qrc:/qml/PX4TuningComponentPlane.qml";
+            qmlFile = ""; // TODO: "qrc:/qml/PX4TuningComponentPlane.qml";
             break;
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_COAXIAL:
