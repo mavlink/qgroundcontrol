@@ -11768,6 +11768,27 @@ How often the sensor is readout</short_desc>
       <long_desc>Absolute value superior to 10000 will disable barometer</long_desc>
       <unit>m</unit>
     </parameter>
+    <parameter name="SIH_DISTSNSR_MAX" default="100.0" type="FLOAT">
+      <short_desc>distance sensor maximun range</short_desc>
+      <min>0.0</min>
+      <max>1000.0</max>
+      <unit>m</unit>
+      <decimal>4</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="SIH_DISTSNSR_MIN" default="0.0" type="FLOAT">
+      <short_desc>distance sensor minimun range</short_desc>
+      <min>0.0</min>
+      <max>10.0</max>
+      <unit>m</unit>
+      <decimal>4</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter name="SIH_DISTSNSR_OVR" default="-1.0" type="FLOAT">
+      <short_desc>if &gt;= 0 the distance sensor measures will be overrided by this value
+Absolute value superior to 10000 will disable distance sensor</short_desc>
+      <unit>m</unit>
+    </parameter>
     <parameter name="SIH_GPS_USED" default="10" type="INT32">
       <short_desc>Number of GPS satellites used</short_desc>
       <min>0</min>
