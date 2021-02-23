@@ -202,7 +202,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmapd
+    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmap-platform-sdk
     AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
     message("Including support for AirMap")
     MacBuild {
@@ -224,6 +224,8 @@ contains (DEFINES, DISABLE_AIRMAP) {
 
             airmap_platform_sdk_install.target = install_airmap_platform_sdk
             airmap_platform_sdk_install.commands = \
+                (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") && \
+                (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") && \
                 (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}") && \
                 (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap") && \
                 (wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/") && \
@@ -231,7 +233,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
                 (mv "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/") && \
                 (rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}") && \
                 (rm "$${AIRMAP_PLATFORM_SDK_FILENAME}")
-            airmap_platform_sdk_install.depends = FORCE
+            airmap_platform_sdk_install.depends = ${AIRMAP_PLATFORM_SDK_PATH}
             QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
             PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 

@@ -38,7 +38,7 @@ MacBuild {
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmap-platform-sdk/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
             QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
         }
     }
@@ -141,7 +141,7 @@ LinuxBuild {
 
     # Airmap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$OUT_PWD/libs/airmapd/linux/$$AIRMAP_QT_PATH/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$OUT_PWD/libs/airmap-platform-sdk/linux/$$AIRMAP_QT_PATH/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
     }
 
     # QGroundControl start script
