@@ -38,14 +38,14 @@ SetupPage {
                 QGCTabButton {
                     text:       qsTr("Multirotor")
                 }
-                QGCTabButton {
-                    text:       qsTr("Fixedwing")
-                }
+                //QGCTabButton {
+                //    text:       qsTr("Fixedwing")
+                //}
             }
 
             property var pages:  [
                 "PX4TuningComponentCopterAll.qml",
-                "PX4TuningComponentPlaneAll.qml"
+                //"PX4TuningComponentPlaneAll.qml"
             ]
 
             Loader {
