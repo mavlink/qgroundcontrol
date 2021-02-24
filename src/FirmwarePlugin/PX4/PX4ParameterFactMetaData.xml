@@ -5230,15 +5230,6 @@ Setting this parameter to 0 disables the filter</short_desc>
         <value code="2">Terrain hold</value>
       </values>
     </parameter>
-    <parameter name="MPC_DEC_HOR_SLOW" default="5.0" type="FLOAT">
-      <short_desc>Slow horizontal manual deceleration for manual mode</short_desc>
-      <long_desc>Note: This is only used when MPC_POS_MODE is set to 1.</long_desc>
-      <min>0.5</min>
-      <max>10.0</max>
-      <unit>m/s^2</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
-    </parameter>
     <parameter name="MPC_HOLD_DZ" default="0.1" type="FLOAT">
       <short_desc>Deadzone of sticks where position hold is enabled</short_desc>
       <min>0.0</min>
@@ -5273,15 +5264,6 @@ Setting this parameter to 0 disables the filter</short_desc>
       <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 1, 3 or 4.</long_desc>
       <min>0.5</min>
       <max>500.0</max>
-      <unit>m/s^3</unit>
-      <decimal>2</decimal>
-      <increment>1</increment>
-    </parameter>
-    <parameter name="MPC_JERK_MIN" default="8.0" type="FLOAT">
-      <short_desc>Velocity-based jerk limit</short_desc>
-      <long_desc>If this is not zero, a velocity-based maximum jerk limit is used: the applied jerk limit linearly increases with the vehicle's velocity between MPC_JERK_MIN (zero velocity) and MPC_JERK_MAX (maximum velocity). This means that the vehicle's motions are smooth for low velocities, but still allows fast direction changes or breaking at higher velocities. Set this to zero to use a fixed maximum jerk limit (MPC_JERK_MAX). Note: This is only used when MPC_POS_MODE is set to 1.</long_desc>
-      <min>0</min>
-      <max>30.0</max>
       <unit>m/s^3</unit>
       <decimal>2</decimal>
       <increment>1</increment>
@@ -5483,6 +5465,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>1.0</max>
       <decimal>1</decimal>
     </parameter>
+    <parameter name="MPC_XY_VEL_ALL" default="-10.0" type="FLOAT">
+      <short_desc>Overall Horizonal Velocity Limit</short_desc>
+      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_XY_VEL_MAX or MPC_VEL_MANUAL). If set to -1, the existing individual parameters are used.</long_desc>
+      <min>-20</min>
+      <max>20</max>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
     <parameter name="MPC_XY_VEL_D_ACC" default="0.2" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
       <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
@@ -5510,7 +5500,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <short_desc>Proportional gain for horizontal velocity error</short_desc>
       <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
       <min>1.2</min>
-      <max>3.0</max>
+      <max>5.0</max>
       <decimal>2</decimal>
     </parameter>
     <parameter name="MPC_YAW_EXPO" default="0.6" type="FLOAT">
@@ -5533,6 +5523,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>1.5</max>
       <decimal>2</decimal>
     </parameter>
+    <parameter name="MPC_Z_VEL_ALL" default="-3.0" type="FLOAT">
+      <short_desc>Overall Vertical Velocity Limit</short_desc>
+      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_Z_VEL_MAX_UP or MPC_LAND_SPEED). If set to -1, the existing individual parameters are used.</long_desc>
+      <min>-3</min>
+      <max>8</max>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
     <parameter name="MPC_Z_VEL_D_ACC" default="0.0" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
       <long_desc>defined as correction acceleration in m/s^2 per m/s^2 velocity derivative</long_desc>
@@ -5544,7 +5542,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <short_desc>Integral gain for vertical velocity error</short_desc>
       <long_desc>defined as correction acceleration in m/s^2 per m velocity integral Non zero value allows hovering thrust estimation on stabilized or autonomous takeoff.</long_desc>
       <min>0.2</min>
-      <max>2.0</max>
+      <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
     <parameter name="MPC_Z_VEL_MAX_DN" default="1.0" type="FLOAT">
@@ -5566,8 +5564,16 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <short_desc>Proportional gain for vertical velocity error</short_desc>
       <long_desc>defined as correction acceleration in m/s^2 per m/s velocity error</long_desc>
       <min>2.0</min>
-      <max>8.0</max>
+      <max>15.0</max>
       <decimal>2</decimal>
+    </parameter>
+    <parameter name="SYS_VEHICLE_RESP" default="-0.4" type="FLOAT">
+      <short_desc>Responsiveness</short_desc>
+      <long_desc>Changes the overall responsiveness of the vehicle. The higher the value, the faster the vehicle will react. If set to a value greater than zero, other parameters are automatically set (such as the acceleration or jerk limits). If set to -1, the existing individual parameters are used.</long_desc>
+      <min>-1</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
     </parameter>
     <parameter name="WV_EN" default="0" type="INT32" boolean="true">
       <short_desc>Enable weathervane</short_desc>
