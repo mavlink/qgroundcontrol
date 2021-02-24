@@ -13293,6 +13293,30 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
     <parameter name="RV_YAW_P" default="0.1" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
+    <parameter name="UCAN1_BMS0_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS0_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_BMS1_PID" default="0" type="INT32">
+      <short_desc>UCAN1_BMS1_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_ESC0_PID" default="0" type="INT32">
+      <short_desc>UCAN1_ESC0_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_ESC_PUB" default="0" type="INT32">
+      <short_desc>UCAN1_ESC_PUB</short_desc>
+    </parameter>
+    <parameter name="UCAN1_GPS0_PID" default="0" type="INT32">
+      <short_desc>UCAN1_GPS0_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_GPS1_PID" default="0" type="INT32">
+      <short_desc>UCAN1_GPS1_PID</short_desc>
+    </parameter>
+    <parameter name="UCAN1_GPS_PUB" default="0" type="INT32">
+      <short_desc>UCAN1_GPS_PUB</short_desc>
+    </parameter>
+    <parameter name="UCAN1_SERVO_PUB" default="0" type="INT32">
+      <short_desc>UCAN1_SERVO_PUB</short_desc>
+    </parameter>
     <parameter name="UUV_SKIP_CTRL" default="0" type="INT32">
       <short_desc>Skip the controller</short_desc>
       <values>
