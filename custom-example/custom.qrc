@@ -31,4 +31,7 @@
     <qresource prefix="/qml">
         <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">res/CustomFlyViewOverlay.qml</file>
     </qresource>
+    <qresource prefix="/json">
+        <file alias="Custom.SettingsGroup.json">src/Settings/Custom.SettingsGroup.json</file>
+    </qresource>
 </RCC>

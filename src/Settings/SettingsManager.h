@@ -27,6 +27,9 @@
 #include "APMMavlinkStreamRateSettings.h"
 #include "FirmwareUpgradeSettings.h"
 #include "ADSBVehicleManagerSettings.h"
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+#include CUSTOMSETTINGSHEADER
+#endif
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapSettings.h"
 #endif
@@ -36,7 +39,7 @@
 class SettingsManager : public QGCTool
 {
     Q_OBJECT
-    
+
 public:
     SettingsManager(QGCApplication* app, QGCToolbox* toolbox);
 
@@ -57,6 +60,9 @@ public:
     Q_PROPERTY(QObject* adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
+#endif
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+    Q_PROPERTY(QObject* customSettings                  READ customSettings                 CONSTANT)
 #endif
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -79,6 +85,9 @@ public:
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+    CUSTOMSETTINGSCLASS*                 customSettings              (void) { return _customSettings;}
+#endif
 private:
 #if defined(QGC_AIRMAP_ENABLED)
     AirMapSettings*         _airMapSettings;
@@ -97,6 +106,9 @@ private:
     ADSBVehicleManagerSettings*     _adsbVehicleManagerSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
+#endif
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+    CUSTOMSETTINGSCLASS*                 _customSettings;
 #endif
 };
 

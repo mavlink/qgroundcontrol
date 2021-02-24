@@ -32,6 +32,9 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
 #if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
 #endif
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+    , _customSettings                (nullptr)
+#endif
 {
 
 }
@@ -58,6 +61,9 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings(this);
 #endif
 #if defined(QGC_AIRMAP_ENABLED)
-    _airMapSettings =               new AirMapSettings          (this);
+    _airMapSettings =               new AirMapSettings              (this);
+#endif
+#if defined (QGC_CUSTOM_BUILD) && defined (CUSTOMSETTINGSCLASS)
+    _customSettings               = new CUSTOMSETTINGSCLASS         (this);
 #endif
 }

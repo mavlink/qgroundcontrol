@@ -35,6 +35,9 @@ CONFIG  += QGC_DISABLE_PX4_PLUGIN_FACTORY
 DEFINES += CUSTOMHEADER=\"\\\"CustomPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=CustomPlugin
 
+DEFINES += CUSTOMSETTINGSHEADER=\"\\\"CustomSettings.h\\\"\"
+DEFINES += CUSTOMSETTINGSCLASS=CustomSettings
+
 TARGET   = CustomQGroundControl
 DEFINES += QGC_APPLICATION_NAME='"\\\"Custom QGroundControl\\\""'
 
@@ -59,21 +62,25 @@ QML_IMPORT_PATH += \
 # Our own, custom sources
 SOURCES += \
     $$PWD/src/CustomPlugin.cc \
+    $$PWD/src/Settings/CustomSettings.cc \
 
 HEADERS += \
     $$PWD/src/CustomPlugin.h \
+    $$PWD/src/Settings/CustomSettings.h \
 
 INCLUDEPATH += \
     $$PWD/src \
+    $$PWD/src/Settings \
+
 
 #-------------------------------------------------------------------------------------
 # Custom Firmware/AutoPilot Plugin
 
 INCLUDEPATH += \
     $$PWD/src/FirmwarePlugin \
-    $$PWD/src/AutoPilotPlugin
+    $$PWD/src/AutoPilotPlugin \
 
-HEADERS+= \
+HEADERS += \
     $$PWD/src/AutoPilotPlugin/CustomAutoPilotPlugin.h \
     $$PWD/src/FirmwarePlugin/CustomFirmwarePlugin.h \
     $$PWD/src/FirmwarePlugin/CustomFirmwarePluginFactory.h \

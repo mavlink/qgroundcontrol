@@ -15,6 +15,7 @@
 #include "QGCOptions.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
+#include "CustomSettings.h"
 
 #include <QTranslator>
 
@@ -77,4 +78,5 @@ private:
 private:
     CustomOptions*  _options = nullptr;
     QVariantList    _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    CustomSettings* _customSettings;
 };

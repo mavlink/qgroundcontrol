@@ -88,6 +88,8 @@ void CustomPlugin::setToolbox(QGCToolbox* toolbox)
 
     // Allows us to be notified when the user goes in/out out advanced mode
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &CustomPlugin::_advancedChanged);
+
+    _customSettings = qgcApp()->toolbox()->settingsManager()->customSettings();
 }
 
 void CustomPlugin::_advancedChanged(bool changed)

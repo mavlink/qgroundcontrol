@@ -1,0 +1,19 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "customSetting1",
+    "shortDesc":        "Just an example",
+    "type":             "string",
+    "default":          ""
+},
+{
+    "name":             "customSetting2",
+    "shortDesc":        "Another example",
+    "type":             "bool",
+    "default":          false
+}
+]
+}
