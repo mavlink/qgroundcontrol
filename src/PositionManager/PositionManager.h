@@ -21,7 +21,7 @@ class QGCPositionManager : public QGCTool {
     Q_OBJECT
 
 public:
-
+    static constexpr size_t MinHorizonalAccuracyMetres = 100;
     QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCPositionManager();
 
