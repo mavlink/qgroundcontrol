@@ -4613,15 +4613,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <unit>B/s</unit>
       <reboot_required>True</reboot_required>
     </parameter>
-    <parameter name="MAV_BROADCAST" default="0" type="INT32">
-      <short_desc>Broadcast heartbeats on local network</short_desc>
-      <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
-      <values>
-        <value code="0">Never broadcast</value>
-        <value code="1">Always broadcast</value>
-        <value code="2">Only multicast</value>
-      </values>
-    </parameter>
     <parameter name="MAV_COMP_ID" default="1" type="INT32">
       <short_desc>MAVLink component ID</short_desc>
       <min>1</min>
