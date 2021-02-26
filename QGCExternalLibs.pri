@@ -235,16 +235,16 @@ contains (DEFINES, DISABLE_AIRMAP) {
         AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
         AIRMAP_PLATFORM_SDK_INSTALL_PREFIX = "airmap-platform-sdk"
 
-        airmap_platform_sdk_install.target = install_airmap_platform_sdk
+        airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
         airmap_platform_sdk_install.commands = \
-            test -e "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" || \
-            (mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
+            rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
             wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/" && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
             rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}" && \
-            rm "$${AIRMAP_PLATFORM_SDK_FILENAME}")
+            rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
         airmap_platform_sdk_install.depends =
         QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
         PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
