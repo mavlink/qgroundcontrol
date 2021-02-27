@@ -982,6 +982,58 @@ Rectangle {
                         }
                     }
 
+                    Item { width: 1; height: _margins; visible: ntripSectionLabel.visible }
+                    QGCLabel {
+                        id:         ntripSectionLabel
+                        text:       qsTr("NTRIP / RTCM")
+                        visible:    QGroundControl.settingsManager.ntripSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: ntripGrid.y + ntripGrid.height + _margins
+                        Layout.preferredWidth:  ntripGrid.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                ntripSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        GridLayout {
+                            id:                         ntripGrid
+                            anchors.topMargin:          _margins
+                            anchors.top:                warningLabel.bottom
+                            Layout.fillWidth:           true
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            columns:                    2
+
+                            property var  ntripSettings:    QGroundControl.settingsManager.ntripSettings
+
+                            FactCheckBox {
+                                text:                   ntripGrid.ntripSettings.ntripServerConnectEnabled.shortDescription
+                                fact:                   ntripGrid.ntripSettings.ntripServerConnectEnabled
+                                visible:                ntripGrid.ntripSettings.ntripServerConnectEnabled.visible
+                                Layout.columnSpan:      2
+                            }
+
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripServerHostAddress.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripServerHostAddress.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripServerHostAddress
+                                visible:                ntripGrid.ntripSettings.ntripServerHostAddress.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripServerPort.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripServerPort.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripServerPort
+                                visible:                ntripGrid.ntripSettings.ntripServerPort.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+                        }
+                    }
+
                     Item { width: 1; height: _margins; visible: adsbSectionLabel.visible }
                     QGCLabel {
                         id:         adsbSectionLabel
