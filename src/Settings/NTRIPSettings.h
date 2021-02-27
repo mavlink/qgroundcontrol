@@ -21,4 +21,7 @@ public:
     DEFINE_SETTINGFACT(ntripServerConnectEnabled)
     DEFINE_SETTINGFACT(ntripServerHostAddress)
     DEFINE_SETTINGFACT(ntripServerPort)
+    DEFINE_SETTINGFACT(ntripUsername)
+    DEFINE_SETTINGFACT(ntripPassword)
+    DEFINE_SETTINGFACT(ntripMountpoint)
 };

@@ -1031,6 +1031,36 @@ Rectangle {
                                 visible:                ntripGrid.ntripSettings.ntripServerPort.visible
                                 Layout.preferredWidth:  _valueFieldWidth
                             }
+
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripUsername.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripUsername.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripUsername
+                                visible:                ntripGrid.ntripSettings.ntripUsername.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripPassword.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripPassword.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripPassword
+                                visible:                ntripGrid.ntripSettings.ntripPassword.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
+
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripMountpoint.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripMountpoint.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripMountpoint
+                                visible:                ntripGrid.ntripSettings.ntripMountpoint.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
                         }
                     }
 

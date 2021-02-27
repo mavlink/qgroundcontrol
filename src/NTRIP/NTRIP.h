@@ -17,6 +17,11 @@
 #include <QTimer>
 #include <QGeoCoordinate>
 
+#include "Drivers/src/rtcm.h"
+#include "RTCM/RTCMMavlink.h"
+
+
+
 class NTRIPSettings;
 
 class NTRIPTCPLink : public QThread
@@ -24,11 +29,17 @@ class NTRIPTCPLink : public QThread
     Q_OBJECT
 
 public:
-    NTRIPTCPLink(const QString& hostAddress, int port, QObject* parent);
+    NTRIPTCPLink(const QString& hostAddress,
+                 int port,
+                 const QString& username,
+                 const QString& password,
+                 const QString& mountpoint,
+                 QObject* parent);
     ~NTRIPTCPLink();
 
 signals:
     void error(const QString errorMsg);
+    void RTCMDataUpdate(QByteArray message);
 
 protected:
     void run(void) final;
@@ -37,12 +48,26 @@ private slots:
     void _readBytes(void);
 
 private:
+    enum class NTRIPState {
+        uninitialised,
+        waiting_for_http_response,
+        waiting_for_rtcm_header,
+        accumulating_rtcm_packet,
+    };
+    
     void _hardwareConnect(void);
-    void _parseLine(const QString& line);
+    void _parse(const QByteArray &buffer);
 
+    QTcpSocket*     _socket =   nullptr;
+    
     QString         _hostAddress;
     int             _port;
-    QTcpSocket*     _socket =   nullptr;
+    QString         _username;
+    QString         _password;
+    QString         _mountpoint;
+
+    RTCMParsing *_rtcm_parsing{nullptr};
+    NTRIPState _state;
 };
 
 class NTRIP : public QGCTool {
@@ -61,4 +86,5 @@ private slots:
 
 private:
     NTRIPTCPLink*                    _tcpLink = nullptr;
+    RTCMMavlink*                     _rtcmMavlink = nullptr;
 };
