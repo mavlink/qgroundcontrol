@@ -574,6 +574,8 @@ HEADERS += \
     src/Compression/QGCZlib.h \
     src/FirmwarePlugin/PX4/px4_custom_mode.h \
     src/FollowMe/FollowMe.h \
+    src/GPS/Drivers/src/rtcm.h \
+    src/GPS/RTCM/RTCMMavlink.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
@@ -773,14 +775,12 @@ HEADERS += \
 !MobileBuild {
 HEADERS += \
     src/GPS/Drivers/src/gps_helper.h \
-    src/GPS/Drivers/src/rtcm.h \
     src/GPS/Drivers/src/ashtech.h \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/Drivers/src/sbf.h \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
-    src/GPS/RTCM/RTCMMavlink.h \
     src/GPS/definitions.h \
     src/GPS/satellite_info.h \
     src/GPS/vehicle_gps_position.h \
@@ -813,6 +813,8 @@ SOURCES += \
     src/Compression/QGCLZMA.cc \
     src/Compression/QGCZlib.cc \
     src/FollowMe/FollowMe.cc \
+    src/GPS/Drivers/src/rtcm.cpp \
+    src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
@@ -997,13 +999,11 @@ contains (DEFINES, QGC_ENABLE_PAIRING) {
 !MobileBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
-    src/GPS/Drivers/src/rtcm.cpp \
     src/GPS/Drivers/src/ashtech.cpp \
     src/GPS/Drivers/src/ubx.cpp \
     src/GPS/Drivers/src/sbf.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
-    src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
 }
