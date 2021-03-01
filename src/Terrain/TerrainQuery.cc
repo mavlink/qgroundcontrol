@@ -901,8 +901,6 @@ QList<double> UnitTestTerrainQuery::_requestCoordinateHeights(const QList<QGeoCo
 {
     QList<double> result;
 
-    std::cout.precision(17);
-
     for (const auto& coordinate : coordinates) {
         if (flat10Region.contains(coordinate)) {
             result.append(UnitTestTerrainQuery::Flat10Region::amslElevation);
