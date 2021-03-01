@@ -21,8 +21,6 @@
 #include <QTimer>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 
-#include <iostream>
-
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 
