@@ -21,6 +21,8 @@
 #include <QTimer>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 
+#include <iostream>
+
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 
@@ -338,6 +340,18 @@ public:
         static const double totalElevationChange;
     };
     static const LinearSlopeRegion linearSlopeRegion;
+
+    /// Region with a hill (top half of a sphere) in the center.
+    struct HillRegion : public QGeoRectangle
+    {
+        HillRegion(const QGeoRectangle& region)
+            : QGeoRectangle(region)
+        {
+        }
+
+        static const double radius;
+    };
+    static const HillRegion hillRegion;
 
     UnitTestTerrainQuery(TerrainQueryInterface* parent = nullptr);
 
