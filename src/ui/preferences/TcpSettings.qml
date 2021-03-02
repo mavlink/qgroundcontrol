@@ -30,7 +30,7 @@ Column {
     Row {
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCLabel {
-            text:       qsTr("Host Address:")
+            text:       qsTr("Server Address:")
             width:      _firstColumn
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -44,7 +44,7 @@ Column {
     Row {
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCLabel {
-            text:       qsTr("TCP Port:")
+            text:       qsTr("Port:")
             width:      _firstColumn
             anchors.verticalCenter: parent.verticalCenter
         }
