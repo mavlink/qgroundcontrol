@@ -5457,7 +5457,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter name="MPC_XY_VEL_ALL" default="-10.0" type="FLOAT">
       <short_desc>Overall Horizonal Velocity Limit</short_desc>
-      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_XY_VEL_MAX or MPC_VEL_MANUAL). If set to -1, the existing individual parameters are used.</long_desc>
+      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_XY_VEL_MAX or MPC_VEL_MANUAL). If set to a negative value, the existing individual parameters are used.</long_desc>
       <min>-20</min>
       <max>20</max>
       <decimal>1</decimal>
@@ -5515,7 +5515,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter name="MPC_Z_VEL_ALL" default="-3.0" type="FLOAT">
       <short_desc>Overall Vertical Velocity Limit</short_desc>
-      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_Z_VEL_MAX_UP or MPC_LAND_SPEED). If set to -1, the existing individual parameters are used.</long_desc>
+      <long_desc>If set to a value greater than zero, other parameters are automatically set (such as MPC_Z_VEL_MAX_UP or MPC_LAND_SPEED). If set to a negative value, the existing individual parameters are used.</long_desc>
       <min>-3</min>
       <max>8</max>
       <decimal>1</decimal>
@@ -5559,7 +5559,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter name="SYS_VEHICLE_RESP" default="-0.4" type="FLOAT">
       <short_desc>Responsiveness</short_desc>
-      <long_desc>Changes the overall responsiveness of the vehicle. The higher the value, the faster the vehicle will react. If set to a value greater than zero, other parameters are automatically set (such as the acceleration or jerk limits). If set to -1, the existing individual parameters are used.</long_desc>
+      <long_desc>Changes the overall responsiveness of the vehicle. The higher the value, the faster the vehicle will react. If set to a value greater than zero, other parameters are automatically set (such as the acceleration or jerk limits). If set to a negative value, the existing individual parameters are used.</long_desc>
       <min>-1</min>
       <max>1</max>
       <decimal>2</decimal>
