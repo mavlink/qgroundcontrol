@@ -1144,8 +1144,8 @@ Set -1 to disable the check</short_desc>
       </values>
     </parameter>
     <parameter name="COM_ARM_SWISBTN" default="0" type="INT32" boolean="true">
-      <short_desc>Arm switch is only a button</short_desc>
-      <long_desc>The default uses the arm switch as real switch. If parameter set button gets handled like stick arming.</long_desc>
+      <short_desc>Arm switch is a momentary button</short_desc>
+      <long_desc>0: Arming/disarming triggers on switch transition. 1: Arming/disarming triggers when holding the momentary button down for COM_RC_ARM_HYST like the stick gesture.</long_desc>
     </parameter>
     <parameter name="COM_ARM_WO_GPS" default="1" type="INT32">
       <short_desc>Allow arming without GPS</short_desc>
@@ -1540,15 +1540,16 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <short_desc>Enable RC stick override of auto and/or offboard modes</short_desc>
       <long_desc>When RC stick override is enabled, moving the RC sticks more than COM_RC_STICK_OV from their center position immediately gives control back to the pilot by switching to Position mode. Note: Only has an effect on multicopters, and VTOLs in multicopter mode.</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>7</max>
       <bitmask>
         <bit index="0">Enable override during auto modes (except for in critical battery reaction)</bit>
         <bit index="1">Enable override during offboard mode</bit>
+        <bit index="2">Ignore throttle stick</bit>
       </bitmask>
     </parameter>
     <parameter name="COM_RC_STICK_OV" default="30.0" type="FLOAT">
       <short_desc>RC stick override threshold</short_desc>
-      <long_desc>If COM_RC_OVERRIDE is enabled and the joystick input controlling the horizontally axis (right stick for RC in mode 2) is moved more than this threshold from the center the autopilot switches to position mode and the pilot takes over control.</long_desc>
+      <long_desc>If COM_RC_OVERRIDE is enabled and the joystick input is moved more than this threshold the autopilot the pilot takes over control.</long_desc>
       <min>5</min>
       <max>80</max>
       <unit>%</unit>
