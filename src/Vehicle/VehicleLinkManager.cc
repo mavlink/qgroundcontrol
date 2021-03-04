@@ -46,7 +46,6 @@ void VehicleLinkManager::mavlinkMessageReceived(LinkInterface* link, mavlink_mes
 
 void VehicleLinkManager::_commRegainedOnLink(LinkInterface* link)
 {
-    QString commRegainedMessage;
     QString primarySwitchMessage;
 
     int linkIndex = _containsLinkIndex(link);
@@ -56,28 +55,16 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface* link)
 
     _rgLinkInfo[linkIndex].commLost = false;
 
-    // Notify the user of communication regained
-    bool isPrimaryLink = link == _primaryLink.lock().get();
-    if (_rgLinkInfo.count() > 1) {
-        commRegainedMessage = tr("%1Communication regained on %2 link").arg(_vehicle->_vehicleIdSpeech()).arg(isPrimaryLink ? tr("primary") : tr("secondary"));
-    } else {
-        commRegainedMessage = tr("%1Communication regained").arg(_vehicle->_vehicleIdSpeech());
-    }
-
     // Try to switch to another link
     if (_updatePrimaryLink()) {
         QString primarySwitchMessage = tr("%1Switching communication to new primary link").arg(_vehicle->_vehicleIdSpeech());
     }
 
-    if (!commRegainedMessage.isEmpty()) {
-        _vehicle->_say(commRegainedMessage);
-    }
     if (!primarySwitchMessage.isEmpty()) {
         _vehicle->_say(primarySwitchMessage);
     }
-    if (!commRegainedMessage.isEmpty() || !primarySwitchMessage.isEmpty()) {
-        bool showBothMessages = !commRegainedMessage.isEmpty() && !primarySwitchMessage.isEmpty();
-        qgcApp()->showAppMessage(QStringLiteral("%1%2%3").arg(commRegainedMessage).arg(showBothMessages ? " " : "").arg(primarySwitchMessage));
+    if (!primarySwitchMessage.isEmpty()) {
+        qgcApp()->showAppMessage(primarySwitchMessage);
     }
 
     emit linkStatusesChanged();
