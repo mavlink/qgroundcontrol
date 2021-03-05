@@ -1439,7 +1439,7 @@ Set -1 to disable the check</short_desc>
         <value code="7">Lockdown</value>
       </values>
     </parameter>
-    <parameter name="COM_OF_LOSS_T" default="0.5" type="FLOAT">
+    <parameter name="COM_OF_LOSS_T" default="1.0" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action.
 See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <min>0</min>
