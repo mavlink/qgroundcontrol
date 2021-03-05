@@ -354,8 +354,11 @@ void ParameterEditorController::resetAllToVehicleConfiguration(void)
 
 bool ParameterEditorController::_shouldShow(Fact* fact) const
 {
-    bool show = _showModifiedOnly ? (fact->defaultValueAvailable() ? (fact->valueEqualsDefault() ? false : true) : false) : true;
-    return show;
+    if (!_showModifiedOnly) {
+        return true;
+    }
+
+    return fact->defaultValueAvailable() && !fact->valueEqualsDefault();
 }
 
 void ParameterEditorController::_searchTextChanged(void)
