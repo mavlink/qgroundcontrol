@@ -10469,9 +10469,32 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="IMU_GYRO_DYN_NF" default="0" type="INT32">
+      <short_desc>IMU gyro dynamic notch filtering</short_desc>
+      <long_desc>Enable bank of dynamically updating notch filters. Requires ESC RPM feedback or onboard FFT (IMU_GYRO_FFT_EN).</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <bitmask>
+        <bit index="0">ESC RPM</bit>
+        <bit index="1">FFT</bit>
+      </bitmask>
+    </parameter>
     <parameter name="IMU_GYRO_FFT_EN" default="0" type="INT32" boolean="true">
       <short_desc>IMU gyro FFT enable</short_desc>
       <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter name="IMU_GYRO_FFT_LEN" default="256" type="INT32">
+      <short_desc>IMU gyro FFT length</short_desc>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="128">128</value>
+        <value code="256">256</value>
+        <value code="512">512</value>
+        <value code="1024">1024</value>
+        <value code="2048">2048</value>
+        <value code="4096">4096</value>
+      </values>
     </parameter>
     <parameter name="IMU_GYRO_FFT_MAX" default="200.0" type="FLOAT">
       <short_desc>IMU gyro FFT maximum frequency</short_desc>
