@@ -114,6 +114,7 @@ ColumnLayout {
     Column {
         id:         buttonCol
         width:      parent.width
+        anchors.top: flowColumn.bottom
         visible:    globals.activeVehicle.supportsJSButton
         spacing:    ScreenTools.defaultFontPixelHeight / 3
         Row {
@@ -124,11 +125,11 @@ ColumnLayout {
                 text:                   qsTr("#")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
                 text:                   qsTr("Function: ")
             }
             QGCLabel {
-                width:                  ScreenTools.defaultFontPixelWidth * 15
+                width:                  ScreenTools.defaultFontPixelWidth * 26
                 text:                   qsTr("Shift Function: ")
             }
         }
