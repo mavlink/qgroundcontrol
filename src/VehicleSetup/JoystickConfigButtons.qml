@@ -114,7 +114,6 @@ ColumnLayout {
     Column {
         id:         buttonCol
         width:      parent.width
-        anchors.top: flowColumn.bottom
         visible:    globals.activeVehicle.supportsJSButton
         spacing:    ScreenTools.defaultFontPixelHeight / 3
         Row {
@@ -130,6 +129,7 @@ ColumnLayout {
             }
             QGCLabel {
                 width:                  ScreenTools.defaultFontPixelWidth * 26
+                visible:                globals.activeVehicle.supportsJSButton
                 text:                   qsTr("Shift Function: ")
             }
         }
@@ -145,6 +145,7 @@ ColumnLayout {
                 property bool hasFirmwareSupport: controller.parameterExists(-1, parameterName)
 
                 property bool pressed
+                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
 
                 Rectangle {
                     anchors.verticalCenter:     parent.verticalCenter
@@ -205,6 +206,27 @@ ColumnLayout {
                         }
                     }
                 }
+                QGCCheckBox {
+                    id:                         repeatCheck
+                    text:                       qsTr("Repeat")
+                    enabled:                    currentAssignableAction && _activeJoystick.calibrated && currentAssignableAction.canRepeat
+                    visible:                    !globals.activeVehicle.supportsJSButton
+
+                    onClicked: {
+                        _activeJoystick.setButtonRepeat(modelData, checked)
+                    }
+                    Component.onCompleted: {
+                        if(_activeJoystick) {
+                            checked = _activeJoystick.getButtonRepeat(modelData)
+                        }
+                    }
+                    anchors.verticalCenter:     parent.verticalCenter
+                }
+                Item {
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     1
+                }
+
                 FactComboBox {
                     id:         shiftJSButtonActionCombo
                     width:      ScreenTools.defaultFontPixelWidth * 26
