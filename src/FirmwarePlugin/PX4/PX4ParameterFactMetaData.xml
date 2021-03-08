@@ -10473,7 +10473,7 @@ is less than 50% of this value</short_desc>
       <short_desc>IMU gyro dynamic notch filtering</short_desc>
       <long_desc>Enable bank of dynamically updating notch filters. Requires ESC RPM feedback or onboard FFT (IMU_GYRO_FFT_EN).</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>3</max>
       <bitmask>
         <bit index="0">ESC RPM</bit>
         <bit index="1">FFT</bit>
