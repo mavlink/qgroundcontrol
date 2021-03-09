@@ -223,7 +223,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
             wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/" && \
-            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
             rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}" && \
             rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
@@ -231,7 +231,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
         QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
         PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
 
-        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
+        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-qt
         DEFINES += QGC_AIRMAP_ENABLED
     } else {
         message("Skipping support for Airmap (unsupported platform)")
