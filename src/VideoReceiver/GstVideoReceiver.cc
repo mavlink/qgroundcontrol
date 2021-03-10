@@ -1401,6 +1401,30 @@ GstVideoReceiver::_wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer d
 void
 GstVideoReceiver::_linkPad(GstElement* element, GstPad* pad, gpointer data)
 {
+    bool is_video = true;
+
+    GstCaps* filter = gst_caps_from_string("application/x-rtp, media=(string)video");
+
+    if (filter != nullptr) {
+        GstCaps* caps = gst_pad_query_caps(pad, nullptr);
+
+        if (caps != nullptr) {
+            if (!gst_caps_is_any(caps) && !gst_caps_can_intersect(caps, filter)) {
+                is_video = false;
+            }
+
+            gst_caps_unref(caps);
+            caps = nullptr;
+        }
+
+        gst_caps_unref(filter);
+        filter = nullptr;
+    }
+
+    if (!is_video) {
+        return;
+    }
+
     gchar* name;
 
     if ((name = gst_pad_get_name(pad)) != nullptr) {
