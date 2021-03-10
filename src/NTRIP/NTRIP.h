@@ -34,6 +34,7 @@ public:
                  const QString& username,
                  const QString& password,
                  const QString& mountpoint,
+                 const QString& whitelist,
                  QObject* parent);
     ~NTRIPTCPLink();
 
@@ -65,6 +66,7 @@ private:
     QString         _username;
     QString         _password;
     QString         _mountpoint;
+    QVector<int>    _whitelist;
 
     RTCMParsing *_rtcm_parsing{nullptr};
     NTRIPState _state;

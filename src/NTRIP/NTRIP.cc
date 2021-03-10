@@ -33,6 +33,7 @@ void NTRIP::setToolbox(QGCToolbox* toolbox)
                                     settings->ntripUsername()->rawValue().toString(),
                                     settings->ntripPassword()->rawValue().toString(),
                                     settings->ntripMountpoint()->rawValue().toString(),
+                                    settings->ntripWhitelist()->rawValue().toString(),
                                     this);
         connect(_tcpLink, &NTRIPTCPLink::error,              this, &NTRIP::_tcpError,           Qt::QueuedConnection);
         connect(_tcpLink, &NTRIPTCPLink::RTCMDataUpdate,   _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
@@ -51,6 +52,7 @@ NTRIPTCPLink::NTRIPTCPLink(const QString& hostAddress,
                            const QString &username,
                            const QString &password,
                            const QString &mountpoint,
+                           const QString &whitelist,
                            QObject* parent)
     : QThread       (parent)
     , _hostAddress  (hostAddress)
@@ -61,6 +63,12 @@ NTRIPTCPLink::NTRIPTCPLink(const QString& hostAddress,
 {
     moveToThread(this);
     start();
+    for(const auto& msg: whitelist.split(',')){
+        int msg_int = msg.toInt();
+        if(msg_int)
+            _whitelist.append(msg_int);
+    }
+    qCDebug(NTRIPLog) << "whitelist: " << _whitelist;
     if (!_rtcm_parsing) {
         _rtcm_parsing = new RTCMParsing();
     }
@@ -104,7 +112,7 @@ void NTRIPTCPLink::_hardwareConnect()
     }
     // If mountpoint is specified, send an http get request for data
     if ( !_mountpoint.isEmpty()){
-        qCInfo(NTRIPLog) << "Sending HTTP request";
+        qCDebug(NTRIPLog) << "Sending HTTP request";
         QString auth = QString(_username + ":"  + _password).toUtf8().toBase64();
         QString query = "GET /%1 HTTP/1.0\r\nUser-Agent: NTRIP\r\nAuthorization: Basic %2\r\n\r\n";
         _socket->write(query.arg(_mountpoint).arg(auth).toUtf8());
@@ -128,7 +136,15 @@ void NTRIPTCPLink::_parse(const QByteArray &buffer)
         if(_rtcm_parsing->addByte(byte)){
             _state = NTRIPState::waiting_for_rtcm_header;
             QByteArray message((char*)_rtcm_parsing->message(), static_cast<int>(_rtcm_parsing->messageLength()));
-            emit RTCMDataUpdate(message);
+            //TODO: Restore the following when upstreamed in Driver repo
+            //uint16_t id = _rtcm_parsing->messageId();
+            uint16_t id = ((uint8_t)message[3] << 4) | ((uint8_t)message[4] >> 4);
+            if(_whitelist.empty() || _whitelist.contains(id)){
+                emit RTCMDataUpdate(message);
+                qCDebug(NTRIPLog) << "Sending " << id << "of size " << message.length();
+            }
+            else 
+                qCDebug(NTRIPLog) << "Ignoring " << id;
             _rtcm_parsing->reset();
         }
     }

@@ -1061,6 +1061,16 @@ Rectangle {
                                 visible:                ntripGrid.ntripSettings.ntripMountpoint.visible
                                 Layout.preferredWidth:  _valueFieldWidth
                             }
+                            
+                            QGCLabel {
+                                text:               ntripGrid.ntripSettings.ntripWhitelist.shortDescription
+                                visible:            ntripGrid.ntripSettings.ntripWhitelist.visible
+                            }
+                            FactTextField {
+                                fact:                   ntripGrid.ntripSettings.ntripWhitelist
+                                visible:                ntripGrid.ntripSettings.ntripWhitelist.visible
+                                Layout.preferredWidth:  _valueFieldWidth
+                            }
                         }
                     }
 

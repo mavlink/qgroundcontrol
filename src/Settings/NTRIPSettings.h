@@ -24,4 +24,5 @@ public:
     DEFINE_SETTINGFACT(ntripUsername)
     DEFINE_SETTINGFACT(ntripPassword)
     DEFINE_SETTINGFACT(ntripMountpoint)
+    DEFINE_SETTINGFACT(ntripWhitelist)
 };

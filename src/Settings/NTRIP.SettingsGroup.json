@@ -46,6 +46,14 @@
     "type":                 "string",
     "default":         "",
     "qgcRebootRequired":    true
+},
+{
+    "name":                 "ntripWhitelist",
+    "shortDesc":     "RTCM Message Whitelist",
+    "longDesc":      "RTCM Messages to send over mavlink. Leave blank for all messages",
+    "type":                 "string",
+    "default":         "",
+    "qgcRebootRequired":    true
 }
 ]
 }
