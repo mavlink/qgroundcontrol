@@ -32,6 +32,8 @@ add_library(Vehicle
 	InitialConnectStateMachine.h
 	MAVLinkLogManager.cc
 	MAVLinkLogManager.h
+	MAVLinkStreamConfig.cc
+	MAVLinkStreamConfig.h
 	MultiVehicleManager.cc
 	MultiVehicleManager.h
 	StateMachine.cc
@@ -55,6 +57,10 @@ add_library(Vehicle
 	VehicleEscStatusFactGroup.h
 	VehicleEstimatorStatusFactGroup.cc
 	VehicleEstimatorStatusFactGroup.h
+	VehicleLocalPositionFactGroup.cc
+	VehicleLocalPositionFactGroup.h
+	VehicleLocalPositionSetpointFactGroup.cc
+	VehicleLocalPositionSetpointFactGroup.h
 	VehicleGPSFactGroup.cc
 	VehicleGPSFactGroup.h
 	VehicleGPS2FactGroup.cc
