@@ -3069,7 +3069,7 @@ QString Vehicle::firmwareVersionTypeString() const
         return QStringLiteral("rc");
     case FIRMWARE_VERSION_TYPE_OFFICIAL:
     default:
-        return QStringLiteral("");
+        return QStringLiteral();
     }
 }
 
