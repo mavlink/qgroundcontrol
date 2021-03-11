@@ -146,7 +146,7 @@ Rectangle {
 
         function brandImageOutdoor() {
             if (_userBrandingOutdoor) {
-                return _userBrandingOutdoor
+                return _userBrandImageOutdoor
             } else {
                 if (_userBrandingIndoor) {
                     return _userBrandingIndoor
