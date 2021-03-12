@@ -57,17 +57,23 @@ Item {
     }
 
     function showDragArea() {
-        if (!_dragAreaShowing && _missionItem.specifiesCoordinate) {
+        if (!_dragAreaShowing) {
             _dragArea = dragAreaComponent.createObject(map)
             _dragAreaShowing = true
         }
     }
 
+    function updateDragArea() {
+        if (_missionItem.isCurrentItem && map.planView && _missionItem.specifiesCoordinate) {
+            showDragArea()
+        } else {
+            hideDragArea()
+        }
+    }
+
     Component.onCompleted: {
         showItemVisuals()
-        if (_missionItem.isCurrentItem && map.planView) {
-            showDragArea()
-        }
+        updateDragArea()
     }
 
     Component.onDestruction: {
@@ -79,13 +85,8 @@ Item {
     Connections {
         target: _missionItem
 
-        onIsCurrentItemChanged: {
-            if (_missionItem.isCurrentItem && map.planView) {
-                showDragArea()
-            } else {
-                hideDragArea()
-            }
-        }
+        onIsCurrentItemChanged:         updateDragArea()
+        onSpecifiesCoordinateChanged:   updateDragArea()
     }
 
     // Control which is used to drag items
