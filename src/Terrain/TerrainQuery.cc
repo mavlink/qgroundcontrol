@@ -911,7 +911,7 @@ QList<double> UnitTestTerrainQuery::_requestCoordinateHeights(const QList<QGeoCo
             double fraction = 1.0 * x / dx;
             result.append(std::round(UnitTestTerrainQuery::LinearSlopeRegion::minAMSLElevation + (fraction * UnitTestTerrainQuery::LinearSlopeRegion::totalElevationChange)));
         } else if (hillRegion.contains(coordinate)) {
-            double arc_second_meters = (6371000. / 3600.) * (M_PI / 180);
+            double arc_second_meters = (earths_radius_mts * one_second_deg) * (M_PI / 180);
             double x = (coordinate.latitude() - hillRegion.center().latitude()) * arc_second_meters / one_second_deg;
             double y = (coordinate.longitude() - hillRegion.center().longitude()) * arc_second_meters / one_second_deg;
             double x2y2 = pow(x, 2) + pow(y, 2);
