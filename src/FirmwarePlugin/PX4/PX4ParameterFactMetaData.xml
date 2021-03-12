@@ -11922,6 +11922,11 @@ Absolute value superior to 10000 will disable distance sensor</short_desc>
       <decimal>2</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="SIH_T_TAU" default="0.05" type="FLOAT">
+      <short_desc>thruster time constant tau</short_desc>
+      <long_desc>the time taken for the thruster to step from 0 to 100% should be about 4 times tau</long_desc>
+      <unit>s</unit>
+    </parameter>
   </group>
   <group name="System">
     <parameter name="LED_RGB1_MAXBRT" default="31" type="INT32">
