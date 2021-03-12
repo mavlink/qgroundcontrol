@@ -481,13 +481,6 @@ FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
-    return {
-#if 0
-    // Waiting for module update
-        MAV_CMD_DO_SET_REVERSE,
-#endif
-    };
-
     QList<MAV_CMD> supportedCommands = {
         MAV_CMD_NAV_WAYPOINT,
         MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TURNS, MAV_CMD_NAV_LOITER_TIME,
