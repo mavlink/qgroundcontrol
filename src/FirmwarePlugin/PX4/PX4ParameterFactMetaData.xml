@@ -10425,7 +10425,7 @@ is less than 50% of this value</short_desc>
       <short_desc>IMU gyro FFT enable</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_LEN" default="256" type="INT32">
+    <parameter name="IMU_GYRO_FFT_LEN" default="1024" type="INT32">
       <short_desc>IMU gyro FFT length</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
@@ -10438,14 +10438,14 @@ is less than 50% of this value</short_desc>
         <value code="4096">4096</value>
       </values>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MAX" default="200.0" type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MAX" default="256." type="FLOAT">
       <short_desc>IMU gyro FFT maximum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MIN" default="50.0" type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MIN" default="32." type="FLOAT">
       <short_desc>IMU gyro FFT minimum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
