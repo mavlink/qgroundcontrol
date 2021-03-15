@@ -150,6 +150,22 @@ SetupPage {
                     }
                 }
             }
+
+            FactSliderPanel {
+                width:          availableWidth
+
+                sliderModel: ListModel {
+                    ListElement {
+                        title:          qsTr("Mission Turning Radius")
+                        description:    qsTr("Increasing this leads to rounder turns in missions (corner cutting). Use the minimum value for accurate corner tracking.")
+                        param:          "NAV_ACC_RAD"
+                        min:            2
+                        max:            16
+                        step:           0.5
+                    }
+                }
+            }
+
         } // Column
     } // Component - pageComponent
 } // SetupPage
