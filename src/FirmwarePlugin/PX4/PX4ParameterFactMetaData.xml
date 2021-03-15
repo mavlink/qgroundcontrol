@@ -10403,6 +10403,10 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter name="IMU_GYRO_CAL_EN" default="1" type="INT32" boolean="true">
+      <short_desc>IMU gyro auto calibration enable</short_desc>
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter name="IMU_GYRO_CUTOFF" default="30.0" type="FLOAT">
       <short_desc>Low pass filter cutoff frequency for gyro</short_desc>
       <long_desc>The cutoff frequency for the 2nd order butterworth filter on the primary gyro. This only affects the angular velocity sent to the controllers, not the estimators. It applies also to the angular acceleration (D-Term filter), see IMU_DGYRO_CUTOFF. A value of 0 disables the filter.</long_desc>
