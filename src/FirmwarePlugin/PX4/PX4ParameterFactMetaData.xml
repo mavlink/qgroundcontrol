@@ -3576,6 +3576,13 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter name="FW_T_SEB_R_FF" default="1.0" type="FLOAT">
+      <short_desc>Specific total energy balance rate feedforward gain</short_desc>
+      <min>0.5</min>
+      <max>3</max>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
     <parameter name="FW_T_SINK_MAX" default="5.0" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
       <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
