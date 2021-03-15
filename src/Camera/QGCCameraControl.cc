@@ -2019,7 +2019,11 @@ QGCCameraControl::_downloadFinished()
         data.append("\n");
     } else {
         data.clear();
-        qWarning() << QString("Camera Definition download error: %1 status: %2").arg(reply->errorString(), reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString());
+        qWarning() << QString("Camera Definition (%1) download error: %2 status: %3").arg(
+            reply->url().toDisplayString(),
+            reply->errorString(),
+            reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toString()
+        );
     }
     emit dataReady(data);
     //reply->deleteLater();
