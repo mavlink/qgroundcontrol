@@ -48,7 +48,7 @@ QString JapanReliefMapProvider::_getURL(const int x, const int y, const int zoom
 QString CustomURLMapProvider::_getURL(const int x, const int y, const int zoom, QNetworkAccessManager* networkManager) {
     Q_UNUSED(networkManager)
     QString url = qgcApp()->toolbox()->settingsManager()->appSettings()->customURL()->rawValue().toString();
-    return url.arg(zoom).arg(x).arg(y);
+    return url.replace("{x}",QString::number(x)).replace("{y}",QString::number(y)).replace(QRegExp("\\{(z|zoom)\\}"),QString::number(zoom));
 }
 
 static const QString StatkartMapUrl = QStringLiteral("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3");

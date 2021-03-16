@@ -223,7 +223,7 @@
 {
     "name":             "customURL",
     "shortDesc": "Custom Map URL",
-    "longDesc":  "URL for X Y Z map with %1 for zoom level %2 for x and %3 for y",
+    "longDesc":  "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
     "type":             "string",
     "default":     ""
 },

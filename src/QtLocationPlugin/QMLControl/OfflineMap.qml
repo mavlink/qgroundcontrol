@@ -382,7 +382,7 @@ Item {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
-                        text:           qsTr("URL with the mappings /zoom/x/y/ /%1/%2/%3/")
+                        text:           qsTr("URL with {x} {y} {z} or {zoom} substitutions")
                         visible:        _customURLFact ? _customURLFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
