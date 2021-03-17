@@ -30,7 +30,7 @@ Column {
 
     Item {
         height: ScreenTools.defaultFontPixelHeight * 2
-        width:  ScreenTools.defaultFontPixelWidth * 43
+        width:  parent.width
         QGCLabel {
             id:                 warningLabel
             anchors.margins:    _margins
@@ -66,7 +66,7 @@ Column {
     }
     Item {
         height: ScreenTools.defaultFontPixelHeight / 2
-        width:  ScreenTools.defaultFontPixelWidth * 43
+        width:  parent.width
     }
     QGCLabel {
         text:   qsTr("Server addresses (optional):")
@@ -82,7 +82,7 @@ Column {
                 spacing:    ScreenTools.defaultFontPixelHeight / 2
                 Rectangle {
                     height:  1
-                    width:   ScreenTools.defaultFontPixelWidth * 43
+                    width:   parent.width
                     color:   qgcPal.button
                     visible: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeUdp && subEditConfig.hostList.length > 0
                 }
@@ -91,7 +91,7 @@ Column {
                     delegate:
                     QGCButton {
                         text:               modelData
-                        width:              ScreenTools.defaultFontPixelWidth * 43
+                        width:              parent.width
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                         autoExclusive:      true
                         onClicked: {
@@ -104,7 +104,7 @@ Column {
                     id:         hostField
                     focus:      true
                     visible:    false
-                    width:      ScreenTools.defaultFontPixelWidth * 43
+                    width:      parent.width
                     onEditingFinished: {
                         if(subEditConfig) {
                             if(hostField.text !== "") {
@@ -123,15 +123,15 @@ Column {
                 }
                 Rectangle {
                     height: 1
-                    width:  ScreenTools.defaultFontPixelWidth * 43
+                    width:  parent.width
                     color:  qgcPal.button
                 }
                 Item {
                     height: ScreenTools.defaultFontPixelHeight / 2
-                    width:  ScreenTools.defaultFontPixelWidth * 43
+                    width:  parent.width
                 }
                 Item {
-                    width:  ScreenTools.defaultFontPixelWidth * 43
+                    width:  _firstColumn + _secondColumn
                     height: udpButtonRow.height
                     Row {
                         id:         udpButtonRow
