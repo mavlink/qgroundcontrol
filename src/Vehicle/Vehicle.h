@@ -422,6 +422,7 @@ public:
     int id() { return _id; }
     MAV_AUTOPILOT firmwareType() const { return _firmwareType; }
     MAV_TYPE vehicleType() const { return _vehicleType; }
+    QGCMAVLink::VehicleClass_t vehicleClass(void) const { return QGCMAVLink::vehicleClass(_vehicleType); }
     Q_INVOKABLE QString vehicleTypeName() const;
 
     /// Sends a message to the specified link
