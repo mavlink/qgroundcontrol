@@ -95,12 +95,9 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(this, &StructureScanComplexItem::wizardModeChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(this,               &StructureScanComplexItem::amslEntryAltChanged,     this, &StructureScanComplexItem::amslExitAltChanged);
 
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::minAMSLAltitudeChanged);
