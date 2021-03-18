@@ -27,7 +27,10 @@ ComplexMissionItem::ComplexMissionItem(PlanMasterController* masterController, b
     , _toolbox          (qgcApp()->toolbox())
     , _settingsManager  (_toolbox->settingsManager())
 {
-
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::_amslEntryAltChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::_amslExitAltChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::minAMSLAltitudeChanged);
+    connect(_missionController, &MissionController::plannedHomePositionChanged,         this, &ComplexMissionItem::maxAMSLAltitudeChanged);
 }
 
 const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem& other)
