@@ -18,7 +18,7 @@ QGC_CUSTOM_APP_ICON="${QGC_CUSTOM_APP_ICON:-${QGC_SRC}/resources/icons/qgroundco
 QGC_CUSTOM_APP_ICON_NAME="${QGC_CUSTOM_APP_ICON_NAME:-QGroundControl}"
 
 if [ ! -f ${QGC_SRC}/qgroundcontrol.pro ]; then
-  echo "please specify path to $(QGC_CUSTOM_APP_NAME) source as the 1st argument"
+  echo "please specify path to ${QGC_CUSTOM_APP_NAME} source as the 1st argument"
   exit 1
 fi
 
