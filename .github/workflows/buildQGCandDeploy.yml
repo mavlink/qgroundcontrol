@@ -41,8 +41,11 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-              wget --quiet https://s3.amazonaws.com/downloads.bluerobotics.com/QGC/dependencies/gstreamer-osx-1.18.3.tar.bz2 &&
-              sudo tar jxf gstreamer-osx-1.18.3.tar.bz2 -C /Library/Frameworks
+              wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-devel-1.18.1-x86_64.pkg
+              wget https://gstreamer.freedesktop.org/data/pkg/osx/1.18.1/gstreamer-1.0-1.18.1-x86_64.pkg
+              for package in *.pkg ;
+                do sudo installer -verbose -pkg "$package" -target /
+              done
               find /Library/Frameworks/GS*
 
       - name: mkdir directory shadow_build
