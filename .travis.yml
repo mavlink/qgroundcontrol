@@ -55,7 +55,7 @@ jobs:
           before_deploy: skip
           after_deploy: skip
           script: echo "Google Play Upload"
-        
+
 # iOS build needs updating Qt to > 5.10
 #        - os: osx
 #          osx_image: xcode9.2
@@ -186,7 +186,7 @@ before_script:
         git fetch --tags origin master &&
         ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};
     fi
-    
+
   # Install signing cert into OSX keychain
   - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
         export CODESIGN=codesign;

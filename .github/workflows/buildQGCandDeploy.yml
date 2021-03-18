@@ -1,6 +1,6 @@
-name: Build QGC and upload to release 
+name: Build QGC and upload to release
 
-on: 
+on:
     push:
       #Every time a tag with name v* (e.g: vX.Y.Z) is pushed,
       #this action will trigger.
@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        #Only running MacOS right now, but we leave this options 
+        #Only running MacOS right now, but we leave this options
         #for future builds of all distros
         exclude:
           - os: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
 
       - name: install QT via action
         uses: jurplel/install-qt-action@v2
-        with: 
+        with:
           version: '5.12.6'
           host: 'mac'
           target: 'desktop'
@@ -52,9 +52,9 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-              wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2
-              sudo tar -zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
-        
+              wget --quiet https://s3.amazonaws.com/downloads.bluerobotics.com/QGC/dependencies/gstreamer-osx-1.18.3.tar.bz2 &&
+              sudo tar jxf gstreamer-osx-1.18.3.tar.bz2 -C /Library/Frameworks
+
       - name: mkdir directory shadow_build
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
