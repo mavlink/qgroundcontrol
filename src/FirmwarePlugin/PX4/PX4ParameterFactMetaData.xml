@@ -10441,15 +10441,12 @@ is less than 50% of this value</short_desc>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="128">128</value>
         <value code="256">256</value>
-        <value code="512">512</value>
         <value code="1024">1024</value>
-        <value code="2048">2048</value>
         <value code="4096">4096</value>
       </values>
     </parameter>
-    <parameter name="IMU_GYRO_FFT_MAX" default="256." type="FLOAT">
+    <parameter name="IMU_GYRO_FFT_MAX" default="192." type="FLOAT">
       <short_desc>IMU gyro FFT maximum frequency</short_desc>
       <min>1</min>
       <max>1000</max>
