@@ -52,6 +52,7 @@
 #include "QGCLoggingCategory.h"
 #include "ParameterEditorController.h"
 #include "ESP8266ComponentController.h"
+#include "RadioComponentController.h"
 #include "ScreenToolsController.h"
 #include "QGCFileDialogController.h"
 #include "RCChannelMonitorController.h"
@@ -569,6 +570,7 @@ void QGCApplication::_initCommon()
 
     qmlRegisterType<ParameterEditorController>      (kQGCControllers,                       1, 0, "ParameterEditorController");
     qmlRegisterType<ESP8266ComponentController>     (kQGCControllers,                       1, 0, "ESP8266ComponentController");
+    qmlRegisterType<RadioComponentController>       (kQGCControllers,                       1, 0, "RadioComponentController");
     qmlRegisterType<ScreenToolsController>          (kQGCControllers,                       1, 0, "ScreenToolsController");
     qmlRegisterType<PlanMasterController>           (kQGCControllers,                       1, 0, "PlanMasterController");
     qmlRegisterType<QGCFileDialogController>        (kQGCControllers,                       1, 0, "QGCFileDialogController");
