@@ -96,8 +96,6 @@ void LandingComplexItem::_init(void)
 
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_amslEntryAltChanged);
     connect(this,                       &LandingComplexItem::altitudesAreRelativeChanged,   this, &LandingComplexItem::_amslExitAltChanged);
-    connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_amslEntryAltChanged);
-    connect(_missionController,         &MissionController::plannedHomePositionChanged,     this, &LandingComplexItem::_amslExitAltChanged);
     connect(finalApproachAltitude(),    &Fact::valueChanged,                                this, &LandingComplexItem::_amslEntryAltChanged);
     connect(landingAltitude(),          &Fact::valueChanged,                                this, &LandingComplexItem::_amslExitAltChanged);
     connect(this,                       &LandingComplexItem::amslEntryAltChanged,           this, &LandingComplexItem::maxAMSLAltitudeChanged);
