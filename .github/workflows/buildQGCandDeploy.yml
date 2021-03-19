@@ -54,7 +54,6 @@ jobs:
       - name: run qmake and build
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run:  |
-              export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Library/Frameworks/GStreamer.framework/Versions/1.0/
               export JOBS=$((`sysctl -n hw.ncpu`+1))
               qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG}
               make -j$JOBS
