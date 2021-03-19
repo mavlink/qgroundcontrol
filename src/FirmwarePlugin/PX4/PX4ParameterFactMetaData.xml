@@ -5404,7 +5404,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter name="MPC_XY_CRUISE" default="5.0" type="FLOAT">
       <short_desc>Maximum horizontal velocity in mission</short_desc>
-      <long_desc>Normal horizontal velocity in AUTO modes (includes also RTL / hold / etc.) and endpoint for position stabilized mode (POSCTRL).</long_desc>
+      <long_desc>Horizontal velocity used when flying autonomously in e.g. Missions, RTL, Goto.</long_desc>
       <min>3.0</min>
       <max>20.0</max>
       <unit>m/s</unit>
