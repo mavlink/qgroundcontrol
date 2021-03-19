@@ -176,6 +176,9 @@ exists ($$PWD/.git) {
     GIT_HASH     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD rev-parse --short HEAD)
     GIT_TIME     = $$system(git --git-dir $$PWD/.git --work-tree $$PWD show --oneline --format=\"%ci\" -s HEAD)
 
+    GIT_VERSION_CODE = $${GIT_DESCRIBE}
+    GIT_VERSION_CODE = $$replace(GIT_VERSION_CODE, "v", "")
+
     # determine if we're on a tag matching vX.Y.Z (stable release)
     contains(GIT_DESCRIBE, v[0-9]+.[0-9]+.[0-9]+) {
         # release version "vX.Y.Z"
