@@ -69,6 +69,8 @@ jobs:
         run:  |
               export JOBS=$((`sysctl -n hw.ncpu`+1))
               export LIBRARY_PATH=/Library/Frameworks/GStreamer.framework/Versions/1.0/lib/
+              export CCACHE_DIR=~/.ccache
+              ccache -s
               ccache -z
               qmake -r ${ACTIONS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=ccache
               make -j$JOBS
