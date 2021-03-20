@@ -74,10 +74,7 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface* link)
     }
     if (!primarySwitchMessage.isEmpty()) {
         _vehicle->_say(primarySwitchMessage);
-    }
-    if (!commRegainedMessage.isEmpty() || !primarySwitchMessage.isEmpty()) {
-        bool showBothMessages = !commRegainedMessage.isEmpty() && !primarySwitchMessage.isEmpty();
-        qgcApp()->showAppMessage(QStringLiteral("%1%2%3").arg(commRegainedMessage).arg(showBothMessages ? " " : "").arg(primarySwitchMessage));
+        qgcApp()->showAppMessage(primarySwitchMessage);
     }
 
     emit linkStatusesChanged();
@@ -117,7 +114,6 @@ void VehicleLinkManager::_commLostCheck(void)
             if (_rgLinkInfo.count() > 1) {
                 QString msg = tr("%1Communication lost on %2 link.").arg(_vehicle->_vehicleIdSpeech()).arg(isPrimaryLink ? tr("primary") : tr("secondary"));
                 _vehicle->_say(msg);
-                qgcApp()->showAppMessage(msg);
             }
         }
     }
