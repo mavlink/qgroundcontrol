@@ -41,6 +41,8 @@ class FirmwarePlugin : public QObject
     Q_OBJECT
 
 public:
+    FirmwarePlugin ();
+
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
