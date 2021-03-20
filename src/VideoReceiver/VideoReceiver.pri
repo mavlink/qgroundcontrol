@@ -25,6 +25,9 @@ LinuxBuild {
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F/Library/Frameworks -framework GStreamer
+        QMAKE_LFLAGS += -Wl,-rpath,@executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib
+        QMAKE_LFLAGS += -Wl,-rpath,@executable_path/../Frameworks/GStreamer.framework/Versions/1.0
+        QMAKE_LFLAGS += -Wl,-rpath,/Library/Frameworks/GStreamer.framework/Versions/1.0
     }
 } else:iOSBuild {
     #- gstreamer framework installed by the gstreamer iOS SDK installer (default to home directory)

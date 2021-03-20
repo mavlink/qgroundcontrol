@@ -29,9 +29,9 @@ installer {
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
         QMAKE_POST_LINK += && echo osxrelocator
-        QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/libMoltenVK.dylib @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib -r > /dev/null 2>&1
-        QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0 -r > /dev/null 2>&1
-        QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/libMoltenVK.dylib @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib -r > /dev/null 2>&1
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0 -r > /dev/null 2>&1
+        #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents @rpath @executable_path/../Frameworks -r > /dev/null 2>&1
 
         codesign {
             # Disabled for now since it's not working correctly yet
