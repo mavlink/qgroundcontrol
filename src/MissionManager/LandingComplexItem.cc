@@ -195,7 +195,7 @@ void LandingComplexItem::_recalcFromHeadingAndDistanceChange(void)
         _loiterTangentCoordinate = _landingCoordinate.atDistanceAndAzimuth(landToTangentDistance, heading + 180);
 
         // Loiter coord is 90 degrees counter clockwise from tangent coord
-        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 - 90);
+        _finalApproachCoordinate = _loiterTangentCoordinate.atDistanceAndAzimuth(radius, heading - 180 + (_loiterClockwise()->rawValue().toBool() ? -90 : 90));
         _finalApproachCoordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
 
         _ignoreRecalcSignals = true;
