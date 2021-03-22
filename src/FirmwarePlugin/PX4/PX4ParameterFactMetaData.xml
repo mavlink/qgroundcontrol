@@ -4039,7 +4039,7 @@ Value 0 turns the functionality off</short_desc>
   <group name="Land Detector">
     <parameter name="LNDFW_AIRSPD_MAX" default="6.00" type="FLOAT">
       <short_desc>Airspeed max</short_desc>
-      <long_desc>Maximum airspeed allowed in the landed state (m/s)</long_desc>
+      <long_desc>Maximum airspeed allowed in the landed state</long_desc>
       <min>4</min>
       <max>20</max>
       <unit>m/s</unit>
@@ -4047,7 +4047,7 @@ Value 0 turns the functionality off</short_desc>
     </parameter>
     <parameter name="LNDFW_VEL_XY_MAX" default="5.0" type="FLOAT">
       <short_desc>Fixedwing max horizontal velocity</short_desc>
-      <long_desc>Maximum horizontal velocity allowed in the landed state (m/s)</long_desc>
+      <long_desc>Maximum horizontal velocity allowed in the landed state</long_desc>
       <min>0.5</min>
       <max>10</max>
       <unit>m/s</unit>
@@ -4055,7 +4055,7 @@ Value 0 turns the functionality off</short_desc>
     </parameter>
     <parameter name="LNDFW_VEL_Z_MAX" default="3.0" type="FLOAT">
       <short_desc>Fixedwing max climb rate</short_desc>
-      <long_desc>Maximum vertical velocity allowed in the landed state (m/s up and down)</long_desc>
+      <long_desc>Maximum vertical velocity allowed in the landed state</long_desc>
       <min>0.1</min>
       <max>20</max>
       <unit>m/s</unit>
@@ -4063,7 +4063,7 @@ Value 0 turns the functionality off</short_desc>
     </parameter>
     <parameter name="LNDFW_XYACC_MAX" default="8.0" type="FLOAT">
       <short_desc>Fixedwing max horizontal acceleration</short_desc>
-      <long_desc>Maximum horizontal (x,y body axes) acceleration allowed in the landed state (m/s^2)</long_desc>
+      <long_desc>Maximum horizontal (x,y body axes) acceleration allowed in the landed state</long_desc>
       <min>2</min>
       <max>15</max>
       <unit>m/s^2</unit>
@@ -4092,13 +4092,13 @@ Value 0 turns the functionality off</short_desc>
     </parameter>
     <parameter name="LNDMC_XY_VEL_MAX" default="1.5" type="FLOAT">
       <short_desc>Multicopter max horizontal velocity</short_desc>
-      <long_desc>Maximum horizontal velocity allowed in the landed state (m/s)</long_desc>
+      <long_desc>Maximum horizontal velocity allowed in the landed state</long_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter name="LNDMC_Z_VEL_MAX" default="0.50" type="FLOAT">
       <short_desc>Multicopter max climb rate</short_desc>
-      <long_desc>Maximum vertical velocity allowed in the landed state (m/s up and down)</long_desc>
+      <long_desc>Maximum vertical velocity allowed in the landed state</long_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
