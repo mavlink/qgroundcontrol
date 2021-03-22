@@ -9098,8 +9098,8 @@ FW_CLMBOUT_DIFF if FW_CLMBOUT_DIFF &gt; 0</short_desc>
     </parameter>
     <parameter name="RWTO_PSP" default="0.0" type="FLOAT">
       <short_desc>Pitch setpoint during taxi / before takeoff airspeed is reached.
-A taildragger with stearable wheel might need to pitch up
-a little to keep it's wheel on the ground before airspeed
+A taildragger with steerable wheel might need to pitch up
+a little to keep its wheel on the ground before airspeed
 to takeoff is reached</short_desc>
       <min>-10.0</min>
       <max>20.0</max>
