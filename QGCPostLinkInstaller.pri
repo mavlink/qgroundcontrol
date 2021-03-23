@@ -32,7 +32,7 @@ installer {
         #QMAKE_POST_LINK += && cp -R /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && CONTENT_FOLDER=$${TARGET}.app/Contents $$SOURCE_DIR/rpath.py
         QMAKE_POST_LINK += && echo libexec
-        QMAKE_POST_LINK += && find $${TARGET}.app/Contents | grep libexec
+        QMAKE_POST_LINK += && find $${TARGET}.app/Contents
         QMAKE_POST_LINK += && mkdir -p $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec
         QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
         #QMAKE_POST_LINK += && echo osxrelocator
