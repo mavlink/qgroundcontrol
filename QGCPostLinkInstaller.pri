@@ -21,7 +21,7 @@ installer {
             # Relocate all dylibs so they can work under @executable_path/...
             # Copy the result into the app bundle
             # Make sure qgroundcontrol can find them
-            QMAKE_POST_LINK += && $$SOURCE_DIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
+            #QMAKE_POST_LINK += && $$SOURCE_DIR/tools/prepare_gstreamer_framework.sh $${OUT_PWD}/gstwork/ $${TARGET}.app $${TARGET}
         }
 
         QMAKE_POST_LINK += && echo macdeployqt
