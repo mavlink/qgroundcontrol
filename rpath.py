@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import functools
 import os
 import subprocess
 from pathlib import Path
@@ -13,6 +14,7 @@ if not os.path.exists(CONTENT_FOLDER):
 def find_files(file_name: str):
     return [str(file) for file in Path(CONTENT_FOLDER).rglob(file_name)]
 
+@cache
 def get_rpaths(file: str):
     process = subprocess.Popen(['otool', '-L', file], stdout=subprocess.PIPE)
     paths = [line.decode('unicode_escape').strip().split(" ")[0] for line in process.stdout]
