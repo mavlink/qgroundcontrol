@@ -15,27 +15,31 @@ def find_files(file_name: str):
     return [str(file) for file in Path(CONTENT_FOLDER).rglob(file_name)]
 
 @cache
-def get_rpaths(file: str):
+def get_paths(file: str):
     process = subprocess.Popen(['otool', '-L', file], stdout=subprocess.PIPE)
     paths = [line.decode('unicode_escape').strip().split(" ")[0] for line in process.stdout]
-    rpaths = filter(lambda file: "@rpath" in file, paths)
-    return list(rpaths)
+    return paths
 
 def update_file_rpath(file: str, old_rpath: str, new_rpath: str):
     print(f"{file} => {old_rpath} -> {new_rpath}")
     command = f"install_name_tool -change {old_rpath} {new_rpath} {file}".split(" ")
-    subprocess.Popen(command, stdout=subprocess.PIPE)
+    #subprocess.Popen(command, stdout=subprocess.PIPE)
 
 #get_rpaths(f"{CONTENT_FOLDER}/Frameworks/GStreamer.framework/Versions/1.0/lib/libgstnet-1.0.dylib")
 
+prefixes = ["@rpath/", "/Library/Frameworks/"]
+
 for file in find_files("*.dylib"):
-    for rpath in get_rpaths(file):
-        rpath_file = rpath[len("@rpath/"):]
-        possible_rpath_candidates = find_files(rpath_file)
-        if not possible_rpath_candidates:
-            print(f"Failed to find candidate for: {file} -> {rpath_file}")
+    paths = get_paths(file)
+    paths = filter(lambda file: any([prefix in file for prefix in prefixes]), paths)
+    scan_paths = map(lambda file: if prefix in file return (prefix, file) else continue for prefix in prefixes, paths)
+    for prefix, path in list(scan_paths):
+        path_file = path[len(prefix):]
+        possible_path_candidates = find_files(path_file)
+        if not possible_path_candidates:
+            print(f"Failed to find candidate for: {file} -> {path_file}")
             exit(1)
 
         # Remove path that already exist in original rpath reference
-        new_rpath = BASE_PATH + possible_rpath_candidates[0][(len(str(Path(CONTENT_FOLDER))) + 1):] #[:-(len(rpath_file) + 1)]
-        update_file_rpath(file, rpath, new_rpath)
+        new_rpath = BASE_PATH + possible_path_candidates[0][(len(str(Path(CONTENT_FOLDER))) + 1):]
+        update_file_rpath(file, path, new_path)
