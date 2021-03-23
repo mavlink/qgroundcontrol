@@ -18,15 +18,9 @@ CompInfo::CompInfo(COMP_METADATA_TYPE type, uint8_t compId, Vehicle* vehicle, QO
 
 }
 
-void CompInfo::setMessage(const mavlink_message_t& message)
+void CompInfo::setUriMetaData(const QString &uri, uint32_t crc)
 {
-    mavlink_component_information_t componentInformation;
-
-    mavlink_msg_component_information_decode(&message, &componentInformation);
-
-    available      = true;
-    uidMetaData    = componentInformation.metadata_uid;
-    uidTranslation = componentInformation.translation_uid;
-    uriMetaData    = componentInformation.metadata_uri;
-    uriTranslation = componentInformation.translation_uri;
+    _uris.uriMetaData = uri;
+    _uris.crcMetaData = crc;
+    _uris.crcMetaDataValid = true;
 }

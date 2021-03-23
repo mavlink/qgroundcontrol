@@ -681,7 +681,7 @@ HEADERS += \
     src/TerrainTile.h \
     src/Vehicle/CompInfo.h \
     src/Vehicle/CompInfoParam.h \
-    src/Vehicle/CompInfoVersion.h \
+    src/Vehicle/CompInfoGeneral.h \
     src/Vehicle/ComponentInformationManager.h \
     src/Vehicle/FTPManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
@@ -915,7 +915,7 @@ SOURCES += \
     src/TerrainTile.cc\
     src/Vehicle/CompInfo.cc \
     src/Vehicle/CompInfoParam.cc \
-    src/Vehicle/CompInfoVersion.cc \
+    src/Vehicle/CompInfoGeneral.cc \
     src/Vehicle/ComponentInformationManager.cc \
     src/Vehicle/FTPManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
