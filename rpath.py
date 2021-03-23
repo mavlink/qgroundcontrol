@@ -37,5 +37,5 @@ for file in find_files("*.dylib"):
             exit(1)
 
         # Remove path that already exist in original rpath reference
-        new_rpath = BASE_PATH + possible_rpath_candidates[0][len(str(Path(CONTENT_FOLDER))):] #[:-(len(rpath_file) + 1)]
+        new_rpath = BASE_PATH + possible_rpath_candidates[0][(len(str(Path(CONTENT_FOLDER))) + 1):] #[:-(len(rpath_file) + 1)]
         update_file_rpath(file, rpath, new_rpath)
