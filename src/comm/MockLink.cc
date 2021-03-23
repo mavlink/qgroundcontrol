@@ -1576,14 +1576,8 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
     switch ((int)request.param1) {
     case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
-            switch (static_cast<int>(request.param2)) {
-            case COMP_METADATA_TYPE_VERSION:
-                _sendVersionMetaData();
-                return true;
-            case COMP_METADATA_TYPE_PARAMETER:
-                _sendParameterMetaData();
-                return true;
-            }
+            _sendVersionMetaData();
+            return true;
         }
         break;
     case MAVLINK_MSG_ID_DEBUG:
@@ -1619,45 +1613,21 @@ void MockLink::_sendVersionMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]version.json";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_GENERAL_METADATA_URI_LEN]       = "mftp://[;comp=1]general.json";
 #else
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
+    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_GENERAL_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
 #endif
-    char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
+    char                peripheralsMetaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_PERIPHERALS_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
                                                 _vehicleComponentId,
                                                 _mavlinkChannel,
                                                 &responseMsg,
                                                 0,                          // time_boot_ms
-                                                COMP_METADATA_TYPE_VERSION,
-                                                1,                          // comp_metadata_uid
+                                                100,                        // general_metadata_file_crc
                                                 metaDataURI,
-                                                0,                          // comp_translation_uid
-                                                translationURI);
-    respondWithMavlinkMessage(responseMsg);
-}
-
-void MockLink::_sendParameterMetaData(void)
-{
-    mavlink_message_t   responseMsg;
-#if 1
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "mftp://[;comp=1]parameter.json.xz";
-#else
-    char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_METADATA_URI_LEN]       = "https://bit.ly/2ZKRIRE";
-#endif
-    char                translationURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_TRANSLATION_URI_LEN] = "";
-
-    mavlink_msg_component_information_pack_chan(_vehicleSystemId,
-                                                _vehicleComponentId,
-                                                _mavlinkChannel,
-                                                &responseMsg,
-                                                0,                              // time_boot_ms
-                                                COMP_METADATA_TYPE_PARAMETER,
-                                                1,                              // comp_metadata_uid
-                                                metaDataURI,
-                                                0,                              // comp_translation_uid
-                                                translationURI);
+                                                0,                          // peripherals_metadata_file_crc
+                                                peripheralsMetaDataURI);
     respondWithMavlinkMessage(responseMsg);
 }
 

@@ -20,7 +20,6 @@
 
 QGC_LOGGING_CATEGORY(CompInfoParamLog, "CompInfoParamLog")
 
-const char* CompInfoParam::_jsonScopeKey                = "scope";
 const char* CompInfoParam::_jsonParametersKey           = "parameters";
 const char* CompInfoParam::_cachedMetaDataFilePrefix    = "ParameterFactMetaData";
 const char* CompInfoParam::_indexedNameTag              = "{n}";
@@ -54,7 +53,6 @@ void CompInfoParam::setJson(const QString& metadataJsonFileName, const QString& 
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
-        { _jsonScopeKey,                QJsonValue::String, true },
         { _jsonParametersKey,           QJsonValue::Array,  true },
     };
     if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {

@@ -12,7 +12,7 @@
 #include "FTPManager.h"
 #include "QGCLZMA.h"
 #include "JsonHelper.h"
-#include "CompInfoVersion.h"
+#include "CompInfoGeneral.h"
 #include "CompInfoParam.h"
 #include "QGCFileDownload.h"
 #include "QGCApplication.h"
@@ -26,7 +26,8 @@
 QGC_LOGGING_CATEGORY(ComponentInformationManagerLog, "ComponentInformationManagerLog")
 
 ComponentInformationManager::StateFn ComponentInformationManager::_rgStates[]= {
-    ComponentInformationManager::_stateRequestCompInfoVersion,
+    ComponentInformationManager::_stateRequestCompInfoGeneral,
+    ComponentInformationManager::_stateRequestCompInfoGeneralComplete,
     ComponentInformationManager::_stateRequestCompInfoParam,
     ComponentInformationManager::_stateRequestAllCompInfoComplete
 };
@@ -46,7 +47,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)
 {
-    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION]    = new CompInfoVersion   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
+    _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
 }
 
@@ -67,10 +68,25 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     start();
 }
 
-void ComponentInformationManager::_stateRequestCompInfoVersion(StateMachine* stateMachine)
+void ComponentInformationManager::_stateRequestCompInfoGeneral(StateMachine* stateMachine)
 {
     ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
-    compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION]);
+    compMgr->_requestTypeStateMachine.request(compMgr->_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
+}
+
+void ComponentInformationManager::_stateRequestCompInfoGeneralComplete(StateMachine* stateMachine)
+{
+    ComponentInformationManager* compMgr = static_cast<ComponentInformationManager*>(stateMachine);
+    compMgr->_updateAllUri();
+    compMgr->advance();
+}
+
+void ComponentInformationManager::_updateAllUri()
+{
+    CompInfoGeneral* general = qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]);
+    for (auto& compInfo : _compInfoMap[MAV_COMP_ID_AUTOPILOT1]) {
+        general->setUris(*compInfo);
+    }
 }
 
 void ComponentInformationManager::_stateRequestCompInfoComplete(void)
@@ -100,7 +116,7 @@ void ComponentInformationManager::_stateRequestAllCompInfoComplete(StateMachine*
 
 bool ComponentInformationManager::_isCompTypeSupported(COMP_METADATA_TYPE type)
 {
-    return qobject_cast<CompInfoVersion*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_VERSION])->isMetaDataTypeSupported(type);
+    return qobject_cast<CompInfoGeneral*>(_compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL])->isMetaDataTypeSupported(type);
 }
 
 CompInfoParam* ComponentInformationManager::compInfoParam(uint8_t compId)
@@ -112,9 +128,9 @@ CompInfoParam* ComponentInformationManager::compInfoParam(uint8_t compId)
     return qobject_cast<CompInfoParam*>(_compInfoMap[compId][COMP_METADATA_TYPE_PARAMETER]);
 }
 
-CompInfoVersion* ComponentInformationManager::compInfoVersion(uint8_t compId)
+CompInfoGeneral* ComponentInformationManager::compInfoGeneral(uint8_t compId)
 {
-    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_VERSION) ? qobject_cast<CompInfoVersion*>(_compInfoMap[compId][COMP_METADATA_TYPE_VERSION]) : nullptr;
+    return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_GENERAL) ? qobject_cast<CompInfoGeneral*>(_compInfoMap[compId][COMP_METADATA_TYPE_GENERAL]) : nullptr;
 }
 
 RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr)
@@ -150,7 +166,7 @@ void RequestMetaDataTypeStateMachine::statesCompleted(void) const
 
 QString RequestMetaDataTypeStateMachine::typeToString(void)
 {
-    return _compInfo->type == COMP_METADATA_TYPE_VERSION ? "COMP_METADATA_TYPE_VERSION" : "COMP_METADATA_TYPE_PARAM";
+    return _compInfo->type == COMP_METADATA_TYPE_GENERAL ? "COMP_METADATA_TYPE_GENERAL" : "COMP_METADATA_TYPE_PARAM";
 }
 
 static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t &message)
@@ -158,7 +174,10 @@ static void _requestMessageResultHandler(void* resultHandlerData, MAV_RESULT res
     RequestMetaDataTypeStateMachine* requestMachine = static_cast<RequestMetaDataTypeStateMachine*>(resultHandlerData);
 
     if (result == MAV_RESULT_ACCEPTED) {
-        requestMachine->compInfo()->setMessage(message);
+        mavlink_component_information_t componentInformation;
+        mavlink_msg_component_information_decode(&message, &componentInformation);
+        requestMachine->compInfo()->setUriMetaData(componentInformation.general_metadata_uri, componentInformation.general_metadata_file_crc);
+        // TODO: handle peripherals
     } else {
         switch (failureCode) {
         case Vehicle::RequestMessageFailureCommandError:
@@ -183,6 +202,11 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
     Vehicle*                            vehicle         = requestMachine->_compMgr->vehicle();
     WeakLinkInterfacePtr                weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
+    if (requestMachine->_compInfo->type != COMP_METADATA_TYPE_GENERAL) {
+        requestMachine->advance();
+        return;
+    }
+
     if (weakLink.expired()) {
         qCDebug(ComponentInformationManagerLog) << QStringLiteral("_stateRequestCompInfo Skipping component information %1 request due to no primary link").arg(requestMachine->typeToString());
         stateMachine->advance();
@@ -200,8 +224,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
                         _requestMessageResultHandler,
                         stateMachine,
                         MAV_COMP_ID_AUTOPILOT1,
-                        MAVLINK_MSG_ID_COMPONENT_INFORMATION,
-                        requestMachine->_compInfo->type);
+                        MAVLINK_MSG_ID_COMPONENT_INFORMATION);
         }
     }
 }
@@ -295,11 +318,11 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
     CompInfo*                           compInfo        = requestMachine->compInfo();
     FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
 
-    if (compInfo->available) {
-        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData;
-        if (_uriIsMAVLinkFTP(compInfo->uriMetaData)) {
+    if (compInfo->available()) {
+        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData();
+        if (_uriIsMAVLinkFTP(compInfo->uriMetaData())) {
             connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
-            if (!ftpManager->download(compInfo->uriMetaData, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+            if (!ftpManager->download(compInfo->uriMetaData(), QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
                 qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson FTPManager::download returned failure";
                 disconnect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
                 requestMachine->advance();
@@ -307,7 +330,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
         } else {
             QGCFileDownload* download = new QGCFileDownload(requestMachine);
             connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
-            if (!download->download(compInfo->uriMetaData)) {
+            if (!download->download(compInfo->uriMetaData())) {
                 qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
                 disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
                 requestMachine->advance();
@@ -325,15 +348,15 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
     CompInfo*                           compInfo        = requestMachine->compInfo();
     FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
 
-    if (compInfo->available) {
-        if (compInfo->uriTranslation.isEmpty()) {
+    if (compInfo->available()) {
+        if (compInfo->uriTranslation().isEmpty()) {
             qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. No translation json specified";
             requestMachine->advance();
         } else {
-            qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation;
-            if (_uriIsMAVLinkFTP(compInfo->uriTranslation)) {
+            qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation();
+            if (_uriIsMAVLinkFTP(compInfo->uriTranslation())) {
                 connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
-                if (!ftpManager->download(compInfo->uriTranslation, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                if (!ftpManager->download(compInfo->uriTranslation(), QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
                     qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson FTPManager::download returned failure";
                     connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
                     requestMachine->advance();
@@ -341,7 +364,7 @@ void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine*
             } else {
                 QGCFileDownload* download = new QGCFileDownload(requestMachine);
                 connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
-                if (!download->download(compInfo->uriTranslation)) {
+                if (!download->download(compInfo->uriTranslation())) {
                     qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
                     disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
                     requestMachine->advance();
