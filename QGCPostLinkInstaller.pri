@@ -29,7 +29,7 @@ installer {
 
         # macdeployqt is missing some relocations once in a while. "Fix" it:
         QMAKE_POST_LINK += && echo patrick
-        #QMAKE_POST_LINK += && cp -R /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
+        QMAKE_POST_LINK += && cp -R /Library/Frameworks/GStreamer.framework $${TARGET}.app/Contents/Frameworks
         QMAKE_POST_LINK += && BUILD_FOLDER=$$OUT_PWD $$SOURCE_DIR/rpath.py
         QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
         #QMAKE_POST_LINK += && echo osxrelocator
