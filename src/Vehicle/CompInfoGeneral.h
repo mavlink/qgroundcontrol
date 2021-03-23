@@ -15,27 +15,30 @@
 #include "FactMetaData.h"
 
 #include <QObject>
+#include <QMap>
 
 class FactMetaData;
 class Vehicle;
 class FirmwarePlugin;
 
-Q_DECLARE_LOGGING_CATEGORY(CompInfoVersionLog)
+Q_DECLARE_LOGGING_CATEGORY(CompInfoGeneralLog)
 
-class CompInfoVersion : public CompInfo
+class CompInfoGeneral : public CompInfo
 {
     Q_OBJECT
 
 public:
-    CompInfoVersion(uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
+    CompInfoGeneral(uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
 
     bool isMetaDataTypeSupported(COMP_METADATA_TYPE type) { return _supportedTypes.contains(type); }
+
+    void setUris(CompInfo& compInfo) const;
 
     // Overrides from CompInfo
     void setJson(const QString& metadataJsonFileName, const QString& translationJsonFileName) override;
 
 private:
-    QList<COMP_METADATA_TYPE>   _supportedTypes;
+    QMap<COMP_METADATA_TYPE, Uris>   _supportedTypes;
 
-    static const char*          _jsonSupportedCompMetadataTypesKey;
+    static const char*          _jsonMetadataTypesKey;
 };

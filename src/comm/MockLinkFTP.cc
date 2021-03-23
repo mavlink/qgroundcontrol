@@ -117,10 +117,10 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     if (path.startsWith(sizePrefix)) {
         QString sizeString = path.right(path.length() - sizePrefix.length());
         tmpFilename = _createTestTempFile(sizeString.toInt());
-    } else if (path == "/version.json") {
-        tmpFilename = ":MockLink/Version.MetaData.json";
-    } else if (path == "/version.json.xz") {
-        tmpFilename = ":MockLink/Version.MetaData.json.xz";
+    } else if (path == "/general.json") {
+        tmpFilename = ":MockLink/General.MetaData.json";
+    } else if (path == "/general.json.xz") {
+        tmpFilename = ":MockLink/General.MetaData.json.xz";
     } else if (path == "/parameter.json") {
         tmpFilename = ":MockLink/Parameter.MetaData.json";
     } else if (path == "/parameter.json.xz") {

@@ -19,7 +19,7 @@ class Vehicle;
 class ComponentInformationManager;
 class CompInfo;
 class CompInfoParam;
-class CompInfoVersion;
+class CompInfoGeneral;
 
 class RequestMetaDataTypeStateMachine : public StateMachine
 {
@@ -73,7 +73,7 @@ public:
     void                requestAllComponentInformation  (RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData);
     Vehicle*            vehicle                         (void) { return _vehicle; }
     CompInfoParam*      compInfoParam                   (uint8_t compId);
-    CompInfoVersion*    compInfoVersion                 (uint8_t compId);
+    CompInfoGeneral*    compInfoGeneral                 (uint8_t compId);
 
     // Overrides from StateMachine
     int             stateCount  (void) const final;
@@ -82,8 +82,10 @@ public:
 private:
     void _stateRequestCompInfoComplete  (void);
     bool _isCompTypeSupported           (COMP_METADATA_TYPE type);
+    void _updateAllUri                  ();
 
-    static void _stateRequestCompInfoVersion        (StateMachine* stateMachine);
+    static void _stateRequestCompInfoGeneral        (StateMachine* stateMachine);
+    static void _stateRequestCompInfoGeneralComplete(StateMachine* stateMachine);
     static void _stateRequestCompInfoParam          (StateMachine* stateMachine);
     static void _stateRequestAllCompInfoComplete    (StateMachine* stateMachine);
 
