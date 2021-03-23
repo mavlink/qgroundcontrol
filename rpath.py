@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-import functools
 import os
 import subprocess
+from functools import cache
 from pathlib import Path
 
 CONTENT_FOLDER=os.getenv("CONTENT_FOLDER")
