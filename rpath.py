@@ -4,12 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 
-BUILD_FOLDER=os.getenv("BUILD_FOLDER")
-CONTENT_FOLDER=f"{BUILD_FOLDER}/staging/QGroundControl.app/Contents/"
+CONTENT_FOLDER=os.getenv("CONTENT_FOLDER")
 BASE_PATH="@executable_path/../"
-
-if not BUILD_FOLDER or not os.path.exists(BUILD_FOLDER):
-    print(f"BUILD_FOLDER does not exist or was not set: {BUILD_FOLDER}")
 
 if not os.path.exists(CONTENT_FOLDER):
     print(f"Content folder does not exist: {CONTENT_FOLDER}")
