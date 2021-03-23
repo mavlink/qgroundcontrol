@@ -372,8 +372,7 @@ QGCCameraParamIO::paramRequest(bool reset)
                     static_cast<uint8_t>(_vehicle->id()),
                     static_cast<uint8_t>(_control->compID()),
                     param_id,
-                    -1,
-                    0);                                                 // trimmed messages = false
+                    -1);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
     _paramRequestTimer.start();
