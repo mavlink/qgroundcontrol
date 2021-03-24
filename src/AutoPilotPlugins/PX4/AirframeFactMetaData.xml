@@ -979,5 +979,22 @@
       <output name="MAIN7">Elevon right</output>
       <output name="MAIN8">Elevon left</output>
     </airframe>
+    <airframe name="Generic Quadplane VTOL Tiltrotor" id="13030" maintainer="">
+      <class>VTOL</class>
+      <maintainer />
+      <type>VTOL Tiltrotor</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+      <output name="AUX1">Motor tilt front left</output>
+      <output name="AUX2">Motor tilt front right</output>
+      <output name="AUX3">Motor tilt rear left</output>
+      <output name="AUX4">Motor tilt rear right</output>
+      <output name="AUX5">Aileron left</output>
+      <output name="AUX6">Aileron right</output>
+      <output name="AUX7">Elevator</output>
+      <output name="AUX8">Rudder</output>
+    </airframe>
   </airframe_group>
 </airframes>
