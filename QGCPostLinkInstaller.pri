@@ -34,7 +34,7 @@ installer {
         QMAKE_POST_LINK += && echo libexec
         #QMAKE_POST_LINK += && find $${TARGET}.app/Contents
         QMAKE_POST_LINK += && ln -sf $${TARGET}.app/Contents/Frameworks $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/Frameworks
-        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/QGroundControl;
+        QMAKE_POST_LINK += && install_name_tool -change /Library/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer $${TARGET}.app/Contents/MacOS/QGroundControl
         #QMAKE_POST_LINK += && echo osxrelocator
         #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/libMoltenVK.dylib @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib -r > /dev/null 2>&1
         #QMAKE_POST_LINK += && python $$SOURCE_DIR/tools/osxrelocator.py $${TARGET}.app/Contents/Frameworks/GStreamer.framework @rpath @executable_path/../Frameworks/GStreamer.framework/Versions/1.0 -r > /dev/null 2>&1
