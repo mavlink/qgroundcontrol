@@ -309,7 +309,10 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         }
     }
 
-    if (!forPresets) {
+    if (forPresets) {
+        // Most signalling will happen after the transects are rebuilt so we don't over signal here
+        emit followTerrainChanged(_followTerrain);
+    } else {
         emit minAMSLAltitudeChanged();
         emit maxAMSLAltitudeChanged();
         _amslEntryAltChanged();
