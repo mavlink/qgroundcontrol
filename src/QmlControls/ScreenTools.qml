@@ -162,7 +162,7 @@ Item {
     Text {
         id:     _textMeasure
         text:   "X"
-        font.family:    normalFontFamily
+        font.family:    "opensans"
         property real   fontWidth:    contentWidth
         property real   fontHeight:   contentHeight
         Component.onCompleted: {
