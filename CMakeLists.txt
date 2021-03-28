@@ -186,6 +186,28 @@ endif()
 
 target_link_libraries(QGroundControl PRIVATE qgc)
 
+option(ENABLE_INSTALL_TARGET "Enable real installation of QGC when running install" OFF)
+if(ENABLE_INSTALL_TARGET)
+    include(GNUInstallDirs)
+
+    install(
+        TARGETS QGroundControl
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
+    )
+    install(
+        FILES ${CMAKE_SOURCE_DIR}/deploy/qgroundcontrol.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    )
+    install(
+        FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps/
+    )
+endif()
+
 if(BUILD_TESTING)
         target_link_libraries(QGroundControl PRIVATE Qt5::Test)
 endif()
