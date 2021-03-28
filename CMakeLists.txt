@@ -199,8 +199,9 @@ if(ENABLE_INSTALL_TARGET)
         DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
     )
     install(
-        FILES ${CMAKE_SOURCE_DIR}/deploy/qgroundcontrol.desktop
+        FILES ${CMAKE_SOURCE_DIR}/deploy/qgroundcontrol-clean.desktop
         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+        RENAME qgroundcontrol.desktop
     )
     install(
         FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
