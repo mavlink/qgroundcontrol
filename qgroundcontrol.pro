@@ -1447,5 +1447,27 @@ contains (CONFIG, QGC_DISABLE_INSTALLER_SETUP) {
     include(QGCPostLinkInstaller.pri)
 }
 
+#
+# Unix installation
+#
+
+contains (CONFIG, QGC_ENABLE_UNIX_INSTALLATION) {
+    message("binary: $${OUT_PWD}/$${DESTDIR}/QGroundControl")
+
+    bin_qgroundcontrol.path = $${PREFIX}/bin/
+    bin_qgroundcontrol.files = $${OUT_PWD}/$${DESTDIR}/QGroundControl
+
+    share_qgroundcontrol.path = $${PREFIX}/share/qgroundcontrol/
+    share_qgroundcontrol.files = $${IN_PWD}/resources/
+
+    share_pixmaps.path = $${PREFIX}/share/pixmaps/
+    share_pixmaps.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
+
+    share_applications.path = $${PREFIX}/share/applications/
+    share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
+
+    INSTALLS += bin_qgroundcontrol share_qgroundcontrol share_pixmaps share_applications
+}
+
 DISTFILES += \
     src/QmlControls/QGroundControl/Specific/qmldir
