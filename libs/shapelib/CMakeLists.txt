@@ -189,7 +189,7 @@ foreach(executable ${executables})
     get_target_property(${executable}_LOC ${executable} LOCATION)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/script.sed "s?\\./${executable}?${${executable}_LOC}?\n")
   endif(BUILD_TEST)
-  install(TARGETS ${executable} DESTINATION ${CMAKE_INSTALL_BINDIR})
+  # install(TARGETS ${executable} DESTINATION ${CMAKE_INSTALL_BINDIR})
 endforeach(executable ${executables})
 
 # Install header
