@@ -11,6 +11,7 @@
 // We keep the list of all unit tests in a global location so it's easier to see which
 // ones are enabled/disabled
 
+#include "ComponentInformationCacheTest.h"
 #include "FactSystemTestGeneric.h"
 #include "FactSystemTestPX4.h"
 //#include "FileDialogTest.h"
@@ -49,6 +50,7 @@
 #include "VehicleLinkManagerTest.h"
 #include "LandingComplexItemTest.h"
 
+UT_REGISTER_TEST(ComponentInformationCacheTest)
 UT_REGISTER_TEST(FactSystemTestGeneric)
 UT_REGISTER_TEST(FactSystemTestPX4)
 //UT_REGISTER_TEST(FileDialogTest)
