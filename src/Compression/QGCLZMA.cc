@@ -13,7 +13,12 @@
 #include <QDir>
 #include <QtDebug>
 
+#include <mutex>
+
 #include "xz.h"
+
+
+static std::once_flag crc_init;
 
 bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decompressedFilename)
 {
@@ -30,9 +35,10 @@ bool QGCLZMA::inflateLZMAFile(const QString& lzmaFilename, const QString& decomp
     }
 
 
-    // TODO: call once during startup
-    xz_crc32_init();
-    xz_crc64_init();
+    std::call_once(crc_init, []() {
+        xz_crc32_init();
+        xz_crc64_init();
+    });
 
 
     xz_dec *s = xz_dec_init(XZ_DYNALLOC, (uint32_t)-1);
