@@ -116,7 +116,7 @@ void ComponentInformationCache::initializeDirectory()
 {
     if (!_path.exists()) {
         QDir d;
-        if (!d.mkdir(_path.path())) {
+        if (!d.mkpath(_path.path())) {
             qCWarning(ComponentInformationCacheLog) << "Failed to create dir" << _path.path();
         }
     }
