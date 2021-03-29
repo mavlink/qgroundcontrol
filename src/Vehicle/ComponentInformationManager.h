@@ -12,6 +12,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 #include "StateMachine.h"
+#include "ComponentInformationCache.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
@@ -38,11 +39,9 @@ public:
     void            statesCompleted (void) const final;
 
 private slots:
-    void    _ftpDownloadCompleteMetaDataJson    (const QString& file, const QString& errorMsg);
-    void    _ftpDownloadCompleteTranslationJson (const QString& file, const QString& errorMsg);
-    void    _httpDownloadCompleteMetaDataJson   (QString remoteFile, QString localFile, QString errorMsg);
-    void    _httpDownloadCompleteTranslationJson(QString remoteFile, QString localFile, QString errorMsg);
-    QString _downloadCompleteJsonWorker         (const QString& jsonFileName, const QString& inflatedFileName);
+    void    _ftpDownloadComplete                (const QString& file, const QString& errorMsg);
+    void    _httpDownloadComplete               (QString remoteFile, QString localFile, QString errorMsg);
+    QString _downloadCompleteJsonWorker         (const QString& jsonFileName);
 
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
@@ -51,11 +50,18 @@ private:
     static void _stateRequestComplete           (StateMachine* stateMachine);
     static bool _uriIsMAVLinkFTP                (const QString& uri);
 
+    void _requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName);
 
     ComponentInformationManager*    _compMgr                    = nullptr;
     CompInfo*                       _compInfo                   = nullptr;
     QString                         _jsonMetadataFileName;
+    bool                            _jsonMetadataCrcValid       = false;
     QString                         _jsonTranslationFileName;
+    bool                            _jsonTranslationCrcValid    = false;
+
+    QString*                        _currentFileName            = nullptr;
+    QString                         _currentCacheFileTag;
+    bool                            _currentFileValidCrc        = false;
 
     static StateFn  _rgStates[];
     static int      _cStates;
@@ -79,10 +85,14 @@ public:
     int             stateCount  (void) const final;
     const StateFn*  rgStates    (void) const final;
 
+    ComponentInformationCache& fileCache() { return _fileCache; }
+
 private:
     void _stateRequestCompInfoComplete  (void);
     bool _isCompTypeSupported           (COMP_METADATA_TYPE type);
     void _updateAllUri                  ();
+
+    static QString _getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation);
 
     static void _stateRequestCompInfoGeneral        (StateMachine* stateMachine);
     static void _stateRequestCompInfoGeneralComplete(StateMachine* stateMachine);
@@ -93,6 +103,7 @@ private:
     RequestMetaDataTypeStateMachine _requestTypeStateMachine;
     RequestAllCompleteFn            _requestAllCompleteFn       = nullptr;
     void*                           _requestAllCompleteFnData   = nullptr;
+    ComponentInformationCache&      _fileCache;
 
     QMap<uint8_t /* compId */, QMap<COMP_METADATA_TYPE, CompInfo*>> _compInfoMap;
 
