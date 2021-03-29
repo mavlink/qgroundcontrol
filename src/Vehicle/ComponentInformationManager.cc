@@ -46,6 +46,7 @@ int RequestMetaDataTypeStateMachine::_cStates = sizeof(RequestMetaDataTypeStateM
 ComponentInformationManager::ComponentInformationManager(Vehicle* vehicle)
     : _vehicle                  (vehicle)
     , _requestTypeStateMachine  (this)
+    , _fileCache(ComponentInformationCache::defaultInstance())
 {
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
@@ -132,6 +133,12 @@ CompInfoGeneral* ComponentInformationManager::compInfoGeneral(uint8_t compId)
 {
     return _compInfoMap.contains(compId) && _compInfoMap[compId].contains(COMP_METADATA_TYPE_GENERAL) ? qobject_cast<CompInfoGeneral*>(_compInfoMap[compId][COMP_METADATA_TYPE_GENERAL]) : nullptr;
 }
+
+QString ComponentInformationManager::_getFileCacheTag(int compInfoType, uint32_t crc, bool isTranslation)
+{
+    return QString::asprintf("%08x_%02i_%i", crc, compInfoType, (int)isTranslation);
+}
+
 
 RequestMetaDataTypeStateMachine::RequestMetaDataTypeStateMachine(ComponentInformationManager* compMgr)
     : _compMgr(compMgr)
@@ -229,152 +236,125 @@ void RequestMetaDataTypeStateMachine::_stateRequestCompInfo(StateMachine* stateM
     }
 }
 
-QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName, const QString& inflatedFileName)
+QString RequestMetaDataTypeStateMachine::_downloadCompleteJsonWorker(const QString& fileName)
 {
     QString outputFileName = fileName;
 
     if (fileName.endsWith(".lzma", Qt::CaseInsensitive) || fileName.endsWith(".xz", Qt::CaseInsensitive)) {
-        outputFileName = (QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(inflatedFileName));
+        outputFileName = (QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(_currentCacheFileTag));
         if (QGCLZMA::inflateLZMAFile(fileName, outputFileName)) {
             QFile(fileName).remove();
         } else {
-            qCWarning(ComponentInformationManagerLog) << "Inflate of compressed json failed" << inflatedFileName;
+            qCWarning(ComponentInformationManagerLog) << "Inflate of compressed json failed" << _currentCacheFileTag;
             outputFileName.clear();
         }
     } else {
         outputFileName = fileName;
     }
 
+    if (_currentFileValidCrc) {
+        // cache the file (this will move/remove the temp file as well)
+        outputFileName = _compMgr->fileCache().insert(_currentCacheFileTag, outputFileName);
+    }
     return outputFileName;
 }
 
-void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson(const QString& fileName, const QString& errorMsg)
+void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileName, const QString& errorMsg)
 {
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson fileName:errorMsg" << fileName << errorMsg;
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadComplete fileName:errorMsg" << fileName << errorMsg;
 
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
+    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
     if (errorMsg.isEmpty()) {
-        _jsonMetadataFileName = _downloadCompleteJsonWorker(fileName, "metadata.json");
+        if (_currentFileName) {
+            *_currentFileName = _downloadCompleteJsonWorker(fileName);
+        }
     } else if (qgcApp()->runningUnitTests()) {
         // Unit test should always succeed
-        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson failed filename:errorMsg" << fileName << errorMsg;
-    }
+        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadComplete failed filename:errorMsg" << fileName << errorMsg;
+    } // TODO: else: try fallback uri
 
     advance();
 }
 
-void RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson(const QString& fileName, const QString& errorMsg)
+void RequestMetaDataTypeStateMachine::_httpDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
 {
-    QString jsonTranslationFileName;
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadComplete remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
 
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson fileName:errorMsg" << fileName << errorMsg;
-
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
+    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
     if (errorMsg.isEmpty()) {
-        _jsonTranslationFileName = _downloadCompleteJsonWorker(fileName, "translation.json");
-    } else if (qgcApp()->runningUnitTests()) {
-        // Unit test should always succeed
-        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson failed filename:errorMsg" << fileName << errorMsg;
-    }
-
-    advance();
-}
-
-void RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson(QString remoteFile, QString localFile, QString errorMsg)
-{
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
-
-    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
-    if (errorMsg.isEmpty()) {
-        _jsonMetadataFileName = _downloadCompleteJsonWorker(localFile, "metadata.json");
+        if (_currentFileName) {
+            *_currentFileName = _downloadCompleteJsonWorker(localFile);
+        }
     } else if (qgcApp()->runningUnitTests()) {
         // Unit test should always succeed
         qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson failed remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
-    }
+    } // TODO: else: try fallback uri
 
     advance();
 }
 
-void RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson(QString remoteFile, QString localFile, QString errorMsg)
+void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName)
 {
-    QString jsonTranslationFileName;
+    FTPManager*                         ftpManager      = _compInfo->vehicle->ftpManager();
+    _currentCacheFileTag = cacheFileTag;
+    _currentFileName = &outputFileName;
+    _currentFileValidCrc = crcValid;
 
-    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
+    if (_compInfo->available() && !uri.isEmpty()) {
+        const QString cachedFile = crcValid ? _compMgr->fileCache().access(cacheFileTag) : "";
 
-    disconnect(qobject_cast<QGCFileDownload*>(sender()), &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
-    if (errorMsg.isEmpty()) {
-        _jsonTranslationFileName = _downloadCompleteJsonWorker(localFile, "translation.json");
-    } else if (qgcApp()->runningUnitTests()) {
-        // Unit test should always succeed
-        qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson failed remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
+        if (cachedFile.isEmpty()) {
+            qCDebug(ComponentInformationManagerLog) << "Downloading json" << uri;
+            if (_uriIsMAVLinkFTP(uri)) {
+                connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
+                if (!ftpManager->download(uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                    qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile FTPManager::download returned failure";
+                    disconnect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
+                    // TODO: try fallback uri
+                    advance();
+                }
+            } else {
+                QGCFileDownload* download = new QGCFileDownload(this);
+                connect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
+                if (!download->download(uri)) {
+                    qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile QGCFileDownload::download returned failure";
+                    disconnect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
+                    // TODO: try fallback uri
+                    advance();
+                }
+            }
+        } else {
+            qCDebug(ComponentInformationManagerLog) << "Using cached file" << cachedFile;
+            outputFileName = cachedFile;
+            advance();
+        }
+    } else {
+        qCDebug(ComponentInformationManagerLog) << "Skipping download. Component information not available for" << _currentCacheFileTag;
+        advance();
     }
 
-    advance();
 }
 
 void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* stateMachine)
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     CompInfo*                           compInfo        = requestMachine->compInfo();
-    FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
-
-    if (compInfo->available()) {
-        qCDebug(ComponentInformationManagerLog) << "Downloading metadata json" << compInfo->uriMetaData();
-        if (_uriIsMAVLinkFTP(compInfo->uriMetaData())) {
-            connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
-            if (!ftpManager->download(compInfo->uriMetaData(), QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
-                qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson FTPManager::download returned failure";
-                disconnect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteMetaDataJson);
-                requestMachine->advance();
-            }
-        } else {
-            QGCFileDownload* download = new QGCFileDownload(requestMachine);
-            connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
-            if (!download->download(compInfo->uriMetaData())) {
-                qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
-                disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson);
-                requestMachine->advance();
-            }
-        }
-    } else {
-        qCDebug(ComponentInformationManagerLog) << "Skipping metadata json download. Component information not available";
-        requestMachine->advance();
-    }
+    const QString                       fileTag         = ComponentInformationManager::_getFileCacheTag(
+            compInfo->type, compInfo->crcMetaData(), false);
+    const QString                       uri             = compInfo->uriMetaData();
+    requestMachine->_jsonMetadataCrcValid               = compInfo->crcMetaDataValid();
+    requestMachine->_requestFile(fileTag, compInfo->crcMetaDataValid(), uri, requestMachine->_jsonMetadataFileName);
 }
 
 void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine* stateMachine)
 {
     RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
     CompInfo*                           compInfo        = requestMachine->compInfo();
-    FTPManager*                         ftpManager      = compInfo->vehicle->ftpManager();
-
-    if (compInfo->available()) {
-        if (compInfo->uriTranslation().isEmpty()) {
-            qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. No translation json specified";
-            requestMachine->advance();
-        } else {
-            qCDebug(ComponentInformationManagerLog) << "Downloading translation json" << compInfo->uriTranslation();
-            if (_uriIsMAVLinkFTP(compInfo->uriTranslation())) {
-                connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
-                if (!ftpManager->download(compInfo->uriTranslation(), QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
-                    qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson FTPManager::download returned failure";
-                    connect(ftpManager, &FTPManager::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_ftpDownloadCompleteTranslationJson);
-                    requestMachine->advance();
-                }
-            } else {
-                QGCFileDownload* download = new QGCFileDownload(requestMachine);
-                connect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
-                if (!download->download(compInfo->uriTranslation())) {
-                    qCWarning(ComponentInformationManagerLog) << "_stateRequestTranslationJson::_stateRequestMetaDataJson QGCFileDownload::download returned failure";
-                    disconnect(download, &QGCFileDownload::downloadComplete, requestMachine, &RequestMetaDataTypeStateMachine::_httpDownloadCompleteTranslationJson);
-                    requestMachine->advance();
-                }
-            }
-        }
-    } else {
-        qCDebug(ComponentInformationManagerLog) << "Skipping translation json download. Component information not available";
-        requestMachine->advance();
-    }
+    const QString                       fileTag         = ComponentInformationManager::_getFileCacheTag(
+            compInfo->type, compInfo->crcTranslation(), true);
+    const QString                       uri             = compInfo->uriTranslation();
+    requestMachine->_jsonTranslationCrcValid            = compInfo->crcTranslationValid();
+    requestMachine->_requestFile(fileTag, compInfo->crcTranslationValid(), uri, requestMachine->_jsonTranslationFileName);
 }
 
 void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateMachine)
@@ -384,10 +364,11 @@ void RequestMetaDataTypeStateMachine::_stateRequestComplete(StateMachine* stateM
 
     compInfo->setJson(requestMachine->_jsonMetadataFileName, requestMachine->_jsonTranslationFileName);
 
-    if (!requestMachine->_jsonMetadataFileName.isEmpty()) {
+    // if we don't have a CRC we didn't cache the file and we need to delete it
+    if (!requestMachine->_jsonMetadataCrcValid && !requestMachine->_jsonMetadataFileName.isEmpty()) {
         QFile(requestMachine->_jsonMetadataFileName).remove();
     }
-    if (!requestMachine->_jsonTranslationFileName.isEmpty()) {
+    if (!requestMachine->_jsonMetadataCrcValid && !requestMachine->_jsonTranslationFileName.isEmpty()) {
         QFile(requestMachine->_jsonTranslationFileName).remove();
     }
 
