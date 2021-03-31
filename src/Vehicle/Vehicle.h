@@ -777,7 +777,7 @@ public:
 
     qreal       gimbalRoll              () const{ return static_cast<qreal>(_curGimbalRoll);}
     qreal       gimbalPitch             () const{ return static_cast<qreal>(_curGimbalPitch); }
-    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGinmbalYaw); }
+    qreal       gimbalYaw               () const{ return static_cast<qreal>(_curGimbalYaw); }
     bool        gimbalData              () const{ return _haveGimbalData; }
     bool        isROIEnabled            () const{ return _isROIEnabled; }
 
@@ -1104,7 +1104,7 @@ private:
 
     float               _curGimbalRoll  = 0.0f;
     float               _curGimbalPitch = 0.0f;
-    float               _curGinmbalYaw  = 0.0f;
+    float               _curGimbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
     bool                _isROIEnabled   = false;
     Joystick*           _activeJoystick = nullptr;
