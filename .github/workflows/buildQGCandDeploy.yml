@@ -1,17 +1,6 @@
-name: Build QGC and upload to release 
+name: Build QGC and upload to release
 
-on: 
-    push:
-      #Every time a tag with name v* (e.g: vX.Y.Z) is pushed,
-      #this action will trigger.
-      tags:
-        - v*
-      #If instead of a tag (or with both restricctions simultaniously)
-      #you prefer to trigger the action uppon push on a branch,
-      #remove the "tags:" flag and add the "branches:" one. E.g:
-      #push:
-        #branches:
-          #- your_branch
+on: [push, pull_request]
 
 defaults:
   run:
