@@ -13,16 +13,9 @@ env:
 
 jobs:
   build-job:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-        gst_version: ["1.18.1"]
-        #Only running MacOS right now, but we leave this options
-        #for future builds of all distros
-        exclude:
-          - os: ubuntu-latest
-          - os: windows-latest
+    runs-on: macos-latest
+    env:
+      gst_version: "1.18.1"
 
     steps:
       - name: Checkout repo
@@ -56,9 +49,9 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-              GST_URL_BASE_PATH="https://gstreamer.freedesktop.org/data/pkg/osx/${{ matrix.gst_version }}"
-              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-devel-${{ matrix.gst_version }}-x86_64.pkg"
-              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-${{ matrix.gst_version }}-x86_64.pkg"
+              GST_URL_BASE_PATH="https://gstreamer.freedesktop.org/data/pkg/osx/${{ env.gst_version }}"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-devel-${{ env.gst_version }}-x86_64.pkg"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-${{ env.gst_version }}-x86_64.pkg"
               for package in *.pkg ;
                 do sudo installer -verbose -pkg "$package" -target /
               done
