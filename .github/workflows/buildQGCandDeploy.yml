@@ -17,7 +17,8 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        #Only running MacOS right now, but we leave this options 
+        gst_version: ["1.18.1"]
+        #Only running MacOS right now, but we leave this options
         #for future builds of all distros
         exclude:
           - os: ubuntu-latest
@@ -55,9 +56,13 @@ jobs:
 
       - name: Install Gstreamer
         run:  |
-              wget --quiet https://qgroundcontrol.s3-us-west-2.amazonaws.com/dependencies/gstreamer-osx-1.18.1.tar.bz2
-              sudo tar -zxf gstreamer-osx-1.18.1.tar.bz2 -C /Library/Frameworks
-        
+              GST_URL_BASE_PATH="https://gstreamer.freedesktop.org/data/pkg/osx/${{ matrix.gst_version }}"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-devel-${{ matrix.gst_version }}-x86_64.pkg"
+              wget "${GST_URL_BASE_PATH}/gstreamer-1.0-${{ matrix.gst_version }}-x86_64.pkg"
+              for package in *.pkg ;
+                do sudo installer -verbose -pkg "$package" -target /
+              done
+
       - name: mkdir directory shadow_build
         run:  mkdir ${{ runner.temp }}/shadow_build_dir
 
