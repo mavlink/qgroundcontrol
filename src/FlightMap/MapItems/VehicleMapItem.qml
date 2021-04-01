@@ -31,6 +31,7 @@ MapQuickItem {
     anchorPoint.y:  vehicleItem.height / 2
     visible:        coordinate.isValid
 
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _adsbVehicle:   vehicle ? false : true
     property real   _uavSize:       ScreenTools.defaultFontPixelHeight * 5
     property real   _adsbSize:      ScreenTools.defaultFontPixelHeight * 2.5
@@ -41,7 +42,7 @@ MapQuickItem {
         id:         vehicleItem
         width:      vehicleIcon.width
         height:     vehicleIcon.height
-        opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
+        opacity:    (vehicle && _activeVehicle) ? ((vehicle === _activeVehicle) ? 1.0 : 0.5) : 1.0
 
         Rectangle {
             id:                 vehicleShadow
