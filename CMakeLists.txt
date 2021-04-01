@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(QGroundControl LANGUAGES C CXX)
 
+include(GNUInstallDirs)
+
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
 set(CMAKE_CXX_STANDARD 14)
@@ -186,28 +188,24 @@ endif()
 
 target_link_libraries(QGroundControl PRIVATE qgc)
 
-option(ENABLE_INSTALL_TARGET "Enable real installation of QGC when running install" OFF)
-if(ENABLE_INSTALL_TARGET)
-    include(GNUInstallDirs)
-
-    install(
-        TARGETS QGroundControl
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-    install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
-    )
-    install(
-        FILES ${CMAKE_SOURCE_DIR}/deploy/qgroundcontrol-clean.desktop
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
-        RENAME qgroundcontrol.desktop
-    )
-    install(
-        FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
-        DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps/
-    )
-endif()
+# Files/directories to install
+install(
+    TARGETS QGroundControl
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/resources/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/qgroundcontrol
+)
+install(
+    FILES ${CMAKE_SOURCE_DIR}/deploy/qgroundcontrol-clean.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    RENAME qgroundcontrol.desktop
+)
+install(
+    FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/
+)
 
 if(BUILD_TESTING)
         target_link_libraries(QGroundControl PRIVATE Qt5::Test)
