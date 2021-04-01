@@ -37,7 +37,7 @@ jobs:
         run: |
           brew install ccache
 
-      - name: install QT via action
+      - name: install Qt via action
         uses: jurplel/install-qt-action@v2
         with:
           version: '5.12.6'
