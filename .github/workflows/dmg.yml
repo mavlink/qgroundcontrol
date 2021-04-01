@@ -39,7 +39,7 @@ jobs:
 
       - name: install QT via action
         uses: jurplel/install-qt-action@v2
-        with: 
+        with:
           version: '5.12.6'
           host: 'mac'
           target: 'desktop'
