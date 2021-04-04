@@ -566,6 +566,24 @@ QObject* APMFirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
     return metaData;
 }
 
+QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle) 
+{
+    uint64_t hobbsTimeSeconds = 0;
+
+    if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "STAT_FLTTIME")) {
+        Fact* factFltTime = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "STAT_FLTTIME");
+        hobbsTimeSeconds = (uint64_t)factFltTime->rawValue().toUInt();
+        qCDebug(VehicleLog) << "Hobbs Meter raw Ardupilot(s):" << "(" <<  hobbsTimeSeconds << ")";
+    } 
+
+    int hours   = hobbsTimeSeconds / 3600;
+    int minutes = (hobbsTimeSeconds % 3600) / 60;
+    int seconds = hobbsTimeSeconds % 60;
+    QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
+    qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
+    return timeStr;
+} 
+
 bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
 {
     return vehicle->flightMode() == "Guided";
