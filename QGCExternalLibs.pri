@@ -220,26 +220,42 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAPD_PATH    = $$PWD/libs/airmapd
-    AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message('Looking for Airmap in folder "$${AIRMAPD_PATH}", variant: "$$AIRMAP_QT_PATH"')
+    AIRMAP_PLATFORM_SDK_PATH    = $${OUT_PWD}/libs/airmap-platform-sdk
+    AIRMAP_QT_PATH              = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
+    message("Including support for AirMap")
     MacBuild {
-        exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
+        exists("$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH") {
             message("Including support for AirMap for macOS")
             LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else:LinuxBuild {
-        exists($${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH) {
-            message("Including support for AirMap for Linux")
-            LIBS += -L$${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
-            DEFINES += QGC_AIRMAP_ENABLED
-        }
+        #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
+        AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/v1.1/airmap-platform-sdk-1.1.0-Linux.deb"
+        AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
+        AIRMAP_PLATFORM_SDK_INSTALL_PREFIX = "airmap-platform-sdk"
+
+        airmap_platform_sdk_install.target = $${AIRMAP_PLATFORM_SDK_PATH}/include/airmap
+        airmap_platform_sdk_install.commands = \
+            rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
+            mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
+            wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
+            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
+            rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}" && \
+            rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
+        airmap_platform_sdk_install.depends =
+        QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install
+        PRE_TARGETDEPS += $$airmap_platform_sdk_install.target
+
+        LIBS += -L$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH} -lairmap-qt
+        DEFINES += QGC_AIRMAP_ENABLED
     } else {
         message("Skipping support for Airmap (unsupported platform)")
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
-            $${AIRMAPD_PATH}/include
+            $${AIRMAP_PLATFORM_SDK_PATH}/include
     }
 }

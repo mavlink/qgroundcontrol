@@ -66,6 +66,8 @@ private:
     std::shared_ptr<airmap::qt::Logger>             _logger;
     std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;
     AirspaceManager::AuthStatus                     _authStatus;
+    const std::string                               _telemetryHost = "telemetry.airmap.com";
+    const uint16_t                                  _telemetryPort = 16060;
 };
 
 

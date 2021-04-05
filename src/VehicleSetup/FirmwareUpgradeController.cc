@@ -61,6 +61,7 @@ static QMap<int, QString> px4_board_name_map {
     {53, "px4_fmu-v6x_default"},
     {88, "airmind_mindpx-v2_default"},
     {12, "bitcraze_crazyflie_default"},
+    {14, "bitcraze_crazyflie21_default"},
     {42, "omnibus_f4sd_default"},
     {33, "mro_x21_default"},
     {65, "intel_aerofc-v1_default"},
@@ -68,7 +69,6 @@ static QMap<int, QString> px4_board_name_map {
     {41775, "modalai_fc-v1_default"},
     {78, "holybro_pix32v5_default"},
     {28, "nxp_fmuk66-v3_default"},
-    {29, "av_x-v1_default"},
     {30, "nxp_fmuk66-e_default"},
     {31, "nxp_fmurt1062-v1_default"},
 
@@ -77,9 +77,12 @@ static QMap<int, QString> px4_board_name_map {
     {139, "holybro_durandal-v1_default"},
     {140, "cubepilot_cubeorange_default"},
     {141, "mro_ctrl-zero-f7_default"},
+    {142, "mro_ctrl-zero-f7-oem_default"},
     {1009, "cuav_nora_default"},
     {1010, "cuav_x7pro_default"},
     {1017, "mro_pixracerpro_default"},
+    {1023, "mro_ctrl-zero-h7_default"},
+    {1024, "mro_ctrl-zero-h7-oem_default"},
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)

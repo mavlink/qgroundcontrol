@@ -115,11 +115,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(this,                                       &TransectStyleComplexItem::followTerrainChanged,        this, &TransectStyleComplexItem::_followTerrainChanged);
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslEntryAltChanged);
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslExitAltChanged);
-
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
     connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
     connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
     connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,          this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
@@ -314,7 +309,10 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         }
     }
 
-    if (!forPresets) {
+    if (forPresets) {
+        // Most signalling will happen after the transects are rebuilt so we don't over signal here
+        emit followTerrainChanged(_followTerrain);
+    } else {
         emit minAMSLAltitudeChanged();
         emit maxAMSLAltitudeChanged();
         _amslEntryAltChanged();

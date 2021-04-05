@@ -1,0 +1,27 @@
+name: Linux AppImage
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: docker-practice/actions-setup-docker@master
+    - name: Build docker
+      run: |
+        docker build --file deploy/docker/Dockerfile-build-linux -t qgc-linux-docker .
+    - name: Run docker
+      run: |
+        mkdir build
+        docker run --rm -v $PWD:/project/source -v $PWD/build:/project/build qgc-linux-docker
+    - name: Create AppImage
+      run: |
+        sudo chown $(whoami) -R build
+        ./deploy/create_linux_appimage.sh $PWD $PWD/build/staging $PWD
+    - uses: actions/upload-artifact@master
+      with:
+        name: QGroundControl.AppImage
+        path: QGroundControl.AppImage

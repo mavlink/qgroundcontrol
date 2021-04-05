@@ -50,8 +50,8 @@ public:
     const QString               getCachePath        () { return _cachePath; }
     const QString               getCacheFilename    () { return _cacheFile; }
     void                        testInternet        ();
-    bool                        wasCacheReset       () { return _cacheWasReset; }
-    bool                        isInternetActive    () { return _isInternetActive; }
+    bool                        wasCacheReset       () const{ return _cacheWasReset; }
+    bool                        isInternetActive    () const{ return _isInternetActive; }
 
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 

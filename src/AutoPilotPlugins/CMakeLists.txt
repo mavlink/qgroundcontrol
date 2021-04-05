@@ -54,6 +54,8 @@ add_library(AutoPilotPlugins
 	PX4/PX4AirframeLoader.h
 	PX4/PX4AutoPilotPlugin.cc
 	PX4/PX4AutoPilotPlugin.h
+	PX4/PX4FlightBehavior.cc
+	PX4/PX4FlightBehavior.h
 	PX4/PX4RadioComponent.cc
 	PX4/PX4RadioComponent.h
 	PX4/PX4SimpleFlightModesController.cc

@@ -7,8 +7,6 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 
 QGCCheckBox {
-    checkedState: isFactChecked()
-
     property Fact fact: Fact { }
 
     property variant checkedValue:   1
