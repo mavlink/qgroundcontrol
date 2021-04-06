@@ -206,6 +206,9 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
     RENAME org.mavlink.qgroundcontrol.png
 )
+install(
+    FILES ${CMAKE_SOURCE_DIR}/deploy/org.mavlink.qgroundcontrol.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo/
 )
 
 if(BUILD_TESTING)
