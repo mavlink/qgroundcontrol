@@ -76,7 +76,7 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
             continue;
         Uris uris;
         uris.uriMetaData = typeValue["uri"].toString();
-        uris.crcMetaData = typeValue["fileCrc"].toVariant().toLongLong(); // Note: can't use toInt()
+        uris.crcMetaData = typeValue["fileCrc"].toVariant().toLongLong(); // Note: can't use toInt(), as it returns 0 when exceeding 2^31
         uris.crcMetaDataValid = typeValue.toObject().contains("fileCrc");
         uris.uriMetaDataFallback = typeValue["uriFallback"].toString();
         uris.crcMetaDataFallback = typeValue["fileCrcFallback"].toVariant().toLongLong();
@@ -87,6 +87,13 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName, const QString
         uris.uriTranslationFallback = typeValue["translationUriFallback"].toString();
         uris.crcTranslationFallback = typeValue["translationFileCrcFallback"].toVariant().toLongLong();
         uris.crcTranslationFallbackValid = typeValue.toObject().contains("translationFileCrcFallback");
+
+        if (uris.uriMetaData.isEmpty() || !uris.crcMetaDataValid) {
+            qCWarning(CompInfoGeneralLog) << "Metadata missing required fields: type:uri:crcValid" << type <<
+                    uris.uriMetaData << uris.crcMetaDataValid;
+            continue;
+        }
+
         _supportedTypes[(COMP_METADATA_TYPE)type] = uris;
         qCDebug(CompInfoGeneralLog) << "Metadata type : uri : crc" << type << uris.uriMetaData << uris.crcMetaData;
     }

@@ -1576,7 +1576,7 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
     switch ((int)request.param1) {
     case MAVLINK_MSG_ID_COMPONENT_INFORMATION:
         if (_firmwareType == MAV_AUTOPILOT_PX4) {
-            _sendVersionMetaData();
+            _sendGeneralMetaData();
             return true;
         }
         break;
@@ -1609,7 +1609,7 @@ bool MockLink::_handleRequestMessage(const mavlink_command_long_t& request, bool
     return false;
 }
 
-void MockLink::_sendVersionMetaData(void)
+void MockLink::_sendGeneralMetaData(void)
 {
     mavlink_message_t   responseMsg;
 #if 1
@@ -1617,7 +1617,7 @@ void MockLink::_sendVersionMetaData(void)
 #else
     char                metaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_GENERAL_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
 #endif
-    char                peripheralsMetaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_PERIPHERALS_METADATA_URI_LEN]       = "https://bit.ly/31nm0fs";
+    char                peripheralsMetaDataURI[MAVLINK_MSG_COMPONENT_INFORMATION_FIELD_PERIPHERALS_METADATA_URI_LEN]       = "";
 
     mavlink_msg_component_information_pack_chan(_vehicleSystemId,
                                                 _vehicleComponentId,
