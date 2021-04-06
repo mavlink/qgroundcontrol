@@ -203,7 +203,9 @@ install(
 )
 install(
     FILES ${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps/
+    RENAME org.mavlink.qgroundcontrol.png
+)
 )
 
 if(BUILD_TESTING)
