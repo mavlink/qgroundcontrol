@@ -42,7 +42,7 @@ MapQuickItem {
         id:         vehicleItem
         width:      vehicleIcon.width
         height:     vehicleIcon.height
-        opacity:    (vehicle && _activeVehicle) ? ((vehicle === _activeVehicle) ? 1.0 : 0.5) : 1.0
+        opacity:    _adsbVehicle || vehicle === _activeVehicle ? 1.0 : 0.5
 
         Rectangle {
             id:                 vehicleShadow
