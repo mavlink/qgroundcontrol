@@ -1147,10 +1147,10 @@
     </parameter>
     <parameter name="COM_ARM_WO_GPS" default="1" type="INT32">
       <short_desc>Allow arming without GPS</short_desc>
-      <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
+      <long_desc>The default allows the vehicle to arm without GPS signal.</long_desc>
       <values>
-        <value code="0">Allow arming without GPS</value>
-        <value code="1">Require GPS lock to arm</value>
+        <value code="0">Require GPS lock to arm</value>
+        <value code="1">Allow arming without GPS</value>
       </values>
     </parameter>
     <parameter name="COM_CPU_MAX" default="90.0" type="FLOAT">
