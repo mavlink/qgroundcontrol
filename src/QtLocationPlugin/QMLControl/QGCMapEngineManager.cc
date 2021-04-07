@@ -96,14 +96,14 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngineManager::tileCountStr()
+QGCMapEngineManager::tileCountStr() const
 {
     return QGCMapEngine::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
 }
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngineManager::tileSizeStr()
+QGCMapEngineManager::tileSizeStr() const
 {
     return QGCMapEngine::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }

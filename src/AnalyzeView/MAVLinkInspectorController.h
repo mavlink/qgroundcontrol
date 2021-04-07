@@ -50,12 +50,12 @@ public:
     QString         label           ();
     QString         type            () { return _type;  }
     QString         value           () { return _value; }
-    bool            selectable      () { return _selectable; }
+    bool            selectable      () const{ return _selectable; }
     bool            selected        () { return _pSeries != nullptr; }
     QAbstractSeries*series          () { return _pSeries; }
     QList<QPointF>* values          () { return &_values;}
-    qreal           rangeMin        () { return _rangeMin; }
-    qreal           rangeMax        () { return _rangeMax; }
+    qreal           rangeMin        () const{ return _rangeMin; }
+    qreal           rangeMax        () const{ return _rangeMax; }
     int             chartIndex      ();
 
     void            setSelectable   (bool sel);
@@ -102,15 +102,15 @@ public:
     QGCMAVLinkMessage   (QObject* parent, mavlink_message_t* message);
     ~QGCMAVLinkMessage  ();
 
-    quint32             id              () { return _message.msgid;  }
-    quint8              cid             () { return _message.compid; }
+    quint32             id              () const{ return _message.msgid;  }
+    quint8              cid             () const{ return _message.compid; }
     QString             name            () { return _name;  }
-    qreal               messageHz       () { return _messageHz; }
-    quint64             count           () { return _count; }
-    quint64             lastCount       () { return _lastCount; }
+    qreal               messageHz       () const{ return _messageHz; }
+    quint64             count           () const{ return _count; }
+    quint64             lastCount       () const{ return _lastCount; }
     QmlObjectListModel* fields          () { return &_fields; }
-    bool                fieldSelected   () { return _fieldSelected; }
-    bool                selected        () { return _selected; }
+    bool                fieldSelected   () const{ return _fieldSelected; }
+    bool                selected        () const{ return _selected; }
 
     void                updateFieldSelection();
     void                update          (mavlink_message_t* message);
@@ -150,11 +150,11 @@ public:
     QGCMAVLinkSystem   (QObject* parent, quint8 id);
     ~QGCMAVLinkSystem  ();
 
-    quint8              id              () { return _id; }
+    quint8              id              () const{ return _id; }
     QmlObjectListModel* messages        () { return &_messages; }
     QList<int>          compIDs         () { return _compIDs; }
     QStringList         compIDsStr      () { return _compIDsStr; }
-    int                 selected        () { return _selected; }
+    int                 selected        () const{ return _selected; }
 
     void                setSelected     (int sel);
     QGCMAVLinkMessage*  findMessage     (uint32_t id, uint8_t cid);
@@ -202,11 +202,11 @@ public:
     QVariantList            chartFields         () { return _chartFields; }
     QDateTime               rangeXMin           () { return _rangeXMin;   }
     QDateTime               rangeXMax           () { return _rangeXMax;   }
-    qreal                   rangeYMin           () { return _rangeYMin;   }
-    qreal                   rangeYMax           () { return _rangeYMax;   }
-    quint32                 rangeXIndex         () { return _rangeXIndex; }
-    quint32                 rangeYIndex         () { return _rangeYIndex; }
-    int                     chartIndex          () { return _index; }
+    qreal                   rangeYMin           () const{ return _rangeYMin;   }
+    qreal                   rangeYMax           () const{ return _rangeYMax;   }
+    quint32                 rangeXIndex         () const{ return _rangeXIndex; }
+    quint32                 rangeYIndex         () const{ return _rangeYIndex; }
+    int                     chartIndex          () const{ return _index; }
 
     void                    setRangeXIndex      (quint32 t);
     void                    setRangeYIndex      (quint32 r);

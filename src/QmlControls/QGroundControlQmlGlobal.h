@@ -210,7 +210,7 @@ public:
     bool    singleVehicleSupport    ();
     bool    px4ProFirmwareSupported ();
     bool    apmFirmwareSupported    ();
-    bool    skipSetupPage           () { return _skipSetupPage; }
+    bool    skipSetupPage           () const{ return _skipSetupPage; }
     void    setSkipSetupPage        (bool skip);
 
     void    setIsVersionCheckEnabled    (bool enable);

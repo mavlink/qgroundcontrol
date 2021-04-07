@@ -38,7 +38,7 @@ MacBuild {
         QMAKE_POST_LINK += && install_name_tool -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $${TARGET}.app/Contents/MacOS/$${TARGET}
         # AirMap
         contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmapd/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
+            QMAKE_POST_LINK += && rsync -a $$SOURCE_DIR/libs/airmap-platform-sdk/macOS/$$AIRMAP_QT_PATH/* $${TARGET}.app/Contents/Frameworks/
             QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $${TARGET}.app/Contents/MacOS/$${TARGET}
         }
     }
@@ -104,12 +104,17 @@ LinuxBuild {
         libicui18n.so* \
         libQt5TextToSpeech.so.5
 
-    !contains(DEFINES, __rasp_pi2__) {
+    exists($$[QT_INSTALL_LIBS]/libicudata.so.56) {
         # Some Qt distributions link with *.so.56
         QT_LIB_LIST += \
             libicudata.so.56 \
             libicui18n.so.56 \
             libicuuc.so.56
+    } else {
+        QT_LIB_LIST += \
+            libicudata.so \
+            libicui18n.so \
+            libicuuc.so
     }
 
     for(QT_LIB, QT_LIB_LIST) {
@@ -141,7 +146,7 @@ LinuxBuild {
 
     # Airmap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$PWD/libs/airmapd/linux/Qt.5.11.0/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$OUT_PWD/libs/airmap-platform-sdk/linux/$$AIRMAP_QT_PATH/libairmap-qt.so.1.1.0 $$DESTDIR/Qt/libs/
     }
 
     # QGroundControl start script

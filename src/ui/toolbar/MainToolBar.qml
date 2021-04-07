@@ -69,7 +69,7 @@ Rectangle {
             Layout.preferredHeight: viewButtonRow.height
             icon.source:            "/res/QGCLogoFull"
             logo:                   true
-            onClicked:              toolSelectDrawer.visible = true
+            onClicked:              mainWindow.showToolSelectDialog()
         }
 
         MainStatusIndicator {
@@ -87,7 +87,7 @@ Rectangle {
 
     QGCFlickable {
         id:                     toolsFlickable
-        anchors.leftMargin:     ScreenTools.defaultFontPixelHeight / 2
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * ScreenTools.largeFontPointRatio * 1.5
         anchors.left:           viewButtonRow.right
         anchors.bottomMargin:   1
         anchors.top:            parent.top
@@ -98,8 +98,7 @@ Rectangle {
 
         Loader {
             id:                 indicatorLoader
-            anchors.leftMargin: currentToolbar !== planViewToolbar ? ScreenTools.defaultFontPixelHeight / 2 : 0
-            anchors.left:       parent.left//currentToolbar !== planViewToolbar ? valueArea.right : parent.left
+            anchors.left:       parent.left
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             source:             currentToolbar === flyViewToolbar ?

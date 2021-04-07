@@ -481,13 +481,6 @@ FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData,
 
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass)
 {
-    return {
-#if 0
-    // Waiting for module update
-        MAV_CMD_DO_SET_REVERSE,
-#endif
-    };
-
     QList<MAV_CMD> supportedCommands = {
         MAV_CMD_NAV_WAYPOINT,
         MAV_CMD_NAV_LOITER_UNLIM, MAV_CMD_NAV_LOITER_TURNS, MAV_CMD_NAV_LOITER_TIME,
@@ -699,10 +692,15 @@ void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
     _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
-void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
+void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(tr("Unable to change altitude, vehicle altitude not known."));
+        return;
+    }
+
+    if (pauseVehicle && !_setFlightModeAndValidate(vehicle, pauseFlightMode())) {
+        qgcApp()->showAppMessage(tr("Unable to pause vehicle."));
         return;
     }
 

@@ -206,6 +206,9 @@ void SimpleMissionItem::_connectSignals(void)
     // Propogate signals from MissionItem up to SimpleMissionItem
     connect(&_missionItem,                      &MissionItem::sequenceNumberChanged,        this, &SimpleMissionItem::sequenceNumberChanged);
     connect(&_missionItem,                      &MissionItem::specifiedFlightSpeedChanged,  this, &SimpleMissionItem::specifiedFlightSpeedChanged);
+
+    connect(_missionController,                 &MissionController::plannedHomePositionChanged, this, &SimpleMissionItem::_amslEntryAltChanged);
+    connect(_missionController,                 &MissionController::plannedHomePositionChanged, this, &SimpleMissionItem::_amslExitAltChanged);
 }
 
 void SimpleMissionItem::_setupMetaData(void)
@@ -673,7 +676,9 @@ void SimpleMissionItem::_altitudeChanged(void)
     if (_altitudeMode == QGroundControlQmlGlobal::AltitudeModeAboveTerrain || _altitudeMode == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
         _terrainAltChanged();
-    } else {
+    }
+
+    if (_altitudeMode != QGroundControlQmlGlobal::AltitudeModeAboveTerrain) {
         _missionItem._param7Fact.setRawValue(_altitudeFact.rawValue());
     }
 }

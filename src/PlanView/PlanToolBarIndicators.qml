@@ -18,7 +18,7 @@ Item {
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
-    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : NaN
+    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : 0
     property real   missionMaxTelemetry:        _controllerValid ? _planMasterController.missionController.missionMaxTelemetry : NaN
     property bool   missionDirty:               _controllerValid ? _planMasterController.missionController.dirty : false
 
@@ -44,7 +44,7 @@ Item {
     property real   _heading:                   _currentMissionItemValid ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
     property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
-    property real   _missionTime:               _missionValid ? missionTime : NaN
+    property real   _missionTime:               _missionValid ? missionTime : 0
     property int    _batteryChangePoint:        _controllerValid ? _planMasterController.missionController.batteryChangePoint : -1
     property int    _batteriesRequired:         _controllerValid ? _planMasterController.missionController.batteriesRequired : -1
     property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
@@ -69,11 +69,20 @@ Item {
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
 
     function getMissionTime() {
-        if(isNaN(_missionTime)) {
+        if (!_missionTime) {
             return "00:00:00"
         }
-        var t = new Date(0, 0, 0, 0, 0, Number(_missionTime))
-        return Qt.formatTime(t, 'hh:mm:ss')
+        var t = new Date(2021, 0, 0, 0, 0, Number(_missionTime))
+        var days = Qt.formatDateTime(t, 'dd')
+        var complete
+
+        if (days == 31) {
+            days = '0'
+            complete = Qt.formatTime(t, 'hh:mm:ss')
+        } else {
+            complete = days + " days " + Qt.formatTime(t, 'hh:mm:ss')
+        }
+        return complete
     }
 
     // Progress bar

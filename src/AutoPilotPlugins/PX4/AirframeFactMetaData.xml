@@ -28,6 +28,24 @@
       <output name="AUX1">feed-through of RC AUX1 channel for prerotator (optional)</output>
       <output name="AUX2">feed-through of RC AUX2 channel for release device (optional)</output>
     </airframe>
+    <airframe name="ThunderFly TF-G2" id="17003" maintainer="ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;">
+      <class>Autogyro</class>
+      <maintainer>ThunderFly s.r.o., Roman Dvorak &lt;dvorakroman@thunderfly.cz&gt;</maintainer>
+      <type>Autogyro</type>
+      <url>https://github.com/ThunderFly-aerospace/TF-G2/</url>
+      <output name="MAIN2">rotor_head_L</output>
+      <output name="MAIN3">rotor_head_R</output>
+      <output name="MAIN4">rudder</output>
+      <output name="MAIN5">throttle</output>
+    </airframe>
+  </airframe_group>
+  <airframe_group name="Balloon" image="Balloon">
+    <airframe name="ThunderFly balloon TF-B1" id="18001" maintainer="ThunderFly s.r.o.">
+      <class>Balloon</class>
+      <maintainer>ThunderFly s.r.o.</maintainer>
+      <type>Balloon</type>
+      <url>https://github.com/ThunderFly-aerospace/TF-B1/</url>
+    </airframe>
   </airframe_group>
   <airframe_group name="Coaxial Helicopter" image="HelicopterCoaxial">
     <airframe name="Esky (Big) Lama v4" id="15001" maintainer="Emmanuel Roussel">
@@ -130,6 +148,11 @@
       <output name="MAIN6">motor 6</output>
       <output name="AUX1">feed-through of RC AUX1 channel</output>
       <output name="AUX2">feed-through of RC AUX2 channel</output>
+    </airframe>
+    <airframe name="Hex X with control allocation" id="6003" maintainer="Silvan Fuhrer">
+      <class>Copter</class>
+      <maintainer>Silvan Fuhrer</maintainer>
+      <type>Hexarotor x</type>
     </airframe>
   </airframe_group>
   <airframe_group name="Octo Coax Wide" image="OctoRotorXCoaxial">
@@ -374,6 +397,11 @@
       <output name="MAIN3">motor 3</output>
       <output name="MAIN4">motor 4</output>
     </airframe>
+    <airframe name="S500 with control allocation" id="4018" maintainer="Silvan Fuhrer">
+      <class>Copter</class>
+      <maintainer>Silvan Fuhrer</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe name="Hobbyking Micro PCB" id="4020" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;">
       <class>Copter</class>
       <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
@@ -408,11 +436,6 @@
     <airframe name="DJI Matrice 100" id="4060" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
-      <type>Quadrotor x</type>
-    </airframe>
-    <airframe name="Intel Aero Ready to Fly Drone" id="4070" maintainer="Beat Kueng &lt;beat@px4.io&gt;">
-      <class>Copter</class>
-      <maintainer>Beat Kueng &lt;beat@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="UVify IFO" id="4071" maintainer="Hyon Lim &lt;lim@uvify.com&gt;">
@@ -467,6 +490,11 @@
       <type>Quadrotor x</type>
     </airframe>
     <airframe name="Crazyflie 2" id="4900" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;">
+      <class>Copter</class>
+      <maintainer>Dennis Shtatov &lt;densht@gmail.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
+    <airframe name="Crazyflie 2.1" id="4901" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;">
       <class>Copter</class>
       <maintainer>Dennis Shtatov &lt;densht@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -726,26 +754,6 @@
       <output name="MAIN2">steering</output>
       <output name="MAIN4">throttle</output>
     </airframe>
-    <airframe name="Axial Racing AX10" id="50001" maintainer="John Doe &lt;john@example.com&gt;">
-      <class>Rover</class>
-      <type>Rover</type>
-      <output name="MAIN1">pass-through of control group 0, channel 0</output>
-      <output name="MAIN2">pass-through of control group 0, channel 1</output>
-      <output name="MAIN3">pass-through of control group 0, channel 2</output>
-      <output name="MAIN4">pass-through of control group 0, channel 3</output>
-      <output name="MAIN5">pass-through of control group 0, channel 4</output>
-      <output name="MAIN6">pass-through of control group 0, channel 5</output>
-      <output name="MAIN7">pass-through of control group 0, channel 6</output>
-      <output name="MAIN8">pass-through of control group 0, channel 7</output>
-    </airframe>
-    <airframe name="Traxxas stampede vxl 2wd" id="50002" maintainer="Marco Zorzi">
-      <class>Rover</class>
-      <maintainer>Marco Zorzi</maintainer>
-      <type>Rover</type>
-      <url>https://traxxas.com/products/models/electric/stampede-vxl-tsm</url>
-      <output name="MAIN2">steering</output>
-      <output name="MAIN4">throttle</output>
-    </airframe>
     <airframe name="Aion Robotics R1 UGV" id="50003" maintainer="Timothy Scott">
       <class>Rover</class>
       <maintainer>Timothy Scott</maintainer>
@@ -970,6 +978,23 @@
       <output name="MAIN6">Tilt servo left</output>
       <output name="MAIN7">Elevon right</output>
       <output name="MAIN8">Elevon left</output>
+    </airframe>
+    <airframe name="Generic Quadplane VTOL Tiltrotor" id="13030" maintainer="">
+      <class>VTOL</class>
+      <maintainer />
+      <type>VTOL Tiltrotor</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+      <output name="AUX1">Motor tilt front left</output>
+      <output name="AUX2">Motor tilt front right</output>
+      <output name="AUX3">Motor tilt rear left</output>
+      <output name="AUX4">Motor tilt rear right</output>
+      <output name="AUX5">Aileron left</output>
+      <output name="AUX6">Aileron right</output>
+      <output name="AUX7">Elevator</output>
+      <output name="AUX8">Rudder</output>
     </airframe>
   </airframe_group>
 </airframes>

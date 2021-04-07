@@ -120,10 +120,31 @@ Item {
     }
 
     PhotoVideoControl {
+        id:                     photoVideoControl
         anchors.margins:        _toolsMargin
-        anchors.verticalCenter: parent.verticalCenter
         anchors.right:          parent.right
         width:                  _rightPanelWidth
+        state:                  _verticalCenter ? "verticalCenter" : "topAnchor"
+        states: [
+            State {
+                name: "verticalCenter"
+                AnchorChanges {
+                    target:                 photoVideoControl
+                    anchors.top:            undefined
+                    anchors.verticalCenter: _root.verticalCenter
+                }
+            },
+            State {
+                name: "topAnchor"
+                AnchorChanges {
+                    target:                 photoVideoControl
+                    anchors.verticalCenter: undefined
+                    anchors.top:            instrumentPanel.bottom
+                }
+            }
+        ]
+
+        property bool _verticalCenter: !QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.rawValue
     }
 
     TelemetryValuesBar {

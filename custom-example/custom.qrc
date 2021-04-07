@@ -1,7 +1,4 @@
 <RCC>
-    <qresource prefix="/custom">
-        <file alias="CustomFlyViewOverlay.qml">res/CustomFlyViewOverlay.qml</file>
-    </qresource>
     <qresource prefix="custom/img">
         <file alias="altitude.svg">res/Images/altitude.svg</file>
         <file alias="attitude_crosshair.svg">res/Images/attitude_crosshair.svg</file>

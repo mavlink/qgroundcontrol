@@ -39,8 +39,6 @@ private:
         loiterTangentCoordinateChangedIndex,
         landingCoordinateChangedIndex,
         landingCoordSetChangedIndex,
-        loiterClockwiseChangedIndex,
-        useLoiterToAltChangedIndex,
         altitudesAreRelativeChangedIndex,
         _updateFlightPathSegmentsSignalIndex,
         maxSignalIndex,
@@ -51,8 +49,6 @@ private:
         loiterTangentCoordinateChangedMask      = 1 << loiterTangentCoordinateChangedIndex,
         landingCoordinateChangedMask            = 1 << landingCoordinateChangedIndex,
         landingCoordSetChangedMask              = 1 << landingCoordSetChangedIndex,
-        loiterClockwiseChangedMask              = 1 << loiterClockwiseChangedIndex,
-        useLoiterToAltChangedMask               = 1 << useLoiterToAltChangedIndex,
         altitudesAreRelativeChangedMask         = 1 << altitudesAreRelativeChangedIndex,
         _updateFlightPathSegmentsSignalMask     = 1 << _updateFlightPathSegmentsSignalIndex,
     };

@@ -89,7 +89,7 @@ public:
         , _hash(hash)
     {
     }
-    qulonglong          set     () { return _set;   }
+    qulonglong          set     () const{ return _set;   }
     QString             hash    () { return _hash;  }
     QByteArray          img     () { return _img;   }
     QString             format  () { return _format;}
@@ -264,8 +264,8 @@ public:
         , _count(count)
     {}
 
-    qulonglong  setID() { return _setID; }
-    int         count() { return _count; }
+    qulonglong  setID() const{ return _setID; }
+    int         count() const{ return _count; }
 
     void setTileListFetched(QList<QGCTile*> tiles)
     {
@@ -293,7 +293,7 @@ public:
     {}
 
     QString             hash    () { return _hash; }
-    qulonglong          setID   () { return _setID; }
+    qulonglong          setID   () const{ return _setID; }
     QGCTile::TyleState  state   () { return _state; }
 
 private:
@@ -312,7 +312,7 @@ public:
         , _setID(setID)
     {}
 
-    qulonglong  setID() { return _setID; }
+    qulonglong  setID() const{ return _setID; }
 
     void setTileSetDeleted()
     {
@@ -337,7 +337,7 @@ public:
         , _newName(newName)
     {}
 
-    qulonglong  setID   () { return _setID; }
+    qulonglong  setID   () const{ return _setID; }
     QString     newName () { return _newName; }
 
 private:
@@ -355,7 +355,7 @@ public:
         , _amount(amount)
     {}
 
-    quint64  amount() { return _amount; }
+    quint64  amount() const{ return _amount; }
 
     void setPruned()
     {
@@ -441,7 +441,7 @@ public:
     }
 
     QString                    path     () { return _path; }
-    bool                       replace  () { return _replace; }
+    bool                       replace  () const{ return _replace; }
 
     void setImportCompleted()
     {

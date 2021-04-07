@@ -99,7 +99,7 @@ void PlanMasterController::start(void)
 
 #if defined(QGC_AIRMAP_ENABLED)
     //-- This assumes there is one single instance of PlanMasterController in edit mode.
-    if(!flyView) {
+    if(!_flyView) {
         // Wait for signal confirming AirMap client connection before starting flight planning
         connect(qgcApp()->toolbox()->airspaceManager(), &AirspaceManager::connectStatusChanged, this, &PlanMasterController::_startFlightPlanning);
     }

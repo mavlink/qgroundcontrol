@@ -500,7 +500,7 @@ Item {
             _activeVehicle.emergencyStop()
             break
         case actionChangeAlt:
-            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange)
+            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange, false /* pauseVehicle */)
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(actionData)
@@ -515,8 +515,7 @@ Item {
             _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
             break
         case actionPause:
-            _activeVehicle.pauseVehicle()
-            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange)
+            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange, true /* pauseVehicle */)
             break
         case actionMVPause:
             rgVehicle = QGroundControl.multiVehicleManager.vehicles

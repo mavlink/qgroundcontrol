@@ -32,13 +32,13 @@ namespace Ui {
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
-    
+
     //friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
-    
+
 public:
     JoystickConfigController(void);
     ~JoystickConfigController();
-    
+
     Q_PROPERTY(QString statusText               READ statusText                 NOTIFY statusTextChanged)
 
     Q_PROPERTY(bool rollAxisMapped              READ rollAxisMapped             NOTIFY rollAxisMappedChanged)
@@ -81,12 +81,12 @@ public:
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
 
-    int  axisCount                          () { return _axisCount; }
+    int  axisCount                          () const{ return _axisCount; }
 
-    int  transmitterMode                    () { return _transmitterMode; }
+    int  transmitterMode                    () const{ return _transmitterMode; }
     void setTransmitterMode                 (int mode);
 
-    bool calibrating                        () { return _currentStep != -1; }
+    bool calibrating                        () const{ return _currentStep != -1; }
     bool nextEnabled                        ();
     bool skipEnabled                        ();
 
@@ -125,7 +125,7 @@ private slots:
     void _activeJoystickChanged(Joystick* joystick);
     void _axisValueChanged(int axis, int value);
     void _axisDeadbandChanged(int axis, int value);
-   
+
 private:
     /// @brief The states of the calibration state machine.
     enum calStates {
@@ -150,7 +150,7 @@ private:
         buttonFn                    skipFn;
         int                         channelID;
     };
-    
+
     /// @brief A set of information associated with a radio axis.
     struct AxisInfo {
         Joystick::AxisFunction_t    function;   ///< Function mapped to this axis, Joystick::maxFunction for none
@@ -160,48 +160,48 @@ private:
         int                         axisTrim;   ///< Trim position
         int                         deadband;   ///< Deadband
     };
-    
+
     Joystick* _activeJoystick = nullptr;
-    
+
     int _transmitterMode    = 2;
     int _currentStep        = -1;  ///< Current step of state machine
-    
+
     const struct stateMachineEntry* _getStateMachineEntry(int step);
-    
+
     void _advanceState          ();
     void _setupCurrentState     ();
-    
-    bool _validAxis             (int axis);
+
+    bool _validAxis             (int axis) const;
 
     void _inputCenterWaitBegin  (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickDetect      (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickMin         (Joystick::AxisFunction_t function, int axis, int value);
     void _inputCenterWait       (Joystick::AxisFunction_t function, int axis, int value);
-    
+
     void _switchDetect          (Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep);
-    
+
     void _saveFlapsDown         ();
     void _skipFlaps             ();
     void _saveAllTrims          ();
-    
+
     bool _stickSettleComplete   (int axis, int value);
-    
+
     void _validateCalibration   ();
     void _writeCalibration      ();
     void _resetInternalCalibrationValues();
     void _setInternalCalibrationValuesFromSettings();
-    
+
     void _startCalibration      ();
     void _stopCalibration       ();
 
     void _calSaveCurrentValues  ();
-    
+
     void _setStickPositions     ();
-    
+
     void _signalAllAttitudeValueChanges();
 
     void _setStatusText         (const QString& text);
-    
+
     stateStickPositions _sticksCentered;
     stateStickPositions _sticksThrottleUp;
     stateStickPositions _sticksThrottleDown;
@@ -217,7 +217,7 @@ private:
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
     static const int _attitudeControls  = 5;
-    
+
     int                 _axisCount      = 0;        ///< Number of actual joystick axes available
     static const int    _axisNoAxis     = -1;       ///< Signals no axis set
     static const int    _axisMinimum    = 4;        ///< Minimum numner of joystick axes required to run PX4
@@ -231,7 +231,7 @@ private:
     bool    _calStateAxisComplete;                  ///< Work associated with current axis is complete
     int     _calStateIdentifyOldMapping;            ///< Previous mapping for axis being currently identified
     int     _calStateReverseOldMapping;             ///< Previous mapping for axis being currently used to detect inversion
-    
+
     static const int _calCenterPoint;
     static const int _calValidMinValue;
     static const int _calValidMaxValue;
@@ -240,8 +240,8 @@ private:
     static const int _calRoughCenterDelta;
     static const int _calMoveDelta;
     static const int _calSettleDelta;
-    static const int _calMinDelta;    
-    
+    static const int _calMinDelta;
+
     int     _stickDetectAxis;
     int     _stickDetectInitialValue;
     int     _stickDetectValue;

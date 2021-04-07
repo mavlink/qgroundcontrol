@@ -15,6 +15,8 @@
 
 #include <QSettings>
 
+static const char* kVideoAllLogCategory = "VideoAllLog";
+
 // Add Global logging categories (not class specific) here using QGC_LOGGING_CATEGORY
 QGC_LOGGING_CATEGORY(FirmwareUpgradeLog,            "FirmwareUpgradeLog")
 QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog,     "FirmwareUpgradeVerboseLog")
@@ -26,6 +28,7 @@ QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
 QGC_LOGGING_CATEGORY(ADSBVehicleManagerLog,         "ADSBVehicleManagerLog")
 QGC_LOGGING_CATEGORY(LocalizationLog,               "LocalizationLog")
+QGC_LOGGING_CATEGORY(VideoAllLog,                   kVideoAllLogCategory)
 
 QGCLoggingCategoryRegister* _instance = nullptr;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
@@ -64,18 +67,23 @@ bool QGCLoggingCategoryRegister::categoryLoggingOn(const QString& category)
 
 void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& commandLineLoggingOptions)
 {
+    QString filterRules;
+    QString filterRuleFormat("%1.debug=true\n");
+    bool    videoAllLogSet = false;
+
     if (!commandLineLoggingOptions.isEmpty()) {
         _commandLineLoggingOptions = commandLineLoggingOptions;
     }
-    QString filterRules;
 
     filterRules += "*Log.debug=false\n";
 
     // Set up filters defined in settings
     foreach (QString category, _registeredCategories) {
         if (categoryLoggingOn(category)) {
-            filterRules += category;
-            filterRules += ".debug=true\n";
+            filterRules += filterRuleFormat.arg(category);
+            if (category == kVideoAllLogCategory) {
+                videoAllLogSet = true;
+            }
         }
     }
 
@@ -86,16 +94,26 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
         if (logList[0] == "full") {
             filterRules += "*Log.debug=true\n";
             for(int i=1; i<logList.count(); i++) {
-                filterRules += logList[i];
-                filterRules += ".debug=false\n";
+                filterRules += filterRuleFormat.arg(logList[i]);
             }
         } else {
-            foreach(const QString &rule, logList) {
-                filterRules += rule;
-                filterRules += ".debug=true\n";
+            for (auto& category: logList) {
+                filterRules += filterRuleFormat.arg(category);
+                if (category == kVideoAllLogCategory) {
+                    videoAllLogSet = true;
+                }
             }
         }
     }
+
+    if (videoAllLogSet) {
+        filterRules += filterRuleFormat.arg("VideoManagerLog");
+        filterRules += filterRuleFormat.arg("VideoReceiverLog");
+        filterRules += filterRuleFormat.arg("GStreamerLog");
+    }
+
+    // Logging from GStreamer library itself controlled by gstreamer debug levels is always turned on
+    filterRules += filterRuleFormat.arg("GStreamerAPILog");
 
     qDebug() << "Filter rules" << filterRules;
     QLoggingCategory::setFilterRules(filterRules);

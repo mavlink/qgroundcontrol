@@ -65,8 +65,7 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Mapbox Hybrid"]       = new MapboxHybridMapProvider(this);
     _providersTable["Mapbox StreetsBasic"] = new MapboxStreetsBasicMapProvider(this);
     _providersTable["Mapbox Outdoors"]     = new MapboxOutdoorsMapProvider(this);
-    _providersTable["Mapbox RunBikeHike"]  = new MapboxRunBikeHikeMapProvider(this);
-    _providersTable["Mapbox HighContrast"] = new MapboxHighContrastMapProvider(this);
+    _providersTable["Mapbox Bright"]       = new MapboxBrightMapProvider(this);
     _providersTable["Mapbox Custom"]       = new MapboxCustomMapProvider(this);
 
     //_providersTable["MapQuest Map"] = new MapQuestMapMapProvider(this);
@@ -82,6 +81,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Japan-GSI Anaglyph"] = new JapanAnaglyphMapProvider(this);
     _providersTable["Japan-GSI Slope"] = new JapanSlopeMapProvider(this);
     _providersTable["Japan-GSI Relief"] = new JapanReliefMapProvider(this);
+    
+    _providersTable["CustomURL Custom"] = new CustomURLMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {

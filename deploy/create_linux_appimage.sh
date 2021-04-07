@@ -8,7 +8,7 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-QGC_SRC=$1
+QGC_SRC=$(readlink -f $1)
 
 QGC_CUSTOM_APP_NAME="${QGC_CUSTOM_APP_NAME:-QGroundControl}"
 QGC_CUSTOM_GENERIC_NAME="${QGC_CUSTOM_GENERIC_NAME:-Ground Control Station}"
@@ -18,17 +18,18 @@ QGC_CUSTOM_APP_ICON="${QGC_CUSTOM_APP_ICON:-${QGC_SRC}/resources/icons/qgroundco
 QGC_CUSTOM_APP_ICON_NAME="${QGC_CUSTOM_APP_ICON_NAME:-QGroundControl}"
 
 if [ ! -f ${QGC_SRC}/qgroundcontrol.pro ]; then
-  echo "please specify path to $(QGC_CUSTOM_APP_NAME) source as the 1st argument"
+  echo "please specify path to ${QGC_CUSTOM_APP_NAME} source as the 1st argument"
   exit 1
 fi
 
-QGC_RELEASE_DIR=$2
+QGC_RELEASE_DIR=$(readlink -f $2)
 if [ ! -f ${QGC_RELEASE_DIR}/${QGC_CUSTOM_BINARY_NAME} ]; then
   echo "please specify path to ${QGC_CUSTOM_BINARY_NAME} release as the 2nd argument"
   exit 1
 fi
 
 OUTPUT_DIR=${3-`pwd`}
+OUTPUT_DIR=$(readlink -f $OUTPUT_DIR)
 echo "Output directory:" ${OUTPUT_DIR}
 
 # Generate AppImage using the binaries currently provided by the project.
@@ -87,5 +88,6 @@ chmod a+x ./appimagetool-x86_64.AppImage
 
 ./appimagetool-x86_64.AppImage ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
 
+mkdir -p ${OUTPUT_DIR}
 cp ${TMPDIR}/$APP".AppImage" ${OUTPUT_DIR}/$APP".AppImage"
 

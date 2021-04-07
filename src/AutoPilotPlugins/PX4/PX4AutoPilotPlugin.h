@@ -23,6 +23,7 @@
 #include "PowerComponent.h"
 #include "MotorComponent.h"
 #include "PX4TuningComponent.h"
+#include "PX4FlightBehavior.h"
 #include "SyslinkComponent.h"
 #include "Vehicle.h"
 
@@ -58,6 +59,7 @@ protected:
     PowerComponent*         _powerComponent;
     MotorComponent*         _motorComponent;
     PX4TuningComponent*     _tuningComponent;
+    PX4FlightBehavior*      _flightBehavior;
     SyslinkComponent*       _syslinkComponent;
 
 private:

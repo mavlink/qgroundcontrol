@@ -119,8 +119,6 @@ add_library(qgc
 	QGCTemporaryFile.h
 	QGCToolbox.cc
 	QGCToolbox.h
-	QGCZlib.cc
-	QGCZlib.h
 	RunGuard.cc
 	RunGuard.h
 	ShapeFileHelper.cc
@@ -144,6 +142,7 @@ add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(Camera)
 add_subdirectory(comm)
+add_subdirectory(Compression)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlightDisplay)

@@ -40,8 +40,6 @@ void LandingComplexItemTest::init(void)
     rgSignals[loiterTangentCoordinateChangedIndex]  = SIGNAL(loiterTangentCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordinateChangedIndex]        = SIGNAL(landingCoordinateChanged(QGeoCoordinate));
     rgSignals[landingCoordSetChangedIndex]          = SIGNAL(landingCoordSetChanged(bool));
-    rgSignals[loiterClockwiseChangedIndex]          = SIGNAL(loiterClockwiseChanged(bool));
-    rgSignals[useLoiterToAltChangedIndex]           = SIGNAL(useLoiterToAltChanged(bool));
     rgSignals[altitudesAreRelativeChangedIndex]     = SIGNAL(altitudesAreRelativeChanged(bool));
     rgSignals[_updateFlightPathSegmentsSignalIndex] = SIGNAL(_updateFlightPathSegmentsSignal());
 
@@ -388,10 +386,10 @@ void SimpleLandingComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
     _flightPathSegments.beginReset();
     _flightPathSegments.clearAndDeleteContents();
     if (useLoiterToAlt()->rawValue().toBool()) {
-        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
-        _appendFlightPathSegment(loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, finalApproachCoordinate(), amslEntryAlt(), loiterTangentCoordinate(),  amslEntryAlt()); // Best we can do to simulate loiter circle terrain profile
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, loiterTangentCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     } else {
-        _appendFlightPathSegment(finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeLand, finalApproachCoordinate(), amslEntryAlt(), landingCoordinate(),        amslExitAlt());
     }
     _flightPathSegments.endReset();
 

@@ -95,12 +95,9 @@ StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterC
 
     connect(this, &StructureScanComplexItem::wizardModeChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(&_entranceAltFact,  &Fact::valueChanged,                                this, &StructureScanComplexItem::_amslEntryAltChanged);
     connect(this,               &StructureScanComplexItem::amslEntryAltChanged,     this, &StructureScanComplexItem::amslExitAltChanged);
 
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
-    connect(_missionController, &MissionController::plannedHomePositionChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::minAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::topFlightAltChanged,     this, &StructureScanComplexItem::maxAMSLAltitudeChanged);
     connect(this,               &StructureScanComplexItem::bottomFlightAltChanged,  this, &StructureScanComplexItem::minAMSLAltitudeChanged);
@@ -712,23 +709,23 @@ void StructureScanComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
 
         // Entrance to first layer entrance
         double entranceAlt = _entranceAltFact.rawValue().toDouble() + _missionController->plannedHomePosition().altitude();
-        _appendFlightPathSegment(layerEntranceCoord, entranceAlt, layerEntranceCoord, layerAltitude);
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, layerEntranceCoord, entranceAlt, layerEntranceCoord, layerAltitude);
 
         // Segments for each layer
         for (int layerIndex=0; layerIndex<_layersFact.rawValue().toInt(); layerIndex++) {
             // Move from one layer to the next
             if (layerIndex != 0) {
-                _appendFlightPathSegment(layerEntranceCoord, prevLayerAltitude, layerEntranceCoord, layerAltitude);
+                _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, layerEntranceCoord, prevLayerAltitude, layerEntranceCoord, layerAltitude);
             }
 
             QGeoCoordinate prevCoord = QGeoCoordinate();
             for (const QGeoCoordinate& coord: _flightPolygon.coordinateList()) {
                 if (prevCoord.isValid()) {
-                    _appendFlightPathSegment(prevCoord, layerAltitude, coord, layerAltitude);
+                    _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, prevCoord, layerAltitude, coord, layerAltitude);
                 }
                 prevCoord = coord;
             }
-            _appendFlightPathSegment(_flightPolygon.coordinateList().last(), layerAltitude, _flightPolygon.coordinateList().first(), layerAltitude);
+            _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, _flightPolygon.coordinateList().last(), layerAltitude, _flightPolygon.coordinateList().first(), layerAltitude);
 
             // Move to next layer altitude
             prevLayerAltitude = layerAltitude;
@@ -740,7 +737,7 @@ void StructureScanComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         }
 
         // Last layer exit back to entrance
-        _appendFlightPathSegment(layerEntranceCoord, prevLayerAltitude, layerEntranceCoord, entranceAlt);
+        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, layerEntranceCoord, prevLayerAltitude, layerEntranceCoord, entranceAlt);
     }
 
     _flightPathSegments.endReset();

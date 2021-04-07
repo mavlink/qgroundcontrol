@@ -223,7 +223,14 @@ bool checkAndroidWritePermission() {
 int main(int argc, char *argv[])
 {
 #ifndef __mobile__
-    RunGuard guard("QGroundControlRunGuardKey");
+    // We make the runguard key different for custom and non custom
+    // builds, so they can be executed together in the same device.
+    // Stable and Daily have same QGC_APPLICATION_NAME so they would
+    // not be able to run at the same time
+    QString runguardString(QGC_APPLICATION_NAME);
+    runguardString.append("RunGuardKey");
+
+    RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);

@@ -115,11 +115,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     connect(this,                                       &TransectStyleComplexItem::followTerrainChanged,        this, &TransectStyleComplexItem::_followTerrainChanged);
     connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslEntryAltChanged);
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::_amslExitAltChanged);
-
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
-    connect(_missionController,                         &MissionController::plannedHomePositionChanged,         this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
     connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
     connect(_cameraCalc.distanceToSurface(),            &Fact::rawValueChanged,                                 this, &TransectStyleComplexItem::maxAMSLAltitudeChanged);
     connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged,          this, &TransectStyleComplexItem::minAMSLAltitudeChanged);
@@ -314,7 +309,10 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         }
     }
 
-    if (!forPresets) {
+    if (forPresets) {
+        // Most signalling will happen after the transects are rebuilt so we don't over signal here
+        emit followTerrainChanged(_followTerrain);
+    } else {
         emit minAMSLAltitudeChanged();
         emit maxAMSLAltitudeChanged();
         _amslEntryAltChanged();
@@ -490,7 +488,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
             for (const MissionItem* missionItem: _loadedMissionItems) {
                 if (missionItem->command() == MAV_CMD_NAV_WAYPOINT || missionItem->command() == MAV_CMD_CONDITION_GATE) {
                     if (prevCoord.isValid()) {
-                        _appendFlightPathSegment(prevCoord, prevAlt, missionItem->coordinate(), missionItem->param7());
+                        _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, prevCoord, prevAlt, missionItem->coordinate(), missionItem->param7());
                     }
                     prevCoord = missionItem->coordinate();
                     prevAlt = missionItem->param7();
@@ -505,7 +503,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
                     const QGeoCoordinate& fromCoord = _rgFlightPathCoordInfo[i].coord;
                     const QGeoCoordinate& toCoord   = _rgFlightPathCoordInfo[i+1].coord;
                     //qDebug() << _rgFlightPathCoordInfo.count() << fromCoord << _rgFlightPathCoordInfo[i].coordType << toCoord << _rgFlightPathCoordInfo[i+1].coordType;
-                    _appendFlightPathSegment(fromCoord, fromCoord.altitude(), toCoord, toCoord.altitude());
+                    _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, fromCoord, fromCoord.altitude(), toCoord, toCoord.altitude());
                 }
             }
         }
@@ -518,7 +516,7 @@ void TransectStyleComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
         for (const QVariant& varCoord: _visualTransectPoints) {
             QGeoCoordinate thisCoord = varCoord.value<QGeoCoordinate>();
             if (prevCoord.isValid()) {
-                _appendFlightPathSegment(prevCoord,  surveyAlt, thisCoord,  surveyAlt);
+                _appendFlightPathSegment(FlightPathSegment::SegmentTypeGeneric, prevCoord,  surveyAlt, thisCoord,  surveyAlt);
             }
             prevCoord = thisCoord;
         }
@@ -729,8 +727,8 @@ void TransectStyleComplexItem::_adjustForMaxRates(void)
             //qDebug() << "descent rate pass";
             descentRateAdjusted = false;
             for (int i=0; i<_rgFlightPathCoordInfo.count() - 1; i++) {
-                QGeoCoordinate& fromCoord   = _rgFlightPathCoordInfo[i-1].coord;
-                QGeoCoordinate& toCoord     = _rgFlightPathCoordInfo[i].coord;
+                QGeoCoordinate& fromCoord   = _rgFlightPathCoordInfo[i].coord;
+                QGeoCoordinate& toCoord     = _rgFlightPathCoordInfo[i+1].coord;
 
                 double altDifference    = toCoord.altitude() - fromCoord.altitude();
                 double distance         = fromCoord.distanceTo(toCoord);
