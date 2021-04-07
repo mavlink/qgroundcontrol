@@ -28,6 +28,10 @@
     </screenshot>
   </screenshots>
   
+  <url type="homepage">http://qgroundcontrol.com/</url>
+  <url type="help">https://docs.qgroundcontrol.com/master/en/index.html</url>
+  <url type="bugtracker">https://github.com/mavlink/qgroundcontrol/issues</url>
+
   <categories>
     <category>Utility</category>
     <category>Maps</category>
