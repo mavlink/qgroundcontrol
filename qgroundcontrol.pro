@@ -1454,15 +1454,14 @@ DISTFILES += \
 # "install" target
 #
 
-bin_qgroundcontrol.path = $${PREFIX}/bin/
-bin_qgroundcontrol.files = $${OUT_PWD}/$${DESTDIR}/QGroundControl
+target.path = $${PREFIX}/bin/
 
 share_qgroundcontrol.path = $${PREFIX}/share/qgroundcontrol/
 share_qgroundcontrol.files = $${IN_PWD}/resources/
 
-share_pixmaps.path = $${PREFIX}/share/pixmaps/
-share_pixmaps.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
+share_icons.path = $${PREFIX}/share/icons/hicolor/128x128/apps/
+share_icons.files = $${IN_PWD}/resources/icons/qgroundcontrol.png
 share_applications.path = $${PREFIX}/share/applications/
 share_applications.files = $${IN_PWD}/deploy/qgroundcontrol.desktop
 
-INSTALLS += bin_qgroundcontrol share_qgroundcontrol share_pixmaps share_applications
+INSTALLS += target share_qgroundcontrol share_icons share_applications
