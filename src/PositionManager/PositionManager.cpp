@@ -82,7 +82,7 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
         // Note that gcsPosition filters out possible crap values
         if (qAbs(update.coordinate().latitude()) > 0.001 &&
             qAbs(update.coordinate().longitude()) > 0.001 &&
-            update.attribute(QGeoPositionInfo::HorizontalAccuracy) <= MinHorizonalAccuracyMetres) {
+            update.attribute(QGeoPositionInfo::HorizontalAccuracy) <= MinHorizonalAccuracyMeters) {
             newGCSPosition = update.coordinate();
         }
     }
