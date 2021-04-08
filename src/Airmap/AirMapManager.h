@@ -13,8 +13,13 @@
 #include "AirspaceManager.h"
 #include "QGCLoggingCategory.h"
 
+<<<<<<< HEAD
 #include <Airmap/services/logger.h>
 #include <Airmap/services/types.h>
+=======
+#include <Airmap/qt/logger.h>
+#include <Airmap/qt/types.h>
+>>>>>>> moved QT-interfacing code from AirMap's platform-sdk lib into QGC
 
 #include <memory>
 
