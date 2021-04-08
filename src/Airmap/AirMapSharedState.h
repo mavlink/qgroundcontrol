@@ -14,7 +14,7 @@
 
 #include "AirspaceManager.h"
 
-#include <airmap/qt/client.h>
+#include <Airmap/qt/client.h>
 
 /**
  * @class AirMapSharedState
