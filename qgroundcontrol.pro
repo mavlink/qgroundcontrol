@@ -219,7 +219,7 @@ LinuxBuild {
 
 CONFIG += qt \
     thread \
-    c++11
+    c++14
 
 DebugBuild {
     CONFIG -= qtquickcompiler
@@ -1323,7 +1323,8 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/airmap.qrc
 
     INCLUDEPATH += \
-        src/Airmap
+        src/Airmap \
+        src/Airmap/qt
 
     HEADERS += \
         src/Airmap/AirMapAdvisoryManager.h \
@@ -1339,6 +1340,21 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapVehicleManager.h \
         src/Airmap/AirMapWeatherInfoManager.h \
         src/Airmap/LifetimeChecker.h \
+        src/Airmap/qt/advisory.h \
+        src/Airmap/qt/aircrafts.h \
+        src/Airmap/qt/airspaces.h \
+        src/Airmap/qt/authenticator.h \
+        src/Airmap/qt/client.h \
+        src/Airmap/qt/dispatcher.h \
+        src/Airmap/qt/flight_plans.h \
+        src/Airmap/qt/flights.h \
+        src/Airmap/qt/logger.h \
+        src/Airmap/qt/pilots.h \
+        src/Airmap/qt/rulesets.h \
+        src/Airmap/qt/status.h \
+        src/Airmap/qt/telemetry.h \
+        src/Airmap/qt/traffic.h \
+        src/Airmap/qt/types.h \
 
     SOURCES += \
         src/Airmap/AirMapAdvisoryManager.cc \
@@ -1353,6 +1369,21 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapTrafficMonitor.cc \
         src/Airmap/AirMapVehicleManager.cc \
         src/Airmap/AirMapWeatherInfoManager.cc \
+        src/Airmap/qt/advisory.cpp \
+        src/Airmap/qt/aircrafts.cpp \
+        src/Airmap/qt/airspaces.cpp \
+        src/Airmap/qt/authenticator.cpp \
+        src/Airmap/qt/client.cpp \
+        src/Airmap/qt/dispatcher.cpp \
+        src/Airmap/qt/flight_plans.cpp \
+        src/Airmap/qt/flights.cpp \
+        src/Airmap/qt/logger.cpp \
+        src/Airmap/qt/pilots.cpp \
+        src/Airmap/qt/rulesets.cpp \
+        src/Airmap/qt/status.cpp \
+        src/Airmap/qt/telemetry.cpp \
+        src/Airmap/qt/traffic.cpp \
+        src/Airmap/qt/types.cpp \
 
     #-- Do we have an API key?
     exists(src/Airmap/Airmap_api_key.h) {
