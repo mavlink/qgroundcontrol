@@ -29,10 +29,13 @@ public:
     CompInfo(COMP_METADATA_TYPE type, uint8_t compId, Vehicle* vehicle, QObject* parent = nullptr);
 
     const QString& uriMetaData() const { return _uris.uriMetaData; }
+    const QString& uriMetaDataFallback() const { return _uris.uriMetaDataFallback; }
     const QString& uriTranslation() const { return _uris.uriTranslation; }
 
     uint32_t crcMetaData() const { return _uris.crcMetaData; }
+    uint32_t crcMetaDataFallback() const { return _uris.crcMetaDataFallback; }
     bool crcMetaDataValid() const { return _uris.crcMetaDataValid; }
+    bool crcMetaDataFallbackValid() const { return _uris.crcMetaDataFallbackValid; }
     uint32_t crcTranslation() const { return _uris.crcTranslation; }
     bool crcTranslationValid() const { return _uris.crcTranslationValid; }
 

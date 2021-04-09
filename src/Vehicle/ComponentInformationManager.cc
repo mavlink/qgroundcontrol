@@ -37,6 +37,7 @@ int ComponentInformationManager::_cStates = sizeof(ComponentInformationManager::
 RequestMetaDataTypeStateMachine::StateFn RequestMetaDataTypeStateMachine::_rgStates[]= {
     RequestMetaDataTypeStateMachine::_stateRequestCompInfo,
     RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson,
+    RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback,
     RequestMetaDataTypeStateMachine::_stateRequestTranslationJson,
     RequestMetaDataTypeStateMachine::_stateRequestComplete,
 };
@@ -264,6 +265,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileNa
     qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadComplete fileName:errorMsg" << fileName << errorMsg;
 
     disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
+    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
     if (errorMsg.isEmpty()) {
         if (_currentFileName) {
             *_currentFileName = _downloadCompleteJsonWorker(fileName);
@@ -271,9 +273,22 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileNa
     } else if (qgcApp()->runningUnitTests()) {
         // Unit test should always succeed
         qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_ftpDownloadComplete failed filename:errorMsg" << fileName << errorMsg;
-    } // TODO: else: try fallback uri
+    }
 
     advance();
+}
+
+void RequestMetaDataTypeStateMachine::_ftpDownloadProgress(float progress)
+{
+    int elapsedSec = _downloadStartTime.elapsed() / 1000;
+    float totalDownloadTime = elapsedSec / progress;
+    // abort download if it's too slow (e.g. over telemetry link) and use the fallback.
+    // (we could also check if there's a http fallback)
+    const int maxDownloadTimeSec = 40;
+    if (elapsedSec > 10 && progress < 0.5 && totalDownloadTime > maxDownloadTimeSec) {
+        qCDebug(ComponentInformationManagerLog) << "Slow download, aborting. Total time (s):" << totalDownloadTime;
+        _compInfo->vehicle->ftpManager()->cancel();
+    }
 }
 
 void RequestMetaDataTypeStateMachine::_httpDownloadComplete(QString remoteFile, QString localFile, QString errorMsg)
@@ -288,7 +303,7 @@ void RequestMetaDataTypeStateMachine::_httpDownloadComplete(QString remoteFile, 
     } else if (qgcApp()->runningUnitTests()) {
         // Unit test should always succeed
         qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_httpDownloadCompleteMetaDataJson failed remoteFile:localFile:errorMsg" << remoteFile << localFile << errorMsg;
-    } // TODO: else: try fallback uri
+    }
 
     advance();
 }
@@ -299,6 +314,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
     _currentCacheFileTag = cacheFileTag;
     _currentFileName = &outputFileName;
     _currentFileValidCrc = crcValid;
+    outputFileName.clear();
 
     if (_compInfo->available() && !uri.isEmpty()) {
         const QString cachedFile = crcValid ? _compMgr->fileCache().access(cacheFileTag) : "";
@@ -307,19 +323,22 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
             qCDebug(ComponentInformationManagerLog) << "Downloading json" << uri;
             if (_uriIsMAVLinkFTP(uri)) {
                 connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-                if (!ftpManager->download(uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                if (ftpManager->download(uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+                    _downloadStartTime.start();
+                    connect(ftpManager, &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
+                } else {
                     qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile FTPManager::download returned failure";
                     disconnect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-                    // TODO: try fallback uri
                     advance();
                 }
             } else {
                 QGCFileDownload* download = new QGCFileDownload(this);
                 connect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-                if (!download->download(uri)) {
+                if (download->download(uri)) {
+                    _downloadStartTime.start();
+                } else {
                     qCWarning(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_requestFile QGCFileDownload::download returned failure";
                     disconnect(download, &QGCFileDownload::downloadComplete, this, &RequestMetaDataTypeStateMachine::_httpDownloadComplete);
-                    // TODO: try fallback uri
                     advance();
                 }
             }
@@ -344,6 +363,23 @@ void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJson(StateMachine* st
     const QString                       uri             = compInfo->uriMetaData();
     requestMachine->_jsonMetadataCrcValid               = compInfo->crcMetaDataValid();
     requestMachine->_requestFile(fileTag, compInfo->crcMetaDataValid(), uri, requestMachine->_jsonMetadataFileName);
+}
+
+void RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback(StateMachine* stateMachine)
+{
+    RequestMetaDataTypeStateMachine*    requestMachine  = static_cast<RequestMetaDataTypeStateMachine*>(stateMachine);
+    if (!requestMachine->_jsonMetadataFileName.isEmpty()) {
+        requestMachine->advance();
+        return;
+    }
+    qCDebug(ComponentInformationManagerLog) << "RequestMetaDataTypeStateMachine::_stateRequestMetaDataJsonFallback: trying fallback download";
+
+    CompInfo*                           compInfo        = requestMachine->compInfo();
+    const QString                       fileTag         = ComponentInformationManager::_getFileCacheTag(
+            compInfo->type, compInfo->crcMetaDataFallback(), false);
+    const QString                       uri             = compInfo->uriMetaDataFallback();
+    requestMachine->_jsonMetadataCrcValid               = compInfo->crcMetaDataFallbackValid();
+    requestMachine->_requestFile(fileTag, compInfo->crcMetaDataFallbackValid(), uri, requestMachine->_jsonMetadataFileName);
 }
 
 void RequestMetaDataTypeStateMachine::_stateRequestTranslationJson(StateMachine* stateMachine)

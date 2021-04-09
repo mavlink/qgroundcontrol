@@ -14,6 +14,8 @@
 #include "StateMachine.h"
 #include "ComponentInformationCache.h"
 
+#include <QTime>
+
 Q_DECLARE_LOGGING_CATEGORY(ComponentInformationManagerLog)
 
 class Vehicle;
@@ -40,12 +42,14 @@ public:
 
 private slots:
     void    _ftpDownloadComplete                (const QString& file, const QString& errorMsg);
+    void    _ftpDownloadProgress                (float progress);
     void    _httpDownloadComplete               (QString remoteFile, QString localFile, QString errorMsg);
     QString _downloadCompleteJsonWorker         (const QString& jsonFileName);
 
 private:
     static void _stateRequestCompInfo           (StateMachine* stateMachine);
     static void _stateRequestMetaDataJson       (StateMachine* stateMachine);
+    static void _stateRequestMetaDataJsonFallback(StateMachine* stateMachine);
     static void _stateRequestTranslationJson    (StateMachine* stateMachine);
     static void _stateRequestComplete           (StateMachine* stateMachine);
     static bool _uriIsMAVLinkFTP                (const QString& uri);
@@ -62,6 +66,8 @@ private:
     QString*                        _currentFileName            = nullptr;
     QString                         _currentCacheFileTag;
     bool                            _currentFileValidCrc        = false;
+
+    QTime                           _downloadStartTime;
 
     static StateFn  _rgStates[];
     static int      _cStates;
