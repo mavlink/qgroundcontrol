@@ -6,8 +6,8 @@
   <summary>UAS ground control station</summary>
   <developer_name>Dronecode Project, Inc.</developer_name>
   
-  <metadata_license>MIT</metadata_license>
-  <project_license>GPL-3.0</project_license>
+  <metadata_license>GPL-3.0 AND Apache-2.0</metadata_license>
+  <project_license>GPL-3.0 AND Apache-2.0</project_license>
   
   <recommends>
     <control>pointing</control>
