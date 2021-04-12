@@ -97,12 +97,11 @@ void InitialConnectStateMachine::_stateRequestCapabilities(StateMachine* stateMa
     Vehicle*                    vehicle         = connectMachine->_vehicle;
     WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
 
+    SharedLinkInterfacePtr sharedLink = weakLink.lock();
     if (weakLink.expired()) {
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestCapabilities Skipping capability request due to no primary link";
         connectMachine->advance();
     } else {
-        SharedLinkInterfacePtr sharedLink = weakLink.lock();
-
         if (sharedLink->linkConfiguration()->isHighLatency() || sharedLink->isPX4Flow() || sharedLink->isLogReplay()) {
             qCDebug(InitialConnectStateMachineLog) << "Skipping capability request due to link type";
             connectMachine->advance();
