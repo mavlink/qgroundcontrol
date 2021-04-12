@@ -24,7 +24,7 @@ public:
     void start(void);
 
     /// Advance the state machine to the next state and call the state function
-    void advance(void);
+    virtual void advance(void);
 
     /// Move the state machine to the specified state and call the state function
     void move(StateFn stateFn);
@@ -39,6 +39,8 @@ public:
 
     /// Called when all states have completed
     virtual void statesCompleted(void) const;
+
+    bool active() const { return _active; }
 
 protected:
     bool    _active = false;

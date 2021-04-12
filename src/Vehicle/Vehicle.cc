@@ -376,6 +376,10 @@ void Vehicle::_commonInit()
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
 
+    connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
+            this, &Vehicle::_gotProgressUpdate);
+    connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
+
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
     // GeoFenceManager needs to access ParameterManager so make sure to create after
@@ -2086,6 +2090,18 @@ void Vehicle::_updateFlightTime()
     _flightTimeFact.setRawValue((double)_flightTimer.elapsed() / 1000.0);
 }
 
+void Vehicle::_gotProgressUpdate(float progressValue)
+{
+    if (sender() != _initialConnectStateMachine && _initialConnectStateMachine->active()) {
+        return;
+    }
+    if (sender() == _initialConnectStateMachine && !_initialConnectStateMachine->active()) {
+        progressValue = 0.f;
+    }
+    _loadProgress = progressValue;
+    emit loadProgressChanged(progressValue);
+}
+
 void Vehicle::_firstMissionLoadComplete()
 {
     disconnect(_missionManager, &MissionManager::newMissionItemsAvailable, this, &Vehicle::_firstMissionLoadComplete);
@@ -3620,6 +3636,11 @@ void Vehicle::_setMessageInterval(int messageId, int rate)
             true,                        // show error
             messageId,
             rate);
+}
+
+bool Vehicle::_initialConnectComplete() const
+{
+    return !_initialConnectStateMachine->active();
 }
 
 void Vehicle::_initializeCsv()
