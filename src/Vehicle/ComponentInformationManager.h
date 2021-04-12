@@ -93,6 +93,13 @@ public:
 
     ComponentInformationCache& fileCache() { return _fileCache; }
 
+    float progress() const;
+
+    void advance() override;
+
+signals:
+    void progressUpdate(float progress);
+
 private:
     void _stateRequestCompInfoComplete  (void);
     bool _isCompTypeSupported           (COMP_METADATA_TYPE type);

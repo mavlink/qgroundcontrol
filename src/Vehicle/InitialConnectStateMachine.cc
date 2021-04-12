@@ -29,12 +29,30 @@ const StateMachine::StateFn InitialConnectStateMachine::_rgStates[] = {
     InitialConnectStateMachine::_stateSignalInitialConnectComplete
 };
 
+const int InitialConnectStateMachine::_rgProgressWeights[] = {
+    1, //_stateRequestCapabilities
+    1, //_stateRequestProtocolVersion
+    5, //_stateRequestCompInfo
+    5, //_stateRequestParameters
+    2, //_stateRequestMission
+    1, //_stateRequestGeoFence
+    1, //_stateRequestRallyPoints
+    1, //_stateSignalInitialConnectComplete
+};
+
+
 const int InitialConnectStateMachine::_cStates = sizeof(InitialConnectStateMachine::_rgStates) / sizeof(InitialConnectStateMachine::_rgStates[0]);
 
 InitialConnectStateMachine::InitialConnectStateMachine(Vehicle* vehicle)
     : _vehicle(vehicle)
 {
+    static_assert(sizeof(_rgStates)/sizeof(_rgStates[0]) == sizeof(_rgProgressWeights)/sizeof(_rgProgressWeights[0]),
+            "array size mismatch");
 
+    _progressWeightTotal = 0;
+    for (int i = 0; i < _cStates; ++i) {
+        _progressWeightTotal += _rgProgressWeights[i];
+    }
 }
 
 int InitialConnectStateMachine::stateCount(void) const
@@ -50,6 +68,27 @@ const InitialConnectStateMachine::StateFn* InitialConnectStateMachine::rgStates(
 void InitialConnectStateMachine::statesCompleted(void) const
 {
 
+}
+
+void InitialConnectStateMachine::advance()
+{
+    StateMachine::advance();
+    emit progressUpdate(_progress());
+}
+
+void InitialConnectStateMachine::gotProgressUpdate(float progressValue)
+{
+    emit progressUpdate(_progress(progressValue));
+}
+
+float InitialConnectStateMachine::_progress(float subProgress)
+{
+    int progressWeight = 0;
+    for (int i = 0; i < _stateIndex && i < _cStates; ++i) {
+        progressWeight += _rgProgressWeights[i];
+    }
+    int currentWeight = _stateIndex < _cStates ? _rgProgressWeights[_stateIndex] : 1;
+    return (progressWeight + currentWeight * subProgress) / (float)_progressWeightTotal;
 }
 
 void InitialConnectStateMachine::_stateRequestCapabilities(StateMachine* stateMachine)
@@ -248,12 +287,16 @@ void InitialConnectStateMachine::_stateRequestCompInfo(StateMachine* stateMachin
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestCompInfo";
+    connect(vehicle->_componentInformationManager, &ComponentInformationManager::progressUpdate, connectMachine,
+            &InitialConnectStateMachine::gotProgressUpdate);
     vehicle->_componentInformationManager->requestAllComponentInformation(_stateRequestCompInfoComplete, connectMachine);
 }
 
 void InitialConnectStateMachine::_stateRequestCompInfoComplete(void* requestAllCompleteFnData)
 {
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(requestAllCompleteFnData);
+    disconnect(connectMachine->_vehicle->_componentInformationManager, &ComponentInformationManager::progressUpdate,
+            connectMachine, &InitialConnectStateMachine::gotProgressUpdate);
 
     connectMachine->advance();
 }
@@ -264,6 +307,8 @@ void InitialConnectStateMachine::_stateRequestParameters(StateMachine* stateMach
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
+    connect(vehicle->_parameterManager, &ParameterManager::loadProgressChanged, connectMachine,
+            &InitialConnectStateMachine::gotProgressUpdate);
     vehicle->_parameterManager->refreshAllParameters();
 }
 
@@ -272,6 +317,9 @@ void InitialConnectStateMachine::_stateRequestMission(StateMachine* stateMachine
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
     WeakLinkInterfacePtr        weakLink        = vehicle->vehicleLinkManager()->primaryLink();
+
+    disconnect(vehicle->_parameterManager, &ParameterManager::loadProgressChanged, connectMachine,
+            &InitialConnectStateMachine::gotProgressUpdate);
 
     if (weakLink.expired()) {
         qCDebug(InitialConnectStateMachineLog) << "_stateRequestMission: Skipping first mission load request due to no primary link";
@@ -347,6 +395,7 @@ void InitialConnectStateMachine::_stateSignalInitialConnectComplete(StateMachine
     InitialConnectStateMachine* connectMachine  = static_cast<InitialConnectStateMachine*>(stateMachine);
     Vehicle*                    vehicle         = connectMachine->_vehicle;
 
+    connectMachine->advance();
     qCDebug(InitialConnectStateMachineLog) << "Signalling initialConnectComplete";
     emit vehicle->initialConnectComplete();
 }

@@ -20,6 +20,8 @@ class Vehicle;
 
 class InitialConnectStateMachine : public StateMachine
 {
+    Q_OBJECT
+
 public:
     InitialConnectStateMachine(Vehicle* vehicle);
 
@@ -27,6 +29,14 @@ public:
     int             stateCount      (void) const final;
     const StateFn*  rgStates        (void) const final;
     void            statesCompleted (void) const final;
+
+    void advance() override;
+
+signals:
+    void progressUpdate(float progress);
+
+private slots:
+    void gotProgressUpdate(float progressValue);
 
 private:
     static void _stateRequestCapabilities               (StateMachine* stateMachine);
@@ -45,8 +55,13 @@ private:
     static void _waitForAutopilotVersionResultHandler   (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
     static void _waitForProtocolVersionResultHandler    (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
 
+    float _progress(float subProgress = 0.f);
+
     Vehicle* _vehicle;
 
     static const StateFn    _rgStates[];
+    static const int        _rgProgressWeights[];
     static const int        _cStates;
+
+    int _progressWeightTotal;
 };
