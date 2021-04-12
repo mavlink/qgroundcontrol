@@ -63,11 +63,26 @@ const ComponentInformationManager::StateFn* ComponentInformationManager::rgState
     return &_rgStates[0];
 }
 
+float ComponentInformationManager::progress() const
+{
+    if (!_active)
+        return 1.f;
+    // here we could compute a more fine-grained progress, based on ftp download progress
+    return _stateIndex / (float)_cStates;
+}
+
+void ComponentInformationManager::advance()
+{
+    StateMachine::advance();
+    emit progressUpdate(progress());
+}
+
 void ComponentInformationManager::requestAllComponentInformation(RequestAllCompleteFn requestAllCompletFn, void * requestAllCompleteFnData)
 {
     _requestAllCompleteFn       = requestAllCompletFn;
     _requestAllCompleteFnData   = requestAllCompleteFnData;
     start();
+    emit progressUpdate(progress());
 }
 
 void ComponentInformationManager::_stateRequestCompInfoGeneral(StateMachine* stateMachine)
