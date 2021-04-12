@@ -1015,9 +1015,9 @@
       <max>894281</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter name="CBRK_USB_CHK" default="0" type="INT32" category="Developer">
+    <parameter name="CBRK_USB_CHK" default="197848" type="INT32" category="Developer">
       <short_desc>Circuit breaker for USB link check</short_desc>
-      <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 197848 will disable the USB connected checks in the commander, setting it to 0 keeps them enabled (recommended). We are generally recommending to not fly with the USB link connected and production vehicles should set this parameter to zero to prevent users from flying USB powered. However, for R&amp;D purposes it has proven over the years to work just fine.</long_desc>
       <min>0</min>
       <max>197848</max>
       <reboot_required>true</reboot_required>
