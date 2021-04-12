@@ -12647,6 +12647,17 @@
       <min>1</min>
       <max>125</max>
     </parameter>
+    <parameter name="UAVCAN_BAT_MON" default="0" type="INT32">
+      <short_desc>UAVCAN BATTERY_MONITOR battery monitor selection</short_desc>
+      <long_desc>This parameter defines that the system will select the battery monitor under the following conditions 0 - default battery monitor 1 - CUAV battery monitor</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">default battery monitor</value>
+        <value code="1">CUAV battery monitor</value>
+      </values>
+    </parameter>
     <parameter name="UAVCAN_BITRATE" default="1000000" type="INT32">
       <short_desc>UAVCAN CAN bus bitrate</short_desc>
       <min>20000</min>
