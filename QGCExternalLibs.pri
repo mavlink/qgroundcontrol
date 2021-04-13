@@ -231,11 +231,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
         }
     } else:LinuxBuild {
         #-- Download and install platform-sdk libs and headers iff they're not already in the build directory
-<<<<<<< HEAD
         AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0/airmap-platform-sdk-2.0.0-Linux.deb"
-=======
-        AIRMAP_PLATFORM_SDK_URL = "https://github.com/airmap/platform-sdk/releases/download/2.0/airmap-platform-sdk-1.1.0-Linux.deb"
->>>>>>> moved QT-interfacing code from AirMap's platform-sdk lib into QGC
         AIRMAP_PLATFORM_SDK_FILENAME = "airmap-platform-sdk.deb"
         AIRMAP_PLATFORM_SDK_INSTALL_DIR = "tmp"
 
@@ -244,19 +240,12 @@ contains (DEFINES, DISABLE_AIRMAP) {
             rm -rf $${AIRMAP_PLATFORM_SDK_PATH} && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}" && \
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap" && \
-<<<<<<< HEAD
             mkdir -p "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
             wget -q -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && \
             ar p "$${AIRMAP_PLATFORM_SDK_FILENAME}" data.tar.gz | tar xvz -C "$${AIRMAP_PLATFORM_SDK_PATH}/" --strip-components=1 && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
             mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}/usr/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
             rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_DIR}" && \
-=======
-            wget -O "$${OUT_PWD}/$${AIRMAP_PLATFORM_SDK_FILENAME}" "$${AIRMAP_PLATFORM_SDK_URL}" && dpkg -x "$${AIRMAP_PLATFORM_SDK_FILENAME} $${AIRMAP_PLATFORM_SDK_PATH}/" && \
-            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/lib/x86_64-linux-gnu/*" "$${AIRMAP_PLATFORM_SDK_PATH}/linux/$${AIRMAP_QT_PATH}/" && \
-            mv -u "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}/include/airmap/*" "$${AIRMAP_PLATFORM_SDK_PATH}/include/airmap/" && \
-            rm -rf "$${AIRMAP_PLATFORM_SDK_PATH}/$${AIRMAP_PLATFORM_SDK_INSTALL_PREFIX}" && \
->>>>>>> moved QT-interfacing code from AirMap's platform-sdk lib into QGC
             rm "$${AIRMAP_PLATFORM_SDK_FILENAME}"
         airmap_platform_sdk_install.depends =
         QMAKE_EXTRA_TARGETS += airmap_platform_sdk_install

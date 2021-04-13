@@ -24,7 +24,7 @@ airmap::qt::Authenticator::Authenticator(const std::shared_ptr<Dispatcher>& disp
 
 void airmap::qt::Authenticator::authenticate_with_password(const AuthenticateWithPassword::Params& parameters,
                                                            const AuthenticateWithPassword::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->authenticator().authenticate_with_password(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
@@ -33,7 +33,7 @@ void airmap::qt::Authenticator::authenticate_with_password(const AuthenticateWit
 
 void airmap::qt::Authenticator::authenticate_anonymously(const AuthenticateAnonymously::Params& parameters,
                                                          const AuthenticateAnonymously::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->authenticator().authenticate_anonymously(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
@@ -42,7 +42,7 @@ void airmap::qt::Authenticator::authenticate_anonymously(const AuthenticateAnony
 
 void airmap::qt::Authenticator::renew_authentication(const RenewAuthentication::Params& parameters,
                                                      const RenewAuthentication::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->authenticator().renew_authentication(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
