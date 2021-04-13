@@ -49,7 +49,7 @@ airmap::qt::Traffic::Traffic(const std::shared_ptr<Dispatcher>& dispatcher,
 }
 
 void airmap::qt::Traffic::monitor(const Monitor::Params& parameters, const Monitor::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->traffic().monitor(parameters, [this, sp, parameters, cb](const auto& result) {
       if (result) {
         auto m  = result.value();
