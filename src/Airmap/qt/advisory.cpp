@@ -23,7 +23,7 @@ airmap::qt::Advisory::Advisory(const std::shared_ptr<Dispatcher>& dispatcher,
 }
 
 void airmap::qt::Advisory::for_id(const ForId::Parameters& parameters, const ForId::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->advisory().for_id(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
@@ -31,7 +31,7 @@ void airmap::qt::Advisory::for_id(const ForId::Parameters& parameters, const For
 }
 
 void airmap::qt::Advisory::search(const Search::Parameters& parameters, const Search::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->advisory().search(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
@@ -40,7 +40,7 @@ void airmap::qt::Advisory::search(const Search::Parameters& parameters, const Se
 
 void airmap::qt::Advisory::report_weather(const ReportWeather::Parameters& parameters,
                                           const ReportWeather::Callback& cb) {
-  dispatcher_->dispatch_to_native([this, sp = shared_from_this(), parameters, cb]() {
+  dispatcher_->dispatch_to_airmap([this, sp = shared_from_this(), parameters, cb]() {
     sp->client_->advisory().report_weather(parameters, [this, sp, cb](const auto& result) {
       sp->dispatcher_->dispatch_to_qt([sp, result, cb]() { cb(result); });
     });
