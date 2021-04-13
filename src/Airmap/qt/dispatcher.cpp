@@ -68,7 +68,7 @@ airmap::qt::Dispatcher::ToNative::ToNative(const std::shared_ptr<Context>& conte
 }
 
 void airmap::qt::Dispatcher::ToNative::dispatch(const Task& task) {
-  context_->dispatch(task);
+  context_->schedule_in(task);
 }
 
 airmap::qt::Dispatcher::Dispatcher(const std::shared_ptr<Context>& context)
@@ -79,7 +79,7 @@ void airmap::qt::Dispatcher::dispatch_to_qt(const std::function<void()>& task) {
   to_qt_->dispatch(task);
 }
 
-void airmap::qt::Dispatcher::dispatch_to_native(const std::function<void()>& task) {
+void airmap::qt::Dispatcher::dispatch_to_airmap(const std::function<void()>& task) {
   to_native_->dispatch(task);
 }
 
