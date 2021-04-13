@@ -62,7 +62,7 @@ class Dispatcher : public QObject {
   explicit Dispatcher(const std::shared_ptr<Context>& context);
 
   void dispatch_to_qt(const Task& task);
-  void dispatch_to_native(const Task& task);
+  void dispatch_to_airmap(const Task& task);
 
  private:
   std::shared_ptr<ToQt> to_qt_;

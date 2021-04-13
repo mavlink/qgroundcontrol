@@ -45,7 +45,7 @@ class AIRMAP_EXPORT Client : public QObject, public airmap::Client {
   static void create(const Client::Configuration& configuration, const std::shared_ptr<Logger>& logger, QObject* parent,
                      const CreateCallback& cb);
 
-  ~Client();
+  ~Client() override;
 
   // From airmap::Client
   Authenticator& authenticator() override;
