@@ -47,20 +47,8 @@ bool airmap::qt::Dispatcher::ToQt::event(QEvent* event) {
   return false;
 }
 
-std::shared_ptr<airmap::qt::Dispatcher::ToNative> airmap::qt::Dispatcher::ToNative::create(
-    const std::shared_ptr<Context>& context) {
-  return std::shared_ptr<ToNative>{new ToNative{context}};
-}
-
-airmap::qt::Dispatcher::ToNative::ToNative(const std::shared_ptr<Context>& context) : context_{context} {
-}
-
-void airmap::qt::Dispatcher::ToNative::dispatch(const Task& task) {
-  context_->schedule_in(task);
-}
-
 airmap::qt::Dispatcher::Dispatcher(const std::shared_ptr<Context>& context)
-    : to_qt_{ToQt::create()}, to_native_{ToNative::create(context)} {
+    : to_qt_{ToQt::create()}, context_{context} {
 }
 
 void airmap::qt::Dispatcher::dispatch_to_qt(const std::function<void()>& task) {
@@ -68,7 +56,7 @@ void airmap::qt::Dispatcher::dispatch_to_qt(const std::function<void()>& task) {
 }
 
 void airmap::qt::Dispatcher::dispatch_to_airmap(const std::function<void()>& task) {
-  to_native_->dispatch(task);
+  context_->schedule_in(task);
 }
 
 // From QObject
