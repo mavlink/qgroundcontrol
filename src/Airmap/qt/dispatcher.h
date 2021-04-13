@@ -37,15 +37,6 @@ class Dispatcher : public QObject {
     bool event(QEvent* event) override;
   };
 
-  class ToAirmap : public std::enable_shared_from_this<ToAirmap> {
-   public:
-    static std::shared_ptr<ToAirmap> create(const std::shared_ptr<Context>& context);
-    void dispatch(const Task& task);
-
-   private:
-    explicit ToAirmap(const std::shared_ptr<Context>& context);
-  };
-
   explicit Dispatcher(const std::shared_ptr<Context>& context);
 
   void dispatch_to_qt(const Task& task);
