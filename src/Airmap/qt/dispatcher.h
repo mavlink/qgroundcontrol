@@ -37,14 +37,13 @@ class Dispatcher : public QObject {
     bool event(QEvent* event) override;
   };
 
-  class ToNative : public std::enable_shared_from_this<ToNative> {
+  class ToAirmap : public std::enable_shared_from_this<ToAirmap> {
    public:
-    static std::shared_ptr<ToNative> create(const std::shared_ptr<Context>& context);
+    static std::shared_ptr<ToAirmap> create(const std::shared_ptr<Context>& context);
     void dispatch(const Task& task);
 
    private:
-    explicit ToNative(const std::shared_ptr<Context>& context);
-    std::shared_ptr<Context> context_;
+    explicit ToAirmap(const std::shared_ptr<Context>& context);
   };
 
   explicit Dispatcher(const std::shared_ptr<Context>& context);
@@ -54,7 +53,7 @@ class Dispatcher : public QObject {
 
  private:
   std::shared_ptr<ToQt> to_qt_;
-  std::shared_ptr<ToNative> to_native_;
+  std::shared_ptr<Context> context_;
 };
 
 }  // namespace qt

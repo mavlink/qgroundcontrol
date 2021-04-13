@@ -16,7 +16,7 @@ namespace airmap {
 namespace qt {
 
 /// Client implements the airmap::Client interface, bridging over between
-/// the Qt event loop and the native event loop of the native airmap::Client.
+/// the Qt event loop and the native event loop of the airmap::Client.
 ///
 /// All callback invocations that might happen in the context of a Client instance
 /// are dispatched to the Qt applications' main thread.
