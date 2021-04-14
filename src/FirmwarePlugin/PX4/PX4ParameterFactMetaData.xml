@@ -10419,14 +10419,13 @@
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter name="IMU_GYRO_RATEMAX" default="400" type="INT32">
-      <short_desc>Gyro control data maximum publication rate</short_desc>
-      <long_desc>This is the maximum rate the gyro control data (sensor_gyro) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
-      <min>0</min>
+      <short_desc>Gyro control data maximum publication rate (inner loop rate)</short_desc>
+      <long_desc>The maximum rate the gyro control data (vehicle_angular_velocity) will be allowed to publish at. This is the loop rate for the rate controller and outputs. Note: sensor data is always read and filtered at the full raw rate (eg commonly 8 kHz) regardless of this setting.</long_desc>
+      <min>100</min>
       <max>2000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="0">0 (driver minimum)</value>
         <value code="100">100 Hz</value>
         <value code="250">250 Hz</value>
         <value code="400">400 Hz</value>
