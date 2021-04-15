@@ -2,21 +2,13 @@
 #define AIRMAP_QT_STATUS_H_
 
 #include <airmap/client.h>
-<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
-=======
-#include <Airmap/qt/dispatcher.h>
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 #include <airmap/status.h>
 
 #include <memory>
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Status : public airmap::Status, public std::enable_shared_from_this<Status> {
  public:
@@ -34,7 +26,7 @@ class Status : public airmap::Status, public std::enable_shared_from_this<Status
   std::shared_ptr<airmap::Client> client_;
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_STATUS_H_

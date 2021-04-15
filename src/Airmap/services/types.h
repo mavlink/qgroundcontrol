@@ -53,11 +53,7 @@ Q_DECLARE_METATYPE(airmap::Traffic::Update)
 Q_DECLARE_METATYPE(airmap::Version)
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 /// register_types makes airmap::* types known to the Qt type system.
 ///
@@ -65,7 +61,7 @@ namespace qt {
 /// types in queued signal-slot connections.
 AIRMAP_EXPORT void register_types();
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_TYPES_H_

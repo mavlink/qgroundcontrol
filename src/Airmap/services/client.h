@@ -11,15 +11,9 @@
 #include <QObject>
 
 namespace airmap {
-<<<<<<< HEAD
 /// @namespace namespace services bundles up types and functions that help with integrating AirMap functionality
 /// into Qt-based applications and libraries.
 namespace services {
-=======
-/// @namespace namespace qt bundles up types and functions that help with integrating AirMap functionality
-/// into Qt-based applications and libraries.
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 /// Client implements the airmap::Client interface, bridging over between
 /// the Qt event loop and the native event loop of the airmap::Client.
@@ -62,14 +56,10 @@ class AIRMAP_EXPORT Client : public QObject, public airmap::Client {
   /// @endcond
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
-/// @example qt/client.cpp
-<<<<<<< HEAD
+/// @example services/client.cpp
 /// Illustrates how to use airmap::services::Client,  airmap::services::DispatchingLogger and airmap::services::Logger.
-=======
-/// Illustrates how to use airmap::qt::Client, airmap::qt::DispatchingLogger and airmap::qt::Logger.
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 #endif  // AIRMAP_QT_CLIENT_H_

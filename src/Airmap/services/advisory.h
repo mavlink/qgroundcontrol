@@ -6,11 +6,7 @@
 #include "dispatcher.h"
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Advisory : public airmap::Advisory, public std::enable_shared_from_this<Advisory> {
  public:

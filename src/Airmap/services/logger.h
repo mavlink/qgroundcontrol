@@ -9,11 +9,7 @@
 #include <memory>
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 /// Logger is an airmap::Logger implementation that uses to
 /// Qt's logging facilities.
@@ -55,7 +51,7 @@ class AIRMAP_EXPORT DispatchingLogger : public airmap::Logger {
   std::unique_ptr<Private> d_;
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_LOGGER_H_

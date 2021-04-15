@@ -4,20 +4,12 @@
 #include <airmap/pilots.h>
 
 #include <airmap/pilots.h>
-<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
-=======
-#include <Airmap/qt/dispatcher.h>
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 #include <memory>
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Pilots : public airmap::Pilots, public std::enable_shared_from_this<Pilots> {
  public:
@@ -43,7 +35,7 @@ class Pilots : public airmap::Pilots, public std::enable_shared_from_this<Pilots
   std::shared_ptr<airmap::Client> client_;
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_PILOTS_H_

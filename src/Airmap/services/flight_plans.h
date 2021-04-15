@@ -3,20 +3,12 @@
 
 #include <airmap/client.h>
 #include <airmap/flight_plans.h>
-<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
-=======
-#include <Airmap/qt/dispatcher.h>
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 #include <memory>
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 /// FlightPlans provides functionality for managing flight plans.
 class FlightPlans : public airmap::FlightPlans, public std::enable_shared_from_this<FlightPlans> {
@@ -38,7 +30,7 @@ class FlightPlans : public airmap::FlightPlans, public std::enable_shared_from_t
   std::shared_ptr<airmap::Client> client_;
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_FLIGHT_PLANS_H_

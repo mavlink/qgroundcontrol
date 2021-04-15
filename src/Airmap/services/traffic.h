@@ -3,21 +3,13 @@
 
 #include <airmap/traffic.h>
 
-<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
-=======
-#include <Airmap/qt/dispatcher.h>
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 #include <memory>
 #include <set>
 
 namespace airmap {
-<<<<<<< HEAD
 namespace services {
-=======
-namespace qt {
->>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Traffic : public airmap::Traffic, public std::enable_shared_from_this<Traffic> {
  public:
@@ -56,7 +48,7 @@ class Traffic : public airmap::Traffic, public std::enable_shared_from_this<Traf
   std::shared_ptr<airmap::Client> client_;
 };
 
-}  // namespace qt
+}  // namespace services
 }  // namespace airmap
 
 #endif  // AIRMAP_QT_TRAFFIC_H_
