@@ -236,7 +236,6 @@ private:
 
     QString                     _name;
     bool                        _connected;
-    int                         _mavlinkChannel;
 
     uint8_t                     _vehicleSystemId;
     uint8_t                     _vehicleComponentId             = MAV_COMP_ID_AUTOPILOT1;
