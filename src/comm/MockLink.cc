@@ -543,14 +543,19 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 {
     mavlink_message_t msg;
     mavlink_status_t comm;
+    auto raw = mavlink_get_channel_status(mavlinkChannel());
+    int processed = 0;
 
     for (qint64 i=0; i<cBytes; i++)
     {
-        if (!mavlink_parse_char(mavlinkChannel(), bytes[i], &msg, &comm)) {
+        processed = mavlink_parse_char(mavlinkChannel(), bytes[i], &msg, &comm);
+        if (!processed) {
             continue;
         }
+        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes good " << cBytes << mavlinkChannel() << comm.parse_error << raw->parse_error;
 
         if (_missionItemHandler.handleMessage(msg)) {
+            qCDebug(MockLinkLog) << "_handleIncomingMavlinkBytes missionItemHandler handled " << cBytes;
             continue;
         }
 
@@ -591,6 +596,9 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
         default:
             break;
         }
+    }
+    if (!processed) {
+        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes !!" << cBytes << mavlinkChannel() << comm.parse_error << raw->parse_error;
     }
 }
 

@@ -11,6 +11,7 @@
 
 #include <QThread>
 #include <QDateTime>
+#include <QLoggingCategory>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QMetaType>
@@ -25,6 +26,8 @@
 #include "MavlinkMessagesTimer.h"
 
 class LinkManager;
+
+Q_DECLARE_LOGGING_CATEGORY(LinkInterfaceLog)
 
 /**
 * @brief The link interface defines the interface for all links used to communicate
