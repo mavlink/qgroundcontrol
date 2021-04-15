@@ -1,4 +1,4 @@
-#include <Airmap/qt/traffic.h>
+#include <Airmap/services/traffic.h>
 
 std::shared_ptr<airmap::qt::Traffic::Monitor> airmap::qt::Traffic::Monitor::create(
     const std::shared_ptr<Dispatcher>& dispatcher, const std::shared_ptr<airmap::Traffic::Monitor>& native) {

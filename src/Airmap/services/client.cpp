@@ -1,19 +1,19 @@
-#include <Airmap/qt/client.h>
+#include <Airmap/services/client.h>
 
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 
-#include <Airmap/qt/advisory.h>
-#include <Airmap/qt/aircrafts.h>
-#include <Airmap/qt/airspaces.h>
-#include <Airmap/qt/authenticator.h>
-#include <Airmap/qt/flight_plans.h>
-#include <Airmap/qt/flights.h>
-#include <Airmap/qt/pilots.h>
-#include <Airmap/qt/rulesets.h>
-#include <Airmap/qt/status.h>
-#include <Airmap/qt/telemetry.h>
-#include <Airmap/qt/traffic.h>
-#include <Airmap/qt/types.h>
+#include <Airmap/services/advisory.h>
+#include <Airmap/services/aircrafts.h>
+#include <Airmap/services/airspaces.h>
+#include <Airmap/services/authenticator.h>
+#include <Airmap/services/flight_plans.h>
+#include <Airmap/services/flights.h>
+#include <Airmap/services/pilots.h>
+#include <Airmap/services/rulesets.h>
+#include <Airmap/services/status.h>
+#include <Airmap/services/telemetry.h>
+#include <Airmap/services/traffic.h>
+#include <Airmap/services/types.h>
 
 #include <memory>
 #include <thread>
