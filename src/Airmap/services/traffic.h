@@ -3,7 +3,7 @@
 
 #include <airmap/traffic.h>
 
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 
 #include <memory>
 #include <set>

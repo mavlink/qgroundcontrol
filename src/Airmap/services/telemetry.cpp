@@ -1,4 +1,4 @@
-#include <Airmap/qt/telemetry.h>
+#include <Airmap/services/telemetry.h>
 
 #include <airmap/flight.h>
 

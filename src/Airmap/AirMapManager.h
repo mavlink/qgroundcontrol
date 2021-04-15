@@ -13,8 +13,8 @@
 #include "AirspaceManager.h"
 #include "QGCLoggingCategory.h"
 
-#include <Airmap/qt/logger.h>
-#include <Airmap/qt/types.h>
+#include <Airmap/services/logger.h>
+#include <Airmap/services/types.h>
 
 #include <memory>
 

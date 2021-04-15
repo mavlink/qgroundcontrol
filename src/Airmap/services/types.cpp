@@ -1,4 +1,4 @@
-#include <Airmap/qt/types.h>
+#include <Airmap/services/types.h>
 
 namespace {
 
