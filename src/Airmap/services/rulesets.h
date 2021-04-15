@@ -2,7 +2,7 @@
 #define AIRMAP_QT_RULESETS_H_
 
 #include <airmap/client.h>
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 #include <airmap/rulesets.h>
 
 namespace airmap {

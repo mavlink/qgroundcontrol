@@ -3,7 +3,7 @@
 
 #include <airmap/airspaces.h>
 #include <airmap/client.h>
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 
 #include <memory>
 

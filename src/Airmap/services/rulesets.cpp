@@ -1,4 +1,4 @@
-#include <Airmap/qt/rulesets.h>
+#include <Airmap/services/rulesets.h>
 
 std::shared_ptr<airmap::qt::RuleSets> airmap::qt::RuleSets::create(const std::shared_ptr<Dispatcher>& dispatcher,
                                                                    const std::shared_ptr<airmap::Client>& client) {

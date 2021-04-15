@@ -1,4 +1,4 @@
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 
 #include <QCoreApplication>
 #include <QThread>
