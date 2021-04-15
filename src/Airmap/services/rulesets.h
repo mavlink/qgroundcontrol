@@ -2,11 +2,19 @@
 #define AIRMAP_QT_RULESETS_H_
 
 #include <airmap/client.h>
+<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
 #include <airmap/rulesets.h>
 
 namespace airmap {
 namespace services {
+=======
+#include <Airmap/qt/dispatcher.h>
+#include <airmap/rulesets.h>
+
+namespace airmap {
+namespace qt {
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class RuleSets : public airmap::RuleSets, public std::enable_shared_from_this<RuleSets> {
  public:

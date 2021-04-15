@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #include <Airmap/services/types.h>
+=======
+#include <Airmap/qt/types.h>
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 namespace {
 
@@ -16,7 +20,11 @@ inline void register_type_once() {
 
 }  // namespace
 
+<<<<<<< HEAD
 void airmap::services::register_types() {
+=======
+void airmap::qt::register_types() {
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
   register_type_once<Aircraft>("Aircraft");
   register_type_once<Airspace>("Airspace");
   register_type_once<Credentials>("Credentials");

@@ -9,7 +9,11 @@
 #include <functional>
 #include <memory>
 namespace airmap {
+<<<<<<< HEAD
 namespace services {
+=======
+namespace qt {
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Dispatcher : public QObject {
  public:

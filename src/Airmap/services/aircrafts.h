@@ -3,13 +3,21 @@
 
 #include <airmap/aircrafts.h>
 #include <airmap/client.h>
+<<<<<<< HEAD
 #include <Airmap/services/dispatcher.h>
+=======
+#include <Airmap/qt/dispatcher.h>
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 #include <memory>
 #include <string>
 
 namespace airmap {
+<<<<<<< HEAD
 namespace services {
+=======
+namespace qt {
+>>>>>>> renamed qt dir to services for all of the platform-sdk service interface classes
 
 class Aircrafts : public airmap::Aircrafts, public std::enable_shared_from_this<Aircrafts> {
  public:
