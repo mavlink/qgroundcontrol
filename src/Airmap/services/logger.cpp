@@ -1,6 +1,6 @@
-#include <Airmap/qt/logger.h>
+#include <Airmap/services/logger.h>
 
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 
 struct airmap::qt::Logger::Private {
   QLoggingCategory logging_category{"airmap"};

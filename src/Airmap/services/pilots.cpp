@@ -1,4 +1,4 @@
-#include <Airmap/qt/pilots.h>
+#include <Airmap/services/pilots.h>
 
 std::shared_ptr<airmap::qt::Pilots> airmap::qt::Pilots::create(const std::shared_ptr<Dispatcher>& dispatcher,
                                                                const std::shared_ptr<airmap::Client>& client) {

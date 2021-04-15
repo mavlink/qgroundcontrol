@@ -1,4 +1,4 @@
-#include <Airmap/qt/advisory.h>
+#include <Airmap/services/advisory.h>
 
 std::shared_ptr<airmap::qt::Advisory> airmap::qt::Advisory::create(const std::shared_ptr<Dispatcher>& dispatcher,
                                                                    const std::shared_ptr<airmap::Client>& client) {
