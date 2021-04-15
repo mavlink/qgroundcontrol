@@ -1170,7 +1170,7 @@ QGCCacheWorker::_testInternet()
     emit internetStatus(false);
 #else
     if(!_hostLookupID) {
-        _hostLookupID = QHostInfo::lookupHost("www.github.com", this, SLOT(_lookupReady(QHostInfo)));
+        _hostLookupID = QHostInfo::lookupHost("www.github.com", this, &QGCCacheWorker::_lookupReady);
     }
 #endif
 }
