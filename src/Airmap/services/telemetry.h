@@ -2,7 +2,7 @@
 #define AIRMAP_QT_TELEMETRY_H_
 
 #include <airmap/client.h>
-#include <Airmap/qt/dispatcher.h>
+#include <Airmap/services/dispatcher.h>
 #include <airmap/telemetry.h>
 
 #include <memory>

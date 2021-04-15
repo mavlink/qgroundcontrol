@@ -1,4 +1,4 @@
-#include <Airmap/qt/status.h>
+#include <Airmap/services/status.h>
 
 std::shared_ptr<airmap::qt::Status> airmap::qt::Status::create(const std::shared_ptr<Dispatcher>& dispatcher,
                                                                const std::shared_ptr<airmap::Client>& client) {
