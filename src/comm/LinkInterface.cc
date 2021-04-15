@@ -10,6 +10,8 @@
 #include "LinkInterface.h"
 #include "QGCApplication.h"
 
+QGC_LOGGING_CATEGORY(LinkInterfaceLog, "LinkInterfaceLog")
+
 LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
     : QThread   (0)
     , _config   (config)
@@ -23,7 +25,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPtr& config, bool isPX4Flow)
 LinkInterface::~LinkInterface()
 {
     if (_vehicleReferenceCount != 0) {
-        qWarning() << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
+        qWarning(LinkInterfaceLog) << "~LinkInterface still have vehicle references:" << _vehicleReferenceCount;
     }
     _config.reset();
 }
@@ -31,7 +33,7 @@ LinkInterface::~LinkInterface()
 uint8_t LinkInterface::mavlinkChannel(void) const
 {
     if (!_mavlinkChannelSet) {
-        qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
+        qWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
     }
     return _mavlinkChannel;
 }
@@ -41,6 +43,7 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     if (_mavlinkChannelSet) {
         qWarning() << "Mavlink channel set multiple times";
     }
+    qCDebug(LinkInterfaceLog) << QThread::currentThread() << this << "setMavlinkChannel" << channel;
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
 }
@@ -66,7 +69,7 @@ void LinkInterface::removeVehicleReference(void)
             disconnect();
         }
     } else {
-        qWarning() << "LinkInterface::removeVehicleReference called with no vehicle references";
+        qWarning(LinkInterfaceLog) << "LinkInterface::removeVehicleReference called with no vehicle references";
     }
 }
 

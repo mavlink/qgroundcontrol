@@ -1657,6 +1657,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {
     if (!link->isConnected()) {
+        qCDebug(VehicleLog) << "sendMessageOnLinkThreadSafe" << QThread::currentThread() << this << link << "not connected!";
         return false;
     }
 
@@ -2729,6 +2730,10 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
     }
 
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "_sendMavCommandWorker: primary link gone!";
+        return;
+    }
 
     if (sharedLink) {
         MavCommandListEntry_t   entry;
@@ -2953,6 +2958,9 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 void Vehicle::_waitForMavlinkMessage(WaitForMavlinkMessageResultHandler resultHandler, void* resultHandlerData, int messageId, int timeoutMsecs)
 {
     qCDebug(VehicleLog) << "_waitForMavlinkMessage msg:timeout" << messageId << timeoutMsecs;
+    if (_waitForMavlinkMessageResultHandler) {
+        qCCritical(VehicleLog) << "_waitForMavlinkMessage: collision";
+    }
     _waitForMavlinkMessageResultHandler     = resultHandler;
     _waitForMavlinkMessageResultHandlerData = resultHandlerData;
     _waitForMavlinkMessageId                = messageId;
@@ -2970,6 +2978,7 @@ void Vehicle::_waitForMavlinkMessageClear(void)
 
 void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
 {
+    qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived" << message.msgid << "vs" << _waitForMavlinkMessageId;
     if (_waitForMavlinkMessageId != 0) {
         if (_waitForMavlinkMessageId == message.msgid) {
             WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;
