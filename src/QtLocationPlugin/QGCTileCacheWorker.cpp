@@ -1184,18 +1184,28 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
 #else
     _hostLookupID = 0;
     if(info.error() == QHostInfo::NoError && info.addresses().size()) {
-        QTcpSocket socket;
+        auto socket = new QTcpSocket();
         QNetworkProxy tempProxy;
         tempProxy.setType(QNetworkProxy::DefaultProxy);
-        socket.setProxy(tempProxy);
-        socket.connectToHost(info.addresses().first(), 80);
-        if (socket.waitForConnected(2000)) {
+        socket->setProxy(tempProxy);
+        socket->connectToHost(info.addresses().first(), 80);
+        connect(socket, &QTcpSocket::connected, this, [this, socket] {
             qCDebug(QGCTileCacheLog) << "Yes Internet Access";
             emit internetStatus(true);
-            return;
-        }
+            socket->deleteLater();
+        });
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+        connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, [this, socket](QAbstractSocket::SocketError error) {
+#else
+        connect(socket, &QAbstractSocket::errorOccurred, this, [this, socket](auto error) {
+#endif
+            qCDebug(QGCTileCacheLog) << "No internet connection, reason:" << error;
+            emit internetStatus(false);
+            socket->deleteLater();
+        });
+    } else {
+        qDebug(QGCTileCacheLog) << "No Internet Access";
+        emit internetStatus(false);
     }
-    qDebug() << "No Internet Access";
-    emit internetStatus(false);
 #endif
 }
