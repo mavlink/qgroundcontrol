@@ -553,7 +553,6 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
     mavlink_message_t msg;
     mavlink_status_t comm;
     memset(&comm, 0, sizeof(comm));
-    auto raw = mavlink_get_channel_status(mavlinkAuxChannel());
     int parsed = 0;
 
     for (qint64 i=0; i<cBytes; i++)
@@ -562,62 +561,55 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
         if (!parsed) {
             continue;
         }
-        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes parsed " << cBytes << mavlinkAuxChannel() << comm.parse_error << raw->parse_error;
         lock.unlock();
         _handleIncomingMavlinkMsg(msg);
         lock.relock();
     }
-    if (!parsed) {
-        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes unparsed!" << cBytes << mavlinkAuxChannel() << comm.parse_error << raw->parse_error;
-    }
 }
 
-bool MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
+void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
 {
     if (_missionItemHandler.handleMessage(msg)) {
-        qCDebug(MockLinkLog) << "_handleIncomingMavlinkMsg missionItemHandler handled " << msg.msgid;
-        return true;
+        return;
     }
 
     switch (msg.msgid) {
     case MAVLINK_MSG_ID_HEARTBEAT:
         _handleHeartBeat(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
         _handleParamRequestList(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_SET_MODE:
         _handleSetMode(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_PARAM_SET:
         _handleParamSet(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
         _handleParamRequestRead(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
         _handleFTP(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_COMMAND_LONG:
         _handleCommandLong(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_MANUAL_CONTROL:
         _handleManualControl(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
         _handleLogRequestList(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
         _handleLogRequestData(msg);
-        return true;
+        break;
     case MAVLINK_MSG_ID_PARAM_MAP_RC:
         _handleParamMapRC(msg);
-        return true;
+        break;
     default:
         break;
     }
-    qCDebug(MockLinkLog) << "_handleIncomingMavlinkMsg missionItemHandler unhandled " << msg.msgid;
-    return false;
 }
 
 void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
