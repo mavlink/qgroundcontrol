@@ -10,9 +10,10 @@
 #pragma once
 
 #include <QElapsedTimer>
-#include <QMap>
-#include <QLoggingCategory>
 #include <QGeoCoordinate>
+#include <QLoggingCategory>
+#include <QMap>
+#include <QMutex>
 
 #include "MockLinkMissionItemHandler.h"
 #include "MockLinkFTP.h"
@@ -189,6 +190,7 @@ private slots:
 private:
     // LinkInterface overrides
     bool _connect(void) override;
+    bool _needAuxChannel(void) override;
 
     // QThread override
     void run(void) final;
@@ -198,6 +200,7 @@ private:
     void _sendHighLatency2              (void);
     void _handleIncomingNSHBytes        (const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes    (const uint8_t* bytes, int cBytes);
+    bool _handleIncomingMavlinkMsg      (const mavlink_message_t& msg);
     void _loadParams                    (void);
     void _handleHeartBeat               (const mavlink_message_t& msg);
     void _handleSetMode                 (const mavlink_message_t& msg);
@@ -231,6 +234,8 @@ private:
 
     static MockLink* _startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode);
     static MockLink* _startMockLink(MockConfiguration* mockConfig);
+
+    QMutex                      _mavlinkAuxMutex;
 
     MockLinkMissionItemHandler  _missionItemHandler;
 
