@@ -1657,7 +1657,7 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)
 {
     if (!link->isConnected()) {
-        qCDebug(VehicleLog) << "sendMessageOnLinkThreadSafe" << QThread::currentThread() << this << link << "not connected!";
+        qCDebug(VehicleLog) << "sendMessageOnLinkThreadSafe" << link << "not connected!";
         return false;
     }
 
@@ -2735,31 +2735,29 @@ void Vehicle::_sendMavCommandWorker(bool commandInt, bool requestMessage, bool s
         return;
     }
 
-    if (sharedLink) {
-        MavCommandListEntry_t   entry;
+    MavCommandListEntry_t   entry;
 
-        entry.useCommandInt     = commandInt;
-        entry.targetCompId      = targetCompId;
-        entry.command           = command;
-        entry.frame             = frame;
-        entry.showError         = showError;
-        entry.requestMessage    = requestMessage;
-        entry.resultHandler     = resultHandler;
-        entry.resultHandlerData = resultHandlerData;
-        entry.rgParam[0]        = param1;
-        entry.rgParam[1]        = param2;
-        entry.rgParam[2]        = param3;
-        entry.rgParam[3]        = param4;
-        entry.rgParam[4]        = param5;
-        entry.rgParam[5]        = param6;
-        entry.rgParam[6]        = param7;
-        entry.maxTries          = _sendMavCommandShouldRetry(command) ? _mavCommandMaxRetryCount : 1;
-        entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
-        entry.elapsedTimer.start();
+    entry.useCommandInt     = commandInt;
+    entry.targetCompId      = targetCompId;
+    entry.command           = command;
+    entry.frame             = frame;
+    entry.showError         = showError;
+    entry.requestMessage    = requestMessage;
+    entry.resultHandler     = resultHandler;
+    entry.resultHandlerData = resultHandlerData;
+    entry.rgParam[0]        = param1;
+    entry.rgParam[1]        = param2;
+    entry.rgParam[2]        = param3;
+    entry.rgParam[3]        = param4;
+    entry.rgParam[4]        = param5;
+    entry.rgParam[5]        = param6;
+    entry.rgParam[6]        = param7;
+    entry.maxTries          = _sendMavCommandShouldRetry(command) ? _mavCommandMaxRetryCount : 1;
+    entry.ackTimeoutMSecs   = sharedLink->linkConfiguration()->isHighLatency() ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs;
+    entry.elapsedTimer.start();
 
-        _mavCommandList.append(entry);
-        _sendMavCommandFromList(_mavCommandList.count() - 1);
-    }
+    _mavCommandList.append(entry);
+    _sendMavCommandFromList(_mavCommandList.count() - 1);
 }
 
 void Vehicle::_sendMavCommandFromList(int index)
@@ -2978,7 +2976,6 @@ void Vehicle::_waitForMavlinkMessageClear(void)
 
 void Vehicle::_waitForMavlinkMessageMessageReceived(const mavlink_message_t& message)
 {
-    qCDebug(VehicleLog) << "_waitForMavlinkMessageMessageReceived" << message.msgid << "vs" << _waitForMavlinkMessageId;
     if (_waitForMavlinkMessageId != 0) {
         if (_waitForMavlinkMessageId == message.msgid) {
             WaitForMavlinkMessageResultHandler  resultHandler       = _waitForMavlinkMessageResultHandler;

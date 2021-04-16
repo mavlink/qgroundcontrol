@@ -200,7 +200,7 @@ private:
     void _sendHighLatency2              (void);
     void _handleIncomingNSHBytes        (const char* bytes, int cBytes);
     void _handleIncomingMavlinkBytes    (const uint8_t* bytes, int cBytes);
-    bool _handleIncomingMavlinkMsg      (const mavlink_message_t& msg);
+    void _handleIncomingMavlinkMsg      (const mavlink_message_t& msg);
     void _loadParams                    (void);
     void _handleHeartBeat               (const mavlink_message_t& msg);
     void _handleSetMode                 (const mavlink_message_t& msg);
