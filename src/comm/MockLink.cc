@@ -16,9 +16,10 @@
 #include "UnitTest.h"
 #endif
 
-#include <QTimer>
 #include <QDebug>
 #include <QFile>
+#include <QMutexLocker>
+#include <QTimer>
 
 #include <string.h>
 
@@ -124,10 +125,17 @@ bool MockLink::_connect(void)
         // MockLinks use Mavlink 2.0
         mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel());
         mavlinkStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
+        mavlink_status_t* auxStatus = mavlink_get_channel_status(mavlinkAuxChannel());
+        auxStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         start();
         emit connected();
     }
 
+    return true;
+}
+
+bool MockLink::_needAuxChannel(void)
+{
     return true;
 }
 
@@ -541,65 +549,75 @@ void MockLink::_handleIncomingNSHBytes(const char* bytes, int cBytes)
 /// @brief Handle incoming bytes which are meant to be handled by the mavlink protocol
 void MockLink::_handleIncomingMavlinkBytes(const uint8_t* bytes, int cBytes)
 {
+    QMutexLocker lock{&_mavlinkAuxMutex};
     mavlink_message_t msg;
     mavlink_status_t comm;
-    auto raw = mavlink_get_channel_status(mavlinkChannel());
-    int processed = 0;
+    memset(&comm, 0, sizeof(comm));
+    auto raw = mavlink_get_channel_status(mavlinkAuxChannel());
+    int parsed = 0;
 
     for (qint64 i=0; i<cBytes; i++)
     {
-        processed = mavlink_parse_char(mavlinkChannel(), bytes[i], &msg, &comm);
-        if (!processed) {
+        parsed = mavlink_parse_char(mavlinkAuxChannel(), bytes[i], &msg, &comm);
+        if (!parsed) {
             continue;
         }
-        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes good " << cBytes << mavlinkChannel() << comm.parse_error << raw->parse_error;
-
-        if (_missionItemHandler.handleMessage(msg)) {
-            qCDebug(MockLinkLog) << "_handleIncomingMavlinkBytes missionItemHandler handled " << cBytes;
-            continue;
-        }
-
-        switch (msg.msgid) {
-        case MAVLINK_MSG_ID_HEARTBEAT:
-            _handleHeartBeat(msg);
-            break;
-        case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
-            _handleParamRequestList(msg);
-            break;
-        case MAVLINK_MSG_ID_SET_MODE:
-            _handleSetMode(msg);
-            break;
-        case MAVLINK_MSG_ID_PARAM_SET:
-            _handleParamSet(msg);
-            break;
-        case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
-            _handleParamRequestRead(msg);
-            break;
-        case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
-            _handleFTP(msg);
-            break;
-        case MAVLINK_MSG_ID_COMMAND_LONG:
-            _handleCommandLong(msg);
-            break;
-        case MAVLINK_MSG_ID_MANUAL_CONTROL:
-            _handleManualControl(msg);
-            break;
-        case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
-            _handleLogRequestList(msg);
-            break;
-        case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
-            _handleLogRequestData(msg);
-            break;
-        case MAVLINK_MSG_ID_PARAM_MAP_RC:
-            _handleParamMapRC(msg);
-            break;
-        default:
-            break;
-        }
+        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes parsed " << cBytes << mavlinkAuxChannel() << comm.parse_error << raw->parse_error;
+        lock.unlock();
+        _handleIncomingMavlinkMsg(msg);
+        lock.relock();
     }
-    if (!processed) {
-        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes !!" << cBytes << mavlinkChannel() << comm.parse_error << raw->parse_error;
+    if (!parsed) {
+        qCDebug(MockLinkLog) << QThread::currentThread() << this << "_handleIncomingMavlinkBytes unparsed!" << cBytes << mavlinkAuxChannel() << comm.parse_error << raw->parse_error;
     }
+}
+
+bool MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
+{
+    if (_missionItemHandler.handleMessage(msg)) {
+        qCDebug(MockLinkLog) << "_handleIncomingMavlinkMsg missionItemHandler handled " << msg.msgid;
+        return true;
+    }
+
+    switch (msg.msgid) {
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartBeat(msg);
+        return true;
+    case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+        _handleParamRequestList(msg);
+        return true;
+    case MAVLINK_MSG_ID_SET_MODE:
+        _handleSetMode(msg);
+        return true;
+    case MAVLINK_MSG_ID_PARAM_SET:
+        _handleParamSet(msg);
+        return true;
+    case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
+        _handleParamRequestRead(msg);
+        return true;
+    case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
+        _handleFTP(msg);
+        return true;
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(msg);
+        return true;
+    case MAVLINK_MSG_ID_MANUAL_CONTROL:
+        _handleManualControl(msg);
+        return true;
+    case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
+        _handleLogRequestList(msg);
+        return true;
+    case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
+        _handleLogRequestData(msg);
+        return true;
+    case MAVLINK_MSG_ID_PARAM_MAP_RC:
+        _handleParamMapRC(msg);
+        return true;
+    default:
+        break;
+    }
+    qCDebug(MockLinkLog) << "_handleIncomingMavlinkMsg missionItemHandler unhandled " << msg.msgid;
+    return false;
 }
 
 void MockLink::_handleHeartBeat(const mavlink_message_t& msg)
