@@ -51,7 +51,7 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     if (_mavlinkChannelSet) {
         qWarning() << "Mavlink channel set multiple times";
     }
-    qCDebug(LinkInterfaceLog) << QThread::currentThread() << this << "setMavlinkChannel" << channel;
+    qCDebug(LinkInterfaceLog) << "setMavlinkChannel" << channel;
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
 }
@@ -61,7 +61,7 @@ void LinkInterface::_setMavlinkAuxChannel(uint8_t channel)
     if (_mavlinkAuxChannelSet) {
         qWarning() << "Mavlink channel set multiple times";
     }
-    qCDebug(LinkInterfaceLog) << QThread::currentThread() << this << "setMavlinkChannel" << channel;
+    qCDebug(LinkInterfaceLog) << "setMavlinkChannel" << channel;
     _mavlinkAuxChannelSet = true;
     _mavlinkAuxChannel = channel;
 }
