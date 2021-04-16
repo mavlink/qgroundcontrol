@@ -38,6 +38,14 @@ uint8_t LinkInterface::mavlinkChannel(void) const
     return _mavlinkChannel;
 }
 
+uint8_t LinkInterface::mavlinkAuxChannel(void) const
+{
+    if (!_mavlinkAuxChannelSet) {
+        qWarning(LinkInterfaceLog) << "Call to LinkInterface::mavlinkAuxChannel with _mavlinkAuxChannelSet == false";
+    }
+    return _mavlinkAuxChannel;
+}
+
 void LinkInterface::_setMavlinkChannel(uint8_t channel)
 {
     if (_mavlinkChannelSet) {
@@ -46,6 +54,16 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     qCDebug(LinkInterfaceLog) << QThread::currentThread() << this << "setMavlinkChannel" << channel;
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
+}
+
+void LinkInterface::_setMavlinkAuxChannel(uint8_t channel)
+{
+    if (_mavlinkAuxChannelSet) {
+        qWarning() << "Mavlink channel set multiple times";
+    }
+    qCDebug(LinkInterfaceLog) << QThread::currentThread() << this << "setMavlinkChannel" << channel;
+    _mavlinkAuxChannelSet = true;
+    _mavlinkAuxChannel = channel;
 }
 
 void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
