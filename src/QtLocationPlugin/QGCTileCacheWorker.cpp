@@ -76,12 +76,12 @@ QGCCacheWorker::quit()
     if(_hostLookupID) {
         QHostInfo::abortHostLookup(_hostLookupID);
     }
-    _mutex.lock();
+    QMutexLocker lock(&_taskQueueMutex);
     while(_taskQueue.count()) {
         QGCMapTask* task = _taskQueue.dequeue();
         delete task;
     }
-    _mutex.unlock();
+    lock.unlock(); // don't need the lock any more
     if(this->isRunning()) {
         _waitc.wakeAll();
     }
@@ -97,9 +97,9 @@ QGCCacheWorker::enqueueTask(QGCMapTask* task)
         task->deleteLater();
         return false;
     }
-    _mutex.lock();
+    QMutexLocker lock(&_taskQueueMutex);
     _taskQueue.enqueue(task);
-    _mutex.unlock();
+    lock.unlock(); // don't need to hold the mutex any more
     if(this->isRunning()) {
         _waitc.wakeAll();
     } else {
@@ -116,61 +116,19 @@ QGCCacheWorker::run()
         _init();
     }
     if(_valid) {
-        _db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kSession));
-        _db->setDatabaseName(_databasePath);
-        _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
-        _valid = _db->open();
+        _connectDB();
     }
     _deleteBingNoTileTiles();
+    QMutexLocker lock(&_taskQueueMutex);
     while(true) {
         QGCMapTask* task;
         if(_taskQueue.count()) {
-            _mutex.lock();
             task = _taskQueue.dequeue();
-            _mutex.unlock();
-            switch(task->type()) {
-                case QGCMapTask::taskInit:
-                    break;
-                case QGCMapTask::taskCacheTile:
-                    _saveTile(task);
-                    break;
-                case QGCMapTask::taskFetchTile:
-                    _getTile(task);
-                    break;
-                case QGCMapTask::taskFetchTileSets:
-                    _getTileSets(task);
-                    break;
-                case QGCMapTask::taskCreateTileSet:
-                    _createTileSet(task);
-                    break;
-                case QGCMapTask::taskGetTileDownloadList:
-                    _getTileDownloadList(task);
-                    break;
-                case QGCMapTask::taskUpdateTileDownloadState:
-                    _updateTileDownloadState(task);
-                    break;
-                case QGCMapTask::taskDeleteTileSet:
-                    _deleteTileSet(task);
-                    break;
-                case QGCMapTask::taskRenameTileSet:
-                    _renameTileSet(task);
-                    break;
-                case QGCMapTask::taskPruneCache:
-                    _pruneCache(task);
-                    break;
-                case QGCMapTask::taskReset:
-                    _resetCacheDatabase(task);
-                    break;
-                case QGCMapTask::taskExport:
-                    _exportSets(task);
-                    break;
-                case QGCMapTask::taskImport:
-                    _importSets(task);
-                    break;
-                case QGCMapTask::taskTestInternet:
-                    _testInternet();
-                    break;
-            }
+
+            // Don't need the lock while running the task.
+            lock.unlock();
+            _runTask(task);
+            lock.relock();
             task->deleteLater();
             //-- Check for update timeout
             size_t count = static_cast<size_t>(_taskQueue.count());
@@ -181,29 +139,75 @@ QGCCacheWorker::run()
             }
             if(!count || (time(nullptr) - _lastUpdate > _updateTimeout)) {
                 if(_valid) {
+                    // _updateTotals() will emit a signal. Don't keep the lock
+                    // while any slots process the signal.
+                    lock.unlock();
                     _updateTotals();
+                    lock.relock();
                 }
             }
         } else {
             //-- Wait a bit before shutting things down
-            _waitmutex.lock();
-            unsigned long timeout = 5000;
-            _waitc.wait(&_waitmutex, timeout);
-            _waitmutex.unlock();
-            _mutex.lock();
+            unsigned long timeoutMilliseconds = 5000;
+            _waitc.wait(lock.mutex(), timeoutMilliseconds);
             //-- If nothing to do, close db and leave thread
             if(!_taskQueue.count()) {
-                _mutex.unlock();
                 break;
             }
-            _mutex.unlock();
         }
     }
-    if(_db) {
-        delete _db;
-        _db = nullptr;
-        QSqlDatabase::removeDatabase(kSession);
+    lock.unlock();
+    _disconnectDB();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_runTask(QGCMapTask *task)
+{
+    switch(task->type()) {
+        case QGCMapTask::taskInit:
+            return;
+        case QGCMapTask::taskCacheTile:
+            _saveTile(task);
+            return;
+        case QGCMapTask::taskFetchTile:
+            _getTile(task);
+            return;
+        case QGCMapTask::taskFetchTileSets:
+            _getTileSets(task);
+            return;
+        case QGCMapTask::taskCreateTileSet:
+            _createTileSet(task);
+            return;
+        case QGCMapTask::taskGetTileDownloadList:
+            _getTileDownloadList(task);
+            return;
+        case QGCMapTask::taskUpdateTileDownloadState:
+            _updateTileDownloadState(task);
+            return;
+        case QGCMapTask::taskDeleteTileSet:
+            _deleteTileSet(task);
+            return;
+        case QGCMapTask::taskRenameTileSet:
+            _renameTileSet(task);
+            return;
+        case QGCMapTask::taskPruneCache:
+            _pruneCache(task);
+            return;
+        case QGCMapTask::taskReset:
+            _resetCacheDatabase(task);
+            return;
+        case QGCMapTask::taskExport:
+            _exportSets(task);
+            return;
+        case QGCMapTask::taskImport:
+            _importSets(task);
+            return;
+        case QGCMapTask::taskTestInternet:
+            _testInternet();
+            return;
     }
+    qCWarning(QGCTileCacheLog) << "_runTask given unhandled task type" << task->type();
 }
 
 //-----------------------------------------------------------------------------
@@ -703,7 +707,7 @@ QGCCacheWorker::_resetCacheDatabase(QGCMapTask* mtask)
     query.exec(s);
     s = QString("DROP TABLE TilesDownload");
     query.exec(s);
-    _valid = _createDB(_db);
+    _valid = _createDB(*_db);
     task->setResetCompleted();
 }
 
@@ -718,11 +722,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
     //-- If replacing, simply copy over it
     if(task->replace()) {
         //-- Close and delete old database
-        if(_db) {
-            delete _db;
-            _db = nullptr;
-            QSqlDatabase::removeDatabase(kSession);
-        }
+        _disconnectDB();
         QFile file(_databasePath);
         file.remove();
         //-- Copy given database
@@ -731,10 +731,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
         _init();
         if(_valid) {
             task->setProgress(50);
-            _db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kSession));
-            _db->setDatabaseName(_databasePath);
-            _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
-            _valid = _db->open();
+            _connectDB();
         }
         task->setProgress(100);
     } else {
@@ -905,11 +902,11 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
     QFile file(task->path());
     file.remove();
     //-- Create exported database
-    QSqlDatabase *dbExport = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kExportSession));
+    QScopedPointer<QSqlDatabase> dbExport(new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kExportSession)));
     dbExport->setDatabaseName(task->path());
     dbExport->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
     if (dbExport->open()) {
-        if(_createDB(dbExport, false)) {
+        if(_createDB(*dbExport, false)) {
             //-- Prepare progress report
             quint64 tileCount = 0;
             quint64 currentCount = 0;
@@ -997,7 +994,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
         qCritical() << "Map Cache SQL error (create export database):" << dbExport->lastError();
         task->setError("Error opening export database");
     }
-    delete dbExport;
+    dbExport.reset();
     QSqlDatabase::removeDatabase(kExportSession);
     task->setExportCompleted();
 }
@@ -1020,11 +1017,8 @@ QGCCacheWorker::_init()
     if(!_databasePath.isEmpty()) {
         qCDebug(QGCTileCacheLog) << "Mapping cache directory:" << _databasePath;
         //-- Initialize Database
-        _db = new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kSession));
-        _db->setDatabaseName(_databasePath);
-        _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
-        if (_db->open()) {
-            _valid = _createDB(_db);
+        if (_connectDB()) {
+            _valid = _createDB(*_db);
             if(!_valid) {
                 _failed = true;
             }
@@ -1032,9 +1026,7 @@ QGCCacheWorker::_init()
             qCritical() << "Map Cache SQL error (init() open db):" << _db->lastError();
             _failed = true;
         }
-        delete _db;
-        _db = nullptr;
-        QSqlDatabase::removeDatabase(kSession);
+        _disconnectDB();
     } else {
         qCritical() << "Could not find suitable cache directory.";
         _failed = true;
@@ -1045,10 +1037,21 @@ QGCCacheWorker::_init()
 
 //-----------------------------------------------------------------------------
 bool
-QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
+QGCCacheWorker::_connectDB()
+{
+    _db.reset(new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", kSession)));
+    _db->setDatabaseName(_databasePath);
+    _db->setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
+    _valid = _db->open();
+    return _valid;
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCacheWorker::_createDB(QSqlDatabase& db, bool createDefault)
 {
     bool res = false;
-    QSqlQuery query(*db);
+    QSqlQuery query(db);
     if(!query.exec(
         "CREATE TABLE IF NOT EXISTS Tiles ("
         "tileID INTEGER PRIMARY KEY NOT NULL, "
@@ -1116,12 +1119,12 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
                 query.addBindValue(1);
                 query.addBindValue(QDateTime::currentDateTime().toTime_t());
                 if(!query.exec()) {
-                    qWarning() << "Map Cache SQL error (Creating default tile set):" << db->lastError();
+                    qWarning() << "Map Cache SQL error (Creating default tile set):" << db.lastError();
                     res = false;
                 }
             }
         } else {
-            qWarning() << "Map Cache SQL error (Looking for default tile set):" << db->lastError();
+            qWarning() << "Map Cache SQL error (Looking for default tile set):" << db.lastError();
         }
     }
     if(!res) {
@@ -1129,6 +1132,16 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
         file.remove();
     }
     return res;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCacheWorker::_disconnectDB()
+{
+    if (_db) {
+        _db.reset();
+        QSqlDatabase::removeDatabase(kSession);
+    }
 }
 
 //-----------------------------------------------------------------------------
