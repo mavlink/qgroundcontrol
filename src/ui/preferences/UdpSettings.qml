@@ -28,10 +28,24 @@ Column {
 
     property string _currentHost: ""
 
+    Item {
+        height: ScreenTools.defaultFontPixelHeight * 2
+        width:  parent.width
+        QGCLabel {
+            id:                 warningLabel
+            anchors.top:        parent.top
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            font.pointSize:     ScreenTools.smallFontPointSize
+            wrapMode:           Text.WordWrap
+            text:               qsTr("Note: For best perfomance, please disable AutoConnect to UDP devices on the General page.")
+        }
+    }
+
     Row {
         spacing:    ScreenTools.defaultFontPixelWidth
         QGCLabel {
-            text:   qsTr("Listening Port:")
+            text:   qsTr("Port:")
             width:  _firstColumn
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -54,7 +68,7 @@ Column {
         width:  parent.width
     }
     QGCLabel {
-        text:   qsTr("Target Hosts:")
+        text:   qsTr("Server addresses (optional):")
     }
     Item {
         width:  hostRow.width
@@ -62,16 +76,12 @@ Column {
         Row {
             id:      hostRow
             spacing: ScreenTools.defaultFontPixelWidth
-            Item {
-                height: 1
-                width:  _firstColumn
-            }
             Column {
                 id:         hostColumn
                 spacing:    ScreenTools.defaultFontPixelHeight / 2
                 Rectangle {
                     height:  1
-                    width:   _secondColumn
+                    width:   parent.width
                     color:   qgcPal.button
                     visible: subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeUdp && subEditConfig.hostList.length > 0
                 }
@@ -80,7 +90,7 @@ Column {
                     delegate:
                     QGCButton {
                         text:               modelData
-                        width:              _secondColumn
+                        width:              parent.width
                         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                         autoExclusive:      true
                         onClicked: {
@@ -93,7 +103,7 @@ Column {
                     id:         hostField
                     focus:      true
                     visible:    false
-                    width:      ScreenTools.defaultFontPixelWidth * 30
+                    width:      parent.width
                     onEditingFinished: {
                         if(subEditConfig) {
                             if(hostField.text !== "") {
@@ -112,7 +122,7 @@ Column {
                 }
                 Rectangle {
                     height: 1
-                    width:  _secondColumn
+                    width:  parent.width
                     color:  qgcPal.button
                 }
                 Item {
@@ -120,7 +130,7 @@ Column {
                     width:  parent.width
                 }
                 Item {
-                    width:  _secondColumn
+                    width:  _firstColumn + _secondColumn
                     height: udpButtonRow.height
                     Row {
                         id:         udpButtonRow
