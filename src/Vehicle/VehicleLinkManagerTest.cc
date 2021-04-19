@@ -141,6 +141,7 @@ void VehicleLinkManagerTest::_simpleCommLossTest(void)
     QCOMPARE(spyCommLostChanged.count(),                                                    1);
 }
 
+#if 0
 void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
 {
     SharedLinkConfigurationPtr  mockConfig1;
@@ -231,6 +232,7 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest(void)
 
     multiSpy.clearAllSignals();
 }
+#endif
 
 void VehicleLinkManagerTest::_connectionRemovedTest(void)
 {
