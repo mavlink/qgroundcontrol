@@ -673,7 +673,6 @@ QStringList LinkManager::serialBaudRates(void)
 bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfiguration* editedConfig)
 {
     if (config && editedConfig) {
-        _fixUnnamed(editedConfig);
         config->copyFrom(editedConfig);
         saveLinkConfigurationList();
         emit config->nameChanged(config->name());
@@ -688,7 +687,6 @@ bool LinkManager::endConfigurationEditing(LinkConfiguration* config, LinkConfigu
 bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 {
     if (config) {
-        _fixUnnamed(config);
         addConfiguration(config);
         saveLinkConfigurationList();
     } else {
@@ -700,8 +698,9 @@ bool LinkManager::endCreateConfiguration(LinkConfiguration* config)
 LinkConfiguration* LinkManager::createConfiguration(int type, const QString& name)
 {
 #ifndef NO_SERIAL_LINK
-    if(static_cast<LinkConfiguration::LinkType>(type) == LinkConfiguration::TypeSerial)
+    if (static_cast<LinkConfiguration::LinkType>(type) == LinkConfiguration::TypeSerial) {
         _updateSerialPorts();
+    }
 #endif
     return LinkConfiguration::createSettings(type, name);
 }
@@ -710,74 +709,14 @@ LinkConfiguration* LinkManager::startConfigurationEditing(LinkConfiguration* con
 {
     if (config) {
 #ifndef NO_SERIAL_LINK
-        if(config->type() == LinkConfiguration::TypeSerial)
+        if (config->type() == LinkConfiguration::TypeSerial) {
             _updateSerialPorts();
+        }
 #endif
         return LinkConfiguration::duplicateSettings(config);
     } else {
         qWarning() << "Internal error";
         return nullptr;
-    }
-}
-
-void LinkManager::_fixUnnamed(LinkConfiguration* config)
-{
-    if (config) {
-        //-- Check for "Unnamed"
-        if (config->name() == "Unnamed") {
-            switch(config->type()) {
-#ifndef NO_SERIAL_LINK
-            case LinkConfiguration::TypeSerial: {
-                QString tname = dynamic_cast<SerialConfiguration*>(config)->portName();
-#ifdef Q_OS_WIN
-                tname.replace("\\\\.\\", "");
-#else
-                tname.replace("/dev/cu.", "");
-                tname.replace("/dev/", "");
-#endif
-                config->setName(QString("Serial Device on %1").arg(tname));
-                break;
-            }
-#endif
-            case LinkConfiguration::TypeUdp:
-                config->setName(
-                            QString("UDP Link on Port %1").arg(dynamic_cast<UDPConfiguration*>(config)->localPort()));
-                break;
-            case LinkConfiguration::TypeTcp: {
-                TCPConfiguration* tconfig = dynamic_cast<TCPConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(
-                                QString("TCP Link %1:%2").arg(tconfig->address().toString()).arg(static_cast<int>(tconfig->port())));
-                }
-            }
-                break;
-#ifdef QGC_ENABLE_BLUETOOTH
-            case LinkConfiguration::TypeBluetooth: {
-                BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("%1 (Bluetooth Device)").arg(tconfig->device().name));
-                }
-            }
-                break;
-#endif
-            case LinkConfiguration::TypeLogReplay: {
-                LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("Log Replay %1").arg(tconfig->logFilenameShort()));
-                }
-            }
-                break;
-#ifdef QT_DEBUG
-            case LinkConfiguration::TypeMock:
-                config->setName(QString("Mock Link"));
-                break;
-#endif
-            case LinkConfiguration::TypeLast:
-                break;
-            }
-        }
-    } else {
-        qWarning() << "Internal error";
     }
 }
 
